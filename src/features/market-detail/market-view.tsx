@@ -37,7 +37,11 @@ import { SuppliesTable } from '@/features/market-detail/components/supplies-tabl
 import { SuppliersTable } from '@/features/market-detail/components/suppliers-table';
 import SupplierFiltersModal from '@/features/market-detail/components/filters/supplier-filters-modal';
 import TransactionFiltersModal from '@/features/market-detail/components/filters/transaction-filters-modal';
+import { useMarketWarnings } from '@/hooks/useMarketWarnings';
+import { WarningCategory } from '@/utils/types';
+import { CardWarningIndicator } from './components/card-warning-indicator';
 import RateChart from './components/charts/rate-chart';
+import { MarketWarningBanner } from './components/market-warning-banner';
 import VolumeChart from './components/charts/volume-chart';
 
 function MarketContent() {
@@ -84,6 +88,9 @@ function MarketContent() {
     loading: positionLoading,
     refetch: refetchUserPosition,
   } = useUserPosition(address, network, marketId as string);
+
+  // Get all warnings for this market (hook handles undefined market)
+  const allWarnings = useMarketWarnings(market, true);
 
   // 6. All memoized values and callbacks
   const formattedOraclePrice = useMemo(() => {
@@ -211,6 +218,11 @@ function MarketContent() {
   // 8. Derived values that depend on market data
   const cardStyle = 'bg-surface rounded shadow-sm p-4';
 
+  // 9. Warning filtering by category
+  const pageWarnings = allWarnings.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general);
+  const assetWarnings = allWarnings.filter((w) => w.category === WarningCategory.asset);
+  const oracleWarnings = allWarnings.filter((w) => w.category === WarningCategory.oracle);
+
   return (
     <>
       <Header />
@@ -262,6 +274,9 @@ function MarketContent() {
           </div>
         </div>
 
+        {/* Page-level warnings (debt + general) */}
+        <MarketWarningBanner warnings={pageWarnings} />
+
         {showBorrowModal && (
           <BorrowModal
             market={market}
@@ -309,14 +324,14 @@ function MarketContent() {
           <Card className={cardStyle}>
             <CardHeader className="flex flex-row items-center justify-between text-xl">
               <span>Basic Info</span>
-              <div className="flex items-center text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <CardWarningIndicator warnings={assetWarnings} />
                 {networkImg && (
                   <Image
                     src={networkImg}
                     alt={network.toString()}
                     width={18}
                     height={18}
-                    className="mr-2"
                   />
                 )}
                 {getNetworkName(network)}
@@ -386,14 +401,17 @@ function MarketContent() {
           <Card className={cardStyle}>
             <CardHeader className="flex flex-row items-center justify-between text-xl">
               <span>Oracle Info</span>
-              <Link
-                href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center text-sm text-gray-500 hover:underline"
-              >
-                <ExternalLinkIcon />
-              </Link>
+              <div className="flex items-center gap-2">
+                <CardWarningIndicator warnings={oracleWarnings} />
+                <Link
+                  href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-sm text-gray-500 hover:underline"
+                >
+                  <ExternalLinkIcon />
+                </Link>
+              </div>
             </CardHeader>
             <CardBody>
               <div className="space-y-2">
