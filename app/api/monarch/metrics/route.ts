@@ -1,31 +1,21 @@
 import { type NextRequest, NextResponse } from 'next/server';
-
-const MONARCH_API_ENDPOINT = process.env.MONARCH_API_ENDPOINT;
-const MONARCH_API_KEY = process.env.MONARCH_API_KEY;
+import { MONARCH_API_KEY, getMonarchUrl } from '../utils';
 
 export async function GET(req: NextRequest) {
-  if (!MONARCH_API_ENDPOINT || !MONARCH_API_KEY) {
-    console.error('[Monarch Metrics API] Missing required env vars: MONARCH_API_ENDPOINT or MONARCH_API_KEY');
+  if (!MONARCH_API_KEY) {
+    console.error('[Monarch Metrics API] Missing MONARCH_API_KEY');
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
   const searchParams = req.nextUrl.searchParams;
-  const params = new URLSearchParams();
-  const chainId = searchParams.get('chain_id');
-  const sortBy = searchParams.get('sort_by');
-  const sortOrder = searchParams.get('sort_order');
-  const limit = searchParams.get('limit');
-  const offset = searchParams.get('offset');
-
-  if (chainId) params.set('chain_id', chainId);
-  if (sortBy) params.set('sort_by', sortBy);
-  if (sortOrder) params.set('sort_order', sortOrder);
-  if (limit) params.set('limit', limit);
-  if (offset) params.set('offset', offset);
-
-  const url = `${MONARCH_API_ENDPOINT}/v1/markets/metrics?${params.toString()}`;
 
   try {
+    const url = getMonarchUrl('/v1/markets/metrics');
+    for (const key of ['chain_id', 'sort_by', 'sort_order', 'limit', 'offset']) {
+      const value = searchParams.get(key);
+      if (value) url.searchParams.set(key, value);
+    }
+
     const response = await fetch(url, {
       headers: { 'X-API-Key': MONARCH_API_KEY },
       next: { revalidate: 900 },
@@ -37,8 +27,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch market metrics' }, { status: response.status });
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(await response.json());
   } catch (error) {
     console.error('[Monarch Metrics API] Failed to fetch:', error);
     return NextResponse.json({ error: 'Failed to fetch market metrics' }, { status: 500 });
