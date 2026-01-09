@@ -108,7 +108,6 @@ export type TokenInfo = {
   decimals: number;
 };
 
-// Common types
 type AssetType = {
   id: string;
   address: string;
@@ -122,7 +121,6 @@ export type RewardAmount = {
   claimed: string;
 };
 
-// Market Program Type
 export type MarketRewardType = {
   // shared
   type: 'market-reward';
@@ -143,7 +141,6 @@ export type MarketRewardType = {
   };
 };
 
-// Uniform Reward Type
 export type UniformRewardType = {
   // shared
   type: 'uniform-reward';
@@ -179,7 +176,6 @@ export type VaultProgramType = {
   id: string;
 };
 
-// Combined RewardResponseType
 export type RewardResponseType = MarketRewardType | UniformRewardType | VaultRewardType;
 
 export type AggregatedRewardType = {
@@ -247,7 +243,6 @@ export type GroupedPosition = {
   allWarnings: WarningWithDetail[];
 };
 
-// Add these new types
 export type OracleFeed = {
   address: string;
   chain: {
@@ -289,14 +284,12 @@ export type OraclesQueryResponse = {
   errors?: { message: string }[];
 };
 
-// Update the Market type
 export type Market = {
   id: string;
   lltv: string;
   uniqueKey: string;
   irmAddress: string;
   oracleAddress: string;
-  collateralPrice: string;
   whitelisted: boolean;
   morphoBlue: {
     id: string;
@@ -324,10 +317,7 @@ export type Market = {
     fee: number;
     timestamp: number;
 
-    // AdaptiveCurveIRM APY if utilization was at target
     apyAtTarget: number;
-
-    // AdaptiveCurveIRM rate per second if utilization was at target
     rateAtTarget: string;
   };
   realizedBadDebt: {
@@ -336,7 +326,6 @@ export type Market = {
   supplyingVaults?: {
     address: string;
   }[];
-  // whether we have USD price such has supplyUSD, borrowUSD, collateralUSD, etc. If not, use estimationP
   hasUSDPrice: boolean;
   warnings: MarketWarning[];
   oracle?: {
@@ -355,7 +344,6 @@ export type TimeseriesOptions = {
   interval: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
 };
 
-// Export MarketRates and MarketVolumes
 export type MarketRates = {
   supplyApy: TimeseriesDataPoint[];
   borrowApy: TimeseriesDataPoint[];
@@ -402,7 +390,6 @@ export type AgentMetadata = {
   image: string;
 };
 
-// Define the comprehensive Market Activity Transaction type
 export type MarketActivityTransaction = {
   type: 'MarketSupply' | 'MarketWithdraw' | 'MarketBorrow' | 'MarketRepay';
   hash: string;
@@ -411,13 +398,11 @@ export type MarketActivityTransaction = {
   userAddress: string; // Unified field for user address
 };
 
-// Paginated result type for market activity transactions
 export type PaginatedMarketActivityTransactions = {
   items: MarketActivityTransaction[];
   totalCount: number;
 };
 
-// Type for Liquidation Transactions (Simplified based on original hook)
 export type MarketLiquidationTransaction = {
   type: 'MarketLiquidation';
   hash: string;
@@ -428,28 +413,22 @@ export type MarketLiquidationTransaction = {
   badDebtAssets: string;
 };
 
-// Type for Market Supplier (current position state, not historical transactions)
-// Only stores shares - assets can be calculated from shares using market state
 export type MarketSupplier = {
   userAddress: string;
   supplyShares: string;
 };
 
-// Paginated result type for market suppliers
 export type PaginatedMarketSuppliers = {
   items: MarketSupplier[];
   totalCount: number;
 };
 
-// Type for Market Borrower (current position state, not historical transactions)
-// Stores borrowAssets and collateral - shares can be calculated if needed
 export type MarketBorrower = {
   userAddress: string;
   borrowAssets: string;
   collateral: string;
 };
 
-// Paginated result type for market borrowers
 export type PaginatedMarketBorrowers = {
   items: MarketBorrower[];
   totalCount: number;

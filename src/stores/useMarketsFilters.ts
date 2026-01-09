@@ -15,6 +15,7 @@ type MarketsFiltersState = {
   selectedNetwork: SupportedNetworks | null;
   selectedOracles: PriceFeedVendors[];
   searchQuery: string;
+  trendingMode: boolean; // Filter toggle - thresholds are in useMarketPreferences
 };
 
 type MarketsFiltersActions = {
@@ -23,6 +24,7 @@ type MarketsFiltersActions = {
   setSelectedNetwork: (network: SupportedNetworks | null) => void;
   setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
   setSearchQuery: (query: string) => void;
+  toggleTrendingMode: () => void;
   resetFilters: () => void;
 };
 
@@ -34,6 +36,7 @@ const DEFAULT_STATE: MarketsFiltersState = {
   selectedNetwork: null,
   selectedOracles: [],
   searchQuery: '',
+  trendingMode: false,
 };
 
 /**
@@ -46,34 +49,14 @@ const DEFAULT_STATE: MarketsFiltersState = {
  * ```
  */
 export const useMarketsFilters = create<MarketsFiltersStore>()((set) => ({
-  // Default state
   ...DEFAULT_STATE,
 
-  // Actions
-  setSelectedCollaterals: (collaterals) =>
-    set({
-      selectedCollaterals: [...new Set(collaterals)], // Remove duplicates
-    }),
-
-  setSelectedLoanAssets: (assets) =>
-    set({
-      selectedLoanAssets: [...new Set(assets)], // Remove duplicates
-    }),
-
-  setSelectedNetwork: (network) =>
-    set({
-      selectedNetwork: network,
-    }),
-
-  setSelectedOracles: (oracles) =>
-    set({
-      selectedOracles: oracles,
-    }),
-
-  setSearchQuery: (query) =>
-    set({
-      searchQuery: query,
-    }),
+  setSelectedCollaterals: (collaterals) => set({ selectedCollaterals: [...new Set(collaterals)] }),
+  setSelectedLoanAssets: (assets) => set({ selectedLoanAssets: [...new Set(assets)] }),
+  setSelectedNetwork: (network) => set({ selectedNetwork: network }),
+  setSelectedOracles: (oracles) => set({ selectedOracles: oracles }),
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  toggleTrendingMode: () => set((state) => ({ trendingMode: !state.trendingMode })),
 
   resetFilters: () => set(DEFAULT_STATE),
 }));

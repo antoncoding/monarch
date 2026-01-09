@@ -9,6 +9,7 @@ import { MarketRiskIndicators } from '@/features/markets/components/market-risk-
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { useMarketMetricsMap, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -28,6 +29,7 @@ type MarketTableBodyProps = {
 export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
+  const { metricsMap } = useMarketMetricsMap();
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -84,7 +86,12 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
           <React.Fragment key={index}>
             <TableRow
               key={item.uniqueKey}
-              onClick={() => setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey)}
+              onClick={() => {
+                const key = getMetricsKey(item.morphoBlue.chain.id, item.uniqueKey);
+                const metrics = metricsMap.get(key);
+                console.log('[Metrics]', key, metrics ?? 'NOT FOUND');
+                setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey);
+              }}
               className={`hover:cursor-pointer ${item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''}`}
             >
               <TableCell

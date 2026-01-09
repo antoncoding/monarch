@@ -4,6 +4,33 @@ import { SortColumn } from '@/features/markets/components/constants';
 import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from '@/features/markets/components/column-visibility';
 
+// Trending feature types
+export type FlowTimeWindow = '1h' | '24h' | '7d' | '30d';
+
+export type TrendingWindowConfig = {
+  // Supply flow thresholds (both must be met if set - AND logic)
+  minSupplyFlowPct: string; // e.g. "6" = 6% of current supply
+  minSupplyFlowUsd: string; // Absolute USD threshold
+  // Borrow flow thresholds (both must be met if set - AND logic)
+  minBorrowFlowPct: string;
+  minBorrowFlowUsd: string;
+};
+
+export type TrendingConfig = {
+  enabled: boolean;
+  windows: Record<FlowTimeWindow, TrendingWindowConfig>;
+};
+
+const DEFAULT_TRENDING_CONFIG: TrendingConfig = {
+  enabled: false,
+  windows: {
+    '1h': { minSupplyFlowPct: '6', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
+    '24h': { minSupplyFlowPct: '', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
+    '7d': { minSupplyFlowPct: '', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
+    '30d': { minSupplyFlowPct: '', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
+  },
+};
+
 type MarketPreferencesState = {
   // Sorting
   sortColumn: SortColumn;
@@ -31,6 +58,9 @@ type MarketPreferencesState = {
   minSupplyEnabled: boolean;
   minBorrowEnabled: boolean;
   minLiquidityEnabled: boolean;
+
+  // Trending Config (Beta)
+  trendingConfig: TrendingConfig;
 };
 
 type MarketPreferencesActions = {
@@ -63,6 +93,10 @@ type MarketPreferencesActions = {
   setMinBorrowEnabled: (enabled: boolean) => void;
   setMinLiquidityEnabled: (enabled: boolean) => void;
 
+  // Trending Config (Beta)
+  setTrendingEnabled: (enabled: boolean) => void;
+  setTrendingWindowConfig: (window: FlowTimeWindow, config: Partial<TrendingWindowConfig>) => void;
+
   // Bulk update for migration
   setAll: (state: Partial<MarketPreferencesState>) => void;
 };
@@ -82,7 +116,6 @@ type MarketPreferencesStore = MarketPreferencesState & MarketPreferencesActions;
 export const useMarketPreferences = create<MarketPreferencesStore>()(
   persist(
     (set, get) => ({
-      // Default state
       sortColumn: SortColumn.Supply,
       sortDirection: -1,
       entriesPerPage: 8,
@@ -98,8 +131,8 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       minSupplyEnabled: false,
       minBorrowEnabled: false,
       minLiquidityEnabled: false,
+      trendingConfig: DEFAULT_TRENDING_CONFIG,
 
-      // Actions
       setSortColumn: (column) => set({ sortColumn: column }),
       setSortDirection: (direction) => set({ sortDirection: direction }),
       setEntriesPerPage: (count) => set({ entriesPerPage: count }),
@@ -129,6 +162,20 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       setMinSupplyEnabled: (enabled) => set({ minSupplyEnabled: enabled }),
       setMinBorrowEnabled: (enabled) => set({ minBorrowEnabled: enabled }),
       setMinLiquidityEnabled: (enabled) => set({ minLiquidityEnabled: enabled }),
+      setTrendingEnabled: (enabled) =>
+        set((state) => ({
+          trendingConfig: { ...state.trendingConfig, enabled },
+        })),
+      setTrendingWindowConfig: (window, config) =>
+        set((state) => ({
+          trendingConfig: {
+            ...state.trendingConfig,
+            windows: {
+              ...state.trendingConfig.windows,
+              [window]: { ...state.trendingConfig.windows[window], ...config },
+            },
+          },
+        })),
       setAll: (state) => set(state),
     }),
     {

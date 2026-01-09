@@ -51,6 +51,8 @@ export type ModalProps = {
 
   trustedVaults: Record<string, never>; // No props needed - uses useTrustedVaults() store
 
+  trendingSettings: Record<string, never>; // No props needed - uses useMarketPreferences() store
+
   blacklistedMarkets: Record<string, never>; // No props needed - uses useProcessedMarkets() context
 
   // Vault Operations

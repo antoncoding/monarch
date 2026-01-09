@@ -1,31 +1,27 @@
+/**
+ * @deprecated_after_monarch_api_stable
+ * This query is kept as a fallback while Monarch Metrics API is being validated.
+ * The primary source is now useEverLiquidated() in useMarketMetricsQuery.ts.
+ *
+ * Once the Monarch API is confirmed stable, this file and related data sources can be removed:
+ * - src/hooks/queries/useLiquidationsQuery.ts (this file)
+ * - src/data-sources/morpho-api/liquidations.ts
+ * - src/data-sources/subgraph/liquidations.ts
+ *
+ * Note: useMarketLiquidations.ts (detailed transactions) is SEPARATE and should be kept.
+ */
 import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoApiLiquidatedMarketKeys } from '@/data-sources/morpho-api/liquidations';
 import { fetchSubgraphLiquidatedMarketKeys } from '@/data-sources/subgraph/liquidations';
 import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 
-/**
- * Fetches liquidated market IDs from all supported networks using React Query.
- *
- * Data fetching strategy:
- * - Tries Morpho API first (if supported)
- * - Falls back to Subgraph if API fails
- * - Combines liquidated market keys from all networks
- *
- * Cache behavior:
- * - staleTime: 10 minutes (data considered fresh)
- * - Auto-refetch: Every 10 minutes in background
- * - Refetch on window focus: enabled
- *
- * @example
- * ```tsx
- * const { data, isLoading, refetch } = useLiquidationsQuery();
- * const isProtected = data?.has(marketId) ?? false;
- * ```
- */
-export const useLiquidationsQuery = () => {
+export const useLiquidationsQuery = (options: { enabled?: boolean } = {}) => {
+  const { enabled = true } = options;
+
   return useQuery({
     queryKey: ['liquidations'],
+    enabled,
     queryFn: async () => {
       const combinedLiquidatedKeys = new Set<string>();
       const fetchErrors: unknown[] = [];
@@ -36,7 +32,6 @@ export const useLiquidationsQuery = () => {
             let networkLiquidatedKeys: Set<string>;
             let trySubgraph = false;
 
-            // Try Morpho API first if supported
             if (supportsMorphoApi(network)) {
               try {
                 console.log(`Attempting to fetch liquidated markets via Morpho API for ${network}`);
@@ -51,7 +46,6 @@ export const useLiquidationsQuery = () => {
               trySubgraph = true;
             }
 
-            // If Morpho API failed or not supported, try Subgraph
             if (trySubgraph) {
               try {
                 console.log(`Attempting to fetch liquidated markets via Subgraph for ${network}`);
@@ -62,8 +56,9 @@ export const useLiquidationsQuery = () => {
               }
             }
 
-            // Add the keys to the combined set
-            networkLiquidatedKeys.forEach((key) => combinedLiquidatedKeys.add(key));
+            for (const key of networkLiquidatedKeys) {
+              combinedLiquidatedKeys.add(key);
+            }
           } catch (networkError) {
             console.error(`Failed to fetch liquidated markets for network ${network}:`, networkError);
             fetchErrors.push(networkError);
@@ -71,15 +66,14 @@ export const useLiquidationsQuery = () => {
         }),
       );
 
-      // If any network fetch failed, log but still return what we got
       if (fetchErrors.length > 0) {
         console.warn(`Failed to fetch liquidations from ${fetchErrors.length} network(s)`, fetchErrors[0]);
       }
 
       return combinedLiquidatedKeys;
     },
-    staleTime: 10 * 60 * 1000, // Data is fresh for 10 minutes
-    refetchInterval: 10 * 60 * 1000, // Auto-refetch every 10 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 };

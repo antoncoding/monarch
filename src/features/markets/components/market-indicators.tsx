@@ -1,9 +1,11 @@
 import { Tooltip } from '@/components/ui/tooltip';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
+import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { useLiquidationsQuery } from '@/hooks/queries/useLiquidationsQuery';
+import { useTrendingMarketKeys, getMetricsKey, useEverLiquidated } from '@/hooks/queries/useMarketMetricsQuery';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { RewardsIndicator } from '@/features/markets/components/rewards-indicator';
 
@@ -17,11 +19,10 @@ type MarketIndicatorsProps = {
 };
 
 export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
-  // Check liquidation protection status using React Query
-  const { data: liquidatedMarkets } = useLiquidationsQuery();
-  const hasLiquidationProtection = liquidatedMarkets?.has(market.uniqueKey) ?? false;
-
-  // Compute risk warnings if needed
+  const hasLiquidationProtection = useEverLiquidated(market.morphoBlue.chain.id, market.uniqueKey);
+  const { trendingConfig } = useMarketPreferences();
+  const trendingKeys = useTrendingMarketKeys();
+  const isTrending = trendingConfig.enabled && trendingKeys.has(getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey));
   const warnings = showRisk ? computeMarketWarnings(market, true) : [];
   const hasWarnings = warnings.length > 0;
   const alertWarning = warnings.find((w) => w.level === 'alert');
@@ -29,7 +30,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
 
   return (
     <div className="flex items-center justify-center gap-2">
-      {/* Personal Indicators */}
       {isStared && (
         <Tooltip
           content={
@@ -68,7 +68,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         </Tooltip>
       )}
 
-      {/* Universal Indicators */}
       {hasLiquidationProtection && (
         <Tooltip
           content={
@@ -92,20 +91,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         </Tooltip>
       )}
 
-      {/* {market.isMonarchWhitelisted && (
-        <Tooltip          content={
-            <TooltipContent
-              icon={<Image src={logo} alt="Monarch" width={ICON_SIZE} height={ICON_SIZE} />}
-              detail="This market is recognized by Monarch"
-            />
-          }
-        >
-          <div className="flex-shrink-0">
-            <Image src={logo} alt="Monarch" width={ICON_SIZE} height={ICON_SIZE} />
-          </div>
-        </Tooltip>
-      )} */}
-
       <RewardsIndicator
         size={ICON_SIZE}
         chainId={market.morphoBlue.chain.id}
@@ -114,7 +99,29 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         whitelisted={market.whitelisted}
       />
 
-      {/* Risk Warnings */}
+      {isTrending && (
+        <Tooltip
+          content={
+            <TooltipContent
+              icon={
+                <AiOutlineFire
+                  size={ICON_SIZE + 2}
+                  className="text-orange-500"
+                />
+              }
+              detail="This market is trending based on flow metrics"
+            />
+          }
+        >
+          <div className="flex-shrink-0">
+            <AiOutlineFire
+              size={ICON_SIZE + 2}
+              className="text-orange-500"
+            />
+          </div>
+        </Tooltip>
+      )}
+
       {showRisk && hasWarnings && (
         <Tooltip
           content={

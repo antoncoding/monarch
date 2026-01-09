@@ -1,3 +1,11 @@
+/**
+ * @deprecated_after_monarch_api_stable
+ * This fetcher is kept as a fallback while Monarch Metrics API is being validated.
+ * Used by useLiquidationsQuery.ts which is also deprecated.
+ *
+ * Once the Monarch API is confirmed stable, this file can be removed.
+ * See useLiquidationsQuery.ts for the full list of related files.
+ */
 import { subgraphMarketsWithLiquidationCheckQuery } from '@/graphql/morpho-subgraph-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
@@ -25,9 +33,6 @@ export const fetchSubgraphLiquidatedMarketKeys = async (network: SupportedNetwor
   }
 
   const liquidatedKeys = new Set<string>();
-
-  // Apply the same base filters as fetchSubgraphMarkets
-  // paginate until the API returns < pageSize items
   const pageSize = 1000;
   let skip = 0;
   while (true) {
@@ -60,12 +65,11 @@ export const fetchSubgraphLiquidatedMarketKeys = async (network: SupportedNetwor
       break; // Exit loop if no markets are returned
     }
 
-    markets.forEach((market) => {
-      // If the liquidates array has items, this market has had liquidations
-      if (market.liquidates && market.liquidates.length > 0) {
+    for (const market of markets) {
+      if (market.liquidates?.length > 0) {
         liquidatedKeys.add(market.id);
       }
-    });
+    }
 
     if (markets.length < pageSize) {
       break; // Exit loop if the number of returned markets is less than the page size
