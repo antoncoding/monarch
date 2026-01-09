@@ -90,7 +90,7 @@ function MarketContent() {
   } = useUserPosition(address, network, marketId as string);
 
   // Get all warnings for this market (hook handles undefined market)
-  const allWarnings = useMarketWarnings(market, true);
+  const allWarnings = useMarketWarnings(market);
 
   // 6. All memoized values and callbacks
   const formattedOraclePrice = useMemo(() => {

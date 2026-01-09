@@ -113,7 +113,7 @@ export function RiskIndicatorFromWarning({
   isBatched?: boolean;
   mode?: 'simple' | 'complex';
 }) {
-  const warningsWithDetail = useMarketWarnings(market, true);
+  const warningsWithDetail = useMarketWarnings(market);
   const warnings = warningsWithDetail.filter((w) => w.category === category);
 
   if (warnings.length === 0) {
@@ -201,7 +201,7 @@ export function MarketStatusIndicator({
   isBatched?: boolean;
   mode?: 'simple' | 'complex';
 }) {
-  const warningsWithDetail = useMarketWarnings(market, true);
+  const warningsWithDetail = useMarketWarnings(market);
 
   // Combine debt + general category warnings
   const warnings = warningsWithDetail.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general);

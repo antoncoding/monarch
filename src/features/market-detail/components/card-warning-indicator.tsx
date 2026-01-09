@@ -16,35 +16,23 @@ export function CardWarningIndicator({ warnings }: CardWarningIndicatorProps) {
   const Icon = hasAlert ? MdError : MdWarning;
   const iconColor = hasAlert ? 'text-red-500' : 'text-yellow-500';
 
-  const tooltipContent =
-    warnings.length === 1 ? (
-      <TooltipContent
-        icon={
-          <Icon
-            size={16}
-            className={iconColor}
-          />
-        }
-        title={warnings[0].code.replace(/_/g, ' ')}
-        detail={warnings[0].description}
-      />
-    ) : (
-      <div className="flex flex-col gap-3">
-        {warnings.map((warning) => (
-          <TooltipContent
-            key={warning.code}
-            icon={
-              <Icon
-                size={16}
-                className={iconColor}
-              />
-            }
-            title={warning.code.replace(/_/g, ' ')}
-            detail={warning.description}
-          />
-        ))}
-      </div>
-    );
+  const tooltipContent = (
+    <div className="flex flex-col gap-3">
+      {warnings.map((warning) => (
+        <TooltipContent
+          key={warning.code}
+          icon={
+            <Icon
+              size={16}
+              className={iconColor}
+            />
+          }
+          title={warning.code.replace(/_/g, ' ')}
+          detail={warning.description}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <Tooltip

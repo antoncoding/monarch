@@ -6,7 +6,7 @@ import type { Market } from '@/utils/types';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
   const oracleData = market.oracle ? market.oracle.data : null;
-  const warningsWithDetail = useMarketWarnings(market, true);
+  const warningsWithDetail = useMarketWarnings(market);
 
   return (
     <div className="flex w-full flex-col gap-4 lg:flex-row lg:gap-6">
