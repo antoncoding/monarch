@@ -27,12 +27,15 @@ export function useTransactionWithToast({
   onSuccess,
 }: UseTransactionWithToastProps) {
   const { data: hash, mutate: sendTransaction, error: txError, mutateAsync: sendTransactionAsync } = useSendTransaction();
+  
   const {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
     isError,
   } = useWaitForTransactionReceipt({
     hash,
+    chainId: chainId,
+    confirmations: 0,
   });
 
   // Use a ref to store the latest onSuccess callback without it being in the dependency array
