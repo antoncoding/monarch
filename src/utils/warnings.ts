@@ -1,5 +1,5 @@
 import type { Market, MarketWarning } from '@/utils/types';
-import { monarchWhitelistedMarkets } from './markets';
+import { monarchWhitelistedMarkets, getMarketOverrideWarnings } from './markets';
 import { getOracleType, OracleType, parsePriceFeedVendors, checkFeedsPath } from './oracle';
 import { WarningCategory, type WarningWithDetail } from './types';
 
@@ -225,6 +225,17 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
         result.push(incompatibleFeedsWarning);
       }
     }
+  }
+
+  // Inject custom market warnings from override rules
+  const overrideWarnings = getMarketOverrideWarnings(market.uniqueKey);
+  for (const warning of overrideWarnings) {
+    result.push({
+      code: warning.code,
+      level: warning.level,
+      description: warning.description,
+      category: warning.category as WarningCategory,
+    });
   }
 
   return result;

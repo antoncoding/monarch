@@ -1,5 +1,5 @@
 import type { Market } from '@/utils/types';
-import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './risk-indicator';
+import { MarketAssetIndicator, MarketOracleIndicator, MarketStatusIndicator } from './risk-indicator';
 
 type MarketRiskIndicatorsProps = {
   market: Market;
@@ -24,7 +24,7 @@ export function MarketRiskIndicators({ market, isBatched = false, mode = 'simple
         isBatched={isBatched}
         mode={mode}
       />
-      <MarketDebtIndicator
+      <MarketStatusIndicator
         market={market}
         isBatched={isBatched}
         mode={mode}

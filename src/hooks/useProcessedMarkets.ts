@@ -3,6 +3,7 @@ import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { isForceUnwhitelisted } from '@/utils/markets';
 
 /**
  * Processes raw markets data with blacklist filtering and oracle enrichment.
@@ -49,17 +50,16 @@ export const useProcessedMarkets = () => {
     // Apply blacklist filter
     const blacklistFiltered = rawMarketsUnfiltered.filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
 
-    // Enrich with oracle data
+    // Enrich with oracle data and apply force-unwhitelisted overrides
     const enriched = blacklistFiltered.map((market) => {
       const oracleData = getOracleData(market.oracleAddress, market.morphoBlue.chain.id);
-      return oracleData
-        ? {
-            ...market,
-            oracle: {
-              data: oracleData,
-            },
-          }
-        : market;
+      const shouldForceUnwhitelist = isForceUnwhitelisted(market.uniqueKey);
+
+      return {
+        ...market,
+        ...(oracleData && { oracle: { data: oracleData } }),
+        ...(shouldForceUnwhitelist && { whitelisted: false }),
+      };
     });
 
     // allMarkets: all markets (whitelisted + unwhitelisted, excluding blacklisted)
