@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     const response = await fetch(url, {
       headers: { 'X-API-Key': MONARCH_API_KEY },
-      next: { revalidate: 900 },
+      cache: 'no-store',
     });
 
     if (!response.ok) {
