@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';
@@ -18,9 +18,7 @@ const WRAP_STEPS = [
 ];
 
 export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
-  const [currentStep, setCurrentStep] = useState<WrapStep>('approve');
-
-  const { start, complete, fail, showModal, setModalOpen } = useTransactionTracking('wrap');
+  const tracking = useTransactionTracking('wrap');
 
   const { address: account, chainId } = useConnection();
   const { switchChainAsync } = useSwitchChain();
@@ -39,7 +37,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
     successText: 'Successfully wrapped MORPHO tokens!',
     errorText: 'Failed to wrap MORPHO tokens',
     onSuccess: () => {
-      complete();
+      tracking.complete();
       onSuccess?.();
     },
   });
@@ -56,14 +54,13 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
         toast.info('Network changed');
       }
 
-      start(WRAP_STEPS, { tokenSymbol: 'MORPHO', amount }, 'approve');
+      tracking.start(WRAP_STEPS, { tokenSymbol: 'MORPHO', amount }, 'approve');
 
       if (!isApproved) {
-        setCurrentStep('approve');
         await approve();
       }
 
-      setCurrentStep('wrap');
+      tracking.update('wrap');
       await sendTransactionAsync({
         account: account,
         to: MORPHO_TOKEN_WRAPPER,
@@ -75,15 +72,16 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
       });
     } catch (_err) {
       toast.error('Failed to wrap MORPHO.');
-      fail();
+      tracking.fail();
     }
-  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync, start, fail]);
+  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync, tracking]);
 
   return {
     wrap,
-    currentStep,
-    showProcessModal: showModal,
-    setShowProcessModal: setModalOpen,
+    // Transaction tracking
+    transaction: tracking.transaction,
+    dismiss: tracking.dismiss,
+    currentStep: tracking.currentStep as WrapStep | null,
     isApproved,
   };
 }

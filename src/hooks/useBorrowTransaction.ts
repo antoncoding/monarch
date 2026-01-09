@@ -31,12 +31,11 @@ export type BorrowStepType =
   | 'execute'; // Common final step
 
 export function useBorrowTransaction({ market, collateralAmount, borrowAmount, onSuccess }: UseBorrowTransactionProps) {
-  const [currentStep, setCurrentStep] = useState<BorrowStepType>('approve_permit2');
   const { usePermit2: usePermit2Setting } = useAppSettings();
   const [useEth, setUseEth] = useState<boolean>(false);
 
   // Transaction tracking
-  const { start, update, complete, fail, showModal, setModalOpen } = useTransactionTracking('borrow');
+  const tracking = useTransactionTracking('borrow');
 
   const { address: account, chainId } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);
@@ -137,8 +136,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
 
       // --- ETH Flow: Skip permit2/ERC20 approval, native ETH can't be permit-signed ---
       if (useEth) {
-        setCurrentStep('execute');
-        update('execute');
+        tracking.update('execute');
 
         // Bundler authorization may still be needed for the borrow operation
         if (!isBundlerAuthorized) {
@@ -149,15 +147,13 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         }
       } else if (usePermit2Setting) {
         // --- Permit2 Flow ---
-        setCurrentStep('approve_permit2');
-        update('approve_permit2');
+        tracking.update('approve_permit2');
         if (!permit2Authorized) {
           await authorizePermit2(); // Authorize Permit2 contract
           await new Promise((resolve) => setTimeout(resolve, 800)); // UI delay
         }
 
-        setCurrentStep('authorize_bundler_sig');
-        update('authorize_bundler_sig');
+        tracking.update('authorize_bundler_sig');
         const bundlerAuthSigTx = await authorizeBundlerWithSignature(); // Get signature for Bundler auth if needed
         if (bundlerAuthSigTx) {
           transactions.push(bundlerAuthSigTx);
@@ -165,8 +161,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         }
 
         if (collateralAmount > 0n) {
-          setCurrentStep('sign_permit');
-          update('sign_permit');
+          tracking.update('sign_permit');
           const { sigs, permitSingle } = await signForBundlers();
           console.log('Signed for bundlers:', { sigs, permitSingle });
 
@@ -187,12 +182,10 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
           transactions.push(transferFromTx);
         }
 
-        setCurrentStep('execute');
-        update('execute');
+        tracking.update('execute');
       } else {
         // --- Standard ERC20 Flow ---
-        setCurrentStep('authorize_bundler_tx');
-        update('authorize_bundler_tx');
+        tracking.update('authorize_bundler_tx');
         const bundlerTxAuthorized = await authorizeWithTransaction(); // Authorize Bundler via TX if needed
         if (!bundlerTxAuthorized) {
           throw new Error('Failed to authorize Bundler via transaction.'); // Stop if auth tx fails/is rejected
@@ -200,8 +193,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeWithTransaction
 
         if (collateralAmount > 0n) {
-          setCurrentStep('approve_token');
-          update('approve_token');
+          tracking.update('approve_token');
           if (!isApproved) {
             await approve(); // Approve ERC20 token
             await new Promise((resolve) => setTimeout(resolve, 1000)); // UI delay
@@ -217,8 +209,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
           );
         }
 
-        setCurrentStep('execute');
-        update('execute');
+        tracking.update('execute');
       }
 
       if (useEth && collateralAmount > 0n) {
@@ -297,9 +288,9 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         },
       ]);
 
-      complete();
+      tracking.complete();
     } catch (error: unknown) {
-      fail();
+      tracking.fail();
       console.error('Error during borrow execution:', error);
       if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
         toast.error('Borrow Failed', 'An unexpected error occurred during borrow.');
@@ -324,9 +315,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     batchAddUserMarkets,
     bundlerAddress,
     toast,
-    update,
-    complete,
-    fail,
+    tracking,
   ]);
 
   // Combined approval and borrow flow
@@ -338,7 +327,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
 
     try {
       const initialStep = useEth ? 'execute' : usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
-      start(
+      tracking.start(
         getStepsForFlow(useEth, usePermit2Setting),
         { tokenSymbol: market.collateralAsset.symbol, amount: collateralAmount, marketId: market.uniqueKey },
         initialStep,
@@ -347,7 +336,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
       await executeBorrowTransaction();
     } catch (error: unknown) {
       console.error('Error in approveAndBorrow:', error);
-      fail();
+      tracking.fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -358,7 +347,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         toast.error('Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeBorrowTransaction, toast, useEth, usePermit2Setting, start, getStepsForFlow, market, collateralAmount, fail]);
+  }, [account, executeBorrowTransaction, toast, useEth, usePermit2Setting, tracking, getStepsForFlow, market, collateralAmount]);
 
   // Function to handle signing and executing the borrow transaction
   const signAndBorrow = useCallback(async () => {
@@ -368,7 +357,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     }
 
     try {
-      start(
+      tracking.start(
         getStepsForFlow(useEth, usePermit2Setting),
         { tokenSymbol: market.collateralAsset.symbol, amount: collateralAmount, marketId: market.uniqueKey },
         'sign_permit',
@@ -377,7 +366,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
       await executeBorrowTransaction();
     } catch (error: unknown) {
       console.error('Error in signAndBorrow:', error);
-      fail();
+      tracking.fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -388,16 +377,17 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeBorrowTransaction, toast, start, getStepsForFlow, useEth, usePermit2Setting, market, collateralAmount, fail]);
+  }, [account, executeBorrowTransaction, toast, tracking, getStepsForFlow, useEth, usePermit2Setting, market, collateralAmount]);
 
   // Determine overall loading state
   const isLoading = borrowPending || isLoadingPermit2 || isApproving || isAuthorizingBundler;
 
   return {
+    // Transaction tracking
+    transaction: tracking.transaction,
+    dismiss: tracking.dismiss,
+    currentStep: tracking.currentStep as BorrowStepType | null,
     // State
-    currentStep,
-    showProcessModal: showModal,
-    setShowProcessModal: setModalOpen,
     useEth,
     setUseEth,
     isLoadingPermit2,
@@ -405,10 +395,8 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     permit2Authorized,
     borrowPending,
     isLoading,
-
     // Expose relevant states for UI feedback
     isBundlerAuthorized,
-
     // Actions
     approveAndBorrow,
     signAndBorrow,

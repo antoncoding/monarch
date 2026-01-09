@@ -20,9 +20,10 @@ export type UseVaultV2DepositReturn = {
   setDepositAmount: Dispatch<SetStateAction<bigint>>;
   inputError: string | null;
   setInputError: Dispatch<SetStateAction<string | null>>;
-  showProcessModal: boolean;
-  setShowProcessModal: Dispatch<SetStateAction<boolean>>;
-  currentStep: VaultDepositStepType;
+  // Transaction tracking
+  transaction: ReturnType<typeof import('@/hooks/useTransactionTracking').useTransactionTracking>['transaction'];
+  dismiss: () => void;
+  currentStep: VaultDepositStepType | null;
 
   // Balance data
   tokenBalance: bigint | undefined;
@@ -60,11 +61,10 @@ export function useVaultV2Deposit({
   // State
   const [depositAmount, setDepositAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<VaultDepositStepType>('approve');
   const { usePermit2: usePermit2Setting } = useAppSettings();
 
   // Transaction tracking
-  const { start, update, complete, fail, showModal, setModalOpen } = useTransactionTracking('deposit');
+  const tracking = useTransactionTracking('deposit');
 
   const { address: account } = useConnection();
   const toast = useStyledToast();
@@ -175,8 +175,7 @@ export function useVaultV2Deposit({
         gas = GAS_COSTS.SINGLE_SUPPLY; // Using same gas estimate as supply
       }
 
-      setCurrentStep('depositing');
-      update('depositing');
+      tracking.update('depositing');
 
       const minShares = BigInt(1);
       const erc4626DepositTx = encodeFunctionData({
@@ -204,10 +203,10 @@ export function useVaultV2Deposit({
         gas: gas ? BigInt(gas * GAS_MULTIPLIER) : undefined,
       });
 
-      complete();
+      tracking.complete();
       return true;
     } catch (_error: unknown) {
-      fail();
+      tracking.fail();
       toast.error('Deposit Failed', 'Deposit to vault failed or cancelled');
       return false;
     }
@@ -221,9 +220,7 @@ export function useVaultV2Deposit({
     usePermit2Setting,
     toast,
     chainId,
-    update,
-    complete,
-    fail,
+    tracking,
   ]);
 
   // Approve and deposit handler
@@ -234,8 +231,7 @@ export function useVaultV2Deposit({
     }
 
     try {
-      setCurrentStep('approve');
-      start(getStepsForFlow(usePermit2Setting), { tokenSymbol: assetSymbol, amount: depositAmount, vaultName }, 'approve');
+      tracking.start(getStepsForFlow(usePermit2Setting), { tokenSymbol: assetSymbol, amount: depositAmount, vaultName }, 'approve');
 
       if (usePermit2Setting) {
         // Permit2 flow
@@ -244,8 +240,7 @@ export function useVaultV2Deposit({
             await authorizePermit2();
           }
 
-          setCurrentStep('signing');
-          update('signing');
+          tracking.update('signing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 500));
@@ -269,13 +264,11 @@ export function useVaultV2Deposit({
 
       // Standard ERC20 flow
       if (isApproved) {
-        setCurrentStep('depositing');
-        update('depositing');
+        tracking.update('depositing');
       } else {
         try {
           await approve();
-          setCurrentStep('depositing');
-          update('depositing');
+          tracking.update('depositing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -297,7 +290,7 @@ export function useVaultV2Deposit({
       await executeDepositTransaction();
     } catch (error: unknown) {
       console.error('Error in approveAndDeposit:', error);
-      fail();
+      tracking.fail();
     }
   }, [
     account,
@@ -308,9 +301,7 @@ export function useVaultV2Deposit({
     approve,
     toast,
     permit2Authorized,
-    start,
-    update,
-    fail,
+    tracking,
     getStepsForFlow,
     assetSymbol,
     depositAmount,
@@ -325,13 +316,12 @@ export function useVaultV2Deposit({
     }
 
     try {
-      setCurrentStep('signing');
-      start(getStepsForFlow(usePermit2Setting), { tokenSymbol: assetSymbol, amount: depositAmount, vaultName }, 'signing');
+      tracking.start(getStepsForFlow(usePermit2Setting), { tokenSymbol: assetSymbol, amount: depositAmount, vaultName }, 'signing');
 
       await executeDepositTransaction();
     } catch (error: unknown) {
       console.error('Error in signAndDeposit:', error);
-      fail();
+      tracking.fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -342,7 +332,7 @@ export function useVaultV2Deposit({
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeDepositTransaction, toast, start, fail, getStepsForFlow, usePermit2Setting, assetSymbol, depositAmount, vaultName]);
+  }, [account, executeDepositTransaction, toast, tracking, getStepsForFlow, usePermit2Setting, assetSymbol, depositAmount, vaultName]);
 
   return {
     // State
@@ -350,9 +340,10 @@ export function useVaultV2Deposit({
     setDepositAmount,
     inputError,
     setInputError,
-    showProcessModal: showModal,
-    setShowProcessModal: setModalOpen,
-    currentStep,
+    // Transaction tracking
+    transaction: tracking.transaction,
+    dismiss: tracking.dismiss,
+    currentStep: tracking.currentStep as VaultDepositStepType | null,
 
     // Balance data
     tokenBalance,

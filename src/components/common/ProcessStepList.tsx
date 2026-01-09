@@ -18,14 +18,12 @@ function StepIcon({ status }: { status: StepStatus }): JSX.Element {
   const renderIcon = () => {
     switch (status) {
       case 'done':
-        return <FaCheckCircle className="h-5 w-5 text-green-500" />;
+        return <FaCheckCircle className="h-5 w-5 text-primary" />;
       case 'current':
         return (
-          <div className="relative">
-            <FaCircle className="h-5 w-5 text-primary" />
-            <div className="absolute inset-0 animate-ping opacity-30">
-              <FaCircle className="h-5 w-5 text-primary" />
-            </div>
+          <div className="relative flex items-center justify-center">
+            <FaCircle className="h-4 w-4 text-primary" />
+            <div className="absolute h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
           </div>
         );
       default:
@@ -58,11 +56,11 @@ export function ProcessStepList({ steps, currentStep }: ProcessStepListProps): J
           <div
             key={step.id}
             className={cn(
-              'flex items-start gap-3 rounded-lg border p-3',
+              'flex items-start gap-3 rounded border p-3',
               'transition-all duration-300 ease-out',
               status === 'current' && ['border-primary bg-primary/5', 'scale-[1.02] shadow-sm shadow-primary/10'],
-              status === 'done' && ['border-green-200 dark:border-green-900/50', 'opacity-70'],
-              status === 'undone' && ['border-gray-100 dark:border-gray-800', 'opacity-40'],
+              status === 'done' && 'border-border opacity-70',
+              status === 'undone' && 'border-border opacity-40',
             )}
           >
             <StepIcon status={status} />

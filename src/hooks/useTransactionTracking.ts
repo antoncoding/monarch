@@ -1,5 +1,5 @@
 import { type SetStateAction, useCallback, useState } from 'react';
-import { useTransactionProcessStore, type TransactionStep } from '@/stores/useTransactionProcessStore';
+import { useTransactionProcessStore, type TransactionStep, type ActiveTransaction } from '@/stores/useTransactionProcessStore';
 
 type TransactionMetadata = {
   tokenSymbol?: string;
@@ -10,54 +10,133 @@ type TransactionMetadata = {
 
 /**
  * Hook that simplifies transaction tracking with the global store.
- * Encapsulates all the boilerplate for starting, updating, completing transactions.
  *
- * Modal visibility is derived from the store, so reopening via TransactionIndicator works.
+ * ## Usage
+ * ```tsx
+ * const tracking = useTransactionTracking('supply');
+ *
+ * const handleSupply = async () => {
+ *   tracking.start(steps, { tokenSymbol: 'USDC' }, 'approve');
+ *   try {
+ *     await doApproval();
+ *     tracking.update('signing');
+ *     await doSign();
+ *     tracking.update('supplying');
+ *     await doSupply();
+ *     tracking.complete();
+ *   } catch (error) {
+ *     tracking.fail();
+ *   }
+ * };
+ *
+ * return (
+ *   <ProcessModal
+ *     transaction={tracking.transaction}
+ *     onDismiss={tracking.dismiss}
+ *     title="Supply"
+ *   />
+ * );
+ * ```
  */
 export function useTransactionTracking(type: string) {
-  const { startTransaction, updateStep, completeTransaction, failTransaction, setModalVisible } = useTransactionProcessStore();
+  const store = useTransactionProcessStore();
   const [txId, setTxId] = useState<string | null>(null);
 
-  // Derive showModal from store based on txId
-  const showModal = useTransactionProcessStore((s) => (txId ? (s.transactions[txId]?.isModalVisible ?? false) : false));
+  // Derive transaction from store - this is reactive
+  const transaction = useTransactionProcessStore((s): ActiveTransaction | null => (txId ? (s.transactions[txId] ?? null) : null));
 
+  // Convenience accessors
+  const isVisible = transaction?.isModalVisible ?? false;
+  const currentStep = transaction?.currentStep ?? null;
+  const steps = transaction?.steps ?? [];
+
+  /**
+   * Start a new transaction. Creates entry in store with modal visible.
+   */
   const start = useCallback(
-    (steps: TransactionStep[], metadata: TransactionMetadata, initialStep: string) => {
-      const id = startTransaction({ type, currentStep: initialStep, steps, metadata });
+    (txSteps: TransactionStep[], metadata: TransactionMetadata, initialStep: string) => {
+      const id = store.startTransaction({ type, currentStep: initialStep, steps: txSteps, metadata });
       setTxId(id);
+      return id;
     },
-    [startTransaction, type],
+    [store, type],
   );
 
+  /**
+   * Update the current step of the transaction.
+   */
   const update = useCallback(
     (step: string) => {
-      if (txId) updateStep(txId, step);
+      if (txId) store.updateStep(txId, step);
     },
-    [updateStep, txId],
+    [store, txId],
   );
 
+  /**
+   * Mark transaction as complete. Removes from store.
+   */
   const complete = useCallback(() => {
     if (txId) {
-      completeTransaction(txId);
+      store.completeTransaction(txId);
       setTxId(null);
     }
-  }, [completeTransaction, txId]);
+  }, [store, txId]);
 
+  /**
+   * Mark transaction as failed. Removes from store.
+   * Error display is handled by useTransactionWithToast.
+   */
   const fail = useCallback(() => {
     if (txId) {
-      failTransaction(txId);
+      store.failTransaction(txId);
       setTxId(null);
     }
-  }, [failTransaction, txId]);
+  }, [store, txId]);
 
+  /**
+   * Dismiss the modal but keep transaction in background.
+   * Transaction will appear in TransactionIndicator.
+   */
+  const dismiss = useCallback(() => {
+    if (txId) store.setModalVisible(txId, false);
+  }, [store, txId]);
+
+  /**
+   * Resume a background transaction - reopens the modal.
+   */
+  const resume = useCallback(() => {
+    if (txId) store.setModalVisible(txId, true);
+  }, [store, txId]);
+
+  /**
+   * Legacy: Set modal visibility (for backward compatibility).
+   * @deprecated Use dismiss() or resume() instead.
+   */
   const setModalOpen = useCallback(
     (value: SetStateAction<boolean>) => {
       if (!txId) return;
-      const newValue = typeof value === 'function' ? value(showModal) : value;
-      setModalVisible(txId, newValue);
+      const newValue = typeof value === 'function' ? value(isVisible) : value;
+      store.setModalVisible(txId, newValue);
     },
-    [setModalVisible, txId, showModal],
+    [store, txId, isVisible],
   );
 
-  return { start, update, complete, fail, showModal, setModalOpen };
+  return {
+    // State
+    txId,
+    transaction,
+    isVisible,
+    currentStep,
+    steps,
+    // Actions
+    start,
+    update,
+    complete,
+    fail,
+    dismiss,
+    resume,
+    // Legacy aliases for backward compatibility
+    showModal: isVisible,
+    setModalOpen,
+  };
 }

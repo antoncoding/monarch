@@ -10,7 +10,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useVaultV2Deposit } from '@/hooks/useVaultV2Deposit';
 import { formatBalance } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
-import { VaultDepositProcessModal } from './vault-deposit-process-modal';
+import { ProcessModal } from '@/components/common/ProcessModal';
 
 type VaultDepositModalProps = {
   vaultAddress: Address;
@@ -48,9 +48,8 @@ export function VaultDepositModal({
     depositPending,
     approveAndDeposit,
     signAndDeposit,
-    showProcessModal,
-    setShowProcessModal,
-    currentStep,
+    transaction,
+    dismiss,
   } = useVaultV2Deposit({
     vaultAddress,
     assetAddress,
@@ -132,17 +131,12 @@ export function VaultDepositModal({
         </ModalBody>
       </Modal>
 
-      {showProcessModal && (
-        <VaultDepositProcessModal
-          currentStep={currentStep}
-          onOpenChange={setShowProcessModal}
-          vaultName={vaultName}
-          assetSymbol={assetSymbol}
-          amount={depositAmount}
-          assetDecimals={assetDecimals}
-          usePermit2={usePermit2Setting}
-        />
-      )}
+      <ProcessModal
+        transaction={transaction}
+        onDismiss={dismiss}
+        title={`Deposit ${assetSymbol}`}
+        description={`Depositing to ${vaultName}`}
+      />
     </>
   );
 }

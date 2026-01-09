@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import type { NetworkToken } from '@/types/token';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
@@ -13,6 +14,7 @@ import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constan
 import { useERC20Approval } from './useERC20Approval';
 import { useStyledToast } from './useStyledToast';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
+
 export type MarketSupply = {
   market: Market;
   amount: bigint;
@@ -25,8 +27,7 @@ export function useMultiMarketSupply(
   usePermit2Setting: boolean,
   onSuccess?: () => void,
 ) {
-  const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'supplying'>('approve');
-  const [showProcessModal, setShowProcessModal] = useState(false);
+  const tracking = useTransactionTracking('multi-supply');
   const toast = useStyledToast();
 
   const { address: account } = useConnection();
@@ -90,7 +91,7 @@ export function useMultiMarketSupply(
       }
       // Token approvals with Permit 2
       else if (usePermit2Setting) {
-        setCurrentStep('signing');
+        tracking.update('signing');
         const { sigs, permitSingle } = await signForBundlers();
 
         txs.push(
@@ -123,7 +124,7 @@ export function useMultiMarketSupply(
         gas = GAS_COSTS.BUNDLER_SUPPLY + GAS_COSTS.SINGLE_SUPPLY * (numOfSupplies - 1);
       }
 
-      setCurrentStep('supplying');
+      tracking.update('supplying');
 
       // Add supply transactions for each market
       for (const supply of supplies) {
@@ -176,7 +177,7 @@ export function useMultiMarketSupply(
       return true;
     } catch (error: unknown) {
       console.error('Error in executeSupplyTransaction:', error);
-      setShowProcessModal(false);
+      tracking.fail();
       if (error instanceof Error) {
         toast.error('Transaction failed', error.message);
       } else {
@@ -184,7 +185,7 @@ export function useMultiMarketSupply(
       }
       throw error; // Re-throw to be caught by approveAndSupply
     }
-  }, [account, supplies, totalAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting, chainId, loanAsset, toast]);
+  }, [account, supplies, totalAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting, chainId, loanAsset, toast, tracking]);
 
   const approveAndSupply = useCallback(async () => {
     if (!account) {
@@ -193,11 +194,23 @@ export function useMultiMarketSupply(
     }
 
     try {
-      setShowProcessModal(true);
-      setCurrentStep('approve');
+      // Start tracking with appropriate steps based on flow
+      const steps = useEth
+        ? [{ id: 'supplying', title: 'Supplying', description: `Supplying ${tokenSymbol}` }]
+        : usePermit2Setting
+          ? [
+              { id: 'approve', title: 'Authorize Permit2', description: 'Approving Permit2 for token transfers' },
+              { id: 'signing', title: 'Sign Permit', description: 'Sign the permit message' },
+              { id: 'supplying', title: 'Supplying', description: `Supplying ${tokenSymbol}` },
+            ]
+          : [
+              { id: 'approve', title: 'Approve Token', description: `Approving ${tokenSymbol} for transfer` },
+              { id: 'supplying', title: 'Supplying', description: `Supplying ${tokenSymbol}` },
+            ];
+
+      tracking.start(steps, { tokenSymbol }, useEth ? 'supplying' : 'approve');
 
       if (useEth) {
-        setCurrentStep('supplying');
         const success = await executeSupplyTransaction();
         return success;
       }
@@ -205,26 +218,26 @@ export function useMultiMarketSupply(
       if (usePermit2Setting && !permit2Authorized) {
         try {
           await authorizePermit2();
-          setCurrentStep('signing');
+          tracking.update('signing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 500));
         } catch (error) {
           console.error('Error in Permit2 authorization:', error);
-          setShowProcessModal(false);
+          tracking.fail();
           return false;
         }
       } else if (!usePermit2Setting && !isApproved) {
         // Standard ERC20 flow
         try {
           await approve();
-          setCurrentStep('supplying');
+          tracking.update('supplying');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (error) {
           console.error('Error in ERC20 approval:', error);
-          setShowProcessModal(false);
+          tracking.fail();
           if (error instanceof Error) {
             if (error.message.includes('User rejected')) {
               toast.error('Approval rejected', 'Token approval rejected by the user');
@@ -242,16 +255,16 @@ export function useMultiMarketSupply(
       return success;
     } catch (error) {
       console.error('Error in approveAndSupply:', error);
-      setShowProcessModal(false);
+      tracking.fail();
       return false;
     }
-  }, [account, usePermit2Setting, permit2Authorized, authorizePermit2, isApproved, approve, useEth, executeSupplyTransaction, toast]);
+  }, [account, usePermit2Setting, permit2Authorized, authorizePermit2, isApproved, approve, useEth, executeSupplyTransaction, toast, tracking, tokenSymbol]);
 
   return {
     approveAndSupply,
-    currentStep,
-    showProcessModal,
-    setShowProcessModal,
+    transaction: tracking.transaction,
+    dismiss: tracking.dismiss,
+    currentStep: tracking.currentStep,
     supplyPending,
     isLoadingPermit2,
   };

@@ -2,7 +2,6 @@ import type { Address } from 'viem';
 import { create } from 'zustand';
 import type { Market, MarketPosition, GroupedPosition } from '@/utils/types';
 import type { SwapToken } from '@/features/swap/types';
-import type { RebalanceStepType } from '@/hooks/useRebalance';
 import type { SupportedNetworks } from '@/utils/networks';
 
 /**
@@ -30,13 +29,6 @@ export type ModalProps = {
     groupedPosition: GroupedPosition;
     refetch: (onSuccess?: () => void) => void;
     isRefetching: boolean;
-  };
-
-  rebalanceProcess: {
-    currentStep: RebalanceStepType;
-    isPermit2Flow: boolean;
-    tokenSymbol: string;
-    actionsCount: number;
   };
 
   rebalanceMarketSelection: {

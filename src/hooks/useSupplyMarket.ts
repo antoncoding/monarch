@@ -24,9 +24,6 @@ export type UseSupplyMarketReturn = {
   setInputError: Dispatch<SetStateAction<string | null>>;
   useEth: boolean;
   setUseEth: Dispatch<SetStateAction<boolean>>;
-  showProcessModal: boolean;
-  setShowProcessModal: Dispatch<SetStateAction<boolean>>;
-  currentStep: SupplyStepType;
 
   // Balance data
   tokenBalance: bigint | undefined;
@@ -37,6 +34,15 @@ export type UseSupplyMarketReturn = {
   permit2Authorized: boolean;
   isLoadingPermit2: boolean;
   supplyPending: boolean;
+
+  // Transaction tracking (new unified pattern)
+  transaction: ReturnType<typeof import('@/hooks/useTransactionTracking').useTransactionTracking>['transaction'];
+  dismiss: () => void;
+  currentStep: SupplyStepType;
+
+  // Legacy aliases (for backward compatibility)
+  showProcessModal: boolean;
+  setShowProcessModal: Dispatch<SetStateAction<boolean>>;
 
   // Actions
   approveAndSupply: () => Promise<void>;
@@ -49,11 +55,11 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const [supplyAmount, setSupplyAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
   const [useEth, setUseEth] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<SupplyStepType>('approve');
   const { usePermit2: usePermit2Setting } = useAppSettings();
 
-  // Transaction tracking
-  const { start, update, complete, fail, showModal, setModalOpen } = useTransactionTracking('supply');
+  // Transaction tracking (unified pattern)
+  const tracking = useTransactionTracking('supply');
+  const { start, update, complete, fail, dismiss, transaction, isVisible, currentStep: trackingStep, setModalOpen } = tracking;
 
   const { address: account, chainId } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);
@@ -191,7 +197,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
         gas = GAS_COSTS.SINGLE_SUPPLY;
       }
 
-      setCurrentStep('supplying');
       update('supplying');
 
       const minShares = BigInt(1);
@@ -270,7 +275,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     }
 
     try {
-      setCurrentStep('approve');
       const initialStep = useEth ? 'supplying' : 'approve';
       start(
         getStepsForFlow(useEth, usePermit2Setting),
@@ -279,7 +283,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       );
 
       if (useEth) {
-        setCurrentStep('supplying');
         await executeSupplyTransaction();
         return;
       }
@@ -288,7 +291,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
         // Permit2 flow
         try {
           await authorizePermit2();
-          setCurrentStep('signing');
           update('signing');
 
           // Small delay to prevent UI glitches
@@ -313,12 +315,10 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
 
       // Standard ERC20 flow
       if (isApproved) {
-        setCurrentStep('supplying');
         update('supplying');
       } else {
         try {
           await approve();
-          setCurrentStep('supplying');
           update('supplying');
 
           // Small delay to prevent UI glitches
@@ -368,7 +368,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     }
 
     try {
-      setCurrentStep('signing');
       start(
         getStepsForFlow(useEth, usePermit2Setting),
         { tokenSymbol: market.loanAsset.symbol, amount: supplyAmount, marketId: market.uniqueKey },
@@ -399,14 +398,20 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     setInputError,
     useEth,
     setUseEth,
-    showProcessModal: showModal,
-    setShowProcessModal: setModalOpen,
-    currentStep,
 
     // Balance data
     tokenBalance,
     ethBalance: ethBalance?.value,
     refetch,
+
+    // Transaction tracking (new unified pattern)
+    transaction,
+    dismiss,
+    currentStep: (trackingStep as SupplyStepType) ?? 'approve',
+
+    // Legacy aliases (for backward compatibility)
+    showProcessModal: isVisible,
+    setShowProcessModal: setModalOpen,
 
     // Transaction state
     isApproved,

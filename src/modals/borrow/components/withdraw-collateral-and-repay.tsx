@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import Input from '@/components/Input/Input';
-import { RepayProcessModal } from '@/modals/borrow/repay-process-modal';
+import { ProcessModal } from '@/components/common/ProcessModal';
 import { useRepayTransaction } from '@/hooks/useRepayTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
@@ -50,9 +50,8 @@ export function WithdrawCollateralAndRepay({
 
   // Use the repay transaction hook
   const {
-    currentStep,
-    showProcessModal,
-    setShowProcessModal,
+    transaction,
+    dismiss,
     isLoadingPermit2,
     isApproved,
     permit2Authorized,
@@ -334,17 +333,12 @@ export function WithdrawCollateralAndRepay({
       </div>
 
       {/* Process Modal */}
-      {showProcessModal && (
-        <RepayProcessModal
-          market={market}
-          repayAmount={repayAssets}
-          withdrawAmount={withdrawAmount}
-          currentStep={currentStep}
-          onOpenChange={setShowProcessModal}
-          tokenSymbol={market.loanAsset.symbol}
-          usePermit2={usePermit2Setting}
-        />
-      )}
+      <ProcessModal
+        transaction={transaction}
+        onDismiss={dismiss}
+        title={withdrawAmount > 0n ? 'Withdraw & Repay' : 'Repay'}
+        description={`Repaying ${market.loanAsset.symbol}`}
+      />
     </div>
   );
 }

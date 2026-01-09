@@ -13,7 +13,7 @@ import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { WrapProcessModal } from '@/modals/wrap-process-modal';
+import { ProcessModal } from '@/components/common/ProcessModal';
 import useUserRewards from '@/hooks/useRewards';
 
 import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
@@ -132,7 +132,7 @@ export default function Rewards() {
 
   const showLegacy = useMemo(() => morphoBalanceLegacy !== undefined && morphoBalanceLegacy !== 0n, [morphoBalanceLegacy]);
 
-  const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
+  const { wrap, transaction, dismiss } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
     // Refresh rewards data after successful wrap
     void refresh();
   });
@@ -232,7 +232,7 @@ export default function Rewards() {
                     onClick: () => {
                       void wrap();
                     },
-                    disabled: showProcessModal,
+                    disabled: !!transaction?.isModalVisible,
                   }}
                 >
                   <div className="flex items-center gap-2 text-base">
@@ -266,12 +266,12 @@ export default function Rewards() {
           </section>
         </div>
       </div>
-      {showProcessModal && (
-        <WrapProcessModal
-          currentStep={currentStep}
-          onOpenChange={setShowProcessModal}
-        />
-      )}
+      <ProcessModal
+        transaction={transaction}
+        onDismiss={dismiss}
+        title="Wrap MORPHO"
+        description="Wrapping legacy MORPHO tokens"
+      />
     </div>
   );
 }
