@@ -185,7 +185,19 @@ export function useMultiMarketSupply(
       }
       throw error; // Re-throw to be caught by approveAndSupply
     }
-  }, [account, supplies, totalAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting, chainId, loanAsset, toast, tracking]);
+  }, [
+    account,
+    supplies,
+    totalAmount,
+    sendTransactionAsync,
+    useEth,
+    signForBundlers,
+    usePermit2Setting,
+    chainId,
+    loanAsset,
+    toast,
+    tracking,
+  ]);
 
   const approveAndSupply = useCallback(async () => {
     if (!account) {
@@ -258,7 +270,19 @@ export function useMultiMarketSupply(
       tracking.fail();
       return false;
     }
-  }, [account, usePermit2Setting, permit2Authorized, authorizePermit2, isApproved, approve, useEth, executeSupplyTransaction, toast, tracking, tokenSymbol]);
+  }, [
+    account,
+    usePermit2Setting,
+    permit2Authorized,
+    authorizePermit2,
+    isApproved,
+    approve,
+    useEth,
+    executeSupplyTransaction,
+    toast,
+    tracking,
+    tokenSymbol,
+  ]);
 
   return {
     approveAndSupply,

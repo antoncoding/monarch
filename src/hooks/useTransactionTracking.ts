@@ -52,7 +52,7 @@ export function useTransactionTracking(type: string) {
 
   // Derive transaction from store using REF (not state) for immediate access
   const transaction = useTransactionProcessStore((s): ActiveTransaction | null =>
-    txIdRef.current ? (s.transactions[txIdRef.current] ?? null) : null
+    txIdRef.current ? (s.transactions[txIdRef.current] ?? null) : null,
   );
 
   // Convenience accessors
@@ -66,8 +66,8 @@ export function useTransactionTracking(type: string) {
   const start = useCallback(
     (txSteps: TransactionStep[], metadata: TransactionMetadata, initialStep: string) => {
       const id = store.startTransaction({ type, currentStep: initialStep, steps: txSteps, metadata });
-      txIdRef.current = id;  // Sync update for immediate use
-      setTxId(id);           // Async update to trigger re-render
+      txIdRef.current = id; // Sync update for immediate use
+      setTxId(id); // Async update to trigger re-render
       return id;
     },
     [store, type],

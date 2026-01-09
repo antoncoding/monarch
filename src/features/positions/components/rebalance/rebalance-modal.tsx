@@ -216,116 +216,116 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
   return (
     <>
-    <ProcessModal
-      transaction={transaction}
-      onDismiss={dismiss}
-      title="Rebalance"
-      description={`Rebalancing ${groupedPosition.loanAsset} positions`}
-    />
-    <Modal
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      isDismissable={false}
-      flexibleWidth
-    >
-      <ModalHeader
-        title={
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position</span>
-            {isRefetching && <Spinner size={20} />}
-          </div>
-        }
-        description={`Click on your existing position to rebalance ${
-          groupedPosition.loanAssetSymbol ?? groupedPosition.loanAsset ?? 'this token'
-        } to a new market. You can batch actions.`}
-        mainIcon={
-          <TokenIcon
-            address={groupedPosition.loanAssetAddress as `0x${string}`}
-            chainId={groupedPosition.chainId}
-            symbol={groupedPosition.loanAssetSymbol}
-            width={28}
-            height={28}
-          />
-        }
-        onClose={() => onOpenChange(false)}
-        auxiliaryAction={{
-          icon: <ReloadIcon className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />,
-          onClick: () => {
-            if (!isRefetching) {
-              handleManualRefresh();
-            }
-          },
-          ariaLabel: 'Refresh position data',
-        }}
+      <ProcessModal
+        transaction={transaction}
+        onDismiss={dismiss}
+        title="Rebalance"
+        description={`Rebalancing ${groupedPosition.loanAsset} positions`}
       />
-      <ModalBody className="gap-4">
-        <FromMarketsTable
-          positions={groupedPosition.markets
-            .filter((p) => BigInt(p.state.supplyShares) > 0)
-            .map((market) => ({
-              ...market,
-              pendingDelta: getPendingDelta(market.market.uniqueKey),
-            }))}
-          selectedMarketUniqueKey={selectedFromMarketUniqueKey}
-          onSelectMarket={setSelectedFromMarketUniqueKey}
-          onSelectMax={handleMaxSelect}
-        />
-
-        <RebalanceActionInput
-          amount={amount}
-          setAmount={setAmount}
-          selectedFromMarketUniqueKey={selectedFromMarketUniqueKey}
-          selectedToMarketUniqueKey={selectedToMarketUniqueKey}
-          groupedPosition={groupedPosition}
-          eligibleMarkets={eligibleMarkets}
-          token={{
-            address: groupedPosition.loanAssetAddress,
-            chainId: groupedPosition.chainId,
-          }}
-          onAddAction={handleAddAction}
-          onToMarketClick={() =>
-            openModal('rebalanceMarketSelection', {
-              vaultAsset: groupedPosition.loanAssetAddress as `0x${string}`,
-              chainId: groupedPosition.chainId,
-              multiSelect: false,
-              onSelect: (_markets) => {
-                if (_markets.length > 0) {
-                  setSelectedToMarketUniqueKey(_markets[0].uniqueKey);
-                }
-                closeModal('rebalanceMarketSelection');
-              },
-            })
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        isDismissable={false}
+        flexibleWidth
+      >
+        <ModalHeader
+          title={
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position</span>
+              {isRefetching && <Spinner size={20} />}
+            </div>
           }
-          onClearToMarket={() => setSelectedToMarketUniqueKey('')}
+          description={`Click on your existing position to rebalance ${
+            groupedPosition.loanAssetSymbol ?? groupedPosition.loanAsset ?? 'this token'
+          } to a new market. You can batch actions.`}
+          mainIcon={
+            <TokenIcon
+              address={groupedPosition.loanAssetAddress as `0x${string}`}
+              chainId={groupedPosition.chainId}
+              symbol={groupedPosition.loanAssetSymbol}
+              width={28}
+              height={28}
+            />
+          }
+          onClose={() => onOpenChange(false)}
+          auxiliaryAction={{
+            icon: <ReloadIcon className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />,
+            onClick: () => {
+              if (!isRefetching) {
+                handleManualRefresh();
+              }
+            },
+            ariaLabel: 'Refresh position data',
+          }}
         />
+        <ModalBody className="gap-4">
+          <FromMarketsTable
+            positions={groupedPosition.markets
+              .filter((p) => BigInt(p.state.supplyShares) > 0)
+              .map((market) => ({
+                ...market,
+                pendingDelta: getPendingDelta(market.market.uniqueKey),
+              }))}
+            selectedMarketUniqueKey={selectedFromMarketUniqueKey}
+            onSelectMarket={setSelectedFromMarketUniqueKey}
+            onSelectMax={handleMaxSelect}
+          />
 
-        <RebalanceCart
-          rebalanceActions={rebalanceActions}
-          groupedPosition={groupedPosition}
-          eligibleMarkets={eligibleMarkets}
-          removeRebalanceAction={removeRebalanceAction}
-        />
-      </ModalBody>
-      <ModalFooter className="mx-2">
-        <Button
-          variant="default"
-          onClick={() => onOpenChange(false)}
-          className="rounded-sm p-4 px-10 font-zen text-secondary duration-200 ease-in-out hover:scale-105"
-        >
-          Cancel
-        </Button>
-        <ExecuteTransactionButton
-          targetChainId={groupedPosition.chainId}
-          onClick={handleExecuteRebalance}
-          disabled={rebalanceActions.length === 0}
-          isLoading={isProcessing}
-          variant="primary"
-          className="rounded-sm p-4 px-10 font-zen text-white duration-200 ease-in-out hover:scale-105 disabled:opacity-50"
-        >
-          Execute Rebalance
-        </ExecuteTransactionButton>
-      </ModalFooter>
-    </Modal>
+          <RebalanceActionInput
+            amount={amount}
+            setAmount={setAmount}
+            selectedFromMarketUniqueKey={selectedFromMarketUniqueKey}
+            selectedToMarketUniqueKey={selectedToMarketUniqueKey}
+            groupedPosition={groupedPosition}
+            eligibleMarkets={eligibleMarkets}
+            token={{
+              address: groupedPosition.loanAssetAddress,
+              chainId: groupedPosition.chainId,
+            }}
+            onAddAction={handleAddAction}
+            onToMarketClick={() =>
+              openModal('rebalanceMarketSelection', {
+                vaultAsset: groupedPosition.loanAssetAddress as `0x${string}`,
+                chainId: groupedPosition.chainId,
+                multiSelect: false,
+                onSelect: (_markets) => {
+                  if (_markets.length > 0) {
+                    setSelectedToMarketUniqueKey(_markets[0].uniqueKey);
+                  }
+                  closeModal('rebalanceMarketSelection');
+                },
+              })
+            }
+            onClearToMarket={() => setSelectedToMarketUniqueKey('')}
+          />
+
+          <RebalanceCart
+            rebalanceActions={rebalanceActions}
+            groupedPosition={groupedPosition}
+            eligibleMarkets={eligibleMarkets}
+            removeRebalanceAction={removeRebalanceAction}
+          />
+        </ModalBody>
+        <ModalFooter className="mx-2">
+          <Button
+            variant="default"
+            onClick={() => onOpenChange(false)}
+            className="rounded-sm p-4 px-10 font-zen text-secondary duration-200 ease-in-out hover:scale-105"
+          >
+            Cancel
+          </Button>
+          <ExecuteTransactionButton
+            targetChainId={groupedPosition.chainId}
+            onClick={handleExecuteRebalance}
+            disabled={rebalanceActions.length === 0}
+            isLoading={isProcessing}
+            variant="primary"
+            className="rounded-sm p-4 px-10 font-zen text-white duration-200 ease-in-out hover:scale-105 disabled:opacity-50"
+          >
+            Execute Rebalance
+          </ExecuteTransactionButton>
+        </ModalFooter>
+      </Modal>
     </>
   );
 }

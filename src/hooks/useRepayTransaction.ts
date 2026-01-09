@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
