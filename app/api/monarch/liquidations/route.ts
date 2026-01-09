@@ -1,9 +1,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-const MONARCH_API_ENDPOINT = process.env.MONARCH_API_ENDPOINT ?? 'http://localhost:3000';
-const MONARCH_API_KEY = process.env.MONARCH_API_KEY ?? '';
+const MONARCH_API_ENDPOINT = process.env.MONARCH_API_ENDPOINT;
+const MONARCH_API_KEY = process.env.MONARCH_API_KEY;
 
 export async function GET(req: NextRequest) {
+  if (!MONARCH_API_ENDPOINT || !MONARCH_API_KEY) {
+    console.error('[Monarch Liquidations API] Missing required env vars: MONARCH_API_ENDPOINT or MONARCH_API_KEY');
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+  }
+
   const searchParams = req.nextUrl.searchParams;
   const chainId = searchParams.get('chain_id');
 

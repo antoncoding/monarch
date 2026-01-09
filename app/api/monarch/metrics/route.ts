@@ -1,9 +1,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-const MONARCH_API_ENDPOINT = process.env.MONARCH_API_ENDPOINT ?? 'http://localhost:3000';
-const MONARCH_API_KEY = process.env.MONARCH_API_KEY ?? '';
+const MONARCH_API_ENDPOINT = process.env.MONARCH_API_ENDPOINT;
+const MONARCH_API_KEY = process.env.MONARCH_API_KEY;
 
 export async function GET(req: NextRequest) {
+  if (!MONARCH_API_ENDPOINT || !MONARCH_API_KEY) {
+    console.error('[Monarch Metrics API] Missing required env vars: MONARCH_API_ENDPOINT or MONARCH_API_KEY');
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+  }
+
   const searchParams = req.nextUrl.searchParams;
 
   // Pass through all query params
@@ -13,8 +18,6 @@ export async function GET(req: NextRequest) {
   const sortOrder = searchParams.get('sort_order');
   const limit = searchParams.get('limit');
   const offset = searchParams.get('offset');
-
-  console.log('getting limit', limit, 'offset', offset);
 
   if (chainId) params.set('chain_id', chainId);
   if (sortBy) params.set('sort_by', sortBy);
@@ -40,7 +43,6 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('data', data.markets?.length);
     return NextResponse.json(data);
   } catch (error) {
     console.error('[Monarch Metrics API] Failed to fetch:', error);

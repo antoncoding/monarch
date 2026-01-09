@@ -148,7 +148,7 @@ export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
   return useQuery({
     queryKey: ['market-metrics', { chainId, sortBy, sortOrder }],
     queryFn: () => fetchAllMarketMetrics({ chainId, sortBy, sortOrder }),
-    staleTime: 1 * 60 * 1000, // 15 minutes - matches API update frequency
+    staleTime: 5 * 60 * 1000, // 5 minutes - matches API update frequency
     refetchInterval: 1 * 60 * 1000,
     refetchOnWindowFocus: false, // Don't refetch on focus since data is slow-changing
     enabled,

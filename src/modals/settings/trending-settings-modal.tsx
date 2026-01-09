@@ -86,7 +86,12 @@ function CompactInput({
         type="text"
         inputMode="numeric"
         value={value}
-        onChange={(e) => onChange(e.target.value.replace(/[^0-9.]/g, ''))}
+        onChange={(e) => {
+          const stripped = e.target.value.replace(/[^0-9.]/g, '');
+          const parts = stripped.split('.');
+          const result = parts.length <= 1 ? stripped : `${parts[0]}.${parts.slice(1).join('')}`;
+          onChange(result);
+        }}
         placeholder="-"
         disabled={disabled}
         className="font-inter h-6 w-12 px-1 text-center text-xs"
