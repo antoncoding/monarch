@@ -64,7 +64,7 @@ export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
     const variables = {
       first: MAX_VAULTS_LIMIT,
       where: {
-        whitelisted: true,
+        listed: true,
         chainId_in: MORPHO_SUPPORTED_CHAIN_IDS,
       },
     };

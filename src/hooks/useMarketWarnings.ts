@@ -6,18 +6,11 @@ import { getMarketWarningsWithDetail } from '@/utils/warnings';
  * Hook to compute market warnings with details on-demand
  * This separates data fetching concerns from presentation logic
  */
-export const useMarketWarnings = (market: Market, considerWhitelist = false): WarningWithDetail[] => {
+export const useMarketWarnings = (market: Market | null | undefined): WarningWithDetail[] => {
   return useMemo(() => {
-    return getMarketWarningsWithDetail(market, considerWhitelist);
-  }, [
-    market.warnings,
-    market.uniqueKey,
-    market.oracle,
-    market.oracleAddress,
-    market.morphoBlue?.chain?.id,
-    market.realizedBadDebt?.underlying,
-    considerWhitelist,
-  ]);
+    if (!market) return [];
+    return getMarketWarningsWithDetail(market, true);
+  }, [market]);
 };
 
 /**

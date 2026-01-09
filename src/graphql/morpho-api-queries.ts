@@ -68,7 +68,7 @@ irmAddress
 oracle {
   address
 }
-whitelisted
+listed
 morphoBlue {
   id
   address
@@ -165,7 +165,7 @@ export const marketsQuery = `
     oracle {
       address
     }
-    whitelisted
+    listed
     morphoBlue {
       id
       address
