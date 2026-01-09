@@ -6,8 +6,9 @@ import { morphoGraphqlFetcher } from './fetchers';
 import { zeroAddress } from 'viem';
 
 // API response type - matches the new Morpho API shape where oracleAddress is nested
-type MorphoApiMarket = Omit<Market, 'oracleAddress'> & {
+type MorphoApiMarket = Omit<Market, 'oracleAddress' | 'whitelisted'> & {
   oracle: { address: string } | null;
+  listed: boolean;
 };
 
 type MarketGraphQLResponse = {
@@ -35,10 +36,11 @@ type MarketsGraphQLResponse = {
 
 // Transform API response to internal Market type
 const processMarketData = (market: MorphoApiMarket): Market => {
-  const { oracle, ...rest } = market;
+  const { oracle, listed, ...rest } = market;
   return {
     ...rest,
     oracleAddress: oracle?.address ?? zeroAddress,
+    whitelisted: listed,
     hasUSDPrice: true,
   };
 };
