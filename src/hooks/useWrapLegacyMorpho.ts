@@ -5,6 +5,7 @@ import { useConnection, useSwitchChain } from 'wagmi';
 
 import wrapperABI from '@/abis/morpho-wrapper';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHO_LEGACY, MORPHO_TOKEN_WRAPPER } from '@/utils/tokens';
 import { useERC20Approval } from './useERC20Approval';
@@ -13,7 +14,8 @@ export type WrapStep = 'approve' | 'wrap';
 
 export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
   const [currentStep, setCurrentStep] = useState<WrapStep>('approve');
-  const [showProcessModal, setShowProcessModal] = useState(false);
+
+  const { start, complete, fail, showModal, setModalOpen } = useTransactionTracking('wrap');
 
   const { address: account, chainId } = useConnection();
   const { switchChainAsync } = useSwitchChain();
@@ -32,10 +34,17 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
     successText: 'Successfully wrapped MORPHO tokens!',
     errorText: 'Failed to wrap MORPHO tokens',
     onSuccess: () => {
-      setShowProcessModal(false);
+      complete();
       onSuccess?.();
     },
   });
+
+  const getStepsForFlow = useCallback(() => {
+    return [
+      { key: 'approve', label: 'Approve MORPHO', detail: 'Approve legacy MORPHO tokens for wrapping' },
+      { key: 'wrap', label: 'Wrap MORPHO', detail: 'Confirm transaction to wrap your MORPHO tokens' },
+    ];
+  }, []);
 
   const wrap = useCallback(async () => {
     try {
@@ -49,7 +58,8 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
         toast.info('Network changed');
       }
 
-      setShowProcessModal(true);
+      start(getStepsForFlow(), { tokenSymbol: 'MORPHO', amount }, 'approve');
+
       if (!isApproved) {
         setCurrentStep('approve');
         await approve();
@@ -67,15 +77,15 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
       });
     } catch (_err) {
       toast.error('Failed to wrap MORPHO.');
-      setShowProcessModal(false);
+      fail();
     }
-  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync]);
+  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync, start, fail, getStepsForFlow]);
 
   return {
     wrap,
     currentStep,
-    showProcessModal,
-    setShowProcessModal,
+    showProcessModal: showModal,
+    setShowProcessModal: setModalOpen,
     isApproved,
   };
 }

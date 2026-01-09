@@ -3,6 +3,7 @@ import { type Address, encodeFunctionData, maxUint256 } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
@@ -25,8 +26,10 @@ export type RebalanceStepType =
 
 export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () => void) => {
   const [rebalanceActions, setRebalanceActions] = useState<RebalanceAction[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false); // Renamed from isConfirming for clarity
+  const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<RebalanceStepType>('idle');
+
+  const { start, update, complete, fail } = useTransactionTracking('rebalance');
 
   const { address: account } = useConnection();
   const bundlerAddress = getBundlerV2(groupedPosition.chainId);
@@ -86,10 +89,11 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const handleTransactionSuccess = useCallback(() => {
     setRebalanceActions([]);
     void refetchIsBundlerAuthorized();
+    complete();
     if (onRebalance) {
       onRebalance();
     }
-  }, [refetchIsBundlerAuthorized, onRebalance]);
+  }, [refetchIsBundlerAuthorized, onRebalance, complete]);
 
   const { sendTransactionAsync, isConfirming: isExecuting } = useTransactionWithToast({
     toastId: 'rebalance',
@@ -100,6 +104,26 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     onSuccess: handleTransactionSuccess,
   });
 
+  // Helper to generate steps based on flow type
+  const getStepsForFlow = useCallback(
+    (isPermit2: boolean) => {
+      if (isPermit2) {
+        return [
+          { key: 'approve_permit2', label: 'Authorize Permit2', detail: "This one-time approval makes sure you don't need to send approval tx again in the future." },
+          { key: 'authorize_bundler_sig', label: 'Authorize Morpho Bundler (Signature)', detail: 'Sign a message to authorize the Morpho bundler if needed.' },
+          { key: 'sign_permit', label: 'Sign Token Permit', detail: 'Sign a Permit2 signature to authorize the token transfer' },
+          { key: 'execute', label: 'Confirm Rebalance', detail: 'Confirm transaction in wallet to complete the rebalance' },
+        ];
+      }
+      return [
+        { key: 'authorize_bundler_tx', label: 'Authorize Morpho Bundler (Transaction)', detail: 'Submit a transaction to authorize the Morpho bundler if needed.' },
+        { key: 'approve_token', label: `Approve ${groupedPosition.loanAsset}`, detail: `Approve ${groupedPosition.loanAsset} for spending` },
+        { key: 'execute', label: 'Confirm Rebalance', detail: 'Confirm transaction in wallet to complete the rebalance' },
+      ];
+    },
+    [groupedPosition.loanAsset],
+  );
+
   // Helper function to generate common withdraw/supply tx data
   const generateRebalanceTxData = useCallback(() => {
     const withdrawTxs: `0x${string}`[] = [];
@@ -109,7 +133,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     const groupedWithdraws: Record<string, RebalanceAction[]> = {};
     const groupedSupplies: Record<string, RebalanceAction[]> = {};
 
-    rebalanceActions.forEach((action) => {
+    for (const action of rebalanceActions) {
       const withdrawKey = action.fromMarket.uniqueKey;
       const supplyKey = action.toMarket.uniqueKey;
 
@@ -121,9 +145,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
 
       if (!allMarketKeys.includes(withdrawKey)) allMarketKeys.push(withdrawKey);
       if (!allMarketKeys.includes(supplyKey)) allMarketKeys.push(supplyKey);
-    });
+    }
 
-    Object.values(groupedWithdraws).forEach((actions) => {
+    for (const actions of Object.values(groupedWithdraws)) {
       const batchAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
       const isWithdrawMax = actions.some((action) => action.isMax);
       const shares = isWithdrawMax
@@ -159,9 +183,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         ],
       });
       withdrawTxs.push(withdrawTx);
-    });
+    }
 
-    Object.values(groupedSupplies).forEach((actions) => {
+    for (const actions of Object.values(groupedSupplies)) {
       const batchedAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
       const market = actions[0].toMarket;
 
@@ -189,7 +213,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         ],
       });
       supplyTxs.push(supplyTx);
-    });
+    }
 
     return { withdrawTxs, supplyTxs, allMarketKeys };
   }, [rebalanceActions, groupedPosition.markets, account]);
@@ -202,6 +226,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     setIsProcessing(true);
     const transactions: `0x${string}`[] = [];
 
+    const initialStep = usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
+    start(getStepsForFlow(usePermit2Setting), { tokenSymbol: groupedPosition.loanAsset }, initialStep);
+
     try {
       const { withdrawTxs, supplyTxs, allMarketKeys } = generateRebalanceTxData();
 
@@ -210,12 +237,14 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       if (usePermit2Setting) {
         // --- Permit2 Flow ---
         setCurrentStep('approve_permit2');
+        update('approve_permit2');
         if (!permit2Authorized) {
           await authorizePermit2(); // Authorize Permit2 contract
           await new Promise((resolve) => setTimeout(resolve, 800)); // UI delay
         }
 
         setCurrentStep('authorize_bundler_sig');
+        update('authorize_bundler_sig');
         const bundlerAuthSigTx = await authorizeBundlerWithSignature(); // Get signature for Bundler auth if needed
         if (bundlerAuthSigTx) {
           transactions.push(bundlerAuthSigTx);
@@ -223,6 +252,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         }
 
         setCurrentStep('sign_permit');
+        update('sign_permit');
         const { sigs, permitSingle } = await signForBundlers(); // Sign for Permit2 token transfer
         const permitTx = encodeFunctionData({
           abi: morphoBundlerAbi,
@@ -242,6 +272,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       } else {
         // --- Standard ERC20 Flow ---
         setCurrentStep('authorize_bundler_tx');
+        update('authorize_bundler_tx');
         const bundlerTxAuthorized = await authorizeWithTransaction(); // Authorize Bundler via TX if needed
         if (!bundlerTxAuthorized) {
           throw new Error('Failed to authorize Bundler via transaction.'); // Stop if auth tx fails/is rejected
@@ -249,6 +280,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeWithTransaction
 
         setCurrentStep('approve_token');
+        update('approve_token');
         if (!isTokenApproved) {
           await approveToken(); // Approve ERC20 token
           await new Promise((resolve) => setTimeout(resolve, 1000)); // UI delay
@@ -280,6 +312,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
 
       // Step Final: Execute multicall
       setCurrentStep('execute');
+      update('execute');
       const multicallTx = (encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'multicall',
@@ -304,6 +337,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       return true;
     } catch (error) {
       console.error('Error during rebalance executeRebalance:', error);
+      fail();
       // Log specific details if available, especially for standard flow issues
       if (!usePermit2Setting) {
         console.error('Error occurred during standard ERC20 rebalance flow.');
@@ -338,13 +372,17 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     approveToken,
     generateRebalanceTxData,
     sendTransactionAsync,
-    refetchIsBundlerAuthorized,
     bundlerAddress,
     groupedPosition.chainId,
     groupedPosition.loanAssetAddress,
+    groupedPosition.loanAsset,
     totalAmount,
     batchAddUserMarkets,
     toast,
+    start,
+    update,
+    fail,
+    getStepsForFlow,
   ]);
 
   // Determine overall loading state

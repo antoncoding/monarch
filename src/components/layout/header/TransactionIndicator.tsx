@@ -50,18 +50,18 @@ export function TransactionIndicator() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="relative flex items-center justify-center rounded-sm p-2 transition-colors hover:bg-hovered focus:outline-none"
+          className="relative flex items-center justify-center rounded-sm p-1.5 transition-colors hover:bg-hovered focus:outline-none"
           aria-label={`${backgroundTransactions.length} pending transaction${backgroundTransactions.length > 1 ? 's' : ''}`}
         >
           {/* Pulsing indicator */}
-          <span className="relative flex h-3 w-3">
+          <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex h-3 w-3 rounded-full bg-primary" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
           </span>
 
           {/* Count badge */}
           {backgroundTransactions.length > 1 && (
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-medium text-white">
               {backgroundTransactions.length}
             </span>
           )}

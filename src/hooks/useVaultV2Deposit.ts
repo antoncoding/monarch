@@ -7,6 +7,7 @@ import { usePermit2 } from '@/hooks/usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
@@ -59,9 +60,11 @@ export function useVaultV2Deposit({
   // State
   const [depositAmount, setDepositAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
-  const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<VaultDepositStepType>('approve');
   const { usePermit2: usePermit2Setting } = useAppSettings();
+
+  // Transaction tracking
+  const { start, update, complete, fail, showModal, setModalOpen } = useTransactionTracking('deposit');
 
   const { address: account } = useConnection();
   const toast = useStyledToast();
@@ -112,6 +115,28 @@ export function useVaultV2Deposit({
     onSuccess,
   });
 
+  // Helper to generate steps based on flow type
+  const getStepsForFlow = useCallback(
+    (isPermit2: boolean) => {
+      if (isPermit2) {
+        return [
+          {
+            key: 'approve',
+            label: 'Authorize Permit2',
+            detail: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+          },
+          { key: 'signing', label: 'Sign message in wallet', detail: 'Sign a Permit2 signature to authorize the deposit' },
+          { key: 'depositing', label: 'Confirm Deposit', detail: 'Confirm transaction in wallet to complete the deposit' },
+        ];
+      }
+      return [
+        { key: 'approve', label: 'Approve Token', detail: `Approve ${assetSymbol} for spending` },
+        { key: 'depositing', label: 'Confirm Deposit', detail: 'Confirm transaction in wallet to complete the deposit' },
+      ];
+    },
+    [assetSymbol],
+  );
+
   // Execute deposit transaction
   const executeDepositTransaction = useCallback(async () => {
     try {
@@ -151,6 +176,7 @@ export function useVaultV2Deposit({
       }
 
       setCurrentStep('depositing');
+      update('depositing');
 
       const minShares = BigInt(1);
       const erc4626DepositTx = encodeFunctionData({
@@ -178,15 +204,14 @@ export function useVaultV2Deposit({
         gas: gas ? BigInt(gas * GAS_MULTIPLIER) : undefined,
       });
 
-      setShowProcessModal(false);
-
+      complete();
       return true;
     } catch (_error: unknown) {
-      setShowProcessModal(false);
+      fail();
       toast.error('Deposit Failed', 'Deposit to vault failed or cancelled');
       return false;
     }
-  }, [account, assetAddress, vaultAddress, depositAmount, sendTransactionAsync, signForBundlers, usePermit2Setting, toast, chainId]);
+  }, [account, assetAddress, vaultAddress, depositAmount, sendTransactionAsync, signForBundlers, usePermit2Setting, toast, chainId, update, complete, fail]);
 
   // Approve and deposit handler
   const approveAndDeposit = useCallback(async () => {
@@ -196,8 +221,8 @@ export function useVaultV2Deposit({
     }
 
     try {
-      setShowProcessModal(true);
       setCurrentStep('approve');
+      start(getStepsForFlow(usePermit2Setting), { tokenSymbol: assetSymbol, amount: depositAmount, vaultName }, 'approve');
 
       if (usePermit2Setting) {
         // Permit2 flow
@@ -207,6 +232,7 @@ export function useVaultV2Deposit({
           }
 
           setCurrentStep('signing');
+          update('signing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 500));
@@ -231,10 +257,12 @@ export function useVaultV2Deposit({
       // Standard ERC20 flow
       if (isApproved) {
         setCurrentStep('depositing');
+        update('depositing');
       } else {
         try {
           await approve();
           setCurrentStep('depositing');
+          update('depositing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -256,9 +284,9 @@ export function useVaultV2Deposit({
       await executeDepositTransaction();
     } catch (error: unknown) {
       console.error('Error in approveAndDeposit:', error);
-      setShowProcessModal(false);
+      fail();
     }
-  }, [account, authorizePermit2, executeDepositTransaction, usePermit2Setting, isApproved, approve, toast]);
+  }, [account, authorizePermit2, executeDepositTransaction, usePermit2Setting, isApproved, approve, toast, permit2Authorized, start, update, fail, getStepsForFlow, assetSymbol, depositAmount, vaultName]);
 
   // Sign and deposit handler (for when already authorized)
   const signAndDeposit = useCallback(async () => {
@@ -268,12 +296,13 @@ export function useVaultV2Deposit({
     }
 
     try {
-      setShowProcessModal(true);
       setCurrentStep('signing');
+      start(getStepsForFlow(usePermit2Setting), { tokenSymbol: assetSymbol, amount: depositAmount, vaultName }, 'signing');
+
       await executeDepositTransaction();
     } catch (error: unknown) {
       console.error('Error in signAndDeposit:', error);
-      setShowProcessModal(false);
+      fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -284,7 +313,7 @@ export function useVaultV2Deposit({
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeDepositTransaction, toast]);
+  }, [account, executeDepositTransaction, toast, start, fail, getStepsForFlow, usePermit2Setting, assetSymbol, depositAmount, vaultName]);
 
   return {
     // State
@@ -292,12 +321,12 @@ export function useVaultV2Deposit({
     setDepositAmount,
     inputError,
     setInputError,
-    showProcessModal,
-    setShowProcessModal,
+    showProcessModal: showModal,
+    setShowProcessModal: setModalOpen,
     currentStep,
 
     // Balance data
-    tokenBalance: tokenBalance,
+    tokenBalance,
 
     // Transaction state
     isApproved,

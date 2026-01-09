@@ -10,6 +10,7 @@ import { usePermit2 } from './usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 
 type UseRepayTransactionProps = {
   market: Market;
@@ -29,8 +30,10 @@ export function useRepayTransaction({
   onSuccess,
 }: UseRepayTransactionProps) {
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'repaying'>('approve');
-  const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const { usePermit2: usePermit2Setting } = useAppSettings();
+
+  // Transaction tracking
+  const { start, update, complete, fail, showModal, setModalOpen } = useTransactionTracking('repay');
 
   const { address: account, chainId } = useConnection();
   const toast = useStyledToast();
@@ -87,6 +90,24 @@ export function useRepayTransaction({
     successDescription: `Successfully processed transaction for market ${market.uniqueKey.slice(2, 8)}`,
     onSuccess,
   });
+
+  // Helper to generate steps based on flow type
+  const getStepsForFlow = useCallback(
+    (isPermit2: boolean) => {
+      if (isPermit2) {
+        return [
+          { key: 'approve', label: 'Authorize Permit2', detail: "This one-time approval makes sure you don't need to send approval tx again in the future." },
+          { key: 'signing', label: 'Sign message in wallet', detail: 'Sign a Permit2 signature to authorize the repayment' },
+          { key: 'repaying', label: 'Confirm Repay', detail: 'Confirm transaction in wallet to complete the repayment' },
+        ];
+      }
+      return [
+        { key: 'approve', label: 'Approve Token', detail: `Approve ${market.loanAsset.symbol} for spending` },
+        { key: 'repaying', label: 'Confirm Repay', detail: 'Confirm transaction in wallet to complete the repayment' },
+      ];
+    },
+    [market.loanAsset.symbol],
+  );
 
   // Core transaction execution logic
   const executeRepayTransaction = useCallback(async () => {
@@ -204,6 +225,7 @@ export function useRepayTransaction({
       }
 
       setCurrentStep('repaying');
+      update('repaying');
 
       // Add timeout to prevent rabby reverting
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -218,10 +240,10 @@ export function useRepayTransaction({
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
       });
 
-      setShowProcessModal(false);
+      complete();
     } catch (error: unknown) {
       console.error('Error in repay transaction:', error);
-      setShowProcessModal(false);
+      fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -245,6 +267,9 @@ export function useRepayTransaction({
     toast,
     useRepayByShares,
     repayAmountToApprove,
+    update,
+    complete,
+    fail,
   ]);
 
   // Combined approval and repay flow
@@ -255,14 +280,15 @@ export function useRepayTransaction({
     }
 
     try {
-      setShowProcessModal(true);
       setCurrentStep('approve');
+      start(getStepsForFlow(usePermit2Setting), { tokenSymbol: market.loanAsset.symbol, amount: repayAssets, marketId: market.uniqueKey }, 'approve');
 
       if (usePermit2Setting) {
         // Permit2 flow
         try {
           await authorizePermit2();
           setCurrentStep('signing');
+          update('signing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 500));
@@ -288,7 +314,7 @@ export function useRepayTransaction({
             await approve();
           } catch (error: unknown) {
             console.error('Error in approval:', error);
-            setShowProcessModal(false);
+            fail();
             if (error instanceof Error) {
               if (error.message.includes('User rejected')) {
                 toast.error('Approval rejected', 'Approval rejected by user');
@@ -303,13 +329,14 @@ export function useRepayTransaction({
         }
 
         setCurrentStep('repaying');
+        update('repaying');
         await executeRepayTransaction();
       }
     } catch (error: unknown) {
       console.error('Error in approveAndRepay:', error);
-      setShowProcessModal(false);
+      fail();
     }
-  }, [account, authorizePermit2, executeRepayTransaction, usePermit2Setting, isApproved, approve, toast]);
+  }, [account, authorizePermit2, executeRepayTransaction, usePermit2Setting, isApproved, approve, toast, start, getStepsForFlow, market, repayAssets, update, fail]);
 
   // Function to handle signing and executing the repay transaction
   const signAndRepay = useCallback(async () => {
@@ -319,12 +346,13 @@ export function useRepayTransaction({
     }
 
     try {
-      setShowProcessModal(true);
       setCurrentStep('signing');
+      start(getStepsForFlow(usePermit2Setting), { tokenSymbol: market.loanAsset.symbol, amount: repayAssets, marketId: market.uniqueKey }, 'signing');
+
       await executeRepayTransaction();
     } catch (error: unknown) {
       console.error('Error in signAndRepay:', error);
-      setShowProcessModal(false);
+      fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -335,13 +363,13 @@ export function useRepayTransaction({
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeRepayTransaction, toast]);
+  }, [account, executeRepayTransaction, toast, start, getStepsForFlow, usePermit2Setting, market, repayAssets, fail]);
 
   return {
     // State
     currentStep,
-    showProcessModal,
-    setShowProcessModal,
+    showProcessModal: showModal,
+    setShowProcessModal: setModalOpen,
     isLoadingPermit2,
     isApproved,
     permit2Authorized,
