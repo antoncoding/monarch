@@ -12,10 +12,8 @@ export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const chainId = searchParams.get('chain_id');
 
-  const params = new URLSearchParams();
-  if (chainId) params.set('chain_id', chainId);
-
-  const url = `${MONARCH_API_ENDPOINT}/v1/liquidations?${params.toString()}`;
+  const url = new URL('/v1/liquidations', MONARCH_API_ENDPOINT.replace(/\/$/, ''));
+  if (chainId) url.searchParams.set('chain_id', chainId);
 
   try {
     const response = await fetch(url, {

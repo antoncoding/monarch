@@ -272,7 +272,7 @@ const LIQUIDATIONS_STALE_THRESHOLD_MS = (2 * 60 + 5) * 60 * 1000;
 /**
  * Returns whether a market has ever been liquidated.
  * Primary: Uses Monarch API /v1/liquidations endpoint
- * Fallback: Uses old Morpho API/Subgraph if Monarch data is stale (>1 hour)
+ * Fallback: Uses old Morpho API/Subgraph if Monarch data is stale (>2 hours)
  *
  * @deprecated_fallback The fallback to useLiquidationsQuery can be removed
  * once Monarch API stability is confirmed.
@@ -289,6 +289,6 @@ export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean =
     if (!needsFallback) {
       return liquidatedKeys.has(key);
     }
-    return fallbackKeys?.has(uniqueKey) ?? false;
+    return fallbackKeys?.has(uniqueKey.toLowerCase()) ?? false;
   }, [liquidatedKeys, needsFallback, chainId, uniqueKey, fallbackKeys]);
 };
