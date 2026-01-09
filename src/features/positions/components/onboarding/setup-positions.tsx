@@ -349,7 +349,7 @@ export function SetupPositions({ onClose }: { onClose: () => void }) {
         <SupplyProcessModal
           supplies={supplies}
           currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
+          onOpenChange={setShowProcessModal}
           tokenSymbol={selectedToken.symbol}
           useEth={useEth}
           usePermit2={usePermit2Setting}

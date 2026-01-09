@@ -17,6 +17,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
+import { TransactionIndicator } from './TransactionIndicator';
 
 export function NavbarLink({
   children,
@@ -194,6 +195,8 @@ export function Navbar() {
         </div>
 
         <span className="mx-3 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
+
+        <TransactionIndicator />
 
         <div className="flex items-center">
           <AccountConnect />

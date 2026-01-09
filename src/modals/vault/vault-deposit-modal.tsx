@@ -135,7 +135,7 @@ export function VaultDepositModal({
       {showProcessModal && (
         <VaultDepositProcessModal
           currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
+          onOpenChange={setShowProcessModal}
           vaultName={vaultName}
           assetSymbol={assetSymbol}
           amount={depositAmount}

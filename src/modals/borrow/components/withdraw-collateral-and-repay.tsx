@@ -340,7 +340,7 @@ export function WithdrawCollateralAndRepay({
           repayAmount={repayAssets}
           withdrawAmount={withdrawAmount}
           currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
+          onOpenChange={setShowProcessModal}
           tokenSymbol={market.loanAsset.symbol}
           usePermit2
         />

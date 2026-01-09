@@ -129,7 +129,7 @@ export function AddCollateralAndBorrow({
             borrowAmount,
           }}
           currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
+          onOpenChange={setShowProcessModal}
           tokenSymbol={market.collateralAsset.symbol}
           useEth={useEth}
           usePermit2={usePermit2Setting}

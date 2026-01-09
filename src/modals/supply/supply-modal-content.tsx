@@ -78,7 +78,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
         <SupplyProcessModal
           supplies={[{ market, amount: supplyAmount }]}
           currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
+          onOpenChange={setShowProcessModal}
           tokenSymbol={market.loanAsset.symbol}
           useEth={useEth}
           usePermit2={usePermit2Setting}

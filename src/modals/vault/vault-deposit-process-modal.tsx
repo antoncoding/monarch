@@ -1,15 +1,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { FiDownload } from 'react-icons/fi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
+import { ProcessStepList } from '@/components/common/ProcessStepList';
 import type { VaultDepositStepType } from '@/hooks/useVaultV2Deposit';
 import { formatBalance } from '@/utils/balance';
 
 type VaultDepositProcessModalProps = {
   currentStep: VaultDepositStepType;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   vaultName: string;
   assetSymbol: string;
   amount: bigint;
@@ -19,7 +19,7 @@ type VaultDepositProcessModalProps = {
 
 export function VaultDepositProcessModal({
   currentStep,
-  onClose,
+  onOpenChange,
   vaultName,
   assetSymbol,
   amount,
@@ -62,19 +62,6 @@ export function VaultDepositProcessModal({
     ];
   }, [usePermit2, assetSymbol]);
 
-  const getStepStatus = (stepKey: string) => {
-    const currentIndex = steps.findIndex((step) => step.key === currentStep);
-    const stepIndex = steps.findIndex((step) => step.key === stepKey);
-
-    if (stepIndex < currentIndex) {
-      return 'done';
-    }
-    if (stepKey === currentStep) {
-      return 'current';
-    }
-    return 'undone';
-  };
-
   const formattedAmount = useMemo(() => {
     return formatBalance(amount, assetDecimals).toString();
   }, [amount, assetDecimals]);
@@ -82,9 +69,7 @@ export function VaultDepositProcessModal({
   return (
     <Modal
       isOpen
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
+      onOpenChange={onOpenChange}
       size="lg"
       isDismissable={false}
       backdrop="blur"
@@ -93,34 +78,13 @@ export function VaultDepositProcessModal({
         title={`Deposit ${assetSymbol}`}
         description={`Depositing ${formattedAmount} ${assetSymbol} to ${vaultName}`}
         mainIcon={<FiDownload className="h-5 w-5" />}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
       />
-      <ModalBody className="gap-4">
-        {steps.map((step) => {
-          const status = getStepStatus(step.key);
-          return (
-            <div
-              key={step.key}
-              className={`flex items-start gap-3 rounded border p-3 transition-colors ${
-                status === 'current' ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-700'
-              }`}
-            >
-              <div className="mt-0.5">
-                {status === 'done' ? (
-                  <FaCheckCircle className="h-5 w-5 text-green-500" />
-                ) : status === 'current' ? (
-                  <FaCircle className="h-5 w-5 animate-pulse text-primary" />
-                ) : (
-                  <FaCircle className="h-5 w-5 text-gray-300 dark:text-gray-600" />
-                )}
-              </div>
-              <div>
-                <div className="font-medium">{step.label}</div>
-                <div className="text-sm text-gray-500">{step.detail}</div>
-              </div>
-            </div>
-          );
-        })}
+      <ModalBody className="gap-5">
+        <ProcessStepList
+          steps={steps}
+          currentStep={currentStep}
+        />
       </ModalBody>
     </Modal>
   );

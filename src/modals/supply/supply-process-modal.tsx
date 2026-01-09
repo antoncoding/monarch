@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { FiUpload } from 'react-icons/fi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
+import { ProcessStepList } from '@/components/common/ProcessStepList';
 import type { Market } from '@/utils/types';
 import { MarketInfoBlock } from '@/features/markets/components/market-info-block';
 
@@ -13,7 +13,7 @@ type MarketSupply = {
 type SupplyProcessModalProps = {
   supplies: MarketSupply[];
   currentStep: 'approve' | 'signing' | 'supplying';
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   tokenSymbol: string;
   useEth: boolean;
   usePermit2?: boolean;
@@ -22,7 +22,7 @@ type SupplyProcessModalProps = {
 export function SupplyProcessModal({
   supplies,
   currentStep,
-  onClose,
+  onOpenChange,
   useEth,
   tokenSymbol,
   usePermit2 = true,
@@ -73,27 +73,12 @@ export function SupplyProcessModal({
     ];
   }, [useEth, usePermit2, tokenSymbol]);
 
-  const getStepStatus = (stepKey: string) => {
-    const currentIndex = steps.findIndex((step) => step.key === currentStep);
-    const stepIndex = steps.findIndex((step) => step.key === stepKey);
-
-    if (stepIndex < currentIndex) {
-      return 'done';
-    }
-    if (stepKey === currentStep) {
-      return 'current';
-    }
-    return 'undone';
-  };
-
   const isMultiMarket = supplies.length > 1;
 
   return (
     <Modal
       isOpen
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
+      onOpenChange={onOpenChange}
       size="lg"
       isDismissable={false}
       backdrop="blur"
@@ -102,7 +87,7 @@ export function SupplyProcessModal({
         title={`Supply ${tokenSymbol}`}
         description={isMultiMarket ? `Supplying to ${supplies.length} markets` : 'Supplying to market'}
         mainIcon={<FiUpload className="h-5 w-5" />}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
       />
       <ModalBody className="gap-5">
         <div className="flex flex-col gap-3">
@@ -115,33 +100,10 @@ export function SupplyProcessModal({
           ))}
         </div>
 
-        <div className="space-y-4">
-          {steps.map((step) => {
-            const status = getStepStatus(step.key);
-            return (
-              <div
-                key={step.key}
-                className={`flex items-start gap-3 rounded border p-3 transition-colors ${
-                  status === 'current' ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-700'
-                }`}
-              >
-                <div className="mt-0.5">
-                  {status === 'done' ? (
-                    <FaCheckCircle className="h-5 w-5 text-green-500" />
-                  ) : status === 'current' ? (
-                    <FaCircle className="h-5 w-5 animate-pulse text-primary" />
-                  ) : (
-                    <FaCircle className="h-5 w-5 text-gray-300 dark:text-gray-600" />
-                  )}
-                </div>
-                <div>
-                  <div className="font-medium">{step.label}</div>
-                  <div className="text-sm text-gray-500">{step.detail}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <ProcessStepList
+          steps={steps}
+          currentStep={currentStep}
+        />
       </ModalBody>
     </Modal>
   );

@@ -22,6 +22,7 @@ import {
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
+import { TransactionIndicator } from './TransactionIndicator';
 
 export default function NavbarMobile() {
   const { theme, setTheme } = useTheme();
@@ -149,7 +150,8 @@ export default function NavbarMobile() {
         </DropdownMenu>
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
+        <TransactionIndicator />
         <AccountConnect />
       </div>
     </nav>

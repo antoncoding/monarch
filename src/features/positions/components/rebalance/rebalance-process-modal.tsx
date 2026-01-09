@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { LuArrowRightLeft } from 'react-icons/lu';
 
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
+import { ProcessStepList } from '@/components/common/ProcessStepList';
 import type { RebalanceStepType } from '@/hooks/useRebalance';
 
 type RebalanceProcessModalProps = {
@@ -67,23 +67,8 @@ export function RebalanceProcessModal({
     return isPermit2Flow ? permit2Steps : standardSteps;
   }, [isPermit2Flow, actionsCount, tokenSymbol]);
 
-  const getStepStatus = (stepKey: RebalanceStepType) => {
-    const currentFlowSteps = isPermit2Flow ? steps : steps;
-    const currentIndex = currentFlowSteps.findIndex((step) => step.key === currentStep);
-    const stepIndex = currentFlowSteps.findIndex((step) => step.key === stepKey);
-
-    if (currentStep === 'idle' || currentIndex === -1 || stepIndex === -1) {
-      return 'undone';
-    }
-
-    if (stepIndex < currentIndex) {
-      return 'done';
-    }
-    if (stepKey === currentStep) {
-      return 'current';
-    }
-    return 'undone';
-  };
+  // Handle 'idle' step specially - treat it as first step
+  const effectiveCurrentStep = currentStep === 'idle' ? steps[0].key : currentStep;
 
   return (
     <Modal
@@ -99,34 +84,11 @@ export function RebalanceProcessModal({
         mainIcon={<LuArrowRightLeft className="h-5 w-5" />}
         onClose={() => onOpenChange(false)}
       />
-      <ModalBody className="gap-4">
-        {steps
-          .filter((step) => step.key !== 'idle')
-          .map((step) => {
-            const status = getStepStatus(step.key as RebalanceStepType);
-            return (
-              <div
-                key={step.key}
-                className={`flex items-start gap-3 rounded border p-3 transition-colors ${
-                  status === 'current' ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-700'
-                }`}
-              >
-                <div className="mt-0.5">
-                  {status === 'done' ? (
-                    <FaCheckCircle className="h-5 w-5 text-green-500" />
-                  ) : status === 'current' ? (
-                    <FaCircle className="h-5 w-5 animate-pulse text-primary" />
-                  ) : (
-                    <FaCircle className="h-5 w-5 text-gray-300 dark:text-gray-600" />
-                  )}
-                </div>
-                <div>
-                  <div className="font-medium">{step.label}</div>
-                  <div className="text-sm text-gray-500">{step.detail}</div>
-                </div>
-              </div>
-            );
-          })}
+      <ModalBody className="gap-5">
+        <ProcessStepList
+          steps={steps}
+          currentStep={effectiveCurrentStep}
+        />
       </ModalBody>
     </Modal>
   );
