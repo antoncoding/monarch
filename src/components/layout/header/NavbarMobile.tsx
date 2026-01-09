@@ -22,7 +22,6 @@ import {
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
-import { TransactionIndicator } from './TransactionIndicator';
 
 export default function NavbarMobile() {
   const { theme, setTheme } = useTheme();
@@ -101,14 +100,14 @@ export default function NavbarMobile() {
             </DropdownMenuItem>
             <DropdownMenuItem
               startContent={<RiBriefcaseLine className="h-5 w-5" />}
-              onClick={() => handleNavigation(address ? `/positions/${address}` : '/positions')}
+              onClick={() => handleNavigation(mounted && address ? `/positions/${address}` : '/positions')}
               className="py-3"
             >
               <span className="font-medium">Portfolio</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               startContent={<RiGiftLine className="h-5 w-5" />}
-              onClick={() => handleNavigation(address ? `/rewards/${address}` : '/rewards')}
+              onClick={() => handleNavigation(mounted && address ? `/rewards/${address}` : '/rewards')}
               className="py-3"
             >
               <span className="font-medium">Rewards</span>
@@ -150,10 +149,7 @@ export default function NavbarMobile() {
         </DropdownMenu>
       </div>
 
-      <div className="flex items-center gap-2">
-        <TransactionIndicator />
-        <AccountConnect />
-      </div>
+      <AccountConnect />
     </nav>
   );
 }

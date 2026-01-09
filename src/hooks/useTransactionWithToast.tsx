@@ -27,7 +27,7 @@ export function useTransactionWithToast({
   onSuccess,
 }: UseTransactionWithToastProps) {
   const { data: hash, mutate: sendTransaction, error: txError, mutateAsync: sendTransactionAsync } = useSendTransaction();
-  
+
   const {
     isLoading: isConfirming,
     isSuccess: isConfirmed,

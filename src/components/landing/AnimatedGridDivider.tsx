@@ -55,9 +55,10 @@ export function AnimatedGridDivider({
     return indices;
   }, [totalCells, effectiveRatio]);
 
-  const [activeCells, setActiveCells] = useState<Set<number>>(() => generateActiveCells());
+  const [activeCells, setActiveCells] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    setActiveCells(generateActiveCells());
     const interval = setInterval(() => {
       setActiveCells(generateActiveCells());
     }, animationInterval);
