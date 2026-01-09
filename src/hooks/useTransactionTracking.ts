@@ -1,4 +1,4 @@
-import { type SetStateAction, useCallback, useRef, useState } from 'react';
+import { type SetStateAction, useCallback, useState } from 'react';
 import { useTransactionProcessStore, type TransactionStep } from '@/stores/useTransactionProcessStore';
 
 type TransactionMetadata = {
@@ -11,52 +11,52 @@ type TransactionMetadata = {
 /**
  * Hook that simplifies transaction tracking with the global store.
  * Encapsulates all the boilerplate for starting, updating, completing transactions.
+ *
+ * Modal visibility is derived from the store, so reopening via TransactionIndicator works.
  */
 export function useTransactionTracking(type: string) {
   const { startTransaction, updateStep, completeTransaction, failTransaction, setModalVisible } = useTransactionProcessStore();
-  const txIdRef = useRef<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [txId, setTxId] = useState<string | null>(null);
+
+  // Derive showModal from store based on txId
+  const showModal = useTransactionProcessStore((s) => (txId ? (s.transactions[txId]?.isModalVisible ?? false) : false));
 
   const start = useCallback(
     (steps: TransactionStep[], metadata: TransactionMetadata, initialStep: string) => {
-      setShowModal(true);
-      txIdRef.current = startTransaction({ type, currentStep: initialStep, steps, metadata });
+      const id = startTransaction({ type, currentStep: initialStep, steps, metadata });
+      setTxId(id);
     },
     [startTransaction, type],
   );
 
   const update = useCallback(
     (step: string) => {
-      if (txIdRef.current) updateStep(txIdRef.current, step);
+      if (txId) updateStep(txId, step);
     },
-    [updateStep],
+    [updateStep, txId],
   );
 
   const complete = useCallback(() => {
-    if (txIdRef.current) {
-      completeTransaction(txIdRef.current);
-      txIdRef.current = null;
+    if (txId) {
+      completeTransaction(txId);
+      setTxId(null);
     }
-    setShowModal(false);
-  }, [completeTransaction]);
+  }, [completeTransaction, txId]);
 
   const fail = useCallback(() => {
-    if (txIdRef.current) {
-      failTransaction(txIdRef.current);
-      txIdRef.current = null;
+    if (txId) {
+      failTransaction(txId);
+      setTxId(null);
     }
-    setShowModal(false);
-  }, [failTransaction]);
+  }, [failTransaction, txId]);
 
   const setModalOpen = useCallback(
     (value: SetStateAction<boolean>) => {
-      setShowModal((prev) => {
-        const newValue = typeof value === 'function' ? value(prev) : value;
-        if (txIdRef.current) setModalVisible(txIdRef.current, newValue);
-        return newValue;
-      });
+      if (!txId) return;
+      const newValue = typeof value === 'function' ? value(showModal) : value;
+      setModalVisible(txId, newValue);
     },
-    [setModalVisible],
+    [setModalVisible, txId, showModal],
   );
 
   return { start, update, complete, fail, showModal, setModalOpen };

@@ -135,7 +135,19 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     try {
       const transactions: `0x${string}`[] = [];
 
-      if (usePermit2Setting) {
+      // --- ETH Flow: Skip permit2/ERC20 approval, native ETH can't be permit-signed ---
+      if (useEth) {
+        setCurrentStep('execute');
+        update('execute');
+
+        // Bundler authorization may still be needed for the borrow operation
+        if (!isBundlerAuthorized) {
+          const bundlerAuthSigTx = await authorizeBundlerWithSignature();
+          if (bundlerAuthSigTx) {
+            transactions.push(bundlerAuthSigTx);
+          }
+        }
+      } else if (usePermit2Setting) {
         // --- Permit2 Flow ---
         setCurrentStep('approve_permit2');
         update('approve_permit2');
@@ -174,6 +186,9 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
           transactions.push(permitTx);
           transactions.push(transferFromTx);
         }
+
+        setCurrentStep('execute');
+        update('execute');
       } else {
         // --- Standard ERC20 Flow ---
         setCurrentStep('authorize_bundler_tx');
@@ -201,10 +216,10 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
             }),
           );
         }
-      }
 
-      setCurrentStep('execute');
-      update('execute');
+        setCurrentStep('execute');
+        update('execute');
+      }
 
       if (useEth && collateralAmount > 0n) {
         transactions.push(
@@ -301,6 +316,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     permit2Authorized,
     authorizePermit2,
     authorizeBundlerWithSignature,
+    isBundlerAuthorized,
     signForBundlers,
     authorizeWithTransaction,
     isApproved,

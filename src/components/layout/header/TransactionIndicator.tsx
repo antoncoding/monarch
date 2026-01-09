@@ -1,26 +1,28 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback } from 'react';
 import { FiDownload, FiRepeat } from 'react-icons/fi';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { BsArrowDownCircle, BsArrowUpCircle } from 'react-icons/bs';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { useTransactionProcessStore, type TransactionType } from '@/stores/useTransactionProcessStore';
+import { useTransactionProcessStore } from '@/stores/useTransactionProcessStore';
 
-const TX_TYPE_ICONS: Record<TransactionType, React.ReactNode> = {
+const TX_TYPE_ICONS: Record<string, React.ReactNode> = {
   supply: <BsArrowUpCircle className="h-4 w-4" />,
   borrow: <BsArrowDownCircle className="h-4 w-4" />,
   repay: <FiRepeat className="h-4 w-4" />,
   vaultDeposit: <FiDownload className="h-4 w-4" />,
+  deposit: <FiDownload className="h-4 w-4" />,
   wrap: <LuArrowRightLeft className="h-4 w-4" />,
   rebalance: <LuArrowRightLeft className="h-4 w-4" />,
 };
 
-const TX_TYPE_LABELS: Record<TransactionType, string> = {
+const TX_TYPE_LABELS: Record<string, string> = {
   supply: 'Supply',
   borrow: 'Borrow',
   repay: 'Repay',
   vaultDeposit: 'Deposit',
+  deposit: 'Deposit',
   wrap: 'Wrap',
   rebalance: 'Rebalance',
 };
@@ -31,19 +33,20 @@ const TX_TYPE_LABELS: Record<TransactionType, string> = {
  * Clicking reveals a dropdown with transaction details and option to reopen modal.
  */
 export function TransactionIndicator() {
-  const transactionsMap = useTransactionProcessStore((s) => s.transactions);
+  const backgroundTransactions = useTransactionProcessStore((s) => s.getBackgroundTransactions());
   const setModalVisible = useTransactionProcessStore((s) => s.setModalVisible);
 
-  const backgroundTransactions = useMemo(() => Object.values(transactionsMap).filter((tx) => !tx.isModalVisible), [transactionsMap]);
+  const handleViewTransaction = useCallback(
+    (txId: string) => {
+      setModalVisible(txId, true);
+    },
+    [setModalVisible],
+  );
 
   // Don't render if no background transactions
   if (backgroundTransactions.length === 0) {
     return null;
   }
-
-  const handleViewTransaction = (txId: string) => {
-    setModalVisible(txId, true);
-  };
 
   return (
     <DropdownMenu>
@@ -75,19 +78,19 @@ export function TransactionIndicator() {
         <div className="px-2 py-1.5 text-xs font-medium text-secondary">Pending Transactions</div>
 
         {backgroundTransactions.map((tx) => {
-          const currentStepIndex = tx.steps.findIndex((s) => s.key === tx.currentStep);
-          const currentStepLabel = tx.steps[currentStepIndex]?.label ?? tx.currentStep;
+          const currentStepIndex = tx.steps.findIndex((s) => s.id === tx.currentStep);
+          const currentStepLabel = tx.steps[currentStepIndex]?.title ?? tx.currentStep;
 
           return (
             <DropdownMenuItem
               key={tx.id}
               onClick={() => handleViewTransaction(tx.id)}
-              startContent={TX_TYPE_ICONS[tx.type]}
+              startContent={TX_TYPE_ICONS[tx.type] ?? TX_TYPE_ICONS.supply}
             >
               <div className="flex flex-1 flex-col">
                 <span className="font-medium">
-                  {TX_TYPE_LABELS[tx.type]}
-                  {tx.metadata.tokenSymbol && ` ${tx.metadata.tokenSymbol}`}
+                  {TX_TYPE_LABELS[tx.type] ?? 'Transaction'}
+                  {tx.metadata?.tokenSymbol && ` ${tx.metadata.tokenSymbol}`}
                 </span>
                 <span className="text-xs text-secondary">{currentStepLabel}</span>
               </div>

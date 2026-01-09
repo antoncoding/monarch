@@ -16,12 +16,7 @@ type ProcessStepListProps = {
 
 function StepIcon({ status }: { status: StepStatus }): JSX.Element {
   return (
-    <div
-      className={cn(
-        'mt-0.5 transition-all duration-300',
-        status === 'current' && 'scale-110',
-      )}
-    >
+    <div className={cn('mt-0.5 transition-all duration-300', status === 'current' && 'scale-110')}>
       {status === 'done' && <FaCheckCircle className="h-5 w-5 text-green-500" />}
       {status === 'current' && (
         <div className="relative">
@@ -63,27 +58,13 @@ export function ProcessStepList({ steps, currentStep }: ProcessStepListProps): J
             className={cn(
               'flex items-start gap-3 rounded-lg border p-3',
               'transition-all duration-300 ease-out',
-              isCurrent && [
-                'border-primary bg-primary/5',
-                'scale-[1.02] shadow-sm shadow-primary/10',
-              ],
-              isDone && [
-                'border-green-200 dark:border-green-900/50',
-                'opacity-70',
-              ],
-              isUndone && [
-                'border-gray-100 dark:border-gray-800',
-                'opacity-40',
-              ],
+              isCurrent && ['border-primary bg-primary/5', 'scale-[1.02] shadow-sm shadow-primary/10'],
+              isDone && ['border-green-200 dark:border-green-900/50', 'opacity-70'],
+              isUndone && ['border-gray-100 dark:border-gray-800', 'opacity-40'],
             )}
           >
             <StepIcon status={status} />
-            <div
-              className={cn(
-                'transition-opacity duration-300',
-                isUndone && 'opacity-60',
-              )}
-            >
+            <div className={cn('transition-opacity duration-300', isUndone && 'opacity-60')}>
               <div className="font-medium">{step.title}</div>
               <div className="text-sm text-secondary">{step.description}</div>
             </div>
