@@ -1,14 +1,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import { FiUpload, FiDownload, FiRepeat } from 'react-icons/fi';
-import { LuArrowRightLeft, LuArrowDownCircle } from 'react-icons/lu';
+import { FiDownload, FiRepeat } from 'react-icons/fi';
+import { LuArrowRightLeft } from 'react-icons/lu';
+import { BsArrowDownCircle, BsArrowUpCircle } from 'react-icons/bs';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useTransactionProcessStore, type TransactionType } from '@/stores/useTransactionProcessStore';
 
 const TX_TYPE_ICONS: Record<TransactionType, React.ReactNode> = {
-  supply: <FiUpload className="h-4 w-4" />,
-  borrow: <LuArrowDownCircle className="h-4 w-4" />,
+  supply: <BsArrowUpCircle className="h-4 w-4" />,
+  borrow: <BsArrowDownCircle className="h-4 w-4" />,
   repay: <FiRepeat className="h-4 w-4" />,
   vaultDeposit: <FiDownload className="h-4 w-4" />,
   wrap: <LuArrowRightLeft className="h-4 w-4" />,
@@ -30,10 +31,10 @@ const TX_TYPE_LABELS: Record<TransactionType, string> = {
  * Clicking reveals a dropdown with transaction details and option to reopen modal.
  */
 export function TransactionIndicator() {
-  const transactions = useTransactionProcessStore((s) => Object.values(s.transactions));
+  const transactionsMap = useTransactionProcessStore((s) => s.transactions);
   const setModalVisible = useTransactionProcessStore((s) => s.setModalVisible);
 
-  const backgroundTransactions = useMemo(() => transactions.filter((tx) => !tx.isModalVisible), [transactions]);
+  const backgroundTransactions = useMemo(() => Object.values(transactionsMap).filter((tx) => !tx.isModalVisible), [transactionsMap]);
 
   // Don't render if no background transactions
   if (backgroundTransactions.length === 0) {
