@@ -12,6 +12,11 @@ import { useERC20Approval } from './useERC20Approval';
 
 export type WrapStep = 'approve' | 'wrap';
 
+const WRAP_STEPS = [
+  { id: 'approve', title: 'Approve MORPHO', description: 'Approve legacy MORPHO tokens for wrapping' },
+  { id: 'wrap', title: 'Wrap MORPHO', description: 'Confirm transaction to wrap your MORPHO tokens' },
+];
+
 export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
   const [currentStep, setCurrentStep] = useState<WrapStep>('approve');
 
@@ -39,13 +44,6 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
     },
   });
 
-  const getStepsForFlow = useCallback(() => {
-    return [
-      { id: 'approve', title: 'Approve MORPHO', description: 'Approve legacy MORPHO tokens for wrapping' },
-      { id: 'wrap', title: 'Wrap MORPHO', description: 'Confirm transaction to wrap your MORPHO tokens' },
-    ];
-  }, []);
-
   const wrap = useCallback(async () => {
     try {
       if (!account) {
@@ -58,7 +56,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
         toast.info('Network changed');
       }
 
-      start(getStepsForFlow(), { tokenSymbol: 'MORPHO', amount }, 'approve');
+      start(WRAP_STEPS, { tokenSymbol: 'MORPHO', amount }, 'approve');
 
       if (!isApproved) {
         setCurrentStep('approve');
@@ -79,7 +77,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
       toast.error('Failed to wrap MORPHO.');
       fail();
     }
-  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync, start, fail, getStepsForFlow]);
+  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync, start, fail]);
 
   return {
     wrap,

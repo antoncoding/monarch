@@ -30,7 +30,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
   const onSuccess = useCallback(() => {
     onClose();
     refetch();
-  }, [onClose]);
+  }, [onClose, refetch]);
 
   // Use the hook to handle all supply logic
   const {

@@ -4,28 +4,21 @@ import { useCallback } from 'react';
 import { FiDownload, FiRepeat } from 'react-icons/fi';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { BsArrowDownCircle, BsArrowUpCircle } from 'react-icons/bs';
+import { useShallow } from 'zustand/shallow';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useTransactionProcessStore } from '@/stores/useTransactionProcessStore';
 
-const TX_TYPE_ICONS: Record<string, React.ReactNode> = {
-  supply: <BsArrowUpCircle className="h-4 w-4" />,
-  borrow: <BsArrowDownCircle className="h-4 w-4" />,
-  repay: <FiRepeat className="h-4 w-4" />,
-  vaultDeposit: <FiDownload className="h-4 w-4" />,
-  deposit: <FiDownload className="h-4 w-4" />,
-  wrap: <LuArrowRightLeft className="h-4 w-4" />,
-  rebalance: <LuArrowRightLeft className="h-4 w-4" />,
+const TX_TYPE_CONFIG: Record<string, { icon: React.ReactNode; label: string }> = {
+  supply: { icon: <BsArrowUpCircle className="h-4 w-4" />, label: 'Supply' },
+  borrow: { icon: <BsArrowDownCircle className="h-4 w-4" />, label: 'Borrow' },
+  repay: { icon: <FiRepeat className="h-4 w-4" />, label: 'Repay' },
+  vaultDeposit: { icon: <FiDownload className="h-4 w-4" />, label: 'Deposit' },
+  deposit: { icon: <FiDownload className="h-4 w-4" />, label: 'Deposit' },
+  wrap: { icon: <LuArrowRightLeft className="h-4 w-4" />, label: 'Wrap' },
+  rebalance: { icon: <LuArrowRightLeft className="h-4 w-4" />, label: 'Rebalance' },
 };
 
-const TX_TYPE_LABELS: Record<string, string> = {
-  supply: 'Supply',
-  borrow: 'Borrow',
-  repay: 'Repay',
-  vaultDeposit: 'Deposit',
-  deposit: 'Deposit',
-  wrap: 'Wrap',
-  rebalance: 'Rebalance',
-};
+const DEFAULT_TX_CONFIG = { icon: <BsArrowUpCircle className="h-4 w-4" />, label: 'Transaction' };
 
 /**
  * Header indicator showing active background transactions.
@@ -33,7 +26,9 @@ const TX_TYPE_LABELS: Record<string, string> = {
  * Clicking reveals a dropdown with transaction details and option to reopen modal.
  */
 export function TransactionIndicator() {
-  const backgroundTransactions = useTransactionProcessStore((s) => s.getBackgroundTransactions());
+  const backgroundTransactions = useTransactionProcessStore(
+    useShallow((s) => Object.values(s.transactions).filter((tx) => !tx.isModalVisible)),
+  );
   const setModalVisible = useTransactionProcessStore((s) => s.setModalVisible);
 
   const handleViewTransaction = useCallback(
@@ -80,16 +75,17 @@ export function TransactionIndicator() {
         {backgroundTransactions.map((tx) => {
           const currentStepIndex = tx.steps.findIndex((s) => s.id === tx.currentStep);
           const currentStepLabel = tx.steps[currentStepIndex]?.title ?? tx.currentStep;
+          const config = TX_TYPE_CONFIG[tx.type] ?? DEFAULT_TX_CONFIG;
 
           return (
             <DropdownMenuItem
               key={tx.id}
               onClick={() => handleViewTransaction(tx.id)}
-              startContent={TX_TYPE_ICONS[tx.type] ?? TX_TYPE_ICONS.supply}
+              startContent={config.icon}
             >
               <div className="flex flex-1 flex-col">
                 <span className="font-medium">
-                  {TX_TYPE_LABELS[tx.type] ?? 'Transaction'}
+                  {config.label}
                   {tx.metadata?.tokenSymbol && ` ${tx.metadata.tokenSymbol}`}
                 </span>
                 <span className="text-xs text-secondary">{currentStepLabel}</span>

@@ -44,7 +44,17 @@ export function AnimatedGridDivider({
   const totalCells = columns * rows;
 
   // Adjust ratio based on variant
-  const effectiveRatio = variant === 'dense' ? activeRatio * 1.5 : variant === 'sparse' ? activeRatio * 0.5 : activeRatio;
+  const getEffectiveRatio = () => {
+    switch (variant) {
+      case 'dense':
+        return activeRatio * 1.5;
+      case 'sparse':
+        return activeRatio * 0.5;
+      default:
+        return activeRatio;
+    }
+  };
+  const effectiveRatio = getEffectiveRatio();
 
   const generateActiveCells = useCallback(() => {
     const activeCount = Math.floor(totalCells * effectiveRatio);

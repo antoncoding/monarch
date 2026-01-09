@@ -44,6 +44,7 @@ type TransactionProcessActions = {
 
   /**
    * Mark a transaction as failed and remove from tracking.
+   * Note: Has same behavior as completeTransaction - both remove the transaction.
    */
   failTransaction: (txId: string) => void;
 
@@ -144,7 +145,6 @@ export const useTransactionProcessStore = create<TransactionProcessStore>((set, 
     });
   },
 
-  // failTransaction has same behavior as completeTransaction - both remove the transaction
   failTransaction: (txId) => {
     get().completeTransaction(txId);
   },
