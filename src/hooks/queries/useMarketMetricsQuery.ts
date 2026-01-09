@@ -275,8 +275,8 @@ export const useTrendingMarketKeys = () => {
   }, [metricsMap, trendingConfig]);
 };
 
-// Staleness threshold for liquidations data (1 hour)
-const LIQUIDATIONS_STALE_THRESHOLD_MS = 60 * 60 * 1000;
+// Staleness threshold for liquidations data (2 hour 5 min)
+const LIQUIDATIONS_STALE_THRESHOLD_MS = (2 * 60 + 5) * 60 * 1000;
 
 /**
  * Returns whether a market has ever been liquidated.
