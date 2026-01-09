@@ -1,4 +1,4 @@
-import { type SetStateAction, useCallback, useState } from 'react';
+import { type SetStateAction, useCallback, useState, useRef } from 'react';
 import { useTransactionProcessStore, type TransactionStep, type ActiveTransaction } from '@/stores/useTransactionProcessStore';
 
 type TransactionMetadata = {
@@ -10,6 +10,10 @@ type TransactionMetadata = {
 
 /**
  * Hook that simplifies transaction tracking with the global store.
+ *
+ * IMPORTANT: Uses a ref for synchronous txId access to fix React closure problem.
+ * When start() is called, setTxId() is async, so update/complete/fail/dismiss
+ * would see stale null values without the ref.
  *
  * ## Usage
  * ```tsx
@@ -40,10 +44,16 @@ type TransactionMetadata = {
  */
 export function useTransactionTracking(type: string) {
   const store = useTransactionProcessStore();
+
+  // Ref for synchronous access - fixes React closure problem
+  const txIdRef = useRef<string | null>(null);
+  // State for triggering re-renders when txId changes
   const [txId, setTxId] = useState<string | null>(null);
 
-  // Derive transaction from store - this is reactive
-  const transaction = useTransactionProcessStore((s): ActiveTransaction | null => (txId ? (s.transactions[txId] ?? null) : null));
+  // Derive transaction from store using REF (not state) for immediate access
+  const transaction = useTransactionProcessStore((s): ActiveTransaction | null =>
+    txIdRef.current ? (s.transactions[txIdRef.current] ?? null) : null
+  );
 
   // Convenience accessors
   const isVisible = transaction?.isModalVisible ?? false;
@@ -56,7 +66,8 @@ export function useTransactionTracking(type: string) {
   const start = useCallback(
     (txSteps: TransactionStep[], metadata: TransactionMetadata, initialStep: string) => {
       const id = store.startTransaction({ type, currentStep: initialStep, steps: txSteps, metadata });
-      setTxId(id);
+      txIdRef.current = id;  // Sync update for immediate use
+      setTxId(id);           // Async update to trigger re-render
       return id;
     },
     [store, type],
@@ -67,46 +78,48 @@ export function useTransactionTracking(type: string) {
    */
   const update = useCallback(
     (step: string) => {
-      if (txId) store.updateStep(txId, step);
+      if (txIdRef.current) store.updateStep(txIdRef.current, step);
     },
-    [store, txId],
+    [store],
   );
 
   /**
    * Mark transaction as complete. Removes from store.
    */
   const complete = useCallback(() => {
-    if (txId) {
-      store.completeTransaction(txId);
+    if (txIdRef.current) {
+      store.completeTransaction(txIdRef.current);
+      txIdRef.current = null;
       setTxId(null);
     }
-  }, [store, txId]);
+  }, [store]);
 
   /**
    * Mark transaction as failed. Removes from store.
    * Error display is handled by useTransactionWithToast.
    */
   const fail = useCallback(() => {
-    if (txId) {
-      store.failTransaction(txId);
+    if (txIdRef.current) {
+      store.failTransaction(txIdRef.current);
+      txIdRef.current = null;
       setTxId(null);
     }
-  }, [store, txId]);
+  }, [store]);
 
   /**
    * Dismiss the modal but keep transaction in background.
    * Transaction will appear in TransactionIndicator.
    */
   const dismiss = useCallback(() => {
-    if (txId) store.setModalVisible(txId, false);
-  }, [store, txId]);
+    if (txIdRef.current) store.setModalVisible(txIdRef.current, false);
+  }, [store]);
 
   /**
    * Resume a background transaction - reopens the modal.
    */
   const resume = useCallback(() => {
-    if (txId) store.setModalVisible(txId, true);
-  }, [store, txId]);
+    if (txIdRef.current) store.setModalVisible(txIdRef.current, true);
+  }, [store]);
 
   /**
    * Legacy: Set modal visibility (for backward compatibility).
@@ -114,11 +127,11 @@ export function useTransactionTracking(type: string) {
    */
   const setModalOpen = useCallback(
     (value: SetStateAction<boolean>) => {
-      if (!txId) return;
+      if (!txIdRef.current) return;
       const newValue = typeof value === 'function' ? value(isVisible) : value;
-      store.setModalVisible(txId, newValue);
+      store.setModalVisible(txIdRef.current, newValue);
     },
-    [store, txId, isVisible],
+    [store, isVisible],
   );
 
   return {
