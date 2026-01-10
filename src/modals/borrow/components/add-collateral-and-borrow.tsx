@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { IconSwitch } from '@/components/ui/icon-switch';
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
 import Input from '@/components/Input/Input';
@@ -132,7 +132,10 @@ export function AddCollateralAndBorrow({
                   disabled={isRefreshing}
                   aria-label="Refresh position data"
                 >
-                  <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefetchIcon
+                    isLoading={isRefreshing}
+                    className="h-4 w-4"
+                  />
                 </button>
               )}
             </div>

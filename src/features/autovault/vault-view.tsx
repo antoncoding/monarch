@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { GearIcon, ReloadIcon } from '@radix-ui/react-icons';
+import { GearIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Address } from 'viem';
@@ -200,7 +201,7 @@ export default function VaultContent() {
                     disabled={vaultDataLoading}
                     className="text-secondary min-w-0 px-2"
                   >
-                    <ReloadIcon className={`${vaultDataLoading ? 'animate-spin' : ''} h-3 w-3`} />
+                    <RefetchIcon isLoading={vaultDataLoading} />
                   </Button>
                 </span>
               </Tooltip>

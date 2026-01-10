@@ -28,6 +28,7 @@ export type UseSupplyMarketReturn = {
   // Balance data
   tokenBalance: bigint | undefined;
   ethBalance: bigint | undefined;
+  isRefetchingBalance: boolean;
 
   // Transaction state
   isApproved: boolean;
@@ -66,7 +67,11 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const toast = useStyledToast();
 
   // Get token balance
-  const { data: tokenBalance, refetch: refetchToken } = useReadContract({
+  const {
+    data: tokenBalance,
+    refetch: refetchToken,
+    isFetching: isRefetchingToken,
+  } = useReadContract({
     address: market.loanAsset.address as `0x${string}`,
     args: [account as `0x${string}`],
     abi: erc20Abi,
@@ -78,7 +83,11 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   });
 
   // Get ETH balance
-  const { data: ethBalance, refetch: refetchETH } = useBalance({
+  const {
+    data: ethBalance,
+    refetch: refetchETH,
+    isFetching: isRefetchingEth,
+  } = useBalance({
     address: account,
     chainId: market.morphoBlue.chain.id,
   });
@@ -414,6 +423,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     // Balance data
     tokenBalance,
     ethBalance: ethBalance?.value,
+    isRefetchingBalance: isRefetchingToken || isRefetchingEth,
     refetch,
 
     // Transaction tracking (new unified pattern)

@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { formatUnits } from 'viem';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
@@ -69,7 +69,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
           disabled={isRefetching}
           className="text-secondary min-w-0 px-2"
         >
-          <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+          <RefetchIcon isLoading={isRefetching} />
         </Button>
       </span>
     </Tooltip>

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { CgDisplayFullwidth } from 'react-icons/cg';
 import { FiSettings } from 'react-icons/fi';
 import { TbArrowAutofitWidth } from 'react-icons/tb';
@@ -41,7 +41,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile }: Marke
           disabled={isRefetching}
           className="text-secondary min-w-0 px-2"
         >
-          <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+          <RefetchIcon isLoading={isRefetching} />
         </Button>
       </Tooltip>
 

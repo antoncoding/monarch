@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { ExternalLinkIcon, ReloadIcon } from '@radix-ui/react-icons';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -165,7 +166,7 @@ export default function RewardTable({
           disabled={isRefetching}
           className="text-secondary min-w-0 px-2"
         >
-          <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+          <RefetchIcon isLoading={isRefetching} />
         </Button>
       </span>
     </Tooltip>

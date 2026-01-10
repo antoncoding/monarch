@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import Input from '@/components/Input/Input';
 import { useRepayTransaction } from '@/hooks/useRepayTransaction';
@@ -147,7 +147,10 @@ export function WithdrawCollateralAndRepay({
                 disabled={isRefreshing}
                 aria-label="Refresh position data"
               >
-                <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefetchIcon
+                  isLoading={isRefreshing}
+                  className="h-4 w-4"
+                />
               </button>
             )}
           </div>

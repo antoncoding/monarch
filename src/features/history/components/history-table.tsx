@@ -8,7 +8,8 @@ import { now, getLocalTimeZone, type ZonedDateTime } from '@internationalized/da
 import moment from 'moment';
 import { TbReport } from 'react-icons/tb';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import { ReloadIcon, GearIcon } from '@radix-ui/react-icons';
+import { GearIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { IoIosArrowRoundForward } from 'react-icons/io';
 import useUserPositions from '@/hooks/useUserPositions';
 import { formatUnits, type Address } from 'viem';
@@ -417,7 +418,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
             disabled={loading}
             className="text-secondary min-w-0 px-2"
           >
-            <ReloadIcon className={`${loading ? 'animate-spin' : ''} h-3 w-3`} />
+            <RefetchIcon isLoading={loading} />
           </Button>
         </span>
       </Tooltip>

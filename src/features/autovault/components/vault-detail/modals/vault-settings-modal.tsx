@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { FiSettings } from 'react-icons/fi';
 import type { Address } from 'viem';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
@@ -89,7 +89,12 @@ export function VaultSettingsModal({ vaultAddress, chainId }: VaultSettingsModal
         mainIcon={<FiSettings className="h-5 w-5" />}
         onClose={close}
         auxiliaryAction={{
-          icon: <ReloadIcon className={`h-4 w-4 ${vaultDataQuery.isLoading ? 'animate-spin' : ''}`} />,
+          icon: (
+            <RefetchIcon
+              isLoading={vaultDataQuery.isLoading}
+              className="h-4 w-4"
+            />
+          ),
           onClick: () => {
             if (!vaultDataQuery.isLoading) {
               void vaultDataQuery.refetch();
