@@ -87,11 +87,12 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const handleTransactionSuccess = useCallback(() => {
     setRebalanceActions([]);
     void refetchIsBundlerAuthorized();
-    tracking.complete();
+    // Note: tracking.complete() is called directly after sendTransactionAsync
+    // to close the modal immediately, not here (which fires on tx confirmation)
     if (onRebalance) {
       onRebalance();
     }
-  }, [refetchIsBundlerAuthorized, onRebalance, tracking]);
+  }, [refetchIsBundlerAuthorized, onRebalance]);
 
   const { sendTransactionAsync, isConfirming: isExecuting } = useTransactionWithToast({
     toastId: 'rebalance',

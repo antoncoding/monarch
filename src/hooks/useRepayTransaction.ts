@@ -356,6 +356,7 @@ export function useRepayTransaction({
     getStepsForFlow,
     market,
     repayAssets,
+    withdrawAmount,
   ]);
 
   // Function to handle signing and executing the repay transaction
@@ -393,7 +394,7 @@ export function useRepayTransaction({
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeRepayTransaction, toast, tracking, getStepsForFlow, usePermit2Setting, market, repayAssets]);
+  }, [account, executeRepayTransaction, toast, tracking, getStepsForFlow, usePermit2Setting, market, repayAssets, withdrawAmount]);
 
   return {
     // Transaction tracking

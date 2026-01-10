@@ -174,6 +174,7 @@ export function useMultiMarketSupply(
         })),
       );
 
+      tracking.complete();
       return true;
     } catch (error: unknown) {
       console.error('Error in executeSupplyTransaction:', error);
@@ -290,6 +291,7 @@ export function useMultiMarketSupply(
     toast,
     tracking,
     tokenSymbol,
+    supplies,
   ]);
 
   return {
