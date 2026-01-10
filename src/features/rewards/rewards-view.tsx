@@ -131,7 +131,7 @@ export default function Rewards() {
 
   const showLegacy = useMemo(() => morphoBalanceLegacy !== undefined && morphoBalanceLegacy !== 0n, [morphoBalanceLegacy]);
 
-  const { wrap, transaction, dismiss } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
+  const { wrap, transaction } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
     // Refresh rewards data after successful wrap
     void refresh();
   });

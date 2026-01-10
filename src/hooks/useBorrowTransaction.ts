@@ -354,7 +354,18 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         toast.error('Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeBorrowTransaction, toast, useEth, usePermit2Setting, tracking, getStepsForFlow, market, collateralAmount, borrowAmount]);
+  }, [
+    account,
+    executeBorrowTransaction,
+    toast,
+    useEth,
+    usePermit2Setting,
+    tracking,
+    getStepsForFlow,
+    market,
+    collateralAmount,
+    borrowAmount,
+  ]);
 
   // Function to handle signing and executing the borrow transaction
   const signAndBorrow = useCallback(async () => {
@@ -391,7 +402,18 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeBorrowTransaction, toast, tracking, getStepsForFlow, useEth, usePermit2Setting, market, collateralAmount, borrowAmount]);
+  }, [
+    account,
+    executeBorrowTransaction,
+    toast,
+    tracking,
+    getStepsForFlow,
+    useEth,
+    usePermit2Setting,
+    market,
+    collateralAmount,
+    borrowAmount,
+  ]);
 
   // Determine overall loading state
   const isLoading = borrowPending || isLoadingPermit2 || isApproving || isAuthorizingBundler;

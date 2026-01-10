@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { Divider } from '@/components/ui/divider';
 import { Tooltip } from '@/components/ui/tooltip';
-import { GoFilter } from "react-icons/go";
+import { GoFilter } from 'react-icons/go';
 import { Button } from '@/components/ui/button';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
 import { IconSwitch } from '@/components/ui/icon-switch';

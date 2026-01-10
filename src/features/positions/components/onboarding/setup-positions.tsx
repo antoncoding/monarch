@@ -176,7 +176,7 @@ export function SetupPositions({ onClose }: { onClose: () => void }) {
       .filter((supply) => supply.amount > 0n);
   }, [selectedMarkets, amounts, tokenDecimals]);
 
-  const { transaction, dismiss, isLoadingPermit2, approveAndSupply, supplyPending } = useMultiMarketSupply(
+  const { isLoadingPermit2, approveAndSupply, supplyPending } = useMultiMarketSupply(
     selectedToken!,
     supplies,
     useEth,

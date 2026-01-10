@@ -48,15 +48,14 @@ export function WithdrawCollateralAndRepay({
   const [newLTV, setNewLTV] = useState<bigint>(BigInt(0));
 
   // Use the repay transaction hook
-  const { transaction, dismiss, isLoadingPermit2, isApproved, permit2Authorized, repayPending, approveAndRepay, signAndRepay } =
-    useRepayTransaction({
-      market,
-      currentPosition,
-      withdrawAmount,
-      repayAssets,
-      repayShares,
-      onSuccess,
-    });
+  const { isLoadingPermit2, isApproved, permit2Authorized, repayPending, approveAndRepay, signAndRepay } = useRepayTransaction({
+    market,
+    currentPosition,
+    withdrawAmount,
+    repayAssets,
+    repayShares,
+    onSuccess,
+  });
 
   const handleRepay = useCallback(() => {
     if (!permit2Authorized || (!usePermit2Setting && !isApproved)) {
