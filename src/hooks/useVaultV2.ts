@@ -35,6 +35,7 @@ export function useVaultV2({
   const {
     data: batchData,
     refetch: refetchAll,
+    isRefetching,
     isLoading,
   } = useReadContracts({
     contracts: [
@@ -644,7 +645,8 @@ export function useVaultV2({
   );
 
   return {
-    isLoading: isLoading,
+    isLoading,
+    isRefetching,
     refetch: refetchAll,
     completeInitialization,
     isInitializing,

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Divider } from '@/components/ui/divider';
@@ -218,13 +218,12 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
           <TableBody className="text-sm">
             {processedPositions.map((groupedPosition) => {
               const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
-              const _isExpanded = expandedRows.has(rowKey);
               const avgApy = groupedPosition.totalWeightedApy;
 
               const earnings = getGroupedEarnings(groupedPosition);
 
               return (
-                <React.Fragment key={rowKey}>
+                <Fragment key={rowKey}>
                   <TableRow
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => toggleRow(rowKey)}
@@ -358,7 +357,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                       </TableRow>
                     )}
                   </AnimatePresence>
-                </React.Fragment>
+                </Fragment>
               );
             })}
           </TableBody>

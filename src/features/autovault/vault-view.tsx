@@ -85,6 +85,8 @@ export default function VaultContent() {
     void adapterQuery.refetch();
   }, [vaultDataQuery, vaultContract, adapterQuery]);
 
+  const isRefetching = vaultDataQuery.isRefetching || vaultContract.isRefetching || adapterQuery.isRefetching;
+
   // Extract minimal data for vault-view rendering
   const vaultData = vaultDataQuery.data;
   const hasError = vaultDataQuery.isError;
@@ -201,7 +203,9 @@ export default function VaultContent() {
                     disabled={vaultDataLoading}
                     className="text-secondary min-w-0 px-2"
                   >
-                    <RefetchIcon isLoading={vaultDataLoading} />
+                    <RefetchIcon 
+                      isLoading={vaultDataLoading || isRefetching}  
+                    />
                   </Button>
                 </span>
               </Tooltip>

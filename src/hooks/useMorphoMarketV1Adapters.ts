@@ -44,6 +44,7 @@ export function useMorphoMarketV1Adapters({ vaultAddress, chainId }: { vaultAddr
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
+    isRefetching: query.isRefetching,
     hasAdapters: (query.data ?? []).length > 0,
   };
 }

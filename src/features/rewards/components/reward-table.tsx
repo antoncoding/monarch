@@ -294,11 +294,11 @@ export default function RewardTable({
                             disabled={tokenReward.total.claimable === BigInt(0) || isThisRewardClaiming}
                             isLoading={isThisRewardClaiming}
                           >
-                            {isThisRewardClaiming && claimStatus === 'switching'
-                              ? 'Switching...'
-                              : isThisRewardClaiming && (claimStatus === 'pending' || claimStatus === 'preparing')
-                                ? 'Claiming...'
-                                : 'Claim'}
+                            {(() => {
+                              if (isThisRewardClaiming && claimStatus === 'switching') return 'Switching...';
+                              if (isThisRewardClaiming && (claimStatus === 'pending' || claimStatus === 'preparing')) return 'Claiming...';
+                              return 'Claim';
+                            })()}
                           </Button>
                         ) : (
                           <Button
