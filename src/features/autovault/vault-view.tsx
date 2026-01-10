@@ -203,9 +203,7 @@ export default function VaultContent() {
                     disabled={vaultDataLoading}
                     className="text-secondary min-w-0 px-2"
                   >
-                    <RefetchIcon 
-                      isLoading={vaultDataLoading || isRefetching}  
-                    />
+                    <RefetchIcon isLoading={vaultDataLoading || isRefetching} />
                   </Button>
                 </span>
               </Tooltip>

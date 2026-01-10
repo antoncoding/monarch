@@ -35,8 +35,6 @@ export default function Positions() {
     refetch: refetchVaults,
   } = useUserVaultsV2Query({ userAddress: account as Address });
 
-  console.log('User vaults:', isVaultsLoading, vaults);
-
   const router = useRouter();
 
   // Calculate portfolio value from positions and vaults

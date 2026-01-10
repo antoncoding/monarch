@@ -322,6 +322,26 @@ When wrapping Button in Tooltip, wrap it in a `<span>` to prevent ResizeObserver
 
 ---
 
+### RefetchIcon
+
+**Import:** `@/components/ui/refetch-icon`
+
+Spinning reload icon with smooth animation completion. When `isLoading` becomes false, the icon completes its current rotation before stopping. Use isLoading with data refetching states as well.
+
+```tsx
+import { RefetchIcon } from '@/components/ui/refetch-icon';
+
+// Inside a button
+<Button variant="ghost" size="sm" onClick={onRefresh} disabled={isRefetching}>
+  <RefetchIcon isLoading={isRefetching} />
+</Button>
+
+// Custom size
+<RefetchIcon isLoading={isLoading} className="h-4 w-4" />
+```
+
+---
+
 ### Table
 
 **Import:** `@/components/ui/table`
