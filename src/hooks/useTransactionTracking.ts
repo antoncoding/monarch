@@ -1,4 +1,4 @@
-import { type SetStateAction, useCallback, useState, useRef } from 'react';
+import { type SetStateAction, useCallback, useState, useRef, useMemo } from 'react';
 import {
   useTransactionProcessStore,
   type TransactionStep,
@@ -132,22 +132,25 @@ export function useTransactionTracking(type: string) {
     [store, isVisible],
   );
 
-  return {
-    // State
-    txId,
-    transaction,
-    isVisible,
-    currentStep,
-    steps,
-    // Actions
-    start,
-    update,
-    complete,
-    fail,
-    dismiss,
-    resume,
-    // Legacy aliases for backward compatibility
-    showModal: isVisible,
-    setModalOpen,
-  };
+  return useMemo(
+    () => ({
+      // State
+      txId,
+      transaction,
+      isVisible,
+      currentStep,
+      steps,
+      // Actions
+      start,
+      update,
+      complete,
+      fail,
+      dismiss,
+      resume,
+      // Legacy aliases for backward compatibility
+      showModal: isVisible,
+      setModalOpen,
+    }),
+    [txId, transaction, isVisible, currentStep, steps, start, update, complete, fail, dismiss, resume, setModalOpen],
+  );
 }
