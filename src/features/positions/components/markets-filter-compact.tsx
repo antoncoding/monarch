@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { Divider } from '@/components/ui/divider';
 import { Tooltip } from '@/components/ui/tooltip';
-import { FiFilter } from 'react-icons/fi';
+import { GoFilter } from "react-icons/go";
 import { Button } from '@/components/ui/button';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
 import { IconSwitch } from '@/components/ui/icon-switch';
@@ -85,7 +85,7 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
           <TooltipContent
             title="Filters"
             detail="Toggle market filters and risk guards"
-            icon={<FiFilter size={14} />}
+            icon={<GoFilter size={14} />}
           />
         }
       >
@@ -96,7 +96,7 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
           aria-label="Market filters"
           onClick={onOpen}
         >
-          <FiFilter
+          <GoFilter
             size={variant === 'button' ? 16 : 14}
             style={{ color: hasActiveFilters ? MONARCH_PRIMARY : undefined }}
           />
@@ -116,7 +116,7 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
               variant="compact"
               title="Filters"
               description="Quickly toggle the visibility filters that power the markets table"
-              mainIcon={<FiFilter size={14} />}
+              mainIcon={<GoFilter size={14} />}
               onClose={close}
             />
             <ModalBody

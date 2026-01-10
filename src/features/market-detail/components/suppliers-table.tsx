@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import { FiFilter } from 'react-icons/fi';
+import { GoFilter } from 'react-icons/go';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
               <TooltipContent
                 title="Filters"
                 detail="Filter suppliers by minimum share amount"
-                icon={<FiFilter size={14} />}
+                icon={<GoFilter size={14} />}
               />
             }
           >
@@ -81,7 +81,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
               aria-label="Supplier filters"
               onClick={onOpenFiltersModal}
             >
-              <FiFilter
+              <GoFilter
                 size={14}
                 style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }}
               />
