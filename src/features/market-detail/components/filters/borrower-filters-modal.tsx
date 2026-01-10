@@ -1,5 +1,5 @@
 import { Input } from '@/components/ui/input';
-import { FiSliders } from 'react-icons/fi';
+import { GoFilter } from 'react-icons/go';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { SettingItem, createNumericInputHandler } from './shared-filter-utils';
@@ -34,7 +34,7 @@ export default function BorrowerFiltersModal({
           <ModalHeader
             title="Borrower Filters"
             description="Filter borrowers by minimum borrow amount"
-            mainIcon={<FiSliders className="h-5 w-5" />}
+            mainIcon={<GoFilter className="h-5 w-5" />}
             onClose={onClose}
           />
           <ModalBody className="flex flex-col gap-5">

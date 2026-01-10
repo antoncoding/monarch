@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import moment from 'moment';
-import { FiFilter } from 'react-icons/fi';
+import { GoFilter } from 'react-icons/go';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
@@ -61,7 +61,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
               <TooltipContent
                 title="Filters"
                 detail="Filter transactions by minimum amount"
-                icon={<FiFilter size={14} />}
+                icon={<GoFilter size={14} />}
               />
             }
           >
@@ -72,7 +72,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
               aria-label="Transaction filters"
               onClick={onOpenFiltersModal}
             >
-              <FiFilter
+              <GoFilter
                 size={14}
                 style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }}
               />

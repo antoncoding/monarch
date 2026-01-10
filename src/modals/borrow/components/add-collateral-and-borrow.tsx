@@ -50,7 +50,6 @@ export function AddCollateralAndBorrow({
   // Use the new hook for borrow transaction logic
   const {
     transaction,
-    dismiss,
     useEth,
     setUseEth,
     isLoadingPermit2,

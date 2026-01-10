@@ -33,8 +33,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
   // Use computed markets based on user setting
   const { markets } = useProcessedMarkets();
-  const { rebalanceActions, addRebalanceAction, removeRebalanceAction, executeRebalance, isProcessing, transaction, dismiss } =
-    useRebalance(groupedPosition);
+  const { rebalanceActions, addRebalanceAction, removeRebalanceAction, executeRebalance, isProcessing } = useRebalance(groupedPosition);
 
   // Filter eligible markets (same loan asset and chain)
   // Fresh state is fetched by MarketsTableWithSameLoanAsset component
