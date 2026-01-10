@@ -171,6 +171,20 @@ const processed = useMemo(() => data.filter(...).sort(...), [data]);
 
 Always use our custom Modal components. The shared wrapper applies Monarch typography, corner radius, background, blur, and z-index rules automatically.
 
+#### Modal Systems
+
+| System | Use Case | How It Works |
+|--------|----------|--------------|
+| Local `useState` | Simple, single-trigger modals | Component controls own visibility |
+| `useModalStore` | Multi-trigger, nested, or chained modals | Zustand store, `ModalRenderer` in layout |
+| `GlobalModalContext` | Imperative generic modals | Call `openModal(<Content />)`, renders in provider |
+| `GlobalTransactionModals` | Transaction progress | Reactive to `useTransactionProcessStore`, auto-renders |
+
+**Decision:**
+- Settings, confirmations, forms → `useModalStore` or local state
+- Transaction progress → Use `useTransactionTracking`, modal handled automatically
+- Dynamic content injection → `GlobalModalContext`
+
 ```tsx
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
@@ -758,6 +772,71 @@ const handleExecute = useCallback(() => {
   Execute
 </ExecuteTransactionButton>
 ```
+
+### Transaction Tracking & Process Modal
+
+Multi-step transactions use `useTransactionTracking` + `GlobalTransactionModals` for persistent progress UI.
+
+**Architecture:**
+```
+useTransactionTracking (hook)
+    ↓ writes to
+useTransactionProcessStore (Zustand)
+    ↓ watched by
+GlobalTransactionModals (renders ProcessModal)
+    ↓ background txs shown in
+TransactionIndicator (navbar indicator)
+```
+
+**Usage in transaction hooks:**
+
+```typescript
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
+
+export function useSupplyTransaction(market: Market, onSuccess?: () => void) {
+  const tracking = useTransactionTracking('supply');
+
+  const steps = [
+    { id: 'approve', title: 'Approve Token', description: 'Approving...' },
+    { id: 'signing', title: 'Sign Message', description: 'Sign in wallet' },
+    { id: 'supplying', title: 'Confirm Supply', description: 'Confirm tx' },
+  ];
+
+  const execute = async () => {
+    // Start tracking - modal appears automatically
+    tracking.start(steps, {
+      title: `Supply ${market.loanAsset.symbol}`,        // Required
+      description: `Supplying to market`,                // Optional
+      tokenSymbol: market.loanAsset.symbol,              // Optional metadata
+    }, 'approve');
+
+    try {
+      await doApproval();
+      tracking.update('signing');     // Move to next step
+
+      await doSign();
+      tracking.update('supplying');
+
+      await doSupply();
+      tracking.complete();            // Removes from store, modal closes
+      onSuccess?.();
+    } catch (error) {
+      tracking.fail();                // Removes from store
+      throw error;
+    }
+  };
+
+  return { execute, transaction: tracking.transaction };
+}
+```
+
+**Key methods:**
+- `start(steps, metadata, initialStep)` - Begin tracking, modal shows
+- `update(stepId)` - Move to next step
+- `complete()` / `fail()` - End tracking, remove from store
+- `dismiss()` - Hide modal, tx continues in background (shows in indicator)
+
+**No component-level ProcessModal needed.** `GlobalTransactionModals` (in layout) automatically renders modals for all visible transactions. When user dismisses, tx appears in `TransactionIndicator`. Clicking indicator restores the modal.
 
 ---
 

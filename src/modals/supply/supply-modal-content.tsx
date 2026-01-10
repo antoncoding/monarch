@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import Input from '@/components/Input/Input';
-import { ProcessModal } from '@/components/common/ProcessModal';
 import { useSupplyMarket } from '@/hooks/useSupplyMarket';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
@@ -73,12 +72,6 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
 
   return (
     <>
-      <ProcessModal
-        transaction={transaction}
-        onDismiss={dismiss}
-        title={`Supply ${market.loanAsset.symbol}`}
-        description={`Supplying to market ${market.uniqueKey.slice(2, 8)}`}
-      />
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           {/* Supply Input Section */}

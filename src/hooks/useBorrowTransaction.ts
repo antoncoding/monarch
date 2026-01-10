@@ -327,9 +327,16 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
 
     try {
       const initialStep = useEth ? 'execute' : usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
+      const txTitle = collateralAmount > 0n && borrowAmount === 0n ? 'Add Collateral' : 'Borrow';
       tracking.start(
         getStepsForFlow(useEth, usePermit2Setting),
-        { tokenSymbol: market.collateralAsset.symbol, amount: collateralAmount, marketId: market.uniqueKey },
+        {
+          title: txTitle,
+          description: `${market.collateralAsset.symbol} → ${market.loanAsset.symbol}`,
+          tokenSymbol: market.collateralAsset.symbol,
+          amount: collateralAmount,
+          marketId: market.uniqueKey,
+        },
         initialStep,
       );
 
@@ -357,9 +364,16 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     }
 
     try {
+      const txTitle = collateralAmount > 0n && borrowAmount === 0n ? 'Add Collateral' : 'Borrow';
       tracking.start(
         getStepsForFlow(useEth, usePermit2Setting),
-        { tokenSymbol: market.collateralAsset.symbol, amount: collateralAmount, marketId: market.uniqueKey },
+        {
+          title: txTitle,
+          description: `${market.collateralAsset.symbol} → ${market.loanAsset.symbol}`,
+          tokenSymbol: market.collateralAsset.symbol,
+          amount: collateralAmount,
+          marketId: market.uniqueKey,
+        },
         'sign_permit',
       );
 

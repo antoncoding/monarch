@@ -18,20 +18,15 @@ function StepIcon({ status }: { status: StepStatus }): JSX.Element {
   const renderIcon = () => {
     switch (status) {
       case 'done':
-        return <FaCheckCircle className="h-5 w-5 text-primary" />;
+        return <FaCheckCircle className="h-4 w-4 text-foreground/60" />;
       case 'current':
-        return (
-          <div className="relative flex items-center justify-center">
-            <FaCircle className="h-4 w-4 text-primary" />
-            <div className="absolute h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-          </div>
-        );
+        return <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground" />;
       default:
-        return <FaCircle className="h-5 w-5 text-gray-300 dark:text-gray-600" />;
+        return <FaCircle className="h-2 w-2 text-foreground/30" />;
     }
   };
 
-  return <div className={cn('mt-0.5 transition-all duration-300', status === 'current' && 'scale-110')}>{renderIcon()}</div>;
+  return <div className="flex h-5 w-5 items-center justify-center">{renderIcon()}</div>;
 }
 
 /**
@@ -48,25 +43,25 @@ export function ProcessStepList({ steps, currentStep }: ProcessStepListProps): J
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {steps.map((step, index) => {
         const status = getStepStatus(index);
+        const isCurrent = status === 'current';
 
         return (
           <div
             key={step.id}
             className={cn(
-              'flex items-start gap-3 rounded border p-3',
-              'transition-all duration-300 ease-out',
-              status === 'current' && ['border-primary bg-primary/5', 'scale-[1.02] shadow-sm shadow-primary/10'],
-              status === 'done' && 'border-border opacity-70',
-              status === 'undone' && 'border-border opacity-40',
+              'flex items-start gap-3 rounded-lg border p-3 transition-all duration-300 ease-out',
+              isCurrent && 'border-foreground/20 bg-foreground/5',
+              status === 'done' && 'border-foreground/10 opacity-70',
+              status === 'undone' && 'border-foreground/5 opacity-40',
             )}
           >
             <StepIcon status={status} />
-            <div className={cn('transition-opacity duration-300', status === 'undone' && 'opacity-60')}>
-              <div className="font-medium">{step.title}</div>
-              <div className="text-sm text-secondary">{step.description}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm">{step.title}</div>
+              {isCurrent && <div className="mt-0.5 text-sm text-secondary">{step.description}</div>}
             </div>
           </div>
         );

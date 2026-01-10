@@ -54,7 +54,16 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
         toast.info('Network changed');
       }
 
-      tracking.start(WRAP_STEPS, { tokenSymbol: 'MORPHO', amount }, 'approve');
+      tracking.start(
+        WRAP_STEPS,
+        {
+          title: 'Wrap MORPHO',
+          description: 'Wrapping legacy MORPHO tokens',
+          tokenSymbol: 'MORPHO',
+          amount,
+        },
+        'approve',
+      );
 
       if (!isApproved) {
         await approve();

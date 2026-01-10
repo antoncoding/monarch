@@ -8,7 +8,6 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import Input from '@/components/Input/Input';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/features/markets/components/market-identity';
-import { ProcessModal } from '@/components/common/ProcessModal';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -343,14 +342,6 @@ export function SetupPositions({ onClose }: { onClose: () => void }) {
       </div>
 
       {error && <div className="mt-4 text-sm text-red-500">{error}</div>}
-
-      {/* Process Modal */}
-      <ProcessModal
-        transaction={transaction}
-        onDismiss={dismiss}
-        title={`Supply ${selectedToken.symbol}`}
-        description={`Supplying to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`}
-      />
 
       {/* Footer Navigation */}
       <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-gray-700">

@@ -181,7 +181,7 @@ export function useMultiMarketSupply(
       if (error instanceof Error) {
         toast.error('Transaction failed', error.message);
       } else {
-        toast.error('Transaction failed', 'Transaction failed or cancled');
+        toast.error('Transaction failed', 'Transaction failed or canceled');
       }
       throw error; // Re-throw to be caught by approveAndSupply
     }
@@ -220,7 +220,15 @@ export function useMultiMarketSupply(
               { id: 'supplying', title: 'Supplying', description: `Supplying ${tokenSymbol}` },
             ];
 
-      tracking.start(steps, { tokenSymbol }, useEth ? 'supplying' : 'approve');
+      tracking.start(
+        steps,
+        {
+          title: `Supply ${tokenSymbol}`,
+          description: `Supplying to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
+          tokenSymbol,
+        },
+        useEth ? 'supplying' : 'approve',
+      );
 
       if (useEth) {
         const success = await executeSupplyTransaction();

@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import Input from '@/components/Input/Input';
-import { ProcessModal } from '@/components/common/ProcessModal';
 import { useRepayTransaction } from '@/hooks/useRepayTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
@@ -324,13 +323,6 @@ export function WithdrawCollateralAndRepay({
         </div>
       </div>
 
-      {/* Process Modal */}
-      <ProcessModal
-        transaction={transaction}
-        onDismiss={dismiss}
-        title={withdrawAmount > 0n ? 'Withdraw & Repay' : 'Repay'}
-        description={`Repaying ${market.loanAsset.symbol}`}
-      />
     </div>
   );
 }

@@ -6,17 +6,21 @@ export type TransactionStep = {
   description: string;
 };
 
+export type TransactionMetadata = {
+  title: string;
+  description?: string;
+  tokenSymbol?: string;
+  amount?: bigint;
+  marketId?: string;
+  vaultName?: string;
+};
+
 export type ActiveTransaction = {
   id: string;
   type: string;
   currentStep: string;
   steps: TransactionStep[];
-  metadata: {
-    tokenSymbol?: string;
-    amount?: bigint;
-    marketId?: string;
-    vaultName?: string;
-  };
+  metadata: TransactionMetadata;
   startedAt: number;
   isModalVisible: boolean;
 };

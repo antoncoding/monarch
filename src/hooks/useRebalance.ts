@@ -114,8 +114,8 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
           },
           {
             id: 'authorize_bundler_sig',
-            title: 'Authorize Morpho Bundler (Signature)',
-            description: 'Sign a message to authorize the Morpho bundler if needed.',
+            title: 'Authorize Morpho Bundler',
+            description: 'Sign a message to authorize the Morpho bundler for your position.',
           },
           { id: 'sign_permit', title: 'Sign Token Permit', description: 'Sign a Permit2 signature to authorize the token transfer' },
           { id: 'execute', title: 'Confirm Rebalance', description: 'Confirm transaction in wallet to complete the rebalance' },
@@ -125,7 +125,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         {
           id: 'authorize_bundler_tx',
           title: 'Authorize Morpho Bundler (Transaction)',
-          description: 'Submit a transaction to authorize the Morpho bundler if needed.',
+          description: 'Submit a transaction to authorize the Morpho bundler for your position.',
         },
         {
           id: 'approve_token',
@@ -241,7 +241,15 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     const transactions: `0x${string}`[] = [];
 
     const initialStep = usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
-    tracking.start(getStepsForFlow(usePermit2Setting), { tokenSymbol: groupedPosition.loanAsset }, initialStep);
+    tracking.start(
+      getStepsForFlow(usePermit2Setting),
+      {
+        title: 'Rebalance',
+        description: `Rebalancing ${groupedPosition.loanAsset} positions`,
+        tokenSymbol: groupedPosition.loanAsset,
+      },
+      initialStep,
+    );
 
     try {
       const { withdrawTxs, supplyTxs, allMarketKeys } = generateRebalanceTxData();

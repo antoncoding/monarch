@@ -1,5 +1,6 @@
 import type React from 'react';
-import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
+import { FiX } from 'react-icons/fi';
+import { Modal, ModalBody } from '@/components/common/Modal';
 import { ProcessStepList } from '@/components/common/ProcessStepList';
 import type { ActiveTransaction } from '@/stores/useTransactionProcessStore';
 
@@ -23,10 +24,6 @@ type ProcessModalProps = {
    */
   description?: string;
   /**
-   * Icon displayed next to title
-   */
-  icon?: React.ReactNode;
-  /**
    * Additional content rendered above the step list.
    * Use for market info blocks, amounts, etc.
    */
@@ -48,14 +45,12 @@ type ProcessModalProps = {
  *     transaction={tracking.transaction}
  *     onDismiss={tracking.dismiss}
  *     title={`Supply ${tokenSymbol}`}
- *     icon={<FiUpload />}
- *   >
- *     <MarketInfoBlock market={market} amount={amount} />
- *   </ProcessModal>
+ *     description="Supplying to market"
+ *   />
  * );
  * ```
  */
-export function ProcessModal({ transaction, onDismiss, title, description, icon, children }: ProcessModalProps) {
+export function ProcessModal({ transaction, onDismiss, title, description, children }: ProcessModalProps) {
   // Don't render if no transaction or modal is hidden
   if (!transaction?.isModalVisible) return null;
 
@@ -70,18 +65,22 @@ export function ProcessModal({ transaction, onDismiss, title, description, icon,
       isDismissable={false}
       backdrop="blur"
     >
-      <ModalHeader
-        title={title}
-        description={description}
-        mainIcon={icon}
-        onClose={onDismiss}
-      />
+      <div className="flex items-center justify-between px-6 pt-6 pb-2">
+        <div>
+          <h2 className="font-zen text-lg">{title}</h2>
+          <p className="text-sm text-secondary">{description ?? `${transaction.steps.length} steps`}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="rounded p-1 text-secondary transition-colors hover:bg-foreground/10 hover:text-foreground"
+        >
+          <FiX className="h-4 w-4" />
+        </button>
+      </div>
       <ModalBody className="gap-5">
         {children}
-        <ProcessStepList
-          steps={transaction.steps}
-          currentStep={transaction.currentStep}
-        />
+        <ProcessStepList steps={transaction.steps} currentStep={transaction.currentStep} />
       </ModalBody>
     </Modal>
   );

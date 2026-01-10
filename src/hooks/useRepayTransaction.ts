@@ -280,9 +280,16 @@ export function useRepayTransaction({
     }
 
     try {
+      const txTitle = withdrawAmount > 0n ? 'Withdraw & Repay' : 'Repay';
       tracking.start(
         getStepsForFlow(usePermit2Setting),
-        { tokenSymbol: market.loanAsset.symbol, amount: repayAssets, marketId: market.uniqueKey },
+        {
+          title: txTitle,
+          description: `Repaying ${market.loanAsset.symbol}`,
+          tokenSymbol: market.loanAsset.symbol,
+          amount: repayAssets,
+          marketId: market.uniqueKey,
+        },
         'approve',
       );
 
@@ -359,9 +366,16 @@ export function useRepayTransaction({
     }
 
     try {
+      const txTitle = withdrawAmount > 0n ? 'Withdraw & Repay' : 'Repay';
       tracking.start(
         getStepsForFlow(usePermit2Setting),
-        { tokenSymbol: market.loanAsset.symbol, amount: repayAssets, marketId: market.uniqueKey },
+        {
+          title: txTitle,
+          description: `Repaying ${market.loanAsset.symbol}`,
+          tokenSymbol: market.loanAsset.symbol,
+          amount: repayAssets,
+          marketId: market.uniqueKey,
+        },
         'signing',
       );
 

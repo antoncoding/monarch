@@ -278,7 +278,13 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       const initialStep = useEth ? 'supplying' : 'approve';
       start(
         getStepsForFlow(useEth, usePermit2Setting),
-        { tokenSymbol: market.loanAsset.symbol, amount: supplyAmount, marketId: market.uniqueKey },
+        {
+          title: `Supply ${market.loanAsset.symbol}`,
+          description: `Supplying to market ${market.uniqueKey.slice(2, 8)}`,
+          tokenSymbol: market.loanAsset.symbol,
+          amount: supplyAmount,
+          marketId: market.uniqueKey,
+        },
         initialStep,
       );
 
@@ -370,7 +376,13 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     try {
       start(
         getStepsForFlow(useEth, usePermit2Setting),
-        { tokenSymbol: market.loanAsset.symbol, amount: supplyAmount, marketId: market.uniqueKey },
+        {
+          title: `Supply ${market.loanAsset.symbol}`,
+          description: `Supplying to market ${market.uniqueKey.slice(2, 8)}`,
+          tokenSymbol: market.loanAsset.symbol,
+          amount: supplyAmount,
+          marketId: market.uniqueKey,
+        },
         'signing',
       );
 

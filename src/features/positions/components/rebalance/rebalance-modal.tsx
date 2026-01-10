@@ -3,7 +3,6 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
-import { ProcessModal } from '@/components/common/ProcessModal';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
@@ -216,12 +215,6 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
   return (
     <>
-      <ProcessModal
-        transaction={transaction}
-        onDismiss={dismiss}
-        title="Rebalance"
-        description={`Rebalancing ${groupedPosition.loanAsset} positions`}
-      />
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}

@@ -1,12 +1,10 @@
 import { type SetStateAction, useCallback, useState, useRef } from 'react';
-import { useTransactionProcessStore, type TransactionStep, type ActiveTransaction } from '@/stores/useTransactionProcessStore';
-
-type TransactionMetadata = {
-  tokenSymbol?: string;
-  amount?: bigint;
-  marketId?: string;
-  vaultName?: string;
-};
+import {
+  useTransactionProcessStore,
+  type TransactionStep,
+  type ActiveTransaction,
+  type TransactionMetadata,
+} from '@/stores/useTransactionProcessStore';
 
 /**
  * Hook that simplifies transaction tracking with the global store.
@@ -20,7 +18,7 @@ type TransactionMetadata = {
  * const tracking = useTransactionTracking('supply');
  *
  * const handleSupply = async () => {
- *   tracking.start(steps, { tokenSymbol: 'USDC' }, 'approve');
+ *   tracking.start(steps, { title: 'Supply USDC', tokenSymbol: 'USDC' }, 'approve');
  *   try {
  *     await doApproval();
  *     tracking.update('signing');

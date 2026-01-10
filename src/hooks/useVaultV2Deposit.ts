@@ -231,7 +231,17 @@ export function useVaultV2Deposit({
     }
 
     try {
-      tracking.start(getStepsForFlow(usePermit2Setting), { tokenSymbol: assetSymbol, amount: depositAmount, vaultName }, 'approve');
+      tracking.start(
+        getStepsForFlow(usePermit2Setting),
+        {
+          title: `Deposit ${assetSymbol}`,
+          description: `Depositing to ${vaultName}`,
+          tokenSymbol: assetSymbol,
+          amount: depositAmount,
+          vaultName,
+        },
+        'approve',
+      );
 
       if (usePermit2Setting) {
         // Permit2 flow
@@ -316,7 +326,17 @@ export function useVaultV2Deposit({
     }
 
     try {
-      tracking.start(getStepsForFlow(usePermit2Setting), { tokenSymbol: assetSymbol, amount: depositAmount, vaultName }, 'signing');
+      tracking.start(
+        getStepsForFlow(usePermit2Setting),
+        {
+          title: `Deposit ${assetSymbol}`,
+          description: `Depositing to ${vaultName}`,
+          tokenSymbol: assetSymbol,
+          amount: depositAmount,
+          vaultName,
+        },
+        'signing',
+      );
 
       await executeDepositTransaction();
     } catch (error: unknown) {

@@ -13,7 +13,6 @@ import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { ProcessModal } from '@/components/common/ProcessModal';
 import useUserRewards from '@/hooks/useRewards';
 
 import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
@@ -266,12 +265,6 @@ export default function Rewards() {
           </section>
         </div>
       </div>
-      <ProcessModal
-        transaction={transaction}
-        onDismiss={dismiss}
-        title="Wrap MORPHO"
-        description="Wrapping legacy MORPHO tokens"
-      />
     </div>
   );
 }

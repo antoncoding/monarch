@@ -10,7 +10,6 @@ import { formatBalance, formatReadable } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
 import type { Market, MarketPosition } from '@/utils/types';
-import { ProcessModal } from '@/components/common/ProcessModal';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { getLTVColor, getLTVProgressColor } from './helpers';
@@ -120,12 +119,6 @@ export function AddCollateralAndBorrow({
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
-      <ProcessModal
-        transaction={transaction}
-        onDismiss={dismiss}
-        title={collateralAmount > 0n && borrowAmount === 0n ? 'Add Collateral' : 'Borrow'}
-        description={`${market.collateralAsset.symbol} → ${market.loanAsset.symbol}`}
-      />
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           {/* Position Overview Box with dynamic LTV */}
