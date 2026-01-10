@@ -1,19 +1,24 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';
 
 import wrapperABI from '@/abis/morpho-wrapper';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHO_LEGACY, MORPHO_TOKEN_WRAPPER } from '@/utils/tokens';
 import { useERC20Approval } from './useERC20Approval';
 
 export type WrapStep = 'approve' | 'wrap';
 
+const WRAP_STEPS = [
+  { id: 'approve', title: 'Approve MORPHO', description: 'Approve legacy MORPHO tokens for wrapping' },
+  { id: 'wrap', title: 'Wrap MORPHO', description: 'Confirm transaction to wrap your MORPHO tokens' },
+];
+
 export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
-  const [currentStep, setCurrentStep] = useState<WrapStep>('approve');
-  const [showProcessModal, setShowProcessModal] = useState(false);
+  const tracking = useTransactionTracking('wrap');
 
   const { address: account, chainId } = useConnection();
   const { switchChainAsync } = useSwitchChain();
@@ -32,7 +37,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
     successText: 'Successfully wrapped MORPHO tokens!',
     errorText: 'Failed to wrap MORPHO tokens',
     onSuccess: () => {
-      setShowProcessModal(false);
+      tracking.complete();
       onSuccess?.();
     },
   });
@@ -49,13 +54,22 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
         toast.info('Network changed');
       }
 
-      setShowProcessModal(true);
+      tracking.start(
+        WRAP_STEPS,
+        {
+          title: 'Wrap MORPHO',
+          description: 'Wrapping legacy MORPHO tokens',
+          tokenSymbol: 'MORPHO',
+          amount,
+        },
+        'approve',
+      );
+
       if (!isApproved) {
-        setCurrentStep('approve');
         await approve();
       }
 
-      setCurrentStep('wrap');
+      tracking.update('wrap');
       await sendTransactionAsync({
         account: account,
         to: MORPHO_TOKEN_WRAPPER,
@@ -67,15 +81,16 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
       });
     } catch (_err) {
       toast.error('Failed to wrap MORPHO.');
-      setShowProcessModal(false);
+      tracking.fail();
     }
-  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync]);
+  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync, tracking]);
 
   return {
     wrap,
-    currentStep,
-    showProcessModal,
-    setShowProcessModal,
+    // Transaction tracking
+    transaction: tracking.transaction,
+    dismiss: tracking.dismiss,
+    currentStep: tracking.currentStep as WrapStep | null,
     isApproved,
   };
 }

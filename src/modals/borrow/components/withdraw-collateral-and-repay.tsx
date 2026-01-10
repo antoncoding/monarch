@@ -2,8 +2,8 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import Input from '@/components/Input/Input';
-import { RepayProcessModal } from '@/modals/borrow/repay-process-modal';
 import { useRepayTransaction } from '@/hooks/useRepayTransaction';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
 import type { Market, MarketPosition } from '@/utils/types';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
@@ -30,14 +30,13 @@ export function WithdrawCollateralAndRepay({
   onSuccess,
   isRefreshing = false,
 }: WithdrawCollateralAndRepayProps): JSX.Element {
+  const { usePermit2: usePermit2Setting } = useAppSettings();
+
   // State for withdraw and repay amounts
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
-
   const [repayAssets, setRepayAssets] = useState<bigint>(BigInt(0));
-
   // Only specified when click on "max" button. If set, the contract specify exactly how much shares to repay
   const [repayShares, setRepayShares] = useState<bigint>(BigInt(0));
-
   const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
   const [repayInputError, setRepayInputError] = useState<string | null>(null);
 
@@ -49,32 +48,23 @@ export function WithdrawCollateralAndRepay({
   const [newLTV, setNewLTV] = useState<bigint>(BigInt(0));
 
   // Use the repay transaction hook
-  const {
-    currentStep,
-    showProcessModal,
-    setShowProcessModal,
-    isLoadingPermit2,
-    isApproved,
-    permit2Authorized,
-    repayPending,
-    approveAndRepay,
-    signAndRepay,
-  } = useRepayTransaction({
-    market,
-    currentPosition,
-    withdrawAmount,
-    repayAssets,
-    repayShares,
-    onSuccess,
-  });
+  const { transaction, dismiss, isLoadingPermit2, isApproved, permit2Authorized, repayPending, approveAndRepay, signAndRepay } =
+    useRepayTransaction({
+      market,
+      currentPosition,
+      withdrawAmount,
+      repayAssets,
+      repayShares,
+      onSuccess,
+    });
 
   const handleRepay = useCallback(() => {
-    if (!isApproved && !permit2Authorized) {
+    if (!permit2Authorized || (!usePermit2Setting && !isApproved)) {
       void approveAndRepay();
     } else {
       void signAndRepay();
     }
-  }, [isApproved, permit2Authorized, approveAndRepay, signAndRepay]);
+  }, [permit2Authorized, usePermit2Setting, isApproved, approveAndRepay, signAndRepay]);
 
   // if max is clicked, set the repayShares to max shares
   const setShareToMax = useCallback(() => {
@@ -332,19 +322,6 @@ export function WithdrawCollateralAndRepay({
           )}
         </div>
       </div>
-
-      {/* Process Modal */}
-      {showProcessModal && (
-        <RepayProcessModal
-          market={market}
-          repayAmount={repayAssets}
-          withdrawAmount={withdrawAmount}
-          currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
-          tokenSymbol={market.loanAsset.symbol}
-          usePermit2
-        />
-      )}
     </div>
   );
 }

@@ -21,10 +21,6 @@ const RebalanceModal = lazy(() =>
   import('@/features/positions/components/rebalance/rebalance-modal').then((m) => ({ default: m.RebalanceModal })),
 );
 
-const RebalanceProcessModal = lazy(() =>
-  import('@/features/positions/components/rebalance/rebalance-process-modal').then((m) => ({ default: m.RebalanceProcessModal })),
-);
-
 const RebalanceMarketSelectionModal = lazy(() =>
   import('@/features/markets/components/market-selection-modal').then((m) => ({ default: m.MarketSelectionModal })),
 );
@@ -58,7 +54,6 @@ export const MODAL_REGISTRY: {
   bridgeSwap: SwapModal,
   supply: SupplyModalV2,
   rebalance: RebalanceModal,
-  rebalanceProcess: RebalanceProcessModal,
   rebalanceMarketSelection: RebalanceMarketSelectionModal,
   marketSettings: MarketSettingsModal,
   trustedVaults: TrustedVaultsModal,

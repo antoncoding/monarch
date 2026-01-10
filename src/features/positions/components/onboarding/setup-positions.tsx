@@ -8,7 +8,6 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import Input from '@/components/Input/Input';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/features/markets/components/market-identity';
-import { SupplyProcessModal } from '@/modals/supply/supply-process-modal';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -177,7 +176,7 @@ export function SetupPositions({ onClose }: { onClose: () => void }) {
       .filter((supply) => supply.amount > 0n);
   }, [selectedMarkets, amounts, tokenDecimals]);
 
-  const { currentStep, showProcessModal, setShowProcessModal, isLoadingPermit2, approveAndSupply, supplyPending } = useMultiMarketSupply(
+  const { transaction, dismiss, isLoadingPermit2, approveAndSupply, supplyPending } = useMultiMarketSupply(
     selectedToken!,
     supplies,
     useEth,
@@ -343,18 +342,6 @@ export function SetupPositions({ onClose }: { onClose: () => void }) {
       </div>
 
       {error && <div className="mt-4 text-sm text-red-500">{error}</div>}
-
-      {/* Process Modal */}
-      {showProcessModal && (
-        <SupplyProcessModal
-          supplies={supplies}
-          currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
-          tokenSymbol={selectedToken.symbol}
-          useEth={useEth}
-          usePermit2={usePermit2Setting}
-        />
-      )}
 
       {/* Footer Navigation */}
       <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-gray-700">

@@ -7,6 +7,7 @@ import RiskNotificationModal from '@/modals/risk-notification-modal';
 import { VaultRegistryProvider } from '@/contexts/VaultRegistryContext';
 import OnchainProviders from '@/OnchainProviders';
 import { ModalRenderer } from '@/components/modals/ModalRenderer';
+import { GlobalTransactionModals } from '@/components/common/GlobalTransactionModals';
 import { StorageMigrator } from '@/components/StorageMigrator';
 import { DataPrefetcher } from '@/components/DataPrefetcher';
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   {children}
                   <RiskNotificationModal />
                   <ModalRenderer />
+                  <GlobalTransactionModals />
                 </ClientProviders>
               </VaultRegistryProvider>
             </OnchainProviders>

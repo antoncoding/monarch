@@ -12,6 +12,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 
 type UseBorrowTransactionProps = {
   market: Market;
@@ -30,10 +31,11 @@ export type BorrowStepType =
   | 'execute'; // Common final step
 
 export function useBorrowTransaction({ market, collateralAmount, borrowAmount, onSuccess }: UseBorrowTransactionProps) {
-  const [currentStep, setCurrentStep] = useState<BorrowStepType>('approve_permit2');
-  const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const { usePermit2: usePermit2Setting } = useAppSettings();
   const [useEth, setUseEth] = useState<boolean>(false);
+
+  // Transaction tracking
+  const tracking = useTransactionTracking('borrow');
 
   const { address: account, chainId } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);
@@ -85,6 +87,45 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     },
   });
 
+  // Helper to generate steps based on flow type
+  const getStepsForFlow = useCallback(
+    (isEth: boolean, isPermit2: boolean) => {
+      if (isEth) {
+        return [{ id: 'execute', title: 'Confirm Borrow', description: 'Confirm transaction in wallet to complete the borrow' }];
+      }
+      if (isPermit2) {
+        return [
+          {
+            id: 'approve_permit2',
+            title: 'Authorize Permit2',
+            description: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+          },
+          {
+            id: 'authorize_bundler_sig',
+            title: 'Authorize Morpho Bundler (Signature)',
+            description: 'Sign a message to authorize the Morpho bundler if needed.',
+          },
+          { id: 'sign_permit', title: 'Sign Token Permit', description: 'Sign a Permit2 signature to authorize the collateral' },
+          { id: 'execute', title: 'Confirm Borrow', description: 'Confirm transaction in wallet to complete the borrow' },
+        ];
+      }
+      return [
+        {
+          id: 'authorize_bundler_tx',
+          title: 'Authorize Morpho Bundler (Transaction)',
+          description: 'Submit a transaction to authorize the Morpho bundler if needed.',
+        },
+        {
+          id: 'approve_token',
+          title: `Approve ${market.collateralAsset.symbol}`,
+          description: `Approve ${market.collateralAsset.symbol} for spending`,
+        },
+        { id: 'execute', title: 'Confirm Borrow', description: 'Confirm transaction in wallet to complete the borrow' },
+      ];
+    },
+    [market.collateralAsset.symbol],
+  );
+
   // Core transaction execution logic
   const executeBorrowTransaction = useCallback(async () => {
     const minSharesToBorrow =
@@ -93,15 +134,26 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     try {
       const transactions: `0x${string}`[] = [];
 
-      if (usePermit2Setting) {
+      // --- ETH Flow: Skip permit2/ERC20 approval, native ETH can't be permit-signed ---
+      if (useEth) {
+        tracking.update('execute');
+
+        // Bundler authorization may still be needed for the borrow operation
+        if (!isBundlerAuthorized) {
+          const bundlerAuthSigTx = await authorizeBundlerWithSignature();
+          if (bundlerAuthSigTx) {
+            transactions.push(bundlerAuthSigTx);
+          }
+        }
+      } else if (usePermit2Setting) {
         // --- Permit2 Flow ---
-        setCurrentStep('approve_permit2');
+        tracking.update('approve_permit2');
         if (!permit2Authorized) {
           await authorizePermit2(); // Authorize Permit2 contract
           await new Promise((resolve) => setTimeout(resolve, 800)); // UI delay
         }
 
-        setCurrentStep('authorize_bundler_sig');
+        tracking.update('authorize_bundler_sig');
         const bundlerAuthSigTx = await authorizeBundlerWithSignature(); // Get signature for Bundler auth if needed
         if (bundlerAuthSigTx) {
           transactions.push(bundlerAuthSigTx);
@@ -109,7 +161,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         }
 
         if (collateralAmount > 0n) {
-          setCurrentStep('sign_permit');
+          tracking.update('sign_permit');
           const { sigs, permitSingle } = await signForBundlers();
           console.log('Signed for bundlers:', { sigs, permitSingle });
 
@@ -129,9 +181,11 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
           transactions.push(permitTx);
           transactions.push(transferFromTx);
         }
+
+        tracking.update('execute');
       } else {
         // --- Standard ERC20 Flow ---
-        setCurrentStep('authorize_bundler_tx');
+        tracking.update('authorize_bundler_tx');
         const bundlerTxAuthorized = await authorizeWithTransaction(); // Authorize Bundler via TX if needed
         if (!bundlerTxAuthorized) {
           throw new Error('Failed to authorize Bundler via transaction.'); // Stop if auth tx fails/is rejected
@@ -139,7 +193,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeWithTransaction
 
         if (collateralAmount > 0n) {
-          setCurrentStep('approve_token');
+          tracking.update('approve_token');
           if (!isApproved) {
             await approve(); // Approve ERC20 token
             await new Promise((resolve) => setTimeout(resolve, 1000)); // UI delay
@@ -154,9 +208,9 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
             }),
           );
         }
-      }
 
-      setCurrentStep('execute');
+        tracking.update('execute');
+      }
 
       if (useEth && collateralAmount > 0n) {
         transactions.push(
@@ -234,10 +288,9 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         },
       ]);
 
-      // come back to main borrow page
-      setShowProcessModal(false);
+      tracking.complete();
     } catch (error: unknown) {
-      setShowProcessModal(false);
+      tracking.fail();
       console.error('Error during borrow execution:', error);
       if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
         toast.error('Borrow Failed', 'An unexpected error occurred during borrow.');
@@ -254,6 +307,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     permit2Authorized,
     authorizePermit2,
     authorizeBundlerWithSignature,
+    isBundlerAuthorized,
     signForBundlers,
     authorizeWithTransaction,
     isApproved,
@@ -261,6 +315,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     batchAddUserMarkets,
     bundlerAddress,
     toast,
+    tracking,
   ]);
 
   // Combined approval and borrow flow
@@ -271,11 +326,24 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     }
 
     try {
-      setShowProcessModal(true);
+      const initialStep = useEth ? 'execute' : usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
+      const txTitle = collateralAmount > 0n && borrowAmount === 0n ? 'Add Collateral' : 'Borrow';
+      tracking.start(
+        getStepsForFlow(useEth, usePermit2Setting),
+        {
+          title: txTitle,
+          description: `${market.collateralAsset.symbol} → ${market.loanAsset.symbol}`,
+          tokenSymbol: market.collateralAsset.symbol,
+          amount: collateralAmount,
+          marketId: market.uniqueKey,
+        },
+        initialStep,
+      );
+
       await executeBorrowTransaction();
     } catch (error: unknown) {
       console.error('Error in approveAndBorrow:', error);
-      setShowProcessModal(false);
+      tracking.fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -286,7 +354,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         toast.error('Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeBorrowTransaction, toast]);
+  }, [account, executeBorrowTransaction, toast, useEth, usePermit2Setting, tracking, getStepsForFlow, market, collateralAmount, borrowAmount]);
 
   // Function to handle signing and executing the borrow transaction
   const signAndBorrow = useCallback(async () => {
@@ -296,11 +364,23 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     }
 
     try {
-      setShowProcessModal(true);
+      const txTitle = collateralAmount > 0n && borrowAmount === 0n ? 'Add Collateral' : 'Borrow';
+      tracking.start(
+        getStepsForFlow(useEth, usePermit2Setting),
+        {
+          title: txTitle,
+          description: `${market.collateralAsset.symbol} → ${market.loanAsset.symbol}`,
+          tokenSymbol: market.collateralAsset.symbol,
+          amount: collateralAmount,
+          marketId: market.uniqueKey,
+        },
+        'sign_permit',
+      );
+
       await executeBorrowTransaction();
     } catch (error: unknown) {
       console.error('Error in signAndBorrow:', error);
-      setShowProcessModal(false);
+      tracking.fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -311,16 +391,17 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeBorrowTransaction, toast]);
+  }, [account, executeBorrowTransaction, toast, tracking, getStepsForFlow, useEth, usePermit2Setting, market, collateralAmount, borrowAmount]);
 
   // Determine overall loading state
   const isLoading = borrowPending || isLoadingPermit2 || isApproving || isAuthorizingBundler;
 
   return {
+    // Transaction tracking
+    transaction: tracking.transaction,
+    dismiss: tracking.dismiss,
+    currentStep: tracking.currentStep as BorrowStepType | null,
     // State
-    currentStep,
-    showProcessModal,
-    setShowProcessModal,
     useEth,
     setUseEth,
     isLoadingPermit2,
@@ -328,10 +409,8 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     permit2Authorized,
     borrowPending,
     isLoading,
-
     // Expose relevant states for UI feedback
     isBundlerAuthorized,
-
     // Actions
     approveAndBorrow,
     signAndBorrow,

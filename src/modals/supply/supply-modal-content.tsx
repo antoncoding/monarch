@@ -9,7 +9,6 @@ import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
-import { SupplyProcessModal } from './supply-process-modal';
 import { useModal } from '@/hooks/useModal';
 import { RiSparklingFill } from 'react-icons/ri';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
@@ -30,7 +29,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
   const onSuccess = useCallback(() => {
     onClose();
     refetch();
-  }, [onClose]);
+  }, [onClose, refetch]);
 
   // Use the hook to handle all supply logic
   const {
@@ -40,9 +39,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
     setInputError,
     useEth,
     setUseEth,
-    showProcessModal,
-    setShowProcessModal,
-    currentStep,
+    transaction,
     tokenBalance,
     ethBalance,
     isApproved,
@@ -74,17 +71,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
 
   return (
     <>
-      {showProcessModal && (
-        <SupplyProcessModal
-          supplies={[{ market, amount: supplyAmount }]}
-          currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
-          tokenSymbol={market.loanAsset.symbol}
-          useEth={useEth}
-          usePermit2={usePermit2Setting}
-        />
-      )}
-      {!showProcessModal && (
+      {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           {/* Supply Input Section */}
           <div className="mt-12 space-y-4">

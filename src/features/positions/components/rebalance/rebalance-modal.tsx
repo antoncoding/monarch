@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,6 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
-import { useAppSettings } from '@/stores/useAppSettings';
 import { useModalStore } from '@/stores/useModalStore';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useRebalance } from '@/hooks/useRebalance';
@@ -30,20 +29,12 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   const [selectedToMarketUniqueKey, setSelectedToMarketUniqueKey] = useState('');
   const [amount, setAmount] = useState<string>('0');
   const toast = useStyledToast();
-  const { usePermit2: usePermit2Setting } = useAppSettings();
-  const { open: openModal, close: closeModal, update: updateModal, isOpen: isModalOpen } = useModalStore();
+  const { open: openModal, close: closeModal } = useModalStore();
 
   // Use computed markets based on user setting
   const { markets } = useProcessedMarkets();
-  const { rebalanceActions, addRebalanceAction, removeRebalanceAction, executeRebalance, isProcessing, currentStep } =
+  const { rebalanceActions, addRebalanceAction, removeRebalanceAction, executeRebalance, isProcessing, transaction, dismiss } =
     useRebalance(groupedPosition);
-
-  // Sync currentStep to rebalanceProcess modal when it changes
-  useEffect(() => {
-    if (isModalOpen('rebalanceProcess')) {
-      updateModal('rebalanceProcess', { currentStep });
-    }
-  }, [currentStep, isModalOpen, updateModal]);
 
   // Filter eligible markets (same loan asset and chain)
   // Fresh state is fetched by MarketsTableWithSameLoanAsset component
@@ -200,16 +191,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
   const handleExecuteRebalance = useCallback(() => {
     void (async () => {
-      openModal('rebalanceProcess', {
-        currentStep,
-        isPermit2Flow: usePermit2Setting,
-        tokenSymbol: groupedPosition.loanAsset,
-        actionsCount: rebalanceActions.length,
-      });
       try {
         const result = await executeRebalance();
         // Explicitly refetch AFTER successful execution
-
         if (result === true) {
           refetch(() => {
             toast.info('Data refreshed', 'Position data updated after rebalance.');
@@ -217,21 +201,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         }
       } catch (error) {
         console.error('Error during rebalance:', error);
-      } finally {
-        closeModal('rebalanceProcess');
       }
     })();
-  }, [
-    executeRebalance,
-    toast,
-    refetch,
-    openModal,
-    closeModal,
-    currentStep,
-    usePermit2Setting,
-    groupedPosition.loanAsset,
-    rebalanceActions.length,
-  ]);
+  }, [executeRebalance, toast, refetch]);
 
   const handleManualRefresh = () => {
     refetch(() => {

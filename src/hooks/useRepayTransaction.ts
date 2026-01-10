@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -10,6 +10,7 @@ import { usePermit2 } from './usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 
 type UseRepayTransactionProps = {
   market: Market;
@@ -28,9 +29,10 @@ export function useRepayTransaction({
   repayShares,
   onSuccess,
 }: UseRepayTransactionProps) {
-  const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'repaying'>('approve');
-  const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const { usePermit2: usePermit2Setting } = useAppSettings();
+
+  // Transaction tracking
+  const tracking = useTransactionTracking('repay');
 
   const { address: account, chainId } = useConnection();
   const toast = useStyledToast();
@@ -87,6 +89,28 @@ export function useRepayTransaction({
     successDescription: `Successfully processed transaction for market ${market.uniqueKey.slice(2, 8)}`,
     onSuccess,
   });
+
+  // Helper to generate steps based on flow type
+  const getStepsForFlow = useCallback(
+    (isPermit2: boolean) => {
+      if (isPermit2) {
+        return [
+          {
+            id: 'approve',
+            title: 'Authorize Permit2',
+            description: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+          },
+          { id: 'signing', title: 'Sign message in wallet', description: 'Sign a Permit2 signature to authorize the repayment' },
+          { id: 'repaying', title: 'Confirm Repay', description: 'Confirm transaction in wallet to complete the repayment' },
+        ];
+      }
+      return [
+        { id: 'approve', title: 'Approve Token', description: `Approve ${market.loanAsset.symbol} for spending` },
+        { id: 'repaying', title: 'Confirm Repay', description: 'Confirm transaction in wallet to complete the repayment' },
+      ];
+    },
+    [market.loanAsset.symbol],
+  );
 
   // Core transaction execution logic
   const executeRepayTransaction = useCallback(async () => {
@@ -203,7 +227,7 @@ export function useRepayTransaction({
         txs.push(morphoWithdrawTx);
       }
 
-      setCurrentStep('repaying');
+      tracking.update('repaying');
 
       // Add timeout to prevent rabby reverting
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -218,10 +242,10 @@ export function useRepayTransaction({
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
       });
 
-      setShowProcessModal(false);
+      tracking.complete();
     } catch (error: unknown) {
       console.error('Error in repay transaction:', error);
-      setShowProcessModal(false);
+      tracking.fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -245,6 +269,7 @@ export function useRepayTransaction({
     toast,
     useRepayByShares,
     repayAmountToApprove,
+    tracking,
   ]);
 
   // Combined approval and repay flow
@@ -255,14 +280,24 @@ export function useRepayTransaction({
     }
 
     try {
-      setShowProcessModal(true);
-      setCurrentStep('approve');
+      const txTitle = withdrawAmount > 0n ? 'Withdraw & Repay' : 'Repay';
+      tracking.start(
+        getStepsForFlow(usePermit2Setting),
+        {
+          title: txTitle,
+          description: `Repaying ${market.loanAsset.symbol}`,
+          tokenSymbol: market.loanAsset.symbol,
+          amount: repayAssets,
+          marketId: market.uniqueKey,
+        },
+        'approve',
+      );
 
       if (usePermit2Setting) {
         // Permit2 flow
         try {
           await authorizePermit2();
-          setCurrentStep('signing');
+          tracking.update('signing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 500));
@@ -288,7 +323,7 @@ export function useRepayTransaction({
             await approve();
           } catch (error: unknown) {
             console.error('Error in approval:', error);
-            setShowProcessModal(false);
+            tracking.fail();
             if (error instanceof Error) {
               if (error.message.includes('User rejected')) {
                 toast.error('Approval rejected', 'Approval rejected by user');
@@ -302,14 +337,27 @@ export function useRepayTransaction({
           }
         }
 
-        setCurrentStep('repaying');
+        tracking.update('repaying');
         await executeRepayTransaction();
       }
     } catch (error: unknown) {
       console.error('Error in approveAndRepay:', error);
-      setShowProcessModal(false);
+      tracking.fail();
     }
-  }, [account, authorizePermit2, executeRepayTransaction, usePermit2Setting, isApproved, approve, toast]);
+  }, [
+    account,
+    authorizePermit2,
+    executeRepayTransaction,
+    usePermit2Setting,
+    isApproved,
+    approve,
+    toast,
+    tracking,
+    getStepsForFlow,
+    market,
+    repayAssets,
+    withdrawAmount,
+  ]);
 
   // Function to handle signing and executing the repay transaction
   const signAndRepay = useCallback(async () => {
@@ -319,12 +367,23 @@ export function useRepayTransaction({
     }
 
     try {
-      setShowProcessModal(true);
-      setCurrentStep('signing');
+      const txTitle = withdrawAmount > 0n ? 'Withdraw & Repay' : 'Repay';
+      tracking.start(
+        getStepsForFlow(usePermit2Setting),
+        {
+          title: txTitle,
+          description: `Repaying ${market.loanAsset.symbol}`,
+          tokenSymbol: market.loanAsset.symbol,
+          amount: repayAssets,
+          marketId: market.uniqueKey,
+        },
+        'signing',
+      );
+
       await executeRepayTransaction();
     } catch (error: unknown) {
       console.error('Error in signAndRepay:', error);
-      setShowProcessModal(false);
+      tracking.fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -335,18 +394,18 @@ export function useRepayTransaction({
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeRepayTransaction, toast]);
+  }, [account, executeRepayTransaction, toast, tracking, getStepsForFlow, usePermit2Setting, market, repayAssets, withdrawAmount]);
 
   return {
+    // Transaction tracking
+    transaction: tracking.transaction,
+    dismiss: tracking.dismiss,
+    currentStep: tracking.currentStep as 'approve' | 'signing' | 'repaying' | null,
     // State
-    currentStep,
-    showProcessModal,
-    setShowProcessModal,
     isLoadingPermit2,
     isApproved,
     permit2Authorized,
     repayPending,
-
     // Actions
     approveAndRepay,
     signAndRepay,

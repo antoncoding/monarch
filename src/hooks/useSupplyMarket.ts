@@ -8,6 +8,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market } from '@/utils/types';
@@ -23,9 +24,6 @@ export type UseSupplyMarketReturn = {
   setInputError: Dispatch<SetStateAction<string | null>>;
   useEth: boolean;
   setUseEth: Dispatch<SetStateAction<boolean>>;
-  showProcessModal: boolean;
-  setShowProcessModal: Dispatch<SetStateAction<boolean>>;
-  currentStep: SupplyStepType;
 
   // Balance data
   tokenBalance: bigint | undefined;
@@ -36,6 +34,15 @@ export type UseSupplyMarketReturn = {
   permit2Authorized: boolean;
   isLoadingPermit2: boolean;
   supplyPending: boolean;
+
+  // Transaction tracking (new unified pattern)
+  transaction: ReturnType<typeof import('@/hooks/useTransactionTracking').useTransactionTracking>['transaction'];
+  dismiss: () => void;
+  currentStep: SupplyStepType;
+
+  // Legacy aliases (for backward compatibility)
+  showProcessModal: boolean;
+  setShowProcessModal: Dispatch<SetStateAction<boolean>>;
 
   // Actions
   approveAndSupply: () => Promise<void>;
@@ -48,9 +55,11 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const [supplyAmount, setSupplyAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
   const [useEth, setUseEth] = useState<boolean>(false);
-  const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<SupplyStepType>('approve');
   const { usePermit2: usePermit2Setting } = useAppSettings();
+
+  // Transaction tracking (unified pattern)
+  const tracking = useTransactionTracking('supply');
+  const { start, update, complete, fail, dismiss, transaction, isVisible, currentStep: trackingStep, setModalOpen } = tracking;
 
   const { address: account, chainId } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);
@@ -115,6 +124,31 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     onSuccess,
   });
 
+  // Helper to generate steps based on flow type
+  const getStepsForFlow = useCallback(
+    (isEth: boolean, isPermit2: boolean) => {
+      if (isEth) {
+        return [{ id: 'supplying', title: 'Confirm Supply', description: 'Confirm transaction in wallet to complete the supply' }];
+      }
+      if (isPermit2) {
+        return [
+          {
+            id: 'approve',
+            title: 'Authorize Permit2',
+            description: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+          },
+          { id: 'signing', title: 'Sign message in wallet', description: 'Sign a Permit2 signature to authorize the supply' },
+          { id: 'supplying', title: 'Confirm Supply', description: 'Confirm transaction in wallet to complete the supply' },
+        ];
+      }
+      return [
+        { id: 'approve', title: 'Approve Token', description: `Approve ${market.loanAsset.symbol} for spending` },
+        { id: 'supplying', title: 'Confirm Supply', description: 'Confirm transaction in wallet to complete the supply' },
+      ];
+    },
+    [market.loanAsset.symbol],
+  );
+
   // Execute supply transaction
   const executeSupplyTransaction = useCallback(async () => {
     try {
@@ -163,7 +197,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
         gas = GAS_COSTS.SINGLE_SUPPLY;
       }
 
-      setCurrentStep('supplying');
+      update('supplying');
 
       const minShares = BigInt(1);
       const morphoSupplyTx = encodeFunctionData({
@@ -211,16 +245,27 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
         },
       ]);
 
-      // come back to main supply page
-      setShowProcessModal(false);
-
+      complete();
       return true;
     } catch (_error: unknown) {
-      setShowProcessModal(false);
+      fail();
       toast.error('Supply Failed', 'Supply to market failed or cancelled');
       return false;
     }
-  }, [account, market, supplyAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting, toast, batchAddUserMarkets]);
+  }, [
+    account,
+    market,
+    supplyAmount,
+    sendTransactionAsync,
+    useEth,
+    signForBundlers,
+    usePermit2Setting,
+    toast,
+    batchAddUserMarkets,
+    update,
+    complete,
+    fail,
+  ]);
 
   // Approve and supply handler
   const approveAndSupply = useCallback(async () => {
@@ -230,11 +275,20 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     }
 
     try {
-      setShowProcessModal(true);
-      setCurrentStep('approve');
+      const initialStep = useEth ? 'supplying' : 'approve';
+      start(
+        getStepsForFlow(useEth, usePermit2Setting),
+        {
+          title: `Supply ${market.loanAsset.symbol}`,
+          description: `Supplying to market ${market.uniqueKey.slice(2, 8)}`,
+          tokenSymbol: market.loanAsset.symbol,
+          amount: supplyAmount,
+          marketId: market.uniqueKey,
+        },
+        initialStep,
+      );
 
       if (useEth) {
-        setCurrentStep('supplying');
         await executeSupplyTransaction();
         return;
       }
@@ -243,7 +297,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
         // Permit2 flow
         try {
           await authorizePermit2();
-          setCurrentStep('signing');
+          update('signing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 500));
@@ -267,11 +321,11 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
 
       // Standard ERC20 flow
       if (isApproved) {
-        setCurrentStep('supplying');
+        update('supplying');
       } else {
         try {
           await approve();
-          setCurrentStep('supplying');
+          update('supplying');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -293,9 +347,24 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       await executeSupplyTransaction();
     } catch (error: unknown) {
       console.error('Error in approveAndSupply:', error);
-      setShowProcessModal(false);
+      fail();
     }
-  }, [account, authorizePermit2, executeSupplyTransaction, useEth, usePermit2Setting, isApproved, approve, toast]);
+  }, [
+    account,
+    authorizePermit2,
+    executeSupplyTransaction,
+    useEth,
+    usePermit2Setting,
+    isApproved,
+    approve,
+    toast,
+    start,
+    update,
+    fail,
+    getStepsForFlow,
+    market,
+    supplyAmount,
+  ]);
 
   // Sign and supply handler
   const signAndSupply = useCallback(async () => {
@@ -305,12 +374,22 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     }
 
     try {
-      setShowProcessModal(true);
-      setCurrentStep('signing');
+      start(
+        getStepsForFlow(useEth, usePermit2Setting),
+        {
+          title: `Supply ${market.loanAsset.symbol}`,
+          description: `Supplying to market ${market.uniqueKey.slice(2, 8)}`,
+          tokenSymbol: market.loanAsset.symbol,
+          amount: supplyAmount,
+          marketId: market.uniqueKey,
+        },
+        'signing',
+      );
+
       await executeSupplyTransaction();
     } catch (error: unknown) {
       console.error('Error in signAndSupply:', error);
-      setShowProcessModal(false);
+      fail();
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
@@ -321,7 +400,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeSupplyTransaction, toast]);
+  }, [account, executeSupplyTransaction, toast, start, fail, getStepsForFlow, useEth, usePermit2Setting, market, supplyAmount]);
 
   return {
     // State
@@ -331,14 +410,20 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     setInputError,
     useEth,
     setUseEth,
-    showProcessModal,
-    setShowProcessModal,
-    currentStep,
 
     // Balance data
-    tokenBalance: tokenBalance,
+    tokenBalance,
     ethBalance: ethBalance?.value,
-    refetch: refetch,
+    refetch,
+
+    // Transaction tracking (new unified pattern)
+    transaction,
+    dismiss,
+    currentStep: (trackingStep as SupplyStepType) ?? 'approve',
+
+    // Legacy aliases (for backward compatibility)
+    showProcessModal: isVisible,
+    setShowProcessModal: setModalOpen,
 
     // Transaction state
     isApproved,
