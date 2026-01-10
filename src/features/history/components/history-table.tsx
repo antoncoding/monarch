@@ -1,14 +1,14 @@
 'use client';
 
-import React from 'react';
-import { useMemo, useState, useEffect } from 'react';
+import { Fragment, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { now, getLocalTimeZone, type ZonedDateTime } from '@internationalized/date';
 import moment from 'moment';
 import { TbReport } from 'react-icons/tb';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import { ReloadIcon, GearIcon } from '@radix-ui/react-icons';
+import { GearIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { IoIosArrowRoundForward } from 'react-icons/io';
 import useUserPositions from '@/hooks/useUserPositions';
 import { formatUnits, type Address } from 'viem';
@@ -167,12 +167,6 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
   const handleEndDateChange = (date: ZonedDateTime) => {
     if (startDate && date < startDate) setStartDate(date);
     setEndDate(date);
-    setCurrentPage(1);
-  };
-
-  const _clearDateFilters = () => {
-    setStartDate(null);
-    setEndDate(null);
     setCurrentPage(1);
   };
 
@@ -417,7 +411,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
             disabled={loading}
             className="text-secondary min-w-0 px-2"
           >
-            <ReloadIcon className={`${loading ? 'animate-spin' : ''} h-3 w-3`} />
+            <RefetchIcon isLoading={loading} />
           </Button>
         </span>
       </Tooltip>
@@ -574,14 +568,13 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
                     : undefined;
                   const market = fromMarket ?? toMarket;
                   const loanAssetDecimals = fromMarket?.loanAsset.decimals ?? toMarket?.loanAsset.decimals ?? 18;
-                  const _loanAssetSymbol = fromMarket?.loanAsset.symbol ?? toMarket?.loanAsset.symbol ?? '';
                   const hasMoreWithdrawals = withdrawals.length > 1;
                   const hasMoreSupplies = supplies.length > 1;
                   const rowKey = `rebalance-${group.hash}`;
                   const isExpanded = expandedRows.has(rowKey);
 
                   return (
-                    <React.Fragment key={group.hash}>
+                    <Fragment key={group.hash}>
                       <TableRow
                         className="cursor-pointer hover:bg-hovered"
                         onClick={() => toggleRow(rowKey)}
@@ -703,7 +696,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
                           </TableRow>
                         )}
                       </AnimatePresence>
-                    </React.Fragment>
+                    </Fragment>
                   );
                 }
 

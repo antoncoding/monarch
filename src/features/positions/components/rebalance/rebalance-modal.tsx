@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -240,7 +240,12 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         }
         onClose={() => onOpenChange(false)}
         auxiliaryAction={{
-          icon: <ReloadIcon className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />,
+          icon: (
+            <RefetchIcon
+              isLoading={isRefetching}
+              className="h-4 w-4"
+            />
+          ),
           onClick: () => {
             if (!isRefetching) {
               handleManualRefresh();

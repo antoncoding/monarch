@@ -31,6 +31,7 @@ export default function Positions() {
   const {
     data: vaults = [],
     isLoading: isVaultsLoading,
+    isRefetching: isVaultsRefetching,
     refetch: refetchVaults,
   } = useUserVaultsV2Query({ userAddress: account as Address });
 
@@ -120,6 +121,7 @@ export default function Positions() {
               vaults={vaults}
               account={account}
               refetch={() => void refetchVaults()}
+              isRefetching={isVaultsRefetching}
             />
           )}
 

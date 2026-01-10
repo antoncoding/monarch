@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { IconSwitch } from '@/components/ui/icon-switch';
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import Input from '@/components/Input/Input';
 import { useSupplyMarket } from '@/hooks/useSupplyMarket';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -49,6 +49,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
     approveAndSupply,
     signAndSupply,
     refetch: refetchBalance,
+    isRefetchingBalance,
   } = useSupplyMarket(market, onSuccess);
 
   // Handle supply amount change
@@ -131,7 +132,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                     className="opacity-50 transition hover:opacity-100"
                     aria-label="Refetch balance"
                   >
-                    <ReloadIcon className="h-3 w-3" />
+                    <RefetchIcon isLoading={isRefetchingBalance} />
                   </button>
                 </div>
               </div>

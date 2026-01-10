@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { IconSwitch } from '@/components/ui/icon-switch';
-import { ReloadIcon } from '@radix-ui/react-icons';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { FiUser } from 'react-icons/fi';
 import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/ui/spinner';
@@ -204,7 +204,7 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
               disabled={isRefreshing}
               aria-label="Refresh position and market data"
             >
-              <ReloadIcon className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefetchIcon isLoading={isRefreshing} />
             </button>
           )}
           <IconSwitch
