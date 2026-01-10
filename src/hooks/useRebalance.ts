@@ -350,6 +350,10 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         })),
       );
 
+      // Complete tracking immediately after transaction is sent
+      // (handleTransactionSuccess will be called later when tx confirms for cleanup)
+      tracking.complete();
+
       return true;
     } catch (error) {
       console.error('Error during rebalance executeRebalance:', error);

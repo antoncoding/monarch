@@ -40,7 +40,6 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
     useEth,
     setUseEth,
     transaction,
-    dismiss,
     tokenBalance,
     ethBalance,
     isApproved,

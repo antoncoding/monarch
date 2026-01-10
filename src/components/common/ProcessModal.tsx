@@ -80,7 +80,10 @@ export function ProcessModal({ transaction, onDismiss, title, description, child
       </div>
       <ModalBody className="gap-5">
         {children}
-        <ProcessStepList steps={transaction.steps} currentStep={transaction.currentStep} />
+        <ProcessStepList
+          steps={transaction.steps}
+          currentStep={transaction.currentStep}
+        />
       </ModalBody>
     </Modal>
   );

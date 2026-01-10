@@ -322,7 +322,6 @@ export function WithdrawCollateralAndRepay({
           )}
         </div>
       </div>
-
     </div>
   );
 }
