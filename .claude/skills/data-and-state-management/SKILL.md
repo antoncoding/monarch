@@ -1,6 +1,6 @@
 ---
 name: data-and-state-management
-description: Core patterns for data fetching, state management, and user preferences. Use when implementing new features that require getting data from APIs or managing shared state.
+description: Core patterns for data fetching, state management, and user preferences. Use when implementing new features that require getting data from Our APIs, Morpho API, on-chain states or managing shared state.
 ---
 
 

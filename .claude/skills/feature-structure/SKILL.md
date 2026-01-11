@@ -1,6 +1,6 @@
 ---
 name: feature-structure
-description: Architecture patterns for organizing feature modules in the codebase. Use when creating new features to ensure consistent structure and maintainability.
+description: Architecture patterns for organizing feature modules in the codebase. Use when creating new files, brand new features or pages.
 ---
 
 

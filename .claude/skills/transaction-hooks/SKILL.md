@@ -1,6 +1,6 @@
 ---
 name: transaction-hooks
-description: Core patterns to follow for implementing transaction hooks with transaction tracking. Use when implementing new features interacting with EVM contracts.
+description: Patterns to follow for implementing transaction hooks with tracking. Use when implementing new features interacting with EVM contracts, signing transactions, permit... etc.
 ---
 
 
