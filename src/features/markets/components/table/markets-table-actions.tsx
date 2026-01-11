@@ -16,7 +16,7 @@ type MarketsTableActionsProps = {
   onRefresh: () => void;
   isRefetching: boolean;
   isMobile: boolean;
-  dataUpdatedAt?: number;
+  dataUpdatedAt: number;
 };
 
 export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpdatedAt }: MarketsTableActionsProps) {
@@ -26,10 +26,17 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
 
   return (
     <>
-      {dataUpdatedAt && (
-        <span className="text-xs text-secondary whitespace-nowrap">
-          {moment(dataUpdatedAt).format('h:mm: A')} ({moment(dataUpdatedAt).fromNow()})
-        </span>
+      {dataUpdatedAt !== 0 && (
+        <Tooltip
+          content={
+            <TooltipContent
+              title="Last updated"
+              detail={`${moment(dataUpdatedAt).format('h:mm:ss A')} (${moment(dataUpdatedAt).fromNow()})`}
+            />
+          }
+        >
+          <span className="text-xs text-secondary whitespace-nowrap cursor-default">{moment(dataUpdatedAt).format('h:mm:ss A')}</span>
+        </Tooltip>
       )}
 
       <MarketFilter onOpenSettings={() => openModal('marketSettings', {})} />
