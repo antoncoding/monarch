@@ -15,14 +15,6 @@ Monarch is a client-side DeFi dashboard for the Morpho Blue lending protocol. It
 
 ## Tech Stack
 
-### Core Framework
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| Next.js | 15.4.8 | App Router, Server Components |
-| React | 18.x | UI framework |
-| TypeScript | 5.7.3 | Type safety |
-| pnpm | 9.15.0 | Package manager |
-
 ### Blockchain Layer
 | Technology | Version | Purpose |
 |-----------|---------|---------|
@@ -48,33 +40,6 @@ Monarch is a client-side DeFi dashboard for the Morpho Blue lending protocol. It
 | react-table | Tables |
 
 ---
-
-## Architecture
-
-### Project Structure
-```
-/app                    # Next.js App Router pages
-  /markets             # Market listing
-  /market/[chainId]/[marketId]  # Market detail
-  /positions/[account] # User positions
-  /autovault           # Vault listing + detail
-  /rewards             # Rewards dashboard
-  /history/[account]   # Transaction history
-  /settings            # User settings
-  /admin/stats         # Admin stats
-  /api/balances        # Only API route (token balances)
-
-/src
-  /data-sources        # Data fetching layer
-    /morpho-api/       # Morpho API fetchers (14 files)
-    /subgraph/         # Subgraph fallback fetchers
-  /hooks               # 53 custom hooks
-    /queries/          # React Query hooks (13+)
-  /stores              # Zustand stores (16 total)
-  /features            # Feature modules (markets, positions, autovault, swap, rewards)
-  /constants           # Static data (oracle cache, chain configs)
-  /utils               # Utilities (types, networks, RPC, etc.)
-```
 
 ### Provider Hierarchy
 ```

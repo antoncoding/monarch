@@ -1,20 +1,22 @@
-# Monarch Developer Guide
-
-Consolidated reference for state management, components, and architecture.
-
+---
+name: ui-components
+description: Core component library and design system patterns. Use when building UI, using design tokens, or working with the component library.
 ---
 
-## 1. Quick Reference
+# Core Components
 
-### State Management Decision Tree
+
+## Component Hierarchy
 
 ```
-External Data (API, blockchain) → React Query
-User Preferences (persist across refresh) → Zustand + persist
-Shared UI State (modals, selections, operations) → Zustand
-Computed/Derived → useMemo Hook
-Local UI State (single component) → useState
+src/components/
+├── ui/           # Design system primitives (Button, Badge, Spinner)
+├── shared/       # Cross-feature, business-agnostic components
+├── common/       # Common layout components (Modal, TableContainer)
+├── layout/       # Layout wrappers (Header, Footer)
+└── providers/    # Context providers
 ```
+
 
 ### Component Location Rules
 
@@ -24,146 +26,6 @@ src/components/shared/   → Cross-feature components (TokenIcon, AccountIdentit
 src/features/{name}/     → Feature-specific components
 src/modals/              → Global modals (multi-trigger)
 ```
-
-### Modal Pattern Decision
-
-```
-Single trigger, depth 0-1           → Local state (useState)
-Multi-trigger (2+ places)           → Zustand (useModal hook)
-Props drilling pain (3+ levels)     → Zustand
-Modal chaining                      → Zustand
-```
-
-### File Naming
-
-- Stores: `src/stores/use{Feature}{State}.ts`
-- Queries: `src/hooks/queries/use{Entity}Query.ts`
-- Derived hooks: `src/hooks/use{Processed|Filtered}{Entity}.ts`
-- Features: `src/features/{name}/{name}-view.tsx`
-
----
-
-## 2. State Management
-
-### React Query (External Data)
-
-**Location:** `src/hooks/queries/use{Entity}Query.ts`
-
-```typescript
-export const useMarketsQuery = () => {
-  return useQuery({
-    queryKey: ['markets'],
-    queryFn: fetchMarkets,
-    staleTime: 5 * 60 * 1000,
-  });
-};
-
-// Usage
-const { data, isLoading } = useMarketsQuery();
-```
-
-### Zustand + Persist (User Preferences)
-
-**Location:** `src/stores/use{Feature}{State}.ts`
-
-```typescript
-export const useMarketsFilters = create(
-  persist(
-    (set) => ({
-      selectedNetwork: null,
-      setSelectedNetwork: (network) => set({ selectedNetwork: network }),
-    }),
-    { name: 'monarch_store_marketsFilters' }
-  )
-);
-
-// Usage - separate selectors for primitives
-const network = useMarketsFilters((s) => s.selectedNetwork);
-const setNetwork = useMarketsFilters((s) => s.setSelectedNetwork);
-```
-
-### Zustand (Shared UI State)
-
-**Location:** `src/stores/use{Feature}Store.ts`
-
-```typescript
-// Modal state
-export const useVaultModalStore = create((set) => ({
-  isOpen: false,
-  open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
-}));
-
-// Selection state
-export const useTableSelectionStore = create((set) => ({
-  selectedIds: [],
-  toggleSelection: (id) => set((state) => ({
-    selectedIds: state.selectedIds.includes(id)
-      ? state.selectedIds.filter((i) => i !== id)
-      : [...state.selectedIds, id]
-  })),
-  clearSelection: () => set({ selectedIds: [] }),
-}));
-```
-
-### Derived Data Hooks
-
-**Location:** `src/hooks/use{Processed|Filtered}{Entity}.ts`
-
-```typescript
-export const useFilteredMarkets = () => {
-  const { data } = useMarketsQuery();
-  const searchQuery = useMarketsFilters((s) => s.searchQuery);
-
-  return useMemo(() => {
-    return data
-      .filter((m) => m.symbol.includes(searchQuery))
-      .sort((a, b) => b.tvl - a.tvl);
-  }, [data, searchQuery]);
-};
-```
-
-### Anti-Patterns
-
-```typescript
-// ❌ Don't fetch in Context
-const Provider = () => {
-  useEffect(() => { fetch().then(setData); }, []);
-  return <Context.Provider value={data}>{children}</Context.Provider>;
-};
-// ✅ Use React Query
-const useDataQuery = () => useQuery({ queryKey: ['data'], queryFn: fetch });
-```
-
-```typescript
-// ❌ Don't create objects in selectors (infinite loop)
-const filters = useStore((s) => s.filters ?? { min: '0' });
-// ✅ Return primitives
-const min = useStore((s) => s.filters?.min ?? '0');
-```
-
-```typescript
-// ❌ Don't use useState for shared state
-const [modalOpen, setModalOpen] = useState(false);
-// Then pass through 3 levels of props...
-// ✅ Use Zustand for shared UI state
-const useModalStore = create((set) => ({
-  isOpen: false,
-  open: () => set({ isOpen: true }),
-}));
-```
-
-```typescript
-// ❌ Don't chain useEffect
-useEffect(() => { setFiltered(data.filter(...)); }, [data]);
-useEffect(() => { setSorted(filtered.sort(...)); }, [filtered]);
-// ✅ Use useMemo
-const processed = useMemo(() => data.filter(...).sort(...), [data]);
-```
-
----
-
-## 3. Component Usage Guide
 
 ### Modal
 
@@ -725,142 +587,7 @@ success('Success', 'Detail of the success');
 error('Error', 'Detail of the error');
 ```
 
----
-
-## 4. Architecture
-
-### Tech Stack
-
-React 18 · Next.js 15 · TypeScript · Wagmi · TanStack Query · Biome
-
-### Feature Structure
-
-```
-src/features/{feature-name}/
-├── {feature-name}-view.tsx    # Main orchestrator
-├── components/                 # Feature-specific components
-│   ├── filters/
-│   ├── table/
-│   └── {component}.tsx
-├── hooks/                     # Feature-specific hooks (optional)
-└── utils/                     # Feature-specific utilities (optional)
-```
-
-### Component Hierarchy
-
-```
-src/components/
-├── ui/           # Design system primitives (Button, Badge, Spinner)
-├── shared/       # Cross-feature, business-agnostic components
-├── common/       # Common layout components (Modal, TableContainer)
-├── layout/       # Layout wrappers (Header, Footer)
-└── providers/    # Context providers
-```
-
-### Data Flow
-
-```
-1. Try Morpho API (if network supported)
-   ↓ fails
-2. Fallback to The Graph Subgraph
-   ↓ optional
-3. Enhance with on-chain RPC data
-```
-
-### Transaction Pattern
-
-```typescript
-// 1. Transaction hook
-const { approveAndExecute, signAndExecute, isLoading } = useXTransaction({ ... });
-
-// 2. Named callback with useCallback
-const handleExecute = useCallback(() => {
-  if (!isApproved) {
-    void approveAndExecute();
-  } else {
-    void signAndExecute();
-  }
-}, [isApproved, approveAndExecute, signAndExecute]);
-
-// 3. ExecuteTransactionButton (handles connection/chain switching)
-<ExecuteTransactionButton
-  targetChainId={chainId}
-  onClick={handleExecute}
-  isLoading={isLoading}
-  disabled={!amount}
->
-  Execute
-</ExecuteTransactionButton>
-```
-
-### Transaction Tracking & Process Modal
-
-Multi-step transactions use `useTransactionTracking` + `GlobalTransactionModals` for persistent progress UI.
-
-**Architecture:**
-```
-useTransactionTracking (hook)
-    ↓ writes to
-useTransactionProcessStore (Zustand)
-    ↓ watched by
-GlobalTransactionModals (renders ProcessModal)
-    ↓ background txs shown in
-TransactionIndicator (navbar indicator)
-```
-
-**Usage in transaction hooks:**
-
-```typescript
-import { useTransactionTracking } from '@/hooks/useTransactionTracking';
-
-export function useSupplyTransaction(market: Market, onSuccess?: () => void) {
-  const tracking = useTransactionTracking('supply');
-
-  const steps = [
-    { id: 'approve', title: 'Approve Token', description: 'Approving...' },
-    { id: 'signing', title: 'Sign Message', description: 'Sign in wallet' },
-    { id: 'supplying', title: 'Confirm Supply', description: 'Confirm tx' },
-  ];
-
-  const execute = async () => {
-    // Start tracking - modal appears automatically
-    tracking.start(steps, {
-      title: `Supply ${market.loanAsset.symbol}`,        // Required
-      description: `Supplying to market`,                // Optional
-      tokenSymbol: market.loanAsset.symbol,              // Optional metadata
-    }, 'approve');
-
-    try {
-      await doApproval();
-      tracking.update('signing');     // Move to next step
-
-      await doSign();
-      tracking.update('supplying');
-
-      await doSupply();
-      tracking.complete();            // Removes from store, modal closes
-      onSuccess?.();
-    } catch (error) {
-      tracking.fail();                // Removes from store
-      throw error;
-    }
-  };
-
-  return { execute, transaction: tracking.transaction };
-}
-```
-
-**Key methods:**
-- `start(steps, metadata, initialStep)` - Begin tracking, modal shows
-- `update(stepId)` - Move to next step
-- `complete()` / `fail()` - End tracking, remove from store
-- `dismiss()` - Hide modal, tx continues in background (shows in indicator)
-
-**No component-level ProcessModal needed.** `GlobalTransactionModals` (in layout) automatically renders modals for all visible transactions. When user dismisses, tx appears in `TransactionIndicator`. Clicking indicator restores the modal.
-
----
-
-## 5. Styling Guidelines
+## Styling Guidelines
 
 ### Rounding
 
