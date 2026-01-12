@@ -1,6 +1,4 @@
-import type React from 'react';
-
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
 type TooltipContentProps = {
   icon?: ReactNode;
@@ -10,7 +8,7 @@ type TooltipContentProps = {
   className?: string;
   actionIcon?: ReactNode;
   actionHref?: string;
-  onActionClick?: (e: React.MouseEvent) => void;
+  onActionClick?: (e: MouseEvent) => void;
 };
 
 export function TooltipContent({
@@ -51,7 +49,7 @@ export function TooltipContent({
         {icon && <div className="flex-shrink-0 self-center">{icon}</div>}
         <div className="flex flex-col gap-1 flex-1">
           {title && <div className="font-zen font-bold text-primary">{title}</div>}
-          {detail && <div className="font-zen text-sm text-primary whitespace-normal">{detail}</div>}
+          {detail && <div className="font-zen text-sm text-primary whitespace-pre-line">{detail}</div>}
           {secondaryDetail && <div className="font-zen text-xs text-secondary">{secondaryDetail}</div>}
         </div>
         {actionIcon && actionHref && (

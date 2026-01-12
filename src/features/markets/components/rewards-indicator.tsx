@@ -28,7 +28,7 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
   // Create tooltip detail with all rewards
   const rewardsList = activeCampaigns
     .map((campaign) => {
-      const rewardType = campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'supplier' : 'borrower';
+      const rewardType = campaign.type === 'MORPHOBORROW' ? 'borrower' : 'supplier';
       return `${campaign.rewardToken.symbol} ${rewardType} reward +${campaign.apr.toFixed(2)}%`;
     })
     .join('\n');

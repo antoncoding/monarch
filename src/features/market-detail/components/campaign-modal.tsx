@@ -6,7 +6,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { getMerklCampaignURL } from '@/utils/external';
-import type { SimplifiedCampaign } from '@/utils/merklTypes';
+import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
+
+const CAMPAIGN_TYPE_CONFIG: Record<MerklCampaignType, { badge: string; actionType: string; actionVerb: string }> = {
+  MORPHOSUPPLY: { badge: 'Lender Rewards', actionType: 'lenders', actionVerb: 'lend' },
+  MORPHOSUPPLY_SINGLETOKEN: { badge: 'Lender Rewards', actionType: 'lenders', actionVerb: 'lend' },
+  MULTILENDBORROW: { badge: 'Lend/Borrow Rewards', actionType: 'users', actionVerb: 'participate in' },
+  MORPHOBORROW: { badge: 'Borrow Rewards', actionType: 'borrowers', actionVerb: 'borrow' },
+};
 
 type CampaignModalProps = {
   isOpen: boolean;
@@ -14,23 +21,29 @@ type CampaignModalProps = {
   campaigns: SimplifiedCampaign[];
 };
 
+function getUrlIdentifier(campaign: SimplifiedCampaign): string {
+  switch (campaign.type) {
+    case 'MORPHOSUPPLY_SINGLETOKEN':
+      return campaign.targetToken?.address ?? campaign.campaignId;
+    case 'MULTILENDBORROW':
+      return campaign.opportunityIdentifier ?? campaign.campaignId;
+    default:
+      return campaign.marketId.slice(0, 42);
+  }
+}
+
 function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
-  // For SINGLETOKEN campaigns, use the targetToken address, for others use first 42 chars of marketId
-  const urlIdentifier =
-    campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? campaign.targetToken?.address || campaign.campaignId : campaign.marketId.slice(0, 42);
+  const urlIdentifier = getUrlIdentifier(campaign);
   const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, urlIdentifier);
 
-  const actionType = campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'lenders' : 'borrowers';
-  const actionVerb = campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'lend' : 'borrow';
+  const { badge, actionType, actionVerb } = CAMPAIGN_TYPE_CONFIG[campaign.type] ?? CAMPAIGN_TYPE_CONFIG.MORPHOSUPPLY;
 
   return (
     <div className="bg-hovered rounded-sm border border-gray-200/20 p-4 dark:border-gray-600/15">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Campaign Type Badge */}
-          <span className="rounded-sm bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800 dark:text-green-300">
-            {campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'Lender Rewards' : 'Borrow Rewards'}
-          </span>
+          <span className="rounded-sm bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800 dark:text-green-300">{badge}</span>
 
           {/* Reward Token */}
           <div className="flex items-center gap-2">
@@ -95,7 +108,7 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
       <ModalBody className="space-y-4">
         {campaigns.map((campaign) => (
           <CampaignRow
-            key={campaign.campaignId}
+            key={`${campaign.campaignId}-${campaign.marketId}`}
             campaign={campaign}
           />
         ))}

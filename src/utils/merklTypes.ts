@@ -1,4 +1,4 @@
-export type MerklCampaignType = 'MORPHOSUPPLY' | 'MORPHOBORROW' | 'MORPHOSUPPLY_SINGLETOKEN';
+export type MerklCampaignType = 'MORPHOSUPPLY' | 'MORPHOBORROW' | 'MORPHOSUPPLY_SINGLETOKEN' | 'MULTILENDBORROW';
 
 export type MerklCampaignStatus = {
   status: string;
@@ -40,6 +40,12 @@ export type MerklCreator = {
   creatorId: string | null;
 };
 
+export type MerklMarketCampaignParams = {
+  market: string;
+  symbolLoanToken: string;
+  symbolCollateralToken: string;
+};
+
 export type MerklCampaignParams = {
   LLTV: string;
   market: string;
@@ -72,6 +78,17 @@ export type MerklCampaignParams = {
       decimalsTargetToken: number;
     };
   };
+  // For MULTILENDBORROW campaigns
+  markets?: Array<{
+    campaignParameters: MerklMarketCampaignParams;
+  }>;
+};
+
+export type MerklOpportunity = {
+  identifier: string;
+  name: string;
+  chainId: number;
+  type: string;
 };
 
 export type MerklCampaign = {
@@ -98,7 +115,8 @@ export type MerklCampaign = {
   creator: MerklCreator;
   createdAt: string;
   childCampaignIds: string[];
-  program: any;
+  program: unknown;
+  Opportunity?: MerklOpportunity;
 };
 
 export type MerklCampaignsResponse = MerklCampaign[];
@@ -136,4 +154,5 @@ export type SimplifiedCampaign = {
   startTimestamp: number;
   endTimestamp: number;
   isActive: boolean;
+  opportunityIdentifier?: string;
 };

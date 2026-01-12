@@ -22,6 +22,7 @@ export async function fetchCampaigns(params: MerklApiParams = {}): Promise<Merkl
       query: {
         ...queryParams,
         mainProtocolId: 'morpho',
+        withOpportunity: true,
       },
     });
 
@@ -67,19 +68,17 @@ export async function fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTi
   return allCampaigns;
 }
 
-// Adapter function to convert SDK campaign to SimplifiedCampaign
-export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampaign {
+// Helper to check if a campaign is currently active
+function isCampaignActive(campaign: MerklCampaign): boolean {
   const now = Math.floor(Date.now() / 1000);
-  const isActive = campaign.startTimestamp <= now && campaign.endTimestamp > now;
+  return campaign.startTimestamp <= now && campaign.endTimestamp > now;
+}
 
-  // For SINGLETOKEN campaigns, use targetToken as the identifier
-  const marketId =
-    campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-      ? `singletoken_${campaign.params.targetToken}_${campaign.computeChainId}`
-      : campaign.params.market;
-
-  const baseResult: SimplifiedCampaign = {
-    marketId,
+// Helper to extract common campaign fields
+function getBaseCampaignFields(
+  campaign: MerklCampaign,
+): Pick<SimplifiedCampaign, 'chainId' | 'campaignId' | 'type' | 'apr' | 'rewardToken' | 'startTimestamp' | 'endTimestamp' | 'isActive'> {
+  return {
     chainId: campaign.computeChainId,
     campaignId: campaign.campaignId,
     type: campaign.type,
@@ -91,23 +90,51 @@ export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampai
     },
     startTimestamp: campaign.startTimestamp,
     endTimestamp: campaign.endTimestamp,
-    isActive,
+    isActive: isCampaignActive(campaign),
   };
+}
+
+// Adapter function to convert SDK campaign to SimplifiedCampaign
+export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampaign {
+  const baseFields = getBaseCampaignFields(campaign);
+
+  // For SINGLETOKEN campaigns, use targetToken as the identifier
+  const marketId =
+    campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+      ? `singletoken_${campaign.params.targetToken}_${campaign.computeChainId}`
+      : campaign.params.market;
 
   // Add type-specific fields
   if (campaign.type === 'MORPHOSUPPLY_SINGLETOKEN') {
-    baseResult.targetToken = {
-      symbol: campaign.params.symbolTargetToken,
-      address: campaign.params.targetToken,
-    };
-  } else {
-    baseResult.collateralToken = {
-      symbol: campaign.params.symbolCollateralToken,
-    };
-    baseResult.loanToken = {
-      symbol: campaign.params.symbolLoanToken,
+    return {
+      ...baseFields,
+      marketId,
+      targetToken: {
+        symbol: campaign.params.symbolTargetToken,
+        address: campaign.params.targetToken,
+      },
     };
   }
 
-  return baseResult;
+  return {
+    ...baseFields,
+    marketId,
+    collateralToken: { symbol: campaign.params.symbolCollateralToken },
+    loanToken: { symbol: campaign.params.symbolLoanToken },
+  };
+}
+
+// Expand MULTILENDBORROW campaigns into multiple SimplifiedCampaign objects (one per market)
+export function expandMultiLendBorrowCampaign(campaign: MerklCampaign): SimplifiedCampaign[] {
+  const baseFields = getBaseCampaignFields(campaign);
+  const markets = campaign.params.markets ?? [];
+  const opportunityIdentifier = campaign.Opportunity?.identifier;
+
+  return markets.map((m) => ({
+    ...baseFields,
+    marketId: m.campaignParameters.market,
+    collateralToken: { symbol: m.campaignParameters.symbolCollateralToken },
+    loanToken: { symbol: m.campaignParameters.symbolLoanToken },
+    opportunityIdentifier,
+  }));
 }
