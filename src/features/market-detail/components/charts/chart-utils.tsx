@@ -5,6 +5,8 @@ export const TIMEFRAME_LABELS: Record<string, string> = {
   '1d': '1D',
   '7d': '7D',
   '30d': '30D',
+  '3m': '3M',
+  '6m': '6M',
 };
 
 type GradientConfig = {
@@ -63,7 +65,14 @@ export function ChartTooltipContent({ active, payload, label, formatValue }: Cha
   if (!active || !payload) return null;
   return (
     <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-      <p className="mb-2 text-xs text-secondary">{new Date((label ?? 0) * 1000).toLocaleDateString()}</p>
+      <p className="mb-2 text-xs text-secondary">
+        {new Date((label ?? 0) * 1000).toLocaleString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </p>
       <div className="space-y-1">
         {payload.map((entry: any) => (
           <div

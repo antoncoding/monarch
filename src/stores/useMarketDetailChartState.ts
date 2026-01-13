@@ -3,9 +3,10 @@ import type { TimeseriesOptions } from '@/utils/types';
 
 const DAY_IN_SECONDS = 24 * 60 * 60;
 const WEEK_IN_SECONDS = 7 * DAY_IN_SECONDS;
+const MONTH_IN_SECONDS = 30 * DAY_IN_SECONDS;
 
 // Helper to calculate time range based on timeframe string
-const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions => {
+const calculateTimeRange = (timeframe: '1d' | '7d' | '30d' | '3m' | '6m'): TimeseriesOptions => {
   const endTimestamp = Math.floor(Date.now() / 1000);
   let startTimestamp;
   let interval: TimeseriesOptions['interval'] = 'HOUR';
@@ -15,7 +16,14 @@ const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions =
       break;
     case '30d':
       startTimestamp = endTimestamp - 30 * DAY_IN_SECONDS;
-      // Use DAY interval for longer ranges if desired, adjust as needed
+      interval = 'DAY';
+      break;
+    case '3m':
+      startTimestamp = endTimestamp - 3 * MONTH_IN_SECONDS;
+      interval = 'DAY';
+      break;
+    case '6m':
+      startTimestamp = endTimestamp - 6 * MONTH_IN_SECONDS;
       interval = 'DAY';
       break;
     default:
@@ -26,13 +34,13 @@ const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions =
 };
 
 type ChartState = {
-  selectedTimeframe: '1d' | '7d' | '30d';
+  selectedTimeframe: '1d' | '7d' | '30d' | '3m' | '6m';
   selectedTimeRange: TimeseriesOptions;
   volumeView: 'USD' | 'Asset';
 };
 
 type ChartActions = {
-  setTimeframe: (timeframe: '1d' | '7d' | '30d') => void;
+  setTimeframe: (timeframe: '1d' | '7d' | '30d' | '3m' | '6m') => void;
   setVolumeView: (view: 'USD' | 'Asset') => void;
 };
 

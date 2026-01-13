@@ -44,7 +44,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
     apyAtTarget: true,
   });
 
-  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d') => {
+  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d' | '3m' | '6m') => {
     setTimeframe(timeframe);
   };
 
@@ -124,7 +124,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
         <div className="flex items-center gap-2">
           <Select
             value={selectedTimeframe}
-            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
+            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d' | '3m' | '6m')}
           >
             <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
               <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
@@ -133,6 +133,8 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
               <SelectItem value="1d">1D</SelectItem>
               <SelectItem value="7d">7D</SelectItem>
               <SelectItem value="30d">30D</SelectItem>
+              <SelectItem value="3m">3M</SelectItem>
+              <SelectItem value="6m">6M</SelectItem>
             </SelectContent>
           </Select>
         </div>

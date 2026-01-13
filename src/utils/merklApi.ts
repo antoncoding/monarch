@@ -77,7 +77,19 @@ function isCampaignActive(campaign: MerklCampaign): boolean {
 // Helper to extract common campaign fields
 function getBaseCampaignFields(
   campaign: MerklCampaign,
-): Pick<SimplifiedCampaign, 'chainId' | 'campaignId' | 'type' | 'apr' | 'rewardToken' | 'startTimestamp' | 'endTimestamp' | 'isActive'> {
+): Pick<
+  SimplifiedCampaign,
+  | 'chainId'
+  | 'campaignId'
+  | 'type'
+  | 'apr'
+  | 'rewardToken'
+  | 'startTimestamp'
+  | 'endTimestamp'
+  | 'isActive'
+  | 'name'
+  | 'opportunityIdentifier'
+> {
   return {
     chainId: campaign.computeChainId,
     campaignId: campaign.campaignId,
@@ -91,6 +103,8 @@ function getBaseCampaignFields(
     startTimestamp: campaign.startTimestamp,
     endTimestamp: campaign.endTimestamp,
     isActive: isCampaignActive(campaign),
+    name: campaign.Opportunity?.name,
+    opportunityIdentifier: campaign.Opportunity?.identifier,
   };
 }
 
@@ -128,13 +142,11 @@ export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampai
 export function expandMultiLendBorrowCampaign(campaign: MerklCampaign): SimplifiedCampaign[] {
   const baseFields = getBaseCampaignFields(campaign);
   const markets = campaign.params.markets ?? [];
-  const opportunityIdentifier = campaign.Opportunity?.identifier;
 
   return markets.map((m) => ({
     ...baseFields,
     marketId: m.campaignParameters.market,
     collateralToken: { symbol: m.campaignParameters.symbolCollateralToken },
     loanToken: { symbol: m.campaignParameters.symbolLoanToken },
-    opportunityIdentifier,
   }));
 }

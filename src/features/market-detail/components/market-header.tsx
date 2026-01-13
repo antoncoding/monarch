@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { formatUnits } from 'viem';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { GrStatusGood } from 'react-icons/gr';
 import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
@@ -129,6 +131,7 @@ export function MarketHeader({
   onSupplyClick,
   onBorrowClick,
 }: MarketHeaderProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { short: rateLabel } = useRateLabel();
   const { isAprDisplay } = useAppSettings();
   const networkImg = getNetworkImg(network);
@@ -221,13 +224,15 @@ export function MarketHeader({
                 width={40}
                 height={40}
               />
-              <TokenIcon
-                address={market.collateralAsset.address}
-                chainId={market.morphoBlue.chain.id}
-                symbol={market.collateralAsset.symbol}
-                width={40}
-                height={40}
-              />
+              <div className="rounded-full bg-surface">
+                <TokenIcon
+                  address={market.collateralAsset.address}
+                  chainId={market.morphoBlue.chain.id}
+                  symbol={market.collateralAsset.symbol}
+                  width={40}
+                  height={40}
+                />
+              </div>
             </div>
 
             <div>
@@ -283,7 +288,7 @@ export function MarketHeader({
                   content={
                     <TooltipContent
                       title="Oracle Price"
-                      detail={`1 ${market.collateralAsset.symbol} = ${oraclePrice} ${market.loanAsset.symbol}`}
+                      detail={`1 ${market.collateralAsset.symbol} = ${Number(oraclePrice).toPrecision(6)} ${market.loanAsset.symbol}`}
                     />
                   }
                 >
@@ -307,7 +312,7 @@ export function MarketHeader({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    size="sm"
+                    size="xs"
                     variant="surface"
                     className="px-0"
                   >
@@ -368,90 +373,116 @@ export function MarketHeader({
         </div>
 
         {/* Advanced Details - Expandable */}
-        <details className="group mt-4 border-t border-border pt-4">
-          <summary className="flex cursor-pointer list-none items-center gap-3 text-sm text-secondary hover:text-primary">
-            <ChevronDownIcon className="h-4 w-4 transition-transform group-open:rotate-180" />
-            <span>Advanced Details</span>
+        <div className="mt-4 border-t border-border pt-4">
+          <div
+            className="flex cursor-pointer items-center justify-between text-sm text-secondary hover:text-primary"
+            onClick={() => setIsExpanded(!isExpanded)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsExpanded(!isExpanded);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={isExpanded}
+          >
             {renderSummaryBadges()}
-          </summary>
-
-          <div className="mt-4 space-y-4">
-            {/* Global Warnings (debt + general) at top */}
-            <WarningBlock
-              warnings={globalWarnings}
-              riskLevel={globalRiskLevel}
-            />
-
-            {/* Two-column grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {/* LEFT: Market Configuration */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs uppercase tracking-wider text-secondary">Market Configuration</h4>
-                  <RiskIcon level={assetRiskLevel} />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-secondary">Loan:</span>
-                    <AddressIdentity
-                      address={market.loanAsset.address}
-                      chainId={market.morphoBlue.chain.id}
-                      label={market.loanAsset.symbol}
-                      isToken
-                      tokenSymbol={market.loanAsset.symbol}
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-secondary">Collateral:</span>
-                    <AddressIdentity
-                      address={market.collateralAsset.address}
-                      chainId={market.morphoBlue.chain.id}
-                      label={market.collateralAsset.symbol}
-                      isToken
-                      tokenSymbol={market.collateralAsset.symbol}
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-secondary">IRM:</span>
-                    <AddressIdentity
-                      address={market.irmAddress}
-                      chainId={market.morphoBlue.chain.id}
-                      label={getIRMTitle(market.irmAddress)}
-                    />
-                  </div>
-                </div>
-
-                {/* Asset warnings */}
-                <WarningBlock
-                  warnings={assetWarnings}
-                  riskLevel={assetRiskLevel}
-                />
-              </div>
-
-              {/* RIGHT: Oracle */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs uppercase tracking-wider text-secondary">Oracle</h4>
-                  <RiskIcon level={oracleRiskLevel} />
-                </div>
-
-                <OracleTypeInfo
-                  oracleData={market.oracle?.data}
-                  oracleAddress={market.oracleAddress}
-                  chainId={market.morphoBlue.chain.id}
-                  useBadge
-                />
-
-                {/* Oracle warnings */}
-                <WarningBlock
-                  warnings={oracleWarnings}
-                  riskLevel={oracleRiskLevel}
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              <span>Advanced Details</span>
+              <ChevronDownIcon className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
             </div>
           </div>
-        </details>
+
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="pt-4 space-y-4">
+                  {/* Global Warnings (debt + general) at top */}
+                  <WarningBlock
+                    warnings={globalWarnings}
+                    riskLevel={globalRiskLevel}
+                  />
+
+                  {/* Two-column grid */}
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {/* LEFT: Market Configuration */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs uppercase tracking-wider text-secondary">Market Configuration</h4>
+                        <RiskIcon level={assetRiskLevel} />
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-secondary">Loan:</span>
+                          <AddressIdentity
+                            address={market.loanAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            label={market.loanAsset.symbol}
+                            isToken
+                            tokenSymbol={market.loanAsset.symbol}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-secondary">Collateral:</span>
+                          <AddressIdentity
+                            address={market.collateralAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            label={market.collateralAsset.symbol}
+                            isToken
+                            tokenSymbol={market.collateralAsset.symbol}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-secondary">IRM:</span>
+                          <AddressIdentity
+                            address={market.irmAddress}
+                            chainId={market.morphoBlue.chain.id}
+                            label={getIRMTitle(market.irmAddress)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Asset warnings */}
+                      <WarningBlock
+                        warnings={assetWarnings}
+                        riskLevel={assetRiskLevel}
+                      />
+                    </div>
+
+                    {/* RIGHT: Oracle */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs uppercase tracking-wider text-secondary">Oracle</h4>
+                        <RiskIcon level={oracleRiskLevel} />
+                      </div>
+
+                      <OracleTypeInfo
+                        oracleData={market.oracle?.data}
+                        oracleAddress={market.oracleAddress}
+                        chainId={market.morphoBlue.chain.id}
+                        useBadge
+                      />
+
+                      {/* Oracle warnings */}
+                      <WarningBlock
+                        warnings={oracleWarnings}
+                        riskLevel={oracleRiskLevel}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

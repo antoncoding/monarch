@@ -42,6 +42,8 @@ export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCa
           )
         : [];
 
+    console.log('singleTokenCampaigns', singleTokenCampaigns);
+
     // Combine both types of campaigns
     const allMarketCampaigns = [...directMarketCampaigns, ...singleTokenCampaigns];
     const activeCampaigns = allMarketCampaigns.filter((campaign) => campaign.isActive);
