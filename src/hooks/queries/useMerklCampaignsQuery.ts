@@ -8,9 +8,7 @@ export const useMerklCampaignsQuery = () => {
   const query = useQuery({
     queryKey: ['merkl-campaigns'],
     queryFn: async () => {
-      const settledResults = await Promise.allSettled(
-        CAMPAIGN_TYPES_TO_FETCH.map((type) => fetchActiveCampaigns({ type })),
-      );
+      const settledResults = await Promise.allSettled(CAMPAIGN_TYPES_TO_FETCH.map((type) => fetchActiveCampaigns({ type })));
 
       // Extract successful results, use empty array for failed fetches
       const results = settledResults.map((result, index) => {

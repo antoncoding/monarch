@@ -5,7 +5,8 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaCircle } from 'react-icons/fa';
-import { LuExternalLink, LuCopy } from 'react-icons/lu';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { LuCopy } from 'react-icons/lu';
 import { useConnection, useEnsName } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountActionsPopover } from '@/components/shared/account-actions-popover';
@@ -93,7 +94,7 @@ export function AccountIdentity({
     const content = (
       <>
         {vaultName ? <span className="font-zen">{vaultName}</span> : <Name address={address as `0x${string}`} />}
-        {linkTo === 'explorer' && <LuExternalLink className="h-3 w-3" />}
+        {linkTo === 'explorer' && <ExternalLinkIcon className="h-3 w-3" />}
         {showCopy && (
           <LuCopy
             className="h-3 w-3 cursor-pointer transition-colors hover:text-primary"
@@ -168,7 +169,7 @@ export function AccountIdentity({
         <span className="text-xs">
           {vaultName ? <span className="font-zen">{vaultName}</span> : <Name address={address as `0x${string}`} />}
         </span>
-        {linkTo === 'explorer' && <LuExternalLink className="h-3 w-3" />}
+        {linkTo === 'explorer' && <ExternalLinkIcon className="h-3 w-3" />}
         {showCopy && (
           <LuCopy
             className="h-3 w-3 cursor-pointer transition-colors hover:text-primary"
@@ -290,7 +291,7 @@ export function AccountIdentity({
           aria-label="View on explorer"
           onClick={(e) => e.stopPropagation()}
         >
-          <LuExternalLink className="h-4 w-4" />
+          <ExternalLinkIcon className="h-4 w-4" />
         </a>
       )}
     </>

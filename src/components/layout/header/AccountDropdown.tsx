@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback } from 'react';
-import { ExitIcon, ExternalLinkIcon, CopyIcon } from '@radix-ui/react-icons';
+import { ExitIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { LuCopy } from 'react-icons/lu';
 import { clsx } from 'clsx';
 import { useConnection, useDisconnect } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
@@ -68,7 +69,7 @@ export function AccountDropdown() {
 
         <DropdownMenuItem
           onClick={handleCopyAddress}
-          endContent={<CopyIcon className="h-4 w-4" />}
+          endContent={<LuCopy className="h-4 w-4" />}
         >
           Copy Address
         </DropdownMenuItem>

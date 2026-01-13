@@ -1,5 +1,5 @@
 import type React from 'react';
-import { Cross1Icon } from '@radix-ui/react-icons';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { twMerge } from 'tailwind-merge';
 
 export type ModalHeaderVariant = 'standard' | 'compact';
@@ -85,7 +85,7 @@ export function ModalHeader({
               aria-label={closeButtonAriaLabel}
               className={iconButtonBaseClass}
             >
-              <Cross1Icon className="h-3.5 w-3.5" />
+              <Cross2Icon className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { RiArrowRightLine, RiSearchLine } from 'react-icons/ri';
+import { RiArrowRightLine } from 'react-icons/ri';
+import { FiSearch } from 'react-icons/fi';
 import Link from 'next/link';
 import { isAddress } from 'viem';
 import { useConnection } from 'wagmi';
@@ -96,7 +97,7 @@ export default function SearchOrConnect({ path, title }: SearchOrConnectProps) {
               <RiArrowRightLine className="h-4 w-4" />
             ) : (
               <>
-                <RiSearchLine className="h-4 w-4" />
+                <FiSearch className="h-4 w-4" />
                 Search
               </>
             )}

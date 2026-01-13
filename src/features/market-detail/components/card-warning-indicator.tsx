@@ -1,6 +1,7 @@
 'use client';
 
-import { MdError, MdWarning } from 'react-icons/md';
+import { MdError } from 'react-icons/md';
+import { IoWarningOutline } from 'react-icons/io5';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Tooltip } from '@/components/ui/tooltip';
 import type { WarningWithDetail } from '@/utils/types';
@@ -13,7 +14,7 @@ export function CardWarningIndicator({ warnings }: CardWarningIndicatorProps) {
   if (warnings.length === 0) return null;
 
   const hasAlert = warnings.some((w) => w.level === 'alert');
-  const Icon = hasAlert ? MdError : MdWarning;
+  const Icon = hasAlert ? MdError : IoWarningOutline;
   const iconColor = hasAlert ? 'text-red-500' : 'text-yellow-500';
 
   const tooltipContent = (

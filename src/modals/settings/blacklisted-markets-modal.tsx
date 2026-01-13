@@ -2,7 +2,8 @@
 
 import React, { useMemo } from 'react';
 import { Divider } from '@/components/ui/divider';
-import { FiPlus, FiX } from 'react-icons/fi';
+import { FiPlus } from 'react-icons/fi';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { MdBlockFlipped } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -137,7 +138,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                             disabled={isDefault}
                             className="shrink-0"
                           >
-                            <FiX className="h-4 w-4" />
+                            <Cross2Icon className="h-4 w-4" />
                           </Button>
                         </div>
                       );

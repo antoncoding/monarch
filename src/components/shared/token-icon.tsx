@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
-import { FiExternalLink } from 'react-icons/fi';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { getExplorerUrl } from '@/utils/networks';
@@ -74,7 +74,7 @@ export function TokenIcon({
             title={title}
             detail={detail}
             secondaryDetail={secondaryDetail}
-            actionIcon={explorerUrl ? <FiExternalLink className="h-4 w-4" /> : undefined}
+            actionIcon={explorerUrl ? <ExternalLinkIcon className="h-4 w-4" /> : undefined}
             actionHref={explorerUrl ?? undefined}
             onActionClick={(e) => e.stopPropagation()}
           />

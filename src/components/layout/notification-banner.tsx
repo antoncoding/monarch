@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { RiCloseLine } from 'react-icons/ri';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { useActiveNotifications } from '@/hooks/useActiveNotifications';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 
@@ -70,7 +70,7 @@ export function NotificationBanner() {
             className="absolute right-4 p-1 text-primary-foreground/80 transition-colors hover:text-primary-foreground sm:right-6 md:right-8"
             aria-label="Dismiss notification"
           >
-            <RiCloseLine className="h-5 w-5" />
+            <Cross2Icon className="h-5 w-5" />
           </button>
         </div>
       </div>

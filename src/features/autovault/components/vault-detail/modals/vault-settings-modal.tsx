@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
-import { FiSettings } from 'react-icons/fi';
+import { GearIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { GeneralTab, AgentsTab, CapsTab, type SettingsTab } from '../settings';
@@ -86,7 +86,7 @@ export function VaultSettingsModal({ vaultAddress, chainId }: VaultSettingsModal
       <ModalHeader
         title="Vault Settings"
         description="Manage metadata, automation agents, and vault caps"
-        mainIcon={<FiSettings className="h-5 w-5" />}
+        mainIcon={<GearIcon className="h-5 w-5" />}
         onClose={close}
         auxiliaryAction={{
           icon: (

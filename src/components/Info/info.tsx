@@ -1,7 +1,7 @@
 import { FaRegLightbulb } from 'react-icons/fa';
 import { GrStatusGood } from 'react-icons/gr';
-import { MdWarning } from 'react-icons/md';
 import { MdError } from 'react-icons/md';
+import { IoWarningOutline } from 'react-icons/io5';
 
 const levelToCellColor = (level: string) => {
   switch (level) {
@@ -36,7 +36,7 @@ const levelToIcon = (level: string) => {
       );
     case 'warning':
       return (
-        <MdWarning
+        <IoWarningOutline
           className="mr-2"
           size={18}
         />

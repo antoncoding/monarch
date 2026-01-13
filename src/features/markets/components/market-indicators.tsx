@@ -1,6 +1,8 @@
 import { Tooltip } from '@/components/ui/tooltip';
-import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
-import { FiAlertCircle } from 'react-icons/fi';
+import { FaShieldAlt } from 'react-icons/fa';
+import { GoStarFill } from 'react-icons/go';
+import { LuUser } from 'react-icons/lu';
+import { IoWarningOutline } from 'react-icons/io5';
 import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useTrendingMarketKeys, getMetricsKey, useEverLiquidated } from '@/hooks/queries/useMarketMetricsQuery';
@@ -35,7 +37,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
           content={
             <TooltipContent
               icon={
-                <FaStar
+                <GoStarFill
                   size={ICON_SIZE}
                   className="text-yellow-500"
                 />
@@ -45,7 +47,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
           }
         >
           <div className="flex-shrink-0">
-            <FaStar
+            <GoStarFill
               size={ICON_SIZE}
               className="text-yellow-500"
             />
@@ -57,13 +59,13 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         <Tooltip
           content={
             <TooltipContent
-              icon={<FaUser size={ICON_SIZE} />}
+              icon={<LuUser size={ICON_SIZE} />}
               detail="You have supplied to this market"
             />
           }
         >
           <div className="flex-shrink-0">
-            <FaUser size={ICON_SIZE} />
+            <LuUser size={ICON_SIZE} />
           </div>
         </Tooltip>
       )}
@@ -132,7 +134,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
           }
         >
           <div className="flex-shrink-0">
-            <FiAlertCircle
+            <IoWarningOutline
               size={ICON_SIZE}
               className={warningLevel === 'alert' ? 'text-red-500' : 'text-yellow-500'}
             />

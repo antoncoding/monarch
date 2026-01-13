@@ -1,5 +1,5 @@
 import type React from 'react';
-import { FiX } from 'react-icons/fi';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { Modal, ModalBody } from '@/components/common/Modal';
 import { ProcessStepList } from '@/components/common/ProcessStepList';
 import type { ActiveTransaction } from '@/stores/useTransactionProcessStore';
@@ -75,7 +75,7 @@ export function ProcessModal({ transaction, onDismiss, title, description, child
           onClick={onDismiss}
           className="rounded p-1 text-secondary transition-colors hover:bg-foreground/10 hover:text-foreground"
         >
-          <FiX className="h-4 w-4" />
+          <Cross2Icon className="h-4 w-4" />
         </button>
       </div>
       <ModalBody className="gap-5">

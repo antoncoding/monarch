@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useState } from 'react';
-import { LuX } from 'react-icons/lu';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { formatUnits } from 'viem';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import type { Market } from '@/utils/types';
@@ -122,7 +122,7 @@ export function PendingMarketCap({
             className="flex h-8 w-8 items-center justify-center rounded-full bg-hovered text-secondary transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
             aria-label="Remove market"
           >
-            <LuX className="h-4 w-4" />
+            <Cross2Icon className="h-4 w-4" />
           </button>
         </div>
       </div>

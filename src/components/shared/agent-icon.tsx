@@ -1,6 +1,6 @@
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
-import { HiQuestionMarkCircle } from 'react-icons/hi';
+import { BsQuestionCircle } from 'react-icons/bs';
 import type { Address } from 'viem';
 import { findAgent } from '@/utils/monarch-agent';
 import { TooltipContent } from './tooltip-content';
@@ -18,7 +18,7 @@ export function AgentIcon({ address, width, height }: AgentIconProps) {
     return (
       <Tooltip content="Unknown agent">
         <div className="flex items-center justify-center rounded-full bg-hovered/50">
-          <HiQuestionMarkCircle
+          <BsQuestionCircle
             className="text-secondary"
             style={{ width, height }}
           />
@@ -46,7 +46,7 @@ export function AgentIcon({ address, width, height }: AgentIconProps) {
         className="hidden items-center justify-center"
         style={{ width, height }}
       >
-        <HiQuestionMarkCircle
+        <BsQuestionCircle
           className="text-secondary"
           style={{ width, height }}
         />
@@ -82,7 +82,7 @@ export function AgentIcon({ address, width, height }: AgentIconProps) {
           className="hidden items-center justify-center"
           style={{ width, height }}
         >
-          <HiQuestionMarkCircle
+          <BsQuestionCircle
             className="text-secondary"
             style={{ width, height }}
           />
