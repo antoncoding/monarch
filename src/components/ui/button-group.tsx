@@ -15,6 +15,7 @@ type ButtonGroupProps = {
   onChange: (value: ButtonOption['value']) => void;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'primary';
+  equalWidth?: boolean;
 };
 
 const sizeClasses = {
@@ -41,7 +42,7 @@ const variantStyles = {
   ],
 };
 
-export default function ButtonGroup({ options, value, onChange, size = 'md', variant = 'default' }: ButtonGroupProps) {
+export default function ButtonGroup({ options, value, onChange, size = 'md', variant = 'default', equalWidth = false }: ButtonGroupProps) {
   return (
     <div
       className="inline-flex rounded shadow-sm"
@@ -62,6 +63,7 @@ export default function ButtonGroup({ options, value, onChange, size = 'md', var
               // Base styles
               'relative font-medium transition-all duration-200',
               sizeClasses[size],
+              equalWidth && 'min-w-[3rem] text-center',
 
               // Position-based styles
               isFirst ? 'rounded-l' : '-ml-px rounded-none',

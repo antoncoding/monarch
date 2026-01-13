@@ -116,6 +116,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
           onChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
           size="sm"
           variant="default"
+          equalWidth
         />
       </CardHeader>
       <CardBody>
@@ -131,7 +132,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                 height={400}
                 id="rate-chart"
               >
-                <AreaChart data={getChartData}>
+                <AreaChart data={getChartData} margin={{ top: 20, right: 20, left: 10, bottom: 10 }}>
                   <defs>
                     <linearGradient
                       id="rateChart-supplyGradient"
@@ -142,13 +143,13 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                     >
                       <stop
                         offset="0%"
-                        stopColor={CHART_COLORS.supply.gradient.start}
-                        stopOpacity={CHART_COLORS.supply.gradient.startOpacity}
+                        stopColor={CHART_COLORS.supply.stroke}
+                        stopOpacity={0.08}
                       />
                       <stop
-                        offset="25%"
-                        stopColor={CHART_COLORS.supply.gradient.start}
-                        stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
+                        offset="100%"
+                        stopColor={CHART_COLORS.supply.stroke}
+                        stopOpacity={0}
                       />
                     </linearGradient>
                     <linearGradient
@@ -160,13 +161,13 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                     >
                       <stop
                         offset="0%"
-                        stopColor={CHART_COLORS.borrow.gradient.start}
-                        stopOpacity={CHART_COLORS.borrow.gradient.startOpacity}
+                        stopColor={CHART_COLORS.borrow.stroke}
+                        stopOpacity={0.08}
                       />
                       <stop
-                        offset="25%"
-                        stopColor={CHART_COLORS.borrow.gradient.start}
-                        stopOpacity={CHART_COLORS.borrow.gradient.endOpacity}
+                        offset="100%"
+                        stopColor={CHART_COLORS.borrow.stroke}
+                        stopOpacity={0}
                       />
                     </linearGradient>
                     <linearGradient
@@ -178,30 +179,69 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                     >
                       <stop
                         offset="0%"
-                        stopColor={CHART_COLORS.apyAtTarget.gradient.start}
-                        stopOpacity={CHART_COLORS.apyAtTarget.gradient.startOpacity}
+                        stopColor={CHART_COLORS.apyAtTarget.stroke}
+                        stopOpacity={0.08}
                       />
                       <stop
-                        offset="25%"
-                        stopColor={CHART_COLORS.apyAtTarget.gradient.start}
-                        stopOpacity={CHART_COLORS.apyAtTarget.gradient.endOpacity}
+                        offset="100%"
+                        stopColor={CHART_COLORS.apyAtTarget.stroke}
+                        stopOpacity={0}
                       />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid
+                    strokeDasharray="0"
+                    stroke="var(--color-border)"
+                    strokeOpacity={0.25}
+                  />
                   <XAxis
                     dataKey="x"
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={12}
+                    minTickGap={60}
                     tickFormatter={(time) => formatChartTime(time, selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp)}
+                    tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
                   />
-                  <YAxis tickFormatter={(value) => `${(value * 100).toFixed(2)}%`} />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(value) => `${(value * 100).toFixed(2)}%`}
+                    tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+                    width={50}
+                  />
                   <Tooltip
-                    labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
-                    formatter={(value: number) => `${(value * 100).toFixed(2)}%`}
-                    contentStyle={{
-                      backgroundColor: 'var(--color-background)',
+                    cursor={{ stroke: 'var(--color-text-secondary)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload) return null;
+                      return (
+                        <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
+                          <p className="mb-2 text-xs text-secondary">{new Date(label * 1000).toLocaleDateString()}</p>
+                          <div className="space-y-1">
+                            {payload.map((entry: any) => (
+                              <div
+                                key={entry.dataKey}
+                                className="flex items-center justify-between gap-6 text-sm"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="h-2 w-2 rounded-full"
+                                    style={{ backgroundColor: entry.color }}
+                                  />
+                                  <span className="text-secondary">{entry.name}</span>
+                                </div>
+                                <span className="tabular-nums font-medium">{`${(entry.value * 100).toFixed(2)}%`}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
                     }}
                   />
                   <Legend
+                    wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
+                    iconType="circle"
+                    iconSize={8}
                     onClick={(e) => {
                       const dataKey = e.dataKey as keyof typeof visibleLines;
                       setVisibleLines((prev) => ({
@@ -211,8 +251,11 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                     }}
                     formatter={(value, entry) => (
                       <span
+                        className="text-xs"
                         style={{
-                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines] ? undefined : '#999',
+                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines]
+                            ? 'var(--color-text-secondary)'
+                            : '#666',
                         }}
                       >
                         {value}
@@ -266,7 +309,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                     color="primary"
                     showValueLabel
                     classNames={{
-                      value: 'font-zen text-sm',
+                      value: 'font-zen text-sm tabular-nums',
                       base: 'my-2',
                       label: 'text-base',
                     }}
@@ -274,15 +317,15 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Supply APY:</span>
-                  <span className="font-zen text-sm">{formatPercentage(getCurrentApyValue('supply'))}</span>
+                  <span className="font-zen text-sm tabular-nums">{formatPercentage(getCurrentApyValue('supply'))}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Borrow APY:</span>
-                  <span className="font-zen text-sm">{formatPercentage(getCurrentApyValue('borrow'))}</span>
+                  <span className="font-zen text-sm tabular-nums">{formatPercentage(getCurrentApyValue('borrow'))}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Rate at U Target:</span>
-                  <span className="font-zen text-sm">{formatPercentage(getCurrentapyAtTargetValue())}</span>
+                  <span className="font-zen text-sm tabular-nums">{formatPercentage(getCurrentapyAtTargetValue())}</span>
                 </div>
               </div>
 
@@ -298,19 +341,19 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                   <>
                     <div className="flex items-center justify-between">
                       <span>Utilization Rate:</span>
-                      <span className="font-zen text-sm">{formatPercentage(getAverageUtilizationRate())}</span>
+                      <span className="font-zen text-sm tabular-nums">{formatPercentage(getAverageUtilizationRate())}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Supply APY:</span>
-                      <span className="font-zen text-sm">{formatPercentage(getAverageApyValue('supply'))}</span>
+                      <span className="font-zen text-sm tabular-nums">{formatPercentage(getAverageApyValue('supply'))}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Borrow APY:</span>
-                      <span className="font-zen text-sm">{formatPercentage(getAverageApyValue('borrow'))}</span>
+                      <span className="font-zen text-sm tabular-nums">{formatPercentage(getAverageApyValue('borrow'))}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Rate at U Target:</span>
-                      <span className="font-zen text-sm">{formatPercentage(getAverageapyAtTargetValue())}</span>
+                      <span className="font-zen text-sm tabular-nums">{formatPercentage(getAverageapyAtTargetValue())}</span>
                     </div>
                   </>
                 )}
