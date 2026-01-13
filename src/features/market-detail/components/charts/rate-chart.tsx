@@ -198,6 +198,16 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
               />
               <Area
                 type="monotone"
+                dataKey="apyAtTarget"
+                name="Rate at Util Target"
+                stroke={CHART_COLORS.apyAtTarget.stroke}
+                strokeWidth={2}
+                fill="url(#rateChart-targetGradient)"
+                fillOpacity={1}
+                hide={!visibleLines.apyAtTarget}
+              />
+              <Area
+                type="monotone"
                 dataKey="supplyApy"
                 name={`Supply ${rateLabel}`}
                 stroke={CHART_COLORS.supply.stroke}
@@ -215,16 +225,6 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                 fill="url(#rateChart-borrowGradient)"
                 fillOpacity={1}
                 hide={!visibleLines.borrowApy}
-              />
-              <Area
-                type="monotone"
-                dataKey="apyAtTarget"
-                name="Rate at Util Target"
-                stroke={CHART_COLORS.apyAtTarget.stroke}
-                strokeWidth={2}
-                fill="url(#rateChart-targetGradient)"
-                fillOpacity={1}
-                hide={!visibleLines.apyAtTarget}
               />
             </AreaChart>
           </ResponsiveContainer>
