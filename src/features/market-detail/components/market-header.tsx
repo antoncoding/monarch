@@ -309,7 +309,7 @@ export function MarketHeader({
                   <Button
                     size="sm"
                     variant="surface"
-                    className="px px-0"
+                    className="px-0"
                   >
                     <IoEllipsisVertical className="h-4 w-4" />
                   </Button>
