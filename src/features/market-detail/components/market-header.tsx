@@ -114,7 +114,6 @@ type MarketHeaderProps = {
   network: SupportedNetworks;
   userPosition: MarketPosition | null;
   oraclePrice: string;
-  warnings: WarningWithDetail[];
   allWarnings: WarningWithDetail[];
   onSupplyClick: () => void;
   onBorrowClick: () => void;
@@ -126,7 +125,6 @@ export function MarketHeader({
   network,
   userPosition,
   oraclePrice,
-  warnings,
   allWarnings,
   onSupplyClick,
   onBorrowClick,
@@ -141,6 +139,13 @@ export function MarketHeader({
   };
 
   const formattedLltv = `${formatUnits(BigInt(market.lltv), 16)}%`;
+
+  const campaignBadgeProps = {
+    marketId,
+    loanTokenAddress: market.loanAsset.address,
+    chainId: market.morphoBlue.chain.id,
+    whitelisted: market.whitelisted,
+  };
 
   // Filter warnings by category
   const assetWarnings = allWarnings.filter((w) => w.category === WarningCategory.asset);
@@ -203,7 +208,7 @@ export function MarketHeader({
   return (
     <div className="mt-6 mb-6 space-y-4">
       {/* Main Header */}
-      <div className="rounded border border-border bg-surface px-6 py-5 shadow-sm">
+      <div className="rounded border border-border bg-surface px-6 py-4 shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           {/* LEFT: Market Identity */}
           <div className="flex items-center gap-4">
@@ -226,9 +231,9 @@ export function MarketHeader({
             </div>
 
             <div>
-              <h1 className="text-xl font-semibold">
+              <div className="text-2xl pt-4">
                 {market.loanAsset.symbol}/{market.collateralAsset.symbol}
-              </h1>
+              </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-secondary">
                 {networkImg && (
                   <div className="flex items-center gap-1">
@@ -258,10 +263,7 @@ export function MarketHeader({
                 <div className="flex items-center gap-2">
                   <p className="tabular-nums text-lg">{formatRate(market.state.supplyApy)}</p>
                   <CampaignBadge
-                    marketId={marketId}
-                    loanTokenAddress={market.loanAsset.address}
-                    chainId={market.morphoBlue.chain.id}
-                    whitelisted={market.whitelisted}
+                    {...campaignBadgeProps}
                     filterType="supply"
                   />
                 </div>
@@ -271,10 +273,7 @@ export function MarketHeader({
                 <div className="flex items-center gap-2">
                   <p className="tabular-nums text-lg">{formatRate(market.state.borrowApy)}</p>
                   <CampaignBadge
-                    marketId={marketId}
-                    loanTokenAddress={market.loanAsset.address}
-                    chainId={market.morphoBlue.chain.id}
-                    whitelisted={market.whitelisted}
+                    {...campaignBadgeProps}
                     filterType="borrow"
                   />
                 </div>
@@ -310,7 +309,7 @@ export function MarketHeader({
                   <Button
                     size="sm"
                     variant="surface"
-                    className="px-2"
+                    className="px px-0"
                   >
                     <IoEllipsisVertical className="h-4 w-4" />
                   </Button>
@@ -347,10 +346,7 @@ export function MarketHeader({
             <div className="flex items-center gap-1">
               <p className="tabular-nums">{formatRate(market.state.supplyApy)}</p>
               <CampaignBadge
-                marketId={marketId}
-                loanTokenAddress={market.loanAsset.address}
-                chainId={market.morphoBlue.chain.id}
-                whitelisted={market.whitelisted}
+                {...campaignBadgeProps}
                 filterType="supply"
               />
             </div>
@@ -360,10 +356,7 @@ export function MarketHeader({
             <div className="flex items-center gap-1">
               <p className="tabular-nums">{formatRate(market.state.borrowApy)}</p>
               <CampaignBadge
-                marketId={marketId}
-                loanTokenAddress={market.loanAsset.address}
-                chainId={market.morphoBlue.chain.id}
-                whitelisted={market.whitelisted}
+                {...campaignBadgeProps}
                 filterType="borrow"
               />
             </div>
@@ -398,27 +391,35 @@ export function MarketHeader({
                   <RiskIcon level={assetRiskLevel} />
                 </div>
 
-                {/* All 3 address badges */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <AddressIdentity
-                    address={market.loanAsset.address}
-                    chainId={market.morphoBlue.chain.id}
-                    label={market.loanAsset.symbol}
-                    isToken
-                    tokenSymbol={market.loanAsset.symbol}
-                  />
-                  <AddressIdentity
-                    address={market.collateralAsset.address}
-                    chainId={market.morphoBlue.chain.id}
-                    label={market.collateralAsset.symbol}
-                    isToken
-                    tokenSymbol={market.collateralAsset.symbol}
-                  />
-                  <AddressIdentity
-                    address={market.irmAddress}
-                    chainId={market.morphoBlue.chain.id}
-                    label={getIRMTitle(market.irmAddress)}
-                  />
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-secondary">Loan:</span>
+                    <AddressIdentity
+                      address={market.loanAsset.address}
+                      chainId={market.morphoBlue.chain.id}
+                      label={market.loanAsset.symbol}
+                      isToken
+                      tokenSymbol={market.loanAsset.symbol}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-secondary">Collateral:</span>
+                    <AddressIdentity
+                      address={market.collateralAsset.address}
+                      chainId={market.morphoBlue.chain.id}
+                      label={market.collateralAsset.symbol}
+                      isToken
+                      tokenSymbol={market.collateralAsset.symbol}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-secondary">IRM:</span>
+                    <AddressIdentity
+                      address={market.irmAddress}
+                      chainId={market.morphoBlue.chain.id}
+                      label={getIRMTitle(market.irmAddress)}
+                    />
+                  </div>
                 </div>
 
                 {/* Asset warnings */}
@@ -439,7 +440,7 @@ export function MarketHeader({
                   oracleData={market.oracle?.data}
                   oracleAddress={market.oracleAddress}
                   chainId={market.morphoBlue.chain.id}
-                  showLink
+                  useBadge
                 />
 
                 {/* Oracle warnings */}

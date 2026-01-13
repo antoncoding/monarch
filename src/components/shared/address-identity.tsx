@@ -12,6 +12,11 @@ type AddressIdentityProps = {
   tokenSymbol?: string;
 };
 
+/**
+ * Use to display address, not Account. Better used for contracts
+ * @param param0
+ * @returns
+ */
 export function AddressIdentity({ address, chainId, label, isToken, tokenSymbol }: AddressIdentityProps) {
   return (
     <Link

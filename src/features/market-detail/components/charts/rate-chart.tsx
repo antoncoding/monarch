@@ -1,5 +1,3 @@
-/* eslint-disable react/no-unstable-nested-components */
-
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -13,6 +11,15 @@ import { formatChartTime } from '@/utils/chart';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import { convertApyToApr } from '@/utils/rateMath';
+import {
+  TIMEFRAME_LABELS,
+  ChartGradients,
+  ChartTooltipContent,
+  RATE_CHART_GRADIENTS,
+  createLegendClickHandler,
+  chartTooltipCursor,
+  chartLegendStyle,
+} from './chart-utils';
 import type { Market } from '@/utils/types';
 import type { TimeseriesDataPoint } from '@/utils/types';
 
@@ -61,48 +68,24 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
   const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;
 
-  const getCurrentApyValue = (type: 'supply' | 'borrow') => {
-    const apy = type === 'supply' ? market.state.supplyApy : market.state.borrowApy;
-    return isAprDisplay ? convertApyToApr(apy) : apy;
+  const toDisplayRate = (apy: number) => (isAprDisplay ? convertApyToApr(apy) : apy);
+
+  const getAverage = (data: TimeseriesDataPoint[] | undefined) => {
+    if (!data || data.length === 0) return 0;
+    return data.reduce((sum, point) => sum + point.y, 0) / data.length;
   };
 
-  const getAverageApyValue = (type: 'supply' | 'borrow') => {
-    if (!historicalData?.rates) return 0;
-    const data = type === 'supply' ? historicalData.rates.supplyApy : historicalData.rates.borrowApy;
-    const avgApy = data.length > 0 ? data.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / data.length : 0;
-    return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
-  };
+  const currentSupplyRate = toDisplayRate(market.state.supplyApy);
+  const currentBorrowRate = toDisplayRate(market.state.borrowApy);
+  const currentApyAtTarget = toDisplayRate(market.state.apyAtTarget);
+  const currentUtilization = market.state.utilization;
 
-  const getCurrentApyAtTargetValue = () => {
-    const apy = market.state.apyAtTarget;
-    return isAprDisplay ? convertApyToApr(apy) : apy;
-  };
+  const avgSupplyRate = toDisplayRate(getAverage(historicalData?.rates?.supplyApy));
+  const avgBorrowRate = toDisplayRate(getAverage(historicalData?.rates?.borrowApy));
+  const avgApyAtTarget = toDisplayRate(getAverage(historicalData?.rates?.apyAtTarget));
+  const avgUtilization = getAverage(historicalData?.rates?.utilization);
 
-  const getAverageApyAtTargetValue = () => {
-    if (!historicalData?.rates?.apyAtTarget || historicalData.rates.apyAtTarget.length === 0) return 0;
-    const avgApy =
-      historicalData.rates.apyAtTarget.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) /
-      historicalData.rates.apyAtTarget.length;
-    return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
-  };
-
-  const getCurrentUtilizationRate = () => {
-    return market.state.utilization;
-  };
-
-  const getAverageUtilizationRate = () => {
-    if (!historicalData?.rates?.utilization || historicalData.rates.utilization.length === 0) return 0;
-    return (
-      historicalData.rates.utilization.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) /
-      historicalData.rates.utilization.length
-    );
-  };
-
-  const timeframeLabels: Record<string, string> = {
-    '1d': '1D',
-    '7d': '7D',
-    '30d': '30D',
-  };
+  const legendHandlers = createLegendClickHandler({ visibleLines, setVisibleLines });
 
   return (
     <Card className="overflow-hidden border border-border bg-surface shadow-sm">
@@ -110,38 +93,29 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
       <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Live Stats */}
         <div className="flex flex-wrap items-center gap-6 sm:gap-8">
-          {/* Supply Rate */}
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">Supply {rateLabel}</p>
-            <p className="tabular-nums text-lg">{formatPercentage(getCurrentApyValue('supply'))}</p>
+            <p className="tabular-nums text-lg">{formatPercentage(currentSupplyRate)}</p>
           </div>
-
-          {/* Borrow Rate */}
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">Borrow {rateLabel}</p>
-            <p className="tabular-nums text-lg">{formatPercentage(getCurrentApyValue('borrow'))}</p>
+            <p className="tabular-nums text-lg">{formatPercentage(currentBorrowRate)}</p>
           </div>
-
-          {/* Rate at Target */}
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">Rate at Target</p>
-            <p className="tabular-nums text-lg">{formatPercentage(getCurrentApyAtTargetValue())}</p>
+            <p className="tabular-nums text-lg">{formatPercentage(currentApyAtTarget)}</p>
           </div>
-
-          {/* Utilization */}
           <div className="min-w-[140px]">
             <p className="text-xs uppercase tracking-wider text-secondary">Utilization</p>
             <div className="mt-1 flex items-center gap-2">
               <Progress
                 aria-label="Utilization Rate"
                 size="sm"
-                value={getCurrentUtilizationRate() * 100}
+                value={currentUtilization * 100}
                 color="primary"
-                classNames={{
-                  base: 'w-16',
-                }}
+                classNames={{ base: 'w-16' }}
               />
-              <span className="tabular-nums text-lg">{formatPercentage(getCurrentUtilizationRate())}</span>
+              <span className="tabular-nums text-lg">{formatPercentage(currentUtilization)}</span>
             </div>
           </div>
         </div>
@@ -153,7 +127,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
             onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
           >
             <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
-              <SelectValue>{timeframeLabels[selectedTimeframe]}</SelectValue>
+              <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="1d">1D</SelectItem>
@@ -180,62 +154,10 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
               data={getChartData}
               margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
             >
-              <defs>
-                <linearGradient
-                  id="rateChart-supplyGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor={CHART_COLORS.supply.stroke}
-                    stopOpacity={0.08}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={CHART_COLORS.supply.stroke}
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-                <linearGradient
-                  id="rateChart-borrowGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor={CHART_COLORS.borrow.stroke}
-                    stopOpacity={0.08}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={CHART_COLORS.borrow.stroke}
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-                <linearGradient
-                  id="rateChart-targetGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor={CHART_COLORS.apyAtTarget.stroke}
-                    stopOpacity={0.08}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={CHART_COLORS.apyAtTarget.stroke}
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-              </defs>
+              <ChartGradients
+                prefix="rateChart"
+                gradients={RATE_CHART_GRADIENTS}
+              />
               <CartesianGrid
                 strokeDasharray="0"
                 stroke="var(--color-border)"
@@ -258,54 +180,19 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                 width={50}
               />
               <Tooltip
-                cursor={{ stroke: 'var(--color-text-secondary)', strokeWidth: 1, strokeDasharray: '4 4' }}
-                content={({ active, payload, label }) => {
-                  if (!active || !payload) return null;
-                  return (
-                    <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-                      <p className="mb-2 text-xs text-secondary">{new Date(label * 1000).toLocaleDateString()}</p>
-                      <div className="space-y-1">
-                        {payload.map((entry: any) => (
-                          <div
-                            key={entry.dataKey}
-                            className="flex items-center justify-between gap-6 text-sm"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="h-2 w-2 rounded-full"
-                                style={{ backgroundColor: entry.color }}
-                              />
-                              <span className="text-secondary">{entry.name}</span>
-                            </div>
-                            <span className="tabular-nums">{`${(entry.value * 100).toFixed(2)}%`}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }}
+                cursor={chartTooltipCursor}
+                content={({ active, payload, label }) => (
+                  <ChartTooltipContent
+                    active={active}
+                    payload={payload}
+                    label={label}
+                    formatValue={formatPercentage}
+                  />
+                )}
               />
               <Legend
-                wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
-                iconType="circle"
-                iconSize={8}
-                onClick={(e) => {
-                  const dataKey = e.dataKey as keyof typeof visibleLines;
-                  setVisibleLines((prev) => ({
-                    ...prev,
-                    [dataKey]: !prev[dataKey],
-                  }));
-                }}
-                formatter={(value, entry) => (
-                  <span
-                    className="text-xs"
-                    style={{
-                      color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines] ? 'var(--color-text-secondary)' : '#666',
-                    }}
-                  >
-                    {value}
-                  </span>
-                )}
+                {...chartLegendStyle}
+                {...legendHandlers}
               />
               <Area
                 type="monotone"
@@ -344,7 +231,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
       {/* Footer: Historical Averages */}
       <div className="border-t border-border px-6 py-4">
-        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{timeframeLabels[selectedTimeframe]} Averages</h4>
+        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{TIMEFRAME_LABELS[selectedTimeframe]} Averages</h4>
         {isLoading ? (
           <div className="flex h-8 items-center justify-center">
             <Spinner size={16} />
@@ -353,19 +240,19 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
           <div className="flex flex-wrap gap-x-8 gap-y-2">
             <div className="flex items-center gap-2">
               <span className="text-sm text-secondary">Utilization</span>
-              <span className="tabular-nums text-sm">{formatPercentage(getAverageUtilizationRate())}</span>
+              <span className="tabular-nums text-sm">{formatPercentage(avgUtilization)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-secondary">Supply {rateLabel}</span>
-              <span className="tabular-nums text-sm">{formatPercentage(getAverageApyValue('supply'))}</span>
+              <span className="tabular-nums text-sm">{formatPercentage(avgSupplyRate)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-secondary">Borrow {rateLabel}</span>
-              <span className="tabular-nums text-sm">{formatPercentage(getAverageApyValue('borrow'))}</span>
+              <span className="tabular-nums text-sm">{formatPercentage(avgBorrowRate)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-secondary">Rate at Target</span>
-              <span className="tabular-nums text-sm">{formatPercentage(getAverageApyAtTargetValue())}</span>
+              <span className="tabular-nums text-sm">{formatPercentage(avgApyAtTarget)}</span>
             </div>
           </div>
         )}

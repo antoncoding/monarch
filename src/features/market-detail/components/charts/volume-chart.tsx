@@ -1,5 +1,3 @@
-/* eslint-disable react/no-unstable-nested-components */
-
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tooltip as HeroTooltip } from '@/components/ui/tooltip';
@@ -13,6 +11,15 @@ import { formatReadable } from '@/utils/balance';
 import { formatChartTime } from '@/utils/chart';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
+import {
+  TIMEFRAME_LABELS,
+  ChartGradients,
+  ChartTooltipContent,
+  VOLUME_CHART_GRADIENTS,
+  createLegendClickHandler,
+  chartTooltipCursor,
+  chartLegendStyle,
+} from './chart-utils';
 import type { Market } from '@/utils/types';
 import type { TimeseriesDataPoint } from '@/utils/types';
 
@@ -85,37 +92,22 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     return volumeView === 'USD' ? `$${formattedValue}` : `${formattedValue} ${market.loanAsset.symbol}`;
   };
 
-  const getCurrentVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
+  const toValue = (raw: number | bigint) =>
+    volumeView === 'USD' ? Number(raw) : Number(formatUnits(BigInt(raw), market.loanAsset.decimals));
+
+  const getVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
     const data = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : historicalData?.volumes[`${type}Assets`];
-    if (!data || data.length === 0) return { current: 0, netChange: 0, netChangePercentage: 0 };
+    if (!data || data.length === 0) return { current: 0, netChangePercentage: 0, average: 0 };
 
-    const current =
-      volumeView === 'USD'
-        ? (data.at(-1) as TimeseriesDataPoint).y
-        : Number(formatUnits(BigInt((data.at(-1) as TimeseriesDataPoint).y), market.loanAsset.decimals));
-    const start = volumeView === 'USD' ? data[0].y : Number(formatUnits(BigInt(data[0].y), market.loanAsset.decimals));
-    const netChange = current - start;
-    const netChangePercentage = start !== 0 ? (netChange / start) * 100 : 0;
+    const current = toValue((data.at(-1) as TimeseriesDataPoint).y);
+    const start = toValue(data[0].y);
+    const netChangePercentage = start !== 0 ? ((current - start) / start) * 100 : 0;
+    const average = data.reduce((acc: number, point: TimeseriesDataPoint) => acc + toValue(point.y), 0) / data.length;
 
-    return { current, netChange, netChangePercentage };
+    return { current, netChangePercentage, average };
   };
 
-  const getAverageVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
-    const data = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : historicalData?.volumes[`${type}Assets`];
-    if (!data || data.length === 0) return 0;
-    const sum = data.reduce(
-      (acc: number, point: TimeseriesDataPoint) =>
-        acc + Number(volumeView === 'USD' ? point.y : formatUnits(BigInt(point.y), market.loanAsset.decimals)),
-      0,
-    );
-    return sum / data.length;
-  };
-
-  const timeframeLabels: Record<string, string> = {
-    '1d': '1D',
-    '7d': '7D',
-    '30d': '30D',
-  };
+  const legendHandlers = createLegendClickHandler({ visibleLines, setVisibleLines });
 
   const targetUtilizationData = useMemo(() => {
     const supply = market.state.supplyAssets ? BigInt(market.state.supplyAssets) : 0n;
@@ -130,9 +122,9 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     return { borrowDelta, supplyDelta };
   }, [market.state.supplyAssets, market.state.borrowAssets]);
 
-  const supplyStats = getCurrentVolumeStats('supply');
-  const borrowStats = getCurrentVolumeStats('borrow');
-  const liquidityStats = getCurrentVolumeStats('liquidity');
+  const supplyStats = getVolumeStats('supply');
+  const borrowStats = getVolumeStats('borrow');
+  const liquidityStats = getVolumeStats('liquidity');
 
   return (
     <Card className="overflow-hidden border border-border bg-surface shadow-sm">
@@ -191,7 +183,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
             onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
           >
             <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
-              <SelectValue>{timeframeLabels[selectedTimeframe]}</SelectValue>
+              <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="1d">1D</SelectItem>
@@ -218,62 +210,10 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
               data={getVolumeChartData()}
               margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
             >
-              <defs>
-                <linearGradient
-                  id="volumeChart-supplyGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor={CHART_COLORS.supply.stroke}
-                    stopOpacity={0.08}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={CHART_COLORS.supply.stroke}
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-                <linearGradient
-                  id="volumeChart-borrowGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor={CHART_COLORS.borrow.stroke}
-                    stopOpacity={0.08}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={CHART_COLORS.borrow.stroke}
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-                <linearGradient
-                  id="volumeChart-liquidityGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor={CHART_COLORS.apyAtTarget.stroke}
-                    stopOpacity={0.08}
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={CHART_COLORS.apyAtTarget.stroke}
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-              </defs>
+              <ChartGradients
+                prefix="volumeChart"
+                gradients={VOLUME_CHART_GRADIENTS}
+              />
               <CartesianGrid
                 strokeDasharray="0"
                 stroke="var(--color-border)"
@@ -297,54 +237,19 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
                 domain={['auto', 'auto']}
               />
               <Tooltip
-                cursor={{ stroke: 'var(--color-text-secondary)', strokeWidth: 1, strokeDasharray: '4 4' }}
-                content={({ active, payload, label }) => {
-                  if (!active || !payload) return null;
-                  return (
-                    <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-                      <p className="mb-2 text-xs text-secondary">{new Date(label * 1000).toLocaleDateString()}</p>
-                      <div className="space-y-1">
-                        {payload.map((entry: any) => (
-                          <div
-                            key={entry.dataKey}
-                            className="flex items-center justify-between gap-6 text-sm"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="h-2 w-2 rounded-full"
-                                style={{ backgroundColor: entry.color }}
-                              />
-                              <span className="text-secondary">{entry.name}</span>
-                            </div>
-                            <span className="tabular-nums">{formatValue(entry.value)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }}
+                cursor={chartTooltipCursor}
+                content={({ active, payload, label }) => (
+                  <ChartTooltipContent
+                    active={active}
+                    payload={payload}
+                    label={label}
+                    formatValue={formatValue}
+                  />
+                )}
               />
               <Legend
-                wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
-                iconType="circle"
-                iconSize={8}
-                onClick={(e) => {
-                  const dataKey = e.dataKey as keyof typeof visibleLines;
-                  setVisibleLines((prev) => ({
-                    ...prev,
-                    [dataKey]: !prev[dataKey],
-                  }));
-                }}
-                formatter={(value, entry) => (
-                  <span
-                    className="text-xs"
-                    style={{
-                      color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines] ? 'var(--color-text-secondary)' : '#666',
-                    }}
-                  >
-                    {value}
-                  </span>
-                )}
+                {...chartLegendStyle}
+                {...legendHandlers}
               />
               <Area
                 type="monotone"
@@ -422,7 +327,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
 
         {/* Historical Averages */}
         <div className="px-6 py-4">
-          <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{timeframeLabels[selectedTimeframe]} Averages</h4>
+          <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{TIMEFRAME_LABELS[selectedTimeframe]} Averages</h4>
           {isLoading ? (
             <div className="flex h-8 items-center">
               <Spinner size={16} />
@@ -431,15 +336,15 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
             <div className="flex flex-wrap gap-x-8 gap-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-secondary">Supply</span>
-                <span className="tabular-nums text-sm">{formatValue(getAverageVolumeStats('supply'))}</span>
+                <span className="tabular-nums text-sm">{formatValue(supplyStats.average)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-secondary">Borrow</span>
-                <span className="tabular-nums text-sm">{formatValue(getAverageVolumeStats('borrow'))}</span>
+                <span className="tabular-nums text-sm">{formatValue(borrowStats.average)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-secondary">Liquidity</span>
-                <span className="tabular-nums text-sm">{formatValue(getAverageVolumeStats('liquidity'))}</span>
+                <span className="tabular-nums text-sm">{formatValue(liquidityStats.average)}</span>
               </div>
             </div>
           )}

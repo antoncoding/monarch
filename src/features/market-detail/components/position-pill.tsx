@@ -6,6 +6,36 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { formatReadable } from '@/utils/balance';
 import type { MarketPosition } from '@/utils/types';
 
+type PositionRowProps = {
+  tokenAddress: string;
+  chainId: number;
+  symbol: string;
+  label: string;
+  amount: number;
+  textColor?: string;
+};
+
+function PositionRow({ tokenAddress, chainId, symbol, label, amount, textColor }: PositionRowProps) {
+  if (amount <= 0) return null;
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <TokenIcon
+          address={tokenAddress}
+          chainId={chainId}
+          symbol={symbol}
+          width={16}
+          height={16}
+        />
+        <span className="text-sm text-secondary">{label}</span>
+      </div>
+      <span className={`tabular-nums text-sm font-medium ${textColor ?? ''}`}>
+        {formatReadable(amount)} {symbol}
+      </span>
+    </div>
+  );
+}
+
 type PositionPillProps = {
   position: MarketPosition;
   onSupplyClick?: () => void;
@@ -44,59 +74,28 @@ export function PositionPill({ position, onSupplyClick, onBorrowClick }: Positio
         <div className="space-y-3">
           <h4 className="text-xs font-medium uppercase tracking-wider text-secondary">Your Position</h4>
 
-          {supplyAmount > 0 && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TokenIcon
-                  address={market.loanAsset.address}
-                  chainId={market.morphoBlue.chain.id}
-                  symbol={market.loanAsset.symbol}
-                  width={16}
-                  height={16}
-                />
-                <span className="text-sm text-secondary">Supplied</span>
-              </div>
-              <span className="tabular-nums text-sm font-medium">
-                {formatReadable(supplyAmount)} {market.loanAsset.symbol}
-              </span>
-            </div>
-          )}
-
-          {borrowAmount > 0 && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TokenIcon
-                  address={market.loanAsset.address}
-                  chainId={market.morphoBlue.chain.id}
-                  symbol={market.loanAsset.symbol}
-                  width={16}
-                  height={16}
-                />
-                <span className="text-sm text-secondary">Borrowed</span>
-              </div>
-              <span className="tabular-nums text-sm font-medium text-rose-500">
-                {formatReadable(borrowAmount)} {market.loanAsset.symbol}
-              </span>
-            </div>
-          )}
-
-          {collateralAmount > 0 && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TokenIcon
-                  address={market.collateralAsset.address}
-                  chainId={market.morphoBlue.chain.id}
-                  symbol={market.collateralAsset.symbol}
-                  width={16}
-                  height={16}
-                />
-                <span className="text-sm text-secondary">Collateral</span>
-              </div>
-              <span className="tabular-nums text-sm font-medium">
-                {formatReadable(collateralAmount)} {market.collateralAsset.symbol}
-              </span>
-            </div>
-          )}
+          <PositionRow
+            tokenAddress={market.loanAsset.address}
+            chainId={market.morphoBlue.chain.id}
+            symbol={market.loanAsset.symbol}
+            label="Supplied"
+            amount={supplyAmount}
+          />
+          <PositionRow
+            tokenAddress={market.loanAsset.address}
+            chainId={market.morphoBlue.chain.id}
+            symbol={market.loanAsset.symbol}
+            label="Borrowed"
+            amount={borrowAmount}
+            textColor="text-rose-500"
+          />
+          <PositionRow
+            tokenAddress={market.collateralAsset.address}
+            chainId={market.morphoBlue.chain.id}
+            symbol={market.collateralAsset.symbol}
+            label="Collateral"
+            amount={collateralAmount}
+          />
 
           {/* Action buttons */}
           {(onSupplyClick ?? onBorrowClick) && (

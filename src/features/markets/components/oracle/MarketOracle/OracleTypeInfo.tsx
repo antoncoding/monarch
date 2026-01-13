@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { AddressIdentity } from '@/components/shared/address-identity';
 import { MarketOracleFeedInfo } from '@/features/markets/components/oracle';
 import { getExplorerURL } from '@/utils/external';
 import { getOracleType, getOracleTypeDescription, OracleType } from '@/utils/oracle';
@@ -11,30 +12,42 @@ type OracleTypeInfoProps = {
   chainId: number;
   showLink?: boolean;
   showCustom?: boolean;
+  useBadge?: boolean;
 };
 
-export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, showCustom }: OracleTypeInfoProps) {
+export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, showCustom, useBadge }: OracleTypeInfoProps) {
   const oracleType = getOracleType(oracleData, oracleAddress, chainId);
   const typeDescription = getOracleTypeDescription(oracleType);
 
   return (
     <>
-      <div className="flex items-center justify-between pb-2">
-        <span>Oracle Type:</span>
-        {showLink ? (
-          <Link
-            href={getExplorerURL(oracleAddress, chainId)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center text-sm font-medium no-underline hover:underline"
-          >
-            {typeDescription}
-            <ExternalLinkIcon className="ml-1 h-3 w-3" />
-          </Link>
-        ) : (
-          <span className="text-sm font-medium">{typeDescription}</span>
-        )}
-      </div>
+      {useBadge ? (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-secondary">Type:</span>
+          <AddressIdentity
+            address={oracleAddress}
+            chainId={chainId}
+            label={typeDescription}
+          />
+        </div>
+      ) : (
+        <div className="flex items-center justify-between pb-2">
+          <span>Oracle Type:</span>
+          {showLink ? (
+            <Link
+              href={getExplorerURL(oracleAddress, chainId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center text-sm font-medium no-underline hover:underline"
+            >
+              {typeDescription}
+              <ExternalLinkIcon className="ml-1 h-3 w-3" />
+            </Link>
+          ) : (
+            <span className="text-sm font-medium">{typeDescription}</span>
+          )}
+        </div>
+      )}
 
       {oracleType === OracleType.Standard ? (
         <MarketOracleFeedInfo

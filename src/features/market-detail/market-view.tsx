@@ -25,7 +25,6 @@ import { SuppliersTable } from '@/features/market-detail/components/suppliers-ta
 import SupplierFiltersModal from '@/features/market-detail/components/filters/supplier-filters-modal';
 import TransactionFiltersModal from '@/features/market-detail/components/filters/transaction-filters-modal';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
-import { WarningCategory } from '@/utils/types';
 import { MarketHeader } from './components/market-header';
 import RateChart from './components/charts/rate-chart';
 import VolumeChart from './components/charts/volume-chart';
@@ -68,91 +67,79 @@ function MarketContent() {
 
   const { address } = useConnection();
 
-  const {
-    position: userPosition,
-    refetch: refetchUserPosition,
-  } = useUserPosition(address, network, marketId as string);
+  const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketId as string);
 
   // Get all warnings for this market (hook handles undefined market)
   const allWarnings = useMarketWarnings(market);
 
   // 6. All memoized values and callbacks
+
+  // Helper to scale user input to token amount
+  const scaleToTokenAmount = (value: string, decimals: number): string => {
+    if (!value || value === '0' || value === '') return '0';
+    try {
+      return parseUnits(value, decimals).toString();
+    } catch {
+      return '0';
+    }
+  };
+
+  // Helper to convert asset amount to shares: (amount × totalShares) / totalAssets
+  const convertAssetToShares = (amount: string, totalAssets: bigint, totalShares: bigint, decimals: number): string => {
+    if (!amount || amount === '0' || amount === '' || totalAssets === 0n) return '0';
+    try {
+      const assetAmount = parseUnits(amount, decimals);
+      return ((assetAmount * totalShares) / totalAssets).toString();
+    } catch {
+      return '0';
+    }
+  };
+
+  // Oracle price scaled for display (36 decimals is the Morpho oracle price scale)
+  const ORACLE_PRICE_SCALE = 36;
   const formattedOraclePrice = useMemo(() => {
     if (!market) return '0';
     const adjusted = (oraclePrice * BigInt(10 ** market.collateralAsset.decimals)) / BigInt(10 ** market.loanAsset.decimals);
-    return formatUnits(adjusted, 36);
+    return formatUnits(adjusted, ORACLE_PRICE_SCALE);
   }, [oraclePrice, market]);
 
-  // convert to token amounts
-  const scaledMinSupplyAmount = useMemo(() => {
-    if (!market || !minSupplyAmount || minSupplyAmount === '0' || minSupplyAmount === '') {
-      return '0';
-    }
-    try {
-      return parseUnits(minSupplyAmount, market.loanAsset.decimals).toString();
-    } catch {
-      return '0';
-    }
-  }, [minSupplyAmount, market]);
+  // Convert filter amounts to token amounts
+  const scaledMinSupplyAmount = useMemo(
+    () => (market ? scaleToTokenAmount(minSupplyAmount, market.loanAsset.decimals) : '0'),
+    [minSupplyAmount, market],
+  );
 
-  const scaledMinBorrowAmount = useMemo(() => {
-    if (!market || !minBorrowAmount || minBorrowAmount === '0' || minBorrowAmount === '') {
-      return '0';
-    }
-    try {
-      return parseUnits(minBorrowAmount, market.loanAsset.decimals).toString();
-    } catch {
-      return '0';
-    }
-  }, [minBorrowAmount, market]);
+  const scaledMinBorrowAmount = useMemo(
+    () => (market ? scaleToTokenAmount(minBorrowAmount, market.loanAsset.decimals) : '0'),
+    [minBorrowAmount, market],
+  );
 
-  // Convert user-specified asset amount to shares for filtering suppliers
-  // Formula: effectiveMinShares = (minAssetAmount × totalSupplyShares) / totalSupplyAssets
-  const scaledMinSupplierShares = useMemo(() => {
-    if (!market || !minSupplierShares || minSupplierShares === '0' || minSupplierShares === '') {
-      return '0';
-    }
-    try {
-      const minAssetAmount = parseUnits(minSupplierShares, market.loanAsset.decimals);
-      const totalSupplyAssets = BigInt(market.state.supplyAssets);
-      const totalSupplyShares = BigInt(market.state.supplyShares);
+  // Convert user-specified asset amounts to shares for filtering suppliers/borrowers
+  const scaledMinSupplierShares = useMemo(
+    () =>
+      market
+        ? convertAssetToShares(
+            minSupplierShares,
+            BigInt(market.state.supplyAssets),
+            BigInt(market.state.supplyShares),
+            market.loanAsset.decimals,
+          )
+        : '0',
+    [minSupplierShares, market],
+  );
 
-      // If no supply yet, return 0
-      if (totalSupplyAssets === 0n) {
-        return '0';
-      }
-
-      // Convert asset amount to shares
-      const effectiveMinShares = (minAssetAmount * totalSupplyShares) / totalSupplyAssets;
-      return effectiveMinShares.toString();
-    } catch {
-      return '0';
-    }
-  }, [minSupplierShares, market]);
-
-  // Convert user-specified asset amount to shares for filtering borrowers
-  // Formula: effectiveMinShares = (minAssetAmount × totalBorrowShares) / totalBorrowAssets
-  const scaledMinBorrowerShares = useMemo(() => {
-    if (!market || !minBorrowerShares || minBorrowerShares === '0' || minBorrowerShares === '') {
-      return '0';
-    }
-    try {
-      const minAssetAmount = parseUnits(minBorrowerShares, market.loanAsset.decimals);
-      const totalBorrowAssets = BigInt(market.state.borrowAssets);
-      const totalBorrowShares = BigInt(market.state.borrowShares);
-
-      // If no borrows yet, return 0
-      if (totalBorrowAssets === 0n) {
-        return '0';
-      }
-
-      // Convert asset amount to shares
-      const effectiveMinShares = (minAssetAmount * totalBorrowShares) / totalBorrowAssets;
-      return effectiveMinShares.toString();
-    } catch {
-      return '0';
-    }
-  }, [minBorrowerShares, market]);
+  const scaledMinBorrowerShares = useMemo(
+    () =>
+      market
+        ? convertAssetToShares(
+            minBorrowerShares,
+            BigInt(market.state.borrowAssets),
+            BigInt(market.state.borrowShares),
+            market.loanAsset.decimals,
+          )
+        : '0',
+    [minBorrowerShares, market],
+  );
 
   // Unified refetch function for both market and user position
   const handleRefreshAll = useCallback(async () => {
@@ -199,9 +186,6 @@ function MarketContent() {
     );
   }
 
-  // 8. Warning filtering by category (for MarketHeader)
-  const warnings = allWarnings.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general);
-
   // Handlers for supply/borrow actions
   const handleSupplyClick = () => {
     openModal('supply', { market, position: userPosition, isMarketPage: true, refetch: handleRefreshAllSync });
@@ -222,7 +206,6 @@ function MarketContent() {
           network={network}
           userPosition={userPosition}
           oraclePrice={formattedOraclePrice}
-          warnings={warnings}
           allWarnings={allWarnings}
           onSupplyClick={handleSupplyClick}
           onBorrowClick={handleBorrowClick}
