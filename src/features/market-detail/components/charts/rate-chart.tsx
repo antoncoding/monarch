@@ -44,7 +44,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
     apyAtTarget: true,
   });
 
-  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d') => {
+  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d' | '3m' | '6m') => {
     setTimeframe(timeframe);
   };
 
@@ -124,7 +124,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
         <div className="flex items-center gap-2">
           <Select
             value={selectedTimeframe}
-            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
+            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d' | '3m' | '6m')}
           >
             <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
               <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
@@ -133,6 +133,8 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
               <SelectItem value="1d">1D</SelectItem>
               <SelectItem value="7d">7D</SelectItem>
               <SelectItem value="30d">30D</SelectItem>
+              <SelectItem value="3m">3M</SelectItem>
+              <SelectItem value="6m">6M</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -196,6 +198,16 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
               />
               <Area
                 type="monotone"
+                dataKey="apyAtTarget"
+                name="Rate at Util Target"
+                stroke={CHART_COLORS.apyAtTarget.stroke}
+                strokeWidth={2}
+                fill="url(#rateChart-targetGradient)"
+                fillOpacity={1}
+                hide={!visibleLines.apyAtTarget}
+              />
+              <Area
+                type="monotone"
                 dataKey="supplyApy"
                 name={`Supply ${rateLabel}`}
                 stroke={CHART_COLORS.supply.stroke}
@@ -213,16 +225,6 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                 fill="url(#rateChart-borrowGradient)"
                 fillOpacity={1}
                 hide={!visibleLines.borrowApy}
-              />
-              <Area
-                type="monotone"
-                dataKey="apyAtTarget"
-                name="Rate at Util Target"
-                stroke={CHART_COLORS.apyAtTarget.stroke}
-                strokeWidth={2}
-                fill="url(#rateChart-targetGradient)"
-                fillOpacity={1}
-                hide={!visibleLines.apyAtTarget}
               />
             </AreaChart>
           </ResponsiveContainer>

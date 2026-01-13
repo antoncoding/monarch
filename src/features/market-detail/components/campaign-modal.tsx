@@ -8,11 +8,11 @@ import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { getMerklCampaignURL } from '@/utils/external';
 import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
 
-const CAMPAIGN_TYPE_CONFIG: Record<MerklCampaignType, { badge: string; actionType: string; actionVerb: string }> = {
-  MORPHOSUPPLY: { badge: 'Lender Rewards', actionType: 'lenders', actionVerb: 'lend' },
-  MORPHOSUPPLY_SINGLETOKEN: { badge: 'Lender Rewards', actionType: 'lenders', actionVerb: 'lend' },
-  MULTILENDBORROW: { badge: 'Lend/Borrow Rewards', actionType: 'users', actionVerb: 'participate in' },
-  MORPHOBORROW: { badge: 'Borrow Rewards', actionType: 'borrowers', actionVerb: 'borrow' },
+const CAMPAIGN_TYPE_CONFIG: Record<MerklCampaignType, { badge: string }> = {
+  MORPHOSUPPLY: { badge: 'Lender Rewards' },
+  MORPHOSUPPLY_SINGLETOKEN: { badge: 'Lender Rewards' },
+  MULTILENDBORROW: { badge: 'Lend/Borrow Rewards' },
+  MORPHOBORROW: { badge: 'Borrow Rewards' },
 };
 
 type CampaignModalProps = {
@@ -22,30 +22,39 @@ type CampaignModalProps = {
 };
 
 function getUrlIdentifier(campaign: SimplifiedCampaign): string {
+  // Always prefer opportunityIdentifier from the Opportunity object
+  if (campaign.opportunityIdentifier) {
+    return campaign.opportunityIdentifier;
+  }
+  // Fallback for legacy data
   switch (campaign.type) {
     case 'MORPHOSUPPLY_SINGLETOKEN':
       return campaign.targetToken?.address ?? campaign.campaignId;
-    case 'MULTILENDBORROW':
-      return campaign.opportunityIdentifier ?? campaign.campaignId;
     default:
       return campaign.marketId.slice(0, 42);
   }
+}
+
+function formatCampaignDate(timestamp: number): string {
+  return new Date(timestamp * 1000).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
   const urlIdentifier = getUrlIdentifier(campaign);
   const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, urlIdentifier);
 
-  const { badge, actionType, actionVerb } = CAMPAIGN_TYPE_CONFIG[campaign.type] ?? CAMPAIGN_TYPE_CONFIG.MORPHOSUPPLY;
+  const { badge } = CAMPAIGN_TYPE_CONFIG[campaign.type] ?? CAMPAIGN_TYPE_CONFIG.MORPHOSUPPLY;
 
   return (
     <div className="bg-hovered rounded-sm border border-gray-200/20 p-4 dark:border-gray-600/15">
+      {/* Header: Badge + Reward Token + APR */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Campaign Type Badge */}
           <span className="rounded-sm bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800 dark:text-green-300">{badge}</span>
-
-          {/* Reward Token */}
           <div className="flex items-center gap-2">
             <Image
               src={campaign.rewardToken.icon}
@@ -57,16 +66,17 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
             <span className="text-normal">{campaign.rewardToken.symbol}</span>
           </div>
         </div>
-
-        {/* APR */}
         <span className="text text-green-600 dark:text-green-400">+{campaign.apr.toFixed(2)}% APR</span>
       </div>
 
-      <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-        Extra incentives for all {actionType} who {actionVerb} to this market, earning {campaign.rewardToken.symbol} rewards.
-      </div>
+      {/* Campaign Name */}
+      {campaign.name && <h4 className="mb-2 text-sm font-medium">{campaign.name}</h4>}
 
-      <div className="flex justify-end">
+      {/* Date Range + Link */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-gray-500 dark:text-gray-500">
+          {formatCampaignDate(campaign.startTimestamp)} — {formatCampaignDate(campaign.endTimestamp)}
+        </span>
         <Link
           href={merklUrl}
           target="_blank"

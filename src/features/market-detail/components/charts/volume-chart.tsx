@@ -44,7 +44,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     liquidity: true,
   });
 
-  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d') => {
+  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d' | '3m' | '6m') => {
     setTimeframe(timeframe);
   };
 
@@ -180,7 +180,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
           </Select>
           <Select
             value={selectedTimeframe}
-            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
+            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d' | '3m' | '6m')}
           >
             <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
               <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
@@ -189,6 +189,8 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
               <SelectItem value="1d">1D</SelectItem>
               <SelectItem value="7d">7D</SelectItem>
               <SelectItem value="30d">30D</SelectItem>
+              <SelectItem value="3m">3M</SelectItem>
+              <SelectItem value="6m">6M</SelectItem>
             </SelectContent>
           </Select>
         </div>

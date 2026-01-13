@@ -154,5 +154,6 @@ export type SimplifiedCampaign = {
   startTimestamp: number;
   endTimestamp: number;
   isActive: boolean;
+  name?: string;
   opportunityIdentifier?: string;
 };
