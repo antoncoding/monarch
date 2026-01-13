@@ -19,12 +19,6 @@ export function PositionPill({ position, onSupplyClick, onBorrowClick }: Positio
   const borrowAmount = Number(formatUnits(BigInt(state.borrowAssets), market.loanAsset.decimals));
   const collateralAmount = Number(formatUnits(BigInt(state.collateral), market.collateralAsset.decimals));
 
-  // Calculate total position value in USD
-  const supplyUsd = supplyAmount * (market.loanAsset.priceUsd ?? 0);
-  const borrowUsd = borrowAmount * (market.loanAsset.priceUsd ?? 0);
-  const collateralUsd = collateralAmount * (market.collateralAsset.priceUsd ?? 0);
-  const netValue = supplyUsd + collateralUsd - borrowUsd;
-
   // Check if user has any position
   const hasPosition = supplyAmount > 0 || borrowAmount > 0 || collateralAmount > 0;
 
@@ -37,11 +31,10 @@ export function PositionPill({ position, onSupplyClick, onBorrowClick }: Positio
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-sm transition-colors hover:bg-hovered"
+          className="flex items-center gap-2 rounded-full border border-border/50 bg-surface px-3 py-1.5 text-sm transition-colors hover:bg-hovered"
         >
           <span className="h-2 w-2 rounded-full bg-primary" />
-          <span className="text-secondary">Position</span>
-          <span className="tabular-nums font-medium">${formatReadable(netValue)}</span>
+          <span>My Position</span>
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -63,12 +56,9 @@ export function PositionPill({ position, onSupplyClick, onBorrowClick }: Positio
                 />
                 <span className="text-sm text-secondary">Supplied</span>
               </div>
-              <div className="text-right">
-                <span className="tabular-nums text-sm font-medium">
-                  {formatReadable(supplyAmount)} {market.loanAsset.symbol}
-                </span>
-                <p className="tabular-nums text-xs text-secondary">${formatReadable(supplyUsd)}</p>
-              </div>
+              <span className="tabular-nums text-sm font-medium">
+                {formatReadable(supplyAmount)} {market.loanAsset.symbol}
+              </span>
             </div>
           )}
 
@@ -84,12 +74,9 @@ export function PositionPill({ position, onSupplyClick, onBorrowClick }: Positio
                 />
                 <span className="text-sm text-secondary">Borrowed</span>
               </div>
-              <div className="text-right">
-                <span className="tabular-nums text-sm font-medium text-rose-500">
-                  {formatReadable(borrowAmount)} {market.loanAsset.symbol}
-                </span>
-                <p className="tabular-nums text-xs text-secondary">${formatReadable(borrowUsd)}</p>
-              </div>
+              <span className="tabular-nums text-sm font-medium text-rose-500">
+                {formatReadable(borrowAmount)} {market.loanAsset.symbol}
+              </span>
             </div>
           )}
 
@@ -105,12 +92,9 @@ export function PositionPill({ position, onSupplyClick, onBorrowClick }: Positio
                 />
                 <span className="text-sm text-secondary">Collateral</span>
               </div>
-              <div className="text-right">
-                <span className="tabular-nums text-sm font-medium">
-                  {formatReadable(collateralAmount)} {market.collateralAsset.symbol}
-                </span>
-                <p className="tabular-nums text-xs text-secondary">${formatReadable(collateralUsd)}</p>
-              </div>
+              <span className="tabular-nums text-sm font-medium">
+                {formatReadable(collateralAmount)} {market.collateralAsset.symbol}
+              </span>
             </div>
           )}
 

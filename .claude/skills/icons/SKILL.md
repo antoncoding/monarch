@@ -35,9 +35,12 @@ description: Icon usage conventions and semantic mappings. Use when adding, modi
 
 | Concept | Icon | Import |
 |---------|------|--------|
+| Supply | `BsArrowUpCircle` | `react-icons/bs` |
+| Deposit | `BsArrowUpCircle` | `react-icons/bs` |
+| Borrow | `BsArrowDownLeftCircle` | `react-icons/bs` |
+| Repay | `BsArrowUpRightCircle` | `react-icons/bs` |
+| Withdraw | `BsArrowDownCircle` | `react-icons/bs` |
 | Swap | `LuArrowRightLeft` | `react-icons/lu` |
-| Withdraw | `BsArrowUpCircle` | `react-icons/bs` |
-| Deposit | `BsArrowDownCircle` | `react-icons/bs` |
 | History | `GoHistory` | `react-icons/go` |
 | Rewards | `FiGift` | `react-icons/fi` |
 | Fire | `HiFire` | `react-icons/hi2` |

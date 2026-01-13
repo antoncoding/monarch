@@ -47,8 +47,8 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
     return supplyApy.map((point: TimeseriesDataPoint, index: number) => {
       const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
-      const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y ?? 0) : borrowApy[index]?.y ?? 0;
-      const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y ?? 0) : apyAtTarget[index]?.y ?? 0;
+      const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y ?? 0) : (borrowApy[index]?.y ?? 0);
+      const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y ?? 0) : (apyAtTarget[index]?.y ?? 0);
 
       return {
         x: point.x,
@@ -300,9 +300,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                   <span
                     className="text-xs"
                     style={{
-                      color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines]
-                        ? 'var(--color-text-secondary)'
-                        : '#666',
+                      color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines] ? 'var(--color-text-secondary)' : '#666',
                     }}
                   >
                     {value}
@@ -346,9 +344,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
       {/* Footer: Historical Averages */}
       <div className="border-t border-border px-6 py-4">
-        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">
-          {timeframeLabels[selectedTimeframe]} Averages
-        </h4>
+        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{timeframeLabels[selectedTimeframe]} Averages</h4>
         {isLoading ? (
           <div className="flex h-8 items-center justify-center">
             <Spinner size={16} />

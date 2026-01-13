@@ -143,9 +143,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">Supply</p>
             <div className="flex items-baseline gap-2">
-              <span className="tabular-nums text-lg">
-                {formatValue(supplyStats.current)}
-              </span>
+              <span className="tabular-nums text-lg">{formatValue(supplyStats.current)}</span>
               <span className={`text-xs tabular-nums ${supplyStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {supplyStats.netChangePercentage >= 0 ? '+' : ''}
                 {supplyStats.netChangePercentage.toFixed(2)}%
@@ -155,9 +153,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">Borrow</p>
             <div className="flex items-baseline gap-2">
-              <span className="tabular-nums text-lg">
-                {formatValue(borrowStats.current)}
-              </span>
+              <span className="tabular-nums text-lg">{formatValue(borrowStats.current)}</span>
               <span className={`text-xs tabular-nums ${borrowStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {borrowStats.netChangePercentage >= 0 ? '+' : ''}
                 {borrowStats.netChangePercentage.toFixed(2)}%
@@ -167,9 +163,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">Liquidity</p>
             <div className="flex items-baseline gap-2">
-              <span className="tabular-nums text-lg">
-                {formatValue(liquidityStats.current)}
-              </span>
+              <span className="tabular-nums text-lg">{formatValue(liquidityStats.current)}</span>
               <span className={`text-xs tabular-nums ${liquidityStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {liquidityStats.netChangePercentage >= 0 ? '+' : ''}
                 {liquidityStats.netChangePercentage.toFixed(2)}%
@@ -220,7 +214,10 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
             height={350}
             id="volume-chart"
           >
-            <AreaChart data={getVolumeChartData()} margin={{ top: 20, right: 20, left: 10, bottom: 10 }}>
+            <AreaChart
+              data={getVolumeChartData()}
+              margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
+            >
               <defs>
                 <linearGradient
                   id="volumeChart-supplyGradient"
@@ -342,9 +339,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
                   <span
                     className="text-xs"
                     style={{
-                      color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines]
-                        ? 'var(--color-text-secondary)'
-                        : '#666',
+                      color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines] ? 'var(--color-text-secondary)' : '#666',
                     }}
                   >
                     {value}

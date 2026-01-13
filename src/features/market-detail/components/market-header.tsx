@@ -4,9 +4,12 @@ import Image from 'next/image';
 import { formatUnits } from 'viem';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { GrStatusGood } from 'react-icons/gr';
-import { IoWarningOutline } from 'react-icons/io5';
+import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
 import { MdError } from 'react-icons/md';
+import { BsArrowUpCircle, BsArrowDownLeftCircle } from 'react-icons/bs';
+import { FiExternalLink } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -19,6 +22,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { convertApyToApr } from '@/utils/rateMath';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
+import { getMarketURL } from '@/utils/external';
 import type { Market, MarketPosition, WarningWithDetail } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
 import { getRiskLevel, countWarningsByLevel, type RiskLevel } from '@/utils/warnings';
@@ -35,7 +39,7 @@ function WarningBlock({ warnings, riskLevel }: WarningBlockProps): React.ReactNo
   const isAlert = riskLevel === 'red';
   const containerClass = isAlert
     ? 'border-red-200 bg-red-50 dark:border-red-400/20 dark:bg-red-400/10'
-    : 'border-amber-200 bg-amber-50 dark:border-yellow-400/20 dark:bg-yellow-400/10';
+    : 'border-yellow-200 bg-yellow-50 dark:border-yellow-400/20 dark:bg-yellow-400/10';
 
   return (
     <div className={`rounded border p-3 ${containerClass}`}>
@@ -43,13 +47,13 @@ function WarningBlock({ warnings, riskLevel }: WarningBlockProps): React.ReactNo
         {isAlert ? (
           <MdError className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-300" />
         ) : (
-          <IoWarningOutline className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-yellow-300" />
+          <IoWarningOutline className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-600 dark:text-yellow-300" />
         )}
         <div className="space-y-1">
           {warnings.map((w) => (
             <p
               key={w.code}
-              className={`text-sm ${w.level === 'alert' ? 'text-red-800 dark:text-red-300' : 'text-amber-800 dark:text-yellow-300'}`}
+              className={`text-sm ${w.level === 'alert' ? 'text-red-800 dark:text-red-300' : 'text-yellow-800 dark:text-yellow-300'}`}
             >
               {w.description}
             </p>
@@ -70,7 +74,7 @@ type StatusBadgeProps = {
 function StatusBadge({ variant, count, label }: StatusBadgeProps): React.ReactNode {
   const styles = {
     success: 'bg-green-100 text-green-800 dark:bg-green-400/10 dark:text-green-300',
-    warning: 'bg-amber-100 text-amber-800 dark:bg-yellow-400/10 dark:text-yellow-300',
+    warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-400/10 dark:text-yellow-300',
     alert: 'bg-red-100 text-red-800 dark:bg-red-400/10 dark:text-red-300',
   };
 
@@ -94,11 +98,11 @@ function StatusBadge({ variant, count, label }: StatusBadgeProps): React.ReactNo
 function RiskIcon({ level }: { level: RiskLevel }): React.ReactNode {
   switch (level) {
     case 'green':
-      return <GrStatusGood className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />;
+      return <GrStatusGood className="h-3.5 w-3.5 text-green-600 dark:text-green-300" />;
     case 'yellow':
-      return <IoWarningOutline className="h-3.5 w-3.5 text-amber-600 dark:text-yellow-400" />;
+      return <IoWarningOutline className="h-3.5 w-3.5 text-yellow-600 dark:text-yellow-300" />;
     case 'red':
-      return <MdError className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />;
+      return <MdError className="h-3.5 w-3.5 text-red-600 dark:text-red-300" />;
     default:
       return null;
   }
@@ -222,17 +226,9 @@ export function MarketHeader({
             </div>
 
             <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl font-semibold">
-                  {market.loanAsset.symbol}/{market.collateralAsset.symbol}
-                </h1>
-                <CampaignBadge
-                  marketId={marketId}
-                  loanTokenAddress={market.loanAsset.address}
-                  chainId={market.morphoBlue.chain.id}
-                  whitelisted={market.whitelisted}
-                />
-              </div>
+              <h1 className="text-xl font-semibold">
+                {market.loanAsset.symbol}/{market.collateralAsset.symbol}
+              </h1>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-secondary">
                 {networkImg && (
                   <div className="flex items-center gap-1">
@@ -259,11 +255,29 @@ export function MarketHeader({
             <div className="hidden lg:flex items-center gap-6 border-r border-border pr-6">
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Supply {rateLabel}</p>
-                <p className="tabular-nums text-lg">{formatRate(market.state.supplyApy)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="tabular-nums text-lg">{formatRate(market.state.supplyApy)}</p>
+                  <CampaignBadge
+                    marketId={marketId}
+                    loanTokenAddress={market.loanAsset.address}
+                    chainId={market.morphoBlue.chain.id}
+                    whitelisted={market.whitelisted}
+                    filterType="supply"
+                  />
+                </div>
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Borrow {rateLabel}</p>
-                <p className="tabular-nums text-lg">{formatRate(market.state.borrowApy)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="tabular-nums text-lg">{formatRate(market.state.borrowApy)}</p>
+                  <CampaignBadge
+                    marketId={marketId}
+                    loanTokenAddress={market.loanAsset.address}
+                    chainId={market.morphoBlue.chain.id}
+                    whitelisted={market.whitelisted}
+                    filterType="borrow"
+                  />
+                </div>
               </div>
               <div>
                 <Tooltip
@@ -282,7 +296,7 @@ export function MarketHeader({
               </div>
             </div>
 
-            {/* Position Pill + Action Buttons */}
+            {/* Position Pill + Actions Dropdown */}
             <div className="flex flex-wrap items-center gap-2">
               {userPosition && (
                 <PositionPill
@@ -291,8 +305,37 @@ export function MarketHeader({
                   onBorrowClick={onBorrowClick}
                 />
               )}
-              <Button onClick={onSupplyClick}>Supply</Button>
-              <Button onClick={onBorrowClick}>Borrow</Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="surface"
+                    className="px-2"
+                  >
+                    <IoEllipsisVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={onSupplyClick}
+                    startContent={<BsArrowUpCircle className="h-4 w-4" />}
+                  >
+                    Supply
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={onBorrowClick}
+                    startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
+                  >
+                    Borrow
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => window.open(getMarketURL(marketId, network), '_blank')}
+                    startContent={<FiExternalLink className="h-4 w-4" />}
+                  >
+                    View on Morpho
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -301,11 +344,29 @@ export function MarketHeader({
         <div className="mt-4 grid grid-cols-3 gap-4 border-t border-border pt-4 lg:hidden">
           <div>
             <p className="text-xs text-secondary">Supply {rateLabel}</p>
-            <p className="tabular-nums">{formatRate(market.state.supplyApy)}</p>
+            <div className="flex items-center gap-1">
+              <p className="tabular-nums">{formatRate(market.state.supplyApy)}</p>
+              <CampaignBadge
+                marketId={marketId}
+                loanTokenAddress={market.loanAsset.address}
+                chainId={market.morphoBlue.chain.id}
+                whitelisted={market.whitelisted}
+                filterType="supply"
+              />
+            </div>
           </div>
           <div>
             <p className="text-xs text-secondary">Borrow {rateLabel}</p>
-            <p className="tabular-nums">{formatRate(market.state.borrowApy)}</p>
+            <div className="flex items-center gap-1">
+              <p className="tabular-nums">{formatRate(market.state.borrowApy)}</p>
+              <CampaignBadge
+                marketId={marketId}
+                loanTokenAddress={market.loanAsset.address}
+                chainId={market.morphoBlue.chain.id}
+                whitelisted={market.whitelisted}
+                filterType="borrow"
+              />
+            </div>
           </div>
           <div>
             <p className="text-xs text-secondary">Oracle</p>

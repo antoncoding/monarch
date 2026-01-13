@@ -70,7 +70,6 @@ function MarketContent() {
 
   const {
     position: userPosition,
-    loading: positionLoading,
     refetch: refetchUserPosition,
   } = useUserPosition(address, network, marketId as string);
 
@@ -201,9 +200,7 @@ function MarketContent() {
   }
 
   // 8. Warning filtering by category (for MarketHeader)
-  const warnings = allWarnings.filter(
-    (w) => w.category === WarningCategory.debt || w.category === WarningCategory.general,
-  );
+  const warnings = allWarnings.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general);
 
   // Handlers for supply/borrow actions
   const handleSupplyClick = () => {

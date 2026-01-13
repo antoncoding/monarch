@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { FaGift } from 'react-icons/fa';
 import { Badge } from '@/components/ui/badge';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
@@ -11,9 +11,15 @@ type CampaignBadgeProps = {
   loanTokenAddress: string;
   chainId: number;
   whitelisted: boolean;
+  filterType?: 'supply' | 'borrow';
 };
 
-export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted }: CampaignBadgeProps) {
+// Supply campaign types: MORPHOSUPPLY, MORPHOSUPPLY_SINGLETOKEN, MULTILENDBORROW
+const SUPPLY_CAMPAIGN_TYPES = ['MORPHOSUPPLY', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
+// Borrow campaign types: MORPHOBORROW
+const BORROW_CAMPAIGN_TYPES = ['MORPHOBORROW'];
+
+export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted, filterType }: CampaignBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns({
@@ -23,11 +29,19 @@ export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted
     whitelisted,
   });
 
-  if (loading || !hasActiveRewards) {
+  // Filter campaigns by type if filterType is specified
+  const filteredCampaigns = useMemo(() => {
+    if (!filterType) return activeCampaigns;
+
+    const allowedTypes = filterType === 'supply' ? SUPPLY_CAMPAIGN_TYPES : BORROW_CAMPAIGN_TYPES;
+    return activeCampaigns.filter((campaign) => allowedTypes.includes(campaign.type));
+  }, [activeCampaigns, filterType]);
+
+  if (loading || !hasActiveRewards || filteredCampaigns.length === 0) {
     return null;
   }
 
-  const totalBonus = activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0);
+  const totalBonus = filteredCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0);
 
   return (
     <>
@@ -52,7 +66,7 @@ export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted
       <CampaignModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        campaigns={activeCampaigns}
+        campaigns={filteredCampaigns}
       />
     </>
   );

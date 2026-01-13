@@ -10,7 +10,7 @@ const levelToCellColor = (level: string) => {
     case 'success':
       return 'bg-green-100 text-green-800 dark:bg-green-400/10 dark:text-green-300';
     case 'warning':
-      return 'bg-amber-100 text-amber-800 dark:bg-yellow-400/10 dark:text-yellow-300';
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-400/10 dark:text-yellow-300';
     case 'alert':
       return 'bg-red-100 text-red-800 dark:bg-red-400/10 dark:text-red-300';
     default:
@@ -23,33 +23,33 @@ const levelToIcon = (level: string) => {
     case 'info':
       return (
         <FaRegLightbulb
-          className="mr-2"
-          size={18}
+          className="mt-0.5 flex-shrink-0"
+          size={16}
         />
       );
     case 'success':
       return (
         <GrStatusGood
-          className="mr-2"
-          size={18}
+          className="mt-0.5 flex-shrink-0"
+          size={16}
         />
       );
     case 'warning':
       return (
         <IoWarningOutline
-          className="mr-2"
-          size={18}
+          className="mt-0.5 flex-shrink-0"
+          size={16}
         />
       );
     case 'alert':
       return (
         <MdError
-          className="mr-2"
-          size={18}
+          className="mt-0.5 flex-shrink-0"
+          size={16}
         />
       );
     default:
-      return '';
+      return null;
   }
 };
 
