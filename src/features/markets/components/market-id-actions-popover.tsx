@@ -36,24 +36,29 @@ export function MarketIdActionsPopover({ marketId, chainId, children }: MarketId
   }, [chainId, marketId, router]);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="cursor-pointer">{children}</div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuItem
-          onClick={() => void handleCopy()}
-          startContent={<LuCopy className="h-4 w-4" />}
-        >
-          Copy ID
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={handleViewMarket}
-          startContent={<GoGraph className="h-4 w-4" />}
-        >
-          View Market
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="cursor-pointer">{children}</div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem
+            onClick={() => void handleCopy()}
+            startContent={<LuCopy className="h-4 w-4" />}
+          >
+            Copy ID
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={handleViewMarket}
+            startContent={<GoGraph className="h-4 w-4" />}
+          >
+            View Market
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
