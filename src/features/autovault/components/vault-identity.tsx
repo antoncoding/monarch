@@ -3,7 +3,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Link from 'next/link';
-import { FiExternalLink } from 'react-icons/fi';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import type { VaultCurator } from '@/constants/vaults/known_vaults';
@@ -146,7 +146,7 @@ export function VaultIdentity({
           title={tooltipTitle}
           detail={resolvedDetail}
           secondaryDetail={tooltipSecondaryDetail}
-          actionIcon={<FiExternalLink className="h-4 w-4" />}
+          actionIcon={<ExternalLinkIcon className="h-4 w-4" />}
           actionHref={vaultHref}
           onActionClick={(e) => e.stopPropagation()}
         />

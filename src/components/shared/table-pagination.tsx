@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Tooltip } from '@/components/ui/tooltip';
-import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
+import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
+import { FiSearch } from 'react-icons/fi';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils';
@@ -200,7 +201,7 @@ export function TablePagination({
                   <TooltipContent
                     title="Jump to page"
                     detail={`Go to a specific page (1-${totalPages})`}
-                    icon={<MagnifyingGlassIcon />}
+                    icon={<FiSearch />}
                   />
                 }
               >
@@ -211,7 +212,7 @@ export function TablePagination({
                     disabled={isLoading}
                     className="h-8 w-8 font-zen !font-normal"
                   >
-                    <MagnifyingGlassIcon className="h-4 w-4" />
+                    <FiSearch className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
               </Tooltip>

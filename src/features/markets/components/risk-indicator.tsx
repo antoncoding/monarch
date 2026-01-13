@@ -1,6 +1,7 @@
 import { Tooltip } from '@/components/ui/tooltip';
 import { GrStatusGood } from 'react-icons/gr';
-import { MdWarning, MdError } from 'react-icons/md';
+import { MdError } from 'react-icons/md';
+import { IoWarningOutline } from 'react-icons/io5';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import type { WarningWithDetail, Market } from '@/utils/types';
@@ -24,7 +25,7 @@ const levelToIcon = (level: 'green' | 'yellow' | 'red') => {
       );
     case 'yellow':
       return (
-        <MdWarning
+        <IoWarningOutline
           size={18}
           className="text-yellow-600"
         />

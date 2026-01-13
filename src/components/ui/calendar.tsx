@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { FiChevronDown, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
 import { DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker';
 
 import { cn } from '@/utils/components';
@@ -98,14 +98,14 @@ function Calendar({
         },
         Chevron: ({ className: chevronClassName, orientation, ...chevronProps }) => {
           if (orientation === 'left') {
-            return <FiChevronLeft className={cn('size-3.5', chevronClassName)} {...chevronProps} />;
+            return <ChevronLeftIcon className={cn('size-3.5', chevronClassName)} {...chevronProps} />;
           }
 
           if (orientation === 'right') {
-            return <FiChevronRight className={cn('size-3.5', chevronClassName)} {...chevronProps} />;
+            return <ChevronRightIcon className={cn('size-3.5', chevronClassName)} {...chevronProps} />;
           }
 
-          return <FiChevronDown className={cn('size-3.5', chevronClassName)} {...chevronProps} />;
+          return <ChevronDownIcon className={cn('size-3.5', chevronClassName)} {...chevronProps} />;
         },
         DayButton: CalendarDayButton,
         WeekNumber: ({ children, ...weekProps }) => {

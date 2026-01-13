@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { MdWarning } from 'react-icons/md';
+import { IoWarningOutline } from 'react-icons/io5';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
 import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 
@@ -56,7 +56,7 @@ export function RedstoneTypesModal({ isOpen, onClose }: RedstoneTypesModalProps)
 
             {/* Warning Box */}
             <div className="mt-3 flex items-center rounded-sm bg-yellow-200 p-4 text-yellow-700 opacity-80">
-              <MdWarning
+              <IoWarningOutline
                 className="mr-2 flex-shrink-0"
                 size={18}
               />

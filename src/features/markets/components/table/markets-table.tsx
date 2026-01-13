@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { FaRegStar, FaStar } from 'react-icons/fa';
+import { GoStar, GoStarFill } from 'react-icons/go';
 import { Table, TableHeader, TableRow, TableHead } from '@/components/ui/table';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
@@ -137,7 +137,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
             <TableHeader>
               <TableRow>
                 <HTSortable
-                  label={sortColumn === 0 ? <FaStar /> : <FaRegStar />}
+                  label={sortColumn === 0 ? <GoStarFill /> : <GoStar />}
                   sortColumn={sortColumn}
                   titleOnclick={titleOnclick}
                   sortDirection={sortDirection}

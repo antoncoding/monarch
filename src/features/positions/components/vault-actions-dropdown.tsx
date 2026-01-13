@@ -4,7 +4,7 @@ import type React from 'react';
 import { useRouter } from 'next/navigation';
 // import { GoHistory } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
-import { MdOutlineSettings } from 'react-icons/md';
+import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
@@ -55,7 +55,7 @@ export function VaultActionsDropdown({ vaultAddress, chainId, account }: VaultAc
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={handleManageClick}
-            startContent={<MdOutlineSettings className="h-4 w-4" />}
+            startContent={<GearIcon className="h-4 w-4" />}
           >
             Manage
           </DropdownMenuItem>

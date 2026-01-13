@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { GoPlusCircle } from 'react-icons/go';
-import { FiShield, FiZap, FiSettings } from 'react-icons/fi';
+import { FiShield, FiZap } from 'react-icons/fi';
+import { GearIcon } from '@radix-ui/react-icons';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
 import { useAppKit } from '@reown/appkit/react';
@@ -287,7 +288,7 @@ export default function AutovaultListContent() {
             {/* Benefits Section */}
             <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
               <FeatureCard
-                icon={<FiSettings className="h-6 w-6" />}
+                icon={<GearIcon className="h-6 w-6" />}
                 title="Full Ownership"
                 description="Your vault, your rules. No middlemen, no hidden fees. Complete control over your assets."
               />

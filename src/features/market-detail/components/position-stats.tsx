@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
-import { FiUser } from 'react-icons/fi';
+import { LuUser } from 'react-icons/lu';
 import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -25,7 +25,7 @@ type PositionStatsProps = {
 };
 
 function ThumbIcon({ isSelected, className }: { isSelected?: boolean; className?: string }) {
-  return isSelected ? <FiUser className={className} /> : <HiOutlineGlobeAsiaAustralia className={className} />;
+  return isSelected ? <LuUser className={className} /> : <HiOutlineGlobeAsiaAustralia className={className} />;
 }
 
 const hasPosition = (position: MarketPosition) => {

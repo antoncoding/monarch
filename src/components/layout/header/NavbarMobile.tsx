@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
-import { FiSettings } from 'react-icons/fi';
+import { GearIcon } from '@radix-ui/react-icons';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill, RiLineChartLine, RiBriefcaseLine, RiGiftLine } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
@@ -140,7 +140,7 @@ export default function NavbarMobile() {
               {mounted && (theme === 'dark' ? 'Light Theme' : 'Dark Theme')}
             </DropdownMenuItem>
             <DropdownMenuItem
-              startContent={<FiSettings className="h-4 w-4" />}
+              startContent={<GearIcon className="h-4 w-4" />}
               onClick={() => handleNavigation('/settings')}
             >
               Settings

@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { MdError, MdWarning } from 'react-icons/md';
+import { MdError } from 'react-icons/md';
+import { IoWarningOutline } from 'react-icons/io5';
 import type { WarningWithDetail } from '@/utils/types';
 
 type MarketWarningBannerProps = {
@@ -12,7 +13,7 @@ export function MarketWarningBanner({ warnings }: MarketWarningBannerProps) {
   if (warnings.length === 0) return null;
 
   const hasAlert = warnings.some((w) => w.level === 'alert');
-  const Icon = hasAlert ? MdError : MdWarning;
+  const Icon = hasAlert ? MdError : IoWarningOutline;
 
   const colorClasses = hasAlert ? 'border-red-500/20 bg-red-500/10 text-red-500' : 'border-yellow-500/20 bg-yellow-500/10 text-yellow-500';
 

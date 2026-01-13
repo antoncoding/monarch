@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FiExternalLink } from 'react-icons/fi';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { MarketOracleFeedInfo } from '@/features/markets/components/oracle';
 import { getExplorerURL } from '@/utils/external';
 import { getOracleType, getOracleTypeDescription, OracleType } from '@/utils/oracle';
@@ -29,7 +29,7 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, s
             className="flex items-center text-sm font-medium no-underline hover:underline"
           >
             {typeDescription}
-            <FiExternalLink className="ml-1 h-3 w-3" />
+            <ExternalLinkIcon className="ml-1 h-3 w-3" />
           </Link>
         ) : (
           <span className="text-sm font-medium">{typeDescription}</span>

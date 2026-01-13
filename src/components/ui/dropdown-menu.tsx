@@ -1,7 +1,8 @@
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { FaCheck } from "react-icons/fa6";
-import { GoChevronRight, GoCircle } from "react-icons/go";
+import { ChevronRightIcon } from "@radix-ui/react-icons";
+import { GoCircle } from "react-icons/go";
 
 import { cn } from "@/utils/components"
 
@@ -36,7 +37,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <GoChevronRight className="ml-auto" />
+    <ChevronRightIcon className="ml-auto" />
   </DropdownMenuPrimitive.SubTrigger>
 ))
 DropdownMenuSubTrigger.displayName =

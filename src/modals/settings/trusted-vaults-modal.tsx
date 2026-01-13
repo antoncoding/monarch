@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { Spinner } from '@/components/ui/spinner';
 import { Divider } from '@/components/ui/divider';
 import { Input } from '@/components/ui/input';
-import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
@@ -231,7 +231,7 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange }: TrustedVaul
                 onClick={() => setMorphoSectionOpen((prev) => !prev)}
               >
                 <span>All Morpho Vaults ({sortedMorphoVaults.length})</span>
-                {morphoSectionOpen ? <FiChevronUp /> : <FiChevronDown />}
+                {morphoSectionOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
               </button>
               {morphoSectionOpen &&
                 (morphoLoading ? (

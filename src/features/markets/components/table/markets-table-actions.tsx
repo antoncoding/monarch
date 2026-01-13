@@ -3,7 +3,7 @@
 import moment from 'moment';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { CgDisplayFullwidth } from 'react-icons/cg';
-import { FiSettings } from 'react-icons/fi';
+import { GearIcon } from '@radix-ui/react-icons';
 import { TbArrowAutofitWidth } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -105,7 +105,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
           className="text-secondary min-w-0 px-2"
           onClick={() => openModal('marketSettings', {})}
         >
-          <FiSettings className="h-3 w-3" />
+          <GearIcon className="h-3 w-3" />
         </Button>
       </Tooltip>
     </>

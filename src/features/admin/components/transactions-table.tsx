@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { ChevronUpIcon, ChevronDownIcon } from '@radix-ui/react-icons';
 import { Table, TableHeader, TableRow, TableHead } from '@/components/ui/table';
 import { TablePagination } from '@/components/shared/table-pagination';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -50,7 +50,7 @@ function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, on
       <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
         <div>{label}</div>
         {currentSortKey === sortKeyValue &&
-          (sortDirection === 'asc' ? <FiChevronUp className="h-4 w-4" /> : <FiChevronDown className="h-4 w-4" />)}
+          (sortDirection === 'asc' ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />)}
       </div>
     </TableHead>
   );

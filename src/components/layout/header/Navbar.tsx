@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
-import { FiSettings } from 'react-icons/fi';
+import { GearIcon } from '@radix-ui/react-icons';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
 import { TbReport } from 'react-icons/tb';
@@ -185,7 +185,7 @@ export function Navbar() {
                 {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
               </DropdownMenuItem>
               <DropdownMenuItem
-                endContent={<FiSettings className="h-4 w-4" />}
+                endContent={<GearIcon className="h-4 w-4" />}
                 onClick={() => router.push('/settings')}
               >
                 Settings
