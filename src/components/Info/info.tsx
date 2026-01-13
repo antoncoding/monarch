@@ -1,7 +1,7 @@
 import { FaRegLightbulb } from 'react-icons/fa';
 import { GrStatusGood } from 'react-icons/gr';
 import { MdError } from 'react-icons/md';
-import { IoWarningOutline } from "react-icons/io5";
+import { IoWarningOutline } from 'react-icons/io5';
 
 const levelToCellColor = (level: string) => {
   switch (level) {

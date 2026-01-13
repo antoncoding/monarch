@@ -1,7 +1,7 @@
 'use client';
 
 import { MdError } from 'react-icons/md';
-import { IoWarningOutline } from "react-icons/io5";
+import { IoWarningOutline } from 'react-icons/io5';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Tooltip } from '@/components/ui/tooltip';
 import type { WarningWithDetail } from '@/utils/types';
