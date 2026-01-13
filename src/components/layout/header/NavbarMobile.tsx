@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { HamburgerMenuIcon } from '@radix-ui/react-icons';
+import { HamburgerMenuIcon, GearIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
-import { GearIcon } from '@radix-ui/react-icons';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill, RiLineChartLine, RiBriefcaseLine, RiGiftLine } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
