@@ -107,7 +107,7 @@ export default function OracleFilter({
 
       <div
         className={cn(
-          'bg-surface absolute z-10 mt-1 min-w-[200px] rounded-sm shadow-lg transition-all duration-200',
+          'bg-surface absolute z-10 mt-1 w-full min-w-[200px] rounded-sm shadow-lg transition-all duration-200',
           isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0',
         )}
       >
