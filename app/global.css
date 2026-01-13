@@ -294,6 +294,13 @@
   color-scheme: dark;
 }
 
+.dark .shadow-sm, 
+.dark .shadow-md, 
+.dark .shadow-lg {
+  box-shadow: none; /* Kill the shadow in dark mode */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Add a subtle white ring */
+}
+
 *,
 *::before,
 *::after {

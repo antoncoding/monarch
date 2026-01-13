@@ -9,14 +9,6 @@ type MarketOracleFeedInfoProps = {
   chainId: number;
 };
 
-function EmptyFeedSlot() {
-  return (
-    <div className="flex w-full cursor-default items-center gap-1 rounded-sm bg-gray-100 px-2 py-1 opacity-30 dark:bg-gray-800">
-      <span className="text-xs text-gray-400">--</span>
-    </div>
-  );
-}
-
 export function MarketOracleFeedInfo({
   baseFeedOne,
   baseFeedTwo,
@@ -30,26 +22,24 @@ export function MarketOracleFeedInfo({
     return <div className="text-center text-sm text-gray-500 dark:text-gray-400">No feed routes available</div>;
   }
 
-  const renderFeed = (feed: OracleFeed | null | undefined) =>
-    feed ? (
-      <div className="w-full">
-        <FeedEntry
-          feed={feed}
-          chainId={chainId}
-        />
-      </div>
-    ) : (
-      <EmptyFeedSlot />
-    );
-
   return (
     <div className="space-y-2">
       {(baseFeedOne || baseFeedTwo) && (
         <div className="flex items-center justify-between">
           <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Base:</span>
-          <div className="flex gap-2">
-            <div className="w-28">{renderFeed(baseFeedOne)}</div>
-            <div className="w-28">{renderFeed(baseFeedTwo)}</div>
+          <div className="flex justify-end gap-2">
+            {baseFeedOne && (
+              <FeedEntry
+                feed={baseFeedOne}
+                chainId={chainId}
+              />
+            )}
+            {baseFeedTwo && (
+              <FeedEntry
+                feed={baseFeedTwo}
+                chainId={chainId}
+              />
+            )}
           </div>
         </div>
       )}
@@ -57,9 +47,19 @@ export function MarketOracleFeedInfo({
       {(quoteFeedOne || quoteFeedTwo) && (
         <div className="flex items-center justify-between">
           <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Quote:</span>
-          <div className="flex gap-2">
-            <div className="w-28">{renderFeed(quoteFeedOne)}</div>
-            <div className="w-28">{renderFeed(quoteFeedTwo)}</div>
+          <div className="flex justify-end gap-2">
+            {quoteFeedOne && (
+              <FeedEntry
+                feed={quoteFeedOne}
+                chainId={chainId}
+              />
+            )}
+            {quoteFeedTwo && (
+              <FeedEntry
+                feed={quoteFeedTwo}
+                chainId={chainId}
+              />
+            )}
           </div>
         </div>
       )}

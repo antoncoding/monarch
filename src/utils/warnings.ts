@@ -209,16 +209,14 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
 
       if (feedsPathResult.hasUnknownFeed) {
         // only append this error if it doesn't already have "UNRECOGNIZED_FEEDS"
-        if (result.find((w) => w === UNRECOGNIZED_FEEDS) === undefined) {
+        if (!result.includes(UNRECOGNIZED_FEEDS)) {
           result.push(UNKNOWN_FEED_FOR_PAIR_MATCHING);
         }
       } else if (!feedsPathResult.isValid) {
-        // Create a dynamic warning with the specific error message
-        const incompatibleFeedsWarning: WarningWithDetail = {
+        result.push({
           ...INCOMPATIBLE_ORACLE_FEEDS,
           description: feedsPathResult.missingPath ?? INCOMPATIBLE_ORACLE_FEEDS.description,
-        };
-        result.push(incompatibleFeedsWarning);
+        });
       }
     }
   }
@@ -230,4 +228,28 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
   }
 
   return result;
+};
+
+// Risk level type for UI components
+export type RiskLevel = 'green' | 'yellow' | 'red';
+
+/**
+ * Determine risk level for a set of warnings
+ * - green: no warnings
+ * - yellow: has warnings but no alerts
+ * - red: has at least one alert-level warning
+ */
+export const getRiskLevel = (warnings: WarningWithDetail[]): RiskLevel => {
+  if (warnings.length === 0) return 'green';
+  if (warnings.some((w) => w.level === 'alert')) return 'red';
+  return 'yellow';
+};
+
+/**
+ * Count warnings by level
+ */
+export const countWarningsByLevel = (warnings: WarningWithDetail[]) => {
+  const alertCount = warnings.filter((w) => w.level === 'alert').length;
+  const warningCount = warnings.filter((w) => w.level === 'warning').length;
+  return { alertCount, warningCount };
 };

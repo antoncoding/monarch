@@ -1,12 +1,11 @@
 /* eslint-disable react/no-unstable-nested-components */
 
 import { useState, useMemo } from 'react';
-import { Card, CardHeader, CardBody } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Tooltip as HeroTooltip } from '@/components/ui/tooltip';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatUnits } from 'viem';
-import { HiOutlineInformationCircle } from 'react-icons/hi2';
-import ButtonGroup from '@/components/ui/button-group';
 import { Spinner } from '@/components/ui/spinner';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CHART_COLORS } from '@/constants/chartColors';
@@ -24,14 +23,12 @@ type VolumeChartProps = {
 };
 
 function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
-  // ✅ All hooks at top level - no conditional returns before hooks!
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
   const volumeView = useMarketDetailChartState((s) => s.volumeView);
   const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
   const setVolumeView = useMarketDetailChartState((s) => s.setVolumeView);
 
-  // Component fetches its own data (React Query caches by marketId + chainId + timeRange)
   const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
 
   const [visibleLines, setVisibleLines] = useState({
@@ -58,21 +55,17 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     const borrowData = volumeView === 'USD' ? historicalData.volumes.borrowAssetsUsd : historicalData.volumes.borrowAssets;
     const liquidityData = volumeView === 'USD' ? historicalData.volumes.liquidityAssetsUsd : historicalData.volumes.liquidityAssets;
 
-    // Process all data in a single loop
     return supplyData
       .map((point: TimeseriesDataPoint, index: number) => {
-        // Get corresponding points from other series
         const borrowPoint: TimeseriesDataPoint | undefined = borrowData[index];
         const liquidityPoint: TimeseriesDataPoint | undefined = liquidityData[index];
 
-        // Convert values based on view type
         const supplyValue = volumeView === 'USD' ? point.y : Number(formatUnits(BigInt(point.y), market.loanAsset.decimals));
         const borrowValue =
           volumeView === 'USD' ? borrowPoint?.y || 0 : Number(formatUnits(BigInt(borrowPoint?.y || 0), market.loanAsset.decimals));
         const liquidityValue =
           volumeView === 'USD' ? liquidityPoint?.y || 0 : Number(formatUnits(BigInt(liquidityPoint?.y || 0), market.loanAsset.decimals));
 
-        // Check if any timestamps has USD value exceeds 100B
         if (historicalData.volumes.supplyAssetsUsd[index].y >= 100_000_000_000) {
           return null;
         }
@@ -118,328 +111,345 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     return sum / data.length;
   };
 
-  const volumeViewOptions = [
-    { key: 'USD', label: 'USD', value: 'USD' },
-    { key: 'Asset', label: market.loanAsset.symbol, value: 'Asset' },
-  ];
+  const timeframeLabels: Record<string, string> = {
+    '1d': '1D',
+    '7d': '7D',
+    '30d': '30D',
+  };
 
-  const timeframeOptions = [
-    { key: '1d', label: '1D', value: '1d' },
-    { key: '7d', label: '7D', value: '7d' },
-    { key: '30d', label: '30D', value: '30d' },
-  ];
-
-  // This is only for adaptive curve
   const targetUtilizationData = useMemo(() => {
     const supply = market.state.supplyAssets ? BigInt(market.state.supplyAssets) : 0n;
     const borrow = market.state.borrowAssets ? BigInt(market.state.borrowAssets) : 0n;
 
-    // Calculate deltas to reach 90% target utilization
-    const targetBorrow = (supply * 9n) / 10n; // B_target = S * 0.9
+    const targetBorrow = (supply * 9n) / 10n;
     const borrowDelta = targetBorrow - borrow;
 
-    const targetSupply = (borrow * 10n) / 9n; // S_target = B / 0.9
+    const targetSupply = (borrow * 10n) / 9n;
     const supplyDelta = targetSupply - supply;
 
-    return {
-      borrowDelta,
-      supplyDelta,
-    };
+    return { borrowDelta, supplyDelta };
   }, [market.state.supplyAssets, market.state.borrowAssets]);
 
+  const supplyStats = getCurrentVolumeStats('supply');
+  const borrowStats = getCurrentVolumeStats('borrow');
+  const liquidityStats = getCurrentVolumeStats('liquidity');
+
   return (
-    <Card className="bg-surface rounded p-4 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-end gap-4 px-6 py-4">
-        <ButtonGroup
-          options={volumeViewOptions}
-          value={volumeView}
-          onChange={(value) => setVolumeView(value as 'USD' | 'Asset')}
-          size="sm"
-          variant="default"
-        />
-        <ButtonGroup
-          options={timeframeOptions}
-          value={selectedTimeframe}
-          onChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
-          size="sm"
-          variant="default"
-          equalWidth
-        />
-      </CardHeader>
-      <CardBody>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-          <div className="lg:col-span-2">
-            {isLoading ? (
-              <div className="flex h-64 items-center justify-center text-primary">
-                <Spinner size={30} />
-              </div>
-            ) : (
-              <ResponsiveContainer
-                width="100%"
-                height={400}
-                id="volume-chart"
-              >
-                <AreaChart data={getVolumeChartData()} margin={{ top: 20, right: 20, left: 10, bottom: 10 }}>
-                  <defs>
-                    <linearGradient
-                      id="volumeChart-supplyGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor={CHART_COLORS.supply.stroke}
-                        stopOpacity={0.08}
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor={CHART_COLORS.supply.stroke}
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="volumeChart-borrowGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor={CHART_COLORS.borrow.stroke}
-                        stopOpacity={0.08}
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor={CHART_COLORS.borrow.stroke}
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="volumeChart-liquidityGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor={CHART_COLORS.apyAtTarget.stroke}
-                        stopOpacity={0.08}
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor={CHART_COLORS.apyAtTarget.stroke}
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="0"
-                    stroke="var(--color-border)"
-                    strokeOpacity={0.25}
-                  />
-                  <XAxis
-                    dataKey="x"
-                    axisLine={false}
-                    tickLine={false}
-                    tickMargin={12}
-                    minTickGap={60}
-                    tickFormatter={(time) => formatChartTime(time, selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp)}
-                    tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={formatYAxis}
-                    tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-                    width={50}
-                    domain={['auto', 'auto']}
-                  />
-                  <Tooltip
-                    cursor={{ stroke: 'var(--color-text-secondary)', strokeWidth: 1, strokeDasharray: '4 4' }}
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload) return null;
-                      return (
-                        <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-                          <p className="mb-2 text-xs text-secondary">{new Date(label * 1000).toLocaleDateString()}</p>
-                          <div className="space-y-1">
-                            {payload.map((entry: any) => (
-                              <div
-                                key={entry.dataKey}
-                                className="flex items-center justify-between gap-6 text-sm"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className="h-2 w-2 rounded-full"
-                                    style={{ backgroundColor: entry.color }}
-                                  />
-                                  <span className="text-secondary">{entry.name}</span>
-                                </div>
-                                <span className="tabular-nums font-medium">{formatValue(entry.value)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Legend
-                    wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
-                    iconType="circle"
-                    iconSize={8}
-                    onClick={(e) => {
-                      const dataKey = e.dataKey as keyof typeof visibleLines;
-                      setVisibleLines((prev) => ({
-                        ...prev,
-                        [dataKey]: !prev[dataKey],
-                      }));
-                    }}
-                    formatter={(value, entry) => (
-                      <span
-                        className="text-xs"
-                        style={{
-                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines]
-                            ? 'var(--color-text-secondary)'
-                            : '#666',
-                        }}
-                      >
-                        {value}
-                      </span>
-                    )}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="supply"
-                    name="Supply Volume"
-                    stroke={CHART_COLORS.supply.stroke}
-                    strokeWidth={2}
-                    fill="url(#volumeChart-supplyGradient)"
-                    fillOpacity={1}
-                    hide={!visibleLines.supply}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="borrow"
-                    name="Borrow Volume"
-                    stroke={CHART_COLORS.borrow.stroke}
-                    strokeWidth={2}
-                    fill="url(#volumeChart-borrowGradient)"
-                    fillOpacity={1}
-                    hide={!visibleLines.borrow}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="liquidity"
-                    name="Liquidity"
-                    stroke={CHART_COLORS.apyAtTarget.stroke}
-                    strokeWidth={2}
-                    fill="url(#volumeChart-liquidityGradient)"
-                    fillOpacity={1}
-                    hide={!visibleLines.liquidity}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
+    <Card className="overflow-hidden border border-border bg-surface shadow-sm">
+      {/* Header: Live Stats + Controls */}
+      <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Live Stats */}
+        <div className="flex flex-wrap gap-6">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-secondary">Supply</p>
+            <div className="flex items-baseline gap-2">
+              <span className="tabular-nums text-lg">
+                {formatValue(supplyStats.current)}
+              </span>
+              <span className={`text-xs tabular-nums ${supplyStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                {supplyStats.netChangePercentage >= 0 ? '+' : ''}
+                {supplyStats.netChangePercentage.toFixed(2)}%
+              </span>
+            </div>
           </div>
           <div>
-            <div className="space-y-4">
-              <div>
-                <h3 className="mb-1 text-lg text-secondary">Current Volumes</h3>
-                {['supply', 'borrow', 'liquidity'].map((type) => {
-                  const stats = getCurrentVolumeStats(type as 'supply' | 'borrow' | 'liquidity');
-                  return (
-                    <div
-                      key={type}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="capitalize">{type}:</span>
-                      <span className="font-zen text-sm tabular-nums">
-                        {formatValue(stats.current)}
-                        <span className={stats.netChangePercentage > 0 ? 'ml-2 text-green-500' : 'ml-2 text-red-500'}>
-                          ({stats.netChangePercentage > 0 ? '+' : ''}
-                          {stats.netChangePercentage.toFixed(2)}%)
-                        </span>
-                      </span>
-                    </div>
-                  );
-                })}
-
-                {/* Delta to target Utilization */}
-                <div className="mt-4 space-y-1 border-t border-border pt-3 text-sm">
-                  <h3 className="mb-1 text text-secondary text-base">IRM Targets </h3>
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                      <span>Supply Δ:</span>
-                      <HeroTooltip
-                        content={
-                          <TooltipContent
-                            title="Supply Delta to Target"
-                            detail="Supply change needed to reach 90% target utilization (keeping borrow constant). Positive = add supply. Negative = withdraw supply."
-                          />
-                        }
-                      >
-                        <span className="cursor-help">
-                          <HiOutlineInformationCircle className="h-4 w-4 text-secondary" />
-                        </span>
-                      </HeroTooltip>
-                    </span>
-                    <span className="text-sm tabular-nums">
-                      {formatValue(Number(formatUnits(targetUtilizationData.supplyDelta, market.loanAsset.decimals)))}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                      <span>Borrow Δ:</span>
-                      <HeroTooltip
-                        content={
-                          <TooltipContent
-                            title="Borrow Delta to Target"
-                            detail="Borrow change needed to reach 90% target utilization (keeping supply constant). Positive = borrow more. Negative = repay."
-                          />
-                        }
-                      >
-                        <span className="cursor-help">
-                          <HiOutlineInformationCircle className="h-4 w-4 text-secondary" />
-                        </span>
-                      </HeroTooltip>
-                    </span>
-                    <span className="text-sm tabular-nums">
-                      {formatValue(Number(formatUnits(targetUtilizationData.borrowDelta, market.loanAsset.decimals)))}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="mb-1 text-lg text-secondary">
-                  Historical Averages <span className="text-secondary">({selectedTimeframe})</span>
-                </h3>
-                {isLoading ? (
-                  <div className="flex min-h-48 justify-center text-primary">
-                    <Spinner size={24} />
-                  </div>
-                ) : (
-                  ['supply', 'borrow', 'liquidity'].map((type) => (
-                    <div
-                      key={type}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="capitalize">{type}:</span>
-                      <span className="font-zen text-sm tabular-nums">
-                        {formatValue(getAverageVolumeStats(type as 'supply' | 'borrow' | 'liquidity'))}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
+            <p className="text-xs uppercase tracking-wider text-secondary">Borrow</p>
+            <div className="flex items-baseline gap-2">
+              <span className="tabular-nums text-lg">
+                {formatValue(borrowStats.current)}
+              </span>
+              <span className={`text-xs tabular-nums ${borrowStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                {borrowStats.netChangePercentage >= 0 ? '+' : ''}
+                {borrowStats.netChangePercentage.toFixed(2)}%
+              </span>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-secondary">Liquidity</p>
+            <div className="flex items-baseline gap-2">
+              <span className="tabular-nums text-lg">
+                {formatValue(liquidityStats.current)}
+              </span>
+              <span className={`text-xs tabular-nums ${liquidityStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                {liquidityStats.netChangePercentage >= 0 ? '+' : ''}
+                {liquidityStats.netChangePercentage.toFixed(2)}%
+              </span>
             </div>
           </div>
         </div>
-      </CardBody>
+
+        {/* Controls */}
+        <div className="flex gap-2">
+          <Select
+            value={volumeView}
+            onValueChange={(value) => setVolumeView(value as 'USD' | 'Asset')}
+          >
+            <SelectTrigger className="h-8 w-auto min-w-[80px] px-3 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="Asset">{market.loanAsset.symbol}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={selectedTimeframe}
+            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
+          >
+            <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
+              <SelectValue>{timeframeLabels[selectedTimeframe]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1d">1D</SelectItem>
+              <SelectItem value="7d">7D</SelectItem>
+              <SelectItem value="30d">30D</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Chart Body - Full Width */}
+      <div className="w-full">
+        {isLoading ? (
+          <div className="flex h-[350px] items-center justify-center text-primary">
+            <Spinner size={30} />
+          </div>
+        ) : (
+          <ResponsiveContainer
+            width="100%"
+            height={350}
+            id="volume-chart"
+          >
+            <AreaChart data={getVolumeChartData()} margin={{ top: 20, right: 20, left: 10, bottom: 10 }}>
+              <defs>
+                <linearGradient
+                  id="volumeChart-supplyGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor={CHART_COLORS.supply.stroke}
+                    stopOpacity={0.08}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={CHART_COLORS.supply.stroke}
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+                <linearGradient
+                  id="volumeChart-borrowGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor={CHART_COLORS.borrow.stroke}
+                    stopOpacity={0.08}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={CHART_COLORS.borrow.stroke}
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+                <linearGradient
+                  id="volumeChart-liquidityGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor={CHART_COLORS.apyAtTarget.stroke}
+                    stopOpacity={0.08}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={CHART_COLORS.apyAtTarget.stroke}
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="0"
+                stroke="var(--color-border)"
+                strokeOpacity={0.25}
+              />
+              <XAxis
+                dataKey="x"
+                axisLine={false}
+                tickLine={false}
+                tickMargin={12}
+                minTickGap={60}
+                tickFormatter={(time) => formatChartTime(time, selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp)}
+                tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={formatYAxis}
+                tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+                width={60}
+                domain={['auto', 'auto']}
+              />
+              <Tooltip
+                cursor={{ stroke: 'var(--color-text-secondary)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload) return null;
+                  return (
+                    <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
+                      <p className="mb-2 text-xs text-secondary">{new Date(label * 1000).toLocaleDateString()}</p>
+                      <div className="space-y-1">
+                        {payload.map((entry: any) => (
+                          <div
+                            key={entry.dataKey}
+                            className="flex items-center justify-between gap-6 text-sm"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="h-2 w-2 rounded-full"
+                                style={{ backgroundColor: entry.color }}
+                              />
+                              <span className="text-secondary">{entry.name}</span>
+                            </div>
+                            <span className="tabular-nums">{formatValue(entry.value)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+              <Legend
+                wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
+                iconType="circle"
+                iconSize={8}
+                onClick={(e) => {
+                  const dataKey = e.dataKey as keyof typeof visibleLines;
+                  setVisibleLines((prev) => ({
+                    ...prev,
+                    [dataKey]: !prev[dataKey],
+                  }));
+                }}
+                formatter={(value, entry) => (
+                  <span
+                    className="text-xs"
+                    style={{
+                      color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines]
+                        ? 'var(--color-text-secondary)'
+                        : '#666',
+                    }}
+                  >
+                    {value}
+                  </span>
+                )}
+              />
+              <Area
+                type="monotone"
+                dataKey="supply"
+                name="Supply"
+                stroke={CHART_COLORS.supply.stroke}
+                strokeWidth={2}
+                fill="url(#volumeChart-supplyGradient)"
+                fillOpacity={1}
+                hide={!visibleLines.supply}
+              />
+              <Area
+                type="monotone"
+                dataKey="borrow"
+                name="Borrow"
+                stroke={CHART_COLORS.borrow.stroke}
+                strokeWidth={2}
+                fill="url(#volumeChart-borrowGradient)"
+                fillOpacity={1}
+                hide={!visibleLines.borrow}
+              />
+              <Area
+                type="monotone"
+                dataKey="liquidity"
+                name="Liquidity"
+                stroke={CHART_COLORS.apyAtTarget.stroke}
+                strokeWidth={2}
+                fill="url(#volumeChart-liquidityGradient)"
+                fillOpacity={1}
+                hide={!visibleLines.liquidity}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* Footer: IRM Targets + Historical Averages */}
+      <div className="grid grid-cols-1 divide-y border-t border-border lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+        {/* IRM Targets */}
+        <div className="px-6 py-4">
+          <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">IRM Rebalancing Targets</h4>
+          <div className="flex flex-wrap gap-x-8 gap-y-2">
+            <div className="flex items-center gap-2">
+              <HeroTooltip
+                content={
+                  <TooltipContent
+                    title="Supply Delta to Target"
+                    detail="Supply change needed to reach 90% target utilization (keeping borrow constant)."
+                  />
+                }
+              >
+                <span className="cursor-help border-b border-dotted border-secondary text-sm text-secondary">Supply Δ</span>
+              </HeroTooltip>
+              <span className="tabular-nums text-sm">
+                {formatValue(Number(formatUnits(targetUtilizationData.supplyDelta, market.loanAsset.decimals)))}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <HeroTooltip
+                content={
+                  <TooltipContent
+                    title="Borrow Delta to Target"
+                    detail="Borrow change needed to reach 90% target utilization (keeping supply constant)."
+                  />
+                }
+              >
+                <span className="cursor-help border-b border-dotted border-secondary text-sm text-secondary">Borrow Δ</span>
+              </HeroTooltip>
+              <span className="tabular-nums text-sm">
+                {formatValue(Number(formatUnits(targetUtilizationData.borrowDelta, market.loanAsset.decimals)))}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Historical Averages */}
+        <div className="px-6 py-4">
+          <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{timeframeLabels[selectedTimeframe]} Averages</h4>
+          {isLoading ? (
+            <div className="flex h-8 items-center">
+              <Spinner size={16} />
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-x-8 gap-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-secondary">Supply</span>
+                <span className="tabular-nums text-sm">{formatValue(getAverageVolumeStats('supply'))}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-secondary">Borrow</span>
+                <span className="tabular-nums text-sm">{formatValue(getAverageVolumeStats('borrow'))}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-secondary">Liquidity</span>
+                <span className="tabular-nums text-sm">{formatValue(getAverageVolumeStats('liquidity'))}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </Card>
   );
 }
