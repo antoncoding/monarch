@@ -377,7 +377,7 @@ export function useRepayTransaction({
           amount: repayAssets,
           marketId: market.uniqueKey,
         },
-        'signing',
+        usePermit2Setting ? 'signing' : 'repaying',
       );
 
       await executeRepayTransaction();

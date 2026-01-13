@@ -58,12 +58,27 @@ export function WithdrawCollateralAndRepay({
   });
 
   const handleRepay = useCallback(() => {
-    if (!permit2Authorized || (!usePermit2Setting && !isApproved)) {
+    const needsRepay = repayAssets > 0n || repayShares > 0n;
+    if (needsRepay && (!permit2Authorized || (!usePermit2Setting && !isApproved))) {
       void approveAndRepay();
     } else {
       void signAndRepay();
     }
-  }, [permit2Authorized, usePermit2Setting, isApproved, approveAndRepay, signAndRepay]);
+  }, [repayAssets, repayShares, permit2Authorized, usePermit2Setting, isApproved, approveAndRepay, signAndRepay]);
+
+  const buttonLabel = useMemo(() => {
+    const needsRepay = repayAssets > 0n || repayShares > 0n;
+    if (needsRepay && !isApproved && !permit2Authorized) {
+      return 'Approve & Repay';
+    }
+    if (withdrawAmount > 0n && needsRepay) {
+      return 'Withdraw & Repay';
+    }
+    if (withdrawAmount > 0n) {
+      return 'Withdraw';
+    }
+    return 'Repay';
+  }, [repayAssets, repayShares, isApproved, permit2Authorized, withdrawAmount]);
 
   // if max is clicked, set the repayShares to max shares
   const setShareToMax = useCallback(() => {
@@ -301,7 +316,7 @@ export function WithdrawCollateralAndRepay({
               variant="primary"
               className="min-w-32"
             >
-              {!isApproved && !permit2Authorized ? 'Approve & Repay' : withdrawAmount > 0 ? 'Withdraw & Repay' : 'Repay'}
+              {buttonLabel}
             </ExecuteTransactionButton>
           </div>
           {(withdrawAmount > 0n || repayAssets > 0n) && (
