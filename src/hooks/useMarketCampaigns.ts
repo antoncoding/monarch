@@ -2,6 +2,13 @@ import { useMemo } from 'react';
 import type { SimplifiedCampaign } from '@/utils/merklTypes';
 import { useMerklCampaignsQuery } from './queries/useMerklCampaignsQuery';
 
+// Blacklisted campaign IDs - these will be filtered out
+const BLACKLISTED_CAMPAIGN_IDS: string[] = [
+  // Seems to be reporting bad APY, not singleton for all market for sure
+  // https://app.merkl.xyz/opportunities/base/MORPHOSUPPLY_SINGLETOKEN/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+  '0x4b5aa0f66eb6a63e3b761de8fbbcc8154d568086c1234ba58516f3263a79200a',
+];
+
 type UseMarketCampaignsReturn = {
   campaigns: SimplifiedCampaign[];
   activeCampaigns: SimplifiedCampaign[];
@@ -42,8 +49,13 @@ export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCa
           )
         : [];
 
-    // Combine both types of campaigns
-    const allMarketCampaigns = [...directMarketCampaigns, ...singleTokenCampaigns];
+    // Combine both types of campaigns and filter out blacklisted ones
+    const allMarketCampaigns = [...directMarketCampaigns, ...singleTokenCampaigns].filter(
+      (campaign) => !BLACKLISTED_CAMPAIGN_IDS.includes(campaign.campaignId.toLowerCase()),
+    );
+
+    console.log(`[useMarketCampaigns] Active Campaigns for market ${normalizedMarketId.slice(0, 6)}`, allMarketCampaigns);
+
     const activeCampaigns = allMarketCampaigns.filter((campaign) => campaign.isActive);
 
     return {

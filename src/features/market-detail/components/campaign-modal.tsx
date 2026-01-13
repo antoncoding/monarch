@@ -15,13 +15,6 @@ const CAMPAIGN_TYPE_CONFIG: Record<MerklCampaignType, { badge: string }> = {
   MORPHOBORROW: { badge: 'Borrow Rewards' },
 };
 
-// Blacklisted campaign IDs - these will be filtered out
-const BLACKLISTED_CAMPAIGN_IDS: string[] = [
-  // Seems to be reporting bad APY, not singleton for all market for sure
-  // https://app.merkl.xyz/opportunities/base/MORPHOSUPPLY_SINGLETOKEN/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
-  '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913WHITELIST_PER_PROTOCOL',
-];
-
 type CampaignModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -106,9 +99,6 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
 export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps) {
   if (!isOpen) return null;
 
-  // Filter out blacklisted campaigns
-  const filteredCampaigns = campaigns.filter((c) => !BLACKLISTED_CAMPAIGN_IDS.includes(c.campaignId));
-
   return (
     <Modal
       isOpen={isOpen}
@@ -126,7 +116,7 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
         onClose={onClose}
       />
       <ModalBody className="space-y-4">
-        {filteredCampaigns.map((campaign) => (
+        {campaigns.map((campaign) => (
           <CampaignRow
             key={`${campaign.campaignId}-${campaign.marketId}`}
             campaign={campaign}
