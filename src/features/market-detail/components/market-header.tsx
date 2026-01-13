@@ -374,17 +374,10 @@ export function MarketHeader({
 
         {/* Advanced Details - Expandable */}
         <div className="mt-4 border-t border-border pt-4">
-          <div
-            className="flex cursor-pointer items-center justify-between text-sm text-secondary hover:text-primary"
+          <button
+            type="button"
+            className="flex w-full cursor-pointer items-center justify-between text-sm text-secondary hover:text-primary"
             onClick={() => setIsExpanded(!isExpanded)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setIsExpanded(!isExpanded);
-              }
-            }}
-            role="button"
-            tabIndex={0}
             aria-expanded={isExpanded}
           >
             {renderSummaryBadges()}
@@ -392,7 +385,7 @@ export function MarketHeader({
               <span>Advanced Details</span>
               <ChevronDownIcon className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
             </div>
-          </div>
+          </button>
 
           <AnimatePresence>
             {isExpanded && (
