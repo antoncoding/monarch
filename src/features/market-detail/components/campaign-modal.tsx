@@ -8,11 +8,11 @@ import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { getMerklCampaignURL } from '@/utils/external';
 import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
 
-const CAMPAIGN_TYPE_CONFIG: Record<MerklCampaignType, { badge: string; actionType: string }> = {
-  MORPHOSUPPLY: { badge: 'Lender Rewards', actionType: 'lenders' },
-  MORPHOSUPPLY_SINGLETOKEN: { badge: 'Lender Rewards', actionType: 'lenders' },
-  MULTILENDBORROW: { badge: 'Lend/Borrow Rewards', actionType: 'users' },
-  MORPHOBORROW: { badge: 'Borrow Rewards', actionType: 'borrowers' },
+const CAMPAIGN_TYPE_CONFIG: Record<MerklCampaignType, { badge: string }> = {
+  MORPHOSUPPLY: { badge: 'Lender Rewards' },
+  MORPHOSUPPLY_SINGLETOKEN: { badge: 'Lender Rewards' },
+  MULTILENDBORROW: { badge: 'Lend/Borrow Rewards' },
+  MORPHOBORROW: { badge: 'Borrow Rewards' },
 };
 
 // Blacklisted campaign IDs - these will be filtered out
