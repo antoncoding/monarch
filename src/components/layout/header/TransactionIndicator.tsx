@@ -1,19 +1,19 @@
 'use client';
 
 import { useCallback } from 'react';
-import { FiDownload, FiRepeat } from 'react-icons/fi';
 import { LuArrowRightLeft } from 'react-icons/lu';
-import { BsArrowDownCircle, BsArrowUpCircle } from 'react-icons/bs';
+import { BsArrowDownCircle, BsArrowDownLeftCircle, BsArrowUpCircle, BsArrowUpRightCircle } from 'react-icons/bs';
 import { useShallow } from 'zustand/shallow';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useTransactionProcessStore } from '@/stores/useTransactionProcessStore';
 
 const TX_TYPE_CONFIG: Record<string, { icon: React.ReactNode; label: string }> = {
   supply: { icon: <BsArrowUpCircle className="h-4 w-4" />, label: 'Supply' },
-  borrow: { icon: <BsArrowDownCircle className="h-4 w-4" />, label: 'Borrow' },
-  repay: { icon: <FiRepeat className="h-4 w-4" />, label: 'Repay' },
-  vaultDeposit: { icon: <FiDownload className="h-4 w-4" />, label: 'Deposit' },
-  deposit: { icon: <FiDownload className="h-4 w-4" />, label: 'Deposit' },
+  borrow: { icon: <BsArrowDownLeftCircle className="h-4 w-4" />, label: 'Borrow' },
+  repay: { icon: <BsArrowUpRightCircle className="h-4 w-4" />, label: 'Repay' },
+  withdraw: { icon: <BsArrowDownCircle className="h-4 w-4" />, label: 'Withdraw' },
+  vaultDeposit: { icon: <BsArrowUpCircle className="h-4 w-4" />, label: 'Deposit' },
+  deposit: { icon: <BsArrowUpCircle className="h-4 w-4" />, label: 'Deposit' },
   wrap: { icon: <LuArrowRightLeft className="h-4 w-4" />, label: 'Wrap' },
   rebalance: { icon: <LuArrowRightLeft className="h-4 w-4" />, label: 'Rebalance' },
 };

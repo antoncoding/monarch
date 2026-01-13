@@ -6,13 +6,13 @@ import { IoWarningOutline } from 'react-icons/io5';
 const levelToCellColor = (level: string) => {
   switch (level) {
     case 'info':
-      return 'bg-blue-200 text-blue-700';
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-400/10 dark:text-blue-300';
     case 'success':
-      return 'bg-green-200 text-green-700';
+      return 'bg-green-100 text-green-800 dark:bg-green-400/10 dark:text-green-300';
     case 'warning':
-      return 'bg-yellow-200 text-yellow-700';
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-400/10 dark:text-yellow-300';
     case 'alert':
-      return 'bg-red-200 text-red-700';
+      return 'bg-red-100 text-red-800 dark:bg-red-400/10 dark:text-red-300';
     default:
       return '';
   }
@@ -23,33 +23,33 @@ const levelToIcon = (level: string) => {
     case 'info':
       return (
         <FaRegLightbulb
-          className="mr-2"
-          size={18}
+          className="mt-0.5 flex-shrink-0"
+          size={16}
         />
       );
     case 'success':
       return (
         <GrStatusGood
-          className="mr-2"
-          size={18}
+          className="mt-0.5 flex-shrink-0"
+          size={16}
         />
       );
     case 'warning':
       return (
         <IoWarningOutline
-          className="mr-2"
-          size={18}
+          className="mt-0.5 flex-shrink-0"
+          size={16}
         />
       );
     case 'alert':
       return (
         <MdError
-          className="mr-2"
-          size={18}
+          className="mt-0.5 flex-shrink-0"
+          size={16}
         />
       );
     default:
-      return '';
+      return null;
   }
 };
 
@@ -60,7 +60,7 @@ const levelToIcon = (level: string) => {
  */
 export function Info({ description, level, title }: { description: string; level: string; title?: string }) {
   return (
-    <div className={`flex max-w-full items-start gap-2 rounded-sm ${levelToCellColor(level)} p-3 opacity-80`}>
+    <div className={`flex max-w-full items-start gap-2 rounded border border-current/20 ${levelToCellColor(level)} p-3`}>
       {levelToIcon(level)}
       <div className="min-w-0 flex-1">
         {title && <h2 className="font-bold">{title}</h2>}

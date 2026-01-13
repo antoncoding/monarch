@@ -3,45 +3,30 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { Card, CardHeader, CardBody } from '@/components/ui/card';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { formatUnits, parseUnits } from 'viem';
+import { parseUnits, formatUnits } from 'viem';
 import { useConnection } from 'wagmi';
 import { BorrowModal } from '@/modals/borrow/borrow-modal';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
 import Header from '@/components/layout/header/Header';
-import { OracleTypeInfo } from '@/features/markets/components/oracle';
-import { TokenIcon } from '@/components/shared/token-icon';
 import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import useUserPosition from '@/hooks/useUserPosition';
-import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
-import { getExplorerURL, getMarketURL } from '@/utils/external';
-import { getIRMTitle } from '@/utils/morpho';
-import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
-import { getTruncatedAssetName } from '@/utils/oracle';
+import type { SupportedNetworks } from '@/utils/networks';
 import { BorrowersTable } from '@/features/market-detail/components/borrowers-table';
 import { BorrowsTable } from '@/features/market-detail/components/borrows-table';
 import BorrowerFiltersModal from '@/features/market-detail/components/filters/borrower-filters-modal';
-import { CampaignBadge } from '@/features/market-detail/components/campaign-badge';
 import { LiquidationsTable } from '@/features/market-detail/components/liquidations-table';
-import { PositionStats } from '@/features/market-detail/components/position-stats';
 import { SuppliesTable } from '@/features/market-detail/components/supplies-table';
 import { SuppliersTable } from '@/features/market-detail/components/suppliers-table';
 import SupplierFiltersModal from '@/features/market-detail/components/filters/supplier-filters-modal';
 import TransactionFiltersModal from '@/features/market-detail/components/filters/transaction-filters-modal';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
-import { WarningCategory } from '@/utils/types';
-import { CardWarningIndicator } from './components/card-warning-indicator';
+import { MarketHeader } from './components/market-header';
 import RateChart from './components/charts/rate-chart';
-import { MarketWarningBanner } from './components/market-warning-banner';
 import VolumeChart from './components/charts/volume-chart';
 
 function MarketContent() {
@@ -50,7 +35,6 @@ function MarketContent() {
 
   // 2. Network setup
   const network = Number(chainId as string) as SupportedNetworks;
-  const networkImg = getNetworkImg(network);
 
   // 3. Consolidated state
   const { open: openModal } = useModal();
@@ -83,92 +67,79 @@ function MarketContent() {
 
   const { address } = useConnection();
 
-  const {
-    position: userPosition,
-    loading: positionLoading,
-    refetch: refetchUserPosition,
-  } = useUserPosition(address, network, marketId as string);
+  const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketId as string);
 
   // Get all warnings for this market (hook handles undefined market)
   const allWarnings = useMarketWarnings(market);
 
   // 6. All memoized values and callbacks
+
+  // Helper to scale user input to token amount
+  const scaleToTokenAmount = (value: string, decimals: number): string => {
+    if (!value || value === '0' || value === '') return '0';
+    try {
+      return parseUnits(value, decimals).toString();
+    } catch {
+      return '0';
+    }
+  };
+
+  // Helper to convert asset amount to shares: (amount × totalShares) / totalAssets
+  const convertAssetToShares = (amount: string, totalAssets: bigint, totalShares: bigint, decimals: number): string => {
+    if (!amount || amount === '0' || amount === '' || totalAssets === 0n) return '0';
+    try {
+      const assetAmount = parseUnits(amount, decimals);
+      return ((assetAmount * totalShares) / totalAssets).toString();
+    } catch {
+      return '0';
+    }
+  };
+
+  // Oracle price scaled for display (36 decimals is the Morpho oracle price scale)
+  const ORACLE_PRICE_SCALE = 36;
   const formattedOraclePrice = useMemo(() => {
     if (!market) return '0';
     const adjusted = (oraclePrice * BigInt(10 ** market.collateralAsset.decimals)) / BigInt(10 ** market.loanAsset.decimals);
-    return formatUnits(adjusted, 36);
+    return formatUnits(adjusted, ORACLE_PRICE_SCALE);
   }, [oraclePrice, market]);
 
-  // convert to token amounts
-  const scaledMinSupplyAmount = useMemo(() => {
-    if (!market || !minSupplyAmount || minSupplyAmount === '0' || minSupplyAmount === '') {
-      return '0';
-    }
-    try {
-      return parseUnits(minSupplyAmount, market.loanAsset.decimals).toString();
-    } catch {
-      return '0';
-    }
-  }, [minSupplyAmount, market]);
+  // Convert filter amounts to token amounts
+  const scaledMinSupplyAmount = useMemo(
+    () => (market ? scaleToTokenAmount(minSupplyAmount, market.loanAsset.decimals) : '0'),
+    [minSupplyAmount, market],
+  );
 
-  const scaledMinBorrowAmount = useMemo(() => {
-    if (!market || !minBorrowAmount || minBorrowAmount === '0' || minBorrowAmount === '') {
-      return '0';
-    }
-    try {
-      return parseUnits(minBorrowAmount, market.loanAsset.decimals).toString();
-    } catch {
-      return '0';
-    }
-  }, [minBorrowAmount, market]);
+  const scaledMinBorrowAmount = useMemo(
+    () => (market ? scaleToTokenAmount(minBorrowAmount, market.loanAsset.decimals) : '0'),
+    [minBorrowAmount, market],
+  );
 
-  // Convert user-specified asset amount to shares for filtering suppliers
-  // Formula: effectiveMinShares = (minAssetAmount × totalSupplyShares) / totalSupplyAssets
-  const scaledMinSupplierShares = useMemo(() => {
-    if (!market || !minSupplierShares || minSupplierShares === '0' || minSupplierShares === '') {
-      return '0';
-    }
-    try {
-      const minAssetAmount = parseUnits(minSupplierShares, market.loanAsset.decimals);
-      const totalSupplyAssets = BigInt(market.state.supplyAssets);
-      const totalSupplyShares = BigInt(market.state.supplyShares);
+  // Convert user-specified asset amounts to shares for filtering suppliers/borrowers
+  const scaledMinSupplierShares = useMemo(
+    () =>
+      market
+        ? convertAssetToShares(
+            minSupplierShares,
+            BigInt(market.state.supplyAssets),
+            BigInt(market.state.supplyShares),
+            market.loanAsset.decimals,
+          )
+        : '0',
+    [minSupplierShares, market],
+  );
 
-      // If no supply yet, return 0
-      if (totalSupplyAssets === 0n) {
-        return '0';
-      }
-
-      // Convert asset amount to shares
-      const effectiveMinShares = (minAssetAmount * totalSupplyShares) / totalSupplyAssets;
-      return effectiveMinShares.toString();
-    } catch {
-      return '0';
-    }
-  }, [minSupplierShares, market]);
-
-  // Convert user-specified asset amount to shares for filtering borrowers
-  // Formula: effectiveMinShares = (minAssetAmount × totalBorrowShares) / totalBorrowAssets
-  const scaledMinBorrowerShares = useMemo(() => {
-    if (!market || !minBorrowerShares || minBorrowerShares === '0' || minBorrowerShares === '') {
-      return '0';
-    }
-    try {
-      const minAssetAmount = parseUnits(minBorrowerShares, market.loanAsset.decimals);
-      const totalBorrowAssets = BigInt(market.state.borrowAssets);
-      const totalBorrowShares = BigInt(market.state.borrowShares);
-
-      // If no borrows yet, return 0
-      if (totalBorrowAssets === 0n) {
-        return '0';
-      }
-
-      // Convert asset amount to shares
-      const effectiveMinShares = (minAssetAmount * totalBorrowShares) / totalBorrowAssets;
-      return effectiveMinShares.toString();
-    } catch {
-      return '0';
-    }
-  }, [minBorrowerShares, market]);
+  const scaledMinBorrowerShares = useMemo(
+    () =>
+      market
+        ? convertAssetToShares(
+            minBorrowerShares,
+            BigInt(market.state.borrowAssets),
+            BigInt(market.state.borrowShares),
+            market.loanAsset.decimals,
+          )
+        : '0',
+    [minBorrowerShares, market],
+  );
 
   // Unified refetch function for both market and user position
   const handleRefreshAll = useCallback(async () => {
@@ -215,67 +186,30 @@ function MarketContent() {
     );
   }
 
-  // 8. Derived values that depend on market data
-  const cardStyle = 'bg-surface rounded shadow-sm p-4';
+  // Handlers for supply/borrow actions
+  const handleSupplyClick = () => {
+    openModal('supply', { market, position: userPosition, isMarketPage: true, refetch: handleRefreshAllSync });
+  };
 
-  // 9. Warning filtering by category
-  const pageWarnings = allWarnings.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general);
-  const assetWarnings = allWarnings.filter((w) => w.category === WarningCategory.asset);
-  const oracleWarnings = allWarnings.filter((w) => w.category === WarningCategory.oracle);
+  const handleBorrowClick = () => {
+    setShowBorrowModal(true);
+  };
 
   return (
     <>
       <Header />
       <div className="font-zen container h-full gap-8 pb-12">
-        {/* Market title and actions */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold">
-              {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
-            </h1>
-            <CampaignBadge
-              marketId={marketId as string}
-              loanTokenAddress={market.loanAsset.address}
-              chainId={market.morphoBlue.chain.id}
-              whitelisted={market.whitelisted}
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => openModal('supply', { market, position: userPosition, isMarketPage: true, refetch: handleRefreshAllSync })}
-              className="flex-1 sm:flex-none"
-            >
-              Supply
-            </Button>
-            <Button
-              onClick={() => setShowBorrowModal(true)}
-              className="flex-1 sm:flex-none"
-            >
-              Borrow
-            </Button>
-            <Button
-              size="md"
-              className="w-full sm:w-auto"
-              onClick={() => {
-                void window.open(getMarketURL(market.uniqueKey, market.morphoBlue.chain.id), '_blank');
-              }}
-            >
-              <span className="hidden sm:inline">View on Morpho</span>
-              <span className="sm:hidden">Morpho</span>
-              <Image
-                src={MORPHO_LOGO}
-                alt="Morpho Logo"
-                width={20}
-                height={20}
-                className="ml-2"
-              />
-            </Button>
-          </div>
-        </div>
-
-        {/* Page-level warnings (debt + general) */}
-        <MarketWarningBanner warnings={pageWarnings} />
+        {/* Unified Market Header */}
+        <MarketHeader
+          market={market}
+          marketId={marketId as string}
+          network={network}
+          userPosition={userPosition}
+          oraclePrice={formattedOraclePrice}
+          allWarnings={allWarnings}
+          onSupplyClick={handleSupplyClick}
+          onBorrowClick={handleBorrowClick}
+        />
 
         {showBorrowModal && (
           <BorrowModal
@@ -320,126 +254,6 @@ function MarketContent() {
           />
         )}
 
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-          <Card className={cardStyle}>
-            <CardHeader className="flex flex-row items-center justify-between text-xl">
-              <span>Basic Info</span>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <CardWarningIndicator warnings={assetWarnings} />
-                {networkImg && (
-                  <Image
-                    src={networkImg}
-                    alt={network.toString()}
-                    width={18}
-                    height={18}
-                  />
-                )}
-                {getNetworkName(network)}
-              </div>
-            </CardHeader>
-            <CardBody>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span>Loan Asset:</span>
-                  <div className="flex items-center gap-2">
-                    <TokenIcon
-                      address={market.loanAsset.address}
-                      chainId={market.morphoBlue.chain.id}
-                      symbol={market.loanAsset.symbol}
-                      width={20}
-                      height={20}
-                    />
-                    <Link
-                      href={getExplorerURL(market.loanAsset.address, market.morphoBlue.chain.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center no-underline hover:underline"
-                    >
-                      {getTruncatedAssetName(market.loanAsset.symbol)} <ExternalLinkIcon className="ml-1" />
-                    </Link>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Collateral Asset:</span>
-                  <div className="flex items-center gap-2">
-                    <TokenIcon
-                      address={market.collateralAsset.address}
-                      chainId={market.morphoBlue.chain.id}
-                      symbol={market.collateralAsset.symbol}
-                      width={20}
-                      height={20}
-                    />
-                    <Link
-                      href={getExplorerURL(market.collateralAsset.address, market.morphoBlue.chain.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center no-underline hover:underline"
-                    >
-                      {getTruncatedAssetName(market.collateralAsset.symbol)} <ExternalLinkIcon className="ml-1" />
-                    </Link>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>IRM:</span>
-                  <Link
-                    href={getExplorerURL(market.irmAddress, market.morphoBlue.chain.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center no-underline hover:underline"
-                  >
-                    {getIRMTitle(market.irmAddress)} <ExternalLinkIcon className="ml-1" />
-                  </Link>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>LLTV:</span>
-                  <span>{formatUnits(BigInt(market.lltv), 16)}%</span>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          <Card className={cardStyle}>
-            <CardHeader className="flex flex-row items-center justify-between text-xl">
-              <span>Oracle Info</span>
-              <div className="flex items-center gap-2">
-                <CardWarningIndicator warnings={oracleWarnings} />
-                <Link
-                  href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-sm text-gray-500 hover:underline"
-                >
-                  <ExternalLinkIcon />
-                </Link>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span>Live Price:</span>
-                  <span className="text-sm text-secondary">
-                    {Number(formattedOraclePrice).toFixed(4)} {market.loanAsset.symbol}
-                  </span>
-                </div>
-                <OracleTypeInfo
-                  oracleData={market.oracle?.data}
-                  oracleAddress={market.oracleAddress}
-                  chainId={market.morphoBlue.chain.id}
-                />
-              </div>
-            </CardBody>
-          </Card>
-
-          <PositionStats
-            market={market}
-            userPosition={userPosition}
-            positionLoading={positionLoading}
-            cardStyle={cardStyle}
-            onRefresh={handleRefreshAllSync}
-            isRefreshing={isRefreshing}
-          />
-        </div>
-
         {/* Tabs Section */}
         <Tabs
           defaultValue="statistics"
@@ -452,19 +266,19 @@ function MarketContent() {
           </TabsList>
 
           <TabsContent value="statistics">
-            <h4 className="mb-4 text-lg text-secondary">Volume</h4>
             <VolumeChart
               marketId={marketId as string}
               chainId={network}
               market={market}
             />
 
-            <h4 className="mb-4 mt-8 text-lg text-secondary">Rates</h4>
-            <RateChart
-              marketId={marketId as string}
-              chainId={network}
-              market={market}
-            />
+            <div className="mt-6">
+              <RateChart
+                marketId={marketId as string}
+                chainId={network}
+                market={market}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="activities">

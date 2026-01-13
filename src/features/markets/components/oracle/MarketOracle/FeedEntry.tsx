@@ -115,7 +115,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
 
   return (
     <Tooltip content={getTooltipContent()}>
-      <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80">
+      <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80 gap-1">
         {showAssetPair ? (
           <div className="flex min-w-0 flex-1 items-center gap-1">
             <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">{baseAsset}</span>

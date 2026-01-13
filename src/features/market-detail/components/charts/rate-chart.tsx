@@ -1,10 +1,8 @@
-/* eslint-disable react/no-unstable-nested-components */
-
 import { useState, useMemo } from 'react';
-import { Card, CardHeader, CardBody } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import ButtonGroup from '@/components/ui/button-group';
 import { Spinner } from '@/components/ui/spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -13,6 +11,15 @@ import { formatChartTime } from '@/utils/chart';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import { convertApyToApr } from '@/utils/rateMath';
+import {
+  TIMEFRAME_LABELS,
+  ChartGradients,
+  ChartTooltipContent,
+  RATE_CHART_GRADIENTS,
+  createLegendClickHandler,
+  chartTooltipCursor,
+  chartLegendStyle,
+} from './chart-utils';
 import type { Market } from '@/utils/types';
 import type { TimeseriesDataPoint } from '@/utils/types';
 
@@ -23,14 +30,12 @@ type RateChartProps = {
 };
 
 function RateChart({ marketId, chainId, market }: RateChartProps) {
-  // ✅ All hooks at top level - no conditional returns before hooks!
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
   const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
-  // Component fetches its own data (React Query caches by marketId + chainId + timeRange)
   const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
 
   const [visibleLines, setVisibleLines] = useState({
@@ -48,10 +53,9 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
     const { supplyApy, borrowApy, apyAtTarget } = historicalData.rates;
 
     return supplyApy.map((point: TimeseriesDataPoint, index: number) => {
-      // Convert values to APR if display mode is enabled
       const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
-      const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y || 0) : borrowApy[index]?.y || 0;
-      const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y || 0) : apyAtTarget[index]?.y || 0;
+      const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y ?? 0) : (borrowApy[index]?.y ?? 0);
+      const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y ?? 0) : (apyAtTarget[index]?.y ?? 0);
 
       return {
         x: point.x,
@@ -64,261 +68,195 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
   const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;
 
-  const getCurrentApyValue = (type: 'supply' | 'borrow') => {
-    const apy = type === 'supply' ? market.state.supplyApy : market.state.borrowApy;
-    return isAprDisplay ? convertApyToApr(apy) : apy;
+  const toDisplayRate = (apy: number) => (isAprDisplay ? convertApyToApr(apy) : apy);
+
+  const getAverage = (data: TimeseriesDataPoint[] | undefined) => {
+    if (!data || data.length === 0) return 0;
+    return data.reduce((sum, point) => sum + point.y, 0) / data.length;
   };
 
-  const getAverageApyValue = (type: 'supply' | 'borrow') => {
-    if (!historicalData?.rates) return 0;
-    const data = type === 'supply' ? historicalData.rates.supplyApy : historicalData.rates.borrowApy;
-    const avgApy = data.length > 0 ? data.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / data.length : 0;
-    return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
-  };
+  const currentSupplyRate = toDisplayRate(market.state.supplyApy);
+  const currentBorrowRate = toDisplayRate(market.state.borrowApy);
+  const currentApyAtTarget = toDisplayRate(market.state.apyAtTarget);
+  const currentUtilization = market.state.utilization;
 
-  const getCurrentapyAtTargetValue = () => {
-    const apy = market.state.apyAtTarget;
-    return isAprDisplay ? convertApyToApr(apy) : apy;
-  };
+  const avgSupplyRate = toDisplayRate(getAverage(historicalData?.rates?.supplyApy));
+  const avgBorrowRate = toDisplayRate(getAverage(historicalData?.rates?.borrowApy));
+  const avgApyAtTarget = toDisplayRate(getAverage(historicalData?.rates?.apyAtTarget));
+  const avgUtilization = getAverage(historicalData?.rates?.utilization);
 
-  const getAverageapyAtTargetValue = () => {
-    if (!historicalData?.rates?.apyAtTarget || historicalData.rates.apyAtTarget.length === 0) return 0;
-    const avgApy =
-      historicalData.rates.apyAtTarget.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) /
-      historicalData.rates.apyAtTarget.length;
-    return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
-  };
-
-  const getCurrentUtilizationRate = () => {
-    return market.state.utilization;
-  };
-
-  const getAverageUtilizationRate = () => {
-    if (!historicalData?.rates?.utilization || historicalData.rates.utilization.length === 0) return 0;
-    return (
-      historicalData.rates.utilization.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) /
-      historicalData.rates.utilization.length
-    );
-  };
-
-  const timeframeOptions = [
-    { key: '1d', label: '1D', value: '1d' },
-    { key: '7d', label: '7D', value: '7d' },
-    { key: '30d', label: '30D', value: '30d' },
-  ];
+  const legendHandlers = createLegendClickHandler({ visibleLines, setVisibleLines });
 
   return (
-    <Card className="bg-surface rounded p-4 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-end px-6 py-4">
-        <ButtonGroup
-          options={timeframeOptions}
-          value={selectedTimeframe}
-          onChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
-          size="sm"
-          variant="default"
-        />
-      </CardHeader>
-      <CardBody>
-        <div className="mb-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-          <div className="lg:col-span-2">
-            {isLoading ? (
-              <div className="flex h-64 items-center justify-center">
-                <Spinner size={30} />
-              </div>
-            ) : (
-              <ResponsiveContainer
-                width="100%"
-                height={400}
-                id="rate-chart"
-              >
-                <AreaChart data={getChartData}>
-                  <defs>
-                    <linearGradient
-                      id="rateChart-supplyGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor={CHART_COLORS.supply.gradient.start}
-                        stopOpacity={CHART_COLORS.supply.gradient.startOpacity}
-                      />
-                      <stop
-                        offset="25%"
-                        stopColor={CHART_COLORS.supply.gradient.start}
-                        stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="rateChart-borrowGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor={CHART_COLORS.borrow.gradient.start}
-                        stopOpacity={CHART_COLORS.borrow.gradient.startOpacity}
-                      />
-                      <stop
-                        offset="25%"
-                        stopColor={CHART_COLORS.borrow.gradient.start}
-                        stopOpacity={CHART_COLORS.borrow.gradient.endOpacity}
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="rateChart-targetGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor={CHART_COLORS.apyAtTarget.gradient.start}
-                        stopOpacity={CHART_COLORS.apyAtTarget.gradient.startOpacity}
-                      />
-                      <stop
-                        offset="25%"
-                        stopColor={CHART_COLORS.apyAtTarget.gradient.start}
-                        stopOpacity={CHART_COLORS.apyAtTarget.gradient.endOpacity}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="x"
-                    tickFormatter={(time) => formatChartTime(time, selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp)}
-                  />
-                  <YAxis tickFormatter={(value) => `${(value * 100).toFixed(2)}%`} />
-                  <Tooltip
-                    labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
-                    formatter={(value: number) => `${(value * 100).toFixed(2)}%`}
-                    contentStyle={{
-                      backgroundColor: 'var(--color-background)',
-                    }}
-                  />
-                  <Legend
-                    onClick={(e) => {
-                      const dataKey = e.dataKey as keyof typeof visibleLines;
-                      setVisibleLines((prev) => ({
-                        ...prev,
-                        [dataKey]: !prev[dataKey],
-                      }));
-                    }}
-                    formatter={(value, entry) => (
-                      <span
-                        style={{
-                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines] ? undefined : '#999',
-                        }}
-                      >
-                        {value}
-                      </span>
-                    )}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="supplyApy"
-                    name={`Supply ${rateLabel}`}
-                    stroke={CHART_COLORS.supply.stroke}
-                    strokeWidth={2}
-                    fill="url(#rateChart-supplyGradient)"
-                    fillOpacity={1}
-                    hide={!visibleLines.supplyApy}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="borrowApy"
-                    name={`Borrow ${rateLabel}`}
-                    stroke={CHART_COLORS.borrow.stroke}
-                    strokeWidth={2}
-                    fill="url(#rateChart-borrowGradient)"
-                    fillOpacity={1}
-                    hide={!visibleLines.borrowApy}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="apyAtTarget"
-                    name="Rate at Util Target"
-                    stroke={CHART_COLORS.apyAtTarget.stroke}
-                    strokeWidth={2}
-                    fill="url(#rateChart-targetGradient)"
-                    fillOpacity={1}
-                    hide={!visibleLines.apyAtTarget}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
+    <Card className="overflow-hidden border border-border bg-surface shadow-sm">
+      {/* Header: Live Stats + Controls */}
+      <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Live Stats */}
+        <div className="flex flex-wrap items-center gap-6 sm:gap-8">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-secondary">Supply {rateLabel}</p>
+            <p className="tabular-nums text-lg">{formatPercentage(currentSupplyRate)}</p>
           </div>
           <div>
-            <div className="space-y-4">
-              <div>
-                <h3 className="mb-1 text-lg text-secondary">Current Rates</h3>
-                <div className="mb-2">
-                  <Progress
-                    label="Utilization Rate"
-                    aria-label="Utilization Rate"
-                    size="sm"
-                    value={getCurrentUtilizationRate() * 100}
-                    color="primary"
-                    showValueLabel
-                    classNames={{
-                      value: 'font-zen text-sm',
-                      base: 'my-2',
-                      label: 'text-base',
-                    }}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Supply APY:</span>
-                  <span className="font-zen text-sm">{formatPercentage(getCurrentApyValue('supply'))}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Borrow APY:</span>
-                  <span className="font-zen text-sm">{formatPercentage(getCurrentApyValue('borrow'))}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Rate at U Target:</span>
-                  <span className="font-zen text-sm">{formatPercentage(getCurrentapyAtTargetValue())}</span>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="mb-1 text-lg text-secondary">
-                  Historical Averages <span className="">({selectedTimeframe})</span>
-                </h3>
-                {isLoading ? (
-                  <div className="flex min-h-48 justify-center text-primary">
-                    <Spinner size={24} />
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span>Utilization Rate:</span>
-                      <span className="font-zen text-sm">{formatPercentage(getAverageUtilizationRate())}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Supply APY:</span>
-                      <span className="font-zen text-sm">{formatPercentage(getAverageApyValue('supply'))}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Borrow APY:</span>
-                      <span className="font-zen text-sm">{formatPercentage(getAverageApyValue('borrow'))}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Rate at U Target:</span>
-                      <span className="font-zen text-sm">{formatPercentage(getAverageapyAtTargetValue())}</span>
-                    </div>
-                  </>
-                )}
-              </div>
+            <p className="text-xs uppercase tracking-wider text-secondary">Borrow {rateLabel}</p>
+            <p className="tabular-nums text-lg">{formatPercentage(currentBorrowRate)}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-secondary">Rate at Target</p>
+            <p className="tabular-nums text-lg">{formatPercentage(currentApyAtTarget)}</p>
+          </div>
+          <div className="min-w-[140px]">
+            <p className="text-xs uppercase tracking-wider text-secondary">Utilization</p>
+            <div className="mt-1 flex items-center gap-2">
+              <Progress
+                aria-label="Utilization Rate"
+                size="sm"
+                value={currentUtilization * 100}
+                color="primary"
+                classNames={{ base: 'w-16' }}
+              />
+              <span className="tabular-nums text-lg">{formatPercentage(currentUtilization)}</span>
             </div>
           </div>
         </div>
-      </CardBody>
+
+        {/* Controls */}
+        <div className="flex items-center gap-2">
+          <Select
+            value={selectedTimeframe}
+            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
+          >
+            <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
+              <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1d">1D</SelectItem>
+              <SelectItem value="7d">7D</SelectItem>
+              <SelectItem value="30d">30D</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Chart Body - Full Width */}
+      <div className="w-full">
+        {isLoading ? (
+          <div className="flex h-[350px] items-center justify-center">
+            <Spinner size={30} />
+          </div>
+        ) : (
+          <ResponsiveContainer
+            width="100%"
+            height={350}
+            id="rate-chart"
+          >
+            <AreaChart
+              data={getChartData}
+              margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
+            >
+              <ChartGradients
+                prefix="rateChart"
+                gradients={RATE_CHART_GRADIENTS}
+              />
+              <CartesianGrid
+                strokeDasharray="0"
+                stroke="var(--color-border)"
+                strokeOpacity={0.25}
+              />
+              <XAxis
+                dataKey="x"
+                axisLine={false}
+                tickLine={false}
+                tickMargin={12}
+                minTickGap={60}
+                tickFormatter={(time) => formatChartTime(time, selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp)}
+                tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(value) => `${(value * 100).toFixed(2)}%`}
+                tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+                width={50}
+              />
+              <Tooltip
+                cursor={chartTooltipCursor}
+                content={({ active, payload, label }) => (
+                  <ChartTooltipContent
+                    active={active}
+                    payload={payload}
+                    label={label}
+                    formatValue={formatPercentage}
+                  />
+                )}
+              />
+              <Legend
+                {...chartLegendStyle}
+                {...legendHandlers}
+              />
+              <Area
+                type="monotone"
+                dataKey="supplyApy"
+                name={`Supply ${rateLabel}`}
+                stroke={CHART_COLORS.supply.stroke}
+                strokeWidth={2}
+                fill="url(#rateChart-supplyGradient)"
+                fillOpacity={1}
+                hide={!visibleLines.supplyApy}
+              />
+              <Area
+                type="monotone"
+                dataKey="borrowApy"
+                name={`Borrow ${rateLabel}`}
+                stroke={CHART_COLORS.borrow.stroke}
+                strokeWidth={2}
+                fill="url(#rateChart-borrowGradient)"
+                fillOpacity={1}
+                hide={!visibleLines.borrowApy}
+              />
+              <Area
+                type="monotone"
+                dataKey="apyAtTarget"
+                name="Rate at Util Target"
+                stroke={CHART_COLORS.apyAtTarget.stroke}
+                strokeWidth={2}
+                fill="url(#rateChart-targetGradient)"
+                fillOpacity={1}
+                hide={!visibleLines.apyAtTarget}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* Footer: Historical Averages */}
+      <div className="border-t border-border px-6 py-4">
+        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{TIMEFRAME_LABELS[selectedTimeframe]} Averages</h4>
+        {isLoading ? (
+          <div className="flex h-8 items-center justify-center">
+            <Spinner size={16} />
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-x-8 gap-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-secondary">Utilization</span>
+              <span className="tabular-nums text-sm">{formatPercentage(avgUtilization)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-secondary">Supply {rateLabel}</span>
+              <span className="tabular-nums text-sm">{formatPercentage(avgSupplyRate)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-secondary">Borrow {rateLabel}</span>
+              <span className="tabular-nums text-sm">{formatPercentage(avgBorrowRate)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-secondary">Rate at Target</span>
+              <span className="tabular-nums text-sm">{formatPercentage(avgApyAtTarget)}</span>
+            </div>
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
