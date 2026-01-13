@@ -61,8 +61,8 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork, var
           type="button"
           className={cn(
             'bg-surface flex h-10 items-center gap-2 rounded-sm px-3 shadow-sm transition-all duration-200 hover:bg-hovered',
-            'min-w-[120px] max-w-[200px]',
-            isOpen && 'min-w-[180px]',
+            'max-w-[200px]',
+            isOpen ? 'min-w-[180px]' : 'min-w-[120px]',
           )}
           onClick={toggleDropdown}
           onKeyDown={(e) => {

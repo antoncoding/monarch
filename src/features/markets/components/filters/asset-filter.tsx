@@ -98,7 +98,11 @@ export default function AssetFilter({
     >
       <button
         type="button"
-        className="bg-surface flex h-10 min-w-[120px] items-center gap-2 rounded-sm px-3 shadow-sm transition-colors hover:bg-hovered"
+        className={cn(
+          'bg-surface flex h-10 items-center gap-2 rounded-sm px-3 shadow-sm transition-all duration-200 hover:bg-hovered',
+          'min-w-[120px] max-w-[220px]',
+          isOpen && 'min-w-[180px]',
+        )}
         onClick={toggleDropdown}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
