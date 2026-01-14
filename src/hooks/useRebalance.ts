@@ -76,7 +76,6 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
   const addRebalanceAction = useCallback((action: RebalanceAction) => {
-
     console.log('rebalance action added', action);
 
     setRebalanceActions((prev) => [...prev, action]);
