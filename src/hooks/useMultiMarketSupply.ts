@@ -10,7 +10,7 @@ import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
-import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
+import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useStyledToast } from './useStyledToast';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
@@ -76,7 +76,7 @@ export function useMultiMarketSupply(
 
     const txs: `0x${string}`[] = [];
 
-    let gas = undefined;
+    let gas: bigint | undefined = undefined;
 
     try {
       // Handle ETH wrapping if needed
@@ -121,7 +121,7 @@ export function useMultiMarketSupply(
         );
 
         const numOfSupplies = supplies.length;
-        gas = GAS_COSTS.BUNDLER_SUPPLY + GAS_COSTS.SINGLE_SUPPLY * (numOfSupplies - 1);
+        gas = GAS_COSTS.BUNDLER_SUPPLY + GAS_COSTS.SINGLE_SUPPLY * BigInt(numOfSupplies - 1);
       }
 
       tracking.update('supplying');
@@ -164,7 +164,7 @@ export function useMultiMarketSupply(
         value: useEth ? totalAmount : 0n,
 
         // Only add gas for standard approval flow -> skip gas estimation
-        gas: gas ? BigInt(gas * GAS_MULTIPLIER) : undefined,
+        gas: gas ? (gas * GAS_MULTIPLIER_NUMERATOR) / GAS_MULTIPLIER_DENOMINATOR : undefined,
       });
 
       batchAddUserMarkets(
