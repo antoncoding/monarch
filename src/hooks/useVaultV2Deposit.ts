@@ -10,7 +10,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
+import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
 
 export type VaultDepositStepType = 'approve' | 'signing' | 'depositing';
 
@@ -141,7 +141,7 @@ export function useVaultV2Deposit({
   const executeDepositTransaction = useCallback(async () => {
     try {
       const txs: `0x${string}`[] = [];
-      let gas = undefined;
+      let gas: bigint | undefined = undefined;
 
       if (usePermit2Setting) {
         // Permit2 flow: Sign permit and use bundler to deposit
@@ -200,7 +200,7 @@ export function useVaultV2Deposit({
         value: 0n,
 
         // Only add gas for standard approval flow -> skip gas estimation
-        gas: gas ? BigInt(gas * GAS_MULTIPLIER) : undefined,
+        gas: gas ? (gas * GAS_MULTIPLIER_NUMERATOR) / GAS_MULTIPLIER_DENOMINATOR : undefined,
       });
 
       tracking.complete();

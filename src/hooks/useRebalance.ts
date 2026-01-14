@@ -6,7 +6,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { GroupedPosition, RebalanceAction } from '@/utils/types';
-import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
+import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useMorphoAuthorization } from './useMorphoAuthorization';
 import { usePermit2 } from './usePermit2';
@@ -76,6 +76,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
   const addRebalanceAction = useCallback((action: RebalanceAction) => {
+
+    console.log('rebalance action added', action);
+
     setRebalanceActions((prev) => [...prev, action]);
   }, []);
 
@@ -255,7 +258,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     try {
       const { withdrawTxs, supplyTxs, allMarketKeys } = generateRebalanceTxData();
 
-      let multicallGas = undefined;
+      let multicallGas: bigint | undefined = undefined;
 
       if (usePermit2Setting) {
         // --- Permit2 Flow ---
@@ -318,14 +321,14 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         multicallGas = GAS_COSTS.BUNDLER_REBALANCE;
 
         if (supplyTxs.length > 1) {
-          multicallGas += GAS_COSTS.SINGLE_SUPPLY * (supplyTxs.length - 1);
+          multicallGas += GAS_COSTS.SINGLE_SUPPLY * BigInt(supplyTxs.length - 1);
         }
 
         if (withdrawTxs.length > 1) {
-          multicallGas += GAS_COSTS.SINGLE_WITHDRAW * (withdrawTxs.length - 1);
+          multicallGas += GAS_COSTS.SINGLE_WITHDRAW * BigInt(withdrawTxs.length - 1);
         }
 
-        console.log('multicallGas', multicallGas);
+        console.log('multicallGas', multicallGas.toString());
       }
 
       // Step Final: Execute multicall
@@ -341,7 +344,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         to: bundlerAddress,
         data: multicallTx,
         chainId: groupedPosition.chainId,
-        gas: multicallGas ? BigInt(multicallGas * GAS_MULTIPLIER) : undefined,
+        gas: multicallGas ? (multicallGas * GAS_MULTIPLIER_NUMERATOR) / GAS_MULTIPLIER_DENOMINATOR : undefined,
       });
 
       batchAddUserMarkets(
