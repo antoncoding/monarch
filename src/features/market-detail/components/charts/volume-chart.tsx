@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import moment from 'moment';
 import { Card } from '@/components/ui/card';
 import { Tooltip as HeroTooltip } from '@/components/ui/tooltip';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -44,10 +45,6 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     liquidity: true,
   });
 
-  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d' | '3m' | '6m') => {
-    setTimeframe(timeframe);
-  };
-
   const formatYAxis = (value: number) => {
     if (volumeView === 'USD') {
       return `$${formatReadable(value)}`;
@@ -64,14 +61,31 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   };
 
   const chartData = useMemo(() => {
-    if (!historicalData?.volumes) return [];
+    if (!historicalData?.volumes) {
+      // Only show current state point in Asset mode (no USD values from market.state)
+      if (volumeView === 'Asset') {
+        return [
+          {
+            x: moment().unix(),
+            supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
+            borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
+            liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
+          },
+        ];
+      }
+      return [];
+    }
 
     const supplyData = volumeView === 'USD' ? historicalData.volumes.supplyAssetsUsd : historicalData.volumes.supplyAssets;
     const borrowData = volumeView === 'USD' ? historicalData.volumes.borrowAssetsUsd : historicalData.volumes.borrowAssets;
     const liquidityData = volumeView === 'USD' ? historicalData.volumes.liquidityAssetsUsd : historicalData.volumes.liquidityAssets;
 
-    return supplyData
+    const historicalPoints = supplyData
       .map((point: TimeseriesDataPoint, index: number) => {
+        if (point.y === null || borrowData[index]?.y === null || liquidityData[index]?.y === null) {
+          return null;
+        }
+
         const supplyUsdValue = historicalData.volumes.supplyAssetsUsd[index]?.y;
         if (supplyUsdValue !== null && supplyUsdValue >= 100_000_000_000) {
           return null;
@@ -85,21 +99,63 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
         };
       })
       .filter((point): point is NonNullable<typeof point> => point !== null);
-  }, [historicalData?.volumes, volumeView, market.loanAsset.decimals]);
+
+    // Only add "now" point in Asset mode (we don't have USD values from market.state)
+    if (volumeView === 'Asset') {
+      const nowPoint = {
+        x: moment().unix(),
+        supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
+        borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
+        liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
+      };
+      return [...historicalPoints, nowPoint];
+    }
+
+    return historicalPoints;
+  }, [
+    historicalData?.volumes,
+    volumeView,
+    market.loanAsset.decimals,
+    market.state.supplyAssets,
+    market.state.borrowAssets,
+    market.state.liquidityAssets,
+  ]);
 
   const formatValue = (value: number) => {
     const formattedValue = formatReadable(value);
     return volumeView === 'USD' ? `$${formattedValue}` : `${formattedValue} ${market.loanAsset.symbol}`;
   };
 
-  const getVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
-    const data = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : historicalData?.volumes[`${type}Assets`];
-    if (!data || data.length === 0) return { current: 0, netChangePercentage: 0, average: 0 };
+  const STATE_KEY_MAP = {
+    supply: 'supplyAssets',
+    borrow: 'borrowAssets',
+    liquidity: 'liquidityAssets',
+  } as const;
 
-    const current = convertValue((data.at(-1) as TimeseriesDataPoint).y);
-    const start = convertValue(data[0].y);
-    const netChangePercentage = start !== 0 ? ((current - start) / start) * 100 : 0;
-    const average = data.reduce((acc: number, point: TimeseriesDataPoint) => acc + convertValue(point.y), 0) / data.length;
+  const getVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
+    // Get current value from market.state (always in asset units)
+    const stateKey = STATE_KEY_MAP[type];
+    const currentRaw = market.state[stateKey] ?? 0;
+    const current = Number(formatUnits(BigInt(currentRaw), market.loanAsset.decimals));
+
+    // Always use asset data for net change calculation (consistent units with current)
+    const assetData = historicalData?.volumes[`${type}Assets`];
+    if (!assetData || assetData.length === 0) return { current, netChangePercentage: 0, average: 0 };
+
+    const validAssetData = assetData.filter((point: TimeseriesDataPoint) => point.y !== null);
+    if (validAssetData.length === 0) return { current, netChangePercentage: 0, average: 0 };
+
+    // Net change percentage: compare asset-to-asset for consistent units
+    const startAsset = Number(formatUnits(BigInt(validAssetData[0].y ?? 0), market.loanAsset.decimals));
+    const netChangePercentage = startAsset !== 0 ? ((current - startAsset) / startAsset) * 100 : 0;
+
+    // Average: use selected view data (USD or Asset) for display
+    const displayData = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : assetData;
+    const validDisplayData = displayData?.filter((point: TimeseriesDataPoint) => point.y !== null) ?? [];
+    const average =
+      validDisplayData.length > 0
+        ? validDisplayData.reduce((acc: number, point: TimeseriesDataPoint) => acc + convertValue(point.y), 0) / validDisplayData.length
+        : 0;
 
     return { current, netChangePercentage, average };
   };
@@ -177,7 +233,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
           </Select>
           <Select
             value={selectedTimeframe}
-            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d' | '3m' | '6m')}
+            onValueChange={(value) => setTimeframe(value as '1d' | '7d' | '30d' | '3m' | '6m')}
           >
             <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
               <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
