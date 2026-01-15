@@ -202,8 +202,9 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
               tickMargin={12}
               tickFormatter={(value) => `${value}%`}
               tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-              domain={[0, -100]}
+              domain={[-100, 0]}
               ticks={[0, -20, -40, -60, -80, -100]}
+              reversed
             />
             <YAxis
               axisLine={false}
