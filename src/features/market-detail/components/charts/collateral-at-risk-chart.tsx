@@ -21,6 +21,7 @@ type CollateralAtRiskChartProps = {
 type RiskDataPoint = {
   priceDrop: number; // 0 to -100
   cumulativeDebt: number; // Absolute debt amount
+  cumulativeDebtPercent: number; // Percentage of total debt
 };
 
 // Gradient config for the risk chart
@@ -76,30 +77,33 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
     // Calculate total debt
     const total = borrowersWithRisk.reduce((sum, b) => sum + b.debt, 0);
 
-    // Build cumulative data for each 1% price drop (continuous scale)
-    // "At X% price drop, how much cumulative debt is at risk?"
-    const dataPoints: RiskDataPoint[] = [];
-    for (let drop = 0; drop >= -100; drop -= 1) {
-      // Sum debt for all borrowers who would be liquidated at this price drop or less severe
-      const cumulativeDebt = borrowersWithRisk
-        .filter((b) => b.priceDrop >= drop) // Borrowers liquidated at this drop or earlier (less negative)
-        .reduce((sum, b) => sum + b.debt, 0);
+    // Build data points only at actual liquidation thresholds (where debt changes)
+    // Get unique price drop thresholds, plus start (0) and end (-100)
+    const thresholds = new Set([0, -100, ...borrowersWithRisk.map((b) => Math.round(b.priceDrop))]);
+    const sortedThresholds = [...thresholds].sort((a, b) => b - a); // Descending (0 to -100)
 
-      dataPoints.push({ priceDrop: drop, cumulativeDebt });
-    }
+    const dataPoints: RiskDataPoint[] = sortedThresholds.map((drop) => {
+      const cumulativeDebt = borrowersWithRisk.filter((b) => b.priceDrop >= drop).reduce((sum, b) => sum + b.debt, 0);
+      const cumulativeDebtPercent = total > 0 ? (cumulativeDebt / total) * 100 : 0;
+      return { priceDrop: drop, cumulativeDebt, cumulativeDebtPercent };
+    });
 
-    // Calculate risk metrics for header
-    const debtAt10 = dataPoints.find((d) => d.priceDrop === -10)?.cumulativeDebt ?? 0;
-    const debtAt25 = dataPoints.find((d) => d.priceDrop === -25)?.cumulativeDebt ?? 0;
-    const debtAt50 = dataPoints.find((d) => d.priceDrop === -50)?.cumulativeDebt ?? 0;
+    // Calculate risk metrics for header (percentages) - interpolate from nearest threshold
+    const getPercentAtDrop = (targetDrop: number) => {
+      const point = dataPoints.find((d) => d.priceDrop <= targetDrop);
+      return point?.cumulativeDebtPercent ?? 0;
+    };
+    const percentAt10 = getPercentAtDrop(-10);
+    const percentAt25 = getPercentAtDrop(-25);
+    const percentAt50 = getPercentAtDrop(-50);
 
     return {
       chartData: dataPoints,
       totalDebt: total,
       riskMetrics: {
-        debtAt10,
-        debtAt25,
-        debtAt50,
+        percentAt10,
+        percentAt25,
+        percentAt50,
       },
     };
   }, [borrowers, oraclePrice, market.loanAsset.decimals, lltv]);
@@ -113,17 +117,15 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
         <p className="mb-2 text-xs text-secondary">At {data.priceDrop}% price drop</p>
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-6 text-sm">
+            <span className="text-secondary">% of Total Debt</span>
+            <span className="tabular-nums font-medium">{data.cumulativeDebtPercent.toFixed(1)}%</span>
+          </div>
+          <div className="flex items-center justify-between gap-6 text-sm">
             <span className="text-secondary">Debt at Risk</span>
-            <span className="tabular-nums font-medium">
+            <span className="tabular-nums">
               {formatReadable(data.cumulativeDebt)} {market.loanAsset.symbol}
             </span>
           </div>
-          {totalDebt > 0 && (
-            <div className="flex items-center justify-between gap-6 text-sm">
-              <span className="text-secondary">% of Total</span>
-              <span className="tabular-nums">{((data.cumulativeDebt / totalDebt) * 100).toFixed(1)}%</span>
-            </div>
-          )}
         </div>
       </div>
     );
@@ -156,18 +158,18 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
                 <span className="text-secondary">@-10%:</span>
                 <span
                   className="tabular-nums font-medium"
-                  style={{ color: riskMetrics.debtAt10 > 0 ? RISK_COLORS.stroke : 'inherit' }}
+                  style={{ color: riskMetrics.percentAt10 > 0 ? RISK_COLORS.stroke : 'inherit' }}
                 >
-                  {formatReadable(riskMetrics.debtAt10)}
+                  {riskMetrics.percentAt10.toFixed(1)}%
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-secondary">@-25%:</span>
-                <span className="tabular-nums font-medium">{formatReadable(riskMetrics.debtAt25)}</span>
+                <span className="tabular-nums font-medium">{riskMetrics.percentAt25.toFixed(1)}%</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-secondary">@-50%:</span>
-                <span className="tabular-nums font-medium">{formatReadable(riskMetrics.debtAt50)}</span>
+                <span className="tabular-nums font-medium">{riskMetrics.percentAt50.toFixed(1)}%</span>
               </div>
             </div>
           )}
@@ -194,21 +196,22 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
             />
             <XAxis
               dataKey="priceDrop"
+              type="number"
               axisLine={false}
               tickLine={false}
               tickMargin={12}
               tickFormatter={(value) => `${value}%`}
               tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
               domain={[0, -100]}
-              reversed={false}
+              ticks={[0, -20, -40, -60, -80, -100]}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tickFormatter={(value) => formatReadable(value)}
+              tickFormatter={(value) => `${value}%`}
               tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-              width={60}
-              domain={[0, 'dataMax']}
+              width={50}
+              domain={[0, 100]}
             />
             <Tooltip
               cursor={chartTooltipCursor}
@@ -216,7 +219,7 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
             />
             <Area
               type="stepAfter"
-              dataKey="cumulativeDebt"
+              dataKey="cumulativeDebtPercent"
               name="Debt at Risk"
               stroke={RISK_COLORS.stroke}
               strokeWidth={2}

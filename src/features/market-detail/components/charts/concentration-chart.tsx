@@ -20,7 +20,7 @@ type ConcentrationChartProps = {
   color: string;
 };
 
-const MIN_PERCENT_THRESHOLD = 0.01;
+const MIN_PERCENT_THRESHOLD = 0.1;
 
 export function ConcentrationChart({ positions, totalCount, isLoading, title, color }: ConcentrationChartProps) {
   const { chartData, meaningfulCount, totalPercentShown } = useMemo(() => {
