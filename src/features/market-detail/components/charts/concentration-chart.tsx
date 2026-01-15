@@ -52,7 +52,9 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
       point.idealPercent = (point.position / meaningful.length) * totalPct;
     }
 
-    dataPoints.unshift({ position: 0, cumulativePercent: 0, idealPercent: 0 });
+    if (meaningful.length > 1) {
+      dataPoints.unshift({ position: 0, cumulativePercent: 0, idealPercent: 0 });
+    }
 
     return {
       chartData: dataPoints,
@@ -215,6 +217,7 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
               strokeWidth={2}
               fill={'url(#concentrationChart-gradient)'}
               fillOpacity={0.7}
+              dot={chartData.length === 1 ? { r: 4, fill: color } : false}
             />
           </ComposedChart>
         </ResponsiveContainer>
