@@ -164,8 +164,9 @@ function MarketContent() {
 
   // Prepare concentration data for borrowers
   const borrowerConcentrationData = useMemo(() => {
-    if (!borrowersData || !market) return null;
-    const totalBorrowAssets = BigInt(market.state.borrowAssets);
+    if (!borrowersData || borrowersData.length === 0) return null;
+    // Calculate total from actual data to ensure percentages sum to 100%
+    const totalBorrowAssets = borrowersData.reduce((sum, b) => sum + BigInt(b.borrowAssets), 0n);
     if (totalBorrowAssets === 0n) return null;
 
     return borrowersData.map((b) => {
@@ -173,12 +174,13 @@ function MarketContent() {
       const percentageScaled = (borrowAssets * 10000n) / totalBorrowAssets;
       return { percentage: Number(percentageScaled) / 100 };
     });
-  }, [borrowersData, market]);
+  }, [borrowersData]);
 
   // Prepare concentration data for suppliers
   const supplierConcentrationData = useMemo(() => {
-    if (!suppliersData || !market) return null;
-    const totalSupplyShares = BigInt(market.state.supplyShares);
+    if (!suppliersData || suppliersData.length === 0) return null;
+    // Calculate total from actual data to ensure percentages sum to 100%
+    const totalSupplyShares = suppliersData.reduce((sum, s) => sum + BigInt(s.supplyShares), 0n);
     if (totalSupplyShares === 0n) return null;
 
     return suppliersData.map((s) => {
@@ -186,7 +188,7 @@ function MarketContent() {
       const percentageScaled = (shares * 10000n) / totalSupplyShares;
       return { percentage: Number(percentageScaled) / 100 };
     });
-  }, [suppliersData, market]);
+  }, [suppliersData]);
 
   // Unified refetch function for both market and user position
   const handleRefreshAll = useCallback(async () => {
