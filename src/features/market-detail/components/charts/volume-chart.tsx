@@ -55,7 +55,15 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     return formatReadable(value);
   };
 
-  const getVolumeChartData = () => {
+  const convertValue = (raw: number | bigint | null): number => {
+    const value = raw ?? 0;
+    if (volumeView === 'USD') {
+      return Number(value);
+    }
+    return Number(formatUnits(BigInt(value), market.loanAsset.decimals));
+  };
+
+  const chartData = useMemo(() => {
     if (!historicalData?.volumes) return [];
 
     const supplyData = volumeView === 'USD' ? historicalData.volumes.supplyAssetsUsd : historicalData.volumes.supplyAssets;
@@ -64,45 +72,34 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
 
     return supplyData
       .map((point: TimeseriesDataPoint, index: number) => {
-        const borrowPoint: TimeseriesDataPoint | undefined = borrowData[index];
-        const liquidityPoint: TimeseriesDataPoint | undefined = liquidityData[index];
-
-        const supplyValue = volumeView === 'USD' ? point.y : Number(formatUnits(BigInt(point.y), market.loanAsset.decimals));
-        const borrowValue =
-          volumeView === 'USD' ? borrowPoint?.y || 0 : Number(formatUnits(BigInt(borrowPoint?.y || 0), market.loanAsset.decimals));
-        const liquidityValue =
-          volumeView === 'USD' ? liquidityPoint?.y || 0 : Number(formatUnits(BigInt(liquidityPoint?.y || 0), market.loanAsset.decimals));
-
-        if (historicalData.volumes.supplyAssetsUsd[index].y >= 100_000_000_000) {
+        const supplyUsdValue = historicalData.volumes.supplyAssetsUsd[index]?.y;
+        if (supplyUsdValue !== null && supplyUsdValue >= 100_000_000_000) {
           return null;
         }
 
         return {
           x: point.x,
-          supply: supplyValue,
-          borrow: borrowValue,
-          liquidity: liquidityValue,
+          supply: convertValue(point.y),
+          borrow: convertValue(borrowData[index]?.y),
+          liquidity: convertValue(liquidityData[index]?.y),
         };
       })
       .filter((point): point is NonNullable<typeof point> => point !== null);
-  };
+  }, [historicalData?.volumes, volumeView, market.loanAsset.decimals]);
 
   const formatValue = (value: number) => {
     const formattedValue = formatReadable(value);
     return volumeView === 'USD' ? `$${formattedValue}` : `${formattedValue} ${market.loanAsset.symbol}`;
   };
 
-  const toValue = (raw: number | bigint) =>
-    volumeView === 'USD' ? Number(raw) : Number(formatUnits(BigInt(raw), market.loanAsset.decimals));
-
   const getVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
     const data = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : historicalData?.volumes[`${type}Assets`];
     if (!data || data.length === 0) return { current: 0, netChangePercentage: 0, average: 0 };
 
-    const current = toValue((data.at(-1) as TimeseriesDataPoint).y);
-    const start = toValue(data[0].y);
+    const current = convertValue((data.at(-1) as TimeseriesDataPoint).y);
+    const start = convertValue(data[0].y);
     const netChangePercentage = start !== 0 ? ((current - start) / start) * 100 : 0;
-    const average = data.reduce((acc: number, point: TimeseriesDataPoint) => acc + toValue(point.y), 0) / data.length;
+    const average = data.reduce((acc: number, point: TimeseriesDataPoint) => acc + convertValue(point.y), 0) / data.length;
 
     return { current, netChangePercentage, average };
   };
@@ -209,7 +206,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
             id="volume-chart"
           >
             <AreaChart
-              data={getVolumeChartData()}
+              data={chartData}
               margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
             >
               <ChartGradients
