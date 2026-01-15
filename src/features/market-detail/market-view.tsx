@@ -14,6 +14,7 @@ import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
+import { useMarketDetailPreferences, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
 import useUserPosition from '@/hooks/useUserPosition';
 import type { SupportedNetworks } from '@/utils/networks';
 import { BorrowersTable } from '@/features/market-detail/components/borrowers-table';
@@ -25,9 +26,15 @@ import { SuppliersTable } from '@/features/market-detail/components/suppliers-ta
 import SupplierFiltersModal from '@/features/market-detail/components/filters/supplier-filters-modal';
 import TransactionFiltersModal from '@/features/market-detail/components/filters/transaction-filters-modal';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
+import { useAllMarketBorrowers, useAllMarketSuppliers } from '@/hooks/useAllMarketPositions';
 import { MarketHeader } from './components/market-header';
 import RateChart from './components/charts/rate-chart';
 import VolumeChart from './components/charts/volume-chart';
+import { SuppliersPieChart } from './components/charts/suppliers-pie-chart';
+import { BorrowersPieChart } from './components/charts/borrowers-pie-chart';
+import { CollateralAtRiskChart } from './components/charts/collateral-at-risk-chart';
+import { ConcentrationChart } from './components/charts/concentration-chart';
+import { CHART_COLORS } from '@/constants/chartColors';
 
 function MarketContent() {
   // 1. Get URL params first
@@ -38,13 +45,15 @@ function MarketContent() {
 
   // 3. Consolidated state
   const { open: openModal } = useModal();
+  const selectedTab = useMarketDetailPreferences((s) => s.selectedTab);
+  const setSelectedTab = useMarketDetailPreferences((s) => s.setSelectedTab);
   const [showBorrowModal, setShowBorrowModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
   const [showSupplierFiltersModal, setShowSupplierFiltersModal] = useState(false);
-  const [minSupplierShares, setMinSupplierShares] = useState('0');
+  const [minSupplierShares, setMinSupplierShares] = useState('');
   const [showBorrowerFiltersModal, setShowBorrowerFiltersModal] = useState(false);
-  const [minBorrowerShares, setMinBorrowerShares] = useState('0');
+  const [minBorrowerShares, setMinBorrowerShares] = useState('');
 
   // 4. Data fetching hooks - use unified time range
   const {
@@ -71,6 +80,18 @@ function MarketContent() {
 
   // Get all warnings for this market (hook handles undefined market)
   const allWarnings = useMarketWarnings(market);
+
+  // Fetch position data for concentration charts
+  const {
+    data: borrowersData,
+    isLoading: borrowersLoading,
+    totalCount: borrowersTotalCount,
+  } = useAllMarketBorrowers(market?.uniqueKey, network);
+  const {
+    data: suppliersData,
+    isLoading: suppliersLoading,
+    totalCount: suppliersTotalCount,
+  } = useAllMarketSuppliers(market?.uniqueKey, network);
 
   // 6. All memoized values and callbacks
 
@@ -124,7 +145,7 @@ function MarketContent() {
             BigInt(market.state.supplyShares),
             market.loanAsset.decimals,
           )
-        : '0',
+        : '1',
     [minSupplierShares, market],
   );
 
@@ -137,9 +158,37 @@ function MarketContent() {
             BigInt(market.state.borrowShares),
             market.loanAsset.decimals,
           )
-        : '0',
+        : '1',
     [minBorrowerShares, market],
   );
+
+  // Prepare concentration data for borrowers
+  const borrowerConcentrationData = useMemo(() => {
+    if (!borrowersData || borrowersData.length === 0) return null;
+    // Calculate total from actual data to ensure percentages sum to 100%
+    const totalBorrowAssets = borrowersData.reduce((sum, b) => sum + BigInt(b.borrowAssets), 0n);
+    if (totalBorrowAssets === 0n) return null;
+
+    return borrowersData.map((b) => {
+      const borrowAssets = BigInt(b.borrowAssets);
+      const percentageScaled = (borrowAssets * 10000n) / totalBorrowAssets;
+      return { percentage: Number(percentageScaled) / 100 };
+    });
+  }, [borrowersData]);
+
+  // Prepare concentration data for suppliers
+  const supplierConcentrationData = useMemo(() => {
+    if (!suppliersData || suppliersData.length === 0) return null;
+    // Calculate total from actual data to ensure percentages sum to 100%
+    const totalSupplyShares = suppliersData.reduce((sum, s) => sum + BigInt(s.supplyShares), 0n);
+    if (totalSupplyShares === 0n) return null;
+
+    return suppliersData.map((s) => {
+      const shares = BigInt(s.supplyShares);
+      const percentageScaled = (shares * 10000n) / totalSupplyShares;
+      return { percentage: Number(percentageScaled) / 100 };
+    });
+  }, [suppliersData]);
 
   // Unified refetch function for both market and user position
   const handleRefreshAll = useCallback(async () => {
@@ -256,16 +305,17 @@ function MarketContent() {
 
         {/* Tabs Section */}
         <Tabs
-          defaultValue="statistics"
+          value={selectedTab}
+          onValueChange={(value) => setSelectedTab(value as MarketDetailTab)}
           className="mt-8 w-full"
         >
           <TabsList>
-            <TabsTrigger value="statistics">Statistics</TabsTrigger>
+            <TabsTrigger value="trend">Trend</TabsTrigger>
             <TabsTrigger value="activities">Activities</TabsTrigger>
             <TabsTrigger value="positions">Positions</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="statistics">
+          <TabsContent value="trend">
             <VolumeChart
               marketId={marketId as string}
               chainId={network}
@@ -305,12 +355,55 @@ function MarketContent() {
           </TabsContent>
 
           <TabsContent value="positions">
-            <SuppliersTable
-              chainId={network}
-              market={market}
-              minShares={scaledMinSupplierShares}
-              onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
-            />
+            {/* Suppliers row: Pie + Concentration */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <SuppliersPieChart
+                chainId={network}
+                market={market}
+              />
+              <ConcentrationChart
+                positions={supplierConcentrationData}
+                totalCount={suppliersTotalCount}
+                isLoading={suppliersLoading}
+                title="Supplier Concentration"
+                color={CHART_COLORS.supply.stroke}
+              />
+            </div>
+
+            {/* Borrowers row: Pie + Concentration */}
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <BorrowersPieChart
+                chainId={network}
+                market={market}
+                oraclePrice={oraclePrice}
+              />
+              <ConcentrationChart
+                positions={borrowerConcentrationData}
+                totalCount={borrowersTotalCount}
+                isLoading={borrowersLoading}
+                title="Borrower Concentration"
+                color={CHART_COLORS.borrow.stroke}
+              />
+            </div>
+
+            {/* Collateral at Risk chart */}
+            <div className="mt-6">
+              <CollateralAtRiskChart
+                chainId={network}
+                market={market}
+                oraclePrice={oraclePrice}
+              />
+            </div>
+
+            {/* Tables */}
+            <div className="mt-6">
+              <SuppliersTable
+                chainId={network}
+                market={market}
+                minShares={scaledMinSupplierShares}
+                onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
+              />
+            </div>
             <div className="mt-6">
               <BorrowersTable
                 chainId={network}
