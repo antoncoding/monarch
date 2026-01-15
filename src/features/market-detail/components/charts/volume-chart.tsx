@@ -67,9 +67,9 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
         return [
           {
             x: moment().unix(),
-            supply: convertValue(market.state.supplyAssets),
-            borrow: convertValue(market.state.borrowAssets),
-            liquidity: convertValue(market.state.liquidityAssets),
+            supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
+            borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
+            liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
           },
         ];
       }
@@ -104,9 +104,9 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     if (volumeView === 'Asset') {
       const nowPoint = {
         x: moment().unix(),
-        supply: convertValue(market.state.supplyAssets),
-        borrow: convertValue(market.state.borrowAssets),
-        liquidity: convertValue(market.state.liquidityAssets),
+        supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
+        borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
+        liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
       };
       return [...historicalPoints, nowPoint];
     }
