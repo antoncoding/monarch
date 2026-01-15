@@ -10,6 +10,7 @@ import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
 import { MdError } from 'react-icons/md';
 import { BsArrowUpCircle, BsArrowDownLeftCircle } from 'react-icons/bs';
 import { FiExternalLink } from 'react-icons/fi';
+import { LuCopy } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -20,6 +21,7 @@ import { CampaignBadge } from '@/features/market-detail/components/campaign-badg
 import { PositionPill } from '@/features/market-detail/components/position-pill';
 import { OracleTypeInfo } from '@/features/markets/components/oracle/MarketOracle/OracleTypeInfo';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { convertApyToApr } from '@/utils/rateMath';
 import { getIRMTitle } from '@/utils/morpho';
@@ -134,7 +136,17 @@ export function MarketHeader({
   const [isExpanded, setIsExpanded] = useState(false);
   const { short: rateLabel } = useRateLabel();
   const { isAprDisplay } = useAppSettings();
+  const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
+
+  const handleCopyMarketId = async () => {
+    try {
+      await navigator.clipboard.writeText(marketId);
+      toast.success('Market ID copied', `${marketId.slice(0, 10)}...${marketId.slice(-6)}`);
+    } catch {
+      // Clipboard API not available
+    }
+  };
 
   const formatRate = (rate: number) => {
     const displayRate = isAprDisplay ? convertApyToApr(rate) : rate;
@@ -236,8 +248,15 @@ export function MarketHeader({
             </div>
 
             <div>
-              <div className="text-2xl pt-4">
+              <div className="flex items-center gap-2 pt-4 text-2xl">
                 {market.loanAsset.symbol}/{market.collateralAsset.symbol}
+                <button
+                  type="button"
+                  onClick={handleCopyMarketId}
+                  className="text-secondary transition-colors hover:text-primary"
+                >
+                  <LuCopy className="h-4 w-4" />
+                </button>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-secondary">
                 {networkImg && (
