@@ -7,7 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { formatUnits } from 'viem';
 import { Spinner } from '@/components/ui/spinner';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { CHART_COLORS } from '@/constants/chartColors';
+import { useChartColors } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
 import { formatChartTime } from '@/utils/chart';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
@@ -16,7 +16,7 @@ import {
   TIMEFRAME_LABELS,
   ChartGradients,
   ChartTooltipContent,
-  VOLUME_CHART_GRADIENTS,
+  createVolumeChartGradients,
   createLegendClickHandler,
   chartTooltipCursor,
   chartLegendStyle,
@@ -36,6 +36,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   const volumeView = useMarketDetailChartState((s) => s.volumeView);
   const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
   const setVolumeView = useMarketDetailChartState((s) => s.setVolumeView);
+  const chartColors = useChartColors();
 
   const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
 
@@ -267,7 +268,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
             >
               <ChartGradients
                 prefix="volumeChart"
-                gradients={VOLUME_CHART_GRADIENTS}
+                gradients={createVolumeChartGradients(chartColors)}
               />
               <CartesianGrid
                 strokeDasharray="0"
@@ -310,7 +311,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
                 type="monotone"
                 dataKey="supply"
                 name="Supply"
-                stroke={CHART_COLORS.supply.stroke}
+                stroke={chartColors.supply.stroke}
                 strokeWidth={2}
                 fill="url(#volumeChart-supplyGradient)"
                 fillOpacity={1}
@@ -320,7 +321,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
                 type="monotone"
                 dataKey="borrow"
                 name="Borrow"
-                stroke={CHART_COLORS.borrow.stroke}
+                stroke={chartColors.borrow.stroke}
                 strokeWidth={2}
                 fill="url(#volumeChart-borrowGradient)"
                 fillOpacity={1}
@@ -330,7 +331,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
                 type="monotone"
                 dataKey="liquidity"
                 name="Liquidity"
-                stroke={CHART_COLORS.apyAtTarget.stroke}
+                stroke={chartColors.apyAtTarget.stroke}
                 strokeWidth={2}
                 fill="url(#volumeChart-liquidityGradient)"
                 fillOpacity={1}

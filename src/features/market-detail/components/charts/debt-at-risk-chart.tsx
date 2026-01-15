@@ -5,14 +5,14 @@ import { formatUnits } from 'viem';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { RISK_COLORS } from '@/constants/chartColors';
+import { useChartColors } from '@/constants/chartColors';
 import { useAllMarketBorrowers } from '@/hooks/useAllMarketPositions';
 import { formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
-import { ChartGradients, chartTooltipCursor } from './chart-utils';
+import { ChartGradients, chartTooltipCursor, createRiskChartGradients } from './chart-utils';
 
-type CollateralAtRiskChartProps = {
+type DebtAtRiskChartProps = {
   chainId: SupportedNetworks;
   market: Market;
   oraclePrice: bigint;
@@ -24,11 +24,9 @@ type RiskDataPoint = {
   cumulativeDebtPercent: number; // Percentage of total debt
 };
 
-// Gradient config for the risk chart
-const RISK_GRADIENTS = [{ id: 'riskGradient', color: RISK_COLORS.stroke }];
-
-export function CollateralAtRiskChart({ chainId, market, oraclePrice }: CollateralAtRiskChartProps) {
+export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChartProps) {
   const { data: borrowers, isLoading } = useAllMarketBorrowers(market.uniqueKey, chainId);
+  const chartColors = useChartColors();
 
   const lltv = useMemo(() => {
     const lltvBigInt = BigInt(market.lltv);
@@ -151,14 +149,14 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
     <Card className="overflow-hidden border border-border bg-surface shadow-sm">
       <div className="border-b border-border/40 px-6 py-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h4 className="text-lg text-secondary">Collateral at Risk</h4>
+          <h4 className="text-lg text-secondary">Debt at Risk</h4>
           {riskMetrics && (
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-secondary">@-10%:</span>
                 <span
                   className="tabular-nums font-medium"
-                  style={{ color: riskMetrics.percentAt10 > 0 ? RISK_COLORS.stroke : 'inherit' }}
+                  style={{ color: riskMetrics.percentAt10 > 0 ? chartColors.apyAtTarget.stroke : 'inherit' }}
                 >
                   {riskMetrics.percentAt10.toFixed(1)}%
                 </span>
@@ -187,7 +185,7 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
           >
             <ChartGradients
               prefix="riskChart"
-              gradients={RISK_GRADIENTS}
+              gradients={createRiskChartGradients(chartColors)}
             />
             <CartesianGrid
               strokeDasharray="0"
@@ -222,7 +220,7 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
               type="stepAfter"
               dataKey="cumulativeDebtPercent"
               name="Debt at Risk"
-              stroke={RISK_COLORS.stroke}
+              stroke={chartColors.apyAtTarget.stroke}
               strokeWidth={2}
               fill="url(#riskChart-riskGradient)"
               fillOpacity={0.7}

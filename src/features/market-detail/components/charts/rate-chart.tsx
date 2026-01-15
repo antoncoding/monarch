@@ -4,7 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Spinner } from '@/components/ui/spinner';
-import { CHART_COLORS } from '@/constants/chartColors';
+import { useChartColors } from '@/constants/chartColors';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatChartTime } from '@/utils/chart';
@@ -15,7 +15,7 @@ import {
   TIMEFRAME_LABELS,
   ChartGradients,
   ChartTooltipContent,
-  RATE_CHART_GRADIENTS,
+  createRateChartGradients,
   createLegendClickHandler,
   chartTooltipCursor,
   chartLegendStyle,
@@ -35,6 +35,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
   const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
+  const chartColors = useChartColors();
 
   const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
 
@@ -163,7 +164,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
             >
               <ChartGradients
                 prefix="rateChart"
-                gradients={RATE_CHART_GRADIENTS}
+                gradients={createRateChartGradients(chartColors)}
               />
               <CartesianGrid
                 strokeDasharray="0"
@@ -205,7 +206,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                 type="monotone"
                 dataKey="apyAtTarget"
                 name="Rate at Util Target"
-                stroke={CHART_COLORS.apyAtTarget.stroke}
+                stroke={chartColors.apyAtTarget.stroke}
                 strokeWidth={2}
                 fill="url(#rateChart-targetGradient)"
                 fillOpacity={1}
@@ -215,7 +216,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                 type="monotone"
                 dataKey="supplyApy"
                 name={`Supply ${rateLabel}`}
-                stroke={CHART_COLORS.supply.stroke}
+                stroke={chartColors.supply.stroke}
                 strokeWidth={2}
                 fill="url(#rateChart-supplyGradient)"
                 fillOpacity={1}
@@ -225,7 +226,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
                 type="monotone"
                 dataKey="borrowApy"
                 name={`Borrow ${rateLabel}`}
-                stroke={CHART_COLORS.borrow.stroke}
+                stroke={chartColors.borrow.stroke}
                 strokeWidth={2}
                 fill="url(#rateChart-borrowGradient)"
                 fillOpacity={1}

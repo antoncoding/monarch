@@ -4,6 +4,7 @@ import React from 'react';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
+import { PaletteSelector } from '@/components/ui/palette-preview';
 import Header from '@/components/layout/header/Header';
 import { AdvancedRpcSettings } from '@/modals/settings/custom-rpc-settings';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
@@ -12,11 +13,13 @@ import { useModal } from '@/hooks/useModal';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useChartPalette } from '@/stores/useChartPalette';
 
 export default function SettingsPage() {
   const { usePermit2, setUsePermit2, showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } =
     useAppSettings();
   const { includeUnknownTokens, setIncludeUnknownTokens, showUnknownOracle, setShowUnknownOracle } = useMarketPreferences();
+  const { palette: selectedPalette, setPalette } = useChartPalette();
 
   const { vaults: userTrustedVaults } = useTrustedVaults();
 
@@ -97,6 +100,27 @@ export default function SettingsPage() {
                   color="primary"
                   aria-label="Toggle APR display"
                 />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 pt-4">
+            <h2 className="text font-monospace text-secondary">Chart Appearance</h2>
+
+            <div className="bg-surface rounded p-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-primary">Color Palette</h3>
+                  <p className="text-sm text-secondary">
+                    Choose a color scheme for charts and graphs. Changes apply to all chart visualizations across the application.
+                  </p>
+                </div>
+                {mounted && (
+                  <PaletteSelector
+                    selectedPalette={selectedPalette}
+                    onSelect={setPalette}
+                  />
+                )}
               </div>
             </div>
           </div>

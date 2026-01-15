@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { CHART_COLORS } from '@/constants/chartColors';
+import { CHART_COLORS, useChartColors } from '@/constants/chartColors';
 
 export const TIMEFRAME_LABELS: Record<string, string> = {
   '1d': '1D',
@@ -42,6 +42,7 @@ export function ChartGradients({ prefix, gradients }: { prefix: string; gradient
   );
 }
 
+// Static gradient configs for backwards compatibility
 export const RATE_CHART_GRADIENTS: GradientConfig[] = [
   { id: 'supplyGradient', color: CHART_COLORS.supply.stroke },
   { id: 'borrowGradient', color: CHART_COLORS.borrow.stroke },
@@ -53,6 +54,31 @@ export const VOLUME_CHART_GRADIENTS: GradientConfig[] = [
   { id: 'borrowGradient', color: CHART_COLORS.borrow.stroke },
   { id: 'liquidityGradient', color: CHART_COLORS.apyAtTarget.stroke },
 ];
+
+// Dynamic gradient config builders
+export function createRateChartGradients(colors: ReturnType<typeof useChartColors>): GradientConfig[] {
+  return [
+    { id: 'supplyGradient', color: colors.supply.stroke },
+    { id: 'borrowGradient', color: colors.borrow.stroke },
+    { id: 'targetGradient', color: colors.apyAtTarget.stroke },
+  ];
+}
+
+export function createVolumeChartGradients(colors: ReturnType<typeof useChartColors>): GradientConfig[] {
+  return [
+    { id: 'supplyGradient', color: colors.supply.stroke },
+    { id: 'borrowGradient', color: colors.borrow.stroke },
+    { id: 'liquidityGradient', color: colors.apyAtTarget.stroke },
+  ];
+}
+
+export function createRiskChartGradients(colors: ReturnType<typeof useChartColors>): GradientConfig[] {
+  return [{ id: 'riskGradient', color: colors.apyAtTarget.stroke }];
+}
+
+export function createConcentrationGradient(color: string): GradientConfig[] {
+  return [{ id: 'concentrationGradient', color }];
+}
 
 type ChartTooltipContentProps = {
   active?: boolean;

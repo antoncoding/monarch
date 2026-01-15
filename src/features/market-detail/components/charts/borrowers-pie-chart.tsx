@@ -7,7 +7,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { PIE_COLORS } from '@/constants/chartColors';
+import { useChartColors } from '@/constants/chartColors';
 import { useVaultRegistry } from '@/contexts/VaultRegistryContext';
 import { useAllMarketBorrowers } from '@/hooks/useAllMarketPositions';
 import { formatSimple } from '@/utils/balance';
@@ -39,6 +39,7 @@ export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPie
   const { data: borrowers, isLoading, totalCount } = useAllMarketBorrowers(market.uniqueKey, chainId);
   const { getVaultByAddress } = useVaultRegistry();
   const [expandedOther, setExpandedOther] = useState(false);
+  const chartColors = useChartColors();
 
   // Helper to get display name for an address (vault name or shortened address)
   const getDisplayName = (address: string): string => {
@@ -246,7 +247,7 @@ export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPie
               {pieData.map((entry, index) => (
                 <Cell
                   key={`cell-${entry.address}`}
-                  fill={entry.isOther ? OTHER_COLOR : PIE_COLORS[index % PIE_COLORS.length]}
+                  fill={entry.isOther ? OTHER_COLOR : chartColors.pie[index % chartColors.pie.length]}
                   stroke="var(--color-border)"
                   strokeWidth={1}
                 />
