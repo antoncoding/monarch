@@ -28,6 +28,9 @@ import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { MarketHeader } from './components/market-header';
 import RateChart from './components/charts/rate-chart';
 import VolumeChart from './components/charts/volume-chart';
+import { SuppliersPieChart } from './components/charts/suppliers-pie-chart';
+import { BorrowersPieChart } from './components/charts/borrowers-pie-chart';
+import { CollateralAtRiskChart } from './components/charts/collateral-at-risk-chart';
 
 function MarketContent() {
   // 1. Get URL params first
@@ -262,7 +265,8 @@ function MarketContent() {
           <TabsList>
             <TabsTrigger value="statistics">Statistics</TabsTrigger>
             <TabsTrigger value="activities">Activities</TabsTrigger>
-            <TabsTrigger value="positions">Positions</TabsTrigger>
+            <TabsTrigger value="supply-details">Supply Details</TabsTrigger>
+            <TabsTrigger value="borrow-details">Borrow Details</TabsTrigger>
           </TabsList>
 
           <TabsContent value="statistics">
@@ -304,13 +308,34 @@ function MarketContent() {
             </div>
           </TabsContent>
 
-          <TabsContent value="positions">
-            <SuppliersTable
-              chainId={network}
-              market={market}
-              minShares={scaledMinSupplierShares}
-              onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
-            />
+          <TabsContent value="supply-details">
+            <div className="grid gap-6 lg:grid-cols-[350px_1fr]">
+              <SuppliersPieChart
+                chainId={network}
+                market={market}
+              />
+              <SuppliersTable
+                chainId={network}
+                market={market}
+                minShares={scaledMinSupplierShares}
+                onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="borrow-details">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <BorrowersPieChart
+                chainId={network}
+                market={market}
+                oraclePrice={oraclePrice}
+              />
+              <CollateralAtRiskChart
+                chainId={network}
+                market={market}
+                oraclePrice={oraclePrice}
+              />
+            </div>
             <div className="mt-6">
               <BorrowersTable
                 chainId={network}
