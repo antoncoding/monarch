@@ -5,12 +5,12 @@ import { formatUnits } from 'viem';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { RISK_COLORS } from '@/constants/chartColors';
+import { useChartColors } from '@/constants/chartColors';
 import { useAllMarketBorrowers } from '@/hooks/useAllMarketPositions';
 import { formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
-import { ChartGradients, chartTooltipCursor } from './chart-utils';
+import { ChartGradients, chartTooltipCursor, createRiskChartGradients } from './chart-utils';
 
 type DebtAtRiskChartProps = {
   chainId: SupportedNetworks;
@@ -24,11 +24,9 @@ type RiskDataPoint = {
   cumulativeDebtPercent: number; // Percentage of total debt
 };
 
-// Gradient config for the risk chart
-const RISK_GRADIENTS = [{ id: 'riskGradient', color: RISK_COLORS.stroke }];
-
 export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChartProps) {
   const { data: borrowers, isLoading } = useAllMarketBorrowers(market.uniqueKey, chainId);
+  const chartColors = useChartColors();
 
   const lltv = useMemo(() => {
     const lltvBigInt = BigInt(market.lltv);
@@ -158,7 +156,7 @@ export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChar
                 <span className="text-secondary">@-10%:</span>
                 <span
                   className="tabular-nums font-medium"
-                  style={{ color: riskMetrics.percentAt10 > 0 ? RISK_COLORS.stroke : 'inherit' }}
+                  style={{ color: riskMetrics.percentAt10 > 0 ? chartColors.apyAtTarget.stroke : 'inherit' }}
                 >
                   {riskMetrics.percentAt10.toFixed(1)}%
                 </span>
@@ -187,7 +185,7 @@ export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChar
           >
             <ChartGradients
               prefix="riskChart"
-              gradients={RISK_GRADIENTS}
+              gradients={createRiskChartGradients(chartColors)}
             />
             <CartesianGrid
               strokeDasharray="0"
@@ -222,7 +220,7 @@ export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChar
               type="stepAfter"
               dataKey="cumulativeDebtPercent"
               name="Debt at Risk"
-              stroke={RISK_COLORS.stroke}
+              stroke={chartColors.apyAtTarget.stroke}
               strokeWidth={2}
               fill="url(#riskChart-riskGradient)"
               fillOpacity={0.7}

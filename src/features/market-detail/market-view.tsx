@@ -34,7 +34,7 @@ import { SuppliersPieChart } from './components/charts/suppliers-pie-chart';
 import { BorrowersPieChart } from './components/charts/borrowers-pie-chart';
 import { DebtAtRiskChart } from './components/charts/debt-at-risk-chart';
 import { ConcentrationChart } from './components/charts/concentration-chart';
-import { CHART_COLORS } from '@/constants/chartColors';
+import { useChartColors } from '@/constants/chartColors';
 
 function MarketContent() {
   // 1. Get URL params first
@@ -80,6 +80,9 @@ function MarketContent() {
 
   // Get all warnings for this market (hook handles undefined market)
   const allWarnings = useMarketWarnings(market);
+
+  // Get dynamic chart colors
+  const chartColors = useChartColors();
 
   // Fetch position data for concentration charts
   const {
@@ -366,7 +369,7 @@ function MarketContent() {
                 totalCount={suppliersTotalCount}
                 isLoading={suppliersLoading}
                 title="Supplier Concentration"
-                color={CHART_COLORS.supply.stroke}
+                color={chartColors.supply.stroke}
               />
             </div>
 
@@ -382,7 +385,7 @@ function MarketContent() {
                 totalCount={borrowersTotalCount}
                 isLoading={borrowersLoading}
                 title="Borrower Concentration"
-                color={CHART_COLORS.borrow.stroke}
+                color={chartColors.borrow.stroke}
               />
             </div>
 
