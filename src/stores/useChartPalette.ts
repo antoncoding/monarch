@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export type ChartPaletteName = 'classic' | 'earth' | 'forest' | 'simple';
 
-export const CHART_PALETTE_NAMES: ChartPaletteName[] = ['classic', 'earth', 'forest', 'simple'];
+export const CHART_PALETTE_NAMES: ChartPaletteName[] = ['classic', 'simple', 'earth', 'forest'];
 const DEFAULT_PALETTE: ChartPaletteName = 'classic';
 
 type ChartPaletteStore = {
