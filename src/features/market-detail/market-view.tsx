@@ -14,6 +14,7 @@ import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
+import { useMarketDetailPreferences, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
 import useUserPosition from '@/hooks/useUserPosition';
 import type { SupportedNetworks } from '@/utils/networks';
 import { BorrowersTable } from '@/features/market-detail/components/borrowers-table';
@@ -44,13 +45,15 @@ function MarketContent() {
 
   // 3. Consolidated state
   const { open: openModal } = useModal();
+  const selectedTab = useMarketDetailPreferences((s) => s.selectedTab);
+  const setSelectedTab = useMarketDetailPreferences((s) => s.setSelectedTab);
   const [showBorrowModal, setShowBorrowModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
   const [showSupplierFiltersModal, setShowSupplierFiltersModal] = useState(false);
-  const [minSupplierShares, setMinSupplierShares] = useState('1');
+  const [minSupplierShares, setMinSupplierShares] = useState('');
   const [showBorrowerFiltersModal, setShowBorrowerFiltersModal] = useState(false);
-  const [minBorrowerShares, setMinBorrowerShares] = useState('1');
+  const [minBorrowerShares, setMinBorrowerShares] = useState('');
 
   // 4. Data fetching hooks - use unified time range
   const {
@@ -145,8 +148,6 @@ function MarketContent() {
         : '1',
     [minSupplierShares, market],
   );
-
-  console.log('scaledMinSupplierShares', scaledMinSupplierShares);
 
   const scaledMinBorrowerShares = useMemo(
     () =>
@@ -302,7 +303,8 @@ function MarketContent() {
 
         {/* Tabs Section */}
         <Tabs
-          defaultValue="trend"
+          value={selectedTab}
+          onValueChange={(value) => setSelectedTab(value as MarketDetailTab)}
           className="mt-8 w-full"
         >
           <TabsList>

@@ -1,12 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { GoFilter } from 'react-icons/go';
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { ChartGradients, chartTooltipCursor } from './chart-utils';
-import ConcentrationFiltersModal from '../filters/concentration-filters-modal';
 
 type ConcentrationDataPoint = {
   position: number;
@@ -22,18 +20,9 @@ type ConcentrationChartProps = {
   color: string;
 };
 
-const DEFAULT_MIN_PERCENT = 0.01;
+const MIN_PERCENT_THRESHOLD = 0.01;
 
 export function ConcentrationChart({ positions, totalCount, isLoading, title, color }: ConcentrationChartProps) {
-  const [minPercentInput, setMinPercentInput] = useState(DEFAULT_MIN_PERCENT.toString());
-  const [showFiltersModal, setShowFiltersModal] = useState(false);
-
-  const minPercent = useMemo(() => {
-    const parsed = Number.parseFloat(minPercentInput);
-    // Always filter out 0% positions even if user enters 0
-    return Number.isNaN(parsed) || parsed <= 0 ? 0.000001 : parsed;
-  }, [minPercentInput]);
-
   const { chartData, meaningfulCount, totalPercentShown } = useMemo(() => {
     const emptyResult = { chartData: [], meaningfulCount: 0, totalPercentShown: 0 };
 
@@ -42,7 +31,7 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
     }
 
     const sorted = [...positions].sort((a, b) => b.percentage - a.percentage);
-    const meaningful = sorted.filter((p) => p.percentage > 0 && p.percentage >= minPercent);
+    const meaningful = sorted.filter((p) => p.percentage > 0 && p.percentage >= MIN_PERCENT_THRESHOLD);
 
     if (meaningful.length === 0) {
       return emptyResult;
@@ -54,7 +43,7 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
       return {
         position: index + 1,
         cumulativePercent: runningSum,
-        idealPercent: 0, // Calculated below once we know totalPercentShown
+        idealPercent: 0,
       };
     });
 
@@ -70,7 +59,7 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
       meaningfulCount: meaningful.length,
       totalPercentShown: totalPct,
     };
-  }, [positions, totalCount, minPercent]);
+  }, [positions, totalCount]);
 
   const metrics = useMemo(() => {
     if (chartData.length === 0) return null;
@@ -129,28 +118,11 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
     return (
       <Card className="flex h-full min-h-[300px] flex-col border border-border bg-surface">
         <div className="border-b border-border/40 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-lg text-secondary">{title}</h4>
-            <button
-              type="button"
-              onClick={() => setShowFiltersModal(true)}
-              className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-secondary hover:bg-surface-secondary"
-            >
-              <GoFilter className="h-3.5 w-3.5" />
-              <span>Min: {minPercentInput}%</span>
-            </button>
-          </div>
+          <h4 className="text-lg text-secondary">{title}</h4>
         </div>
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-secondary">All positions below {minPercentInput}% threshold</p>
+          <p className="text-secondary">All positions below {MIN_PERCENT_THRESHOLD}% threshold</p>
         </div>
-        <ConcentrationFiltersModal
-          isOpen={showFiltersModal}
-          onOpenChange={setShowFiltersModal}
-          minPercent={minPercentInput}
-          onMinPercentChange={setMinPercentInput}
-          title={title}
-        />
       </Card>
     );
   }
@@ -159,17 +131,7 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
     <Card className="flex h-full flex-col overflow-hidden border border-border bg-surface shadow-sm">
       <div className="border-b border-border/40 px-6 py-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <h4 className="text-lg text-secondary">{title}</h4>
-            <button
-              type="button"
-              onClick={() => setShowFiltersModal(true)}
-              className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-secondary hover:bg-surface-secondary"
-            >
-              <GoFilter className="h-3.5 w-3.5" />
-              <span>Min: {minPercentInput}%</span>
-            </button>
-          </div>
+          <h4 className="text-lg text-secondary">{title}</h4>
           {metrics && (
             <div className="flex flex-wrap items-center gap-4 text-xs">
               {metrics.top1 !== null && (
@@ -261,18 +223,10 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
       <div className="border-t border-border/40 px-6 py-3">
         <p className="text-xs text-secondary">
           {meaningfulCount < totalCount
-            ? `${meaningfulCount.toLocaleString()} of ${totalCount.toLocaleString()} positions above ${minPercentInput}% (${totalPercentShown.toFixed(1)}% of total)`
+            ? `${meaningfulCount.toLocaleString()} of ${totalCount.toLocaleString()} positions above ${MIN_PERCENT_THRESHOLD}%`
             : `${totalCount.toLocaleString()} total positions`}
         </p>
       </div>
-
-      <ConcentrationFiltersModal
-        isOpen={showFiltersModal}
-        onOpenChange={setShowFiltersModal}
-        minPercent={minPercentInput}
-        onMinPercentChange={setMinPercentInput}
-        title={title}
-      />
     </Card>
   );
 }

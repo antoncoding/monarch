@@ -28,7 +28,10 @@ export const useMarketSuppliers = (
 ) => {
   const queryClient = useQueryClient();
 
-  const queryKey = ['marketSuppliers', marketId, network, minShares, page, pageSize];
+  // Always filter out zero positions by ensuring minShares >= 1
+  const effectiveMinShares = !minShares || minShares === '0' || minShares === '' ? '1' : minShares;
+
+  const queryKey = ['marketSuppliers', marketId, network, effectiveMinShares, page, pageSize];
 
   const queryFn = useCallback(
     async (targetPage: number): Promise<PaginatedMarketSuppliers | null> => {
@@ -43,7 +46,7 @@ export const useMarketSuppliers = (
       if (supportsMorphoApi(network)) {
         try {
           console.log(`Attempting to fetch suppliers via Morpho API for ${marketId} (page ${targetPage})`);
-          result = await fetchMorphoMarketSuppliers(marketId, Number(network), minShares, pageSize, targetSkip);
+          result = await fetchMorphoMarketSuppliers(marketId, Number(network), effectiveMinShares, pageSize, targetSkip);
         } catch (morphoError) {
           console.error('Failed to fetch suppliers via Morpho API:', morphoError);
         }
@@ -53,7 +56,7 @@ export const useMarketSuppliers = (
       if (!result) {
         try {
           console.log(`Attempting to fetch suppliers via Subgraph for ${marketId} (page ${targetPage})`);
-          result = await fetchSubgraphMarketSuppliers(marketId, network, minShares, pageSize, targetSkip);
+          result = await fetchSubgraphMarketSuppliers(marketId, network, effectiveMinShares, pageSize, targetSkip);
         } catch (subgraphError) {
           console.error('Failed to fetch suppliers via Subgraph:', subgraphError);
           throw subgraphError;
@@ -62,7 +65,7 @@ export const useMarketSuppliers = (
 
       return result;
     },
-    [marketId, network, minShares, pageSize],
+    [marketId, network, effectiveMinShares, pageSize],
   );
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<PaginatedMarketSuppliers | null>({
@@ -81,7 +84,7 @@ export const useMarketSuppliers = (
     const totalPages = data.totalCount > 0 ? Math.ceil(data.totalCount / pageSize) : 0;
 
     if (page > 1) {
-      const prevPageKey = ['marketSuppliers', marketId, network, minShares, page - 1, pageSize];
+      const prevPageKey = ['marketSuppliers', marketId, network, effectiveMinShares, page - 1, pageSize];
       void queryClient.prefetchQuery({
         queryKey: prevPageKey,
         queryFn: async () => queryFn(page - 1),
@@ -90,14 +93,14 @@ export const useMarketSuppliers = (
     }
 
     if (page < totalPages) {
-      const nextPageKey = ['marketSuppliers', marketId, network, minShares, page + 1, pageSize];
+      const nextPageKey = ['marketSuppliers', marketId, network, effectiveMinShares, page + 1, pageSize];
       void queryClient.prefetchQuery({
         queryKey: nextPageKey,
         queryFn: async () => queryFn(page + 1),
         staleTime: 1000 * 60 * 2,
       });
     }
-  }, [page, data, queryClient, queryFn, marketId, network, minShares, pageSize]);
+  }, [page, data, queryClient, queryFn, marketId, network, effectiveMinShares, pageSize]);
 
   return {
     data: data,
