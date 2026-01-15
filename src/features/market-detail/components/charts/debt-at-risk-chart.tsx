@@ -12,7 +12,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { ChartGradients, chartTooltipCursor } from './chart-utils';
 
-type CollateralAtRiskChartProps = {
+type DebtAtRiskChartProps = {
   chainId: SupportedNetworks;
   market: Market;
   oraclePrice: bigint;
@@ -27,7 +27,7 @@ type RiskDataPoint = {
 // Gradient config for the risk chart
 const RISK_GRADIENTS = [{ id: 'riskGradient', color: RISK_COLORS.stroke }];
 
-export function CollateralAtRiskChart({ chainId, market, oraclePrice }: CollateralAtRiskChartProps) {
+export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChartProps) {
   const { data: borrowers, isLoading } = useAllMarketBorrowers(market.uniqueKey, chainId);
 
   const lltv = useMemo(() => {
@@ -151,7 +151,7 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
     <Card className="overflow-hidden border border-border bg-surface shadow-sm">
       <div className="border-b border-border/40 px-6 py-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h4 className="text-lg text-secondary">Collateral at Risk</h4>
+          <h4 className="text-lg text-secondary">Debt at Risk</h4>
           {riskMetrics && (
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <div className="flex items-center gap-2">

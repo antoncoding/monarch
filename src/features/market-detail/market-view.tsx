@@ -32,7 +32,7 @@ import RateChart from './components/charts/rate-chart';
 import VolumeChart from './components/charts/volume-chart';
 import { SuppliersPieChart } from './components/charts/suppliers-pie-chart';
 import { BorrowersPieChart } from './components/charts/borrowers-pie-chart';
-import { CollateralAtRiskChart } from './components/charts/collateral-at-risk-chart';
+import { DebtAtRiskChart } from './components/charts/debt-at-risk-chart';
 import { ConcentrationChart } from './components/charts/concentration-chart';
 import { CHART_COLORS } from '@/constants/chartColors';
 
@@ -388,7 +388,7 @@ function MarketContent() {
 
             {/* Collateral at Risk chart */}
             <div className="mt-6">
-              <CollateralAtRiskChart
+              <DebtAtRiskChart
                 chainId={network}
                 market={market}
                 oraclePrice={oraclePrice}
