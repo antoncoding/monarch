@@ -9,7 +9,7 @@ import { RISK_COLORS } from '@/constants/chartColors';
 import { useAllMarketBorrowers } from '@/hooks/useAllMarketPositions';
 import { formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
-import type { Market, MarketBorrower } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { ChartGradients, chartTooltipCursor } from './chart-utils';
 
 type CollateralAtRiskChartProps = {
@@ -18,157 +18,112 @@ type CollateralAtRiskChartProps = {
   oraclePrice: bigint;
 };
 
-type RiskBucket = {
-  priceDropPercent: number;
-  cumulativeDebt: number;
-  debtInBucket: number;
+type RiskDataPoint = {
+  priceDrop: number; // 0 to -100
+  cumulativeDebt: number; // Absolute debt amount
 };
 
 // Gradient config for the risk chart
 const RISK_GRADIENTS = [{ id: 'riskGradient', color: RISK_COLORS.stroke }];
 
-// Price drop buckets from 0% to -100%
-const BUCKET_INTERVALS = [0, -5, -10, -15, -20, -25, -30, -35, -40, -45, -50, -55, -60, -65, -70, -75, -80, -85, -90, -95, -100];
-
-/**
- * Calculate the price drop percentage at which a borrower would be liquidated.
- *
- * Liquidation happens when LTV >= LLTV.
- * currentLTV = borrowAssets / (collateral * oraclePrice / 10^36)
- * At liquidation: LLTV = borrowAssets / (collateral * liquidationPrice / 10^36)
- *
- * The price drop percentage is: (currentLTV / LLTV - 1) * 100
- * If currentLTV > LLTV, the position is already liquidatable (return 0).
- */
-function calculateLiquidationPriceDropPercent(
-  borrowAssets: bigint,
-  collateral: bigint,
-  oraclePrice: bigint,
-  lltv: bigint,
-): number {
-  if (collateral === 0n || oraclePrice === 0n) return 0; // Already liquidatable
-
-  // Calculate collateral value in loan asset terms
-  const collateralValueScaled = collateral * oraclePrice; // Still has 10^36 scale
-  if (collateralValueScaled === 0n) return 0;
-
-  // Current LTV = borrowAssets / collateralValue
-  // To avoid precision issues, we calculate: currentLTV / LLTV = (borrowAssets * 10^18) / (collateralValue * lltv / 10^36)
-  // Simplify: (borrowAssets * 10^18 * 10^36) / (collateral * oraclePrice * lltv)
-
-  const numerator = borrowAssets * BigInt(10 ** 18) * BigInt(10 ** 36);
-  const denominator = collateralValueScaled * lltv;
-
-  if (denominator === 0n) return 0;
-
-  // ratio = currentLTV / LLTV
-  const ratioScaled = (numerator * BigInt(10000)) / denominator; // Scaled by 10000 for precision
-  const ratio = Number(ratioScaled) / 10000;
-
-  // Price drop % = (ratio - 1) * 100
-  // If ratio >= 1, position is at or above LLTV (already risky)
-  const priceDropPercent = (ratio - 1) * 100;
-
-  // Clamp to [-100, 0] range
-  // Negative values mean the price needs to drop that much to liquidate
-  // Values > 0 mean already liquidatable
-  return Math.max(Math.min(priceDropPercent, 0), -100);
-}
-
-/**
- * Aggregate borrowers into risk buckets showing cumulative debt at each price drop level.
- */
-function calculateRiskBuckets(
-  borrowers: MarketBorrower[],
-  oraclePrice: bigint,
-  lltv: bigint,
-  loanDecimals: number,
-): RiskBucket[] {
-  // Calculate liquidation price drop for each borrower
-  const borrowersWithRisk = borrowers.map((borrower) => {
-    const borrowAssets = BigInt(borrower.borrowAssets);
-    const collateral = BigInt(borrower.collateral);
-
-    const priceDropPercent = calculateLiquidationPriceDropPercent(borrowAssets, collateral, oraclePrice, lltv);
-
-    const debtValue = Number(formatUnits(borrowAssets, loanDecimals));
-
-    return {
-      priceDropPercent,
-      debtValue,
-    };
-  });
-
-  // Sort by price drop (least negative first = closest to liquidation)
-  borrowersWithRisk.sort((a, b) => b.priceDropPercent - a.priceDropPercent);
-
-  // Create buckets
-  const buckets: RiskBucket[] = [];
-  let cumulativeDebt = 0;
-
-  for (const bucket of BUCKET_INTERVALS) {
-    // Sum all debt that would be liquidated at this price level or higher
-    const debtAtThisLevel = borrowersWithRisk
-      .filter((b) => b.priceDropPercent >= bucket)
-      .reduce((sum, b) => sum + b.debtValue, 0);
-
-    buckets.push({
-      priceDropPercent: bucket,
-      cumulativeDebt: debtAtThisLevel,
-      debtInBucket: debtAtThisLevel - cumulativeDebt,
-    });
-
-    cumulativeDebt = debtAtThisLevel;
-  }
-
-  return buckets;
-}
-
 export function CollateralAtRiskChart({ chainId, market, oraclePrice }: CollateralAtRiskChartProps) {
   const { data: borrowers, isLoading } = useAllMarketBorrowers(market.uniqueKey, chainId);
 
-  const riskBuckets = useMemo(() => {
-    if (!borrowers || borrowers.length === 0 || !oraclePrice || oraclePrice === 0n) return [];
+  const lltv = useMemo(() => {
+    const lltvBigInt = BigInt(market.lltv);
+    return Number(lltvBigInt) / 1e18; // LLTV as decimal (e.g., 0.8 for 80%)
+  }, [market.lltv]);
 
-    const lltv = BigInt(market.lltv);
-    if (lltv === 0n) return [];
+  const { chartData, totalDebt, riskMetrics } = useMemo(() => {
+    if (!borrowers || borrowers.length === 0 || !oraclePrice || oraclePrice === 0n || lltv === 0) {
+      return { chartData: [], totalDebt: 0, riskMetrics: null };
+    }
 
-    return calculateRiskBuckets(borrowers, oraclePrice, lltv, market.loanAsset.decimals);
-  }, [borrowers, oraclePrice, market]);
+    // Calculate price drop threshold for each borrower
+    const borrowersWithRisk = borrowers
+      .map((borrower) => {
+        const borrowAssets = BigInt(borrower.borrowAssets);
+        const collateral = BigInt(borrower.collateral);
 
-  // Calculate key risk metrics
-  const riskMetrics = useMemo(() => {
-    if (riskBuckets.length === 0) return null;
+        if (collateral === 0n || borrowAssets === 0n) return null;
 
-    const totalDebt = riskBuckets.at(-1)?.cumulativeDebt ?? 0;
-    const debtAt10 = riskBuckets.find((b) => b.priceDropPercent === -10)?.cumulativeDebt ?? 0;
-    const debtAt25 = riskBuckets.find((b) => b.priceDropPercent === -25)?.cumulativeDebt ?? 0;
-    const debtAt50 = riskBuckets.find((b) => b.priceDropPercent === -50)?.cumulativeDebt ?? 0;
+        // Calculate collateral value in loan asset terms
+        const collateralValueInLoan = (collateral * oraclePrice) / BigInt(10 ** 36);
+        if (collateralValueInLoan === 0n) return null;
+
+        // Calculate current LTV as decimal
+        const currentLTV = Number(borrowAssets) / Number(collateralValueInLoan);
+        const debtValue = Number(formatUnits(borrowAssets, market.loanAsset.decimals));
+
+        // Calculate price drop needed for liquidation
+        // Formula: priceDropPercent = 100 * (1 - currentLTV / LLTV)
+        // Negative value means price needs to DROP by that percentage
+        const priceDropForLiquidation = -100 * (1 - currentLTV / lltv);
+
+        // If currentLTV >= LLTV, priceDropForLiquidation >= 0 (already at/past threshold)
+        // Clamp to reasonable range
+        const clampedPriceDrop = Math.max(-100, Math.min(0, priceDropForLiquidation));
+
+        return { priceDrop: clampedPriceDrop, debt: debtValue };
+      })
+      .filter((b): b is { priceDrop: number; debt: number } => b !== null)
+      .sort((a, b) => b.priceDrop - a.priceDrop); // Sort by price drop descending (closest to 0 first = most at risk)
+
+    if (borrowersWithRisk.length === 0) {
+      return { chartData: [], totalDebt: 0, riskMetrics: null };
+    }
+
+    // Calculate total debt
+    const total = borrowersWithRisk.reduce((sum, b) => sum + b.debt, 0);
+
+    // Build cumulative data for each 1% price drop (continuous scale)
+    // "At X% price drop, how much cumulative debt is at risk?"
+    const dataPoints: RiskDataPoint[] = [];
+    for (let drop = 0; drop >= -100; drop -= 1) {
+      // Sum debt for all borrowers who would be liquidated at this price drop or less severe
+      const cumulativeDebt = borrowersWithRisk
+        .filter((b) => b.priceDrop >= drop) // Borrowers liquidated at this drop or earlier (less negative)
+        .reduce((sum, b) => sum + b.debt, 0);
+
+      dataPoints.push({ priceDrop: drop, cumulativeDebt });
+    }
+
+    // Calculate risk metrics for header
+    const debtAt10 = dataPoints.find((d) => d.priceDrop === -10)?.cumulativeDebt ?? 0;
+    const debtAt25 = dataPoints.find((d) => d.priceDrop === -25)?.cumulativeDebt ?? 0;
+    const debtAt50 = dataPoints.find((d) => d.priceDrop === -50)?.cumulativeDebt ?? 0;
 
     return {
-      totalDebt,
-      debtAt10,
-      debtAt25,
-      debtAt50,
-      percentAt10: totalDebt > 0 ? (debtAt10 / totalDebt) * 100 : 0,
-      percentAt25: totalDebt > 0 ? (debtAt25 / totalDebt) * 100 : 0,
-      percentAt50: totalDebt > 0 ? (debtAt50 / totalDebt) * 100 : 0,
+      chartData: dataPoints,
+      totalDebt: total,
+      riskMetrics: {
+        debtAt10,
+        debtAt25,
+        debtAt50,
+      },
     };
-  }, [riskBuckets]);
+  }, [borrowers, oraclePrice, market.loanAsset.decimals, lltv]);
 
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: number }) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { value: number; payload: RiskDataPoint }[] }) => {
     if (!active || !payload || !payload[0]) return null;
+    const data = payload[0].payload;
 
     return (
       <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-        <p className="mb-2 text-xs text-secondary">At {label}% price drop</p>
+        <p className="mb-2 text-xs text-secondary">At {data.priceDrop}% price drop</p>
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-6 text-sm">
-            <span className="text-secondary">Cumulative Debt at Risk</span>
-            <span className="tabular-nums">
-              {formatReadable(payload[0].value)} {market.loanAsset.symbol}
+            <span className="text-secondary">Debt at Risk</span>
+            <span className="tabular-nums font-medium">
+              {formatReadable(data.cumulativeDebt)} {market.loanAsset.symbol}
             </span>
           </div>
+          {totalDebt > 0 && (
+            <div className="flex items-center justify-between gap-6 text-sm">
+              <span className="text-secondary">% of Total</span>
+              <span className="tabular-nums">{((data.cumulativeDebt / totalDebt) * 100).toFixed(1)}%</span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -182,7 +137,7 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
     );
   }
 
-  if (riskBuckets.length === 0) {
+  if (chartData.length === 0) {
     return (
       <Card className="flex h-[350px] items-center justify-center border border-border bg-surface">
         <p className="text-secondary">No borrower data available</p>
@@ -199,21 +154,20 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-secondary">@-10%:</span>
-                <span className="tabular-nums font-medium" style={{ color: riskMetrics.percentAt10 > 10 ? RISK_COLORS.stroke : 'inherit' }}>
-                  {formatReadable(riskMetrics.debtAt10)} ({riskMetrics.percentAt10.toFixed(1)}%)
+                <span
+                  className="tabular-nums font-medium"
+                  style={{ color: riskMetrics.debtAt10 > 0 ? RISK_COLORS.stroke : 'inherit' }}
+                >
+                  {formatReadable(riskMetrics.debtAt10)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-secondary">@-25%:</span>
-                <span className="tabular-nums font-medium">
-                  {formatReadable(riskMetrics.debtAt25)} ({riskMetrics.percentAt25.toFixed(1)}%)
-                </span>
+                <span className="tabular-nums font-medium">{formatReadable(riskMetrics.debtAt25)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-secondary">@-50%:</span>
-                <span className="tabular-nums font-medium">
-                  {formatReadable(riskMetrics.debtAt50)} ({riskMetrics.percentAt50.toFixed(1)}%)
-                </span>
+                <span className="tabular-nums font-medium">{formatReadable(riskMetrics.debtAt50)}</span>
               </div>
             </div>
           )}
@@ -226,7 +180,7 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
           height={280}
         >
           <AreaChart
-            data={riskBuckets}
+            data={chartData}
             margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
           >
             <ChartGradients
@@ -239,13 +193,14 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
               strokeOpacity={0.25}
             />
             <XAxis
-              dataKey="priceDropPercent"
+              dataKey="priceDrop"
               axisLine={false}
               tickLine={false}
               tickMargin={12}
               tickFormatter={(value) => `${value}%`}
               tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-              ticks={[0, -25, -50, -75, -100]}
+              domain={[0, -100]}
+              reversed={false}
             />
             <YAxis
               axisLine={false}
@@ -253,6 +208,7 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
               tickFormatter={(value) => formatReadable(value)}
               tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
               width={60}
+              domain={[0, 'dataMax']}
             />
             <Tooltip
               cursor={chartTooltipCursor}
@@ -273,8 +229,8 @@ export function CollateralAtRiskChart({ chainId, market, oraclePrice }: Collater
 
       <div className="border-t border-border/40 px-6 py-3">
         <p className="text-xs text-secondary">
-          Shows cumulative debt that would become liquidatable at each collateral price drop level. Current LLTV:{' '}
-          {(Number(BigInt(market.lltv)) / 1e16).toFixed(0)}%
+          Shows cumulative debt at risk if collateral price drops. Total debt: {formatReadable(totalDebt)} {market.loanAsset.symbol}. LLTV:{' '}
+          {(lltv * 100).toFixed(0)}%
         </p>
       </div>
     </Card>

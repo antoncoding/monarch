@@ -7,7 +7,7 @@ import { fetchSubgraphMarketSuppliers } from '@/data-sources/subgraph/market-sup
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketBorrower, MarketSupplier } from '@/utils/types';
 
-const TOP_POSITIONS_LIMIT = 100;
+const TOP_POSITIONS_LIMIT = 1000;
 
 type UseAllBorrowersResult = {
   data: MarketBorrower[] | null;
@@ -25,12 +25,9 @@ type UseAllSuppliersResult = {
 
 /**
  * Fetches top borrowers for chart aggregation (non-paginated).
- * Retrieves up to 100 positions sorted by borrow shares descending.
+ * Retrieves up to 1000 positions sorted by borrow shares descending.
  */
-export const useAllMarketBorrowers = (
-  marketId: string | undefined,
-  network: SupportedNetworks | undefined,
-): UseAllBorrowersResult => {
+export const useAllMarketBorrowers = (marketId: string | undefined, network: SupportedNetworks | undefined): UseAllBorrowersResult => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['allMarketBorrowers', marketId, network],
     queryFn: async () => {
@@ -39,7 +36,7 @@ export const useAllMarketBorrowers = (
       // Try Morpho API first
       if (supportsMorphoApi(network)) {
         try {
-          const result = await fetchMorphoMarketBorrowers(marketId, Number(network), '0', TOP_POSITIONS_LIMIT, 0);
+          const result = await fetchMorphoMarketBorrowers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
           return result;
         } catch (morphoError) {
           console.error('Failed to fetch all borrowers via Morpho API:', morphoError);
@@ -47,7 +44,7 @@ export const useAllMarketBorrowers = (
       }
 
       // Fallback to Subgraph
-      const result = await fetchSubgraphMarketBorrowers(marketId, network, '0', TOP_POSITIONS_LIMIT, 0);
+      const result = await fetchSubgraphMarketBorrowers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
       return result;
     },
     enabled: !!marketId && !!network,
@@ -64,12 +61,9 @@ export const useAllMarketBorrowers = (
 
 /**
  * Fetches top suppliers for chart aggregation (non-paginated).
- * Retrieves up to 100 positions sorted by supply shares descending.
+ * Retrieves up to 1000 positions sorted by supply shares descending.
  */
-export const useAllMarketSuppliers = (
-  marketId: string | undefined,
-  network: SupportedNetworks | undefined,
-): UseAllSuppliersResult => {
+export const useAllMarketSuppliers = (marketId: string | undefined, network: SupportedNetworks | undefined): UseAllSuppliersResult => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['allMarketSuppliers', marketId, network],
     queryFn: async () => {
@@ -78,7 +72,7 @@ export const useAllMarketSuppliers = (
       // Try Morpho API first
       if (supportsMorphoApi(network)) {
         try {
-          const result = await fetchMorphoMarketSuppliers(marketId, Number(network), '0', TOP_POSITIONS_LIMIT, 0);
+          const result = await fetchMorphoMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
           return result;
         } catch (morphoError) {
           console.error('Failed to fetch all suppliers via Morpho API:', morphoError);
@@ -86,7 +80,7 @@ export const useAllMarketSuppliers = (
       }
 
       // Fallback to Subgraph
-      const result = await fetchSubgraphMarketSuppliers(marketId, network, '0', TOP_POSITIONS_LIMIT, 0);
+      const result = await fetchSubgraphMarketSuppliers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
       return result;
     },
     enabled: !!marketId && !!network,

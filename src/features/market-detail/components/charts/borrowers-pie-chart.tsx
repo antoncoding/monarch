@@ -32,8 +32,8 @@ type PieDataItem = {
   otherItems?: { name: string; value: number; address: string; percentage: number; collateral: number; ltv: number }[];
 };
 
-const TOP_POSITIONS_COUNT = 10;
-const MIN_PERCENTAGE_THRESHOLD = 1; // 1%
+const TOP_POSITIONS_TO_SHOW = 8;
+const OTHER_COLOR = '#64748B'; // Grey for "Other" category
 
 export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPieChartProps) {
   const { data: borrowers, isLoading, totalCount } = useAllMarketBorrowers(market.uniqueKey, chainId);
@@ -87,7 +87,7 @@ export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPie
       })
       .sort((a, b) => b.value - a.value);
 
-    // Split into top positions and "Other"
+    // Split into top positions and "Other" - always show top 8 regardless of percentage
     const topPositions: PieDataItem[] = [];
     const otherPositions: {
       name: string;
@@ -98,29 +98,37 @@ export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPie
       ltv: number;
     }[] = [];
 
-    for (const position of borrowersWithData) {
-      if (topPositions.length < TOP_POSITIONS_COUNT && position.percentage >= MIN_PERCENTAGE_THRESHOLD) {
-        topPositions.push(position);
+    for (let i = 0; i < borrowersWithData.length; i++) {
+      if (i < TOP_POSITIONS_TO_SHOW) {
+        topPositions.push(borrowersWithData[i]);
       } else {
-        otherPositions.push(position);
+        otherPositions.push(borrowersWithData[i]);
       }
     }
 
-    // Add "Other" category if there are remaining positions
-    if (otherPositions.length > 0) {
-      const otherTotal = otherPositions.reduce((sum, p) => sum + p.value, 0);
-      const otherPercentage = otherPositions.reduce((sum, p) => sum + p.percentage, 0);
+    // Calculate "Other" as everything NOT in topPositions (including positions beyond top 100)
+    // This correctly accounts for all positions, not just the ones we fetched
+    const top8TotalPercentage = topPositions.reduce((sum, p) => sum + p.percentage, 0);
+    const otherPercentage = 100 - top8TotalPercentage;
+
+    // For absolute value, use market total minus top 8
+    const totalBorrowValue = Number(formatUnits(totalBorrowAssets, market.loanAsset.decimals));
+    const top8TotalValue = topPositions.reduce((sum, p) => sum + p.value, 0);
+    const otherValue = totalBorrowValue - top8TotalValue;
+
+    // Only add "Other" if there's meaningful remainder
+    if (otherPercentage > 0.01) {
       const otherCollateral = otherPositions.reduce((sum, p) => sum + p.collateral, 0);
 
       topPositions.push({
-        name: `Other (${otherPositions.length})`,
+        name: 'Other',
         address: 'other',
-        value: otherTotal,
+        value: otherValue,
         percentage: otherPercentage,
         collateral: otherCollateral,
-        ltv: 0, // Aggregated LTV doesn't make sense
+        ltv: 0,
         isOther: true,
-        otherItems: otherPositions,
+        otherItems: otherPositions, // Only contains positions 9-100, but percentage/value are correct
       });
     }
 
@@ -238,7 +246,7 @@ export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPie
               {pieData.map((entry, index) => (
                 <Cell
                   key={`cell-${entry.address}`}
-                  fill={PIE_COLORS[index % PIE_COLORS.length]}
+                  fill={entry.isOther ? OTHER_COLOR : PIE_COLORS[index % PIE_COLORS.length]}
                   stroke="var(--color-border)"
                   strokeWidth={1}
                 />

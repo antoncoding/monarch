@@ -14,7 +14,7 @@ import type { PaginatedMarketSuppliers } from '@/utils/types';
  *
  * @param marketId The ID of the market (e.g., 0x...).
  * @param network The blockchain network.
- * @param minShares Minimum share amount to filter suppliers (optional, defaults to '0').
+ * @param minShares Minimum share amount to filter suppliers (optional, defaults to '1' to exclude zero positions).
  * @param page Current page number (1-indexed, defaults to 1).
  * @param pageSize Number of items per page (defaults to 8).
  * @returns Paginated suppliers for the market.
@@ -22,7 +22,7 @@ import type { PaginatedMarketSuppliers } from '@/utils/types';
 export const useMarketSuppliers = (
   marketId: string | undefined,
   network: SupportedNetworks | undefined,
-  minShares = '0',
+  minShares = '1',
   page = 1,
   pageSize = 8,
 ) => {
