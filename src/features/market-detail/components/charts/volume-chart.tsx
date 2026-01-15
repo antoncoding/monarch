@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import moment from 'moment';
 import { Card } from '@/components/ui/card';
 import { Tooltip as HeroTooltip } from '@/components/ui/tooltip';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -44,10 +45,6 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     liquidity: true,
   });
 
-  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d' | '3m' | '6m') => {
-    setTimeframe(timeframe);
-  };
-
   const formatYAxis = (value: number) => {
     if (volumeView === 'USD') {
       return `$${formatReadable(value)}`;
@@ -64,14 +61,27 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   };
 
   const chartData = useMemo(() => {
-    if (!historicalData?.volumes) return [];
+    if (!historicalData?.volumes) {
+      return [
+        {
+          x: moment().unix(),
+          supply: convertValue(market.state.supplyAssets),
+          borrow: convertValue(market.state.borrowAssets),
+          liquidity: convertValue(market.state.liquidityAssets),
+        },
+      ];
+    }
 
     const supplyData = volumeView === 'USD' ? historicalData.volumes.supplyAssetsUsd : historicalData.volumes.supplyAssets;
     const borrowData = volumeView === 'USD' ? historicalData.volumes.borrowAssetsUsd : historicalData.volumes.borrowAssets;
     const liquidityData = volumeView === 'USD' ? historicalData.volumes.liquidityAssetsUsd : historicalData.volumes.liquidityAssets;
 
-    return supplyData
+    const historicalPoints = supplyData
       .map((point: TimeseriesDataPoint, index: number) => {
+        if (point.y === null || borrowData[index]?.y === null || liquidityData[index]?.y === null) {
+          return null;
+        }
+
         const supplyUsdValue = historicalData.volumes.supplyAssetsUsd[index]?.y;
         if (supplyUsdValue !== null && supplyUsdValue >= 100_000_000_000) {
           return null;
@@ -85,21 +95,52 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
         };
       })
       .filter((point): point is NonNullable<typeof point> => point !== null);
-  }, [historicalData?.volumes, volumeView, market.loanAsset.decimals]);
+
+    const nowPoint = {
+      x: moment().unix(),
+      supply: convertValue(market.state.supplyAssets),
+      borrow: convertValue(market.state.borrowAssets),
+      liquidity: convertValue(market.state.liquidityAssets),
+    };
+
+    return [...historicalPoints, nowPoint];
+  }, [
+    historicalData?.volumes,
+    volumeView,
+    market.loanAsset.decimals,
+    market.state.supplyAssets,
+    market.state.borrowAssets,
+    market.state.liquidityAssets,
+  ]);
 
   const formatValue = (value: number) => {
     const formattedValue = formatReadable(value);
     return volumeView === 'USD' ? `$${formattedValue}` : `${formattedValue} ${market.loanAsset.symbol}`;
   };
 
-  const getVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
-    const data = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : historicalData?.volumes[`${type}Assets`];
-    if (!data || data.length === 0) return { current: 0, netChangePercentage: 0, average: 0 };
+  const STATE_KEY_MAP = {
+    supply: 'supplyAssets',
+    borrow: 'borrowAssets',
+    liquidity: 'liquidityAssets',
+  } as const;
 
-    const current = convertValue((data.at(-1) as TimeseriesDataPoint).y);
-    const start = convertValue(data[0].y);
+  const getVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
+    // Get current value from market.state (always up-to-date)
+    const stateKey = STATE_KEY_MAP[type];
+    const currentRaw = market.state[stateKey] ?? 0;
+    const current = Number(formatUnits(BigInt(currentRaw), market.loanAsset.decimals));
+
+    // Get historical data for average and net change calculation
+    const data = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : historicalData?.volumes[`${type}Assets`];
+    if (!data || data.length === 0) return { current, netChangePercentage: 0, average: 0 };
+
+    // Filter out null values for calculations
+    const validData = data.filter((point: TimeseriesDataPoint) => point.y !== null);
+    if (validData.length === 0) return { current, netChangePercentage: 0, average: 0 };
+
+    const start = convertValue(validData[0].y);
     const netChangePercentage = start !== 0 ? ((current - start) / start) * 100 : 0;
-    const average = data.reduce((acc: number, point: TimeseriesDataPoint) => acc + convertValue(point.y), 0) / data.length;
+    const average = validData.reduce((acc: number, point: TimeseriesDataPoint) => acc + convertValue(point.y), 0) / validData.length;
 
     return { current, netChangePercentage, average };
   };
@@ -177,7 +218,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
           </Select>
           <Select
             value={selectedTimeframe}
-            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d' | '3m' | '6m')}
+            onValueChange={(value) => setTimeframe(value as '1d' | '7d' | '30d' | '3m' | '6m')}
           >
             <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
               <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>

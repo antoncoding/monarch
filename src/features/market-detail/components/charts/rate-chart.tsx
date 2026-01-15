@@ -44,26 +44,29 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
     apyAtTarget: true,
   });
 
-  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d' | '3m' | '6m') => {
-    setTimeframe(timeframe);
-  };
-
-  const getChartData = useMemo(() => {
+  const chartData = useMemo(() => {
     if (!historicalData?.rates) return [];
     const { supplyApy, borrowApy, apyAtTarget } = historicalData.rates;
 
-    return supplyApy.map((point: TimeseriesDataPoint, index: number) => {
-      const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
-      const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y ?? 0) : (borrowApy[index]?.y ?? 0);
-      const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y ?? 0) : (apyAtTarget[index]?.y ?? 0);
+    return supplyApy
+      .map((point: TimeseriesDataPoint, index: number) => {
+        // Skip data points with null values
+        if (point.y === null || borrowApy[index]?.y === null || apyAtTarget[index]?.y === null) {
+          return null;
+        }
 
-      return {
-        x: point.x,
-        supplyApy: supplyVal,
-        borrowApy: borrowVal,
-        apyAtTarget: targetVal,
-      };
-    });
+        const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
+        const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y ?? 0) : (borrowApy[index]?.y ?? 0);
+        const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y ?? 0) : (apyAtTarget[index]?.y ?? 0);
+
+        return {
+          x: point.x,
+          supplyApy: supplyVal,
+          borrowApy: borrowVal,
+          apyAtTarget: targetVal,
+        };
+      })
+      .filter((point): point is NonNullable<typeof point> => point !== null);
   }, [historicalData, isAprDisplay]);
 
   const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;
@@ -72,7 +75,9 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
   const getAverage = (data: TimeseriesDataPoint[] | undefined) => {
     if (!data || data.length === 0) return 0;
-    return data.reduce((sum, point) => sum + point.y, 0) / data.length;
+    const validPoints = data.filter((point) => point.y !== null);
+    if (validPoints.length === 0) return 0;
+    return validPoints.reduce((sum, point) => sum + point.y, 0) / validPoints.length;
   };
 
   const currentSupplyRate = toDisplayRate(market.state.supplyApy);
@@ -124,7 +129,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
         <div className="flex items-center gap-2">
           <Select
             value={selectedTimeframe}
-            onValueChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d' | '3m' | '6m')}
+            onValueChange={(value) => setTimeframe(value as '1d' | '7d' | '30d' | '3m' | '6m')}
           >
             <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
               <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
@@ -153,7 +158,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
             id="rate-chart"
           >
             <AreaChart
-              data={getChartData}
+              data={chartData}
               margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
             >
               <ChartGradients
