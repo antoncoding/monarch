@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useModal } from '@/hooks/useModal';
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -26,6 +27,7 @@ export default function NavbarMobile() {
   const { theme, setTheme } = useTheme();
   const { address } = useConnection();
   const router = useRouter();
+  const { open: openModal } = useModal();
   const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -140,7 +142,10 @@ export default function NavbarMobile() {
             </DropdownMenuItem>
             <DropdownMenuItem
               startContent={<GearIcon className="h-4 w-4" />}
-              onClick={() => handleNavigation('/settings')}
+              onClick={() => {
+                openModal('monarchSettings', {});
+                setIsMenuOpen(false);
+              }}
             >
               Settings
             </DropdownMenuItem>

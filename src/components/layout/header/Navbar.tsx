@@ -14,6 +14,7 @@ import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
 import { TbReport } from 'react-icons/tb';
 import { useConnection } from 'wagmi';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { useModal } from '@/hooks/useModal';
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -78,6 +79,7 @@ export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useConnection();
   const router = useRouter();
+  const { open: openModal } = useModal();
   const [mounted, setMounted] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
@@ -186,7 +188,7 @@ export function Navbar() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 endContent={<GearIcon className="h-4 w-4" />}
-                onClick={() => router.push('/settings')}
+                onClick={() => openModal('monarchSettings', {})}
               >
                 Settings
               </DropdownMenuItem>

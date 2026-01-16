@@ -41,11 +41,10 @@ export type ModalProps = {
   // Settings & Configuration
   marketSettings: Record<string, never>; // No props needed - uses useMarketPreferences() store
 
-  trustedVaults: Record<string, never>; // No props needed - uses useTrustedVaults() store
-
-  trendingSettings: Record<string, never>; // No props needed - uses useMarketPreferences() store
-
-  blacklistedMarkets: Record<string, never>; // No props needed - uses useProcessedMarkets() context
+  // Unified Settings Modal (replaces trustedVaults, trendingSettings, blacklistedMarkets)
+  monarchSettings: {
+    initialCategory?: 'transaction' | 'display' | 'filters' | 'vaults' | 'markets' | 'experimental';
+  };
 
   // Vault Operations
   vaultDeposit: {

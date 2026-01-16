@@ -41,17 +41,15 @@ export function PaletteOption({ paletteId, selected, onSelect }: PaletteOptionPr
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex flex-col gap-2 rounded border-2 p-4 text-left transition-all duration-200',
+        'flex h-full flex-col gap-2 rounded border-2 p-3 text-left transition-all duration-200',
         selected
           ? 'border-primary bg-surface'
           : 'border-border/50 bg-surface/50 hover:border-border hover:bg-surface',
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-primary">{meta.name}</span>
-        {selected && <div className="h-2 w-2 rounded-full bg-primary" />}
+        <span className="text-xs font-medium text-primary">{meta.name}</span>
       </div>
-      <span className="text-xs text-secondary">{meta.description}</span>
       <ColorSwatches paletteId={paletteId} />
     </button>
   );

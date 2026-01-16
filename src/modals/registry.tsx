@@ -26,17 +26,11 @@ const RebalanceMarketSelectionModal = lazy(() =>
 );
 
 // Settings & Configuration
-const BlacklistedMarketsModal = lazy(() =>
-  import('@/modals/settings/blacklisted-markets-modal').then((m) => ({
-    default: m.BlacklistedMarketsModal,
-  })),
-);
-
-const TrustedVaultsModal = lazy(() => import('@/modals/settings/trusted-vaults-modal'));
-
-const TrendingSettingsModal = lazy(() => import('@/modals/settings/trending-settings-modal'));
-
 const MarketSettingsModal = lazy(() => import('@/features/markets/components/market-settings-modal'));
+
+const MonarchSettingsModal = lazy(() =>
+  import('@/modals/settings/monarch-settings/MonarchSettingsModal').then((m) => ({ default: m.MonarchSettingsModal })),
+);
 
 // Vault Operations
 const VaultDepositModal = lazy(() => import('@/modals/vault/vault-deposit-modal'));
@@ -56,9 +50,7 @@ export const MODAL_REGISTRY: {
   rebalance: RebalanceModal,
   rebalanceMarketSelection: RebalanceMarketSelectionModal,
   marketSettings: MarketSettingsModal,
-  trustedVaults: TrustedVaultsModal,
-  trendingSettings: TrendingSettingsModal,
-  blacklistedMarkets: BlacklistedMarketsModal,
+  monarchSettings: MonarchSettingsModal,
   vaultDeposit: VaultDepositModal,
   vaultWithdraw: VaultWithdrawModal,
 };
