@@ -110,11 +110,11 @@ export const CHART_PALETTES: Record<ChartPaletteName, ChartPaletteConfig> = {
   },
 } as const;
 
-export const PALETTE_META: Record<ChartPaletteName, { name: string; description: string }> = {
-  classic: { name: 'Classic', description: 'Industry standard (Tableau)' },
-  earth: { name: 'Earth', description: 'Warm terracotta tones' },
-  forest: { name: 'Forest', description: 'Sage and olive tones' },
-  simple: { name: 'Simple', description: 'Pure primary colors' },
+export const PALETTE_META: Record<ChartPaletteName, { name: string }> = {
+  classic: { name: 'Classic' },
+  earth: { name: 'Earth' },
+  forest: { name: 'Forest' },
+  simple: { name: 'Simple' },
 };
 
 // Backwards compatibility exports

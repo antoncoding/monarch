@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { CHART_COLORS, useChartColors } from '@/constants/chartColors';
+import { CHART_COLORS, type useChartColors } from '@/constants/chartColors';
 
 export const TIMEFRAME_LABELS: Record<string, string> = {
   '1d': '1D',
