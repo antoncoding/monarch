@@ -213,7 +213,7 @@ export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSett
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => openModal('monarchSettings', { initialCategory: 'vaults' })}
+                    onClick={() => openModal('monarchSettings', { initialCategory: 'preferences' })}
                     className="flex-shrink-0"
                   >
                     Manage
