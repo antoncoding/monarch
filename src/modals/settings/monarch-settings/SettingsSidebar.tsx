@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
 import { cn } from '@/utils/components';
-import { SETTINGS_CATEGORIES, type SettingsCategory } from './constants';
+import { SETTINGS_CATEGORIES, type SettingsCategory, type CategoryConfig } from './constants';
 
 type SettingsSidebarProps = {
   collapsed: boolean;
@@ -12,6 +12,45 @@ type SettingsSidebarProps = {
   onSelectCategory: (category: SettingsCategory) => void;
   disabled?: boolean;
 };
+
+function CategoryButton({
+  cat,
+  isSelected,
+  collapsed,
+  disabled,
+  onClick,
+}: {
+  cat: CategoryConfig;
+  isSelected: boolean;
+  collapsed: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  const Icon = cat.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'flex items-center gap-2 rounded px-3 py-2.5 text-left transition-colors',
+        isSelected ? 'bg-surface text-primary' : 'text-secondary hover:bg-surface/50 hover:text-primary',
+      )}
+      aria-current={isSelected ? 'page' : undefined}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      {!collapsed && (
+        <div className="flex items-center gap-1.5">
+          <span className="font-monospace text-[11px] uppercase tracking-wide">{cat.label}</span>
+          {cat.badge && (
+            <span className="shrink-0 rounded-sm bg-orange-500/20 px-1.5 py-0.5 text-[9px] font-medium text-orange-500">{cat.badge}</span>
+          )}
+        </div>
+      )}
+    </button>
+  );
+}
 
 export function SettingsSidebar({ collapsed, onToggle, selectedCategory, onSelectCategory, disabled }: SettingsSidebarProps) {
   return (
@@ -32,37 +71,17 @@ export function SettingsSidebar({ collapsed, onToggle, selectedCategory, onSelec
       </button>
 
       {/* Category list */}
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-        {SETTINGS_CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
-          const isSelected = selectedCategory === cat.id;
-
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => onSelectCategory(cat.id)}
-              disabled={disabled}
-              className={cn(
-                'flex items-center gap-3 rounded px-3 py-2.5 text-left transition-colors',
-                isSelected ? 'bg-surface text-primary' : 'text-secondary hover:bg-surface/50 hover:text-primary',
-              )}
-              aria-current={isSelected ? 'page' : undefined}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed && (
-                <>
-                  <span className="font-monospace text-[11px] uppercase tracking-wide">{cat.label}</span>
-                  {cat.badge && (
-                    <span className="ml-auto rounded-sm bg-orange-500/20 px-1.5 py-0.5 text-[9px] font-medium text-orange-500">
-                      {cat.badge}
-                    </span>
-                  )}
-                </>
-              )}
-            </button>
-          );
-        })}
+      <nav className="flex flex-col gap-1 overflow-y-auto p-2">
+        {SETTINGS_CATEGORIES.map((cat) => (
+          <CategoryButton
+            key={cat.id}
+            cat={cat}
+            isSelected={selectedCategory === cat.id}
+            collapsed={collapsed}
+            disabled={disabled}
+            onClick={() => onSelectCategory(cat.id)}
+          />
+        ))}
       </nav>
     </motion.div>
   );

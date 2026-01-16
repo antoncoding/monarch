@@ -19,15 +19,11 @@ type VaultRowProps = {
   vault: KnownVault;
   trusted: boolean;
   onToggle: () => void;
-  keyPrefix: string;
 };
 
-function VaultRow({ vault, trusted, onToggle, keyPrefix }: VaultRowProps) {
+function VaultRow({ vault, trusted, onToggle }: VaultRowProps) {
   return (
-    <div
-      key={`${keyPrefix}-${vault.address}-${vault.chainId}`}
-      className="flex items-center justify-between gap-4 rounded bg-surface p-2.5 transition-colors hover:bg-surface-dark"
-    >
+    <div className="flex items-center justify-between gap-4 rounded bg-surface p-2.5 transition-colors hover:bg-surface-dark">
       <div className="flex flex-grow items-center gap-2.5">
         <NetworkIcon networkId={vault.chainId} />
         <VaultIdentity
@@ -199,7 +195,6 @@ export function TrustedVaultsDetail() {
                 vault={vault}
                 trusted={isVaultTrusted(vault)}
                 onToggle={() => toggleVault(vault)}
-                keyPrefix="monarch"
               />
             ))}
           </div>
@@ -234,7 +229,6 @@ export function TrustedVaultsDetail() {
                   vault={vault}
                   trusted={isVaultTrusted(vault)}
                   onToggle={() => toggleVault(vault)}
-                  keyPrefix="morpho"
                 />
               ))}
             </div>

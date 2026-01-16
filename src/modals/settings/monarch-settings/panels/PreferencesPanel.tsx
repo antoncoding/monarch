@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { defaultTrustedVaults } from '@/constants/vaults/known_vaults';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { SettingActionItem } from '../SettingItem';
 import type { DetailView } from '../constants';
 
-type VaultsPanelProps = {
-  onNavigateToDetail: (view: DetailView) => void;
+type PreferencesPanelProps = {
+  onNavigateToDetail?: (view: DetailView) => void;
 };
 
-export function VaultsPanel({ onNavigateToDetail }: VaultsPanelProps) {
+export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) {
   const { vaults: userTrustedVaults } = useTrustedVaults();
   const [mounted, setMounted] = useState(false);
 
@@ -19,9 +19,10 @@ export function VaultsPanel({ onNavigateToDetail }: VaultsPanelProps) {
     setMounted(true);
   }, []);
 
-  const defaultVaultKeys = useMemo(() => {
-    return new Set(defaultTrustedVaults.map((vault) => `${vault.chainId}-${vault.address.toLowerCase()}`));
-  }, []);
+  const defaultVaultKeys = useMemo(
+    () => new Set(defaultTrustedVaults.map((vault) => `${vault.chainId}-${vault.address.toLowerCase()}`)),
+    [],
+  );
 
   const sortedTrustedVaults = useMemo(() => {
     return [...userTrustedVaults].sort((a, b) => {
@@ -34,24 +35,14 @@ export function VaultsPanel({ onNavigateToDetail }: VaultsPanelProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Trusted Vaults */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-1">
-            <h3 className="text-sm font-medium text-primary">Manage Trusted Vaults</h3>
-            <p className="text-xs text-secondary">
-              Choose which vaults you trust. Only vaults marked as default trusted are selected automatically.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="default"
-            onClick={() => onNavigateToDetail('trusted-vaults')}
-          >
-            Edit
-          </Button>
-        </div>
-
-        {/* Vault Preview */}
+        <SettingActionItem
+          title="Manage Trusted Vaults"
+          description="Choose which vaults you trust. Only vaults marked as default trusted are selected automatically."
+          buttonLabel="Edit"
+          onClick={() => onNavigateToDetail?.('trusted-vaults')}
+        />
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-2">
             {mounted ? (
@@ -84,6 +75,16 @@ export function VaultsPanel({ onNavigateToDetail }: VaultsPanelProps) {
             {userTrustedVaults.length} vault{userTrustedVaults.length !== 1 ? 's' : ''} trusted
           </span>
         </div>
+      </div>
+
+      {/* Blacklisted Markets */}
+      <div className="rounded bg-surface p-4">
+        <SettingActionItem
+          title="Manage Blacklisted Markets"
+          description="Block specific markets from appearing in your view. Blacklisted markets are completely hidden from all lists."
+          buttonLabel="Edit"
+          onClick={() => onNavigateToDetail?.('blacklisted-markets')}
+        />
       </div>
     </div>
   );

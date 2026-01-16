@@ -2,14 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { SettingsHeader } from './SettingsHeader';
-import {
-  TransactionPanel,
-  DisplayPanel,
-  FiltersPanel,
-  ExperimentalPanel,
-  VaultsPanel,
-  MarketsPanel,
-} from './panels';
+import { TransactionPanel, DisplayPanel, FiltersPanel, PreferencesPanel, ExperimentalPanel } from './panels';
 import { TrendingDetail, TrustedVaultsDetail, BlacklistedMarketsDetail, RpcDetail } from './details';
 import type { SettingsCategory, DetailView } from './constants';
 
@@ -21,9 +14,8 @@ const PANEL_COMPONENTS: Record<SettingsCategory, React.ComponentType<PanelProps>
   transaction: TransactionPanel,
   display: DisplayPanel,
   filters: FiltersPanel,
+  preferences: PreferencesPanel,
   experimental: ExperimentalPanel,
-  vaults: VaultsPanel,
-  markets: MarketsPanel,
 };
 
 const DETAIL_COMPONENTS: Record<Exclude<DetailView, null>, React.ComponentType> = {
@@ -59,7 +51,7 @@ type SettingsContentProps = {
 
 export function SettingsContent({ category, detailView, slideDirection, onNavigateToDetail, onBack, onClose }: SettingsContentProps) {
   const PanelComponent = PANEL_COMPONENTS[category];
-  const DetailComponent = detailView ? DETAIL_COMPONENTS[detailView] : null;
+  const DetailComponent = detailView ? DETAIL_COMPONENTS[detailView] : undefined;
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -71,9 +63,12 @@ export function SettingsContent({ category, detailView, slideDirection, onNaviga
 
       {/* Content area - only animate detail transitions */}
       <div className="relative flex-1 overflow-hidden">
-        {detailView ? (
+        {DetailComponent ? (
           // Animate only when entering/exiting detail view
-          <AnimatePresence mode="wait" custom={slideDirection}>
+          <AnimatePresence
+            mode="wait"
+            custom={slideDirection}
+          >
             <motion.div
               key={detailView}
               custom={slideDirection}

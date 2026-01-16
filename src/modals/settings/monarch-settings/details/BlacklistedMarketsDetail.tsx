@@ -65,6 +65,16 @@ export function BlacklistedMarketsDetail() {
     return filteredAvailableMarkets.slice(startIndex, endIndex);
   }, [filteredAvailableMarkets, currentPage]);
 
+  const trimmedQuery = searchQuery.trim();
+  const searchPlaceholder =
+    trimmedQuery.length === 0
+      ? 'Start typing to search for markets to blacklist.'
+      : trimmedQuery.length < 2
+        ? 'Type at least 2 characters to search.'
+        : filteredAvailableMarkets.length === 0
+          ? `No markets found matching "${searchQuery}".`
+          : null;
+
   return (
     <div className="flex flex-col gap-4">
       {/* Blacklisted Markets Section */}
@@ -140,12 +150,8 @@ export function BlacklistedMarketsDetail() {
 
       {/* Available Markets List */}
       <div className="flex flex-col gap-1.5 rounded bg-surface-soft font-zen">
-        {searchQuery.trim().length === 0 ? (
-          <div className="py-6 text-center text-xs text-secondary">Start typing to search for markets to blacklist.</div>
-        ) : searchQuery.trim().length < 2 ? (
-          <div className="py-6 text-center text-xs text-secondary">Type at least 2 characters to search.</div>
-        ) : filteredAvailableMarkets.length === 0 ? (
-          <div className="py-6 text-center text-xs text-secondary">No markets found matching &quot;{searchQuery}&quot;.</div>
+        {searchPlaceholder ? (
+          <div className="py-6 text-center text-xs text-secondary">{searchPlaceholder}</div>
         ) : (
           <>
             <div className="flex flex-col gap-1.5">

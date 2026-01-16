@@ -1,10 +1,9 @@
 import type { IconType } from 'react-icons';
-import { FiZap, FiEye } from 'react-icons/fi';
-import { GoShieldCheck } from 'react-icons/go';
-import { MdBlockFlipped, MdFilterList } from 'react-icons/md';
+import { FiZap, FiEye, FiSliders } from 'react-icons/fi';
+import { MdFilterList } from 'react-icons/md';
 import { RiFlaskLine } from 'react-icons/ri';
 
-export type SettingsCategory = 'transaction' | 'display' | 'filters' | 'vaults' | 'markets' | 'experimental';
+export type SettingsCategory = 'transaction' | 'display' | 'filters' | 'preferences' | 'experimental';
 
 export type DetailView = 'trending-config' | 'trusted-vaults' | 'blacklisted-markets' | 'rpc-config' | null;
 
@@ -19,8 +18,7 @@ export const SETTINGS_CATEGORIES: CategoryConfig[] = [
   { id: 'transaction', label: 'TRANSACTION', icon: FiZap },
   { id: 'display', label: 'DISPLAY', icon: FiEye },
   { id: 'filters', label: 'FILTERS', icon: MdFilterList },
-  { id: 'vaults', label: 'VAULTS', icon: GoShieldCheck },
-  { id: 'markets', label: 'MARKETS', icon: MdBlockFlipped },
+  { id: 'preferences', label: 'PREFERENCES', icon: FiSliders },
   { id: 'experimental', label: 'EXPERIMENTAL', icon: RiFlaskLine, badge: 'Beta' },
 ];
 

@@ -6,6 +6,7 @@ import { IconSwitch } from '@/components/ui/icon-switch';
 import { PaletteSelector } from '@/components/ui/palette-preview';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useChartPalette } from '@/stores/useChartPalette';
+import { SettingToggleItem } from '../SettingItem';
 
 export function DisplayPanel() {
   const { isAprDisplay, setIsAprDisplay } = useAppSettings();
@@ -21,7 +22,6 @@ export function DisplayPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Dark Mode Toggle */}
       <div className="flex items-center justify-between rounded bg-surface p-4">
         <div className="flex flex-col gap-1">
           <h3 className="text-sm font-medium text-primary">Dark Mode</h3>
@@ -38,25 +38,16 @@ export function DisplayPanel() {
         )}
       </div>
 
-      {/* APR/APY Toggle */}
-      <div className="flex items-center justify-between rounded bg-surface p-4">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-sm font-medium text-primary">Show APR Instead of APY</h3>
-          <p className="text-xs text-secondary">
-            Display Annual Percentage Rate (APR) instead of Annual Percentage Yield (APY). APR represents the simple annualized rate, while
-            APY accounts for continuous compounding.
-          </p>
-        </div>
-        <IconSwitch
+      <div className="rounded bg-surface p-4">
+        <SettingToggleItem
+          title="Show APR Instead of APY"
+          description="Display Annual Percentage Rate (APR) instead of Annual Percentage Yield (APY). APR represents the simple annualized rate, while APY accounts for continuous compounding."
           selected={isAprDisplay}
           onChange={setIsAprDisplay}
-          size="xs"
-          color="primary"
-          aria-label="Toggle APR display"
+          ariaLabel="Toggle APR display"
         />
       </div>
 
-      {/* Color Palette */}
       <div className="flex flex-col gap-3 rounded bg-surface p-4">
         <div className="flex flex-col gap-1">
           <h3 className="text-sm font-medium text-primary">Chart Color Palette</h3>

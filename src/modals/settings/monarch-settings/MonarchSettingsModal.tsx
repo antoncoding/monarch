@@ -18,12 +18,13 @@ export function MonarchSettingsModal({ isOpen, onOpenChange, initialCategory = '
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'forward' | 'backward'>('forward');
 
-  // Reset detail view when modal closes
+  // Reset state when modal opens/closes
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setSelectedCategory(initialCategory);
       setDetailView(null);
     }
-  }, [isOpen]);
+  }, [isOpen, initialCategory]);
 
   const handleNavigateToDetail = useCallback((view: DetailView) => {
     setSlideDirection('forward');
