@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useConnection, useWriteContract, useWaitForTransactionReceipt, useSwitchChain, useChainId } from 'wagmi';
 import type { Address } from 'viem';
 import { merklDistributorAbi, MERKL_DISTRIBUTOR_ADDRESS } from '@/abis/merkl-distributor';
-import type { MerklRewardWithProofs } from './useRewards';
+import type { MerklRewardWithProofs } from './queries/useUserRewardsQuery';
 
 type ClaimStatus = 'idle' | 'preparing' | 'switching' | 'pending' | 'success' | 'error';
 
@@ -124,10 +124,6 @@ export function useClaimMerklRewards() {
     [claimRewards],
   );
 
-  const reset = useCallback(() => {
-    setClaimStatus('idle');
-  }, []);
-
   return {
     claimRewards,
     claimSingleReward,
@@ -137,6 +133,5 @@ export function useClaimMerklRewards() {
     isConfirmed,
     txHash,
     error: writeError,
-    reset,
   };
 }
