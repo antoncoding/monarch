@@ -34,6 +34,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
               detail={`${moment(dataUpdatedAt).format('h:mm:ss A')} (${moment(dataUpdatedAt).fromNow()})`}
             />
           }
+          children={undefined}
         >
           <span className="text-xs text-secondary whitespace-nowrap cursor-default">{moment(dataUpdatedAt).format('h:mm:ss A')}</span>
         </Tooltip>
@@ -48,6 +49,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
             detail="Fetch the latest market data"
           />
         }
+        children={undefined}
       >
         <Button
           variant="ghost"
@@ -73,6 +75,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
               }
             />
           }
+          children={undefined}
         >
           <Button
             aria-label="Toggle table view mode"
@@ -97,6 +100,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
             detail="Adjust thresholds and columns"
           />
         }
+        children={undefined}
       >
         <Button
           aria-label="Market Preferences"
