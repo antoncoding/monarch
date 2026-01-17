@@ -358,6 +358,25 @@ function MarketContent() {
           </TabsContent>
 
           <TabsContent value="positions">
+            {/* Tables */}
+            <div className="mt-6">
+              <SuppliersTable
+                chainId={network}
+                market={market}
+                minShares={scaledMinSupplierShares}
+                onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
+              />
+            </div>
+            <div className="mt-6">
+              <BorrowersTable
+                chainId={network}
+                market={market}
+                minShares={scaledMinBorrowerShares}
+                oraclePrice={oraclePrice}
+                onOpenFiltersModal={() => setShowBorrowerFiltersModal(true)}
+              />
+            </div>
+            
             {/* Suppliers row: Pie + Concentration */}
             <div className="grid gap-6 lg:grid-cols-2">
               <SuppliersPieChart
@@ -398,24 +417,6 @@ function MarketContent() {
               />
             </div>
 
-            {/* Tables */}
-            <div className="mt-6">
-              <SuppliersTable
-                chainId={network}
-                market={market}
-                minShares={scaledMinSupplierShares}
-                onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
-              />
-            </div>
-            <div className="mt-6">
-              <BorrowersTable
-                chainId={network}
-                market={market}
-                minShares={scaledMinBorrowerShares}
-                oraclePrice={oraclePrice}
-                onOpenFiltersModal={() => setShowBorrowerFiltersModal(true)}
-              />
-            </div>
           </TabsContent>
         </Tabs>
       </div>
