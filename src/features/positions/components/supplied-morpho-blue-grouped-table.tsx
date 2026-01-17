@@ -228,6 +228,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => toggleRow(rowKey)}
                   >
+                    {/* Chain image */}
                     <TableCell className="w-10">
                       <div className="flex items-center justify-center">
                         <Image
@@ -238,6 +239,8 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                         />
                       </div>
                     </TableCell>
+
+                    {/* Loan asset details */}
                     <TableCell data-label="Size">
                       <div className="flex items-center justify-center gap-2">
                         <span className="font-medium">{formatReadable(groupedPosition.totalSupply)}</span>
@@ -251,11 +254,15 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                         />
                       </div>
                     </TableCell>
+
+                    {/* Current APR/APY  */}
                     <TableCell data-label={`${rateLabel} (now)`}>
                       <div className="flex items-center justify-center">
                         <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
                       </div>
                     </TableCell>
+
+                    {/* Accrued interest */}
                     <TableCell data-label={`Interest Accrued (${period})`}>
                       <div className="flex items-center justify-center gap-2">
                         {isEarningsLoading ? (
@@ -293,6 +300,8 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                         )}
                       </div>
                     </TableCell>
+
+                    {/* Collateral exposure */}
                     <TableCell data-label="Collateral">
                       <CollateralIconsDisplay
                         collaterals={groupedPosition.collaterals}
@@ -301,6 +310,8 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                         iconSize={20}
                       />
                     </TableCell>
+
+                    {/* Risk indicators */}
                     <TableCell
                       data-label="Risk Tiers"
                       className="align-middle"
@@ -309,6 +320,8 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                         <AggregatedRiskIndicators groupedPosition={groupedPosition} />
                       </div>
                     </TableCell>
+
+                    {/* Actions button */}
                     <TableCell
                       data-label="Actions"
                       className="justify-center px-4 py-3"

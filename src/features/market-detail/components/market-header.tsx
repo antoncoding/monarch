@@ -8,7 +8,7 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { GrStatusGood } from 'react-icons/gr';
 import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
 import { MdError } from 'react-icons/md';
-import { BsArrowUpCircle, BsArrowDownLeftCircle } from 'react-icons/bs';
+import { BsArrowUpCircle, BsArrowDownLeftCircle, BsFillLightningFill } from 'react-icons/bs';
 import { FiExternalLink } from 'react-icons/fi';
 import { LuCopy } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
@@ -121,6 +121,7 @@ type MarketHeaderProps = {
   allWarnings: WarningWithDetail[];
   onSupplyClick: () => void;
   onBorrowClick: () => void;
+  accrueInterest: () => void;
 };
 
 export function MarketHeader({
@@ -132,6 +133,7 @@ export function MarketHeader({
   allWarnings,
   onSupplyClick,
   onBorrowClick,
+  accrueInterest
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { short: rateLabel } = useRateLabel();
@@ -350,6 +352,12 @@ export function MarketHeader({
                     startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
                   >
                     Borrow
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={accrueInterest}
+                    startContent={<BsFillLightningFill className="h-4 w-4" />}
+                  >
+                    Accrue Interest
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => window.open(getMarketURL(marketId, network), '_blank')}
