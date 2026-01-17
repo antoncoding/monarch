@@ -31,6 +31,15 @@ type RewardTableProps = {
   isLoading: boolean;
 };
 
+type ClaimStatus = 'idle' | 'preparing' | 'switching' | 'pending' | 'success' | 'error';
+
+function getMerklClaimButtonText(isClaiming: boolean, status: ClaimStatus): string {
+  if (!isClaiming) return 'Claim';
+  if (status === 'switching') return 'Switching...';
+  if (status === 'pending' || status === 'preparing') return 'Claiming...';
+  return 'Claim';
+}
+
 export default function RewardTable({
   rewards,
   distributions,
@@ -280,11 +289,7 @@ export default function RewardTable({
                             disabled={tokenReward.total.claimable === BigInt(0) || isThisRewardClaiming}
                             isLoading={isThisRewardClaiming}
                           >
-                            {(() => {
-                              if (isThisRewardClaiming && claimStatus === 'switching') return 'Switching...';
-                              if (isThisRewardClaiming && (claimStatus === 'pending' || claimStatus === 'preparing')) return 'Claiming...';
-                              return 'Claim';
-                            })()}
+                            {getMerklClaimButtonText(isThisRewardClaiming, claimStatus)}
                           </Button>
                         ) : (
                           <Button

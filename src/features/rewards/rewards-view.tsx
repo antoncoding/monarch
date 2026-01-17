@@ -144,9 +144,9 @@ export default function Rewards() {
     }, 0n);
   }, [allRewards]);
 
-  const canClaim = useMemo(() => totalClaimable > 0n, [totalClaimable]);
+  const canClaim = totalClaimable > 0n;
 
-  const showLegacy = useMemo(() => morphoBalanceLegacy !== undefined && morphoBalanceLegacy !== 0n, [morphoBalanceLegacy]);
+  const showLegacy = morphoBalanceLegacy !== undefined && morphoBalanceLegacy !== 0n;
 
   const { wrap, transaction } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
     // Refresh rewards data after successful wrap

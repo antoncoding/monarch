@@ -124,10 +124,6 @@ export function useClaimMerklRewards() {
     [claimRewards],
   );
 
-  const reset = useCallback(() => {
-    setClaimStatus('idle');
-  }, []);
-
   return {
     claimRewards,
     claimSingleReward,
@@ -137,6 +133,5 @@ export function useClaimMerklRewards() {
     isConfirmed,
     txHash,
     error: writeError,
-    reset,
   };
 }
