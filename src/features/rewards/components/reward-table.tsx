@@ -12,7 +12,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { TokenIcon } from '@/components/shared/token-icon';
-import type { DistributionResponseType, MerklRewardWithProofs } from '@/hooks/useRewards';
+import type { DistributionResponseType, MerklRewardWithProofs } from '@/hooks/queries/useUserRewardsQuery';
 import { useClaimMerklRewards } from '@/hooks/useClaimMerklRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -54,6 +54,7 @@ export default function RewardTable({
     chainId,
     pendingDescription: 'Claiming rewards',
     successDescription: 'Successfully claimed rewards',
+    onSuccess: onRefresh,
   });
 
   // Initialize Merkl claiming hook
@@ -134,6 +135,7 @@ export default function RewardTable({
 
         if (result.status === 'success') {
           toast.success('Merkl Reward Claimed!', `Successfully claimed ${rewardToClaim.symbol} rewards.`);
+          onRefresh();
         } else if (result.status === 'error' && result.error) {
           toast.error('Claim Failed', result.error.message);
         }
@@ -143,7 +145,7 @@ export default function RewardTable({
         setClaimingRewardKey(null);
       }
     },
-    [account, merklRewardsWithProofs, claimSingleReward, toast],
+    [account, merklRewardsWithProofs, claimSingleReward, toast, onRefresh],
   );
 
   // Header actions (refresh)

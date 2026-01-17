@@ -11,7 +11,7 @@ import { AccountIdentity } from '@/components/shared/account-identity';
 import Header from '@/components/layout/header/Header';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import useUserRewards from '@/hooks/useRewards';
+import { useUserRewardsQuery } from '@/hooks/queries/useUserRewardsQuery';
 
 import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
 import { formatBalance, formatSimple } from '@/utils/balance';
@@ -23,7 +23,7 @@ import RewardTable from './components/reward-table';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
-  const { rewards, distributions, merklRewardsWithProofs, loading: loadingRewards, refresh } = useUserRewards(account);
+  const { rewards, distributions, merklRewardsWithProofs, isLoading, isRefetching, refetch } = useUserRewardsQuery(account);
 
   const { data: morphoBalanceMainnet, refetch: refetchMainnet } = useReadContract({
     address: MORPHO_TOKEN_MAINNET,
@@ -50,11 +50,11 @@ export default function Rewards() {
   });
 
   const handleRefresh = useCallback(() => {
-    void refresh();
+    void refetch();
     void refetchMainnet();
     void refetchBase();
     void refetchLegacy();
-  }, [refresh, refetchMainnet, refetchBase, refetchLegacy]);
+  }, [refetch, refetchMainnet, refetchBase, refetchLegacy]);
 
   const morphoBalance = useMemo(
     () => (morphoBalanceMainnet ?? 0n) + (morphoBalanceBase ?? 0n) + (morphoBalanceLegacy ?? 0n),
@@ -271,8 +271,8 @@ export default function Rewards() {
               distributions={distributions}
               merklRewardsWithProofs={merklRewardsWithProofs}
               onRefresh={handleRefresh}
-              isRefetching={loadingRewards}
-              isLoading={loadingRewards}
+              isRefetching={isRefetching}
+              isLoading={isLoading}
             />
           </section>
         </div>
