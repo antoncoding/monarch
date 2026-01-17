@@ -49,7 +49,7 @@ async function fetchMerklRewards(
           chainId: [chainId.toString()],
           reloadChainId: chainId,
           test: false,
-          claimableOnly: false,
+          claimableOnly: true,
           breakdownPage: 0,
           type: 'TOKEN',
         },
@@ -61,7 +61,6 @@ async function fetchMerklRewards(
       }
 
       if (!Array.isArray(data) || data.length === 0) {
-        console.warn(`No rewards data for chain ${chainId}`);
         continue;
       }
 
@@ -70,35 +69,15 @@ async function fetchMerklRewards(
           continue;
         }
 
-        const tokenAggregation: Record<
-          string,
-          { pending: bigint; amount: bigint; claimed: bigint; proofs: string[]; symbol: string; decimals: number }
-        > = {};
-
+        // Keep each reward entry separate (no aggregation by token)
+        // This ensures proofs match the amount for each individual reward
         for (const reward of chainData.rewards) {
-          const tokenAddress = reward.token.address;
-
-          if (!tokenAggregation[tokenAddress]) {
-            tokenAggregation[tokenAddress] = {
-              pending: 0n,
-              amount: 0n,
-              claimed: 0n,
-              proofs: reward.proofs ?? [],
-              symbol: reward.token.symbol,
-              decimals: reward.token.decimals,
-            };
-          }
-
           const amount = BigInt(reward.amount ?? '0');
           const claimed = BigInt(reward.claimed ?? '0');
-          const pending = amount > claimed ? amount - claimed : 0n;
+          const claimable = amount > claimed ? amount - claimed : 0n;
 
-          tokenAggregation[tokenAddress].pending += pending;
-          tokenAggregation[tokenAddress].amount += amount;
-          tokenAggregation[tokenAddress].claimed += claimed;
-        }
+          const tokenAddress = reward.token.address;
 
-        for (const [tokenAddress, amounts] of Object.entries(tokenAggregation)) {
           // Add to UI rewards list
           rewardsList.push({
             type: 'uniform-reward',
@@ -109,28 +88,29 @@ async function fetchMerklRewards(
             },
             user: userAddress,
             amount: {
-              total: amounts.amount.toString(),
-              claimable_now: amounts.pending.toString(),
+              total: amount.toString(),
+              claimable_now: claimable.toString(),
               claimable_next: '0',
-              claimed: amounts.claimed.toString(),
+              claimed: claimed.toString(),
             },
             program_id: 'merkl',
           });
 
-          // Add to proofs list for claiming
+          // Add to proofs list for claiming (each with its own proofs)
           rewardsWithProofsList.push({
             tokenAddress: tokenAddress as Address,
             chainId: chainData.chain.id,
-            amount: amounts.amount.toString(),
-            claimed: amounts.claimed.toString(),
-            pending: amounts.pending.toString(),
-            proofs: amounts.proofs,
-            symbol: amounts.symbol,
-            decimals: amounts.decimals,
+            amount: amount.toString(),
+            claimed: claimed.toString(),
+            pending: claimable.toString(),
+            proofs: reward.proofs ?? [],
+            symbol: reward.token.symbol,
+            decimals: reward.token.decimals,
           });
         }
       }
     }
+
     return { rewards: rewardsList, rewardsWithProofs: rewardsWithProofsList };
   } catch (error) {
     console.error('Error fetching Merkl rewards:', error);
@@ -142,8 +122,9 @@ async function fetchMorphoRewards(
   userAddress: string,
 ): Promise<{ rewards: RewardResponseType[]; distributions: DistributionResponseType[] }> {
   try {
+    // IMPORTANT: exclude_merkl_programs=true prevents duplicates with Merkl API data
     const [totalRewardsRes, distributionRes] = await Promise.all([
-      fetch(`${URLS.MORPHO_REWARDS_API}/users/${userAddress}/rewards`, {
+      fetch(`${URLS.MORPHO_REWARDS_API}/users/${userAddress}/rewards?exclude_merkl_programs=true`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

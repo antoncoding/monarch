@@ -178,6 +178,8 @@ export type VaultProgramType = {
 
 export type RewardResponseType = MarketRewardType | UniformRewardType | VaultRewardType;
 
+export type RewardSource = 'merkl' | 'morpho-distributor';
+
 export type AggregatedRewardType = {
   asset: AssetType;
   total: {
@@ -185,7 +187,7 @@ export type AggregatedRewardType = {
     pendingAmount: bigint;
     claimed: bigint;
   };
-  programs: ('vault-reward' | 'market-reward' | 'uniform-reward' | 'merkl')[];
+  source: RewardSource;
 };
 
 export type RebalanceAction = {

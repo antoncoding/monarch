@@ -1,11 +1,10 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
+import LoadingScreen from '@/components/status/loading-screen';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import Image from 'next/image';
-import Link from 'next/link';
 import type { Address } from 'viem';
 import { useConnection, useChainId, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/ui/button';
@@ -13,13 +12,11 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useMerklCampaignsQuery } from '@/hooks/queries/useMerklCampaignsQuery';
 import type { DistributionResponseType, MerklRewardWithProofs } from '@/hooks/useRewards';
 import { useClaimMerklRewards } from '@/hooks/useClaimMerklRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
-import { getMerklCampaignURL } from '@/utils/external';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import type { AggregatedRewardType } from '@/utils/types';
@@ -31,6 +28,7 @@ type RewardTableProps = {
   merklRewardsWithProofs: MerklRewardWithProofs[];
   onRefresh: () => void;
   isRefetching: boolean;
+  isLoading: boolean;
 };
 
 export default function RewardTable({
@@ -40,11 +38,11 @@ export default function RewardTable({
   account,
   onRefresh,
   isRefetching,
+  isLoading,
 }: RewardTableProps) {
   const { chainId } = useConnection();
   const currentChainId = useChainId();
   const toast = useStyledToast();
-  const { campaigns } = useMerklCampaignsQuery();
   const [claimingRewardKey, setClaimingRewardKey] = useState<string | null>(null);
   const { mutateAsync: switchChainAsync } = useSwitchChain();
 
@@ -178,20 +176,23 @@ export default function RewardTable({
         title="All Rewards"
         actions={headerActions}
       >
-        <Table aria-label="Rewards table">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-left">Asset</TableHead>
-              <TableHead className="text-center">Chain</TableHead>
-              <TableHead className="text-right">Claimable</TableHead>
-              <TableHead className="text-center">Campaign</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="table-body-compact">
-            {filteredRewardTokens
-              .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
-              .map((tokenReward, index) => {
+        {isLoading ? (
+          <LoadingScreen message="Loading Rewards..." />
+        ) : filteredRewardTokens.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-secondary">No rewards</div>
+        ) : (
+          <Table aria-label="Rewards table">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">Asset</TableHead>
+                <TableHead className="text-center">Chain</TableHead>
+                <TableHead className="text-center">Source</TableHead>
+                <TableHead className="text-right">Claimable</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="table-body-compact">
+              {filteredRewardTokens.map((tokenReward, index) => {
                 // try find the reward token, default to 18 decimals for unknown tokens
                 const matchedToken = findToken(tokenReward.asset.address, tokenReward.asset.chain_id) ?? {
                   symbol: 'Unknown',
@@ -205,14 +206,7 @@ export default function RewardTable({
                     d.asset.chain_id === tokenReward.asset.chain_id,
                 );
 
-                const isMerklReward = tokenReward.programs.includes('merkl');
-
-                // Find matching campaign for this reward
-                const matchedCampaign = campaigns.find(
-                  (c) =>
-                    c.rewardToken.address.toLowerCase() === tokenReward.asset.address.toLowerCase() &&
-                    c.chainId === tokenReward.asset.chain_id,
-                );
+                const isMerklReward = tokenReward.source === 'merkl';
 
                 // Create unique key for tracking claim status
                 const rewardKey = `${tokenReward.asset.address.toLowerCase()}-${tokenReward.asset.chain_id}`;
@@ -250,6 +244,19 @@ export default function RewardTable({
                         </div>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center">
+                        <span
+                          className={`rounded px-2 py-0.5 text-xs ${
+                            isMerklReward
+                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                          }`}
+                        >
+                          {isMerklReward ? 'Merkl' : 'Morpho'}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm">
                       <div className="flex items-center justify-end gap-1">
                         <TokenIcon
@@ -259,29 +266,6 @@ export default function RewardTable({
                           height={16}
                         />
                         <span>{formatSimple(formatBalance(tokenReward.total.claimable, matchedToken.decimals))}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center">
-                        {matchedCampaign ? (
-                          <Link
-                            href={getMerklCampaignURL(
-                              matchedCampaign.chainId,
-                              matchedCampaign.type,
-                              matchedCampaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-                                ? (matchedCampaign.targetToken?.address ?? matchedCampaign.campaignId)
-                                : matchedCampaign.marketId.slice(0, 42),
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm hover:opacity-80 no-underline"
-                          >
-                            view
-                            <ExternalLinkIcon className="h-3 w-3" />
-                          </Link>
-                        ) : (
-                          <span className="text-sm text-gray-400">-</span>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -315,8 +299,9 @@ export default function RewardTable({
                   </TableRow>
                 );
               })}
-          </TableBody>
-        </Table>
+            </TableBody>
+          </Table>
+        )}
       </TableContainerWithHeader>
     </div>
   );

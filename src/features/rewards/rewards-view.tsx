@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
@@ -9,8 +9,6 @@ import { useReadContract } from 'wagmi';
 import { erc20Abi } from 'viem';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import Header from '@/components/layout/header/Header';
-import EmptyScreen from '@/components/status/empty-screen';
-import LoadingScreen from '@/components/status/loading-screen';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import useUserRewards from '@/hooks/useRewards';
@@ -27,7 +25,7 @@ export default function Rewards() {
   const { account } = useParams<{ account: string }>();
   const { rewards, distributions, merklRewardsWithProofs, loading: loadingRewards, refresh } = useUserRewards(account);
 
-  const { data: morphoBalanceMainnet } = useReadContract({
+  const { data: morphoBalanceMainnet, refetch: refetchMainnet } = useReadContract({
     address: MORPHO_TOKEN_MAINNET,
     abi: erc20Abi,
     functionName: 'balanceOf',
@@ -35,7 +33,7 @@ export default function Rewards() {
     chainId: SupportedNetworks.Mainnet,
   });
 
-  const { data: morphoBalanceBase } = useReadContract({
+  const { data: morphoBalanceBase, refetch: refetchBase } = useReadContract({
     address: MORPHO_TOKEN_BASE,
     abi: erc20Abi,
     functionName: 'balanceOf',
@@ -43,7 +41,7 @@ export default function Rewards() {
     chainId: SupportedNetworks.Base,
   });
 
-  const { data: morphoBalanceLegacy } = useReadContract({
+  const { data: morphoBalanceLegacy, refetch: refetchLegacy } = useReadContract({
     address: MORPHO_LEGACY,
     abi: erc20Abi,
     functionName: 'balanceOf',
@@ -51,67 +49,86 @@ export default function Rewards() {
     chainId: SupportedNetworks.Mainnet,
   });
 
+  const handleRefresh = useCallback(() => {
+    void refresh();
+    void refetchMainnet();
+    void refetchBase();
+    void refetchLegacy();
+  }, [refresh, refetchMainnet, refetchBase, refetchLegacy]);
+
   const morphoBalance = useMemo(
     () => (morphoBalanceMainnet ?? 0n) + (morphoBalanceBase ?? 0n) + (morphoBalanceLegacy ?? 0n),
     [morphoBalanceMainnet, morphoBalanceBase, morphoBalanceLegacy],
   );
 
   const allRewards = useMemo(() => {
-    // Group rewards by token address and chain
-    const groupedRewards = rewards.reduce(
-      (acc, reward) => {
-        const key = `${reward.asset.address}-${reward.asset.chain_id}`;
-        if (!acc[key]) {
-          acc[key] = {
+    const result: AggregatedRewardType[] = [];
+    // For Morpho distributor rewards, aggregate by token+chain (they share one tx_data)
+    const morphoRewards: Record<string, AggregatedRewardType> = {};
+
+    for (const reward of rewards) {
+      // Check if this is a Merkl reward
+      const isMerklReward = reward.type === 'uniform-reward' && reward.program_id === 'merkl';
+
+      if (isMerklReward) {
+        // Merkl rewards: add each as separate entry (already non-aggregated from useRewards)
+        const claimable = BigInt(reward.amount.claimable_now);
+        if (claimable > 0n) {
+          result.push({
             asset: reward.asset,
             total: {
-              claimable: 0n,
-              pendingAmount: 0n,
-              claimed: 0n,
+              claimable,
+              pendingAmount: BigInt(reward.amount.claimable_next),
+              claimed: BigInt(reward.amount.claimed),
             },
-            programs: [],
+            source: 'merkl',
+          });
+        }
+      } else {
+        // Morpho distributor rewards: aggregate by token+chain
+        const key = `${reward.asset.address.toLowerCase()}-${reward.asset.chain_id}`;
+        if (!morphoRewards[key]) {
+          morphoRewards[key] = {
+            asset: reward.asset,
+            total: { claimable: 0n, pendingAmount: 0n, claimed: 0n },
+            source: 'morpho-distributor',
           };
         }
+
         if (reward.type === 'uniform-reward') {
-          acc[key].total.claimable += BigInt(reward.amount.claimable_now);
-          acc[key].total.pendingAmount += BigInt(reward.amount.claimable_next);
-          acc[key].total.claimed += BigInt(reward.amount.claimed);
-          // Mark if this is a Merkl reward
-          if (reward.program_id === 'merkl') {
-            acc[key].programs.push('merkl');
-          } else {
-            acc[key].programs.push(reward.type);
-          }
+          morphoRewards[key].total.claimable += BigInt(reward.amount.claimable_now);
+          morphoRewards[key].total.pendingAmount += BigInt(reward.amount.claimable_next);
+          morphoRewards[key].total.claimed += BigInt(reward.amount.claimed);
         } else if (reward.type === 'market-reward' || reward.type === 'vault-reward') {
-          // go through all possible keys of reward object: for_supply, for_borrow, for_collateral}
-
           if (reward.for_supply) {
-            acc[key].total.claimable += BigInt(reward.for_supply.claimable_now);
-            acc[key].total.pendingAmount += BigInt(reward.for_supply.claimable_next);
-            acc[key].total.claimed += BigInt(reward.for_supply.claimed);
-            acc[key].programs.push(reward.type);
+            morphoRewards[key].total.claimable += BigInt(reward.for_supply.claimable_now);
+            morphoRewards[key].total.pendingAmount += BigInt(reward.for_supply.claimable_next);
+            morphoRewards[key].total.claimed += BigInt(reward.for_supply.claimed);
           }
-
           if ((reward as MarketRewardType).for_borrow) {
-            acc[key].total.claimable += BigInt(((reward as MarketRewardType).for_borrow as RewardAmount).claimable_now);
-            acc[key].total.pendingAmount += BigInt(((reward as MarketRewardType).for_borrow as RewardAmount).claimable_next);
-            acc[key].total.claimed += BigInt(((reward as MarketRewardType).for_borrow as RewardAmount).claimed);
-            acc[key].programs.push(reward.type);
+            const borrow = (reward as MarketRewardType).for_borrow as RewardAmount;
+            morphoRewards[key].total.claimable += BigInt(borrow.claimable_now);
+            morphoRewards[key].total.pendingAmount += BigInt(borrow.claimable_next);
+            morphoRewards[key].total.claimed += BigInt(borrow.claimed);
           }
-
           if ((reward as MarketRewardType).for_collateral) {
-            acc[key].total.claimable += BigInt(((reward as MarketRewardType).for_collateral as RewardAmount).claimable_now);
-            acc[key].total.pendingAmount += BigInt(((reward as MarketRewardType).for_collateral as RewardAmount).claimable_next);
-            acc[key].total.claimed += BigInt(((reward as MarketRewardType).for_collateral as RewardAmount).claimed);
-            acc[key].programs.push(reward.type);
+            const collateral = (reward as MarketRewardType).for_collateral as RewardAmount;
+            morphoRewards[key].total.claimable += BigInt(collateral.claimable_now);
+            morphoRewards[key].total.pendingAmount += BigInt(collateral.claimable_next);
+            morphoRewards[key].total.claimed += BigInt(collateral.claimed);
           }
         }
-        return acc;
-      },
-      {} as Record<string, AggregatedRewardType>,
-    );
+      }
+    }
 
-    return Object.values(groupedRewards);
+    // Add Morpho rewards with claimable > 0
+    for (const reward of Object.values(morphoRewards)) {
+      if (reward.total.claimable > 0n) {
+        result.push(reward);
+      }
+    }
+
+    return result;
   }, [rewards]);
 
   const totalClaimable = useMemo(() => {
@@ -133,7 +150,7 @@ export default function Rewards() {
 
   const { wrap, transaction } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
     // Refresh rewards data after successful wrap
-    void refresh();
+    handleRefresh();
   });
 
   return (
@@ -248,20 +265,15 @@ export default function Rewards() {
             </div>
           </section>
           <section>
-            {loadingRewards ? (
-              <LoadingScreen message="Loading Rewards..." />
-            ) : rewards.length === 0 ? (
-              <EmptyScreen message="No rewards" />
-            ) : (
-              <RewardTable
-                account={account}
-                rewards={allRewards}
-                distributions={distributions}
-                merklRewardsWithProofs={merklRewardsWithProofs}
-                onRefresh={refresh}
-                isRefetching={loadingRewards}
-              />
-            )}
+            <RewardTable
+              account={account}
+              rewards={allRewards}
+              distributions={distributions}
+              merklRewardsWithProofs={merklRewardsWithProofs}
+              onRefresh={handleRefresh}
+              isRefetching={loadingRewards}
+              isLoading={loadingRewards}
+            />
           </section>
         </div>
       </div>
