@@ -88,6 +88,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                         {isLiquidatorAddress ? (
                           <AccountIdentity
                             address={liquidation.liquidator as Address}
+                            chainId={chainId}
                             variant="compact"
                             linkTo="profile"
                           />

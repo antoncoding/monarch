@@ -62,6 +62,7 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
             >
               <AccountIdentity
                 address={op.user as `0x${string}`}
+                chainId={selectedNetwork}
                 variant="badge"
                 linkTo="profile"
               />

@@ -31,7 +31,7 @@ TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
 // Main Tooltip component that matches HeroUI API
 type TooltipProps = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   content: React.ReactNode;
   placement?: 'top' | 'bottom' | 'left' | 'right';
   delay?: number;

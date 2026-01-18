@@ -132,6 +132,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                       <TableCell>
                         <AccountIdentity
                           address={supplier.userAddress as Address}
+                          chainId={chainId}
                           variant="compact"
                           linkTo="profile"
                         />

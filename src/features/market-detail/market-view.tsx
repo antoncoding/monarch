@@ -101,12 +101,6 @@ function MarketContent() {
 
   const { mutateAsync: switchChainAsync } = useSwitchChain();
 
-  useEffect(() => {
-    if (market?.morphoBlue.chain.id && chain?.id !== market.morphoBlue.chain.id) {
-      void switchChainAsync({ chainId: market.morphoBlue.chain.id });
-    }
-  }, [market?.morphoBlue.chain.id, chain?.id, switchChainAsync]);
-
   // Transaction hook for accruing interest
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'accrue-interest',
@@ -274,6 +268,7 @@ function MarketContent() {
 
   const handleAccrueInterest = async () => {
     const morphoAddress = market.morphoBlue.address as Address;
+    await switchChainAsync({ chainId: market.morphoBlue.chain.id });
 
     sendTransaction({
       to: morphoAddress,

@@ -80,6 +80,7 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
         {normalized ? (
           <AccountIdentity
             address={normalized}
+            chainId={chainId}
             variant="compact"
             linkTo="explorer"
             copyable
@@ -130,6 +131,7 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
                   >
                     <AgentListItem
                       address={address as Address}
+                      chainId={chainId}
                       ownerAddress={owner as Address}
                     />
                     <Button
@@ -164,6 +166,7 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
                     <div className="flex flex-col gap-2">
                       <AgentListItem
                         address={agent.address as Address}
+                        chainId={chainId}
                         ownerAddress={owner as Address}
                       />
                       <p className="ml-8 text-xs text-secondary">{agent.strategyDescription}</p>
@@ -211,6 +214,7 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
               >
                 <AgentListItem
                   address={address as Address}
+                  chainId={chainId}
                   ownerAddress={owner as Address}
                 />
               </div>
@@ -237,6 +241,7 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
               <AccountIdentity
                 key={address}
                 address={address as Address}
+                chainId={chainId}
                 variant="compact"
                 linkTo="explorer"
                 copyable

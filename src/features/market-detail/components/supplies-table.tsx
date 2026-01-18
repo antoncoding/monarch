@@ -114,6 +114,7 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
                     <TableCell>
                       <AccountIdentity
                         address={supply.userAddress as Address}
+                        chainId={chainId}
                         variant="compact"
                         linkTo="profile"
                       />

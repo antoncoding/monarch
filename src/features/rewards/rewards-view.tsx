@@ -164,6 +164,7 @@ export default function Rewards() {
         <div className="flex flex-col items-center justify-between pb-8 sm:flex-row">
           <AccountIdentity
             address={account as Address}
+            chainId={SupportedNetworks.Mainnet}
             variant="full"
             showAddress
           />

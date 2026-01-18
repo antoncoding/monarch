@@ -19,6 +19,7 @@ import type { Address } from 'viem';
 
 type AccountIdentityProps = {
   address: Address;
+  chainId: number;
   variant?: 'badge' | 'compact' | 'full';
   linkTo?: 'explorer' | 'profile' | 'none';
   copyable?: boolean;
@@ -41,6 +42,7 @@ type AccountIdentityProps = {
  */
 export function AccountIdentity({
   address,
+  chainId,
   variant = 'badge',
   linkTo = 'none',
   copyable = false,
@@ -49,7 +51,7 @@ export function AccountIdentity({
   showActions = true,
   className,
 }: AccountIdentityProps) {
-  const { address: connectedAddress, isConnected, chainId } = useConnection();
+  const { address: connectedAddress, isConnected} = useConnection();
   const [mounted, setMounted] = useState(false);
   const toast = useStyledToast();
   const { vaultName, shortAddress } = useAddressLabel(address);
@@ -72,7 +74,7 @@ export function AccountIdentity({
 
     if (linkTo === 'none') return null;
     if (linkTo === 'explorer') {
-      return getExplorerURL(address as `0x${string}`, SupportedNetworks.Mainnet);
+      return getExplorerURL(address as `0x${string}`, chainId ?? SupportedNetworks.Mainnet);
     }
     if (linkTo === 'profile') {
       return `/positions/${address}`;
