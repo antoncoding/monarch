@@ -133,7 +133,7 @@ export function MarketHeader({
   allWarnings,
   onSupplyClick,
   onBorrowClick,
-  accrueInterest
+  accrueInterest,
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { short: rateLabel } = useRateLabel();

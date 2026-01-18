@@ -4,8 +4,8 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { parseUnits, formatUnits, encodeFunctionData, type Address } from 'viem';
-import { useConnection, useSwitchChain, useWriteContract } from 'wagmi';
+import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem';
+import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import { BorrowModal } from '@/modals/borrow/borrow-modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,12 +13,12 @@ import { Spinner } from '@/components/ui/spinner';
 import Header from '@/components/layout/header/Header';
 import { useModal } from '@/hooks/useModal';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import { useMarketDetailPreferences, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
 import useUserPosition from '@/hooks/useUserPosition';
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import type { SupportedNetworks } from '@/utils/networks';
 import { BorrowersTable } from '@/features/market-detail/components/borrowers-table';
 import { BorrowsTable } from '@/features/market-detail/components/borrows-table';
@@ -79,21 +79,7 @@ function MarketContent() {
 
   const { address } = useConnection();
 
-  const toast = useStyledToast();
-
-  // Transaction hook for accruing interest
-  const { sendTransaction: sendAccrueInterest, isConfirming: isAccruingInterest } = useTransactionWithToast({
-    toastId: 'accrue-interest',
-    pendingText: 'Accruing Interest',
-    successText: 'Interest Accrued',
-    errorText: 'Failed to accrue interest',
-    chainId: market?.morphoBlue.chain.id,
-    pendingDescription: 'Updating market interest rates...',
-    successDescription: 'Market interest rates have been updated',
-    onSuccess: () => {
-      void refetchMarket();
-    },
-  });
+  const _toast = useStyledToast();
 
   const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketId as string);
 
@@ -115,8 +101,21 @@ function MarketContent() {
     totalCount: suppliersTotalCount,
   } = useAllMarketSuppliers(market?.uniqueKey, network);
 
-  const { mutateAsync: writeContractAsync, error: writeError, isPending: isWritePending } = useWriteContract();
   const { mutateAsync: switchChainAsync } = useSwitchChain();
+
+  // Transaction hook for accruing interest
+  const { sendTransaction } = useTransactionWithToast({
+    toastId: 'accrue-interest',
+    pendingText: 'Accruing Interest',
+    successText: 'Interest Accrued',
+    errorText: 'Failed to accrue interest',
+    chainId: market?.morphoBlue.chain.id,
+    pendingDescription: 'Updating market interest rates...',
+    successDescription: 'Market interest rates have been updated',
+    onSuccess: () => {
+      void refetchMarket();
+    },
+  });
 
   // 6. All memoized values and callbacks
 
@@ -270,34 +269,26 @@ function MarketContent() {
   };
 
   const handleAccrueInterest = async () => {
-    if (!address) {
-      toast.info('Wallet not connected', 'Please connect your wallet to accrue interest.');
-      return;
-    }
-    
     await switchChainAsync({ chainId: market.morphoBlue.chain.id });
     const morphoAddress = market.morphoBlue.address as Address;
 
-    toast.info('Accruing interest...');
-
-    const txData = writeContractAsync({
-      address: morphoAddress,
-      abi: morphoAbi,
-      functionName: 'accrueInterest',
+    sendTransaction({
+      to: morphoAddress,
+      account: address,
+      data: encodeFunctionData({
+        abi: morphoAbi,
+        functionName: 'accrueInterest',
+        args: [
+          {
+            loanToken: market.loanAsset.address as Address,
+            collateralToken: market.collateralAsset.address as Address,
+            oracle: market.oracleAddress as Address,
+            irm: market.irmAddress as Address,
+            lltv: BigInt(market.lltv),
+          },
+        ],
+      }),
       chainId: market.morphoBlue.chain.id,
-      args: [
-        {
-          loanToken: market.loanAsset.address as Address,
-          collateralToken: market.collateralAsset.address as Address,
-          oracle: market.oracleAddress as Address,
-          irm: market.irmAddress as Address,
-          lltv: BigInt(market.lltv),
-        },
-      ],
-    }).then((txData) => {
-      if (txData) {
-        toast.success('Interest accrued successfully!');
-      }
     });
   };
 
@@ -471,7 +462,6 @@ function MarketContent() {
                 oraclePrice={oraclePrice}
               />
             </div>
-
           </TabsContent>
         </Tabs>
       </div>
