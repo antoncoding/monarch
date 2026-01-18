@@ -388,7 +388,7 @@ function MarketContent() {
             </div>
 
             {/* Suppliers row: Pie + Concentration */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2 mt-6">
               <SuppliersPieChart
                 chainId={network}
                 market={market}

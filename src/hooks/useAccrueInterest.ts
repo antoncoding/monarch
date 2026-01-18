@@ -1,10 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import type { Market } from '@/utils/types';
 import { useTransactionWithToast } from './useTransactionWithToast';
-import { useStyledToast } from './useStyledToast';
 
 type UseAccrueInterestProps = {
   market: Market | undefined;

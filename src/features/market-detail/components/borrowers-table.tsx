@@ -25,7 +25,14 @@ type BorrowersTableProps = {
   showLiquidateButton?: boolean;
 };
 
-export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpenFiltersModal, showLiquidateButton = true }: BorrowersTableProps) {
+export function BorrowersTable({
+  chainId,
+  market,
+  minShares,
+  oraclePrice,
+  onOpenFiltersModal,
+  showLiquidateButton = true,
+}: BorrowersTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 

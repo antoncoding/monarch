@@ -22,18 +22,13 @@ type UseLiquidateTransactionProps = {
   onSuccess?: () => void;
 };
 
-export function useLiquidateTransaction({
-  market,
-  borrower,
-  seizedAssets,
-  onSuccess,
-}: UseLiquidateTransactionProps) {
+export function useLiquidateTransaction({ market, borrower, seizedAssets, onSuccess }: UseLiquidateTransactionProps) {
   const { address: account } = useConnection();
   const { mutateAsync: switchChainAsync } = useSwitchChain();
   const toast = useStyledToast();
   const tracking = useTransactionTracking('liquidate');
 
-  const chainId = market.morphoBlue.chain.id; 
+  const chainId = market.morphoBlue.chain.id;
   const morphoAddress = market.morphoBlue.address as Address;
 
   // Estimate the max repay amount (borrowAssets + buffer for interest)
@@ -49,12 +44,12 @@ export function useLiquidateTransaction({
 
   const { isConfirming, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'liquidate',
-    pendingText: `Liquidating position`,
+    pendingText: 'Liquidating position',
     successText: 'Position Liquidated',
     errorText: 'Failed to liquidate',
     chainId,
     pendingDescription: `Liquidating borrower ${borrower?.userAddress.slice(0, 8)}...`,
-    successDescription: `Successfully liquidated position`,
+    successDescription: 'Successfully liquidated position',
     onSuccess,
   });
 
@@ -63,7 +58,6 @@ export function useLiquidateTransaction({
     { id: 'liquidating', title: 'Confirm Liquidation', description: 'Confirm transaction in wallet' },
   ];
 
-  
   const executeLiquidation = useCallback(async () => {
     if (!borrower || !account) return;
 
@@ -94,17 +88,7 @@ export function useLiquidateTransaction({
     });
 
     tracking.complete();
-  }, [
-    borrower,
-    account,
-    switchChainAsync,
-    chainId,
-    sendTransactionAsync,
-    morphoAddress,
-    market,
-    seizedAssets,
-    tracking,
-  ]);
+  }, [borrower, account, switchChainAsync, chainId, sendTransactionAsync, morphoAddress, market, seizedAssets, tracking]);
 
   const approveAndLiquidate = useCallback(async () => {
     if (!account) {
@@ -116,7 +100,7 @@ export function useLiquidateTransaction({
       toast.error('No borrower selected', 'Please select a borrower to liquidate.');
       return;
     }
-    
+
     await switchChainAsync({ chainId: market.morphoBlue.chain.id });
 
     try {
@@ -150,18 +134,7 @@ export function useLiquidateTransaction({
         }
       }
     }
-  }, [
-    account,
-    borrower,
-    isApproved,
-    approve,
-    executeLiquidation,
-    toast,
-    tracking,
-    steps,
-    seizedAssets,
-    market,
-  ]);
+  }, [account, borrower, isApproved, approve, executeLiquidation, toast, tracking, steps, seizedAssets, market]);
 
   const signAndLiquidate = useCallback(async () => {
     if (!account) {

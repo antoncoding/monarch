@@ -28,16 +28,16 @@ export function LiquidateButton({ market, borrower, onSuccess }: LiquidateButton
   });
 
   const handleClick = useCallback(() => {
-    if (!isApproved) {
-      void approveAndLiquidate();
-    } else {
+    if (isApproved) {
       void signAndLiquidate();
+    } else {
+      void approveAndLiquidate();
     }
   }, [isApproved, approveAndLiquidate, signAndLiquidate]);
 
   return (
     <Button
-      variant="ghost"
+      variant="default"
       size="sm"
       className="h-7 px-2 text-xs"
       onClick={handleClick}
