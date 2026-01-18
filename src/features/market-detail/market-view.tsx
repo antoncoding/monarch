@@ -4,8 +4,9 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { parseUnits, formatUnits } from 'viem';
-import { useConnection } from 'wagmi';
+import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem';
+import { useConnection, useSwitchChain } from 'wagmi';
+import morphoAbi from '@/abis/morpho';
 import { BorrowModal } from '@/modals/borrow/borrow-modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -16,6 +17,7 @@ import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import { useMarketDetailPreferences, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
 import useUserPosition from '@/hooks/useUserPosition';
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import type { SupportedNetworks } from '@/utils/networks';
 import { BorrowersTable } from '@/features/market-detail/components/borrowers-table';
 import { BorrowsTable } from '@/features/market-detail/components/borrows-table';
@@ -95,6 +97,22 @@ function MarketContent() {
     isLoading: suppliersLoading,
     totalCount: suppliersTotalCount,
   } = useAllMarketSuppliers(market?.uniqueKey, network);
+
+  const { mutateAsync: switchChainAsync } = useSwitchChain();
+
+  // Transaction hook for accruing interest
+  const { sendTransaction } = useTransactionWithToast({
+    toastId: 'accrue-interest',
+    pendingText: 'Accruing Interest',
+    successText: 'Interest Accrued',
+    errorText: 'Failed to accrue interest',
+    chainId: market?.morphoBlue.chain.id,
+    pendingDescription: 'Updating market interest rates...',
+    successDescription: 'Market interest rates have been updated',
+    onSuccess: () => {
+      void refetchMarket();
+    },
+  });
 
   // 6. All memoized values and callbacks
 
@@ -247,6 +265,30 @@ function MarketContent() {
     setShowBorrowModal(true);
   };
 
+  const handleAccrueInterest = async () => {
+    await switchChainAsync({ chainId: market.morphoBlue.chain.id });
+    const morphoAddress = market.morphoBlue.address as Address;
+
+    sendTransaction({
+      to: morphoAddress,
+      account: address,
+      data: encodeFunctionData({
+        abi: morphoAbi,
+        functionName: 'accrueInterest',
+        args: [
+          {
+            loanToken: market.loanAsset.address as Address,
+            collateralToken: market.collateralAsset.address as Address,
+            oracle: market.oracleAddress as Address,
+            irm: market.irmAddress as Address,
+            lltv: BigInt(market.lltv),
+          },
+        ],
+      }),
+      chainId: market.morphoBlue.chain.id,
+    });
+  };
+
   return (
     <>
       <Header />
@@ -261,6 +303,7 @@ function MarketContent() {
           allWarnings={allWarnings}
           onSupplyClick={handleSupplyClick}
           onBorrowClick={handleBorrowClick}
+          accrueInterest={handleAccrueInterest}
         />
 
         {showBorrowModal && (
@@ -358,6 +401,25 @@ function MarketContent() {
           </TabsContent>
 
           <TabsContent value="positions">
+            {/* Tables */}
+            <div className="mt-6">
+              <SuppliersTable
+                chainId={network}
+                market={market}
+                minShares={scaledMinSupplierShares}
+                onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
+              />
+            </div>
+            <div className="mt-6">
+              <BorrowersTable
+                chainId={network}
+                market={market}
+                minShares={scaledMinBorrowerShares}
+                oraclePrice={oraclePrice}
+                onOpenFiltersModal={() => setShowBorrowerFiltersModal(true)}
+              />
+            </div>
+
             {/* Suppliers row: Pie + Concentration */}
             <div className="grid gap-6 lg:grid-cols-2">
               <SuppliersPieChart
@@ -395,25 +457,6 @@ function MarketContent() {
                 chainId={network}
                 market={market}
                 oraclePrice={oraclePrice}
-              />
-            </div>
-
-            {/* Tables */}
-            <div className="mt-6">
-              <SuppliersTable
-                chainId={network}
-                market={market}
-                minShares={scaledMinSupplierShares}
-                onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
-              />
-            </div>
-            <div className="mt-6">
-              <BorrowersTable
-                chainId={network}
-                market={market}
-                minShares={scaledMinBorrowerShares}
-                oraclePrice={oraclePrice}
-                onOpenFiltersModal={() => setShowBorrowerFiltersModal(true)}
               />
             </div>
           </TabsContent>
