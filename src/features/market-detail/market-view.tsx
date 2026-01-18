@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
 import Header from '@/components/layout/header/Header';
 import { useModal } from '@/hooks/useModal';
-import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
@@ -78,8 +77,6 @@ function MarketContent() {
   });
 
   const { address } = useConnection();
-
-  const _toast = useStyledToast();
 
   const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketId as string);
 
