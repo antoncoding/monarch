@@ -2,10 +2,10 @@
 
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem';
-import { useConnection, useSwitchChain } from 'wagmi';
+import { useAccount, useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import { BorrowModal } from '@/modals/borrow/borrow-modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,6 +77,7 @@ function MarketContent() {
   });
 
   const { address } = useConnection();
+  const { chain } = useAccount();
 
   const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketId as string);
 
@@ -99,6 +100,12 @@ function MarketContent() {
   } = useAllMarketSuppliers(market?.uniqueKey, network);
 
   const { mutateAsync: switchChainAsync } = useSwitchChain();
+
+  useEffect(() => {
+    if (market?.morphoBlue.chain.id && chain?.id !== market.morphoBlue.chain.id) {
+      void switchChainAsync({ chainId: market.morphoBlue.chain.id });
+    }
+  }, [market?.morphoBlue.chain.id, chain?.id, switchChainAsync]);
 
   // Transaction hook for accruing interest
   const { sendTransaction } = useTransactionWithToast({
@@ -266,7 +273,6 @@ function MarketContent() {
   };
 
   const handleAccrueInterest = async () => {
-    await switchChainAsync({ chainId: market.morphoBlue.chain.id });
     const morphoAddress = market.morphoBlue.address as Address;
 
     sendTransaction({

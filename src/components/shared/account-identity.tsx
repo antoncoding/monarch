@@ -49,7 +49,7 @@ export function AccountIdentity({
   showActions = true,
   className,
 }: AccountIdentityProps) {
-  const { address: connectedAddress, isConnected } = useConnection();
+  const { address: connectedAddress, isConnected, chainId } = useConnection();
   const [mounted, setMounted] = useState(false);
   const toast = useStyledToast();
   const { vaultName, shortAddress } = useAddressLabel(address);
@@ -152,7 +152,7 @@ export function AccountIdentity({
     );
 
     if (showActions) {
-      return <AccountActionsPopover address={address}>{badgeElement}</AccountActionsPopover>;
+      return <AccountActionsPopover address={address} chainId={chainId}>{badgeElement}</AccountActionsPopover>;
     }
 
     return badgeElement;
@@ -228,7 +228,7 @@ export function AccountIdentity({
     );
 
     if (showActions) {
-      return <AccountActionsPopover address={address}>{compactElement}</AccountActionsPopover>;
+      return <AccountActionsPopover address={address} chainId={chainId}>{compactElement}</AccountActionsPopover>;
     }
 
     return compactElement;
@@ -327,7 +327,7 @@ export function AccountIdentity({
     );
 
   if (showActions) {
-    return <AccountActionsPopover address={address}>{fullElement}</AccountActionsPopover>;
+    return <AccountActionsPopover address={address} chainId={chainId}>{fullElement}</AccountActionsPopover>;
   }
 
   return fullElement;
