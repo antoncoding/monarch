@@ -5,7 +5,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem';
-import { useAccount, useConnection, useSwitchChain } from 'wagmi';
+import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import { BorrowModal } from '@/modals/borrow/borrow-modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,7 +77,6 @@ function MarketContent() {
   });
 
   const { address } = useConnection();
-  const { chain } = useAccount();
 
   const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketId as string);
 

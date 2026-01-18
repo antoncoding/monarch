@@ -40,7 +40,7 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
   const handleViewExplorer = useCallback(() => {
     const explorerUrl = getExplorerURL(address, (chainId ?? SupportedNetworks.Mainnet) as SupportedNetworks);
     window.open(explorerUrl, '_blank', 'noopener,noreferrer');
-  }, [address]);
+  }, [address, chainId]);
 
   return (
     <DropdownMenu>
