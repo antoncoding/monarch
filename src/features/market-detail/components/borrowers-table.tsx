@@ -14,6 +14,7 @@ import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useMarketBorrowers } from '@/hooks/useMarketBorrowers';
 import { formatSimple } from '@/utils/balance';
 import type { Market } from '@/utils/types';
+import { LiquidateButton } from './liquidate-button';
 
 type BorrowersTableProps = {
   chainId: number;
@@ -21,9 +22,10 @@ type BorrowersTableProps = {
   minShares: string;
   oraclePrice: bigint;
   onOpenFiltersModal: () => void;
+  showLiquidateButton?: boolean;
 };
 
-export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpenFiltersModal }: BorrowersTableProps) {
+export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpenFiltersModal, showLiquidateButton = true }: BorrowersTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
@@ -117,13 +119,14 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                 <TableHead className="text-right">COLLATERAL</TableHead>
                 <TableHead className="text-right">LTV</TableHead>
                 <TableHead className="text-right">% OF BORROW</TableHead>
+                {showLiquidateButton && <TableHead className="text-right">ACTIONS</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact">
               {borrowersWithLTV.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={showLiquidateButton ? 6 : 5}
                     className="text-center text-gray-400"
                   >
                     No borrowers found for this market
@@ -175,6 +178,14 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                       </TableCell>
                       <TableCell className="text-right text-sm">{borrower.ltv.toFixed(2)}%</TableCell>
                       <TableCell className="text-right text-sm">{percentDisplay}</TableCell>
+                      {showLiquidateButton && (
+                        <TableCell className="text-right">
+                          <LiquidateButton
+                            market={market}
+                            borrower={borrower}
+                          />
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })

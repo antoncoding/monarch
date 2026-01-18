@@ -4,9 +4,8 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem';
-import { useConnection, useSwitchChain } from 'wagmi';
-import morphoAbi from '@/abis/morpho';
+import { parseUnits, formatUnits } from 'viem';
+import { useConnection } from 'wagmi';
 import { BorrowModal } from '@/modals/borrow/borrow-modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
@@ -17,7 +16,7 @@ import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import { useMarketDetailPreferences, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
 import useUserPosition from '@/hooks/useUserPosition';
-import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useAccrueInterest } from '@/hooks/useAccrueInterest';
 import type { SupportedNetworks } from '@/utils/networks';
 import { BorrowersTable } from '@/features/market-detail/components/borrowers-table';
 import { BorrowsTable } from '@/features/market-detail/components/borrows-table';
@@ -98,17 +97,9 @@ function MarketContent() {
     totalCount: suppliersTotalCount,
   } = useAllMarketSuppliers(market?.uniqueKey, network);
 
-  const { mutateAsync: switchChainAsync } = useSwitchChain();
-
   // Transaction hook for accruing interest
-  const { sendTransaction } = useTransactionWithToast({
-    toastId: 'accrue-interest',
-    pendingText: 'Accruing Interest',
-    successText: 'Interest Accrued',
-    errorText: 'Failed to accrue interest',
-    chainId: market?.morphoBlue.chain.id,
-    pendingDescription: 'Updating market interest rates...',
-    successDescription: 'Market interest rates have been updated',
+  const { accrueInterest } = useAccrueInterest({
+    market: market ?? undefined,
     onSuccess: () => {
       void refetchMarket();
     },
@@ -265,30 +256,6 @@ function MarketContent() {
     setShowBorrowModal(true);
   };
 
-  const handleAccrueInterest = async () => {
-    await switchChainAsync({ chainId: market.morphoBlue.chain.id });
-    const morphoAddress = market.morphoBlue.address as Address;
-
-    sendTransaction({
-      to: morphoAddress,
-      account: address,
-      data: encodeFunctionData({
-        abi: morphoAbi,
-        functionName: 'accrueInterest',
-        args: [
-          {
-            loanToken: market.loanAsset.address as Address,
-            collateralToken: market.collateralAsset.address as Address,
-            oracle: market.oracleAddress as Address,
-            irm: market.irmAddress as Address,
-            lltv: BigInt(market.lltv),
-          },
-        ],
-      }),
-      chainId: market.morphoBlue.chain.id,
-    });
-  };
-
   return (
     <>
       <Header />
@@ -303,7 +270,7 @@ function MarketContent() {
           allWarnings={allWarnings}
           onSupplyClick={handleSupplyClick}
           onBorrowClick={handleBorrowClick}
-          accrueInterest={handleAccrueInterest}
+          accrueInterest={accrueInterest}
         />
 
         {showBorrowModal && (
