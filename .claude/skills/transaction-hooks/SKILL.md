@@ -96,3 +96,63 @@ export function useSupplyTransaction(market: Market, onSuccess?: () => void) {
 **No component-level ProcessModal needed.** `GlobalTransactionModals` (in layout) automatically renders modals for all visible transactions. When user dismisses, tx appears in `TransactionIndicator`. Clicking indicator restores the modal.
 
 ---
+
+### useTransactionWithToast
+
+Wraps wagmi's `useSendTransaction` with automatic toast notifications for pending, success, and error states.
+
+
+**Usage:**
+
+```typescript
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+
+const { isConfirming, sendTransactionAsync } = useTransactionWithToast({
+  toastId: 'supply',
+  pendingText: `Supplying ${formatBalance(amount, decimals)} ${symbol}`,
+  successText: `${symbol} Supplied`,
+  errorText: 'Failed to supply',
+  chainId,
+  pendingDescription: `Supplying to market ${marketId.slice(2, 8)}...`,
+  successDescription: `Successfully supplied to market ${marketId.slice(2, 8)}`,
+  onSuccess,
+});
+
+// Execute transaction
+await sendTransactionAsync({
+  account,
+  to: contractAddress,
+  data: encodedData,
+  value: ethValue,
+  gas: gasLimit,  // Optional: override gas estimation
+});
+```
+
+**Returns:**
+- `sendTransactionAsync` - Async function to send transaction
+- `sendTransaction` - Sync mutation function
+- `isConfirming` - Boolean, true while waiting for confirmation
+- `isConfirmed` - Boolean, true when transaction confirmed
+
+**Combined with useTransactionTracking:**
+
+For multi-step flows (approve → sign → execute), use both hooks together:
+- `useTransactionTracking` - Shows step-by-step progress modal
+- `useTransactionWithToast` - Handles the actual transaction toast notifications
+
+```typescript
+const tracking = useTransactionTracking('supply');
+const { sendTransactionAsync, isConfirming } = useTransactionWithToast({ ... });
+
+const execute = async () => {
+  tracking.start(steps, metadata, 'approve');
+
+  await doApproval();
+  tracking.update('supplying');
+
+  await sendTransactionAsync({ ... });  // Toast appears automatically
+  tracking.complete();
+};
+```
+
+---
