@@ -357,6 +357,7 @@ function MarketContent() {
         >
           <TabsList>
             <TabsTrigger value="trend">Trend</TabsTrigger>
+            <TabsTrigger value="analysis">Analysis</TabsTrigger>
             <TabsTrigger value="activities">Activities</TabsTrigger>
             <TabsTrigger value="positions">Positions</TabsTrigger>
           </TabsList>
@@ -401,7 +402,6 @@ function MarketContent() {
           </TabsContent>
 
           <TabsContent value="positions">
-            {/* Tables */}
             <div className="mt-6">
               <SuppliersTable
                 chainId={network}
@@ -419,7 +419,9 @@ function MarketContent() {
                 onOpenFiltersModal={() => setShowBorrowerFiltersModal(true)}
               />
             </div>
+          </TabsContent>
 
+          <TabsContent value="analysis">
             {/* Suppliers row: Pie + Concentration */}
             <div className="grid gap-6 lg:grid-cols-2">
               <SuppliersPieChart
@@ -451,7 +453,7 @@ function MarketContent() {
               />
             </div>
 
-            {/* Collateral at Risk chart */}
+            {/* Debt at Risk chart */}
             <div className="mt-6">
               <DebtAtRiskChart
                 chainId={network}

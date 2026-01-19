@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type MarketDetailTab = 'trend' | 'activities' | 'positions';
+type MarketDetailTab = 'trend' | 'activities' | 'positions' | 'analysis';
 
 type MarketDetailPreferencesState = {
   selectedTab: MarketDetailTab;
