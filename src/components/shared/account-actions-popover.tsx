@@ -11,7 +11,8 @@ import type { Address } from 'viem';
 
 type AccountActionsPopoverProps = {
   address: Address;
-  children: ReactNode;
+  children?: ReactNode;
+  chainId?: number;
 };
 
 /**
@@ -20,7 +21,7 @@ type AccountActionsPopoverProps = {
  * - View account (positions page)
  * - View on Etherscan
  */
-export function AccountActionsPopover({ address, children }: AccountActionsPopoverProps) {
+export function AccountActionsPopover({ address, chainId, children }: AccountActionsPopoverProps) {
   const toast = useStyledToast();
 
   const handleCopy = useCallback(async () => {
@@ -37,9 +38,9 @@ export function AccountActionsPopover({ address, children }: AccountActionsPopov
   }, [address]);
 
   const handleViewExplorer = useCallback(() => {
-    const explorerUrl = getExplorerURL(address, SupportedNetworks.Mainnet);
+    const explorerUrl = getExplorerURL(address, (chainId ?? SupportedNetworks.Mainnet) as SupportedNetworks);
     window.open(explorerUrl, '_blank', 'noopener,noreferrer');
-  }, [address]);
+  }, [address, chainId]);
 
   return (
     <DropdownMenu>

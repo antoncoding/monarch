@@ -11,6 +11,7 @@ import { AccountIdentity } from '@/components/shared/account-identity';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
+import { SupportedNetworks } from '@/utils/networks';
 
 export function AccountDropdown() {
   const { address, chainId } = useConnection();
@@ -61,6 +62,7 @@ export function AccountDropdown() {
             />
             <AccountIdentity
               address={address}
+              chainId={chainId ?? SupportedNetworks.Mainnet}
               variant="badge"
               showActions={false}
             />

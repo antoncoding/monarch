@@ -119,6 +119,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
                     <TableCell>
                       <AccountIdentity
                         address={borrow.userAddress as Address}
+                        chainId={chainId}
                         variant="compact"
                         linkTo="profile"
                       />

@@ -141,6 +141,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                       <TableCell>
                         <AccountIdentity
                           address={borrower.userAddress as Address}
+                          chainId={chainId}
                           variant="compact"
                           linkTo="profile"
                         />

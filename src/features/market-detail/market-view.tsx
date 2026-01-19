@@ -266,8 +266,8 @@ function MarketContent() {
   };
 
   const handleAccrueInterest = async () => {
-    await switchChainAsync({ chainId: market.morphoBlue.chain.id });
     const morphoAddress = market.morphoBlue.address as Address;
+    await switchChainAsync({ chainId: market.morphoBlue.chain.id });
 
     sendTransaction({
       to: morphoAddress,

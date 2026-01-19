@@ -18,10 +18,13 @@ import { useModal } from '@/hooks/useModal';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
+import { useConnection } from 'wagmi';
+import { SupportedNetworks } from '@/utils/networks';
 
 export default function Positions() {
   const { account } = useParams<{ account: string }>();
   const { open } = useModal();
+  const { chainId } = useConnection();
 
   const { loading: isMarketsLoading } = useProcessedMarkets();
 
@@ -83,6 +86,7 @@ export default function Positions() {
         <div className="flex flex-col items-center justify-between gap-4 pb-4 sm:flex-row">
           <AccountIdentity
             address={account as Address}
+            chainId={chainId ?? SupportedNetworks.Mainnet}
             variant="full"
             showAddress
           />

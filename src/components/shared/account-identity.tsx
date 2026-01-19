@@ -19,6 +19,7 @@ import type { Address } from 'viem';
 
 type AccountIdentityProps = {
   address: Address;
+  chainId: number;
   variant?: 'badge' | 'compact' | 'full';
   linkTo?: 'explorer' | 'profile' | 'none';
   copyable?: boolean;
@@ -41,6 +42,7 @@ type AccountIdentityProps = {
  */
 export function AccountIdentity({
   address,
+  chainId,
   variant = 'badge',
   linkTo = 'none',
   copyable = false,
@@ -72,7 +74,7 @@ export function AccountIdentity({
 
     if (linkTo === 'none') return null;
     if (linkTo === 'explorer') {
-      return getExplorerURL(address as `0x${string}`, SupportedNetworks.Mainnet);
+      return getExplorerURL(address as `0x${string}`, chainId ?? SupportedNetworks.Mainnet);
     }
     if (linkTo === 'profile') {
       return `/positions/${address}`;
@@ -152,7 +154,14 @@ export function AccountIdentity({
     );
 
     if (showActions) {
-      return <AccountActionsPopover address={address}>{badgeElement}</AccountActionsPopover>;
+      return (
+        <AccountActionsPopover
+          address={address}
+          chainId={chainId}
+        >
+          {badgeElement}
+        </AccountActionsPopover>
+      );
     }
 
     return badgeElement;
@@ -228,7 +237,14 @@ export function AccountIdentity({
     );
 
     if (showActions) {
-      return <AccountActionsPopover address={address}>{compactElement}</AccountActionsPopover>;
+      return (
+        <AccountActionsPopover
+          address={address}
+          chainId={chainId}
+        >
+          {compactElement}
+        </AccountActionsPopover>
+      );
     }
 
     return compactElement;
@@ -327,7 +343,14 @@ export function AccountIdentity({
     );
 
   if (showActions) {
-    return <AccountActionsPopover address={address}>{fullElement}</AccountActionsPopover>;
+    return (
+      <AccountActionsPopover
+        address={address}
+        chainId={chainId}
+      >
+        {fullElement}
+      </AccountActionsPopover>
+    );
   }
 
   return fullElement;

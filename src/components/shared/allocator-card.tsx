@@ -1,5 +1,7 @@
 import type { Address } from 'viem';
 import { AccountIdentity } from './account-identity';
+import { useConnection } from 'wagmi';
+import { SupportedNetworks } from '@/utils/networks';
 
 type AllocatorCardProps = {
   name: string;
@@ -18,6 +20,7 @@ export function AllocatorCard({
   onSelect,
   disabled = false,
 }: AllocatorCardProps): JSX.Element {
+  const { chainId } = useConnection();
   return (
     <button
       type="button"
@@ -51,6 +54,7 @@ export function AllocatorCard({
         <div className="text-xs text-secondary">
           <AccountIdentity
             address={address}
+            chainId={chainId ?? SupportedNetworks.Mainnet}
             variant="full"
           />
         </div>
