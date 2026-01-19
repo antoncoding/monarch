@@ -43,6 +43,8 @@ export type ModalProps = {
 
   monarchSettings: {
     initialCategory?: 'transaction' | 'display' | 'filters' | 'preferences' | 'experimental';
+    initialDetailView?: 'trending-config' | 'trusted-vaults' | 'blacklisted-markets' | 'rpc-config' | 'filter-thresholds';
+    onCloseCallback?: () => void;
   };
 
   // Vault Operations

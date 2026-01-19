@@ -10,6 +10,9 @@ type AppSettingsState = {
   showUnwhitelistedMarkets: boolean;
   showFullRewardAPY: boolean;
   isAprDisplay: boolean;
+
+  // UI dismissals
+  trustedVaultsWarningDismissed: boolean;
 };
 
 type AppSettingsActions = {
@@ -18,6 +21,7 @@ type AppSettingsActions = {
   setShowUnwhitelistedMarkets: (show: boolean) => void;
   setShowFullRewardAPY: (show: boolean) => void;
   setIsAprDisplay: (isApr: boolean) => void;
+  setTrustedVaultsWarningDismissed: (dismissed: boolean) => void;
 
   // Bulk update for migration
   setAll: (state: Partial<AppSettingsState>) => void;
@@ -43,6 +47,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       showUnwhitelistedMarkets: false,
       showFullRewardAPY: false,
       isAprDisplay: false,
+      trustedVaultsWarningDismissed: false,
 
       // Actions
       setUsePermit2: (use) => set({ usePermit2: use }),
@@ -50,6 +55,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       setShowUnwhitelistedMarkets: (show) => set({ showUnwhitelistedMarkets: show }),
       setShowFullRewardAPY: (show) => set({ showFullRewardAPY: show }),
       setIsAprDisplay: (isApr) => set({ isAprDisplay: isApr }),
+      setTrustedVaultsWarningDismissed: (dismissed) => set({ trustedVaultsWarningDismissed: dismissed }),
       setAll: (state) => set(state),
     }),
     {

@@ -1,5 +1,6 @@
 'use client';
 
+import { Divider } from '@/components/ui/divider';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { SettingToggleItem, SettingActionItem } from '../SettingItem';
 import type { DetailView } from '../constants';
@@ -13,20 +14,19 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded bg-surface p-4">
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Trending</h3>
         <SettingToggleItem
-          title="Trending Markets"
-          description="Highlight markets with significant supply or borrow activity based on flow metrics."
+          title="Enable Trending Filter"
+          description="Show a 'Trending' filter option in the markets filter popover."
           selected={trendingConfig.enabled}
           onChange={setTrendingEnabled}
           ariaLabel="Toggle trending markets"
         />
-      </div>
-
-      <div className="rounded bg-surface p-4">
+        <Divider />
         <SettingActionItem
-          title="Configure Trending Criteria"
-          description="Define thresholds for market flow metrics to identify trending markets."
+          title="Configure Criteria"
+          description="Set thresholds for what makes a market 'trending'."
           buttonLabel="Configure"
           onClick={() => onNavigateToDetail?.('trending-config')}
         />
