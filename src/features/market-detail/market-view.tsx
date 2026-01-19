@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';

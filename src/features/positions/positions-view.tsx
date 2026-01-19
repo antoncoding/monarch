@@ -24,7 +24,7 @@ import { SupportedNetworks } from '@/utils/networks';
 export default function Positions() {
   const { account } = useParams<{ account: string }>();
   const { open } = useModal();
-  const { chainId } = useConnection(); 
+  const { chainId } = useConnection();
 
   const { loading: isMarketsLoading } = useProcessedMarkets();
 
