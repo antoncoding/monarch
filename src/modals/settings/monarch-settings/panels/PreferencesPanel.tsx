@@ -35,8 +35,8 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Trusted Vaults */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Trusted Vaults</h3>
         <SettingActionItem
           title="Manage Trusted Vaults"
           description="Choose which vaults you trust. Only vaults marked as default trusted are selected automatically."
@@ -71,14 +71,11 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
               <div className="flex h-6 items-center text-xs text-secondary">Loading vaults...</div>
             )}
           </div>
-          <span className="text-[11px] text-secondary">
-            {userTrustedVaults.length} vault{userTrustedVaults.length !== 1 ? 's' : ''} trusted
-          </span>
         </div>
       </div>
 
-      {/* Blacklisted Markets */}
-      <div className="rounded bg-surface p-4">
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Hidden Markets</h3>
         <SettingActionItem
           title="Manage Blacklisted Markets"
           description="Block specific markets from appearing in your view. Blacklisted markets are completely hidden from all lists."

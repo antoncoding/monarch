@@ -3,7 +3,7 @@ import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Input } from '@/components/ui/input';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
+import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { COLUMN_DESCRIPTIONS, COLUMN_LABELS, DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from './column-visibility';
 
@@ -50,26 +50,25 @@ export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSett
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       backdrop="blur"
-      size="xl"
+      size="md"
       zIndex="settings"
     >
       {(onClose) => (
         <>
           <ModalHeader
             title="Table Preferences"
-            description="Configure column visibility and pagination for this table"
+            description="Configure column visibility and pagination"
             mainIcon={<FiSliders className="h-5 w-5" />}
             onClose={onClose}
           />
           <ModalBody className="flex flex-col gap-4">
-            <div className="bg-surface flex flex-col gap-3 rounded p-4">
+            <div className="flex flex-col gap-4">
               <h3 className="text-xs uppercase text-secondary">Visible Columns</h3>
-              <p className="text-xs text-secondary mb-2">Choose which columns to display.</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
                 {columnKeys.map((key) => (
                   <div
                     key={key}
-                    className="flex items-center justify-between gap-2 rounded p-2 bg-surface hover:bg-surface-dark transition-colors"
+                    className="flex items-center justify-between gap-4 py-1"
                   >
                     <label
                       htmlFor={`col-${key}`}
@@ -91,7 +90,7 @@ export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSett
               </div>
             </div>
 
-            <div className="bg-surface flex flex-col gap-3 rounded p-4">
+            <div className="flex flex-col gap-3">
               <h3 className="text-xs uppercase text-secondary">Pagination</h3>
               <SettingItem
                 title="Entries Per Page"
@@ -119,14 +118,6 @@ export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSett
               </SettingItem>
             </div>
           </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="ghost"
-              onClick={onClose}
-            >
-              Close
-            </Button>
-          </ModalFooter>
         </>
       )}
     </Modal>

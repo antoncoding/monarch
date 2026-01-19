@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
+import { Divider } from '@/components/ui/divider';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { PaletteSelector } from '@/components/ui/palette-preview';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -22,46 +23,49 @@ export function DisplayPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between rounded bg-surface p-4">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-sm font-medium text-primary">Dark Mode</h3>
-          <p className="text-xs text-secondary">Switch between light and dark color themes for the application interface.</p>
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Appearance</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-primary">Dark Mode</span>
+            <span className="text-xs text-secondary">Switch between light and dark color themes.</span>
+          </div>
+          {mounted && (
+            <IconSwitch
+              selected={isDarkMode}
+              onChange={() => setTheme(isDarkMode ? 'light' : 'dark')}
+              size="xs"
+              color="primary"
+              aria-label="Toggle dark mode"
+            />
+          )}
         </div>
-        {mounted && (
-          <IconSwitch
-            selected={isDarkMode}
-            onChange={() => setTheme(isDarkMode ? 'light' : 'dark')}
-            size="xs"
-            color="primary"
-            aria-label="Toggle dark mode"
-          />
-        )}
       </div>
 
-      <div className="rounded bg-surface p-4">
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Rate Display</h3>
         <SettingToggleItem
           title="Show APR Instead of APY"
-          description="Display Annual Percentage Rate (APR) instead of Annual Percentage Yield (APY). APR represents the simple annualized rate, while APY accounts for continuous compounding."
+          description="Display simple annualized rate instead of compounded yield."
           selected={isAprDisplay}
           onChange={setIsAprDisplay}
           ariaLabel="Toggle APR display"
         />
-      </div>
-
-      <div className="rounded bg-surface p-4">
+        <Divider />
         <SettingToggleItem
           title="Show Full Reward APY"
-          description="Include external reward programs (like MORPHO emissions) when displaying APY values. When disabled, only base protocol rates are shown."
+          description="Include external rewards like MORPHO emissions in APY values."
           selected={showFullRewardAPY}
           onChange={setShowFullRewardAPY}
           ariaLabel="Toggle full reward APY"
         />
       </div>
 
-      <div className="flex flex-col gap-3 rounded bg-surface p-4">
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Charts</h3>
         <div className="flex flex-col gap-1">
-          <h3 className="text-sm font-medium text-primary">Chart Color Palette</h3>
-          <p className="text-xs text-secondary">Choose a color scheme for charts and graphs across the application.</p>
+          <span className="text-sm font-medium text-primary">Color Palette</span>
+          <span className="text-xs text-secondary">Choose a color scheme for charts and graphs.</span>
         </div>
         {mounted && (
           <PaletteSelector

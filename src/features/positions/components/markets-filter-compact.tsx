@@ -25,9 +25,6 @@ type MarketFilterProps = {
 
 type DetailViewType = 'filter-thresholds' | 'trusted-vaults' | 'trending-config';
 
-const GEAR_BUTTON_CLASS =
-  'flex items-center justify-center h-5 w-5 rounded text-secondary hover:text-primary hover:bg-surface-soft transition-colors';
-
 export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const { open: openModal } = useModal();
@@ -164,14 +161,15 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
                     <span className="font-zen text-sm font-semibold text-primary">Value Thresholds</span>
                     <span className="font-zen text-xs text-secondary">Filter markets by minimum USD values.</span>
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleOpenDetailView('filter-thresholds')}
-                    className="flex items-center gap-1 rounded p-1.5 text-secondary hover:text-primary hover:bg-surface-soft transition-colors"
                     aria-label="Configure thresholds"
+                    className="h-7 w-7"
                   >
                     <GoGear className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
                 <div className="flex flex-col gap-3">
                   <FilterRow
@@ -218,14 +216,15 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
                   description={`Show markets supplied by your ${trustedVaultCount} trusted vault${trustedVaultCount !== 1 ? 's' : ''}`}
                 >
                   <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleOpenDetailView('trusted-vaults')}
-                      className={GEAR_BUTTON_CLASS}
                       aria-label="Configure trusted vaults"
+                      className="h-6 w-6"
                     >
                       <GoGear className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                     <IconSwitch
                       selected={trustedVaultsOnly}
                       onChange={setTrustedVaultsOnly}
@@ -239,14 +238,15 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
                     description="Show markets matching your trending criteria"
                   >
                     <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleOpenDetailView('trending-config')}
-                        className={GEAR_BUTTON_CLASS}
                         aria-label="Configure trending"
+                        className="h-6 w-6"
                       >
                         <GoGear className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                       <IconSwitch
                         selected={trendingMode}
                         onChange={toggleTrendingMode}
