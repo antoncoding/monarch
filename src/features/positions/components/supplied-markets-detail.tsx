@@ -1,3 +1,5 @@
+'use client';
+
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -8,7 +10,8 @@ import { useRateLabel } from '@/hooks/useRateLabel';
 import { useModal } from '@/hooks/useModal';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import type { MarketPosition, GroupedPosition } from '@/utils/types';
-import { getCollateralColor } from '@/features/positions/utils/colors';
+import { getCollateralColorFromPalette, OTHER_COLOR } from '@/features/positions/utils/colors';
+import { useChartColors } from '@/constants/chartColors';
 import { AllocationCell } from './allocation-cell';
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
@@ -107,6 +110,7 @@ function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosit
 // shared similar style with @vault-allocation-detail.tsx
 export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure }: SuppliedMarketsDetailProps) {
   const { short: rateLabel } = useRateLabel();
+  const { pie: pieColors } = useChartColors();
 
   // Sort markets by size
   const sortedMarkets = [...groupedPosition.markets].sort(
@@ -138,7 +142,10 @@ export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure 
                     className="h-full opacity-70"
                     style={{
                       width: `${collateral.percentage}%`,
-                      backgroundColor: collateral.symbol === 'Others' ? '#A0AEC0' : getCollateralColor(collateral.address),
+                      backgroundColor:
+                        collateral.symbol === 'Others'
+                          ? OTHER_COLOR
+                          : getCollateralColorFromPalette(collateral.address, pieColors),
                     }}
                     title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
                   />
@@ -152,7 +159,10 @@ export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure 
                   >
                     <span
                       style={{
-                        color: collateral.symbol === 'Others' ? '#A0AEC0' : getCollateralColor(collateral.address),
+                        color:
+                          collateral.symbol === 'Others'
+                            ? OTHER_COLOR
+                            : getCollateralColorFromPalette(collateral.address, pieColors),
                       }}
                     >
                       ■
