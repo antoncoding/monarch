@@ -196,6 +196,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
               {columnVisibility.supplyAPY && (
                 <TableCell
                   data-label={supplyRateLabel}
+                  className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <APYCell market={item} />

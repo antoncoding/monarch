@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Input } from '@/components/ui/input';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { COLUMN_DESCRIPTIONS, COLUMN_LABELS, DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from './column-visibility';
 
@@ -32,8 +33,23 @@ function SettingItem({ title, description, children }: SettingItemProps) {
 
 export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSettingsModalProps) {
   const { columnVisibility, setColumnVisibility, entriesPerPage, setEntriesPerPage } = useMarketPreferences();
+  const { short: rateShort } = useRateLabel();
 
   const [customEntries, setCustomEntries] = useState(entriesPerPage.toString());
+
+  const rateWord = rateShort === 'APR' ? 'rate' : 'yield';
+
+  const getLabel = (key: keyof ColumnVisibility): string => {
+    if (key === 'supplyAPY') return `Supply ${rateShort}`;
+    if (key === 'borrowAPY') return `Borrow ${rateShort}`;
+    return COLUMN_LABELS[key];
+  };
+
+  const getDescription = (key: keyof ColumnVisibility): string => {
+    if (key === 'supplyAPY') return `Annual percentage ${rateWord} for suppliers`;
+    if (key === 'borrowAPY') return `Annual percentage ${rateWord} for borrowers`;
+    return COLUMN_DESCRIPTIONS[key];
+  };
 
   const handleCustomEntriesSubmit = () => {
     const value = Number(customEntries);
@@ -74,8 +90,8 @@ export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSett
                       htmlFor={`col-${key}`}
                       className="flex-grow cursor-pointer"
                     >
-                      <p className="text-sm font-medium text-primary">{COLUMN_LABELS[key]}</p>
-                      <p className="text-xs text-secondary">{COLUMN_DESCRIPTIONS[key]}</p>
+                      <p className="text-sm font-medium text-primary">{getLabel(key)}</p>
+                      <p className="text-xs text-secondary">{getDescription(key)}</p>
                     </label>
                     <IconSwitch
                       id={`col-${key}`}
