@@ -1,31 +1,36 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useDisclosure } from '@/hooks/useDisclosure';
-import { Divider } from '@/components/ui/divider';
-import { Tooltip } from '@/components/ui/tooltip';
-import { GoFilter } from 'react-icons/go';
+import { GoFilter, GoGear } from 'react-icons/go';
 import { Button } from '@/components/ui/button';
+import { Divider } from '@/components/ui/divider';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
 import { IconSwitch } from '@/components/ui/icon-switch';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
+import { Tooltip } from '@/components/ui/tooltip';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
-import { formatReadable } from '@/utils/balance';
+import { useDisclosure } from '@/hooks/useDisclosure';
+import { useModal } from '@/hooks/useModal';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
-import { useAppSettings } from '@/stores/useAppSettings';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { formatReadable } from '@/utils/balance';
 import { parseNumericThreshold } from '@/utils/markets';
 
 type MarketFilterProps = {
-  onOpenSettings: () => void;
   className?: string;
-  /** Use 'button' variant for a styled button appearance (default: 'ghost') */
   variant?: 'ghost' | 'button';
 };
 
-export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: MarketFilterProps) {
+type DetailViewType = 'filter-thresholds' | 'trusted-vaults' | 'trending-config';
+
+const GEAR_BUTTON_CLASS =
+  'flex items-center justify-center h-5 w-5 rounded text-secondary hover:text-primary hover:bg-surface-soft transition-colors';
+
+export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+  const { open: openModal } = useModal();
 
   // Get all filter values from stores
   const {
@@ -49,34 +54,25 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
 
   const { trendingMode, toggleTrendingMode } = useMarketsFilters();
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useAppSettings();
+  const { vaults: trustedVaults } = useTrustedVaults();
+  const trustedVaultCount = trustedVaults.length;
 
-  // Compute thresholds from store values
-  const thresholds = useMemo(
-    () => ({
-      minSupply: parseNumericThreshold(usdMinSupply),
-      minBorrow: parseNumericThreshold(usdMinBorrow),
-      minLiquidity: parseNumericThreshold(usdMinLiquidity),
-    }),
-    [usdMinSupply, usdMinBorrow, usdMinLiquidity],
-  );
-
-  const thresholdCopy = useMemo(
-    () => ({
-      minSupply: formatReadable(thresholds.minSupply),
-      minBorrow: formatReadable(thresholds.minBorrow),
-      minLiquidity: formatReadable(thresholds.minLiquidity),
-    }),
-    [thresholds],
-  );
-
-  const handleCustomize = () => {
+  // Navigate to a specific detail view, then reopen filter when settings closes
+  const handleOpenDetailView = (detailView: DetailViewType) => {
     onClose();
-    onOpenSettings();
+    openModal('monarchSettings', {
+      initialDetailView: detailView,
+      onCloseCallback: onOpen,
+    });
   };
 
   const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets;
   const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode;
   const hasActiveFilters = advancedFilterActive || !basicGuardianAllAllowed;
+
+  const isButtonVariant = variant === 'button';
+
+  const formatThreshold = (value: string) => `>= $${formatReadable(parseNumericThreshold(value))}`;
 
   return (
     <div className={className}>
@@ -90,14 +86,14 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
         }
       >
         <Button
-          variant={variant === 'button' ? 'default' : 'ghost'}
-          size={variant === 'button' ? 'md' : 'sm'}
-          className={variant === 'button' ? 'w-10 min-w-10 px-0' : 'min-w-0 px-2 text-secondary'}
+          variant={isButtonVariant ? 'default' : 'ghost'}
+          size={isButtonVariant ? 'md' : 'sm'}
+          className={isButtonVariant ? 'w-10 min-w-10 px-0' : 'min-w-0 px-2 text-secondary'}
           aria-label="Market filters"
           onClick={onOpen}
         >
           <GoFilter
-            size={variant === 'button' ? 16 : 14}
+            size={isButtonVariant ? 16 : 14}
             style={{ color: hasActiveFilters ? MONARCH_PRIMARY : undefined }}
           />
         </Button>
@@ -115,7 +111,7 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
             <ModalHeader
               variant="compact"
               title="Filters"
-              description="Quickly toggle the visibility filters that power the markets table"
+              description="Quickly toggle filters that control market visibility"
               mainIcon={<GoFilter size={14} />}
               onClose={close}
             />
@@ -124,8 +120,8 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
               className="flex flex-col gap-4"
             >
               <FilterSection
-                title="Basic Filters"
-                helper="Options to display markets with unknown parameters. Use with caution."
+                title="Risk Guards"
+                helper="Control visibility of unverified markets and tokens."
               >
                 <FilterRow
                   title="Show Unknown Tokens"
@@ -149,7 +145,7 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
                 </FilterRow>
                 <FilterRow
                   title="Show Unwhitelisted Markets"
-                  description="Surface markets that haven't been vetted by Monarch."
+                  description="Surface markets that haven't been vetted."
                 >
                   <IconSwitch
                     selected={showUnwhitelistedMarkets}
@@ -162,15 +158,74 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
 
               <Divider />
 
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="font-zen text-sm font-semibold text-primary">Value Thresholds</span>
+                    <span className="font-zen text-xs text-secondary">Filter markets by minimum USD values.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenDetailView('filter-thresholds')}
+                    className="flex items-center gap-1 rounded p-1.5 text-secondary hover:text-primary hover:bg-surface-soft transition-colors"
+                    aria-label="Configure thresholds"
+                  >
+                    <GoGear className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <FilterRow
+                    title="Min Supply"
+                    description={formatThreshold(usdMinSupply)}
+                  >
+                    <IconSwitch
+                      selected={minSupplyEnabled}
+                      onChange={setMinSupplyEnabled}
+                      size="xs"
+                    />
+                  </FilterRow>
+                  <FilterRow
+                    title="Min Borrow"
+                    description={formatThreshold(usdMinBorrow)}
+                  >
+                    <IconSwitch
+                      selected={minBorrowEnabled}
+                      onChange={setMinBorrowEnabled}
+                      size="xs"
+                    />
+                  </FilterRow>
+                  <FilterRow
+                    title="Min Liquidity"
+                    description={formatThreshold(usdMinLiquidity)}
+                  >
+                    <IconSwitch
+                      selected={minLiquidityEnabled}
+                      onChange={setMinLiquidityEnabled}
+                      size="xs"
+                    />
+                  </FilterRow>
+                </div>
+              </div>
+
+              <Divider />
+
               <FilterSection
-                title="Advanced Filters"
-                helper="Use advanced filters to fine-tune your market view. Use Customize Filters to adjust thresholds and manage trusted vaults."
+                title="My Preferences"
+                helper="Filters based on your configured preferences."
               >
                 <FilterRow
                   title="Trusted Vaults Only"
-                  description="Hide markets where none of your trusted vaults supply."
+                  description={`Show markets supplied by your ${trustedVaultCount} trusted vault${trustedVaultCount !== 1 ? 's' : ''}`}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDetailView('trusted-vaults')}
+                      className={GEAR_BUTTON_CLASS}
+                      aria-label="Configure trusted vaults"
+                    >
+                      <GoGear className="h-3.5 w-3.5" />
+                    </button>
                     <IconSwitch
                       selected={trustedVaultsOnly}
                       onChange={setTrustedVaultsOnly}
@@ -181,56 +236,29 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
                 {trendingConfig.enabled && (
                   <FilterRow
                     title="Trending Only"
-                    description="Show only markets with high flow activity."
+                    description="Show markets matching your trending criteria"
                   >
-                    <IconSwitch
-                      selected={trendingMode}
-                      onChange={toggleTrendingMode}
-                      size="xs"
-                      color="primary"
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenDetailView('trending-config')}
+                        className={GEAR_BUTTON_CLASS}
+                        aria-label="Configure trending"
+                      >
+                        <GoGear className="h-3.5 w-3.5" />
+                      </button>
+                      <IconSwitch
+                        selected={trendingMode}
+                        onChange={toggleTrendingMode}
+                        size="xs"
+                        color="primary"
+                      />
+                    </div>
                   </FilterRow>
                 )}
-                <FilterRow
-                  title="Min Supply"
-                  description={`Require ≥ $${thresholdCopy.minSupply} supplied.`}
-                >
-                  <IconSwitch
-                    selected={minSupplyEnabled}
-                    onChange={setMinSupplyEnabled}
-                    size="xs"
-                  />
-                </FilterRow>
-                <FilterRow
-                  title="Min Borrow"
-                  description={`Require ≥ $${thresholdCopy.minBorrow} borrowed.`}
-                >
-                  <IconSwitch
-                    selected={minBorrowEnabled}
-                    onChange={setMinBorrowEnabled}
-                    size="xs"
-                  />
-                </FilterRow>
-                <FilterRow
-                  title="Min Liquidity"
-                  description={`Require ≥ $${thresholdCopy.minLiquidity} liquidity.`}
-                >
-                  <IconSwitch
-                    selected={minLiquidityEnabled}
-                    onChange={setMinLiquidityEnabled}
-                    size="xs"
-                  />
-                </FilterRow>
               </FilterSection>
             </ModalBody>
-            <ModalFooter className="justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCustomize}
-              >
-                Customize Filters
-              </Button>
+            <ModalFooter className="justify-end">
               <Button
                 color="primary"
                 size="sm"

@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { SettingsHeader } from './SettingsHeader';
 import { TransactionPanel, DisplayPanel, FiltersPanel, PreferencesPanel, ExperimentalPanel } from './panels';
-import { TrendingDetail, TrustedVaultsDetail, BlacklistedMarketsDetail, RpcDetail } from './details';
+import { TrendingDetail, TrustedVaultsDetail, BlacklistedMarketsDetail, RpcDetail, ThresholdsDetail } from './details';
 import type { SettingsCategory, DetailView } from './constants';
 
 type PanelProps = {
@@ -23,6 +23,7 @@ const DETAIL_COMPONENTS: Record<Exclude<DetailView, null>, React.ComponentType> 
   'trusted-vaults': TrustedVaultsDetail,
   'blacklisted-markets': BlacklistedMarketsDetail,
   'rpc-config': RpcDetail,
+  'filter-thresholds': ThresholdsDetail,
 };
 
 const slideVariants = {

@@ -1,30 +1,37 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal } from '@/components/common/Modal';
-import { SettingsSidebar } from './SettingsSidebar';
+import { DETAIL_TITLES, type DetailView, type SettingsCategory } from './constants';
 import { SettingsContent } from './SettingsContent';
-import type { SettingsCategory, DetailView } from './constants';
+import { SettingsSidebar } from './SettingsSidebar';
 
 type MonarchSettingsModalProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   initialCategory?: SettingsCategory;
+  initialDetailView?: DetailView;
+  onCloseCallback?: () => void;
 };
 
-export function MonarchSettingsModal({ isOpen, onOpenChange, initialCategory = 'transaction' }: MonarchSettingsModalProps) {
+export function MonarchSettingsModal({
+  isOpen,
+  onOpenChange,
+  initialCategory = 'transaction',
+  initialDetailView,
+  onCloseCallback,
+}: MonarchSettingsModalProps) {
   const [selectedCategory, setSelectedCategory] = useState<SettingsCategory>(initialCategory);
-  const [detailView, setDetailView] = useState<DetailView>(null);
+  const [detailView, setDetailView] = useState<DetailView>(initialDetailView ?? null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'forward' | 'backward'>('forward');
 
-  // Reset state when modal opens/closes
   useEffect(() => {
-    if (isOpen) {
-      setSelectedCategory(initialCategory);
-      setDetailView(null);
-    }
-  }, [isOpen, initialCategory]);
+    if (!isOpen) return;
+    setSelectedCategory(initialCategory);
+    const isValidDetailView = initialDetailView && initialDetailView in DETAIL_TITLES;
+    setDetailView(isValidDetailView ? initialDetailView : null);
+  }, [isOpen, initialCategory, initialDetailView]);
 
   const handleNavigateToDetail = useCallback((view: DetailView) => {
     setSlideDirection('forward');
@@ -52,10 +59,20 @@ export function MonarchSettingsModal({ isOpen, onOpenChange, initialCategory = '
     setSidebarCollapsed((prev) => !prev);
   }, []);
 
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      onOpenChange(open);
+      if (!open) {
+        onCloseCallback?.();
+      }
+    },
+    [onOpenChange, onCloseCallback],
+  );
+
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       size="4xl"
       zIndex="settings"
       scrollBehavior="normal"

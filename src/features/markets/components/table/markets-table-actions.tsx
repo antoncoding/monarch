@@ -39,7 +39,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
         </Tooltip>
       )}
 
-      <MarketFilter onOpenSettings={() => openModal('marketSettings', {})} />
+      <MarketFilter />
 
       <Tooltip
         content={
@@ -93,8 +93,8 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
       <Tooltip
         content={
           <TooltipContent
-            title="Preferences"
-            detail="Adjust thresholds and columns"
+            title="Table Preferences"
+            detail="Configure column visibility and pagination"
           />
         }
       >

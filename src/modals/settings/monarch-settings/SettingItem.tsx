@@ -81,3 +81,21 @@ export function SettingActionItem({ title, description, buttonLabel, onClick, ba
     </div>
   );
 }
+
+type SettingInputItemProps = {
+  title: string;
+  description: string;
+  children: ReactNode;
+};
+
+export function SettingInputItem({ title, description, children }: SettingInputItemProps) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0 flex-1 flex flex-col gap-1">
+        <h3 className="text-sm font-medium text-primary">{title}</h3>
+        <p className="text-xs text-secondary">{description}</p>
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+}

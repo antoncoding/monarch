@@ -9,7 +9,7 @@ import { useChartPalette } from '@/stores/useChartPalette';
 import { SettingToggleItem } from '../SettingItem';
 
 export function DisplayPanel() {
-  const { isAprDisplay, setIsAprDisplay } = useAppSettings();
+  const { isAprDisplay, setIsAprDisplay, showFullRewardAPY, setShowFullRewardAPY } = useAppSettings();
   const { palette: selectedPalette, setPalette } = useChartPalette();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -45,6 +45,16 @@ export function DisplayPanel() {
           selected={isAprDisplay}
           onChange={setIsAprDisplay}
           ariaLabel="Toggle APR display"
+        />
+      </div>
+
+      <div className="rounded bg-surface p-4">
+        <SettingToggleItem
+          title="Show Full Reward APY"
+          description="Include external reward programs (like MORPHO emissions) when displaying APY values. When disabled, only base protocol rates are shown."
+          selected={showFullRewardAPY}
+          onChange={setShowFullRewardAPY}
+          ariaLabel="Toggle full reward APY"
         />
       </div>
 

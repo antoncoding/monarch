@@ -5,7 +5,7 @@ import { RiFlaskLine } from 'react-icons/ri';
 
 export type SettingsCategory = 'transaction' | 'display' | 'filters' | 'preferences' | 'experimental';
 
-export type DetailView = 'trending-config' | 'trusted-vaults' | 'blacklisted-markets' | 'rpc-config' | null;
+export type DetailView = 'trending-config' | 'trusted-vaults' | 'blacklisted-markets' | 'rpc-config' | 'filter-thresholds' | null;
 
 export type CategoryConfig = {
   id: SettingsCategory;
@@ -27,4 +27,5 @@ export const DETAIL_TITLES: Record<Exclude<DetailView, null>, string> = {
   'trusted-vaults': 'Trusted Vaults',
   'blacklisted-markets': 'Blacklisted Markets',
   'rpc-config': 'Custom RPC',
+  'filter-thresholds': 'Filter Thresholds',
 };
