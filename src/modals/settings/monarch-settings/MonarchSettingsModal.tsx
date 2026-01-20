@@ -33,7 +33,7 @@ export function MonarchSettingsModal({
     setDetailView(isValidDetailView ? initialDetailView : null);
   }, [isOpen, initialCategory, initialDetailView]);
 
-  const handleNavigateToDetail = useCallback((view: DetailView) => {
+  const handleNavigateToDetail = useCallback((view: Exclude<DetailView, null>) => {
     setSlideDirection('forward');
     setDetailView(view);
   }, []);

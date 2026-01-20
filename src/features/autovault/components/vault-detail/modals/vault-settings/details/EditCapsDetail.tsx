@@ -1,14 +1,20 @@
-import { useState } from 'react';
+'use client';
+
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
-import { CurrentCaps } from './CurrentCaps';
-import { EditCaps } from './EditCaps';
-import type { CapsTabProps } from './types';
+import type { SupportedNetworks } from '@/utils/networks';
+import { EditCaps } from '../../../settings/EditCaps';
 
-export function CapsTab({ vaultAddress, chainId }: CapsTabProps) {
+type EditCapsDetailProps = {
+  vaultAddress: Address;
+  chainId: SupportedNetworks;
+  onBack: () => void;
+};
+
+export function EditCapsDetail({ vaultAddress, chainId, onBack }: EditCapsDetailProps) {
   const { address: connectedAddress } = useConnection();
 
   // Pull data directly - TanStack Query deduplicates
@@ -26,9 +32,7 @@ export function CapsTab({ vaultAddress, chainId }: CapsTabProps) {
   const vaultAsset = vaultData?.assetAddress as Address | undefined;
   const existingCaps = vaultData?.capsData;
 
-  const [isEditing, setIsEditing] = useState(false);
-
-  return isEditing ? (
+  return (
     <EditCaps
       existingCaps={existingCaps}
       vaultAsset={vaultAsset}
@@ -36,22 +40,14 @@ export function CapsTab({ vaultAddress, chainId }: CapsTabProps) {
       isOwner={isOwner}
       isUpdating={isUpdatingCaps}
       adapterAddress={adapterAddress}
-      onCancel={() => setIsEditing(false)}
+      onCancel={onBack}
       onSave={async (caps) => {
         const success = await updateCaps(caps);
         if (success) {
-          setIsEditing(false);
+          onBack();
         }
         return success;
       }}
-    />
-  ) : (
-    <CurrentCaps
-      existingCaps={existingCaps}
-      isOwner={isOwner}
-      onStartEdit={() => setIsEditing(true)}
-      vaultAsset={vaultAsset}
-      chainId={chainId}
     />
   );
 }

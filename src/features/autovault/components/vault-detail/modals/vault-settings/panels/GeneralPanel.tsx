@@ -1,4 +1,7 @@
+'use client';
+
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,9 +9,14 @@ import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
-import type { GeneralTabProps } from './types';
+import type { SupportedNetworks } from '@/utils/networks';
 
-export function GeneralTab({ vaultAddress, chainId }: GeneralTabProps) {
+type GeneralPanelProps = {
+  vaultAddress: Address;
+  chainId: SupportedNetworks;
+};
+
+export function GeneralPanel({ vaultAddress, chainId }: GeneralPanelProps) {
   const { address: connectedAddress } = useConnection();
 
   // Pull data directly - TanStack Query deduplicates
@@ -29,8 +37,8 @@ export function GeneralTab({ vaultAddress, chainId }: GeneralTabProps) {
   const previousName = useMemo(() => currentName.trim(), [currentName]);
   const previousSymbol = useMemo(() => currentSymbol.trim(), [currentSymbol]);
 
-  const [nameInput, setNameInput] = useState(previousName || defaultName);
-  const [symbolInput, setSymbolInput] = useState(previousSymbol || defaultSymbol);
+  const [nameInput, setNameInput] = useState(previousName ?? defaultName);
+  const [symbolInput, setSymbolInput] = useState(previousSymbol ?? defaultSymbol);
   const [metadataError, setMetadataError] = useState<string | null>(null);
 
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
@@ -39,8 +47,8 @@ export function GeneralTab({ vaultAddress, chainId }: GeneralTabProps) {
 
   // Reset inputs when current values change
   useEffect(() => {
-    setNameInput(previousName || defaultName);
-    setSymbolInput(previousSymbol || defaultSymbol);
+    setNameInput(previousName ?? defaultName);
+    setSymbolInput(previousSymbol ?? defaultSymbol);
   }, [previousName, previousSymbol, defaultName, defaultSymbol]);
 
   const trimmedName = nameInput.trim();
@@ -74,8 +82,8 @@ export function GeneralTab({ vaultAddress, chainId }: GeneralTabProps) {
     }
 
     const success = await updateNameAndSymbol({
-      name: trimmedName !== previousName ? trimmedName || undefined : undefined,
-      symbol: trimmedSymbol !== previousSymbol ? trimmedSymbol || undefined : undefined,
+      name: trimmedName !== previousName ? (trimmedName ?? undefined) : undefined,
+      symbol: trimmedSymbol !== previousSymbol ? (trimmedSymbol ?? undefined) : undefined,
     });
 
     if (success) {

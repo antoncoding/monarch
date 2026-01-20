@@ -24,7 +24,7 @@ import { VaultAllocatorCard } from '@/features/autovault/components/vault-detail
 import { VaultCollateralsCard } from '@/features/autovault/components/vault-detail/vault-collaterals-card';
 import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
 import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
-import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings-modal';
+import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings';
 import { VaultSummaryMetrics } from '@/features/autovault/components/vault-detail/vault-summary-metrics';
 import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
