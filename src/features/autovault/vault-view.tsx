@@ -207,7 +207,7 @@ export default function VaultContent() {
                   </Button>
                 </span>
               </Tooltip>
-              {(vaultContract.isOwner) && (
+              {vaultContract.isOwner && (
                 <Tooltip
                   content={
                     <TooltipContent

@@ -411,7 +411,10 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
           <div className="space-y-2">
             <div className="space-y-1">
               <p className="text-xs uppercase text-secondary">Collateral Caps ({collateralCaps.size})</p>
-              <p className="text-xs text-secondary">Shared limit across all markets using the same collateral. Example: WETH at 40% means all WETH markets combined cannot exceed 40%.</p>
+              <p className="text-xs text-secondary">
+                Shared limit across all markets using the same collateral. Example: WETH at 40% means all WETH markets combined cannot
+                exceed 40%.
+              </p>
             </div>
 
             {/* Column Headers */}
@@ -502,7 +505,9 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
           <div className="space-y-2">
             <div className="space-y-1">
               <p className="text-xs uppercase text-secondary">Market Caps ({marketCaps.size})</p>
-              <p className="text-xs text-secondary">Individual limits per market. Effective allocation is capped by the smaller of this and the collateral cap above.</p>
+              <p className="text-xs text-secondary">
+                Individual limits per market. Effective allocation is capped by the smaller of this and the collateral cap above.
+              </p>
             </div>
 
             {/* Column Headers */}

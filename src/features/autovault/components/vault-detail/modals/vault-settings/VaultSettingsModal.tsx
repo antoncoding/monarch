@@ -20,8 +20,18 @@ type VaultSettingsModalProps = {
  * Open: useVaultSettingsModalStore().open('category')
  */
 export function VaultSettingsModal({ vaultAddress, chainId }: VaultSettingsModalProps) {
-  const { isOpen, activeCategory, activeDetailView, slideDirection, sidebarCollapsed, close, setCategory, navigateToDetail, navigateBack, toggleSidebar } =
-    useVaultSettingsModalStore();
+  const {
+    isOpen,
+    activeCategory,
+    activeDetailView,
+    slideDirection,
+    sidebarCollapsed,
+    close,
+    setCategory,
+    navigateToDetail,
+    navigateBack,
+    toggleSidebar,
+  } = useVaultSettingsModalStore();
 
   const handleCategoryChange = useCallback(
     (category: typeof activeCategory) => {

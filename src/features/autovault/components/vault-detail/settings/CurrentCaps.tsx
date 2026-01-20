@@ -82,7 +82,7 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
           const marketCapPercent = Number(cap.relativeCap) / 1e16;
 
           const collateralInfo = collateralAddr ? collateralCapMap.get(collateralAddr) : null;
-          const collateralCapPercent = collateralInfo?.relativeCap ?? Infinity;
+          const collateralCapPercent = collateralInfo?.relativeCap ?? Number.POSITIVE_INFINITY;
           const collateralAbsoluteCap = collateralInfo?.absoluteCap;
 
           // Effective cap is the smaller of market cap or collateral cap
@@ -127,7 +127,10 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <p className="text-xs uppercase text-secondary">Allocation Caps</p>
-          <p className="text-xs text-secondary">Caps limit how much of the vault can be allocated to each market. The effective cap shown is the smaller of the market cap and its collateral cap.</p>
+          <p className="text-xs text-secondary">
+            Caps limit how much of the vault can be allocated to each market. The effective cap shown is the smaller of the market cap and
+            its collateral cap.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {isOwner && (
@@ -180,7 +183,9 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
                       {formatAbsoluteCap(item.collateralAbsoluteCap) !== 'No limit' && (
                         <span> · {formatAbsoluteCap(item.collateralAbsoluteCap)}</span>
                       )}
-                      {item.sharedMarketCount > 1 && <span className="text-secondary"> (shared with {item.sharedMarketCount} markets)</span>}
+                      {item.sharedMarketCount > 1 && (
+                        <span className="text-secondary"> (shared with {item.sharedMarketCount} markets)</span>
+                      )}
                     </span>
                   </div>
                 )}

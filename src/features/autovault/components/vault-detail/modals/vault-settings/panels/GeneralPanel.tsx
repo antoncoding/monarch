@@ -82,8 +82,8 @@ export function GeneralPanel({ vaultAddress, chainId }: GeneralPanelProps) {
     }
 
     const success = await updateNameAndSymbol({
-      name: trimmedName !== previousName ? trimmedName ?? undefined : undefined,
-      symbol: trimmedSymbol !== previousSymbol ? trimmedSymbol ?? undefined : undefined,
+      name: trimmedName !== previousName ? (trimmedName ?? undefined) : undefined,
+      symbol: trimmedSymbol !== previousSymbol ? (trimmedSymbol ?? undefined) : undefined,
     });
 
     if (success) {
