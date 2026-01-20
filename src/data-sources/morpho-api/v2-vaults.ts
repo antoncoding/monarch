@@ -66,8 +66,8 @@ type ApiVaultV2 = {
 };
 
 type VaultV2ApiResponse = {
-  data: {
-    vaultV2ByAddress: ApiVaultV2 | null;
+  data?: {
+    vaultV2ByAddress?: ApiVaultV2 | null;
   };
   errors?: { message: string }[];
 };
@@ -127,6 +127,11 @@ const fetchVaultV2DetailsCore = async (vaultAddresses: string[], network: Suppor
       };
 
       const response = await morphoGraphqlFetcher<VaultV2ApiResponse>(vaultV2Query, variables);
+
+      // Handle NOT_FOUND - vault not found in API
+      if (!response) {
+        return null;
+      }
 
       if (response.errors && response.errors.length > 0) {
         console.error('GraphQL errors:', response.errors);

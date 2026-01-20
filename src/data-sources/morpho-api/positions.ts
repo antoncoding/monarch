@@ -42,6 +42,11 @@ export const fetchMorphoUserPositionMarkets = async (
       chainId: network,
     });
 
+    // Handle NOT_FOUND - return empty array
+    if (!result) {
+      return [];
+    }
+
     const marketPositions = result.data?.userByAddress?.marketPositions ?? [];
 
     // Filter for valid positions and extract market key and chain ID
@@ -58,7 +63,7 @@ export const fetchMorphoUserPositionMarkets = async (
     return positionMarkets;
   } catch (error) {
     console.error(`Failed to fetch position markets from Morpho API for ${userAddress} on ${network}:`, error);
-    return []; // Return empty array on error
+    throw error; // Re-throw to allow caller to handle fallback
   }
 };
 
@@ -76,6 +81,11 @@ export const fetchMorphoUserPositionForMarket = async (
       chainId: network,
       marketKey: marketUniqueKey,
     });
+
+    // Handle NOT_FOUND - return null
+    if (!result) {
+      return null;
+    }
 
     const marketPosition = result.data?.marketPosition;
 

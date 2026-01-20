@@ -61,6 +61,7 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
   const results = await Promise.allSettled(
     networksToFetch.map(async (network) => {
       let markets: PositionMarket[] = [];
+      let apiError = false;
 
       // Try Morpho API first if supported
       if (supportsMorphoApi(network)) {
@@ -69,12 +70,13 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
           markets = await fetchMorphoUserPositionMarkets(user, network);
         } catch (morphoError) {
           console.error(`Failed to fetch positions via Morpho API for network ${network}:`, morphoError);
+          apiError = true;
           // Continue to Subgraph fallback
         }
       }
 
       // If Morpho API failed or not supported, try Subgraph
-      if (markets.length === 0) {
+      if (markets.length === 0 && apiError) {
         try {
           console.log(`Attempting to fetch positions via Subgraph for network ${network}`);
           markets = await fetchSubgraphUserPositionMarkets(user, network);
@@ -127,6 +129,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
       const filteredCachedMarkets = chainIds
         ? cachedMarkets.filter((m) => chainIds.includes(m.chainId as SupportedNetworks))
         : cachedMarkets;
+
       // Combine and deduplicate
       const combinedMarkets = [...sourceMarketKeys, ...filteredCachedMarkets];
       const uniqueMarketsMap = new Map<string, PositionMarket>();
@@ -136,6 +139,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
           uniqueMarketsMap.set(key, market);
         }
       });
+
       const finalMarketKeys = Array.from(uniqueMarketsMap.values());
       // console.log(`[Positions] Query 1: Final unique keys count: ${finalMarketKeys.length}`);
       return { finalMarketKeys };

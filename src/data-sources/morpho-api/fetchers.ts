@@ -4,7 +4,7 @@ import { URLS } from '@/utils/urls';
 export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
   query: string,
   variables: Record<string, unknown>,
-): Promise<T> => {
+): Promise<T | null> => {
   const response = await fetch(URLS.MORPHO_BLUE_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -20,8 +20,17 @@ export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
 
   // Check for GraphQL errors
   if ('errors' in result && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
+    // If it's known "NOT FOUND" error, handle gracefully
+    const notFoundError = (result as any).errors.find((err: { status?: string }) => err.status?.includes('NOT_FOUND'));
+
+    if (notFoundError) {
+      console.log('Morpho API return Not Found error:', notFoundError);
+      return null;
+    }
+
     // Log the full error for debugging
     console.error('Morpho API GraphQL Error:', result.errors);
+
     throw new Error('Unknown GraphQL error from Morpho API');
   }
 

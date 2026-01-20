@@ -37,6 +37,11 @@ export const fetchMorphoMarketLiquidations = async (marketId: string): Promise<M
   try {
     const result = await morphoGraphqlFetcher<MorphoAPILiquidationsResponse>(marketLiquidationsQuery, variables);
 
+    // Handle NOT_FOUND - return empty array
+    if (!result) {
+      return [];
+    }
+
     const items = result.data?.transactions?.items ?? [];
 
     // Map to unified type

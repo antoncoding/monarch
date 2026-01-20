@@ -40,6 +40,15 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
       skip: filters.skip ?? 0,
     });
 
+    // Handle NOT_FOUND - return empty result
+    if (!result) {
+      return {
+        items: [],
+        pageInfo: { count: 0, countTotal: 0 },
+        error: null,
+      };
+    }
+
     const transactions = result.data?.transactions;
     if (!transactions) {
       return {

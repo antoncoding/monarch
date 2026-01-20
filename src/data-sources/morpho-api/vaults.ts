@@ -32,9 +32,9 @@ type ApiVault = {
 };
 
 type AllVaultsApiResponse = {
-  data: {
-    vaults: {
-      items: ApiVault[];
+  data?: {
+    vaults?: {
+      items?: ApiVault[];
     };
   };
   errors?: { message: string }[];
@@ -71,8 +71,8 @@ export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
 
     const response = await morphoGraphqlFetcher<AllVaultsApiResponse>(allVaultsQuery, variables);
 
-    if (response.errors && response.errors.length > 0) {
-      console.error('GraphQL errors:', response.errors);
+    // Handle NOT_FOUND - return empty array
+    if (!response) {
       return [];
     }
 
