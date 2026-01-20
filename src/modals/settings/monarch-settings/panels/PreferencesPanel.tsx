@@ -8,7 +8,7 @@ import { SettingActionItem } from '../SettingItem';
 import type { DetailView } from '../constants';
 
 type PreferencesPanelProps = {
-  onNavigateToDetail?: (view: DetailView) => void;
+  onNavigateToDetail?: (view: Exclude<DetailView, null>) => void;
 };
 
 export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) {

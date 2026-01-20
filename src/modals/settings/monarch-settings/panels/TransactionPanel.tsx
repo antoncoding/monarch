@@ -6,7 +6,7 @@ import { SettingToggleItem, SettingActionItem } from '../SettingItem';
 import type { DetailView } from '../constants';
 
 type TransactionPanelProps = {
-  onNavigateToDetail?: (view: DetailView) => void;
+  onNavigateToDetail?: (view: Exclude<DetailView, null>) => void;
 };
 
 export function TransactionPanel({ onNavigateToDetail }: TransactionPanelProps) {
