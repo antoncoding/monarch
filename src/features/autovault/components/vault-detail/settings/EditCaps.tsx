@@ -412,8 +412,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
             <div className="space-y-1">
               <p className="text-xs uppercase text-secondary">Collateral Caps ({collateralCaps.size})</p>
               <p className="text-xs text-secondary">
-                Shared limit across all markets using the same collateral. Example: WETH at 40% means all WETH markets combined cannot
-                exceed 40%.
+                Shared limit across all markets using the same collateral.
               </p>
             </div>
 
