@@ -1,26 +1,3 @@
-import type { Address } from 'viem';
-import type { SupportedNetworks } from '@/utils/networks';
-import type { Market } from '@/utils/types';
-
-export type SettingsTab = 'general' | 'agents' | 'caps';
-
-export type MarketCapState = {
-  market: Market;
-  relativeCap: string;
-  isSelected: boolean;
-};
-
-export type GeneralTabProps = {
-  vaultAddress: Address;
-  chainId: SupportedNetworks;
-};
-
-export type AgentsTabProps = {
-  vaultAddress: Address;
-  chainId: SupportedNetworks;
-};
-
-export type CapsTabProps = {
-  vaultAddress: Address;
-  chainId: SupportedNetworks;
-};
+// Settings types are now defined in the store and constants files
+// This file is kept for backward compatibility with existing imports
+export type { VaultSettingsCategory, VaultDetailView } from '@/stores/vault-settings-modal-store';

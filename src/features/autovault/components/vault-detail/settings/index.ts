@@ -1,4 +1,4 @@
-export { GeneralTab } from './GeneralTab';
-export { AgentsTab } from './AgentsTab';
-export { CapsTab } from './CapsTab';
+export { CurrentCaps } from './CurrentCaps';
+export { EditCaps } from './EditCaps';
+export { AgentListItem } from './AgentListItem';
 export * from './types';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
@@ -7,11 +9,16 @@ import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
+import type { SupportedNetworks } from '@/utils/networks';
 import { v2AgentsBase } from '@/utils/monarch-agent';
-import { AgentListItem } from './AgentListItem';
-import type { AgentsTabProps } from './types';
+import { AgentListItem } from '../../../settings/AgentListItem';
 
-export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
+type AgentsPanelProps = {
+  vaultAddress: Address;
+  chainId: SupportedNetworks;
+};
+
+export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
   const { address: connectedAddress } = useConnection();
 
   // Pull data directly - TanStack Query deduplicates
@@ -222,34 +229,6 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
           </div>
         )}
       </div>
-
-      {/* dont show sentinels for now */}
-      {/* <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-xs uppercase text-secondary">Sentinels</p>
-            <p className="text-xs text-secondary">
-              Sentinels able to pause automation when safeguards trigger.
-            </p>
-          </div>
-        </div>
-        {sentinels.length === 0 ? (
-          <p className="text-sm text-secondary">No sentinels configured</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {sentinels.map((address) => (
-              <AccountIdentity
-                key={address}
-                address={address as Address}
-                chainId={chainId}
-                variant="compact"
-                linkTo="explorer"
-                copyable
-              />
-            ))}
-          </div>
-        )}
-      </div> */}
     </div>
   );
 }

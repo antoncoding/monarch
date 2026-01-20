@@ -15,7 +15,6 @@ import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { AddMarketCapModal } from './AddMarketCapModal';
 import { MarketCapsTable } from './MarketCapsTable';
-import { CollateralCapTooltip, MarketCapTooltip } from './Tooltips';
 
 type EditCapsProps = {
   existingCaps?: CapData;
@@ -354,9 +353,9 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
     <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-medium">Edit Cap Settings</h3>
-            <p className="text-xs text-secondary">Modify allocation limits or add new market caps</p>
+          <div className="space-y-1">
+            <p className="text-xs uppercase text-secondary">Edit Allocation Caps</p>
+            <p className="text-xs text-secondary">Define limits for how agents can allocate vault funds across markets.</p>
           </div>
         </div>
 
@@ -410,9 +409,9 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         {/* Collateral Caps Section */}
         {collateralCaps.size > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-1">
-              <h4 className="text-sm text-secondary">Collateral Caps ({collateralCaps.size})</h4>
-              <CollateralCapTooltip />
+            <div className="space-y-1">
+              <p className="text-xs uppercase text-secondary">Collateral Caps ({collateralCaps.size})</p>
+              <p className="text-xs text-secondary">Shared limit across all markets using the same collateral. Example: WETH at 40% means all WETH markets combined cannot exceed 40%.</p>
             </div>
 
             {/* Column Headers */}
@@ -501,9 +500,9 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         {/* Market Caps Section */}
         {marketCaps.size > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-1">
-              <h4 className="text-sm text-secondary">Market Caps ({marketCaps.size})</h4>
-              <MarketCapTooltip />
+            <div className="space-y-1">
+              <p className="text-xs uppercase text-secondary">Market Caps ({marketCaps.size})</p>
+              <p className="text-xs text-secondary">Individual limits per market. Effective allocation is capped by the smaller of this and the collateral cap above.</p>
             </div>
 
             {/* Column Headers */}

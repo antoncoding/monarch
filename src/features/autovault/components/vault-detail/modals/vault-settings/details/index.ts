@@ -1,0 +1,1 @@
+export { EditCapsDetail } from './EditCapsDetail';

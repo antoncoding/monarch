@@ -1,13 +1,14 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { slideVariants, slideTransition, type SlideDirection } from '@/components/common/settings-modal';
 import { SettingsHeader } from './SettingsHeader';
 import { TransactionPanel, DisplayPanel, FiltersPanel, PreferencesPanel, ExperimentalPanel } from './panels';
 import { TrendingDetail, TrustedVaultsDetail, BlacklistedMarketsDetail, RpcDetail, ThresholdsDetail } from './details';
 import type { SettingsCategory, DetailView } from './constants';
 
 type PanelProps = {
-  onNavigateToDetail?: (view: DetailView) => void;
+  onNavigateToDetail?: (view: Exclude<DetailView, null>) => void;
 };
 
 const PANEL_COMPONENTS: Record<SettingsCategory, React.ComponentType<PanelProps>> = {
@@ -26,26 +27,11 @@ const DETAIL_COMPONENTS: Record<Exclude<DetailView, null>, React.ComponentType> 
   'filter-thresholds': ThresholdsDetail,
 };
 
-const slideVariants = {
-  enter: (direction: 'forward' | 'backward') => ({
-    x: direction === 'forward' ? '100%' : '-30%',
-    opacity: 0,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
-  exit: (direction: 'forward' | 'backward') => ({
-    x: direction === 'forward' ? '-30%' : '100%',
-    opacity: 0,
-  }),
-};
-
 type SettingsContentProps = {
   category: SettingsCategory;
   detailView: DetailView;
-  slideDirection: 'forward' | 'backward';
-  onNavigateToDetail: (view: DetailView) => void;
+  slideDirection: SlideDirection;
+  onNavigateToDetail: (view: Exclude<DetailView, null>) => void;
   onBack: () => void;
   onClose: () => void;
 };
@@ -77,11 +63,7 @@ export function SettingsContent({ category, detailView, slideDirection, onNaviga
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{
-                type: 'tween',
-                duration: 0.15,
-                ease: 'easeOut',
-              }}
+              transition={slideTransition}
               className="absolute inset-0 overflow-y-auto px-6 py-5"
               style={{ scrollbarGutter: 'stable' }}
             >

@@ -1,0 +1,1 @@
+export { VaultSettingsModal } from './VaultSettingsModal';
