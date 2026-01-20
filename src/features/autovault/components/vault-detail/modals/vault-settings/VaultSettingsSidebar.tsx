@@ -1,10 +1,14 @@
 'use client';
 
+import { motion } from 'framer-motion';
+import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
 import { cn } from '@/utils/components';
 import { VAULT_SETTINGS_CATEGORIES, type CategoryConfig } from './constants';
 import type { VaultSettingsCategory } from '@/stores/vault-settings-modal-store';
 
 type VaultSettingsSidebarProps = {
+  collapsed: boolean;
+  onToggle: () => void;
   selectedCategory: VaultSettingsCategory;
   onSelectCategory: (category: VaultSettingsCategory) => void;
   disabled?: boolean;
@@ -13,11 +17,13 @@ type VaultSettingsSidebarProps = {
 function CategoryButton({
   cat,
   isSelected,
+  collapsed,
   disabled,
   onClick,
 }: {
   cat: CategoryConfig;
   isSelected: boolean;
+  collapsed: boolean;
   disabled?: boolean;
   onClick: () => void;
 }) {
@@ -35,21 +41,28 @@ function CategoryButton({
       aria-current={isSelected ? 'page' : undefined}
     >
       <Icon className="h-4 w-4 shrink-0" />
-      <span className="font-monospace text-[11px] uppercase tracking-wide">{cat.label}</span>
+      {!collapsed && <span className="font-monospace text-[11px] uppercase tracking-wide">{cat.label}</span>}
     </button>
   );
 }
 
-export function VaultSettingsSidebar({ selectedCategory, onSelectCategory, disabled }: VaultSettingsSidebarProps) {
+export function VaultSettingsSidebar({ collapsed, onToggle, selectedCategory, onSelectCategory, disabled }: VaultSettingsSidebarProps) {
   return (
-    <div
-      className={cn(
-        'flex w-[180px] shrink-0 flex-col rounded-l-xl border-r border-border bg-surface-soft',
-        disabled && 'pointer-events-none opacity-50',
-      )}
+    <motion.div
+      className={cn('flex flex-col rounded-l-xl border-r border-border bg-surface-soft', disabled && 'pointer-events-none opacity-50')}
+      animate={{ width: collapsed ? 56 : 180 }}
+      transition={{ duration: 0.2, ease: 'easeInOut' }}
     >
-      {/* Header spacer - height matches VaultSettingsHeader */}
-      <div className="h-14 border-b border-border" />
+      {/* Toggle button - height matches VaultSettingsHeader */}
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={disabled}
+        className="flex h-14 items-center justify-end border-b border-border px-4 text-secondary transition-colors hover:text-primary"
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {collapsed ? <ChevronRightIcon className="h-4 w-4" /> : <ChevronLeftIcon className="h-4 w-4" />}
+      </button>
 
       {/* Category list */}
       <nav className="flex flex-col gap-1 overflow-y-auto p-2">
@@ -58,11 +71,12 @@ export function VaultSettingsSidebar({ selectedCategory, onSelectCategory, disab
             key={cat.id}
             cat={cat}
             isSelected={selectedCategory === cat.id}
+            collapsed={collapsed}
             disabled={disabled}
             onClick={() => onSelectCategory(cat.id)}
           />
         ))}
       </nav>
-    </div>
+    </motion.div>
   );
 }

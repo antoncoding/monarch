@@ -8,6 +8,7 @@ type VaultSettingsModalState = {
   activeCategory: VaultSettingsCategory;
   activeDetailView: VaultDetailView;
   slideDirection: 'forward' | 'backward';
+  sidebarCollapsed: boolean;
 };
 
 type VaultSettingsModalActions = {
@@ -35,6 +36,11 @@ type VaultSettingsModalActions = {
    * Navigate back from detail view with slide animation
    */
   navigateBack: () => void;
+
+  /**
+   * Toggle sidebar collapsed state
+   */
+  toggleSidebar: () => void;
 };
 
 type VaultSettingsModalStore = VaultSettingsModalState & VaultSettingsModalActions;
@@ -62,6 +68,7 @@ export const useVaultSettingsModalStore = create<VaultSettingsModalStore>((set) 
   activeCategory: 'general',
   activeDetailView: null,
   slideDirection: 'forward',
+  sidebarCollapsed: false,
 
   open: (category = 'general') => {
     set({
@@ -106,5 +113,9 @@ export const useVaultSettingsModalStore = create<VaultSettingsModalStore>((set) 
       activeDetailView: null,
       slideDirection: 'backward',
     });
+  },
+
+  toggleSidebar: () => {
+    set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed }));
   },
 }));

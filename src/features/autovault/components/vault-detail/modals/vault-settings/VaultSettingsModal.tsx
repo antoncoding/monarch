@@ -20,7 +20,7 @@ type VaultSettingsModalProps = {
  * Open: useVaultSettingsModalStore().open('category')
  */
 export function VaultSettingsModal({ vaultAddress, chainId }: VaultSettingsModalProps) {
-  const { isOpen, activeCategory, activeDetailView, slideDirection, close, setCategory, navigateToDetail, navigateBack } =
+  const { isOpen, activeCategory, activeDetailView, slideDirection, sidebarCollapsed, close, setCategory, navigateToDetail, navigateBack, toggleSidebar } =
     useVaultSettingsModalStore();
 
   const handleCategoryChange = useCallback(
@@ -40,13 +40,16 @@ export function VaultSettingsModal({ vaultAddress, chainId }: VaultSettingsModal
       onOpenChange={(open) => {
         if (!open) close();
       }}
-      size="5xl"
+      size="4xl"
+      zIndex="settings"
       scrollBehavior="normal"
-      className="w-full max-w-6xl overflow-hidden"
-      isDismissable={false}
+      backdrop="blur"
+      className="overflow-hidden"
     >
       <div className="flex h-[70vh] min-h-[500px] max-h-[800px]">
         <VaultSettingsSidebar
+          collapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
           selectedCategory={activeCategory}
           onSelectCategory={handleCategoryChange}
           disabled={activeDetailView !== null}
