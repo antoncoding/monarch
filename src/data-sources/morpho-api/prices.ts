@@ -19,9 +19,9 @@ type AssetPriceItem = {
 };
 
 type AssetPricesResponse = {
-  data: {
-    assets: {
-      items: AssetPriceItem[];
+  data?: {
+    assets?: {
+      items?: AssetPriceItem[];
     };
   };
 };
@@ -65,6 +65,11 @@ export const fetchTokenPrices = async (tokens: TokenPriceInput[]): Promise<Map<s
             chainId_in: [chainId],
           },
         });
+
+        // Handle NOT_FOUND - skip this chain
+        if (!response) {
+          return;
+        }
 
         if (!response.data?.assets?.items) {
           console.warn(`No price data returned for chain ${chainId}`);

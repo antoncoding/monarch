@@ -12,18 +12,18 @@ type MorphoApiMarket = Omit<Market, 'oracleAddress' | 'whitelisted'> & {
 };
 
 type MarketGraphQLResponse = {
-  data: {
-    marketByUniqueKey: MorphoApiMarket;
+  data?: {
+    marketByUniqueKey?: MorphoApiMarket;
   };
   errors?: { message: string }[];
 };
 
 // Define response type for multiple markets with pageInfo
 type MarketsGraphQLResponse = {
-  data: {
-    markets: {
-      items: MorphoApiMarket[];
-      pageInfo: {
+  data?: {
+    markets?: {
+      items?: MorphoApiMarket[];
+      pageInfo?: {
         countTotal: number;
         count: number;
         limit: number;
@@ -51,7 +51,7 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
     uniqueKey,
     chainId: network,
   });
-  if (!response.data || !response.data.marketByUniqueKey) {
+  if (!response || !response.data || !response.data.marketByUniqueKey) {
     throw new Error('Market data not found in Morpho API response');
   }
   return processMarketData(response.data.marketByUniqueKey);
@@ -84,6 +84,12 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
 
       const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(marketsQuery, variables);
 
+      // Handle NOT_FOUND - break pagination loop
+      if (!response) {
+        console.warn(`No markets found in Morpho API for network ${network} at skip ${skip}.`);
+        break;
+      }
+
       if (!response.data || !response.data.markets) {
         console.warn(`Market data not found in Morpho API response for network ${network} at skip ${skip}.`);
         break;
@@ -91,8 +97,8 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
 
       const { items, pageInfo } = response.data.markets;
 
-      if (!items || !Array.isArray(items)) {
-        console.warn(`No market items found in response for network ${network} at skip ${skip}.`);
+      if (!items || !Array.isArray(items) || !pageInfo) {
+        console.warn(`No market items or page info found in response for network ${network} at skip ${skip}.`);
         break;
       }
 

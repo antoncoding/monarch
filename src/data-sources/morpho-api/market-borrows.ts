@@ -54,6 +54,11 @@ export const fetchMorphoMarketBorrows = async (
   try {
     const result = await morphoGraphqlFetcher<MorphoAPIBorrowsResponse>(marketBorrowsQuery, variables);
 
+    // Handle NOT_FOUND - return empty result
+    if (!result) {
+      return { items: [], totalCount: 0 };
+    }
+
     const items = result.data?.transactions?.items ?? [];
     const totalCount = result.data?.transactions?.pageInfo?.countTotal ?? 0;
 

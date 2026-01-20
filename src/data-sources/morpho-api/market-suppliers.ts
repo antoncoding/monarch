@@ -54,6 +54,11 @@ export const fetchMorphoMarketSuppliers = async (
     // Use the shared fetcher
     const result = await morphoGraphqlFetcher<MorphoAPISuppliersResponse>(marketSuppliersQuery, variables);
 
+    // Handle NOT_FOUND - return empty result
+    if (!result) {
+      return { items: [], totalCount: 0 };
+    }
+
     // Fetcher handles network and basic GraphQL errors
     const items = result.data?.marketPositions?.items ?? [];
     const totalCount = result.data?.marketPositions?.pageInfo?.countTotal ?? 0;

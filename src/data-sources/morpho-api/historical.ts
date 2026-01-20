@@ -9,8 +9,8 @@ type MarketWithHistoricalState = Market & {
 };
 
 type HistoricalDataGraphQLResponse = {
-  data: {
-    marketByUniqueKey: MarketWithHistoricalState;
+  data?: {
+    marketByUniqueKey?: MarketWithHistoricalState;
   };
   errors?: { message: string }[];
 };
@@ -36,7 +36,12 @@ export const fetchMorphoMarketHistoricalData = async (
       chainId: network,
     });
 
-    const historicalState = response?.data?.marketByUniqueKey?.historicalState;
+    // Handle NOT_FOUND - return null
+    if (!response) {
+      return null;
+    }
+
+    const historicalState = response.data?.marketByUniqueKey?.historicalState;
 
     // Check if historicalState exists and has *any* relevant data points (e.g., supplyApy)
     // This check might need refinement based on what fields are essential

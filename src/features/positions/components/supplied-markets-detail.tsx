@@ -143,9 +143,7 @@ export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure 
                     style={{
                       width: `${collateral.percentage}%`,
                       backgroundColor:
-                        collateral.symbol === 'Others'
-                          ? OTHER_COLOR
-                          : getCollateralColorFromPalette(collateral.address, pieColors),
+                        collateral.symbol === 'Others' ? OTHER_COLOR : getCollateralColorFromPalette(collateral.address, pieColors),
                     }}
                     title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
                   />
@@ -159,10 +157,7 @@ export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure 
                   >
                     <span
                       style={{
-                        color:
-                          collateral.symbol === 'Others'
-                            ? OTHER_COLOR
-                            : getCollateralColorFromPalette(collateral.address, pieColors),
+                        color: collateral.symbol === 'Others' ? OTHER_COLOR : getCollateralColorFromPalette(collateral.address, pieColors),
                       }}
                     >
                       ■
