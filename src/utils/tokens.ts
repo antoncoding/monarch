@@ -815,7 +815,7 @@ const supportedTokens = [
   {
     symbol: 'USDH',
     img: require('../imgs/tokens/usdh.svg') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [
       {
         chain: hyperEvm,
