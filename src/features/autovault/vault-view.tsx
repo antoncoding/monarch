@@ -207,25 +207,23 @@ export default function VaultContent() {
                   </Button>
                 </span>
               </Tooltip>
-              {
-                <Tooltip
-                  content={
-                    <TooltipContent
-                      title="Settings"
-                      detail="Configure vault settings"
-                    />
-                  }
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title="Settings"
+                    detail="Configure vault settings"
+                  />
+                }
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-secondary min-w-0 px-2"
+                  onClick={() => openSettings('general')}
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-secondary min-w-0 px-2"
-                    onClick={() => openSettings('general')}
-                  >
-                    <GearIcon className="h-3 w-3" />
-                  </Button>
-                </Tooltip>
-              }
+                  <GearIcon className="h-3 w-3" />
+                </Button>
+              </Tooltip>
             </div>
           </div>
 
