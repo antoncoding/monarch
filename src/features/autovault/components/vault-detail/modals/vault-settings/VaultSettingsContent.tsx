@@ -5,7 +5,7 @@ import type { Address } from 'viem';
 import { slideVariants, slideTransition, type SlideDirection } from '@/components/common/settings-modal';
 import type { SupportedNetworks } from '@/utils/networks';
 import { VaultSettingsHeader } from './VaultSettingsHeader';
-import { GeneralPanel, AgentsPanel, CapsPanel } from './panels';
+import { GeneralPanel, RolesPanel, CapsPanel } from './panels';
 import { EditCapsDetail } from './details';
 import type { VaultSettingsCategory, VaultDetailView } from '@/stores/vault-settings-modal-store';
 
@@ -17,7 +17,7 @@ type PanelProps = {
 
 const PANEL_COMPONENTS: Record<VaultSettingsCategory, React.ComponentType<PanelProps>> = {
   general: GeneralPanel,
-  agents: AgentsPanel,
+  roles: RolesPanel,
   caps: CapsPanel,
 };
 

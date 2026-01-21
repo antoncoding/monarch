@@ -561,6 +561,11 @@ export const vaultV2Query = `
           relativeCap
         }
       }
+      adapters {
+        items {
+          address
+        }
+      }
     }
   }
 `;

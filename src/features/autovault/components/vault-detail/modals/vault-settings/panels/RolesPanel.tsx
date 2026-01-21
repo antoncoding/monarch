@@ -1,37 +1,41 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import Image from 'next/image';
 import type { Address } from 'viem';
+import { zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
-import { AccountIdentity } from '@/components/shared/account-identity';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
+import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import type { SupportedNetworks } from '@/utils/networks';
-import { v2AgentsBase } from '@/utils/monarch-agent';
-import { AgentListItem } from '../../../settings/AgentListItem';
+import { v2AgentsBase, findAgent } from '@/utils/monarch-agent';
+import { RoleAddressItem } from '../../../settings/RoleAddressItem';
 
-type AgentsPanelProps = {
+type RolesPanelProps = {
   vaultAddress: Address;
   chainId: SupportedNetworks;
 };
 
-export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
+export function RolesPanel({ vaultAddress, chainId }: RolesPanelProps) {
   const { address: connectedAddress } = useConnection();
 
-  // Pull data directly - TanStack Query deduplicates
   const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
   const { isOwner, setAllocator, isUpdatingAllocator } = useVaultV2({
     vaultAddress,
     chainId,
     connectedAddress,
   });
+  const { morphoMarketV1Adapter } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
 
   const owner = vaultData?.owner;
   const curator = vaultData?.curator;
   const allocators = vaultData?.allocators ?? [];
+  const adapters = vaultData?.adapters ?? [];
+
   const [allocatorToAdd, setAllocatorToAdd] = useState<Address | null>(null);
   const [allocatorToRemove, setAllocatorToRemove] = useState<Address | null>(null);
   const [isEditingAllocators, setIsEditingAllocators] = useState(false);
@@ -42,12 +46,10 @@ export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
 
   const handleAddAllocator = useCallback(
     async (allocator: Address) => {
-      // Switch network if needed
       if (needSwitchChain) {
         switchToNetwork();
         return;
       }
-
       setAllocatorToAdd(allocator);
       try {
         await setAllocator(allocator, true);
@@ -60,12 +62,10 @@ export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
 
   const handleRemoveAllocator = useCallback(
     async (allocator: Address) => {
-      // Switch network if needed
       if (needSwitchChain) {
         switchToNetwork();
         return;
       }
-
       setAllocatorToRemove(allocator);
       const success = await setAllocator(allocator, false);
       if (success) {
@@ -75,39 +75,73 @@ export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
     [setAllocator, needSwitchChain, switchToNetwork],
   );
 
-  const renderSingleRole = (label: string, description: string, addressValue?: string) => {
-    const normalized = addressValue ? (addressValue as Address) : undefined;
-
-    return (
-      <div className="space-y-2">
-        <div className="space-y-1">
-          <p className="text-xs uppercase text-secondary">{label}</p>
-          <p className="text-xs text-secondary">{description}</p>
-        </div>
-        {normalized ? (
-          <AccountIdentity
-            address={normalized}
-            chainId={chainId}
-            variant="compact"
-            linkTo="explorer"
-            copyable
-          />
-        ) : (
-          <span className="text-xs text-secondary">Not assigned</span>
-        )}
-      </div>
-    );
-  };
+  const isMarketV1Adapter = (addr: string) =>
+    morphoMarketV1Adapter !== zeroAddress && addr.toLowerCase() === morphoMarketV1Adapter.toLowerCase();
 
   const currentAllocatorAddresses = allocators.map((a) => a.toLowerCase());
   const availableAllocators = v2AgentsBase.filter((agent) => !currentAllocatorAddresses.includes(agent.address.toLowerCase()));
 
+  const getAgentLabel = (address: string) => {
+    const agent = findAgent(address);
+    return agent?.name;
+  };
+
+  const getAgentIcon = (address: string) => {
+    const agent = findAgent(address);
+    if (!agent?.image) return undefined;
+    return (
+      <Image
+        src={agent.image}
+        alt={agent.name}
+        width={14}
+        height={14}
+        className="rounded-full"
+      />
+    );
+  };
+
+  const renderRoleSection = (
+    label: string,
+    description: string,
+    addresses: string[],
+    options?: {
+      getLabelOverride?: (addr: string) => string | undefined;
+      getIconOverride?: (addr: string) => React.ReactNode | undefined;
+    },
+  ) => (
+    <div className="space-y-2">
+      <div className="space-y-1">
+        <p className="text-xs uppercase text-secondary">{label}</p>
+        <p className="text-xs text-secondary">{description}</p>
+      </div>
+      {addresses.length === 0 ? (
+        <span className="text-xs text-secondary">Not assigned</span>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {addresses.map((addr) => (
+            <RoleAddressItem
+              key={addr}
+              address={addr}
+              chainId={chainId}
+              label={options?.getLabelOverride?.(addr)}
+              icon={options?.getIconOverride?.(addr)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
-      {renderSingleRole('Owner', 'Primary controller of vault permissions.', owner)}
-      {renderSingleRole('Curator', 'Defines risk guardrails for automation.', curator)}
+      {/* Owner */}
+      {renderRoleSection('Owner', 'Primary controller of vault permissions.', owner ? [owner] : [])}
 
-      <div className="space-y-4">
+      {/* Curator */}
+      {renderRoleSection('Curator', 'Defines risk guardrails for automation.', curator ? [curator] : [])}
+
+      {/* Allocators */}
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs uppercase text-secondary">Allocators</p>
@@ -120,13 +154,12 @@ export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
               onClick={() => setIsEditingAllocators(true)}
               disabled={!isOwner}
             >
-              {allocators.length === 0 ? 'Add allocators' : 'Edit'}
+              {allocators.length === 0 ? 'Add' : 'Edit'}
             </Button>
           )}
         </div>
 
         {isEditingAllocators ? (
-          // Edit mode
           <div className="space-y-4">
             {allocators.length > 0 && (
               <div className="space-y-3">
@@ -134,12 +167,13 @@ export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
                 {allocators.map((address) => (
                   <div
                     key={address}
-                    className="flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
+                    className="flex items-center justify-between rounded border border-line bg-surface p-3"
                   >
-                    <AgentListItem
-                      address={address as Address}
+                    <RoleAddressItem
+                      address={address}
                       chainId={chainId}
-                      ownerAddress={owner as Address}
+                      label={getAgentLabel(address)}
+                      icon={getAgentIcon(address)}
                     />
                     <Button
                       variant="default"
@@ -168,15 +202,24 @@ export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
                 {availableAllocators.map((agent) => (
                   <div
                     key={agent.address}
-                    className="flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
+                    className="flex items-center justify-between rounded border border-line bg-surface p-3"
                   >
                     <div className="flex flex-col gap-2">
-                      <AgentListItem
-                        address={agent.address as Address}
+                      <RoleAddressItem
+                        address={agent.address}
                         chainId={chainId}
-                        ownerAddress={owner as Address}
+                        label={agent.name}
+                        icon={
+                          <Image
+                            src={agent.image}
+                            alt={agent.name}
+                            width={14}
+                            height={14}
+                            className="rounded-full"
+                          />
+                        }
                       />
-                      <p className="ml-8 text-xs text-secondary">{agent.strategyDescription}</p>
+                      <p className="text-xs text-secondary">{agent.strategyDescription}</p>
                     </div>
                     <Button
                       variant="surface"
@@ -209,26 +252,27 @@ export function AgentsPanel({ vaultAddress, chainId }: AgentsPanelProps) {
               </Button>
             </div>
           </div>
-        ) : // Read-only view
-        allocators.length === 0 ? (
-          <p className="text-sm text-secondary">No allocators assigned</p>
+        ) : allocators.length === 0 ? (
+          <span className="text-xs text-secondary">Not assigned</span>
         ) : (
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
             {allocators.map((address) => (
-              <div
+              <RoleAddressItem
                 key={address}
-                className="rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
-              >
-                <AgentListItem
-                  address={address as Address}
-                  chainId={chainId}
-                  ownerAddress={owner as Address}
-                />
-              </div>
+                address={address}
+                chainId={chainId}
+                label={getAgentLabel(address)}
+                icon={getAgentIcon(address)}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {/* Adapters */}
+      {renderRoleSection('Adapters', 'Contracts enabling vault interactions with underlying protocols.', adapters, {
+        getLabelOverride: (addr) => (isMarketV1Adapter(addr) ? 'MorphoBlue Adapter' : undefined),
+      })}
     </div>
   );
 }
