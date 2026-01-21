@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PlusIcon } from '@radix-ui/react-icons';
+import { toast } from 'react-toastify';
 import { type Address, parseUnits, maxUint128 } from 'viem';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,9 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
   const [collateralCaps, setCollateralCaps] = useState<Map<string, CollateralCapInfo>>(new Map());
   const [showAddMarketModal, setShowAddMarketModal] = useState(false);
 
+  // Track if user has made edits to prevent state reset from background refetches
+  const hasUserEditsRef = useRef(false);
+
   const { markets, loading: marketsLoading } = useProcessedMarkets();
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
     targetChainId: chainId,
@@ -67,8 +71,10 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
     return markets.filter((m) => m.loanAsset.address.toLowerCase() === vaultAsset.toLowerCase() && m.morphoBlue.chain.id === chainId);
   }, [markets, vaultAsset, chainId]);
 
-  // Initialize from existing caps
+  // Initialize from existing caps (only on first load, not after user edits)
   useEffect(() => {
+    // Don't reset state if user has made edits - prevents losing work on background refetch
+    if (hasUserEditsRef.current) return;
     if (availableMarkets.length === 0) return;
 
     // Initialize collateral caps
@@ -125,6 +131,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
   }, [availableMarkets, chainId, existingCaps, findToken, vaultAssetDecimals]);
 
   const handleAddMarkets = useCallback((newMarkets: Market[]) => {
+    hasUserEditsRef.current = true;
     setMarketCaps((prev) => {
       const next = new Map(prev);
       newMarkets.forEach((market) => {
@@ -155,6 +162,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
   }, []);
 
   const handleUpdateMarketCap = useCallback((marketId: string, field: 'relativeCap' | 'absoluteCap', value: string) => {
+    hasUserEditsRef.current = true;
     setMarketCaps((prev) => {
       const next = new Map(prev);
       const existing = next.get(marketId.toLowerCase());
@@ -166,6 +174,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
   }, []);
 
   const handleUpdateCollateralCap = useCallback((collateralAddr: string, field: 'relativeCap' | 'absoluteCap', value: string) => {
+    hasUserEditsRef.current = true;
     setCollateralCaps((prev) => {
       const next = new Map(prev);
       const existing = next.get(collateralAddr.toLowerCase());
@@ -178,6 +187,11 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
       return next;
     });
   }, []);
+
+  const handleCancel = useCallback(() => {
+    hasUserEditsRef.current = false;
+    onCancel();
+  }, [onCancel]);
 
   const hasChanges = useMemo(() => {
     // Check for new caps
@@ -227,7 +241,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
     }
 
     if (!adapterAddress || !vaultAsset) {
-      console.error('Adapter address and vault asset are required');
+      toast.error('Unable to save: vault data not loaded');
       return;
     }
 
@@ -331,11 +345,23 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
       }
     }
 
-    if (capsToUpdate.length === 0) return;
+    if (capsToUpdate.length === 0) {
+      toast.info('No changes to save');
+      return;
+    }
 
-    const success = await onSave(capsToUpdate);
-    if (success) {
-      // Parent handles switching back to read mode
+    try {
+      const success = await onSave(capsToUpdate);
+      if (success) {
+        // Reset edit tracking on successful save
+        hasUserEditsRef.current = false;
+        // Parent handles switching back to read mode
+      } else {
+        toast.error('Failed to save changes');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Failed to save changes');
     }
   }, [marketCaps, collateralCaps, needSwitchChain, switchToNetwork, onSave, adapterAddress, vaultAsset, vaultAssetDecimals, existingCaps]);
 
@@ -552,7 +578,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
             <Button
               variant="default"
               size="sm"
-              onClick={onCancel}
+              onClick={handleCancel}
             >
               Cancel
             </Button>

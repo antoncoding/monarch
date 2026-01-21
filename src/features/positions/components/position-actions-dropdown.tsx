@@ -3,6 +3,7 @@
 import type React from 'react';
 import { useRouter } from 'next/navigation';
 import { GoHistory } from 'react-icons/go';
+import { TbReport } from 'react-icons/tb';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { TbArrowsRightLeft } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,11 @@ export function PositionActionsDropdown({ account, chainId, tokenAddress, isOwne
   const handleHistoryClick = () => {
     const historyUrl = `/history/${account}?chainId=${chainId}&tokenAddress=${tokenAddress}`;
     router.push(historyUrl);
+  };
+
+  const handleViewReport = () => {
+    const reportUrl = `/positions/report/${account}?chainId=${chainId}&tokenAddress=${tokenAddress}`;
+    router.push(reportUrl);
   };
 
   return (
@@ -65,6 +71,12 @@ export function PositionActionsDropdown({ account, chainId, tokenAddress, isOwne
             startContent={<GoHistory className="h-4 w-4" />}
           >
             History
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={handleViewReport}
+            startContent={<TbReport className="h-4 w-4" />}
+          >
+            View Report
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
