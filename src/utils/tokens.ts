@@ -208,6 +208,13 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'mF-ONE',
+    img: require('../imgs/tokens/mfone.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x238a700eD6165261Cf8b2e544ba797BC11e466Ba' }],
+    peg: TokenPeg.USD,
+  },
+  {
     symbol: 'sPinto',
     img: require('../imgs/tokens/sPinto.svg') as string,
     decimals: 18,
@@ -232,8 +239,15 @@ const supportedTokens = [
     symbol: 'EURCV',
     img: require('../imgs/tokens/eurcv.svg') as string,
     decimals: 6,
+    networks: [{ chain: mainnet, address: '0x5F7827FDeb7c20b443265Fc2F40845B715385Ff2' }],
+  },
+  {
+    symbol: 'EUTBL',
+    img: require('../imgs/tokens/eutbl.webp') as string,
+    decimals: 5,
     networks: [
-      { chain: mainnet, address: '0x5F7827FDeb7c20b443265Fc2F40845B715385Ff2' },
+      { chain: mainnet, address: '0xa0769f7A8fC65e47dE93797b4e21C073c117Fc80' },
+      { chain: arbitrum, address: '0xcbeb19549054cc0a6257a77736fc78c367216ce7' },
     ],
   },
   {
@@ -476,6 +490,33 @@ const supportedTokens = [
     peg: TokenPeg.ETH,
   },
   {
+    symbol: 'ynETHx',
+    img: require('../imgs/tokens/ynethx.webp') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x657d9ABA1DBb59e53f9F3eCAA878447dCfC96dCb' }],
+    peg: TokenPeg.ETH,
+  },
+  {
+    symbol: 'ynUSDx',
+    img: require('../imgs/tokens/ynusdx.webp') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x3DB228FE836D99Ccb25Ec4dfdC80ED6d2CDdCB4b' }],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'ynRWAx',
+    img: require('../imgs/tokens/ynrwax.webp') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x01Ba69727E2860b37bc1a2bd56999c1aFb4C15D8' }],
+  },
+  {
+    symbol: 'thBILL',
+    img: require('../imgs/tokens/thbill.svg') as string,
+    decimals: 6,
+    networks: [{ chain: mainnet, address: '0x5FA487BCa6158c64046B2813623e20755091DA0b' }],
+    peg: TokenPeg.USD,
+  },
+  {
     symbol: 'stEUR',
     img: require('../imgs/tokens/steur.png') as string,
     decimals: 18,
@@ -534,6 +575,13 @@ const supportedTokens = [
     img: require('../imgs/tokens/wusdl.webp') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0x7751E2F4b8ae93EF6B79d86419d42FE3295A4559' }],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'sUSDD',
+    img: require('../imgs/tokens/susdd.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0xC5d6A7B61d18AfA11435a889557b068BB9f29930' }],
     peg: TokenPeg.USD,
   },
   {
@@ -760,6 +808,18 @@ const supportedTokens = [
       {
         chain: hyperEvm,
         address: '0xb50a96253abdf803d85efcdce07ad8becbc52bd5',
+      },
+    ],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'USDH',
+    img: require('../imgs/tokens/usdh.svg') as string,
+    decimals: 6,
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0x111111a1a0667d36bD57c0A9f569b98057111111',
       },
     ],
     peg: TokenPeg.USD,
