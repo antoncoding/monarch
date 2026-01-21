@@ -23,6 +23,7 @@ export function EditCapsDetail({ vaultAddress, chainId, onBack }: EditCapsDetail
     vaultAddress,
     chainId,
     connectedAddress,
+    onTransactionSuccess: onBack, // Navigate AFTER tx confirms, not when sent
   });
   const { morphoMarketV1Adapter: adapterAddress } = useMorphoMarketV1Adapters({
     vaultAddress,
@@ -43,9 +44,8 @@ export function EditCapsDetail({ vaultAddress, chainId, onBack }: EditCapsDetail
       onCancel={onBack}
       onSave={async (caps) => {
         const success = await updateCaps(caps);
-        if (success) {
-          onBack();
-        }
+        // Don't call onBack() here - onTransactionSuccess handles navigation after tx confirms
+        // This allows the toast to appear before the component unmounts
         return success;
       }}
     />
