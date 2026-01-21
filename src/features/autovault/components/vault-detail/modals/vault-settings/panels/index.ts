@@ -1,3 +1,3 @@
 export { GeneralPanel } from './GeneralPanel';
-export { AgentsPanel } from './AgentsPanel';
+export { RolesPanel } from './RolesPanel';
 export { CapsPanel } from './CapsPanel';

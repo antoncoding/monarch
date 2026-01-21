@@ -11,7 +11,7 @@ export type CategoryConfig = {
 
 export const VAULT_SETTINGS_CATEGORIES: CategoryConfig[] = [
   { id: 'general', label: 'GENERAL', icon: FiSettings },
-  { id: 'agents', label: 'AGENTS', icon: FiUsers },
+  { id: 'roles', label: 'ROLES', icon: FiUsers },
   { id: 'caps', label: 'CAPS', icon: MdFilterList },
 ];
 

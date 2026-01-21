@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type VaultSettingsCategory = 'general' | 'agents' | 'caps';
+export type VaultSettingsCategory = 'general' | 'roles' | 'caps';
 export type VaultDetailView = 'edit-caps' | null;
 
 type VaultSettingsModalState = {
@@ -51,9 +51,9 @@ type VaultSettingsModalStore = VaultSettingsModalState & VaultSettingsModalActio
  *
  * @example
  * ```tsx
- * // Open settings modal on agents category
+ * // Open settings modal on roles category
  * const { open } = useVaultSettingsModalStore();
- * open('agents');
+ * open('roles');
  *
  * // Navigate to edit caps detail view
  * const { navigateToDetail } = useVaultSettingsModalStore();

@@ -60,6 +60,11 @@ type ApiVaultV2 = {
       address: string;
     };
   }[];
+  adapters: {
+    items: {
+      address: string;
+    }[];
+  };
   caps: {
     items: ApiVaultV2Cap[];
   };
@@ -99,7 +104,7 @@ function transformVault(apiVault: ApiVaultV2): VaultV2Details {
     allocators: apiVault.allocators.map((a) => a.allocator.address),
     sentinels: [], // Not available in API response
     caps: apiVault.caps.items.map(transformCap),
-    adapters: [], // Not available in API response
+    adapters: apiVault.adapters.items.map((a) => a.address),
     avgApy: apiVault.avgApy,
   };
 }
