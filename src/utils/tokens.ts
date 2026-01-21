@@ -229,6 +229,14 @@ const supportedTokens = [
     ],
   },
   {
+    symbol: 'EURCV',
+    img: require('../imgs/tokens/eurcv.svg') as string,
+    decimals: 6,
+    networks: [
+      { chain: mainnet, address: '0x5F7827FDeb7c20b443265Fc2F40845B715385Ff2' },
+    ],
+  },
+  {
     symbol: 'WETH',
     img: require('../imgs/tokens/weth.webp') as string,
     decimals: 18,

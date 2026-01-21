@@ -26,8 +26,8 @@ type ModalProps = {
 const Z_INDEX_MAP: Record<ModalZIndex, { wrapper: string; backdrop: string }> = {
   base: { wrapper: 'z-[2000]', backdrop: 'z-[1990]' },
   process: { wrapper: 'z-[2600]', backdrop: 'z-[2590]' },
-  selection: { wrapper: 'z-[3000]', backdrop: 'z-[2990]' },
-  settings: { wrapper: 'z-[3200]', backdrop: 'z-[3190]' },
+  settings: { wrapper: 'z-[3000]', backdrop: 'z-[2990]' },
+  selection: { wrapper: 'z-[3200]', backdrop: 'z-[3190]' },
   custom: { wrapper: '', backdrop: '' },
 };
 
