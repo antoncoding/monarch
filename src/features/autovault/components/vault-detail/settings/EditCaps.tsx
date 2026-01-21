@@ -411,9 +411,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
           <div className="space-y-2">
             <div className="space-y-1">
               <p className="text-xs uppercase text-secondary">Collateral Caps ({collateralCaps.size})</p>
-              <p className="text-xs text-secondary">
-                Shared limit across all markets using the same collateral.
-              </p>
+              <p className="text-xs text-secondary">Shared limit across all markets using the same collateral.</p>
             </div>
 
             {/* Column Headers */}

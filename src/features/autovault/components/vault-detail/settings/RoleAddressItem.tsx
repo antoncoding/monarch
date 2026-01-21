@@ -25,7 +25,12 @@ export function RoleAddressItem({ address, chainId, label, icon }: RoleAddressIt
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1.5 rounded-sm bg-hovered px-2 py-1 text-xs text-secondary no-underline hover:bg-gray-300 dark:hover:bg-gray-700"
     >
-      {icon ?? <Avatar address={address as `0x${string}`} size={14} />}
+      {icon ?? (
+        <Avatar
+          address={address as `0x${string}`}
+          size={14}
+        />
+      )}
       {label && <span>{label}</span>}
       <span className="font-mono text-[11px]">
         {address.slice(0, 6)}...{address.slice(-4)}

@@ -207,7 +207,7 @@ export default function VaultContent() {
                   </Button>
                 </span>
               </Tooltip>
-              {vaultContract.isOwner && (
+              {
                 <Tooltip
                   content={
                     <TooltipContent
@@ -225,7 +225,7 @@ export default function VaultContent() {
                     <GearIcon className="h-3 w-3" />
                   </Button>
                 </Tooltip>
-              )}
+              }
             </div>
           </div>
 
@@ -253,16 +253,16 @@ export default function VaultContent() {
           {isVaultInitialized && hasNoAllocators && vaultContract.isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
-                <p className="text-sm text-primary">Choose an agent</p>
+                <p className="text-sm text-primary">Choose an allocator</p>
                 <p className="text-sm text-secondary">Add an agent to enable automated allocation and rebalancing.</p>
               </div>
               <Button
                 variant="primary"
                 size="sm"
                 className="mt-3 sm:mt-0"
-                onClick={() => openSettings('agents')}
+                onClick={() => openSettings('roles')}
               >
-                Configure agents
+                Configure allocator
               </Button>
             </div>
           )}

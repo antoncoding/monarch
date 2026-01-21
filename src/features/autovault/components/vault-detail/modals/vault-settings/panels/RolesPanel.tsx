@@ -270,14 +270,9 @@ export function RolesPanel({ vaultAddress, chainId }: RolesPanelProps) {
       </div>
 
       {/* Adapters */}
-      {renderRoleSection(
-        'Adapters',
-        'Contracts enabling vault interactions with underlying protocols.',
-        adapters,
-        {
-          getLabelOverride: (addr) => (isMarketV1Adapter(addr) ? 'MorphoBlue Adapter' : undefined),
-        },
-      )}
+      {renderRoleSection('Adapters', 'Contracts enabling vault interactions with underlying protocols.', adapters, {
+        getLabelOverride: (addr) => (isMarketV1Adapter(addr) ? 'MorphoBlue Adapter' : undefined),
+      })}
     </div>
   );
 }
