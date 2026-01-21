@@ -381,7 +381,10 @@ export function useVaultV2({
 
   const updateCaps = useCallback(
     async (caps: VaultV2Cap[]): Promise<boolean> => {
-      if (!account || !vaultAddress) return false;
+      if (!account || !vaultAddress) {
+        console.warn('updateCaps: Missing account or vault address', { account: !!account, vaultAddress: !!vaultAddress });
+        return false;
+      }
 
       const txs: `0x${string}`[] = [];
 
@@ -457,7 +460,7 @@ export function useVaultV2({
       });
 
       if (txs.length === 0) {
-        // No cap changes to apply
+        console.warn('updateCaps: No transactions to execute - caps data may have no actual changes', { capsCount: caps.length });
         return false;
       }
 
