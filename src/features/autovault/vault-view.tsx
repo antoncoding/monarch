@@ -252,7 +252,7 @@ export default function VaultContent() {
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Choose an allocator</p>
-                <p className="text-sm text-secondary">Add an agent to enable automated allocation and rebalancing.</p>
+                <p className="text-sm text-secondary">Add an allocator to enable automated allocation and rebalancing.</p>
               </div>
               <Button
                 variant="primary"
