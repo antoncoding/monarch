@@ -111,7 +111,7 @@ export const networks: NetworkConfig[] = [
       vaultsSubgraphEndpoint: 'https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest',
       morphoRegistry: '0x5C2531Cbd2cf112Cf687da3Cd536708aDd7DB10a',
       marketV1AdapterFactory: '0x133baC94306B99f6dAD85c381a5be851d8DD717c',
-      adapterSubgraphEndpoint: `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/8dNeYJ1jDzXQ7KUX43CzAjkuVrY2WgQCJZiDeMDq5EuN`,
+      adapterSubgraphEndpoint: 'https://gateway.thegraph.com/api/subgraphs/id/8dNeYJ1jDzXQ7KUX43CzAjkuVrY2WgQCJZiDeMDq5EuN',
     },
     blocktime: 2,
     maxBlockDelay: 5,

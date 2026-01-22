@@ -4,9 +4,15 @@ export const subgraphGraphqlFetcher = async <T extends object>(
   variables: Record<string, unknown>,
 ): Promise<T> => {
   try {
+    const apiKey = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(apiKey && { Authorization: `Bearer ${apiKey}` }),
+    };
+
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ query, variables }),
     });
 
