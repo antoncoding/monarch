@@ -53,7 +53,7 @@ export const fetchUserVaultV2Addresses = async (owner: string, network: Supporte
     const response = await subgraphGraphqlFetcher<SubgraphUserVaultsV2Response>(subgraphUrl, userVaultsV2AddressesQuery, variables);
 
     if (response.errors) {
-      console.error('GraphQL errors:', response.errors);
+      console.error('GraphQL errors with adapterSubgraphEndpoint:', response.errors);
       return [];
     }
 

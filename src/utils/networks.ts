@@ -6,6 +6,8 @@ import type { AgentMetadata } from './types';
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const rpcPriority = process.env.NEXT_PUBLIC_RPC_PRIORITY;
 
+const apiKey = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
+
 /**
  * Helper function to get RPC URL with fallback logic. Priority behavior:
  * - If NEXT_PUBLIC_RPC_PRIORITY === 'ALCHEMY': Use Alchemy first, fall back to specific RPC
@@ -109,7 +111,7 @@ export const networks: NetworkConfig[] = [
       vaultsSubgraphEndpoint: 'https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest',
       morphoRegistry: '0x5C2531Cbd2cf112Cf687da3Cd536708aDd7DB10a',
       marketV1AdapterFactory: '0x133baC94306B99f6dAD85c381a5be851d8DD717c',
-      adapterSubgraphEndpoint: 'https://api.studio.thegraph.com/query/94369/morpho-adapters/version/latest',
+      adapterSubgraphEndpoint: `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/8dNeYJ1jDzXQ7KUX43CzAjkuVrY2WgQCJZiDeMDq5EuN`,
     },
     blocktime: 2,
     maxBlockDelay: 5,
