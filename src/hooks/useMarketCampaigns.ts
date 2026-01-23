@@ -7,6 +7,8 @@ const BLACKLISTED_CAMPAIGN_IDS: string[] = [
   // Seems to be reporting bad APY, not singleton for all market for sure
   // https://app.merkl.xyz/opportunities/base/MORPHOSUPPLY_SINGLETOKEN/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
   '0x4b5aa0f66eb6a63e3b761de8fbbcc8154d568086c1234ba58516f3263a79200a',
+  // https://app.merkl.xyz/opportunities/base/MORPHOSUPPLY_SINGLETOKEN/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913WHITELIST_PER_PROTOCOL
+  '0x97380b45eed593b3108275de15ba89e452eaffeb04f0ffc7d8f131cf8c70f7a3',
 ];
 
 type UseMarketCampaignsReturn = {
