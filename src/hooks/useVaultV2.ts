@@ -233,7 +233,16 @@ export function useVaultV2({
 
       txs.push(submitSetSelfAllocatorTx, setSelfAllocatorTx);
 
-      // Step 6.2 (Optional). Set initial allocator if provided.
+      // Step 6.2 As allocator, set max apy
+      const setMaxAPYTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'setMaxRate',
+        args: [63419583967n], // max max rate = 200e16 / (86400 * 365) // 200% APR
+      });
+
+      txs.push(setMaxAPYTx);
+
+      // Step 6.3 (Optional). Set initial allocator if provided.
       if (allocator && allocator !== zeroAddress) {
         const setAllocatorTx = encodeFunctionData({
           abi: vaultv2Abi,
