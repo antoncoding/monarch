@@ -6,7 +6,7 @@ import type { AgentMetadata } from './types';
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const rpcPriority = process.env.NEXT_PUBLIC_RPC_PRIORITY;
 
-const apiKey = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
+const _apiKey = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
 
 /**
  * Helper function to get RPC URL with fallback logic. Priority behavior:
