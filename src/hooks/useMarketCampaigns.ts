@@ -53,9 +53,14 @@ export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCa
         : [];
 
     // Combine both types of campaigns and filter out blacklisted ones
-    const allMarketCampaigns = [...directMarketCampaigns, ...singleTokenCampaigns].filter(
-      (campaign) => !BLACKLISTED_CAMPAIGN_IDS.includes(campaign.campaignId.toLowerCase()),
-    );
+    const allMarketCampaigns = [...directMarketCampaigns, ...singleTokenCampaigns].filter((campaign) => {
+      if (BLACKLISTED_CAMPAIGN_IDS.includes(campaign.campaignId.toLowerCase())) return false;
+
+      // temp: remove all Morpho Vault V2 campaigns until we find better way to filter
+      if (campaign.name?.includes('Morpho Vault V2')) return false;
+
+      return true;
+    });
 
     console.log(`[useMarketCampaigns] Active Campaigns for market ${normalizedMarketId.slice(0, 6)}`, allMarketCampaigns);
 
