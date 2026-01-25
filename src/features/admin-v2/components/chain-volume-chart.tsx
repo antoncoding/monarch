@@ -86,8 +86,8 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
 
   const formatYAxis = (value: number) => `$${formatReadable(value)}`;
 
-  const handleLegendClick = (e: { dataKey?: string }) => {
-    if (!e.dataKey) return;
+  const handleLegendClick = (e: { dataKey?: unknown }) => {
+    if (!e.dataKey || typeof e.dataKey !== 'string') return;
     const chainId = Number(e.dataKey.replace('chain_', ''));
     setHiddenChains((prev) => {
       const next = new Set(prev);
@@ -100,8 +100,8 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
     });
   };
 
-  const legendFormatter = (value: string, entry: { dataKey?: string }) => {
-    if (!entry.dataKey) return value;
+  const legendFormatter = (value: string, entry: { dataKey?: unknown }) => {
+    if (!entry.dataKey || typeof entry.dataKey !== 'string') return value;
     const chainId = Number(entry.dataKey.replace('chain_', ''));
     const isVisible = visibleChains[chainId] ?? true;
     return (
@@ -211,8 +211,8 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
                         })}
                       </p>
                       <div className="space-y-1">
-                        {payload.map((entry: { dataKey?: string; value?: number; color?: string }) => {
-                          if (!entry.dataKey) return null;
+                        {payload.map((entry) => {
+                          if (!entry.dataKey || typeof entry.dataKey !== 'string') return null;
                           const chainId = Number(entry.dataKey.replace('chain_', ''));
                           const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
                           return (
@@ -227,7 +227,7 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
                                 />
                                 <span className="text-secondary">{networkName}</span>
                               </div>
-                              <span className="tabular-nums">${formatReadable(entry.value ?? 0)}</span>
+                              <span className="tabular-nums">${formatReadable(Number(entry.value) || 0)}</span>
                             </div>
                           );
                         })}

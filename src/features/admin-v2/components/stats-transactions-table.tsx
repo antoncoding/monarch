@@ -154,7 +154,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant="surface"
                   size="sm"
                   className="min-w-[120px]"
                 >
@@ -193,7 +193,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant="surface"
                   size="sm"
                   className="min-w-[100px]"
                 >
