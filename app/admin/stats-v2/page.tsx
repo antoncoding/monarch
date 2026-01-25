@@ -59,7 +59,10 @@ function StatsV2Content() {
         <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center">
           <h2 className="font-zen text-lg text-red-500">Error Loading Data</h2>
           <p className="mt-2 text-sm text-secondary">{error.message}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
+          <Button
+            onClick={() => window.location.reload()}
+            className="mt-4"
+          >
             Retry
           </Button>
         </div>
@@ -88,7 +91,11 @@ function StatsV2Content() {
             size="sm"
             variant="default"
           />
-          <Button variant="ghost" size="sm" onClick={() => void logout()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void logout()}
+          >
             Logout
           </Button>
         </div>
@@ -121,11 +128,18 @@ function StatsV2Content() {
             />
 
             {/* Chain Breakdown Chart */}
-            <ChainVolumeChart dailyVolumes={dailyVolumes} chainStats={chainStats} isLoading={isLoading} />
+            <ChainVolumeChart
+              dailyVolumes={dailyVolumes}
+              chainStats={chainStats}
+              isLoading={isLoading}
+            />
           </div>
 
           {/* Transactions Table */}
-          <StatsTransactionsTable transactions={transactions} isLoading={isLoading} />
+          <StatsTransactionsTable
+            transactions={transactions}
+            isLoading={isLoading}
+          />
         </div>
       )}
     </div>

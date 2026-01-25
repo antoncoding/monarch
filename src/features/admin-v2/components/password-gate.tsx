@@ -47,9 +47,7 @@ export function PasswordGate({ children }: PasswordGateProps) {
         <CardBody className="p-6">
           <div className="mb-6 text-center">
             <h1 className="font-zen text-xl">Stats V2 (Experimental)</h1>
-            <p className="mt-2 text-sm text-secondary">
-              This page uses an experimental API that may be reverted due to cost concerns.
-            </p>
+            <p className="mt-2 text-sm text-secondary">This page uses an experimental API that may be reverted due to cost concerns.</p>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -74,9 +72,7 @@ export function PasswordGate({ children }: PasswordGateProps) {
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-secondary">
-            Contact the team if you need access credentials.
-          </p>
+          <p className="mt-4 text-center text-xs text-secondary">Contact the team if you need access credentials.</p>
         </CardBody>
       </Card>
     </div>

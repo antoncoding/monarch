@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 /**
@@ -41,10 +41,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: `Indexer request failed: ${response.status}` },
-        { status: response.status },
-      );
+      return NextResponse.json({ error: `Indexer request failed: ${response.status}` }, { status: response.status });
     }
 
     const data = await response.json();
