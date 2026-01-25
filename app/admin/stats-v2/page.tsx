@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ButtonGroup from '@/components/ui/button-group';
 import { Spinner } from '@/components/ui/spinner';
+import Header from '@/components/layout/header/Header';
 import { PasswordGate } from '@/features/admin-v2/components/password-gate';
 import { StatsOverviewCards } from '@/features/admin-v2/components/stats-overview-cards';
 import { StatsVolumeChart } from '@/features/admin-v2/components/stats-volume-chart';
@@ -55,93 +56,99 @@ function StatsV2Content() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8 font-inter">
-        <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center">
-          <h2 className="font-zen text-lg text-red-500">Error Loading Data</h2>
-          <p className="mt-2 text-sm text-secondary">{error.message}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            className="mt-4"
-          >
-            Retry
-          </Button>
+      <div className="flex w-full flex-col font-inter">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center">
+            <h2 className="font-zen text-lg text-red-500">Error Loading Data</h2>
+            <p className="mt-2 text-sm text-secondary">{error.message}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 font-inter">
-      {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="font-zen text-2xl font-bold">Stats V2</h1>
-            <span className="rounded bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500">Experimental</span>
+    <div className="flex w-full flex-col font-inter">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="font-zen text-2xl font-bold">Stats V2</h1>
+              <span className="rounded bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500">Experimental</span>
+            </div>
+            <p className="mt-1 text-sm text-secondary">
+              Cross-chain Monarch transaction analytics. This API may be reverted due to cost concerns.
+            </p>
           </div>
-          <p className="mt-1 text-sm text-secondary">
-            Cross-chain Monarch transaction analytics. This API may be reverted due to cost concerns.
-          </p>
+          <div className="flex items-center gap-4">
+            <ButtonGroup
+              options={timeframeOptions}
+              value={timeframe}
+              onChange={(value) => setTimeframe(value as TimeFrame)}
+              size="sm"
+              variant="default"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void logout()}
+            >
+              Logout
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <ButtonGroup
-            options={timeframeOptions}
-            value={timeframe}
-            onChange={(value) => setTimeframe(value as TimeFrame)}
-            size="sm"
-            variant="default"
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void logout()}
-          >
-            Logout
-          </Button>
-        </div>
-      </div>
 
-      {isLoading ? (
-        <div className="flex h-64 w-full items-center justify-center">
-          <Spinner size={40} />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Overview Cards */}
-          <StatsOverviewCards
-            totalSupplyVolumeUsd={totalSupplyVolumeUsd}
-            totalWithdrawVolumeUsd={totalWithdrawVolumeUsd}
-            totalVolumeUsd={totalVolumeUsd}
-            supplyCount={supplies.length}
-            withdrawCount={withdraws.length}
-            chainStats={chainStats}
-          />
-
-          {/* Charts Grid */}
-          <div className="grid gap-6 lg:grid-cols-1">
-            {/* Aggregated Volume Chart */}
-            <StatsVolumeChart
-              dailyVolumes={dailyVolumes}
+        {isLoading ? (
+          <div className="flex h-64 w-full items-center justify-center">
+            <Spinner size={40} />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Overview Cards */}
+            <StatsOverviewCards
               totalSupplyVolumeUsd={totalSupplyVolumeUsd}
               totalWithdrawVolumeUsd={totalWithdrawVolumeUsd}
-              isLoading={isLoading}
+              totalVolumeUsd={totalVolumeUsd}
+              supplyCount={supplies.length}
+              withdrawCount={withdraws.length}
+              chainStats={chainStats}
             />
 
-            {/* Chain Breakdown Chart */}
-            <ChainVolumeChart
-              dailyVolumes={dailyVolumes}
-              chainStats={chainStats}
+            {/* Charts Grid */}
+            <div className="grid gap-6 lg:grid-cols-1">
+              {/* Aggregated Volume Chart */}
+              <StatsVolumeChart
+                dailyVolumes={dailyVolumes}
+                totalSupplyVolumeUsd={totalSupplyVolumeUsd}
+                totalWithdrawVolumeUsd={totalWithdrawVolumeUsd}
+                isLoading={isLoading}
+              />
+
+              {/* Chain Breakdown Chart */}
+              <ChainVolumeChart
+                dailyVolumes={dailyVolumes}
+                chainStats={chainStats}
+                isLoading={isLoading}
+              />
+            </div>
+
+            {/* Transactions Table */}
+            <StatsTransactionsTable
+              transactions={transactions}
               isLoading={isLoading}
             />
           </div>
-
-          {/* Transactions Table */}
-          <StatsTransactionsTable
-            transactions={transactions}
-            isLoading={isLoading}
-          />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

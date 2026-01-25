@@ -46,6 +46,10 @@ export const useAdminAuth = create<AdminAuthStore>()((set) => ({
         method: 'GET',
         credentials: 'same-origin',
       });
+      if (!response.ok) {
+        set({ isAuthenticated: false, isCheckingAuth: false });
+        return;
+      }
       const data = await response.json();
       set({ isAuthenticated: data.authenticated, isCheckingAuth: false });
     } catch {

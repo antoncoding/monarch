@@ -59,24 +59,6 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
     });
   }, [dailyVolumes, chainIds]);
 
-  // Filter chart data to only include visible chains (enables Y-axis auto-rescale)
-  const filteredChartData = useMemo(() => {
-    return chartData.map((dataPoint) => {
-      const filtered: Record<string, number> = { x: dataPoint.x };
-      for (const chainId of chainIds) {
-        if (visibleChains[chainId]) {
-          filtered[`chain_${chainId}`] = dataPoint[`chain_${chainId}`] ?? 0;
-        }
-      }
-      return filtered;
-    });
-  }, [chartData, chainIds, visibleChains]);
-
-  // Get only visible chain IDs for rendering
-  const visibleChainIds = useMemo(() => {
-    return chainIds.filter((chainId) => visibleChains[chainId]);
-  }, [chainIds, visibleChains]);
-
   const gradients = useMemo(() => {
     return chainIds.map((chainId) => ({
       id: `chain_${chainId}Gradient`,
@@ -160,7 +142,7 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
           <div className="flex h-[300px] items-center justify-center text-primary">
             <Spinner size={30} />
           </div>
-        ) : filteredChartData.length === 0 ? (
+        ) : chartData.length === 0 ? (
           <div className="flex h-[300px] items-center justify-center text-secondary">No data available</div>
         ) : (
           <ResponsiveContainer
@@ -168,7 +150,7 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
             height={300}
           >
             <AreaChart
-              data={filteredChartData}
+              data={chartData}
               margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
             >
               <ChartGradients
@@ -241,7 +223,7 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
                 onClick={handleLegendClick}
                 formatter={legendFormatter}
               />
-              {visibleChainIds.map((chainId) => (
+              {chainIds.map((chainId) => (
                 <Area
                   key={chainId}
                   type="monotone"
@@ -250,7 +232,9 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
                   stroke={getChainColor(chainId)}
                   strokeWidth={2}
                   fill={`url(#chainVolume-chain_${chainId}Gradient)`}
-                  fillOpacity={0.3}
+                  fillOpacity={visibleChains[chainId] ? 0.3 : 0}
+                  strokeOpacity={visibleChains[chainId] ? 1 : 0}
+                  hide={!visibleChains[chainId]}
                 />
               ))}
             </AreaChart>
