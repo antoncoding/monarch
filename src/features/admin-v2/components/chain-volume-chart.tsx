@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Spinner } from '@/components/ui/spinner';
-import { CHART_PALETTES } from '@/constants/chartColors';
+import { useChartColors } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { ChartGradients, chartTooltipCursor, chartLegendStyle } from '@/features/market-detail/components/charts/chart-utils';
@@ -17,22 +17,26 @@ type ChainVolumeChartProps = {
   isLoading: boolean;
 };
 
-// Chain color mapping using pie colors
-const CHAIN_COLORS: Record<number, string> = {
-  1: CHART_PALETTES.classic.pie[0], // Mainnet - Blue
-  8453: CHART_PALETTES.classic.pie[1], // Base - Green
-  137: CHART_PALETTES.classic.pie[3], // Polygon - Purple
-  130: CHART_PALETTES.classic.pie[4], // Unichain - Teal
-  42161: CHART_PALETTES.classic.pie[6], // Arbitrum - Orange
-  999: CHART_PALETTES.classic.pie[5], // HyperEVM - Pink
-  143: CHART_PALETTES.classic.pie[2], // Monad - Yellow
+// Chain to pie color index mapping (consistent ordering)
+const CHAIN_COLOR_INDEX: Record<number, number> = {
+  1: 0, // Mainnet
+  8453: 1, // Base
+  137: 3, // Polygon
+  130: 4, // Unichain
+  42161: 6, // Arbitrum
+  999: 5, // HyperEVM
+  143: 2, // Monad
 };
 
-function getChainColor(chainId: number): string {
-  return CHAIN_COLORS[chainId] ?? CHART_PALETTES.classic.pie[8];
-}
-
 export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainVolumeChartProps) {
+  const chartColors = useChartColors();
+
+  // Get color for a chain using the current palette
+  const getChainColor = (chainId: number): string => {
+    const index = CHAIN_COLOR_INDEX[chainId] ?? 8;
+    return chartColors.pie[index] ?? chartColors.pie[8];
+  };
+
   // Get unique chain IDs from stats
   const chainIds = useMemo(() => chainStats.map((s) => s.chainId), [chainStats]);
 
@@ -64,7 +68,7 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
       id: `chain_${chainId}Gradient`,
       color: getChainColor(chainId),
     }));
-  }, [chainIds]);
+  }, [chainIds, chartColors]);
 
   const formatYAxis = (value: number) => `$${formatReadable(value)}`;
 
