@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 /**
@@ -29,10 +29,7 @@ function hashPassword(password: string): string {
 
 export async function POST(request: NextRequest) {
   if (!EXPECTED_HASH) {
-    return NextResponse.json(
-      { error: 'Authentication not configured' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Authentication not configured' }, { status: 500 });
   }
 
   try {
@@ -43,8 +40,6 @@ export async function POST(request: NextRequest) {
     }
 
     const hash = hashPassword(password);
-
-    console.log('real hash', hash)
 
     if (hash !== EXPECTED_HASH) {
       await new Promise((resolve) => setTimeout(resolve, 200));

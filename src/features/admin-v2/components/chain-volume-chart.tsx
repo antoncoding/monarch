@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Spinner } from '@/components/ui/spinner';
-import { useChartColors, CHART_PALETTES } from '@/constants/chartColors';
+import { CHART_PALETTES } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { ChartGradients, chartTooltipCursor, chartLegendStyle } from '@/features/market-detail/components/charts/chart-utils';
 import type { DailyVolume, ChainStats } from '@/hooks/useMonarchTransactions';
 
@@ -33,31 +33,20 @@ function getChainColor(chainId: number): string {
 }
 
 export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainVolumeChartProps) {
-  const chartColors = useChartColors();
-
   // Get unique chain IDs from stats
   const chainIds = useMemo(() => chainStats.map((s) => s.chainId), [chainStats]);
 
-  const [visibleChains, setVisibleChains] = useState<Record<number, boolean>>(() => {
-    const initial: Record<number, boolean> = {};
-    for (const chainId of chainIds) {
-      initial[chainId] = true;
-    }
-    return initial;
-  });
+  // Track hidden chains instead of visible - all chains visible by default
+  const [hiddenChains, setHiddenChains] = useState<Set<number>>(new Set());
 
-  // Update visible chains when chainIds change
-  useMemo(() => {
-    setVisibleChains((prev) => {
-      const updated = { ...prev };
-      for (const chainId of chainIds) {
-        if (updated[chainId] === undefined) {
-          updated[chainId] = true;
-        }
-      }
-      return updated;
-    });
-  }, [chainIds]);
+  // Derive visible chains (pure computation, no side effects)
+  const visibleChains = useMemo(() => {
+    const visible: Record<number, boolean> = {};
+    for (const chainId of chainIds) {
+      visible[chainId] = !hiddenChains.has(chainId);
+    }
+    return visible;
+  }, [chainIds, hiddenChains]);
 
   const chartData = useMemo(() => {
     return dailyVolumes.map((v) => {
@@ -100,10 +89,15 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
   const handleLegendClick = (e: { dataKey?: string }) => {
     if (!e.dataKey) return;
     const chainId = Number(e.dataKey.replace('chain_', ''));
-    setVisibleChains((prev) => ({
-      ...prev,
-      [chainId]: !prev[chainId],
-    }));
+    setHiddenChains((prev) => {
+      const next = new Set(prev);
+      if (next.has(chainId)) {
+        next.delete(chainId);
+      } else {
+        next.add(chainId);
+      }
+      return next;
+    });
   };
 
   const legendFormatter = (value: string, entry: { dataKey?: string }) => {
@@ -132,13 +126,25 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
             const networkImg = getNetworkImg(stat.chainId);
             const networkName = getNetworkName(stat.chainId) ?? `Chain ${stat.chainId}`;
             return (
-              <div key={stat.chainId} className="flex items-center gap-2">
+              <div
+                key={stat.chainId}
+                className="flex items-center gap-2"
+              >
                 {networkImg && (
-                  <Image src={networkImg as string} alt={networkName} width={20} height={20} className="rounded-full" />
+                  <Image
+                    src={networkImg as string}
+                    alt={networkName}
+                    width={20}
+                    height={20}
+                    className="rounded-full"
+                  />
                 )}
                 <div>
                   <p className="text-xs text-secondary">{networkName}</p>
-                  <p className="tabular-nums text-sm" style={{ color: getChainColor(stat.chainId) }}>
+                  <p
+                    className="tabular-nums text-sm"
+                    style={{ color: getChainColor(stat.chainId) }}
+                  >
                     ${formatReadable(stat.totalVolumeUsd)}
                   </p>
                 </div>
@@ -157,19 +163,30 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
         ) : filteredChartData.length === 0 ? (
           <div className="flex h-[300px] items-center justify-center text-secondary">No data available</div>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={filteredChartData} margin={{ top: 20, right: 20, left: 10, bottom: 10 }}>
-              <ChartGradients prefix="chainVolume" gradients={gradients} />
-              <CartesianGrid strokeDasharray="0" stroke="var(--color-border)" strokeOpacity={0.25} />
+          <ResponsiveContainer
+            width="100%"
+            height={300}
+          >
+            <AreaChart
+              data={filteredChartData}
+              margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
+            >
+              <ChartGradients
+                prefix="chainVolume"
+                gradients={gradients}
+              />
+              <CartesianGrid
+                strokeDasharray="0"
+                stroke="var(--color-border)"
+                strokeOpacity={0.25}
+              />
               <XAxis
                 dataKey="x"
                 axisLine={false}
                 tickLine={false}
                 tickMargin={12}
                 minTickGap={60}
-                tickFormatter={(time) =>
-                  new Date(time * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-                }
+                tickFormatter={(time) => new Date(time * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                 tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
               />
               <YAxis
@@ -199,9 +216,15 @@ export function ChainVolumeChart({ dailyVolumes, chainStats, isLoading }: ChainV
                           const chainId = Number(entry.dataKey.replace('chain_', ''));
                           const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
                           return (
-                            <div key={entry.dataKey} className="flex items-center justify-between gap-6 text-sm">
+                            <div
+                              key={entry.dataKey}
+                              className="flex items-center justify-between gap-6 text-sm"
+                            >
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                <span
+                                  className="h-2 w-2 rounded-full"
+                                  style={{ backgroundColor: entry.color }}
+                                />
                                 <span className="text-secondary">{networkName}</span>
                               </div>
                               <span className="tabular-nums">${formatReadable(entry.value ?? 0)}</span>

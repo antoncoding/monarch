@@ -14,6 +14,7 @@ export type MonarchSupplyTransaction = {
   market_id: string;
   assets: string;
   chainId: number;
+  onBehalf: string;
 };
 
 export type MonarchWithdrawTransaction = {
@@ -22,6 +23,7 @@ export type MonarchWithdrawTransaction = {
   market_id: string;
   assets: string;
   chainId: number;
+  onBehalf: string;
 };
 
 type MonarchTransactionsResponse = {
@@ -39,11 +41,7 @@ export type TimeRange = {
 /**
  * Fetches a single page of transactions
  */
-async function fetchTransactionsPage(
-  timeRange: TimeRange,
-  limit: number,
-  offset: number,
-): Promise<MonarchTransactionsResponse> {
+async function fetchTransactionsPage(timeRange: TimeRange, limit: number, offset: number): Promise<MonarchTransactionsResponse> {
   const hasEndTimestamp = timeRange.endTimestamp !== undefined;
 
   const query = hasEndTimestamp
@@ -60,6 +58,7 @@ async function fetchTransactionsPage(
           market_id
           assets
           chainId
+          onBehalf
         }
         Morpho_Withdraw(
           where: {isMonarch: {_eq: true}, timestamp: {_gte: $startTimestamp, _lte: $endTimestamp}},
@@ -72,6 +71,7 @@ async function fetchTransactionsPage(
           market_id
           assets
           chainId
+          onBehalf
         }
       }
     `
@@ -88,6 +88,7 @@ async function fetchTransactionsPage(
           market_id
           assets
           chainId
+          onBehalf
         }
         Morpho_Withdraw(
           where: {isMonarch: {_eq: true}, timestamp: {_gte: $startTimestamp}},
@@ -100,6 +101,7 @@ async function fetchTransactionsPage(
           market_id
           assets
           chainId
+          onBehalf
         }
       }
     `;
@@ -115,6 +117,8 @@ async function fetchTransactionsPage(
  * Fetches all supply and withdraw transactions with automatic pagination.
  * Will continue fetching until we get less than `limit` results.
  */
+const MAX_PAGES = 50;
+
 export async function fetchMonarchTransactions(
   timeRange: TimeRange,
   limit = 1000,
@@ -125,8 +129,10 @@ export async function fetchMonarchTransactions(
   const allSupplies: MonarchSupplyTransaction[] = [];
   const allWithdraws: MonarchWithdrawTransaction[] = [];
   let offset = 0;
+  let pageCount = 0;
 
-  while (true) {
+  while (pageCount < MAX_PAGES) {
+    pageCount++;
     const response = await fetchTransactionsPage(timeRange, limit, offset);
     const supplies = response.data.Morpho_Supply ?? [];
     const withdraws = response.data.Morpho_Withdraw ?? [];

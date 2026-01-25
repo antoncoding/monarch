@@ -6,18 +6,14 @@ import Link from 'next/link';
 import moment from 'moment';
 import { ChevronUpIcon, ChevronDownIcon } from '@radix-ui/react-icons';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { AddressIdentity } from '@/components/shared/address-identity';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getTruncatedAssetName } from '@/utils/oracle';
@@ -38,6 +34,18 @@ type SortableHeaderProps = {
   sortDirection: SortDirection;
   onSort: (key: SortKey) => void;
 };
+
+function getChainFilterLabel(selectedChains: number[]): string {
+  if (selectedChains.length === 0) return 'All chains';
+  if (selectedChains.length === 1) return getNetworkName(selectedChains[0]) ?? 'Chain';
+  return `${selectedChains.length} chains`;
+}
+
+function getTypeFilterLabel(selectedTypes: ('supply' | 'withdraw')[]): string {
+  if (selectedTypes.length === 0) return 'All types';
+  if (selectedTypes.length === 1) return selectedTypes[0] === 'supply' ? 'Supply' : 'Withdraw';
+  return 'Both types';
+}
 
 function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
   return (
@@ -145,12 +153,12 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
             {/* Chain Filter */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="min-w-[120px]">
-                  {selectedChains.length === 0
-                    ? 'All chains'
-                    : selectedChains.length === 1
-                      ? getNetworkName(selectedChains[0]) ?? 'Chain'
-                      : `${selectedChains.length} chains`}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-w-[120px]"
+                >
+                  {getChainFilterLabel(selectedChains)}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -184,14 +192,12 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
             {/* Type Filter */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="min-w-[100px]">
-                  {selectedTypes.length === 0
-                    ? 'All types'
-                    : selectedTypes.length === 1
-                      ? selectedTypes[0] === 'supply'
-                        ? 'Supply'
-                        : 'Withdraw'
-                      : 'Both types'}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-w-[100px]"
+                >
+                  {getTypeFilterLabel(selectedTypes)}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -214,9 +220,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
       </div>
       <div className="overflow-x-auto">
         {sortedData.length === 0 ? (
-          <div className="py-8 text-center text-secondary">
-            {isLoading ? 'Loading transactions...' : 'No transaction data available'}
-          </div>
+          <div className="py-8 text-center text-secondary">{isLoading ? 'Loading transactions...' : 'No transaction data available'}</div>
         ) : (
           <>
             <Table className="responsive w-full min-w-full rounded-md font-zen">
@@ -224,6 +228,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                 <TableRow>
                   <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Chain</TableHead>
                   <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Type</TableHead>
+                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">User</TableHead>
                   <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Asset</TableHead>
                   <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Market</TableHead>
                   <SortableHeader
@@ -250,9 +255,15 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                   const marketPath = tx.market ? `/market/${tx.chainId}/${tx.market.uniqueKey}` : null;
 
                   return (
-                    <TableRow key={`${tx.txHash}-${idx}`} className="hover:bg-hovered">
+                    <TableRow
+                      key={`${tx.txHash}-${idx}`}
+                      className="hover:bg-hovered"
+                    >
                       {/* Chain */}
-                      <TableCell className="px-2 py-3" style={{ minWidth: '100px' }}>
+                      <TableCell
+                        className="px-2 py-3"
+                        style={{ minWidth: '100px' }}
+                      >
                         <div className="flex items-center gap-2">
                           {networkImg && (
                             <Image
@@ -268,7 +279,10 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* Type */}
-                      <TableCell className="px-2 py-3" style={{ minWidth: '80px' }}>
+                      <TableCell
+                        className="px-2 py-3"
+                        style={{ minWidth: '80px' }}
+                      >
                         <span
                           className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${
                             tx.type === 'supply' ? 'text-green-500' : 'text-red-500'
@@ -278,8 +292,22 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                         </span>
                       </TableCell>
 
+                      {/* User */}
+                      <TableCell
+                        className="px-2 py-3"
+                        style={{ minWidth: '140px' }}
+                      >
+                        <AddressIdentity
+                          address={tx.onBehalf}
+                          chainId={tx.chainId}
+                        />
+                      </TableCell>
+
                       {/* Asset */}
-                      <TableCell className="px-2 py-3" style={{ minWidth: '100px' }}>
+                      <TableCell
+                        className="px-2 py-3"
+                        style={{ minWidth: '100px' }}
+                      >
                         <div className="flex items-center gap-1.5">
                           {tx.market && (
                             <TokenIcon
@@ -290,16 +318,20 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                               height={16}
                             />
                           )}
-                          <span className="whitespace-nowrap text-sm">
-                            {getTruncatedAssetName(tx.loanSymbol ?? 'Unknown')}
-                          </span>
+                          <span className="whitespace-nowrap text-sm">{getTruncatedAssetName(tx.loanSymbol ?? 'Unknown')}</span>
                         </div>
                       </TableCell>
 
                       {/* Market */}
-                      <TableCell className="px-2 py-3" style={{ minWidth: '200px' }}>
+                      <TableCell
+                        className="px-2 py-3"
+                        style={{ minWidth: '200px' }}
+                      >
                         {tx.market && marketPath ? (
-                          <Link href={marketPath} className="no-underline hover:no-underline">
+                          <Link
+                            href={marketPath}
+                            className="no-underline hover:no-underline"
+                          >
                             <div className="flex items-center gap-2">
                               <MarketIdBadge
                                 marketId={tx.market.uniqueKey}
@@ -322,7 +354,10 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* Amount (USD) */}
-                      <TableCell className="px-2 py-3 text-right" style={{ minWidth: '120px' }}>
+                      <TableCell
+                        className="px-2 py-3 text-right"
+                        style={{ minWidth: '120px' }}
+                      >
                         <span className="tabular-nums text-sm">
                           ${formatReadable(tx.usdValue)}
                           <span className="ml-1 text-xs text-secondary">
@@ -332,15 +367,22 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* Tx Hash */}
-                      <TableCell className="px-2 py-3" style={{ minWidth: '120px' }}>
-                        <TransactionIdentity txHash={tx.txHash} chainId={tx.chainId as SupportedNetworks} />
+                      <TableCell
+                        className="px-2 py-3"
+                        style={{ minWidth: '120px' }}
+                      >
+                        <TransactionIdentity
+                          txHash={tx.txHash}
+                          chainId={tx.chainId as SupportedNetworks}
+                        />
                       </TableCell>
 
                       {/* Time */}
-                      <TableCell className="px-2 py-3" style={{ minWidth: '90px' }}>
-                        <span className="whitespace-nowrap text-xs text-secondary">
-                          {moment.unix(tx.timestamp).fromNow()}
-                        </span>
+                      <TableCell
+                        className="px-2 py-3"
+                        style={{ minWidth: '90px' }}
+                      >
+                        <span className="whitespace-nowrap text-xs text-secondary">{moment.unix(tx.timestamp).fromNow()}</span>
                       </TableCell>
                     </TableRow>
                   );

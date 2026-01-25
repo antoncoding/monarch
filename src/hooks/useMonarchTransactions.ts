@@ -38,6 +38,7 @@ export type EnrichedTransaction = {
   type: 'supply' | 'withdraw';
   market?: Market;
   loanSymbol?: string;
+  onBehalf: string;
 };
 
 export type ChainStats = {
@@ -134,9 +135,7 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
   const ethPrice = useMemo(() => {
     for (const [key, price] of tokenPrices) {
       const address = key.split('-')[0];
-      const market = allMarkets.find(
-        (m) => m.loanAsset.address.toLowerCase() === address && ETH_PEGGED_SYMBOLS.has(m.loanAsset.symbol),
-      );
+      const market = allMarkets.find((m) => m.loanAsset.address.toLowerCase() === address && ETH_PEGGED_SYMBOLS.has(m.loanAsset.symbol));
       if (market) return price;
     }
     return 0;
@@ -145,9 +144,7 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
   const btcPrice = useMemo(() => {
     for (const [key, price] of tokenPrices) {
       const address = key.split('-')[0];
-      const market = allMarkets.find(
-        (m) => m.loanAsset.address.toLowerCase() === address && BTC_PEGGED_SYMBOLS.has(m.loanAsset.symbol),
-      );
+      const market = allMarkets.find((m) => m.loanAsset.address.toLowerCase() === address && BTC_PEGGED_SYMBOLS.has(m.loanAsset.symbol));
       if (market) return price;
     }
     return 0;
@@ -195,10 +192,7 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
       return 0;
     };
 
-    const enrichTx = (
-      tx: MonarchSupplyTransaction | MonarchWithdrawTransaction,
-      type: 'supply' | 'withdraw',
-    ): EnrichedTransaction => {
+    const enrichTx = (tx: MonarchSupplyTransaction | MonarchWithdrawTransaction, type: 'supply' | 'withdraw'): EnrichedTransaction => {
       const market = marketMap.get(tx.market_id.toLowerCase());
       const decimals = market?.loanAsset.decimals ?? 18;
       const formatted = Number(formatUnits(BigInt(tx.assets), decimals));
@@ -214,6 +208,7 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
         type,
         market,
         loanSymbol: market?.loanAsset.symbol,
+        onBehalf: tx.onBehalf,
       };
     };
 
@@ -304,29 +299,20 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
 
   // Calculate totals
   const totals = useMemo(() => {
-    let supplyVolumeUsd = 0;
-    let withdrawVolumeUsd = 0;
-
-    for (const tx of enrichedData.supplies) {
-      supplyVolumeUsd += tx.usdValue;
-    }
-
-    for (const tx of enrichedData.withdraws) {
-      withdrawVolumeUsd += tx.usdValue;
-    }
-
+    const totalSupplyVolumeUsd = enrichedData.supplies.reduce((sum, tx) => sum + tx.usdValue, 0);
+    const totalWithdrawVolumeUsd = enrichedData.withdraws.reduce((sum, tx) => sum + tx.usdValue, 0);
     return {
-      totalSupplyVolumeUsd: supplyVolumeUsd,
-      totalWithdrawVolumeUsd: withdrawVolumeUsd,
-      totalVolumeUsd: supplyVolumeUsd + withdrawVolumeUsd,
+      totalSupplyVolumeUsd,
+      totalWithdrawVolumeUsd,
+      totalVolumeUsd: totalSupplyVolumeUsd + totalWithdrawVolumeUsd,
     };
   }, [enrichedData]);
 
-  // Calculate unique users (from tx hashes, approximation)
+  // Calculate unique users from onBehalf addresses
   const uniqueUsers = useMemo(() => {
     const users = new Set<string>();
     for (const tx of enrichedData.transactions) {
-      users.add(tx.txHash);
+      users.add(tx.onBehalf.toLowerCase());
     }
     return users.size;
   }, [enrichedData.transactions]);

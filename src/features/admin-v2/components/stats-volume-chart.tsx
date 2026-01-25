@@ -29,12 +29,7 @@ function createStatsVolumeGradients(colors: ReturnType<typeof useChartColors>) {
   ];
 }
 
-export function StatsVolumeChart({
-  dailyVolumes,
-  totalSupplyVolumeUsd,
-  totalWithdrawVolumeUsd,
-  isLoading,
-}: StatsVolumeChartProps) {
+export function StatsVolumeChart({ dailyVolumes, totalSupplyVolumeUsd, totalWithdrawVolumeUsd, isLoading }: StatsVolumeChartProps) {
   const chartColors = useChartColors();
   const [visibleLines, setVisibleLines] = useState({
     supply: true,
@@ -67,13 +62,19 @@ export function StatsVolumeChart({
           </div>
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">Supply Volume</p>
-            <span className="tabular-nums text-lg" style={{ color: chartColors.supply.stroke }}>
+            <span
+              className="tabular-nums text-lg"
+              style={{ color: chartColors.supply.stroke }}
+            >
               ${formatReadable(totalSupplyVolumeUsd)}
             </span>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">Withdraw Volume</p>
-            <span className="tabular-nums text-lg" style={{ color: chartColors.withdraw.stroke }}>
+            <span
+              className="tabular-nums text-lg"
+              style={{ color: chartColors.withdraw.stroke }}
+            >
               ${formatReadable(totalWithdrawVolumeUsd)}
             </span>
           </div>
@@ -89,19 +90,30 @@ export function StatsVolumeChart({
         ) : chartData.length === 0 ? (
           <div className="flex h-[350px] items-center justify-center text-secondary">No data available</div>
         ) : (
-          <ResponsiveContainer width="100%" height={350}>
-            <AreaChart data={chartData} margin={{ top: 20, right: 20, left: 10, bottom: 10 }}>
-              <ChartGradients prefix="statsVolume" gradients={createStatsVolumeGradients(chartColors)} />
-              <CartesianGrid strokeDasharray="0" stroke="var(--color-border)" strokeOpacity={0.25} />
+          <ResponsiveContainer
+            width="100%"
+            height={350}
+          >
+            <AreaChart
+              data={chartData}
+              margin={{ top: 20, right: 20, left: 10, bottom: 10 }}
+            >
+              <ChartGradients
+                prefix="statsVolume"
+                gradients={createStatsVolumeGradients(chartColors)}
+              />
+              <CartesianGrid
+                strokeDasharray="0"
+                stroke="var(--color-border)"
+                strokeOpacity={0.25}
+              />
               <XAxis
                 dataKey="x"
                 axisLine={false}
                 tickLine={false}
                 tickMargin={12}
                 minTickGap={60}
-                tickFormatter={(time) =>
-                  new Date(time * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-                }
+                tickFormatter={(time) => new Date(time * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                 tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
               />
               <YAxis
@@ -115,10 +127,18 @@ export function StatsVolumeChart({
               <Tooltip
                 cursor={chartTooltipCursor}
                 content={({ active, payload, label }) => (
-                  <ChartTooltipContent active={active} payload={payload} label={label} formatValue={formatValue} />
+                  <ChartTooltipContent
+                    active={active}
+                    payload={payload}
+                    label={label}
+                    formatValue={formatValue}
+                  />
                 )}
               />
-              <Legend {...chartLegendStyle} {...legendHandlers} />
+              <Legend
+                {...chartLegendStyle}
+                {...legendHandlers}
+              />
               <Area
                 type="monotone"
                 dataKey="supply"
@@ -150,13 +170,11 @@ export function StatsVolumeChart({
         <div className="flex flex-wrap gap-x-8 gap-y-2">
           <div className="flex items-center gap-2">
             <span className="text-sm text-secondary">Transactions</span>
-            <span className="tabular-nums text-sm">{dailyVolumes.reduce((sum, d) => sum + 1, 0)} days</span>
+            <span className="tabular-nums text-sm">{dailyVolumes.length} days</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-secondary">Avg Daily Volume</span>
-            <span className="tabular-nums text-sm">
-              ${formatReadable(dailyVolumes.length > 0 ? totalVolume / dailyVolumes.length : 0)}
-            </span>
+            <span className="tabular-nums text-sm">${formatReadable(dailyVolumes.length > 0 ? totalVolume / dailyVolumes.length : 0)}</span>
           </div>
         </div>
       </div>
