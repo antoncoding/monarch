@@ -69,7 +69,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedChains, setSelectedChains] = useState<number[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<('supply' | 'withdraw')[]>([]);
-  const entriesPerPage = 15;
+  const entriesPerPage = 10;
 
   // Get unique chain IDs from transactions
   const uniqueChainIds = useMemo(() => {

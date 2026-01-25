@@ -26,6 +26,8 @@ import { StatsOverviewCards } from '@/features/admin-v2/components/stats-overvie
 import { StatsVolumeChart } from '@/features/admin-v2/components/stats-volume-chart';
 import { ChainVolumeChart } from '@/features/admin-v2/components/chain-volume-chart';
 import { StatsTransactionsTable } from '@/features/admin-v2/components/stats-transactions-table';
+import { StatsAssetTable } from '@/features/admin-v2/components/stats-asset-table';
+import { StatsMarketTable } from '@/features/admin-v2/components/stats-market-table';
 import { useMonarchTransactions, type TimeFrame } from '@/hooks/useMonarchTransactions';
 import { useAdminAuth } from '@/stores/useAdminAuth';
 
@@ -139,6 +141,18 @@ function StatsV2Content() {
 
             {/* Transactions Table */}
             <StatsTransactionsTable
+              transactions={transactions}
+              isLoading={isLoading}
+            />
+
+            {/* Asset Metrics Table */}
+            <StatsAssetTable
+              transactions={transactions}
+              isLoading={isLoading}
+            />
+
+            {/* Market Metrics Table */}
+            <StatsMarketTable
               transactions={transactions}
               isLoading={isLoading}
             />
