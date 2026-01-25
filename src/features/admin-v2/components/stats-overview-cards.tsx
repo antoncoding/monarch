@@ -23,7 +23,7 @@ function StatCard({ title, value, subtitle }: StatCardProps) {
   return (
     <Card className="rounded-md bg-surface shadow-sm">
       <CardBody className="p-4">
-        <h3 className="font-inter text-sm text-secondary">{title}</h3>
+        <h3 className="font text-sm text-secondary">{title}</h3>
         <div className="mt-2">
           <p className="font-zen text-2xl">{value}</p>
           {subtitle && <p className="mt-1 text-xs text-secondary">{subtitle}</p>}
@@ -45,7 +45,7 @@ export function StatsOverviewCards({
   const activeChains = chainStats.length;
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 font-zen">
       <StatCard
         title="Total Volume"
         value={`$${formatReadable(totalVolumeUsd)}`}

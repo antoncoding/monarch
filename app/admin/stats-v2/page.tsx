@@ -82,14 +82,10 @@ function StatsV2Content() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="font-zen text-2xl font-bold">Stats V2</h1>
-              <span className="rounded bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500">Experimental</span>
+              <h1 className="font-zen text-2xl font-bold">Monarch Stats</h1>
             </div>
-            <p className="mt-1 text-sm text-secondary">
-              Cross-chain Monarch transaction analytics. This API may be reverted due to cost concerns.
-            </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 font-zen">
             <ButtonGroup
               options={timeframeOptions}
               value={timeframe}
@@ -98,9 +94,9 @@ function StatsV2Content() {
               variant="default"
             />
             <Button
-              variant="ghost"
-              size="sm"
+              variant="default"
               onClick={() => void logout()}
+              size="sm"
             >
               Logout
             </Button>
