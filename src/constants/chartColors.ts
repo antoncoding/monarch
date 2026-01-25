@@ -14,6 +14,7 @@ type ChartColorConfig = {
 type ChartPaletteConfig = {
   supply: ChartColorConfig;
   borrow: ChartColorConfig;
+  withdraw: ChartColorConfig;
   apyAtTarget: ChartColorConfig;
   risk: ChartColorConfig;
   pie: readonly string[];
@@ -33,6 +34,7 @@ export const CHART_PALETTES: Record<ChartPaletteName, ChartPaletteConfig> = {
   classic: {
     supply: createColorConfig('#4E79A7'), // Blue
     borrow: createColorConfig('#59A14F'), // Green
+    withdraw: createColorConfig('#F28E2B'), // Orange
     apyAtTarget: createColorConfig('#EDC948'), // Yellow
     risk: createColorConfig('#E15759'), // Red
     pie: [
@@ -53,6 +55,7 @@ export const CHART_PALETTES: Record<ChartPaletteName, ChartPaletteConfig> = {
   earth: {
     supply: createColorConfig('#B26333'), // Burnt sienna
     borrow: createColorConfig('#89392D'), // Rust/terracotta
+    withdraw: createColorConfig('#CD853F'), // Peru
     apyAtTarget: createColorConfig('#A48A7A'), // Taupe
     risk: createColorConfig('#411E1D'), // Dark maroon
     pie: [
@@ -73,6 +76,7 @@ export const CHART_PALETTES: Record<ChartPaletteName, ChartPaletteConfig> = {
   forest: {
     supply: createColorConfig('#223A30'), // Dark forest green
     borrow: createColorConfig('#8DA99D'), // Sage green
+    withdraw: createColorConfig('#6B8E23'), // Olive drab
     apyAtTarget: createColorConfig('#727472'), // Medium gray
     risk: createColorConfig('#7A7C7B'), // Gray
     pie: [
@@ -93,6 +97,7 @@ export const CHART_PALETTES: Record<ChartPaletteName, ChartPaletteConfig> = {
   simple: {
     supply: createColorConfig('#2563EB'), // Blue-600
     borrow: createColorConfig('#16A34A'), // Green-600
+    withdraw: createColorConfig('#F97316'), // Orange-500
     apyAtTarget: createColorConfig('#EAB308'), // Yellow-500
     risk: createColorConfig('#DC2626'), // Red-600
     pie: [
