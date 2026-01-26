@@ -176,22 +176,22 @@ export function VaultHeader({
             {/* Key Stats */}
             <div className="flex items-center gap-6 border-r border-border pr-6">
               <div>
-                <p className="text-xs uppercase tracking-wider text-secondary">Total Assets</p>
-                <div className="flex items-center gap-2">
-                  {isLoading ? (
-                    <div className="h-6 w-24 animate-pulse rounded bg-hovered" />
-                  ) : (
-                    <p className="tabular-nums text-lg font-medium">{totalAssetsLabel}</p>
-                  )}
-                </div>
-              </div>
-              <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">APY</p>
                 <div className="flex items-center gap-2">
                   {isLoading ? (
                     <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
                   ) : (
                     <p className="tabular-nums text-lg font-medium text-primary">{apyLabel}</p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-secondary">Total Assets</p>
+                <div className="flex items-center gap-2">
+                  {isLoading ? (
+                    <div className="h-6 w-24 animate-pulse rounded bg-hovered" />
+                  ) : (
+                    <p className="tabular-nums text-lg font-medium">{totalAssetsLabel}</p>
                   )}
                 </div>
               </div>

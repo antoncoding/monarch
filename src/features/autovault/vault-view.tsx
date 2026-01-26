@@ -154,7 +154,7 @@ export default function VaultContent() {
           amount: 1, // Use 1 as placeholder since we're just showing presence
         };
       })
-      .filter((c): c is { address: string; symbol: string; amount: number } => !!c);
+      .filter((c): c is { address: Address; symbol: string; amount: number } => !!c);
   }, [vaultData?.capsData.collateralCaps, findToken, chainId]);
 
   const handleDeposit = useCallback(() => {

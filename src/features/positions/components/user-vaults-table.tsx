@@ -47,14 +47,10 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
     });
   };
 
-  if (vaults.length === 0) {
-    return null;
-  }
-
   // Filter out vaults where user has no balance
   const activeVaults = vaults.filter((vault) => vault.balance && vault.balance > 0n);
 
-  if (activeVaults.length === 0) {
+  if (vaults.length === 0) {
     return null;
   }
 
@@ -101,142 +97,152 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
             </TableRow>
           </TableHeader>
           <TableBody className="text-sm">
-            {activeVaults.map((vault) => {
-              const rowKey = `${vault.address}-${vault.networkId}`;
-              const isExpanded = expandedRows.has(rowKey);
-              const token = findToken(vault.asset, vault.networkId);
-              const networkImg = getNetworkImg(vault.networkId);
+            {activeVaults.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7}>
+                  <div className="flex min-h-[200px] items-center justify-center">
+                    <p className="text-sm text-secondary">No active positions in auto vaults.</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              activeVaults.map((vault) => {
+                const rowKey = `${vault.address}-${vault.networkId}`;
+                const isExpanded = expandedRows.has(rowKey);
+                const token = findToken(vault.asset, vault.networkId);
+                const networkImg = getNetworkImg(vault.networkId);
 
-              // Extract unique collateral addresses from caps
-              const collateralAddresses = vault.caps
-                .map((cap) => parseCapIdParams(cap.idParams).collateralToken)
-                .filter((collat) => collat !== undefined);
+                // Extract unique collateral addresses from caps
+                const collateralAddresses = vault.caps
+                  .map((cap) => parseCapIdParams(cap.idParams).collateralToken)
+                  .filter((collat) => collat !== undefined);
 
-              const uniqueCollateralAddresses = Array.from(new Set(collateralAddresses));
+                const uniqueCollateralAddresses = Array.from(new Set(collateralAddresses));
 
-              // Transform to format expected by CollateralIconsDisplay
-              const collaterals = uniqueCollateralAddresses
-                .map((address) => {
-                  const collateralToken = findToken(address, vault.networkId);
-                  return {
-                    address,
-                    symbol: collateralToken?.symbol ?? 'Unknown',
-                    amount: 1, // Use 1 as placeholder since we're just showing presence
-                  };
-                })
-                .filter((c) => c !== null);
+                // Transform to format expected by CollateralIconsDisplay
+                const collaterals = uniqueCollateralAddresses
+                  .map((address) => {
+                    const collateralToken = findToken(address, vault.networkId);
+                    return {
+                      address,
+                      symbol: collateralToken?.symbol ?? 'Unknown',
+                      amount: 1, // Use 1 as placeholder since we're just showing presence
+                    };
+                  })
+                  .filter((c) => c !== null);
 
-              const avgApy = vault.avgApy;
-              const displayRate = avgApy !== null && avgApy !== undefined && isAprDisplay ? convertApyToApr(avgApy) : avgApy;
+                const avgApy = vault.avgApy;
+                const displayRate = avgApy !== null && avgApy !== undefined && isAprDisplay ? convertApyToApr(avgApy) : avgApy;
 
-              return (
-                <Fragment key={rowKey}>
-                  <TableRow
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => toggleRow(rowKey)}
-                  >
-                    {/* Network */}
-                    <TableCell className="w-10">
-                      <div className="flex items-center justify-center">
-                        {networkImg && (
-                          <Image
-                            src={networkImg}
-                            alt={`Chain ${vault.networkId}`}
-                            width={24}
-                            height={24}
-                          />
-                        )}
-                      </div>
-                    </TableCell>
-
-                    {/* Size */}
-                    <TableCell data-label="Size">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="font-medium">
-                          {vault.balance && token ? formatReadable(formatUnits(vault.balance, token.decimals)) : '0'}
-                        </span>
-                        <span>{token?.symbol ?? 'USDC'}</span>
-                        <TokenIcon
-                          address={vault.asset}
-                          chainId={vault.networkId}
-                          width={16}
-                          height={16}
-                        />
-                      </div>
-                    </TableCell>
-
-                    {/* APY/APR */}
-                    <TableCell data-label={`${rateLabel} (now)`}>
-                      <div className="flex items-center justify-center">
-                        <span className="font-medium">
-                          {displayRate !== null && displayRate !== undefined ? `${(displayRate * 100).toFixed(2)}%` : '-'}
-                        </span>
-                      </div>
-                    </TableCell>
-
-                    {/* Interest Accrued - TODO: implement vault earnings calculation */}
-                    <TableCell data-label="Interest Accrued">
-                      <div className="flex items-center justify-center">
-                        <span className="font-medium">-</span>
-                      </div>
-                    </TableCell>
-
-                    {/* Collateral */}
-                    <TableCell data-label="Collateral">
-                      <CollateralIconsDisplay
-                        collaterals={collaterals}
-                        chainId={vault.networkId}
-                        maxDisplay={5}
-                        iconSize={20}
-                      />
-                    </TableCell>
-
-                    {/* Risk Tiers */}
-                    <TableCell
-                      data-label="Risk Tiers"
-                      className="align-middle"
+                return (
+                  <Fragment key={rowKey}>
+                    <TableRow
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => toggleRow(rowKey)}
                     >
-                      <div className="flex items-center justify-center gap-1">
-                        <AggregatedVaultRiskIndicators vault={vault} />
-                      </div>
-                    </TableCell>
+                      {/* Network */}
+                      <TableCell className="w-10">
+                        <div className="flex items-center justify-center">
+                          {networkImg && (
+                            <Image
+                              src={networkImg}
+                              alt={`Chain ${vault.networkId}`}
+                              width={24}
+                              height={24}
+                            />
+                          )}
+                        </div>
+                      </TableCell>
 
-                    {/* Actions */}
-                    <TableCell data-label="Actions">
-                      <div className="flex justify-center">
-                        <VaultActionsDropdown
-                          vaultAddress={vault.address}
+                      {/* Size */}
+                      <TableCell data-label="Size">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="font-medium">
+                            {vault.balance && token ? formatReadable(formatUnits(vault.balance, token.decimals)) : '0'}
+                          </span>
+                          <span>{token?.symbol ?? 'USDC'}</span>
+                          <TokenIcon
+                            address={vault.asset}
+                            chainId={vault.networkId}
+                            width={16}
+                            height={16}
+                          />
+                        </div>
+                      </TableCell>
+
+                      {/* APY/APR */}
+                      <TableCell data-label={`${rateLabel} (now)`}>
+                        <div className="flex items-center justify-center">
+                          <span className="font-medium">
+                            {displayRate !== null && displayRate !== undefined ? `${(displayRate * 100).toFixed(2)}%` : '-'}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Interest Accrued - TODO: implement vault earnings calculation */}
+                      <TableCell data-label="Interest Accrued">
+                        <div className="flex items-center justify-center">
+                          <span className="font-medium">-</span>
+                        </div>
+                      </TableCell>
+
+                      {/* Collateral */}
+                      <TableCell data-label="Collateral">
+                        <CollateralIconsDisplay
+                          collaterals={collaterals}
                           chainId={vault.networkId}
-                          account={account}
+                          maxDisplay={5}
+                          iconSize={20}
                         />
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
 
-                  {/* Expanded allocation detail */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
-                        <TableCell
-                          colSpan={7}
-                          className="bg-surface"
-                        >
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: 'auto' }}
-                            exit={{ height: 0 }}
-                            transition={{ duration: 0.1 }}
-                            className="overflow-hidden"
+                      {/* Risk Tiers */}
+                      <TableCell
+                        data-label="Risk Tiers"
+                        className="align-middle"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          <AggregatedVaultRiskIndicators vault={vault} />
+                        </div>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell data-label="Actions">
+                        <div className="flex justify-center">
+                          <VaultActionsDropdown
+                            vaultAddress={vault.address}
+                            chainId={vault.networkId}
+                            account={account}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Expanded allocation detail */}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
+                          <TableCell
+                            colSpan={7}
+                            className="bg-surface"
                           >
-                            <VaultAllocationDetail vault={vault} />
-                          </motion.div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </AnimatePresence>
-                </Fragment>
-              );
-            })}
+                            <motion.div
+                              initial={{ height: 0 }}
+                              animate={{ height: 'auto' }}
+                              exit={{ height: 0 }}
+                              transition={{ duration: 0.1 }}
+                              className="overflow-hidden"
+                            >
+                              <VaultAllocationDetail vault={vault} />
+                            </motion.div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </AnimatePresence>
+                  </Fragment>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </TableContainerWithHeader>
