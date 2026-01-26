@@ -1,7 +1,4 @@
-import { useMemo, useState } from 'react';
-import { IconSwitch } from '@/components/ui/icon-switch';
-import { HiOutlineCube } from 'react-icons/hi';
-import { MdOutlineAccountBalance } from 'react-icons/md';
+import { useMemo } from 'react';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -10,7 +7,6 @@ import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
-import { CollateralView } from './allocations/allocations/collateral-view';
 import { MarketView } from './allocations/allocations/market-view';
 
 type VaultMarketAllocationsProps = {
@@ -19,38 +15,23 @@ type VaultMarketAllocationsProps = {
   needsInitialization: boolean;
 };
 
-type ViewMode = 'collateral' | 'market';
-
-function ViewIcon({ isSelected, className }: { isSelected?: boolean; className?: string }) {
-  return isSelected ? <HiOutlineCube className={className} /> : <MdOutlineAccountBalance className={className} />;
-}
-
 export function VaultMarketAllocations({ vaultAddress, chainId, needsInitialization }: VaultMarketAllocationsProps) {
   const { address: connectedAddress } = useConnection();
 
   // Pull data directly - TanStack Query deduplicates
   const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
   const { totalAssets } = useVaultV2({ vaultAddress, chainId, connectedAddress });
-  const {
-    collateralAllocations,
-    marketAllocations,
-    loading: allocationsLoading,
-  } = useVaultAllocations({
+  const { marketAllocations, loading: allocationsLoading } = useVaultAllocations({
     vaultAddress,
     chainId,
   });
 
   const isLoading = vaultDataLoading || allocationsLoading;
-  const [viewMode, setViewMode] = useState<ViewMode>('market');
   const { loading: marketsLoading } = useProcessedMarkets();
 
   // Calculate total allocation from market allocations (canonical source)
-  // Note: collateralAllocations and marketAllocations are different VIEWS of the same data
-  // Using marketAllocations as the source of truth to avoid double-counting
   const totalAllocation = useMemo(() => {
     if (totalAssets !== undefined) return totalAssets;
-
-    // Sum only marketAllocations - collateral view is just a different grouping of the same data
     return marketAllocations.reduce((sum, a) => sum + a.allocation, 0n);
   }, [totalAssets, marketAllocations]);
 
@@ -58,11 +39,8 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
 
   const viewDescription = useMemo(() => {
     if (!vaultData) return '';
-    if (viewMode === 'collateral') {
-      return `See how your ${vaultData.tokenSymbol} supply is collateralized across assets shared by multiple markets.`;
-    }
     return `See where your ${vaultData.tokenSymbol} supply is deployed across markets.`;
-  }, [viewMode, vaultData]);
+  }, [vaultData]);
 
   // Show loading state when either allocations or markets context is still loading
   if (isLoading || marketsLoading) {
@@ -86,30 +64,12 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
 
   if (!vaultData) return null;
 
-  const hasNoAllocations = collateralAllocations.length === 0 && marketAllocations.length === 0;
-
-  const headerActions = (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-secondary">{viewMode === 'collateral' ? 'By Collateral' : 'By Market'}</span>
-      <IconSwitch
-        defaultSelected={viewMode === 'market'}
-        size="sm"
-        color="primary"
-        classNames={{
-          wrapper: 'mx-0',
-          thumbIcon: 'p-0 mr-0',
-        }}
-        onChange={() => setViewMode(viewMode === 'collateral' ? 'market' : 'collateral')}
-        thumbIcon={ViewIcon}
-      />
-    </div>
-  );
+  const hasNoAllocations = marketAllocations.length === 0;
 
   return (
     <TableContainerWithDescription
       title={hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}
       description={viewDescription}
-      actions={headerActions}
     >
       {hasNoAllocations ? (
         <div className="p-10 flex flex-col items-center justify-center font-zen">
@@ -119,14 +79,6 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
               : 'No markets configured yet. Configure caps in settings to start allocating assets'}
           </p>
         </div>
-      ) : viewMode === 'collateral' ? (
-        <CollateralView
-          allocations={collateralAllocations}
-          totalAllocation={totalAllocation}
-          vaultAssetSymbol={vaultData.tokenSymbol}
-          vaultAssetDecimals={vaultData.tokenDecimals}
-          chainId={chainId}
-        />
       ) : (
         <MarketView
           allocations={marketAllocations}

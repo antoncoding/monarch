@@ -1,16 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { GearIcon } from '@radix-ui/react-icons';
-import { RefetchIcon } from '@/components/ui/refetch-icon';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
@@ -18,16 +13,18 @@ import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { getSlicedAddress } from '@/utils/address';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { TotalSupplyCard } from '@/features/autovault/components/vault-detail/total-supply-card';
-import { VaultAllocatorCard } from '@/features/autovault/components/vault-detail/vault-allocator-card';
-import { VaultCollateralsCard } from '@/features/autovault/components/vault-detail/vault-collaterals-card';
+import { parseCapIdParams } from '@/utils/morpho';
 import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
 import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings';
-import { VaultSummaryMetrics } from '@/features/autovault/components/vault-detail/vault-summary-metrics';
 import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
+import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
+import { useModal } from '@/hooks/useModal';
+import { formatBalance } from '@/utils/balance';
+
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -37,6 +34,8 @@ export default function VaultContent() {
   const vaultAddressValue = vaultAddress as Address;
   const { address } = useConnection();
   const [hasMounted, setHasMounted] = useState(false);
+  const { open: openModal } = useModal();
+  const { findToken } = useTokensQuery();
 
   useEffect(() => {
     setHasMounted(true);
@@ -71,7 +70,7 @@ export default function VaultContent() {
   const adapterQuery = useMorphoMarketV1Adapters({ vaultAddress: vaultAddressValue, chainId });
 
   // Only use useVaultPage for complex computed state
-  const { vaultAPY, isAPYLoading, isVaultInitialized, needsInitialization } = useVaultPage({
+  const { vaultAPY, isVaultInitialized, needsInitialization } = useVaultPage({
     vaultAddress: vaultAddressValue,
     chainId,
     connectedAddress,
@@ -95,6 +94,9 @@ export default function VaultContent() {
   const vaultDataLoading = vaultDataQuery.isLoading;
   const title = vaultData?.displayName ?? `Vault ${getSlicedAddress(vaultAddressValue)}`;
   const symbolToDisplay = vaultData?.displaySymbol;
+  const tokenDecimals = vaultData?.tokenDecimals;
+  const tokenSymbol = vaultData?.tokenSymbol;
+  const assetAddress = vaultData?.assetAddress as Address | undefined;
 
   // UI state from Zustand stores (for vault-view banners only)
   const { open: openSettings } = useVaultSettingsModalStore();
@@ -110,6 +112,78 @@ export default function VaultContent() {
     if (vaultAPY === null || vaultAPY === undefined) return '0%';
     return `${(vaultAPY * 100).toFixed(2)}%`;
   }, [vaultAPY]);
+
+  const totalAssetsLabel = useMemo(() => {
+    if (vaultContract.totalAssets === undefined || tokenDecimals === undefined) return '--';
+
+    try {
+      const numericAssets = formatBalance(vaultContract.totalAssets, tokenDecimals);
+      const formattedAssets = new Intl.NumberFormat('en-US', {
+        maximumFractionDigits: 2,
+      }).format(numericAssets);
+
+      return `${formattedAssets}${tokenSymbol ? ` ${tokenSymbol}` : ''}`.trim();
+    } catch (_error) {
+      return '--';
+    }
+  }, [tokenDecimals, tokenSymbol, vaultContract.totalAssets]);
+
+  const userShareBalanceLabel = useMemo(() => {
+    if (vaultContract.userAssets === undefined || tokenDecimals === undefined || vaultContract.userAssets === 0n) return undefined;
+    try {
+      const numericAssets = formatBalance(vaultContract.userAssets, tokenDecimals);
+      const formattedAssets = new Intl.NumberFormat('en-US', {
+        maximumFractionDigits: 2,
+      }).format(numericAssets);
+      return `${formattedAssets}${tokenSymbol ? ` ${tokenSymbol}` : ''}`.trim();
+    } catch (_error) {
+      return undefined;
+    }
+  }, [tokenDecimals, tokenSymbol, vaultContract.userAssets]);
+
+  // Extract collateral addresses from caps for header
+  const collateralAddresses = useMemo(() => {
+    return (vaultData?.capsData.collateralCaps ?? [])
+      .map((cap) => {
+        const addr = parseCapIdParams(cap.idParams).collateralToken;
+        if (!addr) return null;
+        const token = findToken(addr, chainId);
+        return {
+          address: addr,
+          symbol: token?.symbol ?? 'Unknown',
+          amount: 1, // Use 1 as placeholder since we're just showing presence
+        };
+      })
+      .filter((c): c is { address: Address; symbol: string; amount: number } => !!c);
+  }, [vaultData?.capsData.collateralCaps, findToken, chainId]);
+
+  const handleDeposit = useCallback(() => {
+    if (!assetAddress || !tokenSymbol || tokenDecimals === undefined) return;
+
+    openModal('vaultDeposit', {
+      vaultAddress: vaultAddressValue,
+      vaultName: title,
+      assetAddress,
+      assetSymbol: tokenSymbol,
+      assetDecimals: tokenDecimals,
+      chainId,
+      onSuccess: handleRefreshVault,
+    });
+  }, [assetAddress, tokenSymbol, tokenDecimals, vaultAddressValue, title, chainId, openModal, handleRefreshVault]);
+
+  const handleWithdraw = useCallback(() => {
+    if (!assetAddress || !tokenSymbol || tokenDecimals === undefined) return;
+
+    openModal('vaultWithdraw', {
+      vaultAddress: vaultAddressValue,
+      vaultName: title,
+      assetAddress,
+      assetSymbol: tokenSymbol,
+      assetDecimals: tokenDecimals,
+      chainId,
+      onSuccess: handleRefreshVault,
+    });
+  }, [assetAddress, tokenSymbol, tokenDecimals, vaultAddressValue, title, chainId, openModal, handleRefreshVault]);
 
   // Show error state if data failed to load
   if (hasError) {
@@ -134,52 +208,28 @@ export default function VaultContent() {
       <Header />
       <div className="mx-auto container flex-1 pb-12 rounded">
         <div className="space-y-8">
-          {/* Vault Header */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <h1 className="font-zen text-2xl">{title}</h1>
-              {symbolToDisplay && <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>}
-            </div>
-            <div className="flex items-center gap-2">
-              <Tooltip
-                content={
-                  <TooltipContent
-                    title="Refresh"
-                    detail="Fetch latest vault data"
-                  />
-                }
-              >
-                <span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRefreshVault}
-                    disabled={vaultDataLoading}
-                    className="text-secondary min-w-0 px-2"
-                  >
-                    <RefetchIcon isLoading={vaultDataLoading || isRefetching} />
-                  </Button>
-                </span>
-              </Tooltip>
-              <Tooltip
-                content={
-                  <TooltipContent
-                    title="Settings"
-                    detail="Configure vault settings"
-                  />
-                }
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-secondary min-w-0 px-2"
-                  onClick={() => openSettings('general')}
-                >
-                  <GearIcon className="h-3 w-3" />
-                </Button>
-              </Tooltip>
-            </div>
-          </div>
+          {/* Unified Vault Header */}
+          <VaultHeader
+            vaultAddress={vaultAddressValue}
+            chainId={chainId}
+            title={title}
+            symbol={symbolToDisplay ?? ''}
+            assetAddress={assetAddress}
+            assetSymbol={tokenSymbol}
+            totalAssetsLabel={totalAssetsLabel}
+            apyLabel={apyLabel}
+            userShareBalance={userShareBalanceLabel}
+            allocators={vaultData?.allocators}
+            collaterals={collateralAddresses}
+            curator={vaultData?.curator}
+            adapter={adapterQuery.morphoMarketV1Adapter ?? undefined}
+            onDeposit={handleDeposit}
+            onWithdraw={handleWithdraw}
+            onRefresh={handleRefreshVault}
+            onSettings={() => openSettings('general')}
+            isRefetching={isRefetching}
+            isLoading={vaultDataLoading || vaultContract.isLoading}
+          />
 
           {/* Setup Banner - Show if vault needs initialization */}
           {needsInitialization && vaultContract.isOwner && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
@@ -237,36 +287,6 @@ export default function VaultContent() {
               </Button>
             </div>
           )}
-
-          {/* Summary Metrics */}
-          <VaultSummaryMetrics columns={4}>
-            <TotalSupplyCard
-              vaultAddress={vaultAddressValue}
-              chainId={chainId}
-            />
-            <Card className="bg-surface rounded shadow-sm">
-              <CardHeader className="flex items-center justify-between pb-2">
-                <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
-              </CardHeader>
-              <CardBody className="flex items-center justify-center py-3">
-                {vaultContract.isLoading || isAPYLoading ? (
-                  <div className="bg-hovered h-6 w-20 rounded animate-pulse" />
-                ) : (
-                  <div className="text-lg text-primary">{apyLabel}</div>
-                )}
-              </CardBody>
-            </Card>
-            <VaultAllocatorCard
-              vaultAddress={vaultAddressValue}
-              chainId={chainId}
-              needsInitialization={needsInitialization}
-            />
-            <VaultCollateralsCard
-              vaultAddress={vaultAddressValue}
-              chainId={chainId}
-              needsInitialization={needsInitialization}
-            />
-          </VaultSummaryMetrics>
 
           {/* Market Allocations */}
           <VaultMarketAllocations
