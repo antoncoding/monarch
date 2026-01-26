@@ -31,7 +31,7 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
 
     try {
       const capBigInt = BigInt(cap);
-      if (capBigInt >= maxUint128) {
+      if (capBigInt === 0n || capBigInt >= maxUint128) {
         return 'No limit';
       }
       const value = Number(capBigInt) / 10 ** vaultAssetDecimals;
@@ -109,7 +109,7 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
             sharedMarketCount,
           };
         })
-        .filter((item) => item.market !== undefined) ?? []
+        .filter((item) => item.market !== undefined && item.effectiveCap > 0) ?? []
     );
   }, [existingCaps, markets, collateralCapMap, marketCountByCollateral]);
 
