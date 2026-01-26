@@ -63,13 +63,7 @@ function DeployAdapterStep({
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs text-secondary">
           {isDeploying && <Spinner size={12} />}
-          <span>
-            {adapterDetected
-              ? `Adapter detected: ${shortenAddress(adapterAddress)}`
-              : isDeploying
-                ? 'Deploying adapter...'
-                : 'Adapter not detected yet. Click deploy to create one.'}
-          </span>
+          <span>{adapterDetected ? `Adapter detected: ${shortenAddress(adapterAddress)}` : isDeploying ? 'Deploying adapter...' : ''}</span>
         </div>
       </div>
     </div>
@@ -165,7 +159,7 @@ function AgentSelectionStep({
 }) {
   return (
     <div className="space-y-4 font-zen">
-      <p className="text-sm text-secondary">Choose an agent to automate your vault's allocations. You can change this later in settings.</p>
+      <p className="text-sm text-secondary">Choose an allocator to automate your vault's allocations. You can change this later in settings.</p>
       <div className="space-y-3">
         {v2AgentsBase.map((agent) => (
           <AllocatorCard
@@ -173,6 +167,7 @@ function AgentSelectionStep({
             name={agent.name}
             address={agent.address as Address}
             description={agent.strategyDescription}
+            image={agent.image}
             isSelected={selectedAgent === (agent.address as Address)}
             onSelect={() => onSelectAgent(selectedAgent === (agent.address as Address) ? null : (agent.address as Address))}
           />
@@ -239,7 +234,7 @@ export function VaultInitializationModal() {
   });
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [selectedAgent, setSelectedAgent] = useState<Address | null>((v2AgentsBase.at(0)?.address as Address) || null);
+  const [selectedAgent, setSelectedAgent] = useState<Address | null>((v2AgentsBase.at(0)?.address as Address) ?? null);
   const [vaultName, setVaultName] = useState<string>('');
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
   const [deployedAdapter, setDeployedAdapter] = useState<Address>(ZERO_ADDRESS);
@@ -364,7 +359,7 @@ export function VaultInitializationModal() {
   useEffect(() => {
     if (!isOpen) {
       setStepIndex(0);
-      setSelectedAgent(null);
+      setSelectedAgent((v2AgentsBase.at(0)?.address as Address) ?? null);
       setVaultName('');
       setVaultSymbol('');
       setDeployedAdapter(ZERO_ADDRESS);
@@ -385,7 +380,7 @@ export function VaultInitializationModal() {
       case 'metadata':
         return 'Set vault name & symbol';
       case 'agents':
-        return 'Choose an agent';
+        return 'Choose an Allocator';
       case 'finalize':
         return 'Review & finalize';
       default:
@@ -483,7 +478,7 @@ export function VaultInitializationModal() {
         mainIcon={<FiZap className="h-5 w-5" />}
         onClose={close}
       />
-      <ModalBody className="space-y-6 px-8 py-6">
+      <ModalBody className="space-y-6 px-6 py-8">
         {currentStep === 'deploy' && (
           <DeployAdapterStep
             isDeploying={isDeploying}

@@ -41,7 +41,7 @@ export function useVaultIndexing({ vaultAddress, chainId, hasPostInitData, refet
       toastIdRef.current = toast.info(
         <StyledToast
           title="Indexing vault data..."
-          message="This should only take a moment. We're refreshing automatically."
+          message="This can take up to 10 minutes. We're refreshing automatically."
         />,
         {
           autoClose: false,
@@ -73,7 +73,7 @@ export function useVaultIndexing({ vaultAddress, chainId, hasPostInitData, refet
       if (Date.now() - startTime > INDEXING_TIMEOUT_MS) {
         clearInterval(intervalId);
         stopIndexing();
-        styledInfo('Indexing delayed', 'Data is taking longer than expected. Please try refreshing manually using the refresh button.');
+        styledInfo('Indexing delayed', 'Data is taking longer than 10 minutes. Please try refreshing manually using the refresh button.');
         return;
       }
 

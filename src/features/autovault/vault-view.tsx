@@ -240,7 +240,7 @@ export default function VaultContent() {
               <div className="space-y-1">
                 <p className="text-sm text-primary">Complete vault setup</p>
                 <p className="text-sm text-secondary">
-                  Initialize your vault by deploying an adapter, setting caps, and configuring the registry to start using your vault.
+                  Initialize your vault by deploying an adapter, and setting caps to start auto earning.
                 </p>
               </div>
               <Button

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Address } from 'viem';
 
-export const INDEXING_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+export const INDEXING_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
 type IndexingVault = {
   address: Address;
