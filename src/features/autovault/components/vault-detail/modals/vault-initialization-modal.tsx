@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiZap } from 'react-icons/fi';
 import { type Address, zeroAddress, decodeEventLog } from 'viem';
 import { useParams } from 'next/navigation';
-import { usePublicClient } from 'wagmi';
+import { useConnection, usePublicClient } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AllocatorCard } from '@/components/shared/allocator-card';
@@ -18,7 +18,7 @@ import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { useVaultIndexingStore } from '@/stores/vault-indexing-store';
+import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 const ZERO_ADDRESS = zeroAddress;
@@ -191,7 +191,7 @@ const MAX_SYMBOL_LENGTH = 16;
 export function VaultInitializationModal() {
   // Modal state from Zustand (UI state)
   const { isOpen, close } = useVaultInitializationModalStore();
-  const { startIndexing } = useVaultIndexingStore();
+  const { address: connectedAccount } = useConnection();
 
   // Get vault address and chain ID from URL params
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -208,6 +208,9 @@ export function VaultInitializationModal() {
     }
     return SupportedNetworks.Base;
   }, [chainIdParam]);
+
+  // Cache for pushing known keys after init (instant RPC data on next refetch)
+  const { addAllocators, addAdapters } = useVaultKeysCache(vaultAddress, chainId);
 
   // Fetch vault data
   const vaultDataQuery = useVaultV2Data({
@@ -328,10 +331,22 @@ export function VaultInitializationModal() {
         return;
       }
 
-      // Start indexing mode - vault page will handle retry logic
-      startIndexing(vaultAddressValue, chainId);
+      // Push known keys to cache so RPC fetches them instantly on next refetch
+      const allocatorsToCache: { address: string }[] = [];
+      if (connectedAccount) {
+        allocatorsToCache.push({ address: connectedAccount });
+      }
+      if (selectedAgent) {
+        allocatorsToCache.push({ address: selectedAgent });
+      }
+      if (allocatorsToCache.length > 0) {
+        addAllocators(allocatorsToCache);
+      }
+      if (adapterAddress !== ZERO_ADDRESS) {
+        addAdapters([{ address: adapterAddress }]);
+      }
 
-      // Trigger initial refetch
+      // Trigger refetch — cache keys are now available, RPC will return fresh data
       void vaultDataQuery.refetch();
       void vaultContract.refetch();
       void refetchAdapter();
@@ -346,7 +361,9 @@ export function VaultInitializationModal() {
     vaultContract,
     refetchAdapter,
     close,
-    startIndexing,
+    addAllocators,
+    addAdapters,
+    connectedAccount,
     registryAddress,
     selectedAgent,
     adapterAddress,

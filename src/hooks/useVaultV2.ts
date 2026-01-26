@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { type Address, encodeFunctionData, zeroAddress, toFunctionSelector } from 'viem';
+import { useQueryClient } from '@tanstack/react-query';
 import { useConnection, useChainId, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
@@ -7,6 +8,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
+import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 
 /**
  * @notice Reading and Writing hook (via wagmi) for Morpho V2 Vaults
@@ -25,6 +27,8 @@ export function useVaultV2({
   const connectedChainId = useChainId();
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
   const { address: account } = useConnection();
+  const queryClient = useQueryClient();
+  const { addAllocators: cacheAllocators, addCaps: cacheCaps } = useVaultKeysCache(vaultAddress, chainIdToUse);
 
   const vaultContract = {
     address: vaultAddress ?? zeroAddress,
@@ -95,6 +99,7 @@ export function useVaultV2({
     chainId: chainIdToUse,
     onSuccess: () => {
       void refetchAll();
+      void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
       onTransactionSuccess?.();
     },
   });
@@ -376,6 +381,13 @@ export function useVaultV2({
           data: multicallTx,
           chainId: chainIdToUse,
         });
+
+        // Push to cache so RPC picks it up instantly on next refetch
+        if (isAllocator) {
+          cacheAllocators([{ address: allocator }]);
+        }
+        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
+
         return true;
       } catch (allocatorError) {
         if (allocatorError instanceof Error && allocatorError.message.toLowerCase().includes('reject')) {
@@ -385,7 +397,7 @@ export function useVaultV2({
         throw allocatorError;
       }
     },
-    [account, chainIdToUse, sendAllocatorTx, vaultAddress],
+    [account, chainIdToUse, sendAllocatorTx, vaultAddress, cacheAllocators],
   );
 
   const updateCaps = useCallback(
@@ -486,6 +498,12 @@ export function useVaultV2({
           data: multicallTx,
           chainId: chainIdToUse,
         });
+
+        // Push cap keys to cache so RPC picks them up instantly on next refetch
+        cacheCaps(caps.map((cap) => ({ capId: cap.capId, idParams: cap.idParams })));
+        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
+        void queryClient.invalidateQueries({ queryKey: ['vault-allocations', vaultAddress, chainIdToUse] });
+
         return true;
       } catch (capsError) {
         if (capsError instanceof Error && capsError.message.toLowerCase().includes('reject')) {
@@ -495,7 +513,7 @@ export function useVaultV2({
         throw capsError;
       }
     },
-    [account, chainIdToUse, sendCapsTx, vaultAddress],
+    [account, chainIdToUse, sendCapsTx, vaultAddress, cacheCaps],
   );
 
   const { isConfirming: isDepositing, sendTransactionAsync: sendDepositTx } = useTransactionWithToast({

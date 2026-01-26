@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import type { Address } from 'viem';
 import { useQuery } from '@tanstack/react-query';
+import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import type { SupportedNetworks } from '@/utils/networks';
-import { readAllocation } from '@/utils/vaultAllocation';
+import { getClient } from '@/utils/rpc';
 
 export type AllocationData = {
   capId: string;
@@ -34,19 +35,21 @@ export function useAllocationsQuery({ vaultAddress, chainId, caps = [], enabled 
         return [];
       }
 
-      // Read all allocations in parallel
-      const allocationPromises = caps.map(async (cap) => {
-        const allocation = await readAllocation(vaultAddress, cap.capId as `0x${string}`, chainId);
+      const client = getClient(chainId);
+      const contracts = caps.map((cap) => ({
+        address: vaultAddress,
+        abi: vaultv2Abi,
+        functionName: 'allocation' as const,
+        args: [cap.capId as `0x${string}`],
+      }));
 
-        return {
-          capId: cap.capId,
-          allocation,
-          cap,
-        };
-      });
+      const results = await client.multicall({ contracts, allowFailure: true });
 
-      const results = await Promise.all(allocationPromises);
-      return results;
+      return caps.map((cap, i) => ({
+        capId: cap.capId,
+        allocation: results[i].status === 'success' ? (results[i].result as bigint) : 0n,
+        cap,
+      }));
     },
     enabled: enabled && Boolean(vaultAddress) && caps.length > 0,
     staleTime: 30_000, // 30 seconds - allocation data is cacheable
