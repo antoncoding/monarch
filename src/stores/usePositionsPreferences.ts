@@ -3,10 +3,12 @@ import { persist } from 'zustand/middleware';
 
 type PositionsPreferencesState = {
   showCollateralExposure: boolean;
+  showEarningsInUsd: boolean;
 };
 
 type PositionsPreferencesActions = {
   setShowCollateralExposure: (show: boolean) => void;
+  setShowEarningsInUsd: (show: boolean) => void;
 
   // Bulk update for migration
   setAll: (state: Partial<PositionsPreferencesState>) => void;
@@ -27,9 +29,11 @@ export const usePositionsPreferences = create<PositionsPreferencesStore>()(
     (set) => ({
       // Default state
       showCollateralExposure: true,
+      showEarningsInUsd: false,
 
       // Actions
       setShowCollateralExposure: (show) => set({ showCollateralExposure: show }),
+      setShowEarningsInUsd: (show) => set({ showEarningsInUsd: show }),
       setAll: (state) => set(state),
     }),
     {

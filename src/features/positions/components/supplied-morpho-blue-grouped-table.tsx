@@ -31,6 +31,8 @@ import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } fro
 import { convertApyToApr } from '@/utils/rateMath';
 import { type GroupedPosition, type WarningWithDetail, WarningCategory } from '@/utils/types';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
+import { useTokenPrices } from '@/hooks/useTokenPrices';
+import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { PositionActionsDropdown } from './position-actions-dropdown';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
@@ -110,7 +112,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
   } = useUserPositionsSummaryData(account, period);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const { showCollateralExposure, setShowCollateralExposure } = usePositionsPreferences();
+  const { showCollateralExposure, setShowCollateralExposure, showEarningsInUsd, setShowEarningsInUsd } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
   const { address } = useConnection();
   const { isAprDisplay } = useAppSettings();
@@ -133,6 +135,15 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
   const groupedPositions = useMemo(() => groupPositionsByLoanAsset(marketPositions), [marketPositions]);
 
   const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
+
+  const tokens = useMemo(() => {
+    return processedPositions.map((p) => ({
+      address: p.loanAssetAddress,
+      chainId: p.chainId,
+    }));
+  }, [processedPositions]);
+
+  const { prices } = useTokenPrices(tokens);
 
   const toggleRow = (rowKey: string) => {
     setExpandedRows((prev) => {
@@ -292,10 +303,25 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                               );
                             })()}
                           >
-                            <span className="font-medium cursor-help">
-                              {formatReadable(Number(formatBalance(earnings, groupedPosition.loanAssetDecimals)))}{' '}
-                              {groupedPosition.loanAsset}
-                            </span>
+                            <div className="cursor-help">
+                              {(() => {
+                                const earningsReadable = Number(formatBalance(earnings, groupedPosition.loanAssetDecimals));
+                                const priceKey = getTokenPriceKey(groupedPosition.loanAssetAddress, groupedPosition.chainId);
+                                const price = prices.get(priceKey);
+                                const tokenAmount = `${formatReadable(earningsReadable)} ${groupedPosition.loanAsset}`;
+                                const usdValue = price ? earningsReadable * price : null;
+
+                                if (showEarningsInUsd && usdValue !== null) {
+                                  return (
+                                    <div className="flex flex-col items-center gap-0 font-medium">
+                                      <span>${formatReadable(usdValue, usdValue < 1 ? 4 : 2)}</span>
+                                      <span className="font-normal opacity-70">{tokenAmount}</span>
+                                    </div>
+                                  );
+                                }
+                                return <div className="flex justify-center font-medium">{tokenAmount}</div>;
+                              })()}
+                            </div>
                           </Tooltip>
                         )}
                       </div>
@@ -432,6 +458,16 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                   <IconSwitch
                     selected={showCollateralExposure}
                     onChange={setShowCollateralExposure}
+                    size="xs"
+                  />
+                </FilterRow>
+                <FilterRow
+                  title="Show Earnings in USD"
+                  description="Display accrued interest in USD alongside token amount"
+                >
+                  <IconSwitch
+                    selected={showEarningsInUsd}
+                    onChange={setShowEarningsInUsd}
                     size="xs"
                   />
                 </FilterRow>
