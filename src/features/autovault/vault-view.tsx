@@ -1,15 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { GearIcon } from '@radix-ui/react-icons';
-import { RefetchIcon } from '@/components/ui/refetch-icon';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
@@ -74,7 +70,7 @@ export default function VaultContent() {
   const adapterQuery = useMorphoMarketV1Adapters({ vaultAddress: vaultAddressValue, chainId });
 
   // Only use useVaultPage for complex computed state
-  const { vaultAPY, isAPYLoading, isVaultInitialized, needsInitialization } = useVaultPage({
+  const { vaultAPY, isVaultInitialized, needsInitialization } = useVaultPage({
     vaultAddress: vaultAddressValue,
     chainId,
     connectedAddress,
@@ -134,7 +130,7 @@ export default function VaultContent() {
 
   const userShareBalanceLabel = useMemo(() => {
     if (vaultContract.userAssets === undefined || tokenDecimals === undefined || vaultContract.userAssets === 0n) return undefined;
-     try {
+    try {
       const numericAssets = formatBalance(vaultContract.userAssets, tokenDecimals);
       const formattedAssets = new Intl.NumberFormat('en-US', {
         maximumFractionDigits: 2,
@@ -144,6 +140,22 @@ export default function VaultContent() {
       return undefined;
     }
   }, [tokenDecimals, tokenSymbol, vaultContract.userAssets]);
+
+  // Extract collateral addresses from caps for header
+  const collateralAddresses = useMemo(() => {
+    return (vaultData?.capsData.collateralCaps ?? [])
+      .map((cap) => {
+        const addr = parseCapIdParams(cap.idParams).collateralToken;
+        if (!addr) return null;
+        const token = findToken(addr, chainId);
+        return {
+          address: addr,
+          symbol: token?.symbol ?? 'Unknown',
+          amount: 1, // Use 1 as placeholder since we're just showing presence
+        };
+      })
+      .filter((c): c is { address: string; symbol: string; amount: number } => !!c);
+  }, [vaultData?.capsData.collateralCaps, findToken, chainId]);
 
   const handleDeposit = useCallback(() => {
     if (!assetAddress || !tokenSymbol || tokenDecimals === undefined) return;
@@ -191,22 +203,6 @@ export default function VaultContent() {
     );
   }
 
-  // Extract collateral addresses from caps for header
-  const collateralAddresses = useMemo(() => {
-    return (vaultData?.capsData.collateralCaps ?? [])
-      .map((cap) => {
-        const addr = parseCapIdParams(cap.idParams).collateralToken;
-        if (!addr) return null;
-        const token = findToken(addr, chainId);
-        return {
-          address: addr,
-          symbol: token?.symbol ?? 'Unknown',
-          amount: 1, // Use 1 as placeholder since we're just showing presence
-        };
-      })
-      .filter((c): c is { address: string; symbol: string; amount: number } => !!c);
-  }, [vaultData?.capsData.collateralCaps, findToken, chainId]);
-
   return (
     <div className="flex w-full flex-col font-zen">
       <Header />
@@ -220,7 +216,6 @@ export default function VaultContent() {
             symbol={symbolToDisplay ?? ''}
             assetAddress={assetAddress}
             assetSymbol={tokenSymbol}
-            assetDecimals={tokenDecimals}
             totalAssetsLabel={totalAssetsLabel}
             apyLabel={apyLabel}
             userShareBalance={userShareBalanceLabel}
@@ -234,7 +229,6 @@ export default function VaultContent() {
             onSettings={() => openSettings('general')}
             isRefetching={isRefetching}
             isLoading={vaultDataLoading || vaultContract.isLoading}
-            isOwner={vaultContract.isOwner}
           />
 
           {/* Setup Banner - Show if vault needs initialization */}

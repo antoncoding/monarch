@@ -43,7 +43,7 @@ export function TableContainerWithHeader({ title, actions, children, className =
 
 type TableContainerWithDescriptionProps = {
   title: string;
-  description: string;
+  description?: string;
   actions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -79,7 +79,7 @@ export function TableContainerWithDescription({
       <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-4">
         <div className="flex-1">
           <h3 className="text-sm font-medium mb-1">{title}</h3>
-          <p className="text-xs text-secondary">{description}</p>
+          {description && <p className="text-xs text-secondary">{description}</p>}
         </div>
         {actions && <div className="flex items-center gap-2 ml-4">{actions}</div>}
       </div>

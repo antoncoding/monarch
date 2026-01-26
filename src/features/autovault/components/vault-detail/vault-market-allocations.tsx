@@ -21,10 +21,7 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
   // Pull data directly - TanStack Query deduplicates
   const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
   const { totalAssets } = useVaultV2({ vaultAddress, chainId, connectedAddress });
-  const {
-    marketAllocations,
-    loading: allocationsLoading,
-  } = useVaultAllocations({
+  const { marketAllocations, loading: allocationsLoading } = useVaultAllocations({
     vaultAddress,
     chainId,
   });

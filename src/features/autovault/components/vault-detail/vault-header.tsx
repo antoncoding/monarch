@@ -28,7 +28,6 @@ type VaultHeaderProps = {
   symbol: string;
   assetAddress?: Address;
   assetSymbol?: string;
-  assetDecimals?: number;
   totalAssetsLabel: string;
   apyLabel: string;
   userShareBalance?: string;
@@ -42,7 +41,6 @@ type VaultHeaderProps = {
   onSettings: () => void;
   isRefetching: boolean;
   isLoading: boolean;
-  isOwner: boolean;
 };
 
 export function VaultHeader({
@@ -65,7 +63,6 @@ export function VaultHeader({
   onSettings,
   isRefetching,
   isLoading,
-  isOwner,
 }: VaultHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const toast = useStyledToast();
@@ -76,12 +73,12 @@ export function VaultHeader({
       await navigator.clipboard.writeText(vaultAddress);
       toast.success('Vault address copied', `${vaultAddress.slice(0, 6)}...${vaultAddress.slice(-4)}`);
     } catch {
-      // Clipboard API not available
+      toast.error('Copy failed', 'Clipboard access is not available');
     }
   };
 
   // Filter for known agents
-  const knownAllocators = allocators.filter(addr => findAgent(addr) !== undefined);
+  const knownAllocators = allocators.filter((addr) => findAgent(addr) !== undefined);
 
   return (
     <div className="mt-6 mb-6 space-y-4">
@@ -104,9 +101,7 @@ export function VaultHeader({
             <div>
               <div className="flex items-center gap-2 pt-1 text-2xl font-medium">
                 {title}
-                <span className="rounded bg-hovered px-2 py-0.5 text-xs text-secondary align-middle font-normal">
-                  {symbol}
-                </span>
+                <span className="rounded bg-hovered px-2 py-0.5 text-xs text-secondary align-middle font-normal">{symbol}</span>
                 <button
                   type="button"
                   onClick={handleCopyVaultAddress}
@@ -140,11 +135,15 @@ export function VaultHeader({
                       <span>Allocators:</span>
                       <div className="flex -space-x-2 ml-1">
                         {knownAllocators.slice(0, 3).map((addr, index) => (
-                          <div key={addr} style={{ zIndex: 10 - index }} className="relative">
+                          <div
+                            key={addr}
+                            style={{ zIndex: 10 - index }}
+                            className="relative"
+                          >
                             <AgentIcon
-                                address={addr as Address}
-                                width={20}
-                                height={20}
+                              address={addr as Address}
+                              width={20}
+                              height={20}
                             />
                           </div>
                         ))}
@@ -197,12 +196,12 @@ export function VaultHeader({
                 </div>
               </div>
               {userShareBalance && (
-                 <div>
-                 <p className="text-xs uppercase tracking-wider text-secondary">My Balance</p>
-                 <div className="flex items-center gap-2">
-                   <p className="tabular-nums text-lg font-medium">{userShareBalance}</p>
-                 </div>
-               </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-secondary">My Balance</p>
+                  <div className="flex items-center gap-2">
+                    <p className="tabular-nums text-lg font-medium">{userShareBalance}</p>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -250,7 +249,7 @@ export function VaultHeader({
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => window.open(getExplorerURL(vaultAddress, chainId), '_blank')}
+                    onClick={() => window.open(getExplorerURL(vaultAddress, chainId), '_blank', 'noopener,noreferrer')}
                     startContent={<FiExternalLink className="h-4 w-4" />}
                   >
                     View on Explorer
@@ -269,8 +268,8 @@ export function VaultHeader({
             onClick={() => setIsExpanded(!isExpanded)}
             aria-expanded={isExpanded}
           >
-             <div className="flex items-center gap-2">
-                <span>Vault Details</span>
+            <div className="flex items-center gap-2">
+              <span>Vault Details</span>
             </div>
             <div className="flex items-center gap-2">
               <ChevronDownIcon className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
@@ -287,47 +286,50 @@ export function VaultHeader({
                 className="overflow-hidden"
               >
                 <div className="pt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <h4 className="text-xs uppercase tracking-wider text-secondary">Configuration</h4>
-                        </div>
-                        {curator && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-secondary">Curator:</span>
-                            <AddressIdentity
-                              address={curator}
-                              chainId={chainId}
-                            />
-                          </div>
-                        )}
-                        {adapter && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-secondary">Adapter:</span>
-                            <AddressIdentity
-                              address={adapter}
-                              chainId={chainId}
-                            />
-                          </div>
-                        )}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs uppercase tracking-wider text-secondary">Configuration</h4>
                     </div>
+                    {curator && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-secondary">Curator:</span>
+                        <AddressIdentity
+                          address={curator}
+                          chainId={chainId}
+                        />
+                      </div>
+                    )}
+                    {adapter && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-secondary">Adapter:</span>
+                        <AddressIdentity
+                          address={adapter}
+                          chainId={chainId}
+                        />
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="space-y-3">
-                         {allocators.length > 0 && (
-                            <div className="space-y-1.5">
-                                <h4 className="text-xs uppercase tracking-wider text-secondary">Allocators</h4>
-                                <div className="flex flex-col gap-1.5">
-                                    {allocators.map(addr => (
-                                         <div key={addr} className="flex items-center gap-1.5">
-                                            <AddressIdentity
-                                                address={addr}
-                                                chainId={chainId}
-                                            />
-                                         </div>
-                                    ))}
-                                </div>
+                  <div className="space-y-3">
+                    {allocators.length > 0 && (
+                      <div className="space-y-1.5">
+                        <h4 className="text-xs uppercase tracking-wider text-secondary">Allocators</h4>
+                        <div className="flex flex-col gap-1.5">
+                          {allocators.map((addr) => (
+                            <div
+                              key={addr}
+                              className="flex items-center gap-1.5"
+                            >
+                              <AddressIdentity
+                                address={addr}
+                                chainId={chainId}
+                              />
                             </div>
-                        )}
-                    </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}

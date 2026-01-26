@@ -81,7 +81,6 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
   return (
     <TableContainerWithDescription
       title="Recent Activity"
-      description="Last 5 transactions"
       actions={actions}
     >
       <Table className="w-full font-zen">
