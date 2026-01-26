@@ -28,6 +28,8 @@ import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-
 import { useModal } from '@/hooks/useModal';
 import { formatBalance } from '@/utils/balance';
 
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{
     chainId: string;
@@ -37,6 +39,7 @@ export default function VaultContent() {
   const { address } = useConnection();
   const [hasMounted, setHasMounted] = useState(false);
   const { open: openModal } = useModal();
+  const { findToken } = useTokensQuery();
 
   useEffect(() => {
     setHasMounted(true);
@@ -190,8 +193,19 @@ export default function VaultContent() {
 
   // Extract collateral addresses from caps for header
   const collateralAddresses = useMemo(() => {
-    return (vaultData?.capsData.collateralCaps ?? []).map((cap) => parseCapIdParams(cap.idParams).collateralToken).filter((addr): addr is string => !!addr);
-  }, [vaultData?.capsData.collateralCaps]);
+    return (vaultData?.capsData.collateralCaps ?? [])
+      .map((cap) => {
+        const addr = parseCapIdParams(cap.idParams).collateralToken;
+        if (!addr) return null;
+        const token = findToken(addr, chainId);
+        return {
+          address: addr,
+          symbol: token?.symbol ?? 'Unknown',
+          amount: 1, // Use 1 as placeholder since we're just showing presence
+        };
+      })
+      .filter((c): c is { address: string; symbol: string; amount: number } => !!c);
+  }, [vaultData?.capsData.collateralCaps, findToken, chainId]);
 
   return (
     <div className="flex w-full flex-col font-zen">

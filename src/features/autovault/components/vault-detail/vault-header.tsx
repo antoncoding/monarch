@@ -19,6 +19,7 @@ import type { Address } from 'viem';
 
 import { AgentIcon } from '@/components/shared/agent-icon';
 import { findAgent } from '@/utils/monarch-agent';
+import { CollateralIconsDisplay } from '@/features/positions/components/collateral-icons-display';
 
 type VaultHeaderProps = {
   vaultAddress: Address;
@@ -32,7 +33,7 @@ type VaultHeaderProps = {
   apyLabel: string;
   userShareBalance?: string;
   allocators?: string[];
-  collaterals?: string[];
+  collaterals?: { address: string; symbol: string; amount: number }[];
   curator?: string;
   adapter?: string;
   onDeposit: () => void;
@@ -51,7 +52,6 @@ export function VaultHeader({
   symbol,
   assetAddress,
   assetSymbol,
-  assetDecimals,
   totalAssetsLabel,
   apyLabel,
   userShareBalance,
@@ -96,9 +96,8 @@ export function VaultHeader({
                 address={assetAddress}
                 chainId={chainId}
                 symbol={assetSymbol ?? ''}
-                width={48}
-                height={48}
-                className="rounded-full bg-surface"
+                width={40}
+                height={40}
               />
             )}
 
@@ -158,16 +157,13 @@ export function VaultHeader({
                     <span className="text-border">·</span>
                     <div className="flex items-center gap-1">
                       <span>Collaterals:</span>
-                      <div className="flex -space-x-1.5 ml-1">
-                        {collaterals.slice(0, 5).map((addr) => (
-                          <TokenIcon
-                            key={addr}
-                            address={addr}
-                            chainId={chainId}
-                            width={16}
-                            height={16}
-                          />
-                        ))}
+                      <div className="flex ml-1">
+                        <CollateralIconsDisplay
+                          collaterals={collaterals}
+                          chainId={chainId}
+                          maxDisplay={5}
+                          iconSize={16}
+                        />
                       </div>
                     </div>
                   </>
