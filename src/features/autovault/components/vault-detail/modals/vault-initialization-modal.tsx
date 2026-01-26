@@ -159,7 +159,9 @@ function AgentSelectionStep({
 }) {
   return (
     <div className="space-y-4 font-zen">
-      <p className="text-sm text-secondary">Choose an allocator to automate your vault's allocations. You can change this later in settings.</p>
+      <p className="text-sm text-secondary">
+        Choose an allocator to automate your vault's allocations. You can change this later in settings.
+      </p>
       <div className="space-y-3">
         {v2AgentsBase.map((agent) => (
           <AllocatorCard

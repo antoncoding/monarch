@@ -138,28 +138,22 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
   const handleRemoveMarketCap = useCallback((marketId: string) => {
     hasUserEditsRef.current = true;
     const key = marketId.toLowerCase();
-    let wasNewCap = false;
 
     setMarketCaps((prev) => {
       const info = prev.get(key);
-      if (info && !info.existingCapId) {
+      if (!info) return prev;
+
+      if (!info.existingCapId) {
         // Newly added cap — remove from state entirely
-        wasNewCap = true;
         const next = new Map(prev);
         next.delete(key);
         return next;
       }
+
+      // Existing on-chain cap — mark as removed (will be zeroed on save)
+      setRemovedMarketIds((prevRemoved) => new Set(prevRemoved).add(key));
       return prev;
     });
-
-    // Existing on-chain cap — mark as removed (will be zeroed on save)
-    if (!wasNewCap) {
-      setRemovedMarketIds((prev) => {
-        const next = new Set(prev);
-        next.add(key);
-        return next;
-      });
-    }
   }, []);
 
   const handleUndoRemoveMarketCap = useCallback((marketId: string) => {
