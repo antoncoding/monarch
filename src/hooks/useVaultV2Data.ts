@@ -41,70 +41,36 @@ export type VaultV2Data = {
 
 // --- Merge helpers: deduplicate API + cache keys ---
 
-function mergeAllocatorKeys(apiAllocators: string[] | undefined, cachedAllocators: { address: string }[]): string[] {
+function mergeAddressKeys(...sources: (string[] | undefined)[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
-
-  for (const addr of apiAllocators ?? []) {
-    const lower = addr.toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      result.push(lower);
+  for (const source of sources) {
+    for (const addr of source ?? []) {
+      const lower = addr.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        result.push(lower);
+      }
     }
   }
-
-  for (const cached of cachedAllocators) {
-    const lower = cached.address.toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      result.push(lower);
-    }
-  }
-
   return result;
 }
 
 function mergeCapKeys(apiCaps: VaultV2Cap[] | undefined, cachedCaps: CachedCap[]): CachedCap[] {
   const seen = new Set<string>();
   const result: CachedCap[] = [];
-
   for (const cap of apiCaps ?? []) {
     if (!seen.has(cap.capId)) {
       seen.add(cap.capId);
       result.push({ capId: cap.capId, idParams: cap.idParams });
     }
   }
-
   for (const cached of cachedCaps) {
     if (!seen.has(cached.capId)) {
       seen.add(cached.capId);
       result.push(cached);
     }
   }
-
-  return result;
-}
-
-function mergeAdapterKeys(apiAdapters: string[] | undefined, cachedAdapters: { address: string }[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
-
-  for (const addr of apiAdapters ?? []) {
-    const lower = addr.toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      result.push(lower);
-    }
-  }
-
-  for (const cached of cachedAdapters) {
-    const lower = cached.address.toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      result.push(lower);
-    }
-  }
-
   return result;
 }
 
@@ -137,16 +103,16 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
       const cachedKeys = getVaultKeys();
 
       // Merge API + cache keys with deduplication
-      const allocatorAddresses = mergeAllocatorKeys(apiResult?.allocators, cachedKeys.allocators);
+      const allocatorAddresses = mergeAddressKeys(apiResult?.allocators, cachedKeys.allocators);
       const capEntries = mergeCapKeys(apiResult?.caps, cachedKeys.caps);
-      const adapterAddresses = mergeAdapterKeys(apiResult?.adapters, cachedKeys.adapters);
+      const adapterAddresses = mergeAddressKeys(apiResult?.adapters, cachedKeys.adapters);
 
       // Seed cache with API-discovered keys (deduplication handled by store)
       if (apiResult) {
         seedFromApi({
-          allocators: apiResult.allocators.map((a) => ({ address: a })),
+          allocators: apiResult.allocators,
           caps: apiResult.caps.map((c) => ({ capId: c.capId, idParams: c.idParams })),
-          adapters: apiResult.adapters.map((a) => ({ address: a })),
+          adapters: apiResult.adapters,
         });
       }
 

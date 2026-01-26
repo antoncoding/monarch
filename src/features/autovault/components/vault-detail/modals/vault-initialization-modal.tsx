@@ -332,18 +332,18 @@ export function VaultInitializationModal() {
       }
 
       // Push known keys to cache so RPC fetches them instantly on next refetch
-      const allocatorsToCache: { address: string }[] = [];
+      const allocatorsToCache: string[] = [];
       if (connectedAccount) {
-        allocatorsToCache.push({ address: connectedAccount });
+        allocatorsToCache.push(connectedAccount);
       }
       if (selectedAgent) {
-        allocatorsToCache.push({ address: selectedAgent });
+        allocatorsToCache.push(selectedAgent);
       }
       if (allocatorsToCache.length > 0) {
         addAllocators(allocatorsToCache);
       }
       if (adapterAddress !== ZERO_ADDRESS) {
-        addAdapters([{ address: adapterAddress }]);
+        addAdapters([adapterAddress]);
       }
 
       // Trigger refetch — cache keys are now available, RPC will return fresh data

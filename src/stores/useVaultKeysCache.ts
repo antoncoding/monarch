@@ -2,40 +2,16 @@ import { useCallback } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type CachedAllocator = {
-  address: string;
-};
-
 type CachedCap = {
   capId: string;
   idParams: string;
 };
 
-type CachedAdapter = {
-  address: string;
-};
-
 type VaultKeysEntry = {
-  allocators: CachedAllocator[];
+  allocators: string[];
   caps: CachedCap[];
-  adapters: CachedAdapter[];
+  adapters: string[];
 };
-
-type VaultKeysCache = Record<string, VaultKeysEntry>;
-
-type VaultKeysCacheState = {
-  cache: VaultKeysCache;
-};
-
-type VaultKeysCacheActions = {
-  addAllocators: (vaultKey: string, allocators: CachedAllocator[]) => void;
-  addCaps: (vaultKey: string, caps: CachedCap[]) => void;
-  addAdapters: (vaultKey: string, adapters: CachedAdapter[]) => void;
-  getVaultKeys: (vaultKey: string) => VaultKeysEntry;
-  seedFromApi: (vaultKey: string, entry: Partial<VaultKeysEntry>) => void;
-};
-
-type VaultKeysCacheStore = VaultKeysCacheState & VaultKeysCacheActions;
 
 function emptyEntry(): VaultKeysEntry {
   return { allocators: [], caps: [], adapters: [] };
@@ -45,180 +21,134 @@ function makeVaultKey(vaultAddress: string, chainId: number): string {
   return `${vaultAddress.toLowerCase()}:${chainId}`;
 }
 
+/** Deduplicate and merge new addresses into an existing list (case-insensitive). */
+function mergeAddresses(existing: string[], incoming: string[]): string[] | null {
+  const seen = new Set(existing.map((a) => a.toLowerCase()));
+  let changed = false;
+  const result = [...existing];
+  for (const addr of incoming) {
+    const lower = addr.toLowerCase();
+    if (!seen.has(lower)) {
+      seen.add(lower);
+      result.push(lower);
+      changed = true;
+    }
+  }
+  return changed ? result : null;
+}
+
+/** Deduplicate and merge new caps into an existing list (by capId). */
+function mergeCaps(existing: CachedCap[], incoming: CachedCap[]): CachedCap[] | null {
+  const seen = new Set(existing.map((c) => c.capId));
+  let changed = false;
+  const result = [...existing];
+  for (const cap of incoming) {
+    if (!seen.has(cap.capId)) {
+      seen.add(cap.capId);
+      result.push({ capId: cap.capId, idParams: cap.idParams });
+      changed = true;
+    }
+  }
+  return changed ? result : null;
+}
+
 /**
  * Zustand store for caching vault data keys (allocators, caps, adapters).
  *
- * This store persists the "keys" needed to query on-chain vault state via RPC.
- * It bridges the gap between the slow Morpho API indexer and instant on-chain data:
- * - After transactions, push new keys here → next RPC fetch picks them up instantly
- * - API data seeds this cache on first load → ensures keys survive across sessions
- * - RPC verifies each key on-chain → stale keys are filtered out automatically
+ * Persists the "keys" needed to query on-chain vault state via RPC.
+ * After transactions, push new keys here → next RPC fetch picks them up instantly.
+ * API data seeds this cache on first load → keys survive across sessions.
+ * RPC verifies each key on-chain → stale keys are filtered out automatically.
  */
-export const useVaultKeysCacheStore = create<VaultKeysCacheStore>()(
+export const useVaultKeysCacheStore = create<{
+  cache: Record<string, VaultKeysEntry>;
+  addAllocators: (vaultKey: string, addresses: string[]) => void;
+  addCaps: (vaultKey: string, caps: CachedCap[]) => void;
+  addAdapters: (vaultKey: string, addresses: string[]) => void;
+  getVaultKeys: (vaultKey: string) => VaultKeysEntry;
+  seedFromApi: (vaultKey: string, entry: Partial<VaultKeysEntry>) => void;
+}>()(
   persist(
     (set, get) => ({
       cache: {},
 
-      addAllocators: (vaultKey, allocators) => {
+      addAllocators: (vaultKey, addresses) => {
         set((state) => {
           const entry = state.cache[vaultKey] ?? emptyEntry();
-          const existing = entry.allocators;
-          let hasChanges = false;
-          const updated = [...existing];
-
-          for (const alloc of allocators) {
-            const addr = alloc.address.toLowerCase();
-            const exists = updated.some((a) => a.address.toLowerCase() === addr);
-            if (!exists) {
-              updated.push({ address: addr });
-              hasChanges = true;
-            }
-          }
-
-          if (!hasChanges) return state;
-
-          return {
-            cache: {
-              ...state.cache,
-              [vaultKey]: { ...entry, allocators: updated },
-            },
-          };
+          const merged = mergeAddresses(entry.allocators, addresses);
+          if (!merged) return state;
+          return { cache: { ...state.cache, [vaultKey]: { ...entry, allocators: merged } } };
         });
       },
 
       addCaps: (vaultKey, caps) => {
         set((state) => {
           const entry = state.cache[vaultKey] ?? emptyEntry();
-          const existing = entry.caps;
-          let hasChanges = false;
-          const updated = [...existing];
-
-          for (const cap of caps) {
-            const exists = updated.some((c) => c.capId === cap.capId);
-            if (!exists) {
-              updated.push({ capId: cap.capId, idParams: cap.idParams });
-              hasChanges = true;
-            }
-          }
-
-          if (!hasChanges) return state;
-
-          return {
-            cache: {
-              ...state.cache,
-              [vaultKey]: { ...entry, caps: updated },
-            },
-          };
+          const merged = mergeCaps(entry.caps, caps);
+          if (!merged) return state;
+          return { cache: { ...state.cache, [vaultKey]: { ...entry, caps: merged } } };
         });
       },
 
-      addAdapters: (vaultKey, adapters) => {
+      addAdapters: (vaultKey, addresses) => {
         set((state) => {
           const entry = state.cache[vaultKey] ?? emptyEntry();
-          const existing = entry.adapters;
-          let hasChanges = false;
-          const updated = [...existing];
-
-          for (const adapter of adapters) {
-            const addr = adapter.address.toLowerCase();
-            const exists = updated.some((a) => a.address.toLowerCase() === addr);
-            if (!exists) {
-              updated.push({ address: addr });
-              hasChanges = true;
-            }
-          }
-
-          if (!hasChanges) return state;
-
-          return {
-            cache: {
-              ...state.cache,
-              [vaultKey]: { ...entry, adapters: updated },
-            },
-          };
+          const merged = mergeAddresses(entry.adapters, addresses);
+          if (!merged) return state;
+          return { cache: { ...state.cache, [vaultKey]: { ...entry, adapters: merged } } };
         });
       },
 
-      getVaultKeys: (vaultKey) => {
-        return get().cache[vaultKey] ?? emptyEntry();
-      },
+      getVaultKeys: (vaultKey) => get().cache[vaultKey] ?? emptyEntry(),
 
       seedFromApi: (vaultKey, entry) => {
         const store = get();
-        if (entry.allocators?.length) {
-          store.addAllocators(vaultKey, entry.allocators);
-        }
-        if (entry.caps?.length) {
-          store.addCaps(vaultKey, entry.caps);
-        }
-        if (entry.adapters?.length) {
-          store.addAdapters(vaultKey, entry.adapters);
-        }
+        if (entry.allocators?.length) store.addAllocators(vaultKey, entry.allocators);
+        if (entry.caps?.length) store.addCaps(vaultKey, entry.caps);
+        if (entry.adapters?.length) store.addAdapters(vaultKey, entry.adapters);
       },
     }),
     {
       name: 'monarch_store_vaultKeysCache',
+      version: 2,
+      migrate: () => ({ cache: {} }),
     },
   ),
 );
 
 /**
- * Convenience hook with scoped API for a specific vault.
+ * Convenience hook scoped to a specific vault.
  *
  * @example
- * ```tsx
  * const { addAllocators, addCaps, getVaultKeys } = useVaultKeysCache(vaultAddress, chainId);
- * ```
  */
 export function useVaultKeysCache(vaultAddress: string | undefined, chainId: number | undefined) {
   const vaultKey = vaultAddress && chainId ? makeVaultKey(vaultAddress, chainId) : '';
-
-  const storeAddAllocators = useVaultKeysCacheStore((s) => s.addAllocators);
-  const storeAddCaps = useVaultKeysCacheStore((s) => s.addCaps);
-  const storeAddAdapters = useVaultKeysCacheStore((s) => s.addAdapters);
-  const storeGetVaultKeys = useVaultKeysCacheStore((s) => s.getVaultKeys);
-  const storeSeedFromApi = useVaultKeysCacheStore((s) => s.seedFromApi);
+  const store = useVaultKeysCacheStore();
 
   return {
     addAllocators: useCallback(
-      (allocators: CachedAllocator[]) => {
-        if (!vaultKey) return;
-        storeAddAllocators(vaultKey, allocators);
-      },
-      [storeAddAllocators, vaultKey],
+      (addresses: string[]) => { if (vaultKey) store.addAllocators(vaultKey, addresses); },
+      [store.addAllocators, vaultKey],
     ),
-
     addCaps: useCallback(
-      (caps: CachedCap[]) => {
-        if (!vaultKey) return;
-        storeAddCaps(vaultKey, caps);
-      },
-      [storeAddCaps, vaultKey],
+      (caps: CachedCap[]) => { if (vaultKey) store.addCaps(vaultKey, caps); },
+      [store.addCaps, vaultKey],
     ),
-
     addAdapters: useCallback(
-      (adapters: CachedAdapter[]) => {
-        if (!vaultKey) return;
-        storeAddAdapters(vaultKey, adapters);
-      },
-      [storeAddAdapters, vaultKey],
+      (addresses: string[]) => { if (vaultKey) store.addAdapters(vaultKey, addresses); },
+      [store.addAdapters, vaultKey],
     ),
-
-    getVaultKeys: useCallback((): VaultKeysEntry => {
-      if (!vaultKey) return emptyEntry();
-      return storeGetVaultKeys(vaultKey);
-    }, [storeGetVaultKeys, vaultKey]),
-
+    getVaultKeys: useCallback(
+      (): VaultKeysEntry => vaultKey ? store.getVaultKeys(vaultKey) : emptyEntry(),
+      [store.getVaultKeys, vaultKey],
+    ),
     seedFromApi: useCallback(
-      (entry: Partial<VaultKeysEntry>) => {
-        if (!vaultKey) return;
-        storeSeedFromApi(vaultKey, entry);
-      },
-      [storeSeedFromApi, vaultKey],
+      (entry: Partial<VaultKeysEntry>) => { if (vaultKey) store.seedFromApi(vaultKey, entry); },
+      [store.seedFromApi, vaultKey],
     ),
-
     vaultKey,
   };
 }
 
-export type { CachedAllocator, CachedCap, CachedAdapter, VaultKeysEntry };
+export type { CachedCap, VaultKeysEntry };

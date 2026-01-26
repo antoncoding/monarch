@@ -384,7 +384,7 @@ export function useVaultV2({
 
         // Push to cache so RPC picks it up instantly on next refetch
         if (isAllocator) {
-          cacheAllocators([{ address: allocator }]);
+          cacheAllocators([allocator]);
         }
         void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
 
