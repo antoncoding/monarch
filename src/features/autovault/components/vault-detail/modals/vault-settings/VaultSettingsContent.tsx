@@ -6,7 +6,7 @@ import { slideVariants, slideTransition, type SlideDirection } from '@/component
 import type { SupportedNetworks } from '@/utils/networks';
 import { VaultSettingsHeader } from './VaultSettingsHeader';
 import { GeneralPanel, RolesPanel, CapsPanel } from './panels';
-import { EditCapsDetail } from './details';
+import { EditCapsDetail, EditAllocatorsDetail, EditMetadataDetail } from './details';
 import type { VaultSettingsCategory, VaultDetailView } from '@/stores/vault-settings-modal-store';
 
 type PanelProps = {
@@ -29,6 +29,8 @@ type DetailProps = {
 
 const DETAIL_COMPONENTS: Record<Exclude<VaultDetailView, null>, React.ComponentType<DetailProps>> = {
   'edit-caps': EditCapsDetail,
+  'edit-allocators': EditAllocatorsDetail,
+  'edit-metadata': EditMetadataDetail,
 };
 
 type VaultSettingsContentProps = {

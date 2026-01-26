@@ -110,12 +110,7 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
         args: [addr as Address],
       }));
 
-      const contracts = [
-        ...basicContracts,
-        ...allocatorContracts,
-        ...capContracts,
-        ...adapterContracts,
-      ];
+      const contracts = [...basicContracts, ...allocatorContracts, ...capContracts, ...adapterContracts];
 
       const results = await client.multicall({
         contracts,

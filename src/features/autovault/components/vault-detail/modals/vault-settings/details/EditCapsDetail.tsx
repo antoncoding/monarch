@@ -41,7 +41,7 @@ export function EditCapsDetail({ vaultAddress, chainId, onBack }: EditCapsDetail
       isOwner={isOwner}
       isUpdating={isUpdatingCaps}
       adapterAddress={adapterAddress}
-      onCancel={onBack}
+      onBack={onBack}
       onSave={async (caps) => {
         const success = await updateCaps(caps);
         // Don't call onBack() here - onTransactionSuccess handles navigation after tx confirms
