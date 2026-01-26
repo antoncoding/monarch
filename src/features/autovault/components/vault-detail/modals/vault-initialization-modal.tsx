@@ -18,7 +18,7 @@ import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { startVaultIndexing } from '@/utils/vault-indexing';
+import { useVaultIndexingStore } from '@/stores/vault-indexing-store';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 const ZERO_ADDRESS = zeroAddress;
@@ -63,13 +63,7 @@ function DeployAdapterStep({
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs text-secondary">
           {isDeploying && <Spinner size={12} />}
-          <span>
-            {adapterDetected
-              ? `Adapter detected: ${shortenAddress(adapterAddress)}`
-              : isDeploying
-                ? 'Deploying adapter...'
-                : 'Adapter not detected yet. Click deploy to create one.'}
-          </span>
+          <span>{adapterDetected ? `Adapter detected: ${shortenAddress(adapterAddress)}` : isDeploying ? 'Deploying adapter...' : ''}</span>
         </div>
       </div>
     </div>
@@ -165,7 +159,9 @@ function AgentSelectionStep({
 }) {
   return (
     <div className="space-y-4 font-zen">
-      <p className="text-sm text-secondary">Choose an agent to automate your vault's allocations. You can change this later in settings.</p>
+      <p className="text-sm text-secondary">
+        Choose an allocator to automate your vault's allocations. You can change this later in settings.
+      </p>
       <div className="space-y-3">
         {v2AgentsBase.map((agent) => (
           <AllocatorCard
@@ -173,6 +169,7 @@ function AgentSelectionStep({
             name={agent.name}
             address={agent.address as Address}
             description={agent.strategyDescription}
+            image={agent.image}
             isSelected={selectedAgent === (agent.address as Address)}
             onSelect={() => onSelectAgent(selectedAgent === (agent.address as Address) ? null : (agent.address as Address))}
           />
@@ -194,6 +191,7 @@ const MAX_SYMBOL_LENGTH = 16;
 export function VaultInitializationModal() {
   // Modal state from Zustand (UI state)
   const { isOpen, close } = useVaultInitializationModalStore();
+  const { startIndexing } = useVaultIndexingStore();
 
   // Get vault address and chain ID from URL params
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -238,7 +236,7 @@ export function VaultInitializationModal() {
   });
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [selectedAgent, setSelectedAgent] = useState<Address | null>((v2AgentsBase.at(0)?.address as Address) || null);
+  const [selectedAgent, setSelectedAgent] = useState<Address | null>((v2AgentsBase.at(0)?.address as Address) ?? null);
   const [vaultName, setVaultName] = useState<string>('');
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
   const [deployedAdapter, setDeployedAdapter] = useState<Address>(ZERO_ADDRESS);
@@ -331,7 +329,7 @@ export function VaultInitializationModal() {
       }
 
       // Start indexing mode - vault page will handle retry logic
-      startVaultIndexing(vaultAddress, chainId);
+      startIndexing(vaultAddressValue, chainId);
 
       // Trigger initial refetch
       void vaultDataQuery.refetch();
@@ -348,12 +346,14 @@ export function VaultInitializationModal() {
     vaultContract,
     refetchAdapter,
     close,
+    startIndexing,
     registryAddress,
     selectedAgent,
     adapterAddress,
     vaultName,
     vaultSymbol,
     vaultAddress,
+    vaultAddressValue,
     chainId,
   ]);
 
@@ -361,7 +361,7 @@ export function VaultInitializationModal() {
   useEffect(() => {
     if (!isOpen) {
       setStepIndex(0);
-      setSelectedAgent(null);
+      setSelectedAgent((v2AgentsBase.at(0)?.address as Address) ?? null);
       setVaultName('');
       setVaultSymbol('');
       setDeployedAdapter(ZERO_ADDRESS);
@@ -382,7 +382,7 @@ export function VaultInitializationModal() {
       case 'metadata':
         return 'Set vault name & symbol';
       case 'agents':
-        return 'Choose an agent';
+        return 'Choose an Allocator';
       case 'finalize':
         return 'Review & finalize';
       default:
@@ -480,7 +480,7 @@ export function VaultInitializationModal() {
         mainIcon={<FiZap className="h-5 w-5" />}
         onClose={close}
       />
-      <ModalBody className="space-y-6 px-8 py-6">
+      <ModalBody className="space-y-6 px-6 py-8">
         {currentStep === 'deploy' && (
           <DeployAdapterStep
             isDeploying={isDeploying}
