@@ -17,4 +17,6 @@ export const VAULT_SETTINGS_CATEGORIES: CategoryConfig[] = [
 
 export const VAULT_DETAIL_TITLES: Record<Exclude<VaultDetailView, null>, string> = {
   'edit-caps': 'Edit Caps',
+  'edit-allocators': 'Edit Allocators',
+  'edit-metadata': 'Edit Metadata',
 };

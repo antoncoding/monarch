@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type VaultSettingsCategory = 'general' | 'roles' | 'caps';
-export type VaultDetailView = 'edit-caps' | null;
+export type VaultDetailView = 'edit-caps' | 'edit-allocators' | 'edit-metadata' | null;
 
 type VaultSettingsModalState = {
   isOpen: boolean;
