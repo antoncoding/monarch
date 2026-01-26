@@ -119,7 +119,7 @@ export function VaultDepositModal({
                 variant="primary"
                 className="ml-2 min-w-32"
               >
-                {!permit2Authorized || (!usePermit2Setting && !isApproved) ? 'Approve' : 'Deposit'}
+                Deposit
               </ExecuteTransactionButton>
             </div>
           </div>
