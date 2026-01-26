@@ -215,14 +215,16 @@ export function VaultHeader({
               >
                 Deposit
               </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={onWithdraw}
-                disabled={isLoading}
-              >
-                Withdraw
-              </Button>
+              {userShareBalance && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={onWithdraw}
+                  disabled={isLoading}
+                >
+                  Withdraw
+                </Button>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

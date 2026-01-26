@@ -73,21 +73,41 @@ export function useVaultV2({
         functionName: 'totalAssets',
         args: [],
       },
+      {
+        // balanceOf (user's share balance)
+        ...vaultContract,
+        functionName: 'balanceOf',
+        args: [connectedAddress ?? zeroAddress],
+      },
+      {
+        // totalSupply (for share-to-asset conversion)
+        ...vaultContract,
+        functionName: 'totalSupply',
+        args: [],
+      },
     ],
     query: {
       enabled: vaultContract.address !== zeroAddress,
     },
   });
 
-  const [owner, curator, name, symbol, totalAssets] = useMemo(() => {
+  const [owner, curator, name, symbol, totalAssets, userShares, totalSupply] = useMemo(() => {
     return [
       batchData?.[0].result ?? zeroAddress,
       batchData?.[1].result ?? zeroAddress,
       batchData?.[2].result ?? '',
       batchData?.[3].result ?? '',
       batchData?.[4].result ?? 0n,
+      batchData?.[5].result ?? 0n,
+      batchData?.[6].result ?? 0n,
     ];
   }, [batchData]);
+
+  // ERC4626: convert user's shares to underlying asset value
+  const userAssets = useMemo(() => {
+    if (!connectedAddress || userShares === 0n || totalSupply === 0n) return undefined;
+    return (userShares * totalAssets) / totalSupply;
+  }, [connectedAddress, userShares, totalAssets, totalSupply]);
 
   const { isConfirming: isInitializing, sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
     toastId: `init-${vaultAddress ?? 'unknown'}`,
@@ -697,5 +717,6 @@ export function useVaultV2({
     withdrawFromMarket,
     isWithdrawing,
     totalAssets,
+    userAssets,
   };
 }
