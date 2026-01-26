@@ -8,7 +8,7 @@ import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import type { SupportedNetworks } from '@/utils/networks';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getAgentLabel, getAgentIcon } from './agent-display';
-import { RoleAddressItem } from './RoleAddressItem';
+import { AddressIdentity } from '@/components/shared/address-identity';
 
 type EditAllocatorsProps = {
   allocators: Address[];
@@ -76,7 +76,7 @@ export function EditAllocators({
                 key={address}
                 className="flex items-center justify-between rounded border border-line bg-surface p-3"
               >
-                <RoleAddressItem
+                <AddressIdentity
                   address={address}
                   chainId={chainId}
                   label={getAgentLabel(address)}
@@ -112,7 +112,7 @@ export function EditAllocators({
                 className="flex items-center justify-between rounded border border-line bg-surface p-3"
               >
                 <div className="flex flex-col gap-2">
-                  <RoleAddressItem
+                  <AddressIdentity
                     address={agent.address}
                     chainId={chainId}
                     label={agent.name}

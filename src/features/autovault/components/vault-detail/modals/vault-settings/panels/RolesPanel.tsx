@@ -9,7 +9,7 @@ import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getAgentLabel, getAgentIcon } from '../../../settings/agent-display';
-import { RoleAddressItem } from '../../../settings/RoleAddressItem';
+import { AddressIdentity } from '@/components/shared/address-identity';
 import type { VaultDetailView } from '@/stores/vault-settings-modal-store';
 
 type RolesPanelProps = {
@@ -56,7 +56,7 @@ export function RolesPanel({ vaultAddress, chainId, onNavigateToDetail }: RolesP
       ) : (
         <div className="flex flex-wrap gap-2">
           {addresses.map((addr) => (
-            <RoleAddressItem
+            <AddressIdentity
               key={addr}
               address={addr}
               chainId={chainId}
@@ -100,7 +100,7 @@ export function RolesPanel({ vaultAddress, chainId, onNavigateToDetail }: RolesP
         ) : (
           <div className="flex flex-wrap gap-2">
             {allocators.map((address) => (
-              <RoleAddressItem
+              <AddressIdentity
                 key={address}
                 address={address}
                 chainId={chainId}
