@@ -51,6 +51,13 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
     return null;
   }
 
+  // Filter out vaults where user has no balance
+  const activeVaults = vaults.filter((vault) => vault.balance && vault.balance > 0n);
+
+  if (activeVaults.length === 0) {
+    return null;
+  }
+
   // Header actions (refresh button)
   const headerActions = refetch ? (
     <Tooltip
@@ -94,7 +101,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
             </TableRow>
           </TableHeader>
           <TableBody className="text-sm">
-            {vaults.map((vault) => {
+            {activeVaults.map((vault) => {
               const rowKey = `${vault.address}-${vault.networkId}`;
               const isExpanded = expandedRows.has(rowKey);
               const token = findToken(vault.asset, vault.networkId);
@@ -162,7 +169,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                     <TableCell data-label={`${rateLabel} (now)`}>
                       <div className="flex items-center justify-center">
                         <span className="font-medium">
-                          {displayRate !== null && displayRate !== undefined ? `${(displayRate * 100).toFixed(2)}%` : '—'}
+                          {displayRate !== null && displayRate !== undefined ? `${(displayRate * 100).toFixed(2)}%` : '-'}
                         </span>
                       </div>
                     </TableCell>

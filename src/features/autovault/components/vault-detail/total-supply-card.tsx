@@ -9,7 +9,6 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { formatBalance } from '@/utils/balance';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
-import { useVaultPage } from '@/hooks/useVaultPage';
 import { useModal } from '@/hooks/useModal';
 import type { SupportedNetworks } from '@/utils/networks';
 
@@ -33,7 +32,6 @@ export function TotalSupplyCard({ vaultAddress, chainId }: VaultTotalAssetsCardP
     chainId,
     connectedAddress,
   });
-  const { vault24hEarnings } = useVaultPage({ vaultAddress, chainId, connectedAddress });
 
   const tokenDecimals = vaultData?.tokenDecimals;
   const tokenSymbol = vaultData?.tokenSymbol;
@@ -55,25 +53,6 @@ export function TotalSupplyCard({ vaultAddress, chainId }: VaultTotalAssetsCardP
       return '--';
     }
   }, [tokenDecimals, tokenSymbol, totalAssets]);
-
-  const earnings24hLabel = useMemo(() => {
-    if (vault24hEarnings === null || vault24hEarnings === undefined || tokenDecimals === undefined) return null;
-
-    try {
-      const earningsValue = formatBalance(vault24hEarnings, tokenDecimals);
-
-      if (earningsValue === 0) return null;
-
-      const formatted = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 4,
-        minimumFractionDigits: 2,
-      }).format(earningsValue);
-
-      return `+${formatted}`;
-    } catch (_error) {
-      return null;
-    }
-  }, [vault24hEarnings, tokenDecimals]);
 
   const handleSuccess = useCallback(() => {
     void refetch();
@@ -151,13 +130,6 @@ export function TotalSupplyCard({ vaultAddress, chainId }: VaultTotalAssetsCardP
                 width={20}
                 height={20}
               />
-            )}
-            {earnings24hLabel && (
-              <Tooltip content="Total yield earned in the last 24 hours">
-                <div className="flex items-center gap-1 text-xs text-green-500">
-                  <span>{earnings24hLabel}</span>
-                </div>
-              </Tooltip>
             )}
           </div>
         )}
