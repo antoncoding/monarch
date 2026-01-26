@@ -16,7 +16,6 @@ import { useVaultPage } from '@/hooks/useVaultPage';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
-import { useVaultIndexing } from '@/hooks/useVaultIndexing';
 import { getSlicedAddress } from '@/utils/address';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { TotalSupplyCard } from '@/features/autovault/components/vault-detail/total-supply-card';
@@ -78,7 +77,6 @@ export default function VaultContent() {
     connectedAddress,
   });
 
-  // Stabilize refetch references to prevent effect churn in useVaultIndexing
   const refetchVaultData = vaultDataQuery.refetch;
   const refetchVaultContract = vaultContract.refetch;
   const refetchAdapters = adapterQuery.refetch;
@@ -98,22 +96,6 @@ export default function VaultContent() {
   const title = vaultData?.displayName ?? `Vault ${getSlicedAddress(vaultAddressValue)}`;
   const symbolToDisplay = vaultData?.displaySymbol;
 
-  // Determine if vault data reflects post-initialization state.
-  // After initialization, adapters[] must be non-empty in the API response.
-  // This prevents the indexing system from exiting early with stale pre-init data.
-  const hasPostInitData = useMemo(() => {
-    if (vaultDataLoading || hasError || !vaultData) return false;
-    return vaultData.adapters.length > 0;
-  }, [vaultDataLoading, hasError, vaultData]);
-
-  // Use indexing hook to manage retry logic and toast
-  const { isIndexing } = useVaultIndexing({
-    vaultAddress: vaultAddressValue,
-    chainId,
-    hasPostInitData,
-    refetch: handleRefreshVault,
-  });
-
   // UI state from Zustand stores (for vault-view banners only)
   const { open: openSettings } = useVaultSettingsModalStore();
   const { open: openInitialization } = useVaultInitializationModalStore();
@@ -129,42 +111,7 @@ export default function VaultContent() {
     return `${(vaultAPY * 100).toFixed(2)}%`;
   }, [vaultAPY]);
 
-  // Show loading state if indexing (prevents UI jumping)
-  if (isIndexing) {
-    return (
-      <div className="flex w-full flex-col font-zen">
-        <Header />
-        <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
-          <div className="space-y-8">
-            {/* Loading skeleton */}
-            <div className="animate-pulse space-y-8">
-              <div className="flex items-center justify-between">
-                <div className="bg-hovered h-8 w-64 rounded" />
-                <div className="bg-hovered h-8 w-24 rounded" />
-              </div>
-              <div className="grid grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="bg-surface rounded shadow-sm p-4 space-y-3"
-                  >
-                    <div className="bg-hovered h-4 w-20 rounded" />
-                    <div className="bg-hovered h-6 w-32 rounded" />
-                  </div>
-                ))}
-              </div>
-              <div className="bg-surface rounded shadow-sm p-6 space-y-4">
-                <div className="bg-hovered h-6 w-48 rounded" />
-                <div className="bg-hovered h-32 rounded" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state if data failed to load (but not while indexing)
+  // Show error state if data failed to load
   if (hasError) {
     return (
       <div className="flex w-full flex-col font-zen">

@@ -228,12 +228,9 @@ export default function AutovaultListContent() {
                             key={`${vault.networkId}-${vault.address}`}
                             onClick={() => handleManageVault(vault.address, vault.networkId)}
                             className="cursor-pointer"
+                            startContent={<Avatar address={vault.address as `0x${string}`} size={16} />}
                           >
-                            <Avatar
-                              address={vault.address as `0x${string}`}
-                              size={16}
-                            />
-                            <span className="ml-2">{vault.address.slice(0, 6)}</span>
+                            {vault.address.slice(0, 6)}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
