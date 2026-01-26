@@ -78,12 +78,16 @@ export default function VaultContent() {
     connectedAddress,
   });
 
-  // Aggregated refetch function
+  // Stabilize refetch references to prevent effect churn in useVaultIndexing
+  const refetchVaultData = vaultDataQuery.refetch;
+  const refetchVaultContract = vaultContract.refetch;
+  const refetchAdapters = adapterQuery.refetch;
+
   const handleRefreshVault = useCallback(() => {
-    void vaultDataQuery.refetch();
-    void vaultContract.refetch();
-    void adapterQuery.refetch();
-  }, [vaultDataQuery, vaultContract, adapterQuery]);
+    void refetchVaultData();
+    void refetchVaultContract();
+    void refetchAdapters();
+  }, [refetchVaultData, refetchVaultContract, refetchAdapters]);
 
   const isRefetching = vaultDataQuery.isRefetching || vaultContract.isRefetching || adapterQuery.isRefetching;
 
@@ -94,16 +98,19 @@ export default function VaultContent() {
   const title = vaultData?.displayName ?? `Vault ${getSlicedAddress(vaultAddressValue)}`;
   const symbolToDisplay = vaultData?.displaySymbol;
 
-  // Determine if vault data has loaded successfully
-  const isDataLoaded = useMemo(() => {
-    return !vaultDataLoading && !hasError && vaultData !== null;
+  // Determine if vault data reflects post-initialization state.
+  // After initialization, adapters[] must be non-empty in the API response.
+  // This prevents the indexing system from exiting early with stale pre-init data.
+  const hasPostInitData = useMemo(() => {
+    if (vaultDataLoading || hasError || !vaultData) return false;
+    return vaultData.adapters.length > 0;
   }, [vaultDataLoading, hasError, vaultData]);
 
   // Use indexing hook to manage retry logic and toast
   const { isIndexing } = useVaultIndexing({
     vaultAddress: vaultAddressValue,
     chainId,
-    isDataLoaded,
+    hasPostInitData,
     refetch: handleRefreshVault,
   });
 

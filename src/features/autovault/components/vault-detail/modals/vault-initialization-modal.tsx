@@ -18,7 +18,7 @@ import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { startVaultIndexing } from '@/utils/vault-indexing';
+import { useVaultIndexingStore } from '@/stores/vault-indexing-store';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 const ZERO_ADDRESS = zeroAddress;
@@ -194,6 +194,7 @@ const MAX_SYMBOL_LENGTH = 16;
 export function VaultInitializationModal() {
   // Modal state from Zustand (UI state)
   const { isOpen, close } = useVaultInitializationModalStore();
+  const { startIndexing } = useVaultIndexingStore();
 
   // Get vault address and chain ID from URL params
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -331,7 +332,7 @@ export function VaultInitializationModal() {
       }
 
       // Start indexing mode - vault page will handle retry logic
-      startVaultIndexing(vaultAddress, chainId);
+      startIndexing(vaultAddressValue, chainId);
 
       // Trigger initial refetch
       void vaultDataQuery.refetch();
@@ -348,12 +349,14 @@ export function VaultInitializationModal() {
     vaultContract,
     refetchAdapter,
     close,
+    startIndexing,
     registryAddress,
     selectedAgent,
     adapterAddress,
     vaultName,
     vaultSymbol,
     vaultAddress,
+    vaultAddressValue,
     chainId,
   ]);
 

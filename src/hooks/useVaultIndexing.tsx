@@ -1,63 +1,43 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
 import type { Address } from 'viem';
 import { StyledToast } from '@/components/ui/styled-toast';
-import { getIndexingVault, stopVaultIndexing } from '@/utils/vault-indexing';
+import { INDEXING_TIMEOUT_MS, useVaultIndexingStore } from '@/stores/vault-indexing-store';
 import { useStyledToast } from './useStyledToast';
 
 type UseVaultIndexingArgs = {
   vaultAddress: Address;
   chainId: number;
-  isDataLoaded: boolean;
+  hasPostInitData: boolean;
   refetch: () => void;
 };
+
+const REFETCH_INTERVAL_MS = 5_000;
 
 /**
  * Hook to manage vault indexing state after initialization.
  * Shows a persistent toast and retries fetching data every 5 seconds
- * until the vault is indexed or timeout is reached (2 minutes).
+ * until post-initialization data arrives or timeout is reached (2 minutes).
+ *
+ * Uses Zustand store for instant reactivity (no localStorage polling).
  */
-export function useVaultIndexing({ vaultAddress, chainId, isDataLoaded, refetch }: UseVaultIndexingArgs) {
-  const [isIndexing, setIsIndexing] = useState(false);
-  const refetchIntervalRef = useRef<ReturnType<typeof setInterval>>();
+export function useVaultIndexing({ vaultAddress, chainId, hasPostInitData, refetch }: UseVaultIndexingArgs) {
+  // Use selectors for individual pieces to avoid subscribing to the entire store
+  const indexingVault = useVaultIndexingStore((s) => s.indexingVault);
+  const stopIndexing = useVaultIndexingStore((s) => s.stopIndexing);
   const toastIdRef = useRef<string | number>();
-  const hasDetectedIndexing = useRef(false);
   const { info: styledInfo, success: styledSuccess } = useStyledToast();
 
-  // Poll localStorage to detect when indexing state is set
-  // This ensures we pick up indexing state even if it's set after component mount
+  // Derive isIndexing from the store state
+  // Time-based expiry is handled by the interval in Effect 2 (not reactive to time passing)
+  const isIndexing = useMemo(() => {
+    if (!indexingVault) return false;
+    return indexingVault.address.toLowerCase() === vaultAddress.toLowerCase() && indexingVault.chainId === chainId;
+  }, [indexingVault, vaultAddress, chainId]);
+
+  // Effect 1: Show/dismiss the persistent "indexing" toast
   useEffect(() => {
-    // Reset detection flag when vault or chain changes
-    hasDetectedIndexing.current = false;
-
-    // Immediate check on mount
-    const indexingData = getIndexingVault(vaultAddress, chainId);
-    if (indexingData && !hasDetectedIndexing.current) {
-      hasDetectedIndexing.current = true;
-      setIsIndexing(true);
-    }
-
-    // Continue polling for state changes
-    const pollingInterval = setInterval(() => {
-      const data = getIndexingVault(vaultAddress, chainId);
-      if (data && !hasDetectedIndexing.current) {
-        hasDetectedIndexing.current = true;
-        setIsIndexing(true);
-      }
-    }, 1000);
-
-    // Always return cleanup function
-    return () => {
-      clearInterval(pollingInterval);
-    };
-  }, [vaultAddress, chainId]);
-
-  // Handle indexing toast and retry logic
-  useEffect(() => {
-    if (!isIndexing) return;
-
-    // Show persistent toast when indexing starts (only once)
-    if (!toastIdRef.current) {
+    if (isIndexing && !toastIdRef.current) {
       toastIdRef.current = toast.info(
         <StyledToast
           title="Indexing vault data..."
@@ -70,80 +50,56 @@ export function useVaultIndexing({ vaultAddress, chainId, isDataLoaded, refetch 
       );
     }
 
-    // Success: data loaded
-    if (isDataLoaded) {
-      stopVaultIndexing(vaultAddress, chainId);
-      setIsIndexing(false);
-      hasDetectedIndexing.current = false;
+    if (!isIndexing && toastIdRef.current) {
+      toast.dismiss(toastIdRef.current);
+      toastIdRef.current = undefined;
+    }
+  }, [isIndexing, vaultAddress, chainId]);
 
-      if (toastIdRef.current) {
-        toast.dismiss(toastIdRef.current);
-        toastIdRef.current = undefined;
+  // Effect 2: Refetch interval + timeout while indexing.
+  // Only re-runs when isIndexing changes (true→false or false→true).
+  // refetch is stable (vault-view depends on .refetch refs from React Query).
+  // stopIndexing is stable (Zustand action created once).
+  // styledInfo is stable (useCallback with empty deps).
+  useEffect(() => {
+    if (!isIndexing) return;
+
+    const startTime = indexingVault?.startTime ?? Date.now();
+
+    // Fire an immediate refetch
+    refetch();
+
+    const intervalId = setInterval(() => {
+      if (Date.now() - startTime > INDEXING_TIMEOUT_MS) {
+        clearInterval(intervalId);
+        stopIndexing();
+        styledInfo('Indexing delayed', 'Data is taking longer than expected. Please try refreshing manually using the refresh button.');
+        return;
       }
 
-      styledSuccess('Vault data loaded', 'Your vault is ready to use.');
-
-      if (refetchIntervalRef.current) {
-        clearInterval(refetchIntervalRef.current);
-        refetchIntervalRef.current = undefined;
-      }
-
-      return;
-    }
-
-    // Start retry interval if not already running
-    if (!refetchIntervalRef.current) {
-      refetchIntervalRef.current = setInterval(() => {
-        // Check if timeout reached (auto-cleanup happens in getIndexingVault)
-        const stillIndexing = getIndexingVault(vaultAddress, chainId);
-
-        if (!stillIndexing) {
-          // Timeout reached
-          setIsIndexing(false);
-          hasDetectedIndexing.current = false;
-
-          if (refetchIntervalRef.current) {
-            clearInterval(refetchIntervalRef.current);
-            refetchIntervalRef.current = undefined;
-          }
-
-          if (toastIdRef.current) {
-            toast.dismiss(toastIdRef.current);
-            toastIdRef.current = undefined;
-          }
-
-          styledInfo('Indexing delayed', 'Data is taking longer than expected. Please try refreshing manually using the refresh button.');
-          return;
-        }
-
-        // Trigger refetch
-        refetch();
-      }, 5000);
-    }
+      refetch();
+    }, REFETCH_INTERVAL_MS);
 
     return () => {
-      if (refetchIntervalRef.current) {
-        clearInterval(refetchIntervalRef.current);
-        refetchIntervalRef.current = undefined;
-      }
-      // Dismiss toast when vault or chain changes
-      if (toastIdRef.current) {
-        toast.dismiss(toastIdRef.current);
-        toastIdRef.current = undefined;
-      }
+      clearInterval(intervalId);
     };
-  }, [isIndexing, isDataLoaded, vaultAddress, chainId, refetch, styledSuccess, styledInfo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIndexing]);
 
-  // Cleanup on unmount
+  // Effect 3: Detect completion — fresh post-init data arrived while indexing
+  useEffect(() => {
+    if (isIndexing && hasPostInitData) {
+      stopIndexing();
+      styledSuccess('Vault data loaded', 'Your vault is ready to use.');
+    }
+  }, [isIndexing, hasPostInitData, stopIndexing, styledSuccess]);
+
+  // Cleanup toast on unmount
   useEffect(() => {
     return () => {
-      if (refetchIntervalRef.current) {
-        clearInterval(refetchIntervalRef.current);
-      }
       if (toastIdRef.current) {
         toast.dismiss(toastIdRef.current);
       }
-      hasDetectedIndexing.current = false;
     };
   }, []);
 
