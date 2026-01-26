@@ -12,12 +12,12 @@ type UseVaultIndexingArgs = {
   refetch: () => void;
 };
 
-const REFETCH_INTERVAL_MS = 5_000;
+const REFETCH_INTERVAL_MS = 10_000;
 
 /**
  * Hook to manage vault indexing state after initialization.
- * Shows a persistent toast and retries fetching data every 5 seconds
- * until post-initialization data arrives or timeout is reached (2 minutes).
+ * Shows a persistent toast and retries fetching data every 10 seconds
+ * until post-initialization data arrives or timeout is reached (10 minutes).
  *
  * Uses Zustand store for instant reactivity (no localStorage polling).
  */
