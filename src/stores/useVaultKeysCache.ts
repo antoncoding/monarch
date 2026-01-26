@@ -21,35 +21,43 @@ function makeVaultKey(vaultAddress: string, chainId: number): string {
   return `${vaultAddress.toLowerCase()}:${chainId}`;
 }
 
-/** Deduplicate and merge new addresses into an existing list (case-insensitive). */
-function mergeAddresses(existing: string[], incoming: string[]): string[] | null {
-  const seen = new Set(existing.map((a) => a.toLowerCase()));
-  let changed = false;
-  const result = [...existing];
-  for (const addr of incoming) {
-    const lower = addr.toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      result.push(lower);
-      changed = true;
+/**
+ * Deduplicate and merge multiple lists of addresses (case-insensitive).
+ * Returns a new array containing unique addresses from all sources, in order of appearance.
+ */
+export function combineAddresses(...sources: (string[] | undefined | null)[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const source of sources) {
+    if (!source) continue;
+    for (const addr of source) {
+      const lower = addr.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        result.push(lower);
+      }
     }
   }
-  return changed ? result : null;
+  return result;
 }
 
-/** Deduplicate and merge new caps into an existing list (by capId). */
-function mergeCaps(existing: CachedCap[], incoming: CachedCap[]): CachedCap[] | null {
-  const seen = new Set(existing.map((c) => c.capId));
-  let changed = false;
-  const result = [...existing];
-  for (const cap of incoming) {
-    if (!seen.has(cap.capId)) {
-      seen.add(cap.capId);
-      result.push({ capId: cap.capId, idParams: cap.idParams });
-      changed = true;
+/**
+ * Deduplicate and merge multiple lists of caps (by capId).
+ * Returns a new array containing unique caps from all sources, in order of appearance.
+ */
+export function combineCaps(...sources: (CachedCap[] | undefined | null)[]): CachedCap[] {
+  const seen = new Set<string>();
+  const result: CachedCap[] = [];
+  for (const source of sources) {
+    if (!source) continue;
+    for (const cap of source) {
+      if (!seen.has(cap.capId)) {
+        seen.add(cap.capId);
+        result.push({ capId: cap.capId, idParams: cap.idParams });
+      }
     }
   }
-  return changed ? result : null;
+  return result;
 }
 
 /**
@@ -75,8 +83,8 @@ export const useVaultKeysCacheStore = create<{
       addAllocators: (vaultKey, addresses) => {
         set((state) => {
           const entry = state.cache[vaultKey] ?? emptyEntry();
-          const merged = mergeAddresses(entry.allocators, addresses);
-          if (!merged) return state;
+          const merged = combineAddresses(entry.allocators, addresses);
+          if (merged.length === entry.allocators.length) return state;
           return { cache: { ...state.cache, [vaultKey]: { ...entry, allocators: merged } } };
         });
       },
@@ -84,8 +92,8 @@ export const useVaultKeysCacheStore = create<{
       addCaps: (vaultKey, caps) => {
         set((state) => {
           const entry = state.cache[vaultKey] ?? emptyEntry();
-          const merged = mergeCaps(entry.caps, caps);
-          if (!merged) return state;
+          const merged = combineCaps(entry.caps, caps);
+          if (merged.length === entry.caps.length) return state;
           return { cache: { ...state.cache, [vaultKey]: { ...entry, caps: merged } } };
         });
       },
@@ -93,8 +101,8 @@ export const useVaultKeysCacheStore = create<{
       addAdapters: (vaultKey, addresses) => {
         set((state) => {
           const entry = state.cache[vaultKey] ?? emptyEntry();
-          const merged = mergeAddresses(entry.adapters, addresses);
-          if (!merged) return state;
+          const merged = combineAddresses(entry.adapters, addresses);
+          if (merged.length === entry.adapters.length) return state;
           return { cache: { ...state.cache, [vaultKey]: { ...entry, adapters: merged } } };
         });
       },

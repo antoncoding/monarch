@@ -8,7 +8,7 @@ import { getSlicedAddress } from '@/utils/address';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
-import { useVaultKeysCache, type CachedCap } from '@/stores/useVaultKeysCache';
+import { useVaultKeysCache, type CachedCap, combineAddresses, combineCaps } from '@/stores/useVaultKeysCache';
 
 type UseVaultV2DataArgs = {
   vaultAddress?: Address;
@@ -39,45 +39,6 @@ export type VaultV2Data = {
   curatorDisplay: string;
 };
 
-// --- Merge helpers: deduplicate API + cache keys ---
-
-function mergeAddressKeys(...sources: (string[] | undefined)[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const source of sources) {
-    for (const addr of source ?? []) {
-      const lower = addr.toLowerCase();
-      if (!seen.has(lower)) {
-        seen.add(lower);
-        result.push(lower);
-      }
-    }
-  }
-  return result;
-}
-
-function mergeCapKeys(apiCaps: VaultV2Cap[] | undefined, cachedCaps: CachedCap[]): CachedCap[] {
-  const seen = new Set<string>();
-  const result: CachedCap[] = [];
-  for (const cap of apiCaps ?? []) {
-    if (!seen.has(cap.capId)) {
-      seen.add(cap.capId);
-      result.push({ capId: cap.capId, idParams: cap.idParams });
-    }
-  }
-  for (const cached of cachedCaps) {
-    if (!seen.has(cached.capId)) {
-      seen.add(cached.capId);
-      result.push(cached);
-    }
-  }
-  return result;
-}
-
-// --- Multicall index layout ---
-// [0] owner, [1] curator, [2] name, [3] symbol, [4] asset
-const BASIC_FIELD_COUNT = 5;
-
 export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallbackSymbol = '' }: UseVaultV2DataArgs) {
   const { findToken } = useTokensQuery();
   const { getVaultKeys, seedFromApi } = useVaultKeysCache(vaultAddress, chainId);
@@ -103,9 +64,10 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
       const cachedKeys = getVaultKeys();
 
       // Merge API + cache keys with deduplication
-      const allocatorAddresses = mergeAddressKeys(apiResult?.allocators, cachedKeys.allocators);
-      const capEntries = mergeCapKeys(apiResult?.caps, cachedKeys.caps);
-      const adapterAddresses = mergeAddressKeys(apiResult?.adapters, cachedKeys.adapters);
+      const allocatorAddresses = combineAddresses(apiResult?.allocators, cachedKeys.allocators);
+      const apiCaps: CachedCap[] = apiResult?.caps.map((c) => ({ capId: c.capId, idParams: c.idParams })) ?? [];
+      const capEntries = combineCaps(apiCaps, cachedKeys.caps);
+      const adapterAddresses = combineAddresses(apiResult?.adapters, cachedKeys.adapters);
 
       // Seed cache with API-discovered keys (deduplication handled by store)
       if (apiResult) {
@@ -121,35 +83,38 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
       const client = getClient(chainId);
       const contractBase = { address: vaultAddress, abi: vaultv2Abi } as const;
 
-      // Build multicall contracts array with known layout:
-      // [0..4] = basic fields (owner, curator, name, symbol, asset)
-      // [5..5+N-1] = isAllocator for each allocator
-      // [5+N..5+N+2M-1] = relativeCap/absoluteCap pairs for each cap
-      // [5+N+2M..end] = isAdapter for each adapter
-      const contracts = [
+      // Build multicall contracts array with known layout
+      const basicContracts = [
         // Basic vault data (always read from RPC)
         { ...contractBase, functionName: 'owner' as const, args: [] },
         { ...contractBase, functionName: 'curator' as const, args: [] },
         { ...contractBase, functionName: 'name' as const, args: [] },
         { ...contractBase, functionName: 'symbol' as const, args: [] },
         { ...contractBase, functionName: 'asset' as const, args: [] },
-        // Allocator checks
-        ...allocatorAddresses.map((addr) => ({
-          ...contractBase,
-          functionName: 'isAllocator' as const,
-          args: [addr as Address],
-        })),
-        // Cap values (2 calls per cap: relative + absolute)
-        ...capEntries.flatMap((cap) => [
-          { ...contractBase, functionName: 'relativeCap' as const, args: [cap.capId as `0x${string}`] },
-          { ...contractBase, functionName: 'absoluteCap' as const, args: [cap.capId as `0x${string}`] },
-        ]),
-        // Adapter checks
-        ...adapterAddresses.map((addr) => ({
-          ...contractBase,
-          functionName: 'isAdapter' as const,
-          args: [addr as Address],
-        })),
+      ];
+
+      const allocatorContracts = allocatorAddresses.map((addr) => ({
+        ...contractBase,
+        functionName: 'isAllocator' as const,
+        args: [addr as Address],
+      }));
+
+      const capContracts = capEntries.flatMap((cap) => [
+        { ...contractBase, functionName: 'relativeCap' as const, args: [cap.capId as `0x${string}`] },
+        { ...contractBase, functionName: 'absoluteCap' as const, args: [cap.capId as `0x${string}`] },
+      ]);
+
+      const adapterContracts = adapterAddresses.map((addr) => ({
+        ...contractBase,
+        functionName: 'isAdapter' as const,
+        args: [addr as Address],
+      }));
+
+      const contracts = [
+        ...basicContracts,
+        ...allocatorContracts,
+        ...capContracts,
+        ...adapterContracts,
       ];
 
       const results = await client.multicall({
@@ -159,17 +124,17 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
 
       // --- Process results ---
 
+      // Offsets
+      const allocatorOffset = basicContracts.length;
+      const capsOffset = allocatorOffset + allocatorContracts.length;
+      const adapterOffset = capsOffset + capContracts.length;
+
       // Basic fields
       const rpcOwner = (results[0].status === 'success' ? results[0].result : zeroAddress) as Address;
       const rpcCurator = (results[1].status === 'success' ? results[1].result : zeroAddress) as Address;
       const rpcName = (results[2].status === 'success' ? results[2].result : '') as string;
       const rpcSymbol = (results[3].status === 'success' ? results[3].result : '') as string;
       const rpcAsset = (results[4].status === 'success' ? results[4].result : zeroAddress) as Address;
-
-      // Offsets
-      const allocatorOffset = BASIC_FIELD_COUNT;
-      const capsOffset = allocatorOffset + allocatorAddresses.length;
-      const adapterOffset = capsOffset + capEntries.length * 2;
 
       // Filter active allocators
       const activeAllocators: string[] = [];
