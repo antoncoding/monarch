@@ -27,8 +27,8 @@ export function GeneralPanel({ vaultAddress, chainId, onNavigateToDetail }: Gene
 
   const defaultName = vaultData?.displayName ?? '';
   const defaultSymbol = vaultData?.displaySymbol ?? '';
-  const currentName = name || defaultName;
-  const currentSymbol = symbol || defaultSymbol;
+  const currentName = name !== '' ? name : defaultName;
+  const currentSymbol = symbol !== '' ? symbol : defaultSymbol;
 
   return (
     <div className="space-y-6">
@@ -54,7 +54,7 @@ export function GeneralPanel({ vaultAddress, chainId, onNavigateToDetail }: Gene
             <p className="text-xs uppercase text-secondary">Vault Name</p>
             <p className="text-sm font-medium text-primary">{currentName}</p>
           </div>
-          
+
           <div className="space-y-1">
             <p className="text-xs uppercase text-secondary">Vault Symbol</p>
             <p className="text-sm font-medium text-primary">{currentSymbol}</p>

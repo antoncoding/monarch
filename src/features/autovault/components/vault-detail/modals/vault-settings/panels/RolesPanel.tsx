@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import type { Address } from 'viem';
 import { zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
@@ -9,7 +8,7 @@ import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import type { SupportedNetworks } from '@/utils/networks';
-import { findAgent } from '@/utils/monarch-agent';
+import { getAgentLabel, getAgentIcon } from '../../../settings/agent-display';
 import { RoleAddressItem } from '../../../settings/RoleAddressItem';
 import type { VaultDetailView } from '@/stores/vault-settings-modal-store';
 
@@ -37,25 +36,6 @@ export function RolesPanel({ vaultAddress, chainId, onNavigateToDetail }: RolesP
 
   const isMarketV1Adapter = (addr: string) =>
     morphoMarketV1Adapter !== zeroAddress && addr.toLowerCase() === morphoMarketV1Adapter.toLowerCase();
-
-  const getAgentLabel = (address: string) => {
-    const agent = findAgent(address);
-    return agent?.name;
-  };
-
-  const getAgentIcon = (address: string) => {
-    const agent = findAgent(address);
-    if (!agent?.image) return undefined;
-    return (
-      <Image
-        src={agent.image}
-        alt={agent.name}
-        width={14}
-        height={14}
-        className="rounded-full"
-      />
-    );
-  };
 
   const renderRoleSection = (
     label: string,

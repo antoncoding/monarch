@@ -22,7 +22,7 @@ type EditCapsProps = {
   isOwner: boolean;
   isUpdating: boolean;
   adapterAddress?: Address;
-  onCancel: () => void;
+  onBack: () => void;
   onSave: (caps: VaultV2Cap[]) => Promise<boolean>;
 };
 
@@ -33,7 +33,7 @@ type MarketCapInfo = {
   existingCapId?: string;
 };
 
-export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdating, adapterAddress, onCancel, onSave }: EditCapsProps) {
+export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdating, adapterAddress, onBack, onSave }: EditCapsProps) {
   const [marketCaps, setMarketCaps] = useState<Map<string, MarketCapInfo>>(new Map());
   const [removedMarketIds, setRemovedMarketIds] = useState<Set<string>>(new Set());
   const [showAddMarketModal, setShowAddMarketModal] = useState(false);
@@ -166,8 +166,8 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
 
   const handleCancel = useCallback(() => {
     hasUserEditsRef.current = false;
-    onCancel();
-  }, [onCancel]);
+    onBack();
+  }, [onBack]);
 
   const hasChanges = useMemo(() => {
     const hasNewMarkets = Array.from(marketCaps.values()).some((m) => !m.existingCapId);

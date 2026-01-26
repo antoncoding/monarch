@@ -136,23 +136,31 @@ export function useVaultKeysCache(vaultAddress: string | undefined, chainId: num
 
   return {
     addAllocators: useCallback(
-      (addresses: string[]) => { if (vaultKey) store.addAllocators(vaultKey, addresses); },
+      (addresses: string[]) => {
+        if (vaultKey) store.addAllocators(vaultKey, addresses);
+      },
       [store.addAllocators, vaultKey],
     ),
     addCaps: useCallback(
-      (caps: CachedCap[]) => { if (vaultKey) store.addCaps(vaultKey, caps); },
+      (caps: CachedCap[]) => {
+        if (vaultKey) store.addCaps(vaultKey, caps);
+      },
       [store.addCaps, vaultKey],
     ),
     addAdapters: useCallback(
-      (addresses: string[]) => { if (vaultKey) store.addAdapters(vaultKey, addresses); },
+      (addresses: string[]) => {
+        if (vaultKey) store.addAdapters(vaultKey, addresses);
+      },
       [store.addAdapters, vaultKey],
     ),
     getVaultKeys: useCallback(
-      (): VaultKeysEntry => vaultKey ? store.getVaultKeys(vaultKey) : emptyEntry(),
+      (): VaultKeysEntry => (vaultKey ? store.getVaultKeys(vaultKey) : emptyEntry()),
       [store.getVaultKeys, vaultKey],
     ),
     seedFromApi: useCallback(
-      (entry: Partial<VaultKeysEntry>) => { if (vaultKey) store.seedFromApi(vaultKey, entry); },
+      (entry: Partial<VaultKeysEntry>) => {
+        if (vaultKey) store.seedFromApi(vaultKey, entry);
+      },
       [store.seedFromApi, vaultKey],
     ),
     vaultKey,

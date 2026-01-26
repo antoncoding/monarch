@@ -36,8 +36,8 @@ export function EditMetadataDetail({ vaultAddress, chainId, onBack }: EditMetada
       defaultSymbol={defaultSymbol}
       currentName={name}
       currentSymbol={symbol}
-      onUpdate={(name, symbol) => updateNameAndSymbol({ name, symbol })}
-      onCancel={onBack}
+      onUpdate={(newName, newSymbol) => updateNameAndSymbol({ name: newName, symbol: newSymbol })}
+      onBack={onBack}
     />
   );
 }

@@ -158,6 +158,7 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
               >
                 <div className="flex items-center justify-between gap-4">
                   <MarketIdentity
+                    showId
                     market={item.market!}
                     chainId={chainId}
                     focus={MarketIdentityFocus.Collateral}

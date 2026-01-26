@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback } from 'react';
 import type { Address } from 'viem';
 import { Modal } from '@/components/common/Modal';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
@@ -33,13 +32,6 @@ export function VaultSettingsModal({ vaultAddress, chainId }: VaultSettingsModal
     toggleSidebar,
   } = useVaultSettingsModalStore();
 
-  const handleCategoryChange = useCallback(
-    (category: typeof activeCategory) => {
-      setCategory(category);
-    },
-    [setCategory],
-  );
-
   if (!isOpen) {
     return null;
   }
@@ -61,7 +53,7 @@ export function VaultSettingsModal({ vaultAddress, chainId }: VaultSettingsModal
           collapsed={sidebarCollapsed}
           onToggle={toggleSidebar}
           selectedCategory={activeCategory}
-          onSelectCategory={handleCategoryChange}
+          onSelectCategory={setCategory}
           disabled={activeDetailView !== null}
         />
         <VaultSettingsContent

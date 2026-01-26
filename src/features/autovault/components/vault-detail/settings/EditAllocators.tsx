@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import Image from 'next/image';
+import { useCallback, useMemo, useState } from 'react';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import type { SupportedNetworks } from '@/utils/networks';
-import { v2AgentsBase, findAgent } from '@/utils/monarch-agent';
+import { v2AgentsBase } from '@/utils/monarch-agent';
+import { getAgentLabel, getAgentIcon } from './agent-display';
 import { RoleAddressItem } from './RoleAddressItem';
 
 type EditAllocatorsProps = {
@@ -35,59 +35,28 @@ export function EditAllocators({
     targetChainId: chainId,
   });
 
-  const handleAddAllocator = useCallback(
-    async (allocator: Address) => {
+  const handleAllocatorAction = useCallback(
+    async (allocator: Address, action: (a: Address) => Promise<boolean>) => {
       if (needSwitchChain) {
         switchToNetwork();
         return;
       }
       setTargetAllocator(allocator);
       try {
-        await onAddAllocator(allocator);
+        await action(allocator);
       } finally {
         setTargetAllocator(null);
       }
     },
-    [onAddAllocator, needSwitchChain, switchToNetwork],
+    [needSwitchChain, switchToNetwork],
   );
 
-  const handleRemoveAllocator = useCallback(
-    async (allocator: Address) => {
-      if (needSwitchChain) {
-        switchToNetwork();
-        return;
-      }
-      setTargetAllocator(allocator);
-      try {
-        await onRemoveAllocator(allocator);
-      } finally {
-        setTargetAllocator(null);
-      }
-    },
-    [onRemoveAllocator, needSwitchChain, switchToNetwork],
-  );
+  const availableAllocators = useMemo(() => {
+    const currentAddresses = new Set(allocators.map((a) => a.toLowerCase()));
+    return v2AgentsBase.filter((agent) => !currentAddresses.has(agent.address.toLowerCase()));
+  }, [allocators]);
 
-  const currentAllocatorAddresses = allocators.map((a) => a.toLowerCase());
-  const availableAllocators = v2AgentsBase.filter((agent) => !currentAllocatorAddresses.includes(agent.address.toLowerCase()));
-
-  const getAgentLabel = (address: string) => {
-    const agent = findAgent(address);
-    return agent?.name;
-  };
-
-  const getAgentIcon = (address: string) => {
-    const agent = findAgent(address);
-    if (!agent?.image) return undefined;
-    return (
-      <Image
-        src={agent.image}
-        alt={agent.name}
-        width={14}
-        height={14}
-        className="rounded-full"
-      />
-    );
-  };
+  const isTargetLoading = (address: string) => isUpdating && targetAllocator === address;
 
   return (
     <div className="space-y-6">
@@ -116,10 +85,10 @@ export function EditAllocators({
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => void handleRemoveAllocator(address)}
-                  disabled={!isOwner || (isUpdating && targetAllocator === address)}
+                  onClick={() => void handleAllocatorAction(address, onRemoveAllocator)}
+                  disabled={!isOwner || isUpdating}
                 >
-                  {isUpdating && targetAllocator === address ? (
+                  {isTargetLoading(address) ? (
                     <span className="flex items-center gap-2">
                       <Spinner size={12} /> Removing...
                     </span>
@@ -136,9 +105,7 @@ export function EditAllocators({
 
         {availableAllocators.length > 0 && (
           <div className="space-y-3">
-            <p className="text-xs font-medium text-secondary">
-              {allocators.length > 0 ? 'Available to Add' : 'Select Allocator'}
-            </p>
+            <p className="text-xs font-medium text-secondary">{allocators.length > 0 ? 'Available to Add' : 'Select Allocator'}</p>
             {availableAllocators.map((agent) => (
               <div
                 key={agent.address}
@@ -149,25 +116,17 @@ export function EditAllocators({
                     address={agent.address}
                     chainId={chainId}
                     label={agent.name}
-                    icon={
-                      <Image
-                        src={agent.image}
-                        alt={agent.name}
-                        width={14}
-                        height={14}
-                        className="rounded-full"
-                      />
-                    }
+                    icon={getAgentIcon(agent.address)}
                   />
                   <p className="text-xs text-secondary">{agent.strategyDescription}</p>
                 </div>
                 <Button
                   variant="surface"
                   size="sm"
-                  onClick={() => void handleAddAllocator(agent.address as Address)}
-                  disabled={!isOwner || (isUpdating && targetAllocator === (agent.address as Address))}
+                  onClick={() => void handleAllocatorAction(agent.address as Address, onAddAllocator)}
+                  disabled={!isOwner || isUpdating}
                 >
-                  {isUpdating && targetAllocator === (agent.address as Address) ? (
+                  {isTargetLoading(agent.address) ? (
                     <span className="flex items-center gap-2">
                       <Spinner size={12} /> Adding...
                     </span>
@@ -182,7 +141,7 @@ export function EditAllocators({
           </div>
         )}
 
-        <div className="flex justify-end pt-4 border-t border-divider/30">
+        <div className="flex justify-end border-t border-divider/30 pt-4">
           <Button
             variant="ghost"
             size="sm"

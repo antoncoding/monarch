@@ -112,6 +112,7 @@ export function useVaultV2({
     pendingDescription: 'Applying new name and symbol',
     successDescription: 'Vault metadata saved',
     chainId: chainIdToUse,
+    onSuccess: onTransactionSuccess,
   });
 
   const { isConfirming: isUpdatingAllocator, sendTransactionAsync: sendAllocatorTx } = useTransactionWithToast({

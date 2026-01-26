@@ -1,7 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import type { Address } from 'viem';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -17,7 +16,7 @@ type EditMetadataProps = {
   currentName: string;
   currentSymbol: string;
   onUpdate: (name?: string, symbol?: string) => Promise<boolean>;
-  onCancel: () => void;
+  onBack: () => void;
 };
 
 export function EditMetadata({
@@ -29,16 +28,16 @@ export function EditMetadata({
   currentName,
   currentSymbol,
   onUpdate,
-  onCancel,
+  onBack,
 }: EditMetadataProps) {
   const nameInputId = useId();
   const symbolInputId = useId();
 
-  const previousName = useMemo(() => currentName.trim(), [currentName]);
-  const previousSymbol = useMemo(() => currentSymbol.trim(), [currentSymbol]);
+  const previousName = currentName.trim();
+  const previousSymbol = currentSymbol.trim();
 
-  const [nameInput, setNameInput] = useState(previousName || defaultName);
-  const [symbolInput, setSymbolInput] = useState(previousSymbol || defaultSymbol);
+  const [nameInput, setNameInput] = useState(previousName !== '' ? previousName : defaultName);
+  const [symbolInput, setSymbolInput] = useState(previousSymbol !== '' ? previousSymbol : defaultSymbol);
   const [metadataError, setMetadataError] = useState<string | null>(null);
 
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
@@ -47,18 +46,13 @@ export function EditMetadata({
 
   // Reset inputs when current values change
   useEffect(() => {
-    setNameInput(previousName || defaultName);
-    setSymbolInput(previousSymbol || defaultSymbol);
+    setNameInput(previousName !== '' ? previousName : defaultName);
+    setSymbolInput(previousSymbol !== '' ? previousSymbol : defaultSymbol);
   }, [previousName, previousSymbol, defaultName, defaultSymbol]);
 
   const trimmedName = nameInput.trim();
   const trimmedSymbol = symbolInput.trim();
-
-  const metadataChanged = useMemo(() => {
-    const hasNewName = trimmedName !== previousName;
-    const hasNewSymbol = trimmedSymbol !== previousSymbol;
-    return hasNewName || hasNewSymbol;
-  }, [previousName, previousSymbol, trimmedName, trimmedSymbol]);
+  const metadataChanged = trimmedName !== previousName || trimmedSymbol !== previousSymbol;
 
   // Clear error when inputs change
   useEffect(() => {
@@ -75,20 +69,12 @@ export function EditMetadata({
 
     setMetadataError(null);
 
-    // Switch network if needed
     if (needSwitchChain) {
       switchToNetwork();
       return;
     }
 
-    const success = await onUpdate(
-      trimmedName !== previousName ? (trimmedName ?? undefined) : undefined,
-      trimmedSymbol !== previousSymbol ? (trimmedSymbol ?? undefined) : undefined,
-    );
-
-    if (success) {
-      setMetadataError(null);
-    }
+    await onUpdate(trimmedName !== previousName ? trimmedName : undefined, trimmedSymbol !== previousSymbol ? trimmedSymbol : undefined);
   }, [metadataChanged, onUpdate, previousName, previousSymbol, trimmedName, trimmedSymbol, needSwitchChain, switchToNetwork]);
 
   return (
@@ -146,33 +132,30 @@ export function EditMetadata({
 
         {metadataError && <p className="text-xs text-danger">{metadataError}</p>}
 
-        <div className="flex items-center justify-between border-t border-divider/30 pt-4">
-          <div />
-          <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={!metadataChanged || isUpdating || !isOwner}
-              onClick={() => void handleMetadataSubmit()}
-            >
-              {isUpdating ? (
-                <span className="flex items-center gap-2">
-                  <Spinner size={12} /> Saving...
-                </span>
-              ) : needSwitchChain ? (
-                'Switch Network'
-              ) : (
-                'Save Changes'
-              )}
-            </Button>
-          </div>
+        <div className="flex items-center justify-end gap-2 border-t border-divider/30 pt-4">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onBack}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!metadataChanged || isUpdating || !isOwner}
+            onClick={() => void handleMetadataSubmit()}
+          >
+            {isUpdating ? (
+              <span className="flex items-center gap-2">
+                <Spinner size={12} /> Saving...
+              </span>
+            ) : needSwitchChain ? (
+              'Switch Network'
+            ) : (
+              'Save Changes'
+            )}
+          </Button>
         </div>
       </div>
     </div>
