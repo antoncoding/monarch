@@ -36,7 +36,7 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
       })}
     >
       {isConnected ? (
-        <div className="block flex">
+        <div className="flex">
           <AccountDropdown />
         </div>
       ) : (
