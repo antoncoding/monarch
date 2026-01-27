@@ -25,7 +25,7 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
 
   return (
     <div
-      className="flex flex-grow transition-all duration-300 ease-in-out hover:opacity-80"
+      className="flex shrink-0 transition-all duration-300 ease-in-out hover:opacity-80"
       {...(!mounted && {
         'aria-hidden': true,
         style: {
@@ -36,7 +36,7 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
       })}
     >
       {isConnected ? (
-        <div className="block flex">
+        <div className="flex">
           <AccountDropdown />
         </div>
       ) : (
