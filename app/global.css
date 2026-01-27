@@ -134,13 +134,6 @@
     padding-right: 1rem;
   }
 
-  @media (width >= 768px) {
-    .container {
-      padding-left: 0;
-      padding-right: 0;
-    }
-  }
-
   /* Grid texture patterns for landing page */
   .bg-dot-grid {
     background-image: radial-gradient(
