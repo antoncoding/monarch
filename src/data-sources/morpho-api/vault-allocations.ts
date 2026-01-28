@@ -14,7 +14,9 @@ export type VaultAllocationMarket = {
     symbol: string;
     decimals: number;
   } | null;
-  oracleAddress: string;
+  oracle: {
+    address: string;
+  };
   irmAddress: string;
   lltv: string;
   state: {

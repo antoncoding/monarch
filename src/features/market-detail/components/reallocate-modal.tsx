@@ -185,7 +185,7 @@ export function ReallocateModal({ market, network, onOpenChange, onSuccess }: Re
         marketParams: {
           loanToken: alloc.market.loanAsset.address as Address,
           collateralToken: (alloc.market.collateralAsset?.address ?? '0x0000000000000000000000000000000000000000') as Address,
-          oracle: alloc.market.oracleAddress as Address,
+          oracle: alloc.market.oracle.address as Address,
           irm: alloc.market.irmAddress as Address,
           lltv: BigInt(alloc.market.lltv),
         },

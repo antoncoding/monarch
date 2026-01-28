@@ -29,7 +29,9 @@ export const vaultAllocationQuery = `
               symbol
               decimals
             }
-            oracleAddress
+            oracle {
+              address
+            }
             irmAddress
             lltv
             state {
