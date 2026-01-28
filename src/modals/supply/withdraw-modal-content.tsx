@@ -1,5 +1,5 @@
 // Import the necessary hooks
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
@@ -194,15 +194,25 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
     }
   }, [account, activeMarket, needsSourcing, liquiditySourcing, withdrawAmount, marketLiquidity, executeWithdraw, sendSourceTxAsync, switchChainAsync, toast]);
 
-  // Auto-trigger withdraw after sourcing succeeds
-  // (withdrawPhase is set to 'withdrawing' in the source tx onSuccess callback)
   const handleWithdrawClick = useCallback(() => {
     void handleWithdraw();
   }, [handleWithdraw]);
 
-  // When phase transitions to 'withdrawing', execute the withdraw
-  // We use a separate callback to avoid re-renders triggering double withdraws
+  // Auto-trigger step 2 when sourcing completes
+  const hasAutoTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (withdrawPhase === 'withdrawing' && !isWithdrawConfirming && !hasAutoTriggeredRef.current) {
+      hasAutoTriggeredRef.current = true;
+      executeWithdraw();
+    }
+    if (withdrawPhase === 'idle') {
+      hasAutoTriggeredRef.current = false;
+    }
+  }, [withdrawPhase, isWithdrawConfirming, executeWithdraw]);
+
+  // Manual retry if step 2 fails after sourcing succeeded
   const handleRetryWithdraw = useCallback(() => {
+    hasAutoTriggeredRef.current = true;
     executeWithdraw();
   }, [executeWithdraw]);
 
