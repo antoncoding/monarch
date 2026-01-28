@@ -16,7 +16,7 @@ export type VaultAllocationMarket = {
   } | null;
   oracle: {
     address: string;
-  };
+  } | null;
   irmAddress: string;
   lltv: string;
   state: {
