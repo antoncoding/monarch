@@ -13,6 +13,9 @@ type AppSettingsState = {
 
   // UI dismissals
   trustedVaultsWarningDismissed: boolean;
+
+  // Developer options
+  showDeveloperOptions: boolean;
 };
 
 type AppSettingsActions = {
@@ -22,6 +25,7 @@ type AppSettingsActions = {
   setShowFullRewardAPY: (show: boolean) => void;
   setIsAprDisplay: (isApr: boolean) => void;
   setTrustedVaultsWarningDismissed: (dismissed: boolean) => void;
+  setShowDeveloperOptions: (show: boolean) => void;
 
   // Bulk update for migration
   setAll: (state: Partial<AppSettingsState>) => void;
@@ -48,6 +52,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       showFullRewardAPY: false,
       isAprDisplay: false,
       trustedVaultsWarningDismissed: false,
+      showDeveloperOptions: false,
 
       // Actions
       setUsePermit2: (use) => set({ usePermit2: use }),
@@ -56,6 +61,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       setShowFullRewardAPY: (show) => set({ showFullRewardAPY: show }),
       setIsAprDisplay: (isApr) => set({ isAprDisplay: isApr }),
       setTrustedVaultsWarningDismissed: (dismissed) => set({ trustedVaultsWarningDismissed: dismissed }),
+      setShowDeveloperOptions: (show) => set({ showDeveloperOptions: show }),
       setAll: (state) => set(state),
     }),
     {
