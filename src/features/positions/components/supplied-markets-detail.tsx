@@ -75,20 +75,22 @@ function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosit
         style={{ minWidth: '180px' }}
       >
         <div className="flex items-center justify-end gap-2">
-          <Button
-            size="sm"
-            variant="surface"
-            onClick={() => {
-              open('borrow', {
-                market: position.market,
-                position,
-                defaultMode: hasBorrowPosition ? 'repay' : 'borrow',
-                isMarketPage: false,
-              });
-            }}
-          >
-            {hasBorrowPosition ? 'Manage Borrow' : 'Borrow'}
-          </Button>
+          {hasBorrowPosition && (
+            <Button
+              size="sm"
+              variant="surface"
+              onClick={() => {
+                open('borrow', {
+                  market: position.market,
+                  position,
+                  defaultMode: 'repay',
+                  isMarketPage: false,
+                });
+              }}
+            >
+              Manage Borrow
+            </Button>
+          )}
           <Button
             size="sm"
             variant="surface"

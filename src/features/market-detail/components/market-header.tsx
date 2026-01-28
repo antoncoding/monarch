@@ -9,9 +9,14 @@ import { GrStatusGood } from 'react-icons/gr';
 import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
 import { MdError } from 'react-icons/md';
 import { BsArrowUpCircle, BsArrowDownLeftCircle, BsFillLightningFill } from 'react-icons/bs';
+import { GoStarFill, GoStar } from 'react-icons/go';
+import { AiOutlineStop } from 'react-icons/ai';
 import { FiExternalLink } from 'react-icons/fi';
 import { LuCopy } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
+import { BlacklistConfirmationModal } from '@/features/markets/components/blacklist-confirmation-modal';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -136,10 +141,34 @@ export function MarketHeader({
   accrueInterest,
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isBlacklistModalOpen, setIsBlacklistModalOpen] = useState(false);
   const { short: rateLabel } = useRateLabel();
   const { isAprDisplay, showDeveloperOptions } = useAppSettings();
+  const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
+  const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
+  const isStarred = starredMarkets.includes(market.uniqueKey);
+
+  const handleToggleStar = () => {
+    if (isStarred) {
+      unstarMarket(market.uniqueKey);
+      toast.success('Market unstarred', 'Removed from favorites');
+    } else {
+      starMarket(market.uniqueKey);
+      toast.success('Market starred', 'Added to favorites');
+    }
+  };
+
+  const handleBlacklistClick = () => {
+    if (!isBlacklisted(market.uniqueKey)) {
+      setIsBlacklistModalOpen(true);
+    }
+  };
+
+  const handleConfirmBlacklist = () => {
+    addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id);
+  };
 
   const handleCopyMarketId = async () => {
     try {
@@ -321,7 +350,7 @@ export function MarketHeader({
               </div>
             </div>
 
-            {/* Position Pill + Actions Dropdown */}
+            {/* Position Pill + Action Buttons + Dropdown */}
             <div className="flex flex-wrap items-center gap-2">
               {userPosition && (
                 <PositionPill
@@ -330,28 +359,50 @@ export function MarketHeader({
                   onBorrowClick={onBorrowClick}
                 />
               )}
+              {/* Prominent Supply & Borrow Buttons */}
+              <Button
+                size="sm"
+                variant="surface"
+                onClick={onSupplyClick}
+                className="gap-1.5"
+              >
+                <BsArrowUpCircle className="h-4 w-4" />
+                Supply
+              </Button>
+              <Button
+                size="sm"
+                variant="surface"
+                onClick={onBorrowClick}
+                className="gap-1.5"
+              >
+                <BsArrowDownLeftCircle className="h-4 w-4" />
+                Borrow
+              </Button>
+              {/* Advanced Options Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    size="xs"
+                    size="sm"
                     variant="surface"
-                    className="px-0"
+                    className="px-2"
                   >
                     <IoEllipsisVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onClick={onSupplyClick}
-                    startContent={<BsArrowUpCircle className="h-4 w-4" />}
+                    onClick={handleToggleStar}
+                    startContent={isStarred ? <GoStarFill className="h-4 w-4 text-yellow-500" /> : <GoStar className="h-4 w-4" />}
                   >
-                    Supply
+                    {isStarred ? 'Unstar' : 'Star'}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={onBorrowClick}
-                    startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
+                    onClick={handleBlacklistClick}
+                    startContent={<AiOutlineStop className="h-4 w-4" />}
+                    className={isBlacklisted(market.uniqueKey) ? 'opacity-50 cursor-not-allowed' : ''}
+                    disabled={isBlacklisted(market.uniqueKey)}
                   >
-                    Borrow
+                    {isBlacklisted(market.uniqueKey) ? 'Blacklisted' : 'Blacklist'}
                   </DropdownMenuItem>
                   {showDeveloperOptions && (
                     <DropdownMenuItem
@@ -506,6 +557,12 @@ export function MarketHeader({
           </AnimatePresence>
         </div>
       </div>
+      <BlacklistConfirmationModal
+        isOpen={isBlacklistModalOpen}
+        onOpenChange={setIsBlacklistModalOpen}
+        onConfirm={handleConfirmBlacklist}
+        market={market}
+      />
     </div>
   );
 }
