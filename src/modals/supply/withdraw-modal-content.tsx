@@ -7,6 +7,7 @@ import { publicAllocatorAbi } from '@/abis/public-allocator';
 import Input from '@/components/Input/Input';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { getMorphoAddress } from '@/utils/morpho';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
@@ -14,6 +15,15 @@ import type { SupportedNetworks } from '@/utils/networks';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
+
+export type WithdrawStepType = 'sourcing' | 'withdrawing';
+
+const WITHDRAW_STEPS_WITH_SOURCING = [
+  { id: 'sourcing', title: 'Source Liquidity', description: 'Moving liquidity via the Public Allocator' },
+  { id: 'withdrawing', title: 'Withdraw', description: 'Withdrawing assets from the market' },
+];
+
+const WITHDRAW_STEPS_DIRECT = [{ id: 'withdrawing', title: 'Withdraw', description: 'Withdrawing assets from the market' }];
 
 type WithdrawPhase = 'idle' | 'sourcing' | 'withdrawing';
 
@@ -26,11 +36,21 @@ type WithdrawModalContentProps = {
   liquiditySourcing?: LiquiditySourcingResult;
 };
 
-export function WithdrawModalContent({ position, market, onClose, refetch, onAmountChange, liquiditySourcing }: WithdrawModalContentProps): JSX.Element {
+export function WithdrawModalContent({
+  position,
+  market,
+  onClose,
+  refetch,
+  onAmountChange,
+  liquiditySourcing,
+}: WithdrawModalContentProps): JSX.Element {
   const toast = useStyledToast();
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
   const [withdrawPhase, setWithdrawPhase] = useState<WithdrawPhase>('idle');
+
+  // Transaction tracking for ProcessModal
+  const tracking = useTransactionTracking('withdraw');
 
   // Notify parent component when withdraw amount changes
   const handleWithdrawAmountChange = useCallback(
@@ -67,12 +87,13 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
     successDescription: 'Liquidity is now available. Proceeding to withdraw...',
     onSuccess: () => {
       // After sourcing succeeds, automatically trigger withdraw
+      tracking.update('withdrawing');
       setWithdrawPhase('withdrawing');
     },
   });
 
   // ── Transaction hook for withdraw step (Step 2 or direct) ──
-  const { isConfirming: isWithdrawConfirming, sendTransaction: sendWithdrawTx } = useTransactionWithToast({
+  const { isConfirming: isWithdrawConfirming, sendTransactionAsync: sendWithdrawTxAsync } = useTransactionWithToast({
     toastId: 'withdraw',
     pendingText: activeMarket
       ? `Withdrawing ${formatBalance(withdrawAmount, activeMarket.loanAsset.decimals)} ${activeMarket.loanAsset.symbol}`
@@ -90,7 +111,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
   });
 
   // ── Execute the withdraw transaction (shared between direct and 2-step flows) ──
-  const executeWithdraw = useCallback(() => {
+  const executeWithdraw = useCallback(async () => {
     if (!activeMarket || !account) return;
 
     let assetsToWithdraw: string;
@@ -105,29 +126,36 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
       sharesToWithdraw = '0';
     }
 
-    sendWithdrawTx({
-      account,
-      to: getMorphoAddress(activeMarket.morphoBlue.chain.id as SupportedNetworks),
-      data: encodeFunctionData({
-        abi: morphoAbi,
-        functionName: 'withdraw',
-        args: [
-          {
-            loanToken: activeMarket.loanAsset.address as Address,
-            collateralToken: activeMarket.collateralAsset.address as Address,
-            oracle: activeMarket.oracleAddress as Address,
-            irm: activeMarket.irmAddress as Address,
-            lltv: BigInt(activeMarket.lltv),
-          },
-          BigInt(assetsToWithdraw),
-          BigInt(sharesToWithdraw),
-          account, // onBehalf
-          account, // receiver
-        ],
-      }),
-      chainId: activeMarket.morphoBlue.chain.id,
-    });
-  }, [account, activeMarket, position, withdrawAmount, sendWithdrawTx]);
+    try {
+      await sendWithdrawTxAsync({
+        account,
+        to: getMorphoAddress(activeMarket.morphoBlue.chain.id as SupportedNetworks),
+        data: encodeFunctionData({
+          abi: morphoAbi,
+          functionName: 'withdraw',
+          args: [
+            {
+              loanToken: activeMarket.loanAsset.address as Address,
+              collateralToken: activeMarket.collateralAsset.address as Address,
+              oracle: activeMarket.oracleAddress as Address,
+              irm: activeMarket.irmAddress as Address,
+              lltv: BigInt(activeMarket.lltv),
+            },
+            BigInt(assetsToWithdraw),
+            BigInt(sharesToWithdraw),
+            account, // onBehalf
+            account, // receiver
+          ],
+        }),
+        chainId: activeMarket.morphoBlue.chain.id,
+      });
+      // TX submitted — ProcessModal can close, toast tracks confirmation
+      tracking.complete();
+    } catch (error) {
+      tracking.fail();
+      console.error('Error during withdraw:', error);
+    }
+  }, [account, activeMarket, position, withdrawAmount, sendWithdrawTxAsync, tracking]);
 
   // ── Main withdraw handler ──
   const handleWithdraw = useCallback(async () => {
@@ -140,6 +168,8 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
       toast.info('No account connected', 'Please connect your wallet to continue.');
       return;
     }
+
+    const tokenSymbol = activeMarket.loanAsset.symbol;
 
     if (needsSourcing && liquiditySourcing) {
       // 2-step flow: source liquidity first
@@ -156,6 +186,17 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
         toast.error('Not supported', 'Public Allocator is not available on this network.');
         return;
       }
+
+      // Start tracking the 2-step process modal
+      tracking.start(
+        WITHDRAW_STEPS_WITH_SOURCING,
+        {
+          title: `Withdraw ${tokenSymbol}`,
+          description: 'Source liquidity, then withdraw',
+          tokenSymbol,
+        },
+        'sourcing',
+      );
 
       setWithdrawPhase('sourcing');
 
@@ -182,6 +223,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
         // onSuccess of the source tx hook will set phase to 'withdrawing'
         // and we trigger step 2 from the effect below
       } catch (error) {
+        tracking.fail();
         setWithdrawPhase('idle');
         console.error('Error during liquidity sourcing:', error);
         if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
@@ -190,9 +232,30 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
       }
     } else {
       // Direct withdraw (no sourcing needed)
-      executeWithdraw();
+      tracking.start(
+        WITHDRAW_STEPS_DIRECT,
+        {
+          title: `Withdraw ${tokenSymbol}`,
+          tokenSymbol,
+        },
+        'withdrawing',
+      );
+
+      await executeWithdraw();
     }
-  }, [account, activeMarket, needsSourcing, liquiditySourcing, withdrawAmount, marketLiquidity, executeWithdraw, sendSourceTxAsync, switchChainAsync, toast]);
+  }, [
+    account,
+    activeMarket,
+    needsSourcing,
+    liquiditySourcing,
+    withdrawAmount,
+    marketLiquidity,
+    executeWithdraw,
+    sendSourceTxAsync,
+    switchChainAsync,
+    toast,
+    tracking,
+  ]);
 
   const handleWithdrawClick = useCallback(() => {
     void handleWithdraw();
@@ -203,7 +266,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
   useEffect(() => {
     if (withdrawPhase === 'withdrawing' && !isWithdrawConfirming && !hasAutoTriggeredRef.current) {
       hasAutoTriggeredRef.current = true;
-      executeWithdraw();
+      void executeWithdraw();
     }
     if (withdrawPhase === 'idle') {
       hasAutoTriggeredRef.current = false;
@@ -213,7 +276,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
   // Manual retry if step 2 fails after sourcing succeeded
   const handleRetryWithdraw = useCallback(() => {
     hasAutoTriggeredRef.current = true;
-    executeWithdraw();
+    void executeWithdraw();
   }, [executeWithdraw]);
 
   // Compute the reallocation plan for display (memoized)
@@ -273,9 +336,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
                 <p className="mt-1 text-xs text-blue-500">
                   ⚡ Will source extra liquidity from {reallocationPlan.vaultName}
                   {reallocationPlan.fee > 0n && (
-                    <span className="ml-1 opacity-70">
-                      (fee: {formatBalance(reallocationPlan.fee, 18)} ETH)
-                    </span>
+                    <span className="ml-1 opacity-70">(fee: {formatBalance(reallocationPlan.fee, 18)} ETH)</span>
                   )}
                 </p>
               )}
