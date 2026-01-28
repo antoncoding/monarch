@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { LuDroplets } from 'react-icons/lu';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
+import { Tooltip } from '@/components/ui/tooltip';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
 import Input from '@/components/Input/Input';
@@ -284,7 +286,12 @@ export function AddCollateralAndBorrow({
                   Available: {formatReadable(formatBalance(effectiveAvailableLiquidity, market.loanAsset.decimals))}{' '}
                   {market.loanAsset.symbol}
                   {extraLiquidity > 0n && (
-                    <span className="ml-1 text-blue-500" title="Includes liquidity from Public Allocator vaults">+PA</span>
+                    <Tooltip content="Includes extra liquidity sourced from Public Allocator vaults">
+                      <span className="ml-1 inline-flex cursor-help items-center text-blue-500">
+                        <LuDroplets className="mr-0.5 h-3 w-3" />
+                        +PA
+                      </span>
+                    </Tooltip>
                   )}
                 </p>
               </div>
@@ -300,11 +307,11 @@ export function AddCollateralAndBorrow({
                     max={effectiveAvailableLiquidity}
                   />
                   {borrowInputError && <p className="p-1 text-sm text-red-500">{borrowInputError}</p>}
-                  {borrowAmount > marketLiquidity && borrowAmount <= effectiveAvailableLiquidity && liquiditySourcing?.canSourceLiquidity && (
-                    <p className="mt-1 text-xs text-blue-500">
-                      ⚡ Sourcing extra liquidity via Public Allocator
-                    </p>
-                  )}
+                  {borrowAmount > marketLiquidity &&
+                    borrowAmount <= effectiveAvailableLiquidity &&
+                    liquiditySourcing?.canSourceLiquidity && (
+                      <p className="mt-1 text-xs text-blue-500">⚡ Sourcing extra liquidity via Public Allocator</p>
+                    )}
                 </div>
               </div>
             </div>
