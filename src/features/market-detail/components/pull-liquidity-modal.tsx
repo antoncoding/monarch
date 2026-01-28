@@ -9,9 +9,15 @@ import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { usePublicAllocator } from '@/hooks/usePublicAllocator';
-import { usePublicAllocatorVaults, type ProcessedPublicAllocatorVault } from '@/hooks/usePublicAllocatorVaults';
-import { usePublicAllocatorLiveData, type LiveMarketData } from '@/hooks/usePublicAllocatorLiveData';
+import { usePublicAllocatorVaults } from '@/hooks/usePublicAllocatorVaults';
+import { usePublicAllocatorLiveData } from '@/hooks/usePublicAllocatorLiveData';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
+import {
+  getVaultPullableAmount,
+  getVaultPullableAmountLive,
+  autoAllocateWithdrawals,
+  autoAllocateWithdrawalsLive,
+} from '@/utils/public-allocator';
 import type { Market } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
@@ -23,186 +29,6 @@ type PullLiquidityModalProps = {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 };
-
-/**
- * Calculate max pullable liquidity from a vault into the target market (API data only).
- *
- * Bounded by:
- * 1. Per-source: min(flowCap.maxOut, vaultSupply, marketLiquidity)
- * 2. Target market: flowCap.maxIn
- * 3. Target market: supplyCap - currentSupply (remaining vault capacity)
- */
-function getVaultPullableAmount(vault: ProcessedPublicAllocatorVault, targetMarketKey: string): bigint {
-  let total = 0n;
-
-  for (const alloc of vault.state.allocation) {
-    if (alloc.market.uniqueKey === targetMarketKey) continue;
-
-    const cap = vault.flowCapsByMarket.get(alloc.market.uniqueKey);
-    if (!cap || cap.maxOut === 0n) continue;
-
-    const vaultSupply = BigInt(alloc.supplyAssets);
-    const liquidity = BigInt(alloc.market.state.liquidityAssets);
-
-    let pullable = cap.maxOut;
-    if (vaultSupply < pullable) pullable = vaultSupply;
-    if (liquidity < pullable) pullable = liquidity;
-    if (pullable > 0n) total += pullable;
-  }
-
-  // Cap by target market's maxIn flow cap
-  const targetCap = vault.flowCapsByMarket.get(targetMarketKey);
-  if (!targetCap) {
-    return 0n;
-  }
-  if (total > targetCap.maxIn) {
-    total = targetCap.maxIn;
-  }
-
-  // Cap by remaining supply cap for the target market in this vault
-  const targetAlloc = vault.state.allocation.find((a) => a.market.uniqueKey === targetMarketKey);
-  if (targetAlloc) {
-    const supplyCap = BigInt(targetAlloc.supplyCap);
-    const currentSupply = BigInt(targetAlloc.supplyAssets);
-    const remainingCap = supplyCap > currentSupply ? supplyCap - currentSupply : 0n;
-    if (total > remainingCap) total = remainingCap;
-  }
-
-  return total;
-}
-
-/**
- * Calculate max pullable liquidity using live on-chain data for flow caps,
- * vault supply, and market liquidity.
- *
- * Falls back to API values for supply cap constraints (which are less volatile).
- */
-function getVaultPullableAmountLive(
-  vault: ProcessedPublicAllocatorVault,
-  targetMarketKey: string,
-  liveData: Map<string, LiveMarketData>,
-): bigint {
-  let total = 0n;
-
-  for (const alloc of vault.state.allocation) {
-    if (alloc.market.uniqueKey === targetMarketKey) continue;
-
-    const live = liveData.get(alloc.market.uniqueKey);
-    if (!live || live.maxOut === 0n) continue;
-
-    let pullable = live.maxOut;
-    if (live.vaultSupplyAssets < pullable) pullable = live.vaultSupplyAssets;
-    if (live.marketLiquidity < pullable) pullable = live.marketLiquidity;
-    if (pullable > 0n) total += pullable;
-  }
-
-  // Cap by target market's live maxIn flow cap
-  const targetLive = liveData.get(targetMarketKey);
-  if (!targetLive) {
-    return 0n;
-  }
-  if (total > targetLive.maxIn) {
-    total = targetLive.maxIn;
-  }
-
-  // Cap by remaining supply cap (uses API data — supply caps rarely change)
-  const targetAlloc = vault.state.allocation.find((a) => a.market.uniqueKey === targetMarketKey);
-  if (targetAlloc) {
-    const supplyCap = BigInt(targetAlloc.supplyCap);
-    // Use live supply if available, fall back to API
-    const currentSupply = targetLive.vaultSupplyAssets;
-    const remainingCap = supplyCap > currentSupply ? supplyCap - currentSupply : 0n;
-    if (total > remainingCap) total = remainingCap;
-  }
-
-  return total;
-}
-
-/**
- * Auto-allocate a pull amount across source markets greedily (API data).
- * Pulls from the most liquid source first.
- */
-function autoAllocateWithdrawals(
-  vault: ProcessedPublicAllocatorVault,
-  targetMarketKey: string,
-  requestedAmount: bigint,
-): { marketKey: string; amount: bigint }[] {
-  const sources: { marketKey: string; maxPullable: bigint }[] = [];
-
-  for (const alloc of vault.state.allocation) {
-    if (alloc.market.uniqueKey === targetMarketKey) continue;
-
-    const cap = vault.flowCapsByMarket.get(alloc.market.uniqueKey);
-    if (!cap || cap.maxOut === 0n) continue;
-
-    const vaultSupply = BigInt(alloc.supplyAssets);
-    const liquidity = BigInt(alloc.market.state.liquidityAssets);
-
-    let maxPullable = cap.maxOut;
-    if (vaultSupply < maxPullable) maxPullable = vaultSupply;
-    if (liquidity < maxPullable) maxPullable = liquidity;
-
-    if (maxPullable > 0n) {
-      sources.push({ marketKey: alloc.market.uniqueKey, maxPullable });
-    }
-  }
-
-  sources.sort((a, b) => (b.maxPullable > a.maxPullable ? 1 : b.maxPullable < a.maxPullable ? -1 : 0));
-
-  const withdrawals: { marketKey: string; amount: bigint }[] = [];
-  let remaining = requestedAmount;
-
-  for (const source of sources) {
-    if (remaining <= 0n) break;
-    const pullAmount = remaining < source.maxPullable ? remaining : source.maxPullable;
-    withdrawals.push({ marketKey: source.marketKey, amount: pullAmount });
-    remaining -= pullAmount;
-  }
-
-  return withdrawals;
-}
-
-/**
- * Auto-allocate a pull amount across source markets using live on-chain data.
- * Same greedy algorithm but uses RPC-verified flow caps, supply, and liquidity.
- */
-function autoAllocateWithdrawalsLive(
-  vault: ProcessedPublicAllocatorVault,
-  targetMarketKey: string,
-  requestedAmount: bigint,
-  liveData: Map<string, LiveMarketData>,
-): { marketKey: string; amount: bigint }[] {
-  const sources: { marketKey: string; maxPullable: bigint }[] = [];
-
-  for (const alloc of vault.state.allocation) {
-    if (alloc.market.uniqueKey === targetMarketKey) continue;
-
-    const live = liveData.get(alloc.market.uniqueKey);
-    if (!live || live.maxOut === 0n) continue;
-
-    let maxPullable = live.maxOut;
-    if (live.vaultSupplyAssets < maxPullable) maxPullable = live.vaultSupplyAssets;
-    if (live.marketLiquidity < maxPullable) maxPullable = live.marketLiquidity;
-
-    if (maxPullable > 0n) {
-      sources.push({ marketKey: alloc.market.uniqueKey, maxPullable });
-    }
-  }
-
-  sources.sort((a, b) => (b.maxPullable > a.maxPullable ? 1 : b.maxPullable < a.maxPullable ? -1 : 0));
-
-  const withdrawals: { marketKey: string; amount: bigint }[] = [];
-  let remaining = requestedAmount;
-
-  for (const source of sources) {
-    if (remaining <= 0n) break;
-    const pullAmount = remaining < source.maxPullable ? remaining : source.maxPullable;
-    withdrawals.push({ marketKey: source.marketKey, amount: pullAmount });
-    remaining -= pullAmount;
-  }
-
-  return withdrawals;
-}
 
 /**
  * Modal for pulling liquidity into a market via the Public Allocator.

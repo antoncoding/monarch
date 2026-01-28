@@ -28,6 +28,7 @@ import { SuppliersTable } from '@/features/market-detail/components/suppliers-ta
 import SupplierFiltersModal from '@/features/market-detail/components/filters/supplier-filters-modal';
 import TransactionFiltersModal from '@/features/market-detail/components/filters/transaction-filters-modal';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
+import { useMarketLiquiditySourcing } from '@/hooks/useMarketLiquiditySourcing';
 import { useAllMarketBorrowers, useAllMarketSuppliers } from '@/hooks/useAllMarketPositions';
 import { MarketHeader } from './components/market-header';
 import { PullLiquidityModal } from './components/pull-liquidity-modal';
@@ -84,6 +85,9 @@ function MarketContent() {
 
   // Get all warnings for this market (hook handles undefined market)
   const allWarnings = useMarketWarnings(market);
+
+  // Pre-fetch Public Allocator data eagerly so modals have instant access
+  const liquiditySourcing = useMarketLiquiditySourcing(market ?? undefined, network);
 
   // Get dynamic chart colors
   const chartColors = useChartColors();
@@ -260,7 +264,7 @@ function MarketContent() {
 
   // Handlers for supply/borrow actions
   const handleSupplyClick = () => {
-    openModal('supply', { market, position: userPosition, isMarketPage: true, refetch: handleRefreshAllSync });
+    openModal('supply', { market, position: userPosition, isMarketPage: true, refetch: handleRefreshAllSync, liquiditySourcing });
   };
 
   const handleBorrowClick = () => {
@@ -317,6 +321,7 @@ function MarketContent() {
             refetch={handleRefreshAllSync}
             isRefreshing={isRefreshing}
             position={userPosition}
+            liquiditySourcing={liquiditySourcing}
           />
         )}
 

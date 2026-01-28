@@ -1,16 +1,21 @@
 // Import the necessary hooks
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
-import { useConnection } from 'wagmi';
+import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
+import { publicAllocatorAbi } from '@/abis/public-allocator';
 import Input from '@/components/Input/Input';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { getMorphoAddress } from '@/utils/morpho';
+import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market, MarketPosition } from '@/utils/types';
+import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
+
+type WithdrawPhase = 'idle' | 'sourcing' | 'withdrawing';
 
 type WithdrawModalContentProps = {
   position?: MarketPosition | null;
@@ -18,12 +23,14 @@ type WithdrawModalContentProps = {
   onClose: () => void;
   refetch: () => void;
   onAmountChange?: (amount: bigint) => void;
+  liquiditySourcing?: LiquiditySourcingResult;
 };
 
-export function WithdrawModalContent({ position, market, onClose, refetch, onAmountChange }: WithdrawModalContentProps): JSX.Element {
+export function WithdrawModalContent({ position, market, onClose, refetch, onAmountChange, liquiditySourcing }: WithdrawModalContentProps): JSX.Element {
   const toast = useStyledToast();
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
+  const [withdrawPhase, setWithdrawPhase] = useState<WithdrawPhase>('idle');
 
   // Notify parent component when withdraw amount changes
   const handleWithdrawAmountChange = useCallback(
@@ -34,11 +41,38 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
     [onAmountChange],
   );
   const { address: account, chainId } = useConnection();
+  const { mutateAsync: switchChainAsync } = useSwitchChain();
 
   // Prefer the market prop (which has fresh state) over position.market
   const activeMarket = market ?? position?.market;
 
-  const { isConfirming, sendTransaction } = useTransactionWithToast({
+  // Compute effective max amount with PA extra liquidity
+  const marketLiquidity = BigInt(activeMarket?.state.liquidityAssets ?? 0);
+  const extraLiquidity = liquiditySourcing?.totalAvailableExtraLiquidity ?? 0n;
+  const effectiveLiquidity = marketLiquidity + extraLiquidity;
+  const supplyAssets = BigInt(position?.state.supplyAssets ?? 0);
+  const effectiveMax = position ? min(supplyAssets, effectiveLiquidity) : 0n;
+
+  // Whether this withdraw needs PA sourcing
+  const needsSourcing = withdrawAmount > marketLiquidity && withdrawAmount > 0n && liquiditySourcing?.canSourceLiquidity;
+
+  // ── Transaction hook for sourcing step (Step 1) ──
+  const { isConfirming: isSourceConfirming, sendTransactionAsync: sendSourceTxAsync } = useTransactionWithToast({
+    toastId: 'source-liquidity-withdraw',
+    pendingText: 'Sourcing Liquidity',
+    successText: 'Liquidity Sourced',
+    errorText: 'Failed to source liquidity',
+    chainId,
+    pendingDescription: 'Moving liquidity via the Public Allocator...',
+    successDescription: 'Liquidity is now available. Proceeding to withdraw...',
+    onSuccess: () => {
+      // After sourcing succeeds, automatically trigger withdraw
+      setWithdrawPhase('withdrawing');
+    },
+  });
+
+  // ── Transaction hook for withdraw step (Step 2 or direct) ──
+  const { isConfirming: isWithdrawConfirming, sendTransaction: sendWithdrawTx } = useTransactionWithToast({
     toastId: 'withdraw',
     pendingText: activeMarket
       ? `Withdrawing ${formatBalance(withdrawAmount, activeMarket.loanAsset.decimals)} ${activeMarket.loanAsset.symbol}`
@@ -49,23 +83,16 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
     pendingDescription: activeMarket ? `Withdrawing from market ${activeMarket.uniqueKey.slice(2, 8)}...` : '',
     successDescription: activeMarket ? `Successfully withdrawn from market ${activeMarket.uniqueKey.slice(2, 8)}` : '',
     onSuccess: () => {
+      setWithdrawPhase('idle');
       refetch();
       onClose();
     },
   });
 
-  const withdraw = useCallback(async () => {
-    if (!activeMarket) {
-      toast.error('No market', 'Market data not available');
-      return;
-    }
+  // ── Execute the withdraw transaction (shared between direct and 2-step flows) ──
+  const executeWithdraw = useCallback(() => {
+    if (!activeMarket || !account) return;
 
-    if (!account) {
-      toast.info('No account connected', 'Please connect your wallet to continue.');
-      return;
-    }
-
-    // Calculate withdraw parameters - use asset-based withdrawal if no position detected
     let assetsToWithdraw: string;
     let sharesToWithdraw: string;
 
@@ -74,12 +101,11 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
       assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
       sharesToWithdraw = isMax ? position.state.supplyShares : '0';
     } else {
-      // No position detected - use asset-based withdrawal
       assetsToWithdraw = withdrawAmount.toString();
       sharesToWithdraw = '0';
     }
 
-    sendTransaction({
+    sendWithdrawTx({
       account,
       to: getMorphoAddress(activeMarket.morphoBlue.chain.id as SupportedNetworks),
       data: encodeFunctionData({
@@ -101,11 +127,93 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
       }),
       chainId: activeMarket.morphoBlue.chain.id,
     });
-  }, [account, activeMarket, position, withdrawAmount, sendTransaction, toast]);
+  }, [account, activeMarket, position, withdrawAmount, sendWithdrawTx]);
 
-  const handleWithdraw = useCallback(() => {
-    void withdraw();
-  }, [withdraw]);
+  // ── Main withdraw handler ──
+  const handleWithdraw = useCallback(async () => {
+    if (!activeMarket) {
+      toast.error('No market', 'Market data not available');
+      return;
+    }
+
+    if (!account) {
+      toast.info('No account connected', 'Please connect your wallet to continue.');
+      return;
+    }
+
+    if (needsSourcing && liquiditySourcing) {
+      // 2-step flow: source liquidity first
+      const extraNeeded = withdrawAmount - marketLiquidity;
+      const reallocation = liquiditySourcing.computeReallocation(extraNeeded);
+
+      if (!reallocation) {
+        toast.error('Cannot source liquidity', 'Unable to find a vault with enough available liquidity.');
+        return;
+      }
+
+      const allocatorAddress = PUBLIC_ALLOCATOR_ADDRESSES[activeMarket.morphoBlue.chain.id as SupportedNetworks];
+      if (!allocatorAddress) {
+        toast.error('Not supported', 'Public Allocator is not available on this network.');
+        return;
+      }
+
+      setWithdrawPhase('sourcing');
+
+      try {
+        await switchChainAsync({ chainId: activeMarket.morphoBlue.chain.id });
+
+        // Step 1: Call reallocateTo on the public allocator contract directly
+        const sortedWithdrawals = reallocation.withdrawals.map(({ marketParams, amount }) => ({
+          marketParams,
+          amount,
+        }));
+
+        await sendSourceTxAsync({
+          to: allocatorAddress,
+          data: encodeFunctionData({
+            abi: publicAllocatorAbi,
+            functionName: 'reallocateTo',
+            args: [reallocation.vaultAddress, sortedWithdrawals, reallocation.targetMarketParams],
+          }),
+          value: reallocation.fee,
+          chainId: activeMarket.morphoBlue.chain.id,
+        });
+
+        // onSuccess of the source tx hook will set phase to 'withdrawing'
+        // and we trigger step 2 from the effect below
+      } catch (error) {
+        setWithdrawPhase('idle');
+        console.error('Error during liquidity sourcing:', error);
+        if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
+          toast.error('Sourcing Failed', 'Failed to source liquidity from the Public Allocator.');
+        }
+      }
+    } else {
+      // Direct withdraw (no sourcing needed)
+      executeWithdraw();
+    }
+  }, [account, activeMarket, needsSourcing, liquiditySourcing, withdrawAmount, marketLiquidity, executeWithdraw, sendSourceTxAsync, switchChainAsync, toast]);
+
+  // Auto-trigger withdraw after sourcing succeeds
+  // (withdrawPhase is set to 'withdrawing' in the source tx onSuccess callback)
+  const handleWithdrawClick = useCallback(() => {
+    void handleWithdraw();
+  }, [handleWithdraw]);
+
+  // When phase transitions to 'withdrawing', execute the withdraw
+  // We use a separate callback to avoid re-renders triggering double withdraws
+  const handleRetryWithdraw = useCallback(() => {
+    executeWithdraw();
+  }, [executeWithdraw]);
+
+  // Compute the reallocation plan for display (memoized)
+  const reallocationPlan = useMemo(() => {
+    if (!needsSourcing || !liquiditySourcing) return null;
+    const extraNeeded = withdrawAmount - marketLiquidity;
+    return liquiditySourcing.computeReallocation(extraNeeded);
+  }, [needsSourcing, liquiditySourcing, withdrawAmount, marketLiquidity]);
+
+  const isLoading = isSourceConfirming || isWithdrawConfirming;
 
   if (!activeMarket) {
     return (
@@ -114,6 +222,14 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
       </div>
     );
   }
+
+  // Phase-based button text
+  const getButtonText = () => {
+    if (withdrawPhase === 'sourcing') return 'Step 1/2: Sourcing...';
+    if (withdrawPhase === 'withdrawing') return 'Step 2/2: Withdrawing...';
+    if (needsSourcing) return 'Source & Withdraw';
+    return 'Withdraw';
+  };
 
   return (
     <div className="flex flex-col">
@@ -134,24 +250,50 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
             <div className="relative flex-grow">
               <Input
                 decimals={activeMarket.loanAsset.decimals}
-                max={position ? min(BigInt(position.state.supplyAssets), BigInt(activeMarket.state.liquidityAssets)) : BigInt(0)}
+                max={effectiveMax}
                 setValue={handleWithdrawAmountChange}
                 setError={setInputError}
-                exceedMaxErrMessage="Insufficient Liquidity"
-                allowExceedMax={true} // allow exceeding max so it still show previews
+                exceedMaxErrMessage={extraLiquidity > 0n ? 'Exceeds available liquidity (incl. PA)' : 'Insufficient Liquidity'}
+                allowExceedMax={true}
                 error={inputError}
               />
+
+              {/* Sourcing indicator */}
+              {needsSourcing && reallocationPlan && (
+                <p className="mt-1 text-xs text-blue-500">
+                  ⚡ Will source extra liquidity from {reallocationPlan.vaultName}
+                  {reallocationPlan.fee > 0n && (
+                    <span className="ml-1 opacity-70">
+                      (fee: {formatBalance(reallocationPlan.fee, 18)} ETH)
+                    </span>
+                  )}
+                </p>
+              )}
+
+              {/* Phase progress for 2-step flow */}
+              {withdrawPhase === 'withdrawing' && !isWithdrawConfirming && (
+                <div className="mt-2 flex items-center gap-2">
+                  <p className="text-xs text-green-600">✓ Liquidity sourced. </p>
+                  <button
+                    type="button"
+                    onClick={handleRetryWithdraw}
+                    className="text-xs font-medium text-blue-500 hover:text-blue-600"
+                  >
+                    Execute Withdraw →
+                  </button>
+                </div>
+              )}
             </div>
 
             <ExecuteTransactionButton
               targetChainId={activeMarket.morphoBlue.chain.id}
-              onClick={handleWithdraw}
-              isLoading={isConfirming}
-              disabled={!withdrawAmount}
+              onClick={withdrawPhase === 'withdrawing' ? handleRetryWithdraw : handleWithdrawClick}
+              isLoading={isLoading}
+              disabled={!withdrawAmount || (withdrawPhase === 'idle' && !!inputError)}
               variant="primary"
               className="ml-2 min-w-32"
             >
-              Withdraw
+              {getButtonText()}
             </ExecuteTransactionButton>
           </div>
         </div>

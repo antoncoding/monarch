@@ -10,6 +10,7 @@ import { formatBalance, formatReadable } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
 import type { Market, MarketPosition } from '@/utils/types';
+import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { getLTVColor, getLTVProgressColor } from './helpers';
@@ -22,6 +23,7 @@ type BorrowLogicProps = {
   oraclePrice: bigint;
   onSuccess?: () => void;
   isRefreshing?: boolean;
+  liquiditySourcing?: LiquiditySourcingResult;
 };
 
 export function AddCollateralAndBorrow({
@@ -32,6 +34,7 @@ export function AddCollateralAndBorrow({
   oraclePrice,
   onSuccess,
   isRefreshing = false,
+  liquiditySourcing,
 }: BorrowLogicProps): JSX.Element {
   // State for collateral and borrow amounts
   const [collateralAmount, setCollateralAmount] = useState<bigint>(BigInt(0));
@@ -46,6 +49,11 @@ export function AddCollateralAndBorrow({
   // Calculate current and new LTV
   const [currentLTV, setCurrentLTV] = useState<bigint>(BigInt(0));
   const [newLTV, setNewLTV] = useState<bigint>(BigInt(0));
+
+  // Compute effective available liquidity (market + PA extra)
+  const extraLiquidity = liquiditySourcing?.totalAvailableExtraLiquidity ?? 0n;
+  const marketLiquidity = BigInt(market.state.liquidityAssets);
+  const effectiveAvailableLiquidity = marketLiquidity + extraLiquidity;
 
   // Use the new hook for borrow transaction logic
   const {
@@ -63,6 +71,7 @@ export function AddCollateralAndBorrow({
     collateralAmount,
     borrowAmount,
     onSuccess,
+    liquiditySourcing,
   });
 
   const handleBorrow = useCallback(() => {
@@ -272,8 +281,11 @@ export function AddCollateralAndBorrow({
               <div className="flex items-center justify-between">
                 <p className="font text-sm">Borrow </p>
                 <p className="font text-xs opacity-50">
-                  Available: {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}{' '}
+                  Available: {formatReadable(formatBalance(effectiveAvailableLiquidity, market.loanAsset.decimals))}{' '}
                   {market.loanAsset.symbol}
+                  {extraLiquidity > 0n && (
+                    <span className="ml-1 text-blue-500" title="Includes liquidity from Public Allocator vaults">+PA</span>
+                  )}
                 </p>
               </div>
 
@@ -285,9 +297,14 @@ export function AddCollateralAndBorrow({
                     setError={setBorrowInputError}
                     exceedMaxErrMessage="Exceeds available liquidity"
                     value={borrowAmount}
-                    max={BigInt(market.state.liquidityAssets)}
+                    max={effectiveAvailableLiquidity}
                   />
                   {borrowInputError && <p className="p-1 text-sm text-red-500">{borrowInputError}</p>}
+                  {borrowAmount > marketLiquidity && borrowAmount <= effectiveAvailableLiquidity && liquiditySourcing?.canSourceLiquidity && (
+                    <p className="mt-1 text-xs text-blue-500">
+                      ⚡ Sourcing extra liquidity via Public Allocator
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
