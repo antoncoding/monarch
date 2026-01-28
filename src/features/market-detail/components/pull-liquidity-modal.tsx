@@ -480,7 +480,6 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                     <span className="text-secondary">Fee</span>
                     <span className="tabular-nums text-xs">{formatUnits(selectedVault.feeBigInt, 18)} ETH</span>
                   </div>
-                  )
                 </div>
               )}
             </>
