@@ -9,9 +9,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { usePublicAllocator } from '@/hooks/usePublicAllocator';
-import { usePublicAllocatorVaults, type ProcessedPublicAllocatorVault, type FlowCapsByMarket } from '@/hooks/usePublicAllocatorVaults';
+import { usePublicAllocatorVaults, type ProcessedPublicAllocatorVault } from '@/hooks/usePublicAllocatorVaults';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
-import type { VaultAllocation } from '@/data-sources/morpho-api/vault-allocations';
 import type { Market } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
@@ -23,18 +22,99 @@ type PullLiquidityModalProps = {
 };
 
 /**
+ * Calculate max pullable liquidity from a vault into the target market.
+ * Takes min(maxOut, vaultSupply, marketLiquidity) per source, summed,
+ * then capped by the target market's maxIn flow cap.
+ */
+function getVaultPullableAmount(
+  vault: ProcessedPublicAllocatorVault,
+  targetMarketKey: string,
+): bigint {
+  let total = 0n;
+
+  for (const alloc of vault.state.allocation) {
+    if (alloc.market.uniqueKey === targetMarketKey) continue;
+
+    const cap = vault.flowCapsByMarket.get(alloc.market.uniqueKey);
+    if (!cap || cap.maxOut === 0n) continue;
+
+    const vaultSupply = BigInt(alloc.supplyAssets);
+    const liquidity = BigInt(alloc.market.state.liquidityAssets);
+
+    let pullable = cap.maxOut;
+    if (vaultSupply < pullable) pullable = vaultSupply;
+    if (liquidity < pullable) pullable = liquidity;
+    if (pullable > 0n) total += pullable;
+  }
+
+  // Cap by target market's maxIn
+  const targetCap = vault.flowCapsByMarket.get(targetMarketKey);
+  if (targetCap && total > targetCap.maxIn) {
+    total = targetCap.maxIn;
+  }
+
+  return total;
+}
+
+/**
+ * Auto-allocate a pull amount across source markets greedily.
+ * Pulls from the most liquid source first.
+ */
+function autoAllocateWithdrawals(
+  vault: ProcessedPublicAllocatorVault,
+  targetMarketKey: string,
+  requestedAmount: bigint,
+): { marketKey: string; amount: bigint }[] {
+  // Build list of source markets with their max pullable
+  const sources: { marketKey: string; maxPullable: bigint }[] = [];
+
+  for (const alloc of vault.state.allocation) {
+    if (alloc.market.uniqueKey === targetMarketKey) continue;
+
+    const cap = vault.flowCapsByMarket.get(alloc.market.uniqueKey);
+    if (!cap || cap.maxOut === 0n) continue;
+
+    const vaultSupply = BigInt(alloc.supplyAssets);
+    const liquidity = BigInt(alloc.market.state.liquidityAssets);
+
+    let maxPullable = cap.maxOut;
+    if (vaultSupply < maxPullable) maxPullable = vaultSupply;
+    if (liquidity < maxPullable) maxPullable = liquidity;
+
+    if (maxPullable > 0n) {
+      sources.push({ marketKey: alloc.market.uniqueKey, maxPullable });
+    }
+  }
+
+  // Sort by most liquid first (greedy)
+  sources.sort((a, b) => (b.maxPullable > a.maxPullable ? 1 : b.maxPullable < a.maxPullable ? -1 : 0));
+
+  const withdrawals: { marketKey: string; amount: bigint }[] = [];
+  let remaining = requestedAmount;
+
+  for (const source of sources) {
+    if (remaining <= 0n) break;
+    const pullAmount = remaining < source.maxPullable ? remaining : source.maxPullable;
+    withdrawals.push({ marketKey: source.marketKey, amount: pullAmount });
+    remaining -= pullAmount;
+  }
+
+  return withdrawals;
+}
+
+/**
  * Modal for pulling liquidity into a market via the Public Allocator.
  *
- * Improvements over the old ReallocateModal:
- * - Fetches ALL vault data upfront in a single batch query
- * - Only shows vaults with Public Allocator enabled
- * - Shows vault names instead of truncated addresses
- * - Flow caps come from API instead of on-chain reads
- * - Focused UX: "pull liquidity" into THIS market
+ * Simplified UX:
+ * 1. Shows vaults with available liquidity (hides zero-liquidity)
+ * 2. User picks a vault
+ * 3. User enters amount to pull
+ * 4. System auto-allocates across source markets
+ * 5. Execute
  */
 export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }: PullLiquidityModalProps) {
   const [selectedVaultAddress, setSelectedVaultAddress] = useState<string | null>(null);
-  const [withdrawAmounts, setWithdrawAmounts] = useState<Record<string, string>>({});
+  const [pullAmount, setPullAmount] = useState('');
 
   const supplyingVaults = market.supplyingVaults ?? [];
   const supplyingVaultAddresses = useMemo(() => supplyingVaults.map((v) => v.address), [supplyingVaults]);
@@ -51,25 +131,51 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
     error: vaultsError,
   } = usePublicAllocatorVaults(supplyingVaultAddresses, network);
 
-  // Selected vault data
-  const selectedVault = useMemo(
-    () => paVaults.find((v) => v.address === selectedVaultAddress) ?? null,
-    [paVaults, selectedVaultAddress],
+  // Only show vaults with pullable liquidity
+  const vaultsWithLiquidity = useMemo(
+    () =>
+      paVaults
+        .map((v) => ({ vault: v, pullable: getVaultPullableAmount(v, market.uniqueKey) }))
+        .filter(({ pullable }) => pullable > 0n)
+        .sort((a, b) => (b.pullable > a.pullable ? 1 : b.pullable < a.pullable ? -1 : 0)),
+    [paVaults, market.uniqueKey],
   );
 
-  // Source markets: vault's other markets (excluding the current target market)
-  const sourceMarkets = useMemo(() => {
-    if (!selectedVault?.state?.allocation) return [];
-    return selectedVault.state.allocation.filter((alloc) => alloc.market.uniqueKey !== market.uniqueKey);
-  }, [selectedVault, market.uniqueKey]);
+  // Selected vault data
+  const selectedEntry = useMemo(
+    () => vaultsWithLiquidity.find(({ vault }) => vault.address === selectedVaultAddress) ?? null,
+    [vaultsWithLiquidity, selectedVaultAddress],
+  );
+  const selectedVault = selectedEntry?.vault ?? null;
+  const maxPullable = selectedEntry?.pullable ?? 0n;
 
-  // Flow cap map for the selected vault
-  const flowCapMap: FlowCapsByMarket = useMemo(() => {
-    return selectedVault?.flowCapsByMarket ?? new Map();
-  }, [selectedVault]);
+  // Parse pull amount
+  const parsedAmount = useMemo(() => {
+    if (!pullAmount || pullAmount === '' || pullAmount === '0') return 0n;
+    try {
+      return parseUnits(pullAmount, decimals);
+    } catch {
+      return 0n;
+    }
+  }, [pullAmount, decimals]);
 
-  // Target market flow cap (maxIn)
-  const targetFlowCap = flowCapMap.get(market.uniqueKey);
+  // Auto-compute withdrawals
+  const autoWithdrawals = useMemo(() => {
+    if (!selectedVault || parsedAmount <= 0n) return [];
+    return autoAllocateWithdrawals(selectedVault, market.uniqueKey, parsedAmount);
+  }, [selectedVault, market.uniqueKey, parsedAmount]);
+
+  // Validation
+  const validationError = useMemo(() => {
+    if (parsedAmount === 0n) return 'Enter an amount';
+    if (parsedAmount > maxPullable) return 'Exceeds available liquidity';
+
+    // Check the auto-allocation covers the full amount
+    const totalAllocated = autoWithdrawals.reduce((sum, w) => sum + w.amount, 0n);
+    if (totalAllocated < parsedAmount) return 'Not enough liquidity across source markets';
+
+    return null;
+  }, [parsedAmount, maxPullable, autoWithdrawals]);
 
   // Public Allocator transaction hook
   const { pullLiquidity, isConfirming } = usePublicAllocator({
@@ -82,112 +188,42 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
     },
   });
 
-  // Reset amounts when vault changes
-  const handleVaultSelect = useCallback(
-    (address: string) => {
-      setSelectedVaultAddress(address);
-      setWithdrawAmounts({});
-    },
-    [],
-  );
+  const handleVaultSelect = useCallback((address: string) => {
+    setSelectedVaultAddress(address);
+    setPullAmount('');
+  }, []);
 
-  // Parse amount string to bigint
-  const parseAmount = useCallback(
-    (amountStr: string | undefined): bigint => {
-      if (!amountStr || amountStr === '' || amountStr === '0') return 0n;
-      try {
-        return parseUnits(amountStr, decimals);
-      } catch {
-        return 0n;
-      }
-    },
-    [decimals],
-  );
-
-  // Total withdrawal across all source markets
-  const totalWithdrawal = useMemo(() => {
-    let total = 0n;
-    for (const alloc of sourceMarkets) {
-      total += parseAmount(withdrawAmounts[alloc.market.uniqueKey]);
+  const handleSetMax = useCallback(() => {
+    if (maxPullable > 0n) {
+      setPullAmount(formatUnits(maxPullable, decimals));
     }
-    return total;
-  }, [withdrawAmounts, sourceMarkets, parseAmount]);
+  }, [maxPullable, decimals]);
 
-  // Validation
-  const validationError = useMemo(() => {
-    if (totalWithdrawal === 0n) return 'Enter withdrawal amounts';
-
-    if (targetFlowCap && totalWithdrawal > targetFlowCap.maxIn) {
-      return `Exceeds target market max inflow (${formatUnits(targetFlowCap.maxIn, decimals)} ${symbol})`;
-    }
-
-    for (const alloc of sourceMarkets) {
-      const parsed = parseAmount(withdrawAmounts[alloc.market.uniqueKey]);
-      if (parsed <= 0n) continue;
-
-      const cap = flowCapMap.get(alloc.market.uniqueKey);
-      const label = alloc.market.collateralAsset?.symbol ?? 'idle';
-
-      if (cap && parsed > cap.maxOut) {
-        return `Exceeds max outflow for ${label} market`;
-      }
-      if (parsed > BigInt(alloc.supplyAssets)) {
-        return `Exceeds vault supply in ${label} market`;
-      }
-      if (parsed > BigInt(alloc.market.state.liquidityAssets)) {
-        return `Exceeds available liquidity in ${label} market`;
-      }
-    }
-
-    return null;
-  }, [totalWithdrawal, targetFlowCap, sourceMarkets, withdrawAmounts, flowCapMap, decimals, symbol, parseAmount]);
-
-  const handleSetMax = useCallback(
-    (alloc: VaultAllocation) => {
-      const cap = flowCapMap.get(alloc.market.uniqueKey);
-      const maxOut = cap?.maxOut ?? 0n;
-      const vaultSupply = BigInt(alloc.supplyAssets);
-      const liquidity = BigInt(alloc.market.state.liquidityAssets);
-
-      // Take minimum of maxOut, vault supply, liquidity
-      let maxAmount = maxOut;
-      if (vaultSupply < maxAmount) maxAmount = vaultSupply;
-      if (liquidity < maxAmount) maxAmount = liquidity;
-
-      setWithdrawAmounts((prev) => ({
-        ...prev,
-        [alloc.market.uniqueKey]: formatUnits(maxAmount, decimals),
-      }));
-    },
-    [flowCapMap, decimals],
-  );
-
-  // Build sorted withdrawals and execute
   const handlePullLiquidity = useCallback(async () => {
-    if (!market.collateralAsset) return;
+    if (!market.collateralAsset || !selectedVault || autoWithdrawals.length === 0) return;
 
-    const sources: {
-      marketParams: { loanToken: Address; collateralToken: Address; oracle: Address; irm: Address; lltv: bigint };
-      amount: bigint;
-      sortKey: string;
-    }[] = [];
+    // Build sources with full market params
+    const allocationMap = new Map(
+      selectedVault.state.allocation.map((a) => [a.market.uniqueKey, a]),
+    );
 
-    for (const alloc of sourceMarkets) {
-      const parsed = parseAmount(withdrawAmounts[alloc.market.uniqueKey]);
-      if (parsed <= 0n) continue;
-
-      sources.push({
-        marketParams: {
-          loanToken: alloc.market.loanAsset.address as Address,
-          collateralToken: (alloc.market.collateralAsset?.address ?? '0x0000000000000000000000000000000000000000') as Address,
-          oracle: alloc.market.oracle.address as Address,
-          irm: alloc.market.irmAddress as Address,
-          lltv: BigInt(alloc.market.lltv),
-        },
-        amount: parsed,
-        sortKey: alloc.market.uniqueKey,
-      });
-    }
+    const sources = autoWithdrawals
+      .map(({ marketKey, amount }) => {
+        const alloc = allocationMap.get(marketKey);
+        if (!alloc) return null;
+        return {
+          marketParams: {
+            loanToken: alloc.market.loanAsset.address as Address,
+            collateralToken: (alloc.market.collateralAsset?.address ?? '0x0000000000000000000000000000000000000000') as Address,
+            oracle: alloc.market.oracle.address as Address,
+            irm: alloc.market.irmAddress as Address,
+            lltv: BigInt(alloc.market.lltv),
+          },
+          amount,
+          sortKey: marketKey,
+        };
+      })
+      .filter((s): s is NonNullable<typeof s> => s !== null);
 
     const targetMarketParams = {
       loanToken: market.loanAsset.address as Address,
@@ -198,35 +234,9 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
     };
 
     await pullLiquidity(sources, targetMarketParams);
-  }, [sourceMarkets, withdrawAmounts, market, pullLiquidity, parseAmount]);
+  }, [selectedVault, autoWithdrawals, market, pullLiquidity]);
 
-  /**
-   * Calculate total pullable liquidity from a vault's other markets
-   * (excluding the target market).
-   */
-  const getVaultPullableLiquidity = useCallback(
-    (vault: ProcessedPublicAllocatorVault): bigint => {
-      let total = 0n;
-      for (const alloc of vault.state.allocation) {
-        if (alloc.market.uniqueKey === market.uniqueKey) continue;
-
-        const cap = vault.flowCapsByMarket.get(alloc.market.uniqueKey);
-        const maxOut = cap?.maxOut ?? 0n;
-        const vaultSupply = BigInt(alloc.supplyAssets);
-        const liquidity = BigInt(alloc.market.state.liquidityAssets);
-
-        let maxAmount = maxOut;
-        if (vaultSupply < maxAmount) maxAmount = vaultSupply;
-        if (liquidity < maxAmount) maxAmount = liquidity;
-        total += maxAmount;
-      }
-      return total;
-    },
-    [market.uniqueKey],
-  );
-
-  const isReady = !!selectedVault && sourceMarkets.length > 0;
-  const canExecute = isReady && !validationError && !isConfirming;
+  const canExecute = !!selectedVault && parsedAmount > 0n && !validationError && !isConfirming;
 
   return (
     <Modal
@@ -237,7 +247,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
     >
       <ModalHeader
         title="Pull Liquidity"
-        description={`Pull liquidity into the ${symbol}/${market.collateralAsset?.symbol ?? 'idle'} market from other markets within a vault`}
+        description={`Pull liquidity into the ${symbol}/${market.collateralAsset?.symbol ?? 'idle'} market from vault reserves`}
         mainIcon={<BsArrowRepeat className="h-5 w-5" />}
         onClose={() => onOpenChange(false)}
       />
@@ -253,35 +263,27 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
             <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300">
               Failed to load vault data.
             </div>
-          ) : paVaults.length === 0 ? (
+          ) : vaultsWithLiquidity.length === 0 ? (
             <div className="rounded border border-border bg-surface-soft p-4 text-center text-sm text-secondary">
-              {supplyingVaults.length === 0
-                ? 'No MetaMorpho vaults supply to this market.'
-                : 'No supplying vaults have the Public Allocator enabled.'}
+              No vaults with available liquidity found for this market.
             </div>
           ) : (
             <>
-              {/* Step 1: Vault Selection */}
+              {/* Vault Selection */}
               <div>
-                <p className="mb-2 text-xs uppercase tracking-wider text-secondary">Select Vault</p>
+                <p className="mb-2 text-xs uppercase tracking-wider text-secondary">Source Vault</p>
                 <div className="space-y-1">
-                  {paVaults.map((vault) => {
+                  {vaultsWithLiquidity.map(({ vault, pullable }) => {
                     const isSelected = selectedVaultAddress === vault.address;
-                    const pullable = getVaultPullableLiquidity(vault);
-                    const hasPullable = pullable > 0n;
-
                     return (
                       <button
                         type="button"
                         key={vault.address}
                         onClick={() => handleVaultSelect(vault.address)}
-                        disabled={!hasPullable}
                         className={`flex w-full items-center justify-between rounded border px-3 py-2.5 text-left text-sm transition-colors ${
                           isSelected
                             ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-400/10'
-                            : hasPullable
-                              ? 'border-border bg-surface-soft hover:bg-surface-dark'
-                              : 'cursor-not-allowed border-border bg-surface-soft opacity-50'
+                            : 'border-border bg-surface-soft hover:bg-surface-dark'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -294,98 +296,67 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                           />
                           <span className="font-medium">{vault.name}</span>
                         </div>
-                        <div className="text-right">
-                          <span className="tabular-nums text-xs text-secondary">
-                            {hasPullable
-                              ? `${Number(formatUnits(pullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${symbol} available`
-                              : 'No liquidity'}
-                          </span>
-                        </div>
+                        <span className="tabular-nums text-xs text-secondary">
+                          {Number(formatUnits(pullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} {symbol}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Step 2: Source Markets */}
-              {selectedVault &&
-                (sourceMarkets.length === 0 ? (
-                  <div className="rounded border border-border bg-surface-soft p-4 text-center text-sm text-secondary">
-                    This vault has no other markets to withdraw from.
+              {/* Amount Input */}
+              {selectedVault && (
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-wider text-secondary">Amount to Pull</p>
+                    <button
+                      type="button"
+                      onClick={handleSetMax}
+                      className="text-xs font-medium text-blue-500 hover:text-blue-400"
+                    >
+                      MAX: {Number(formatUnits(maxPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} {symbol}
+                    </button>
                   </div>
-                ) : (
-                  <>
-                    {/* Target market info */}
-                    <div className="rounded border border-border bg-surface-soft p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs uppercase tracking-wider text-secondary">Target Market</span>
-                        <div className="flex items-center gap-2">
-                          {market.collateralAsset && (
-                            <TokenIcon
-                              address={market.collateralAsset.address}
-                              chainId={chainId}
-                              symbol={market.collateralAsset.symbol}
-                              width={16}
-                              height={16}
-                            />
-                          )}
-                          <span className="text-sm">
-                            {symbol}/{market.collateralAsset?.symbol ?? 'idle'}
-                          </span>
-                          {targetFlowCap && (
-                            <span className="text-xs text-secondary">
-                              (max inflow: {formatUnits(targetFlowCap.maxIn, decimals)} {symbol})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0.0"
+                    value={pullAmount}
+                    onChange={(e) => setPullAmount(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e') e.preventDefault();
+                    }}
+                    className="w-full rounded border border-border bg-surface px-3 py-2 text-sm tabular-nums text-primary outline-none focus:border-blue-500"
+                  />
+                  {validationError && parsedAmount > 0n && (
+                    <p className="mt-1 text-xs text-red-500 dark:text-red-400">{validationError}</p>
+                  )}
+                </div>
+              )}
 
-                    {/* Source markets list */}
-                    <div>
-                      <p className="mb-2 text-xs uppercase tracking-wider text-secondary">Withdraw From</p>
-                      <div className="space-y-2">
-                        {sourceMarkets.map((alloc) => (
-                          <SourceMarketRow
-                            key={alloc.market.uniqueKey}
-                            alloc={alloc}
-                            chainId={chainId}
-                            decimals={decimals}
-                            symbol={symbol}
-                            flowCap={flowCapMap.get(alloc.market.uniqueKey)}
-                            value={withdrawAmounts[alloc.market.uniqueKey] ?? ''}
-                            onChange={(val) =>
-                              setWithdrawAmounts((prev) => ({
-                                ...prev,
-                                [alloc.market.uniqueKey]: val,
-                              }))
-                            }
-                            onMax={() => handleSetMax(alloc)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Summary */}
-                    <div className="space-y-2 rounded border border-border bg-surface-soft p-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-secondary">Total Pull Amount</span>
-                        <span className="tabular-nums">
-                          {formatUnits(totalWithdrawal, decimals)} {symbol}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-secondary">Fee</span>
-                        <span className="tabular-nums">
-                          {formatUnits(selectedVault.feeBigInt, 18)} ETH
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Validation error */}
-                    {validationError && totalWithdrawal > 0n && <p className="text-xs text-red-500 dark:text-red-400">{validationError}</p>}
-                  </>
-                ))}
+              {/* Summary */}
+              {selectedVault && parsedAmount > 0n && !validationError && (
+                <div className="space-y-2 rounded border border-border bg-surface-soft p-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-secondary">Pull Amount</span>
+                    <span className="tabular-nums">
+                      {formatUnits(parsedAmount, decimals)} {symbol}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-secondary">Source Markets</span>
+                    <span className="text-xs text-secondary">{autoWithdrawals.length} market{autoWithdrawals.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-secondary">Fee</span>
+                    <span className="tabular-nums">
+                      {selectedVault.feeBigInt === 0n ? 'Free' : `${formatUnits(selectedVault.feeBigInt, 18)} ETH`}
+                    </span>
+                  </div>
+                </div>
+              )}
             </>
           )
         ) : (
@@ -396,13 +367,10 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
       </ModalBody>
 
       <ModalFooter>
-        <Button
-          variant="default"
-          onClick={() => onOpenChange(false)}
-        >
+        <Button variant="default" onClick={() => onOpenChange(false)}>
           Cancel
         </Button>
-        {isNetworkSupported && isReady && (
+        {isNetworkSupported && selectedVault && (
           <ExecuteTransactionButton
             targetChainId={chainId}
             onClick={() => {
@@ -417,83 +385,5 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
         )}
       </ModalFooter>
     </Modal>
-  );
-}
-
-/* ─── Source Market Row ─── */
-
-type SourceMarketRowProps = {
-  alloc: VaultAllocation;
-  chainId: number;
-  decimals: number;
-  symbol: string;
-  flowCap: { maxIn: bigint; maxOut: bigint } | undefined;
-  value: string;
-  onChange: (val: string) => void;
-  onMax: () => void;
-};
-
-function SourceMarketRow({ alloc, chainId, decimals, symbol, flowCap, value, onChange, onMax }: SourceMarketRowProps) {
-  const isIdle = !alloc.market.collateralAsset;
-  const label = isIdle ? 'Idle Market' : (alloc.market.collateralAsset?.symbol ?? 'Unknown');
-  const vaultSupply = BigInt(alloc.supplyAssets);
-  const liquidity = BigInt(alloc.market.state.liquidityAssets);
-  const maxOut = flowCap?.maxOut ?? 0n;
-
-  return (
-    <div className="rounded border border-border bg-surface-soft p-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {alloc.market.collateralAsset && (
-            <TokenIcon
-              address={alloc.market.collateralAsset.address}
-              chainId={chainId}
-              symbol={alloc.market.collateralAsset.symbol}
-              width={20}
-              height={20}
-            />
-          )}
-          <span className="text-sm font-medium">{label}</span>
-          <span className="text-xs text-secondary">/ {symbol}</span>
-        </div>
-        <button
-          type="button"
-          onClick={onMax}
-          className="text-xs font-medium text-blue-500 hover:text-blue-400"
-        >
-          MAX
-        </button>
-      </div>
-
-      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-secondary">
-        <div>
-          <span className="block">Vault Supply</span>
-          <span className="tabular-nums text-primary">{formatUnits(vaultSupply, decimals)}</span>
-        </div>
-        <div>
-          <span className="block">Liquidity</span>
-          <span className="tabular-nums text-primary">{formatUnits(liquidity, decimals)}</span>
-        </div>
-        <div>
-          <span className="block">Max Outflow</span>
-          <span className="tabular-nums text-primary">{formatUnits(maxOut, decimals)}</span>
-        </div>
-      </div>
-
-      <div className="mt-2">
-        <input
-          type="number"
-          min="0"
-          step="any"
-          placeholder="0.0"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === '-' || e.key === 'e') e.preventDefault();
-          }}
-          className="w-full rounded border border-border bg-surface px-3 py-1.5 text-sm tabular-nums text-primary outline-none focus:border-blue-500"
-        />
-      </div>
-    </div>
   );
 }
