@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { AiOutlineStop } from 'react-icons/ai';
 import { GoStarFill, GoStar, GoGraph } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
-import { TbArrowUp } from 'react-icons/tb';
+import { BsArrowUpCircle, BsArrowDownLeftCircle } from 'react-icons/bs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { Market } from '@/utils/types';
@@ -76,9 +76,18 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
             onClick={() => {
               openModal('supply', { market });
             }}
-            startContent={<TbArrowUp className="h-4 w-4" />}
+            startContent={<BsArrowUpCircle className="h-4 w-4" />}
           >
             Supply
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() => {
+              openModal('borrow', { market });
+            }}
+            startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
+          >
+            Borrow
           </DropdownMenuItem>
 
           <DropdownMenuItem

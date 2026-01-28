@@ -82,7 +82,6 @@ function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosit
                 market: position.market,
                 position,
                 defaultMode: 'withdraw',
-                isMarketPage: false,
               });
             }}
           >
@@ -95,7 +94,6 @@ function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosit
               open('supply', {
                 market: position.market,
                 position,
-                isMarketPage: false,
               });
             }}
           >

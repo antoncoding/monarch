@@ -13,6 +13,9 @@ import { lazy } from 'react';
 // Swap
 const SwapModal = lazy(() => import('@/features/swap/components/SwapModal').then((m) => ({ default: m.SwapModal })));
 
+// Borrow & Repay
+const BorrowModalGlobal = lazy(() => import('@/modals/borrow/borrow-modal-global').then((m) => ({ default: m.BorrowModalGlobal })));
+
 // Supply & Withdraw
 const SupplyModalV2 = lazy(() => import('@/modals/supply/supply-modal').then((m) => ({ default: m.SupplyModalV2 })));
 
@@ -45,6 +48,7 @@ const VaultWithdrawModal = lazy(() => import('@/modals/vault/vault-withdraw-moda
 export const MODAL_REGISTRY: {
   [K in ModalType]: ComponentType<any>;
 } = {
+  borrow: BorrowModalGlobal,
   bridgeSwap: SwapModal,
   supply: SupplyModalV2,
   rebalance: RebalanceModal,

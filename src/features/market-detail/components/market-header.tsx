@@ -8,22 +8,28 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { GrStatusGood } from 'react-icons/gr';
 import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
 import { MdError } from 'react-icons/md';
-import { BsArrowUpCircle, BsArrowDownLeftCircle, BsFillLightningFill, BsArrowRepeat } from 'react-icons/bs';
+import { BsArrowUpCircle, BsArrowDownLeftCircle, BsFillLightningFill } from 'react-icons/bs';
+import { GoStarFill, GoStar } from 'react-icons/go';
+import { AiOutlineStop } from 'react-icons/ai';
 import { FiExternalLink } from 'react-icons/fi';
-import { LuCopy } from 'react-icons/lu';
+import { LuCopy, LuArrowDownToLine, LuRefreshCw } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
+import { SplitActionButton } from '@/components/ui/split-action-button';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
+import { BlacklistConfirmationModal } from '@/features/markets/components/blacklist-confirmation-modal';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { AddressIdentity } from '@/components/shared/address-identity';
 import { CampaignBadge } from '@/features/market-detail/components/campaign-badge';
-import { PositionPill } from '@/features/market-detail/components/position-pill';
 import { OracleTypeInfo } from '@/features/markets/components/oracle/MarketOracle/OracleTypeInfo';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { convertApyToApr } from '@/utils/rateMath';
+import { formatReadable } from '@/utils/balance';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getMarketURL } from '@/utils/external';
@@ -112,6 +118,127 @@ function RiskIcon({ level }: { level: RiskLevel }): React.ReactNode {
   }
 }
 
+// Extracted action buttons component for cleaner code
+type ActionButtonsProps = {
+  market: Market;
+  userPosition: MarketPosition | null;
+  onSupplyClick: () => void;
+  onWithdrawClick: () => void;
+  onBorrowClick: () => void;
+  onRepayClick: () => void;
+};
+
+function ActionButtons({
+  market,
+  userPosition,
+  onSupplyClick,
+  onWithdrawClick,
+  onBorrowClick,
+  onRepayClick,
+}: ActionButtonsProps): React.ReactNode {
+  // Compute position states once
+  const hasSupply = userPosition !== null && BigInt(userPosition.state.supplyShares) > 0n;
+  const hasBorrow = userPosition !== null && BigInt(userPosition.state.borrowShares) > 0n;
+  const hasCollateral = userPosition !== null && BigInt(userPosition.state.collateral) > 0n;
+  const hasBorrowPosition = hasBorrow || hasCollateral;
+
+  const supplyTooltip =
+    hasSupply && userPosition ? (
+      <div className="flex items-center gap-3">
+        <TokenIcon
+          address={market.loanAsset.address}
+          chainId={market.morphoBlue.chain.id}
+          symbol={market.loanAsset.symbol}
+          width={20}
+          height={20}
+        />
+        <div>
+          <p className="text-xs text-secondary">Supplied</p>
+          <p className="text-sm font-medium tabular-nums">
+            {formatReadable(Number(formatUnits(BigInt(userPosition.state.supplyAssets), market.loanAsset.decimals)))}{' '}
+            {market.loanAsset.symbol}
+          </p>
+        </div>
+      </div>
+    ) : undefined;
+
+  const borrowTooltip =
+    hasBorrowPosition && userPosition ? (
+      <div className="space-y-2">
+        {hasCollateral && (
+          <div className="flex items-center gap-3">
+            <TokenIcon
+              address={market.collateralAsset.address}
+              chainId={market.morphoBlue.chain.id}
+              symbol={market.collateralAsset.symbol}
+              width={20}
+              height={20}
+            />
+            <div>
+              <p className="text-xs text-secondary">Collateral</p>
+              <p className="text-sm font-medium tabular-nums">
+                {formatReadable(Number(formatUnits(BigInt(userPosition.state.collateral), market.collateralAsset.decimals)))}{' '}
+                {market.collateralAsset.symbol}
+              </p>
+            </div>
+          </div>
+        )}
+        {hasBorrow && (
+          <div className="flex items-center gap-3">
+            <TokenIcon
+              address={market.loanAsset.address}
+              chainId={market.morphoBlue.chain.id}
+              symbol={market.loanAsset.symbol}
+              width={20}
+              height={20}
+            />
+            <div>
+              <p className="text-xs text-secondary">Borrowed</p>
+              <p className="text-sm font-medium tabular-nums">
+                {formatReadable(Number(formatUnits(BigInt(userPosition.state.borrowAssets), market.loanAsset.decimals)))}{' '}
+                {market.loanAsset.symbol}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    ) : undefined;
+
+  return (
+    <>
+      <SplitActionButton
+        label="Supply"
+        icon={<BsArrowUpCircle className="h-4 w-4" />}
+        onClick={onSupplyClick}
+        indicator={{ show: hasSupply, tooltip: supplyTooltip }}
+        dropdownItems={[
+          {
+            label: 'Withdraw',
+            icon: <LuArrowDownToLine className="h-4 w-4" />,
+            onClick: onWithdrawClick,
+            disabled: !hasSupply,
+          },
+        ]}
+      />
+
+      <SplitActionButton
+        label="Borrow"
+        icon={<BsArrowDownLeftCircle className="h-4 w-4" />}
+        onClick={onBorrowClick}
+        indicator={{ show: hasBorrowPosition, tooltip: borrowTooltip }}
+        dropdownItems={[
+          {
+            label: 'Repay',
+            icon: <LuRefreshCw className="h-4 w-4" />,
+            onClick: onRepayClick,
+            disabled: !hasBorrow,
+          },
+        ]}
+      />
+    </>
+  );
+}
+
 type MarketHeaderProps = {
   market: Market;
   marketId: string;
@@ -120,9 +247,10 @@ type MarketHeaderProps = {
   oraclePrice: string;
   allWarnings: WarningWithDetail[];
   onSupplyClick: () => void;
+  onWithdrawClick: () => void;
   onBorrowClick: () => void;
+  onRepayClick: () => void;
   accrueInterest: () => void;
-  onPullLiquidity: () => void;
 };
 
 export function MarketHeader({
@@ -133,15 +261,40 @@ export function MarketHeader({
   oraclePrice,
   allWarnings,
   onSupplyClick,
+  onWithdrawClick,
   onBorrowClick,
+  onRepayClick,
   accrueInterest,
-  onPullLiquidity,
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isBlacklistModalOpen, setIsBlacklistModalOpen] = useState(false);
   const { short: rateLabel } = useRateLabel();
-  const { isAprDisplay, showDeveloperOptions, usePublicAllocator } = useAppSettings();
+  const { isAprDisplay, showDeveloperOptions } = useAppSettings();
+  const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
+  const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
+  const isStarred = starredMarkets.includes(market.uniqueKey);
+
+  const handleToggleStar = () => {
+    if (isStarred) {
+      unstarMarket(market.uniqueKey);
+      toast.success('Market unstarred', 'Removed from favorites');
+    } else {
+      starMarket(market.uniqueKey);
+      toast.success('Market starred', 'Added to favorites');
+    }
+  };
+
+  const handleBlacklistClick = () => {
+    if (!isBlacklisted(market.uniqueKey)) {
+      setIsBlacklistModalOpen(true);
+    }
+  };
+
+  const handleConfirmBlacklist = () => {
+    addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id);
+  };
 
   const handleCopyMarketId = async () => {
     try {
@@ -323,46 +476,43 @@ export function MarketHeader({
               </div>
             </div>
 
-            {/* Position Pill + Actions Dropdown */}
+            {/* Action Buttons + Dropdown */}
             <div className="flex flex-wrap items-center gap-2">
-              {userPosition && (
-                <PositionPill
-                  position={userPosition}
-                  onSupplyClick={onSupplyClick}
-                  onBorrowClick={onBorrowClick}
-                />
-              )}
+              <ActionButtons
+                market={market}
+                userPosition={userPosition}
+                onSupplyClick={onSupplyClick}
+                onWithdrawClick={onWithdrawClick}
+                onBorrowClick={onBorrowClick}
+                onRepayClick={onRepayClick}
+              />
+
+              {/* Advanced Options Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    size="xs"
-                    variant="surface"
-                    className="px-0"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-6 min-w-0"
                   >
                     <IoEllipsisVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onClick={onSupplyClick}
-                    startContent={<BsArrowUpCircle className="h-4 w-4" />}
+                    onClick={handleToggleStar}
+                    startContent={isStarred ? <GoStarFill className="h-4 w-4 text-yellow-500" /> : <GoStar className="h-4 w-4" />}
                   >
-                    Supply
+                    {isStarred ? 'Unstar' : 'Star'}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={onBorrowClick}
-                    startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
+                    onClick={handleBlacklistClick}
+                    startContent={<AiOutlineStop className="h-4 w-4" />}
+                    className={isBlacklisted(market.uniqueKey) ? 'opacity-50 cursor-not-allowed' : ''}
+                    disabled={isBlacklisted(market.uniqueKey)}
                   >
-                    Borrow
+                    {isBlacklisted(market.uniqueKey) ? 'Blacklisted' : 'Blacklist'}
                   </DropdownMenuItem>
-                  {usePublicAllocator && (
-                    <DropdownMenuItem
-                      onClick={onPullLiquidity}
-                      startContent={<BsArrowRepeat className="h-4 w-4" />}
-                    >
-                      Source Liquidity
-                    </DropdownMenuItem>
-                  )}
                   {showDeveloperOptions && (
                     <DropdownMenuItem
                       onClick={accrueInterest}
@@ -516,6 +666,12 @@ export function MarketHeader({
           </AnimatePresence>
         </div>
       </div>
+      <BlacklistConfirmationModal
+        isOpen={isBlacklistModalOpen}
+        onOpenChange={setIsBlacklistModalOpen}
+        onConfirm={handleConfirmBlacklist}
+        market={market}
+      />
     </div>
   );
 }

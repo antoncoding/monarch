@@ -189,16 +189,16 @@ export function WithdrawCollateralAndRepay({
               </div>
             </div>
             <div>
-              <p className="mb-1 font-zen text-xs opacity-50">Total Borrowed</p>
+              <p className="mb-1 font-zen text-xs opacity-50">Outstanding Debt</p>
               <div className="flex items-center gap-2">
                 <TokenIcon
                   address={market.loanAsset.address}
                   chainId={market.morphoBlue.chain.id}
                   symbol={market.loanAsset.symbol}
-                  width={16}
-                  height={16}
+                  width={20}
+                  height={20}
                 />
-                <p className="font-zen text-sm">
+                <p className="font-zen text-base font-semibold">
                   {formatBalance(BigInt(currentPosition?.state.borrowAssets ?? 0), market.loanAsset.decimals)} {market.loanAsset.symbol}
                 </p>
               </div>
