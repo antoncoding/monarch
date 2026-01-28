@@ -2,6 +2,7 @@
 
 import { Divider } from '@/components/ui/divider';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { SettingToggleItem, SettingActionItem } from '../SettingItem';
 import type { DetailView } from '../constants';
 
@@ -11,6 +12,7 @@ type ExperimentalPanelProps = {
 
 export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps) {
   const { trendingConfig, setTrendingEnabled } = useMarketPreferences();
+  const { showDeveloperOptions, setShowDeveloperOptions } = useAppSettings();
 
   return (
     <div className="flex flex-col gap-4">
@@ -29,6 +31,30 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
           description="Set thresholds for what makes a market 'trending'."
           buttonLabel="Configure"
           onClick={() => onNavigateToDetail?.('trending-config')}
+        />
+      </div>
+
+      {/* TODO: Uncomment when public allocator integration with withdraw/borrow is ready
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Experimental</h3>
+        <SettingToggleItem
+          title="Source Liquidity"
+          description="Enable sourcing extra liquidity from vault reserves via the Public Allocator when withdrawing or borrowing."
+          selected={usePublicAllocator}
+          onChange={setUsePublicAllocator}
+          ariaLabel="Toggle public allocator"
+        />
+      </div>
+      */}
+
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Developer</h3>
+        <SettingToggleItem
+          title="Developer Options"
+          description="Show advanced developer tools like Accrue Interest in market detail views."
+          selected={showDeveloperOptions}
+          onChange={setShowDeveloperOptions}
+          ariaLabel="Toggle developer options"
         />
       </div>
     </div>

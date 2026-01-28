@@ -8,7 +8,7 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { GrStatusGood } from 'react-icons/gr';
 import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
 import { MdError } from 'react-icons/md';
-import { BsArrowUpCircle, BsArrowDownLeftCircle, BsFillLightningFill } from 'react-icons/bs';
+import { BsArrowUpCircle, BsArrowDownLeftCircle, BsFillLightningFill, BsArrowRepeat } from 'react-icons/bs';
 import { FiExternalLink } from 'react-icons/fi';
 import { LuCopy } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
@@ -122,6 +122,7 @@ type MarketHeaderProps = {
   onSupplyClick: () => void;
   onBorrowClick: () => void;
   accrueInterest: () => void;
+  onPullLiquidity: () => void;
 };
 
 export function MarketHeader({
@@ -134,10 +135,11 @@ export function MarketHeader({
   onSupplyClick,
   onBorrowClick,
   accrueInterest,
+  onPullLiquidity,
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { short: rateLabel } = useRateLabel();
-  const { isAprDisplay } = useAppSettings();
+  const { isAprDisplay, showDeveloperOptions, usePublicAllocator } = useAppSettings();
   const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
 
@@ -353,12 +355,22 @@ export function MarketHeader({
                   >
                     Borrow
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={accrueInterest}
-                    startContent={<BsFillLightningFill className="h-4 w-4" />}
-                  >
-                    Accrue Interest
-                  </DropdownMenuItem>
+                  {usePublicAllocator && (
+                    <DropdownMenuItem
+                      onClick={onPullLiquidity}
+                      startContent={<BsArrowRepeat className="h-4 w-4" />}
+                    >
+                      Source Liquidity
+                    </DropdownMenuItem>
+                  )}
+                  {showDeveloperOptions && (
+                    <DropdownMenuItem
+                      onClick={accrueInterest}
+                      startContent={<BsFillLightningFill className="h-4 w-4" />}
+                    >
+                      Accrue Interest
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onClick={() => window.open(getMarketURL(marketId, network), '_blank')}
                     startContent={<FiExternalLink className="h-4 w-4" />}

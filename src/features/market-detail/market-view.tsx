@@ -30,6 +30,7 @@ import TransactionFiltersModal from '@/features/market-detail/components/filters
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useAllMarketBorrowers, useAllMarketSuppliers } from '@/hooks/useAllMarketPositions';
 import { MarketHeader } from './components/market-header';
+import { PullLiquidityModal } from './components/pull-liquidity-modal';
 import RateChart from './components/charts/rate-chart';
 import VolumeChart from './components/charts/volume-chart';
 import { SuppliersPieChart } from './components/charts/suppliers-pie-chart';
@@ -50,6 +51,7 @@ function MarketContent() {
   const selectedTab = useMarketDetailPreferences((s) => s.selectedTab);
   const setSelectedTab = useMarketDetailPreferences((s) => s.setSelectedTab);
   const [showBorrowModal, setShowBorrowModal] = useState(false);
+  const [showPullLiquidityModal, setShowPullLiquidityModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
   const [showSupplierFiltersModal, setShowSupplierFiltersModal] = useState(false);
@@ -304,6 +306,7 @@ function MarketContent() {
           onSupplyClick={handleSupplyClick}
           onBorrowClick={handleBorrowClick}
           accrueInterest={handleAccrueInterest}
+          onPullLiquidity={() => setShowPullLiquidityModal(true)}
         />
 
         {showBorrowModal && (
@@ -314,6 +317,15 @@ function MarketContent() {
             refetch={handleRefreshAllSync}
             isRefreshing={isRefreshing}
             position={userPosition}
+          />
+        )}
+
+        {showPullLiquidityModal && (
+          <PullLiquidityModal
+            market={market}
+            network={network}
+            onOpenChange={setShowPullLiquidityModal}
+            onSuccess={handleRefreshAllSync}
           />
         )}
 
