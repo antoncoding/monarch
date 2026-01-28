@@ -12,7 +12,7 @@ type ExperimentalPanelProps = {
 
 export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps) {
   const { trendingConfig, setTrendingEnabled } = useMarketPreferences();
-  const { showDeveloperOptions, setShowDeveloperOptions } = useAppSettings();
+  const { showDeveloperOptions, setShowDeveloperOptions, usePublicAllocator, setUsePublicAllocator } = useAppSettings();
 
   return (
     <div className="flex flex-col gap-4">
@@ -34,18 +34,16 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
         />
       </div>
 
-      {/* TODO: Uncomment when public allocator integration with withdraw/borrow is ready
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
-        <h3 className="text-xs uppercase text-secondary">Experimental</h3>
+        <h3 className="text-xs uppercase text-secondary">Liquidity Sourcing</h3>
         <SettingToggleItem
-          title="Source Liquidity"
-          description="Enable sourcing extra liquidity from vault reserves via the Public Allocator when withdrawing or borrowing."
+          title="Source Liquidity via Public Allocator"
+          description="Automatically source extra liquidity from vault reserves when market liquidity is insufficient for your withdraw or borrow."
           selected={usePublicAllocator}
           onChange={setUsePublicAllocator}
           ariaLabel="Toggle public allocator"
         />
       </div>
-      */}
 
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
         <h3 className="text-xs uppercase text-secondary">Developer</h3>
