@@ -273,12 +273,6 @@ export function WithdrawModalContent({
     }
   }, [withdrawPhase, isWithdrawConfirming, executeWithdraw]);
 
-  // Manual retry if step 2 fails after sourcing succeeded
-  const handleRetryWithdraw = useCallback(() => {
-    hasAutoTriggeredRef.current = true;
-    void executeWithdraw();
-  }, [executeWithdraw]);
-
   // Compute the reallocation plan for display (memoized)
   const reallocationPlan = useMemo(() => {
     if (!needsSourcing || !liquiditySourcing) return null;
@@ -295,14 +289,6 @@ export function WithdrawModalContent({
       </div>
     );
   }
-
-  // Phase-based button text
-  const getButtonText = () => {
-    if (withdrawPhase === 'sourcing') return 'Step 1/2: Sourcing...';
-    if (withdrawPhase === 'withdrawing') return 'Step 2/2: Withdrawing...';
-    if (needsSourcing) return 'Source & Withdraw';
-    return 'Withdraw';
-  };
 
   return (
     <div className="flex flex-col">
@@ -340,31 +326,17 @@ export function WithdrawModalContent({
                   )}
                 </p>
               )}
-
-              {/* Phase progress for 2-step flow */}
-              {withdrawPhase === 'withdrawing' && !isWithdrawConfirming && (
-                <div className="mt-2 flex items-center gap-2">
-                  <p className="text-xs text-green-600">✓ Liquidity sourced. </p>
-                  <button
-                    type="button"
-                    onClick={handleRetryWithdraw}
-                    className="text-xs font-medium text-blue-500 hover:text-blue-600"
-                  >
-                    Execute Withdraw →
-                  </button>
-                </div>
-              )}
             </div>
 
             <ExecuteTransactionButton
               targetChainId={activeMarket.morphoBlue.chain.id}
-              onClick={withdrawPhase === 'withdrawing' ? handleRetryWithdraw : handleWithdrawClick}
+              onClick={handleWithdrawClick}
               isLoading={isLoading}
-              disabled={!withdrawAmount || (withdrawPhase === 'idle' && !!inputError)}
+              disabled={!withdrawAmount || !!inputError}
               variant="primary"
               className="ml-2 min-w-32"
             >
-              {getButtonText()}
+              Withdraw
             </ExecuteTransactionButton>
           </div>
         </div>
