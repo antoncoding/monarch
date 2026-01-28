@@ -230,6 +230,7 @@ export function AddCollateralAndBorrow({
               defaultCollapsed
               showRewards
               borrowDelta={borrowAmount}
+              extraLiquidity={extraLiquidity}
             />
           </div>
 

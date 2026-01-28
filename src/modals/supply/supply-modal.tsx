@@ -103,6 +103,7 @@ export function SupplyModalV2({
           mode="supply"
           showRewards
           supplyDelta={supplyDelta}
+          extraLiquidity={mode === 'withdraw' ? liquiditySourcing?.totalAvailableExtraLiquidity : undefined}
         />
 
         {mode === 'supply' ? (

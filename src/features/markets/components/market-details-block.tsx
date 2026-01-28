@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { LuDroplets } from 'react-icons/lu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { Tooltip } from '@/components/ui/tooltip';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getIRMTitle, previewMarketState } from '@/utils/morpho';
 import { getTruncatedAssetName } from '@/utils/oracle';
@@ -22,6 +24,8 @@ type MarketDetailsBlockProps = {
   disableExpansion?: boolean;
   supplyDelta?: bigint;
   borrowDelta?: bigint;
+  /** Extra liquidity available from Public Allocator vaults (in raw token units) */
+  extraLiquidity?: bigint;
 };
 
 export function MarketDetailsBlock({
@@ -33,6 +37,7 @@ export function MarketDetailsBlock({
   disableExpansion = false,
   supplyDelta,
   borrowDelta,
+  extraLiquidity,
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !disableExpansion);
 
@@ -240,19 +245,31 @@ export function MarketDetailsBlock({
                     </div>
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Liquidity:</p>
-                      {previewState !== null ? (
-                        <p className="text-right font-zen text-sm">
-                          <span className="line-through opacity-50">
+                      <div className="flex items-center gap-1">
+                        {previewState !== null ? (
+                          <p className="text-right font-zen text-sm">
+                            <span className="line-through opacity-50">
+                              {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
+                            </span>
+                            {' → '}
+                            <span>{formatReadable(formatBalance(previewState.liquidityAssets.toString(), market.loanAsset.decimals))}</span>
+                          </p>
+                        ) : (
+                          <p className="text-right font-zen text-sm">
                             {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
-                          </span>
-                          {' → '}
-                          <span>{formatReadable(formatBalance(previewState.liquidityAssets.toString(), market.loanAsset.decimals))}</span>
-                        </p>
-                      ) : (
-                        <p className="text-right font-zen text-sm">
-                          {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
-                        </p>
-                      )}
+                          </p>
+                        )}
+                        {extraLiquidity != null && extraLiquidity > 0n && (
+                          <Tooltip
+                            content={`+${formatReadable(formatBalance(extraLiquidity.toString(), market.loanAsset.decimals))} ${market.loanAsset.symbol} available from Public Allocator vaults`}
+                          >
+                            <span className="inline-flex cursor-help items-center text-xs text-blue-500">
+                              <LuDroplets className="mr-0.5 h-3 w-3" />
+                              +PA
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Utilization:</p>
