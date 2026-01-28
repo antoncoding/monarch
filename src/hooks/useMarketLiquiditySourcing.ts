@@ -99,7 +99,7 @@ export function useMarketLiquiditySourcing(market: Market | undefined, network: 
    */
   const computeReallocation = useCallback(
     (extraAmountNeeded: bigint): ReallocationPlan | null => {
-      if (!market || !allocatorAddress || extraAmountNeeded <= 0n || vaultsWithPullable.length === 0) {
+      if (!market || !market.collateralAsset || !allocatorAddress || extraAmountNeeded <= 0n || vaultsWithPullable.length === 0) {
         return null;
       }
 
