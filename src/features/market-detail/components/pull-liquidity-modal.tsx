@@ -10,6 +10,7 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { usePublicAllocator } from '@/hooks/usePublicAllocator';
 import { usePublicAllocatorVaults, type ProcessedPublicAllocatorVault } from '@/hooks/usePublicAllocatorVaults';
+import { usePublicAllocatorLiveData, type LiveMarketData } from '@/hooks/usePublicAllocatorLiveData';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import type { Market } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -24,7 +25,7 @@ type PullLiquidityModalProps = {
 };
 
 /**
- * Calculate max pullable liquidity from a vault into the target market.
+ * Calculate max pullable liquidity from a vault into the target market (API data only).
  *
  * Bounded by:
  * 1. Per-source: min(flowCap.maxOut, vaultSupply, marketLiquidity)
@@ -53,7 +54,6 @@ function getVaultPullableAmount(
   }
 
   // Cap by target market's maxIn flow cap
-  // If no flow cap configured for target market, maxIn = 0 (no inflow allowed)
   const targetCap = vault.flowCapsByMarket.get(targetMarketKey);
   if (!targetCap) {
     return 0n;
@@ -69,7 +69,6 @@ function getVaultPullableAmount(
   if (targetAlloc) {
     const supplyCap = BigInt(targetAlloc.supplyCap);
     const currentSupply = BigInt(targetAlloc.supplyAssets);
-    // supplyCap of 0 means disabled (no more supply allowed)
     const remainingCap = supplyCap > currentSupply ? supplyCap - currentSupply : 0n;
     if (total > remainingCap) total = remainingCap;
   }
@@ -78,7 +77,56 @@ function getVaultPullableAmount(
 }
 
 /**
- * Auto-allocate a pull amount across source markets greedily.
+ * Calculate max pullable liquidity using live on-chain data for flow caps,
+ * vault supply, and market liquidity.
+ *
+ * Falls back to API values for supply cap constraints (which are less volatile).
+ */
+function getVaultPullableAmountLive(
+  vault: ProcessedPublicAllocatorVault,
+  targetMarketKey: string,
+  liveData: Map<string, LiveMarketData>,
+): bigint {
+  let total = 0n;
+
+  for (const alloc of vault.state.allocation) {
+    if (alloc.market.uniqueKey === targetMarketKey) continue;
+
+    const live = liveData.get(alloc.market.uniqueKey);
+    if (!live || live.maxOut === 0n) continue;
+
+    let pullable = live.maxOut;
+    if (live.vaultSupplyAssets < pullable) pullable = live.vaultSupplyAssets;
+    if (live.marketLiquidity < pullable) pullable = live.marketLiquidity;
+    if (pullable > 0n) total += pullable;
+  }
+
+  // Cap by target market's live maxIn flow cap
+  const targetLive = liveData.get(targetMarketKey);
+  if (!targetLive) {
+    return 0n;
+  }
+  if (total > targetLive.maxIn) {
+    total = targetLive.maxIn;
+  }
+
+  // Cap by remaining supply cap (uses API data — supply caps rarely change)
+  const targetAlloc = vault.state.allocation.find(
+    (a) => a.market.uniqueKey === targetMarketKey,
+  );
+  if (targetAlloc) {
+    const supplyCap = BigInt(targetAlloc.supplyCap);
+    // Use live supply if available, fall back to API
+    const currentSupply = targetLive.vaultSupplyAssets;
+    const remainingCap = supplyCap > currentSupply ? supplyCap - currentSupply : 0n;
+    if (total > remainingCap) total = remainingCap;
+  }
+
+  return total;
+}
+
+/**
+ * Auto-allocate a pull amount across source markets greedily (API data).
  * Pulls from the most liquid source first.
  */
 function autoAllocateWithdrawals(
@@ -106,7 +154,48 @@ function autoAllocateWithdrawals(
     }
   }
 
-  // Greedy: most liquid first
+  sources.sort((a, b) => (b.maxPullable > a.maxPullable ? 1 : b.maxPullable < a.maxPullable ? -1 : 0));
+
+  const withdrawals: { marketKey: string; amount: bigint }[] = [];
+  let remaining = requestedAmount;
+
+  for (const source of sources) {
+    if (remaining <= 0n) break;
+    const pullAmount = remaining < source.maxPullable ? remaining : source.maxPullable;
+    withdrawals.push({ marketKey: source.marketKey, amount: pullAmount });
+    remaining -= pullAmount;
+  }
+
+  return withdrawals;
+}
+
+/**
+ * Auto-allocate a pull amount across source markets using live on-chain data.
+ * Same greedy algorithm but uses RPC-verified flow caps, supply, and liquidity.
+ */
+function autoAllocateWithdrawalsLive(
+  vault: ProcessedPublicAllocatorVault,
+  targetMarketKey: string,
+  requestedAmount: bigint,
+  liveData: Map<string, LiveMarketData>,
+): { marketKey: string; amount: bigint }[] {
+  const sources: { marketKey: string; maxPullable: bigint }[] = [];
+
+  for (const alloc of vault.state.allocation) {
+    if (alloc.market.uniqueKey === targetMarketKey) continue;
+
+    const live = liveData.get(alloc.market.uniqueKey);
+    if (!live || live.maxOut === 0n) continue;
+
+    let maxPullable = live.maxOut;
+    if (live.vaultSupplyAssets < maxPullable) maxPullable = live.vaultSupplyAssets;
+    if (live.marketLiquidity < maxPullable) maxPullable = live.marketLiquidity;
+
+    if (maxPullable > 0n) {
+      sources.push({ marketKey: alloc.market.uniqueKey, maxPullable });
+    }
+  }
+
   sources.sort((a, b) => (b.maxPullable > a.maxPullable ? 1 : b.maxPullable < a.maxPullable ? -1 : 0));
 
   const withdrawals: { marketKey: string; amount: bigint }[] = [];
@@ -127,6 +216,9 @@ function autoAllocateWithdrawals(
  *
  * Flow: pick vault → enter amount → pull.
  * System auto-allocates across source markets (greedy, most liquid first).
+ *
+ * Uses API data as seed (vault list, names) and RPC for live verification
+ * (flow caps, positions, liquidity). Gracefully falls back to API data if RPC fails.
  */
 export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }: PullLiquidityModalProps) {
   const [selectedVaultAddress, setSelectedVaultAddress] = useState<string | null>(null);
@@ -140,14 +232,14 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
   const decimals = market.loanAsset.decimals;
   const symbol = market.loanAsset.symbol;
 
-  // Batch-fetch all PA-enabled vaults upfront
+  // Batch-fetch all PA-enabled vaults upfront (API data)
   const {
     vaults: paVaults,
     isLoading: isVaultsLoading,
     error: vaultsError,
   } = usePublicAllocatorVaults(supplyingVaultAddresses, network);
 
-  // Only show vaults with pullable liquidity, sorted by most available
+  // Only show vaults with pullable liquidity (using API data for the initial list)
   const vaultsWithLiquidity = useMemo(
     () =>
       paVaults
@@ -162,7 +254,32 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
     [vaultsWithLiquidity, selectedVaultAddress],
   );
   const selectedVault = selectedEntry?.vault ?? null;
-  const maxPullable = selectedEntry?.pullable ?? 0n;
+  const apiMaxPullable = selectedEntry?.pullable ?? 0n;
+
+  // ── Live on-chain data for the selected vault ──
+  const selectedVaultMarketIds = useMemo(
+    () => selectedVault?.state.allocation.map((a) => a.market.uniqueKey) ?? [],
+    [selectedVault],
+  );
+
+  const {
+    liveData,
+    isLoading: isLiveDataLoading,
+    error: liveDataError,
+  } = usePublicAllocatorLiveData(
+    selectedVault?.address as Address | undefined,
+    network,
+    selectedVaultMarketIds,
+    !!selectedVault,
+  );
+
+  // Compute live-verified max pullable (falls back to API if live data unavailable)
+  const liveMaxPullable = useMemo(() => {
+    if (!selectedVault || !liveData) return null;
+    return getVaultPullableAmountLive(selectedVault, market.uniqueKey, liveData);
+  }, [selectedVault, market.uniqueKey, liveData]);
+
+  const maxPullable = liveMaxPullable ?? apiMaxPullable;
 
   // Parse pull amount
   const parsedAmount = useMemo(() => {
@@ -174,11 +291,14 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
     }
   }, [pullAmount, decimals]);
 
-  // Auto-compute withdrawals
+  // Auto-compute withdrawals using live data when available
   const autoWithdrawals = useMemo(() => {
     if (!selectedVault || parsedAmount <= 0n) return [];
+    if (liveData) {
+      return autoAllocateWithdrawalsLive(selectedVault, market.uniqueKey, parsedAmount, liveData);
+    }
     return autoAllocateWithdrawals(selectedVault, market.uniqueKey, parsedAmount);
-  }, [selectedVault, market.uniqueKey, parsedAmount]);
+  }, [selectedVault, market.uniqueKey, parsedAmount, liveData]);
 
   // Validation
   const validationError = useMemo(() => {
@@ -253,6 +373,9 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
 
   const canExecute = !!selectedVault && parsedAmount > 0n && !validationError && !isConfirming;
 
+  // Whether live data is currently loading for the selected vault
+  const isVerifyingOnChain = !!selectedVault && isLiveDataLoading && !liveData;
+
   return (
     <Modal
       isOpen
@@ -290,6 +413,9 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                 <div className="space-y-1">
                   {vaultsWithLiquidity.map(({ vault, pullable }) => {
                     const isSelected = selectedVaultAddress === vault.address;
+                    // Show live-verified pullable for the selected vault
+                    const displayPullable =
+                      isSelected && liveMaxPullable !== null ? liveMaxPullable : pullable;
                     return (
                       <button
                         type="button"
@@ -311,14 +437,34 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                           />
                           <span className="font-medium">{vault.name}</span>
                         </div>
-                        <span className="tabular-nums text-xs text-secondary">
-                          {Number(formatUnits(pullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} {symbol}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {isSelected && isVerifyingOnChain && (
+                            <Spinner size={12} />
+                          )}
+                          <span className="tabular-nums text-xs text-secondary">
+                            {Number(formatUnits(displayPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} {symbol}
+                          </span>
+                        </div>
                       </button>
                     );
                   })}
                 </div>
               </div>
+
+              {/* On-chain verification indicator */}
+              {isVerifyingOnChain && (
+                <div className="flex items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-400/20 dark:bg-blue-400/10 dark:text-blue-300">
+                  <Spinner size={12} />
+                  <span>Verifying on-chain...</span>
+                </div>
+              )}
+
+              {/* Live data error fallback notice */}
+              {selectedVault && liveDataError && !liveData && (
+                <div className="rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-700 dark:border-yellow-400/20 dark:bg-yellow-400/10 dark:text-yellow-300">
+                  Using cached data — on-chain verification unavailable
+                </div>
+              )}
 
               {/* Amount Input */}
               {selectedVault && (
@@ -385,6 +531,12 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                       {selectedVault.feeBigInt === 0n ? 'Free' : `${formatUnits(selectedVault.feeBigInt, 18)} ETH`}
                     </span>
                   </div>
+                  {liveData && (
+                    <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                      <span>✓</span>
+                      <span>Verified on-chain</span>
+                    </div>
+                  )}
                 </div>
               )}
             </>
