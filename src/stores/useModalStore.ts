@@ -21,7 +21,6 @@ export type ModalProps = {
     market: Market;
     position?: MarketPosition | null;
     defaultMode?: 'borrow' | 'repay';
-    isMarketPage?: boolean;
     refetch?: () => void;
     liquiditySourcing?: LiquiditySourcingResult;
   };

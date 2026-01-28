@@ -9,7 +9,6 @@ type BorrowModalGlobalProps = {
   market: Market;
   position?: MarketPosition | null;
   defaultMode?: 'borrow' | 'repay';
-  isMarketPage?: boolean;
   refetch?: () => void;
   liquiditySourcing?: LiquiditySourcingResult;
   onOpenChange: (open: boolean) => void;
