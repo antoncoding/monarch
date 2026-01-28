@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { LuDroplets } from 'react-icons/lu';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
@@ -43,6 +43,8 @@ export function AddCollateralAndBorrow({
   const [borrowAmount, setBorrowAmount] = useState<bigint>(BigInt(0));
   const [collateralInputError, setCollateralInputError] = useState<string | null>(null);
   const [borrowInputError, setBorrowInputError] = useState<string | null>(null);
+  const [targetLtvInput, setTargetLtvInput] = useState<string>('');
+  const ltvInputActive = useRef(false);
   const { usePermit2: usePermit2Setting } = useAppSettings();
 
   // lltv with 18 decimals
@@ -116,6 +118,70 @@ export function AddCollateralAndBorrow({
       setNewLTV(BigInt(0));
     }
   }, [currentPosition, collateralAmount, borrowAmount, oraclePrice]);
+
+  // Sync LTV input from borrow amount (when borrow amount changes and user isn't actively editing LTV)
+  useEffect(() => {
+    if (ltvInputActive.current) return;
+    if (borrowAmount === 0n && collateralAmount === 0n) {
+      setTargetLtvInput('');
+      return;
+    }
+    if (newLTV > 0n) {
+      // newLTV is 18 decimals, convert to percentage
+      const ltvPercent = Number(newLTV) / 1e16;
+      setTargetLtvInput(ltvPercent.toFixed(2));
+    }
+  }, [newLTV, borrowAmount, collateralAmount]);
+
+  // Handle LTV input change: compute borrow amount from target LTV
+  const handleLtvInputChange = useCallback(
+    (value: string) => {
+      ltvInputActive.current = true;
+      setTargetLtvInput(value);
+
+      const targetLtvPercent = Number.parseFloat(value);
+      if (Number.isNaN(targetLtvPercent) || targetLtvPercent <= 0) {
+        setBorrowAmount(0n);
+        // Use setTimeout to reset the ref after the state update cycle
+        setTimeout(() => {
+          ltvInputActive.current = false;
+        }, 0);
+        return;
+      }
+
+      // targetLtv as 18 decimal bigint
+      const targetLtvBig = BigInt(Math.floor(targetLtvPercent * 1e16));
+
+      // Total collateral after adding new
+      const totalCollateral = BigInt(currentPosition?.state.collateral ?? 0) + collateralAmount;
+      // Collateral value in loan token terms (oracle price has 36 decimals scaling)
+      const totalCollateralValueInLoan = (totalCollateral * oraclePrice) / BigInt(10 ** 36);
+
+      if (totalCollateralValueInLoan <= 0n) {
+        setBorrowAmount(0n);
+        setTimeout(() => {
+          ltvInputActive.current = false;
+        }, 0);
+        return;
+      }
+
+      // targetBorrow = (targetLtv * totalCollateralValueInLoan) / 1e18
+      const totalTargetBorrow = (targetLtvBig * totalCollateralValueInLoan) / BigInt(10 ** 18);
+      // Subtract existing borrow to get the new borrow amount
+      const existingBorrow = BigInt(currentPosition?.state.borrowAssets ?? 0);
+      const newBorrow = totalTargetBorrow > existingBorrow ? totalTargetBorrow - existingBorrow : 0n;
+
+      setBorrowAmount(newBorrow);
+
+      setTimeout(() => {
+        ltvInputActive.current = false;
+      }, 0);
+    },
+    [currentPosition, collateralAmount, oraclePrice],
+  );
+
+  // LLTV as percentage for display
+  const lltvPercent = Number(lltv) / 1e16;
 
   // Function to handle manual refresh
   const handleRefresh = useCallback(() => {
@@ -316,6 +382,26 @@ export function AddCollateralAndBorrow({
                       <p className="mt-1 text-xs text-blue-500">⚡ Sourcing extra liquidity via Public Allocator</p>
                     )}
                 </div>
+              </div>
+            </div>
+
+            {/* Target LTV Input */}
+            <div className="mb-1">
+              <div className="flex items-center justify-between">
+                <p className="font text-sm">Target LTV %</p>
+                <p className="font text-xs opacity-50">Max: {lltvPercent.toFixed(2)}%</p>
+              </div>
+              <div className="mb-4">
+                <input
+                  type="number"
+                  min="0"
+                  max={lltvPercent}
+                  step="0.1"
+                  value={targetLtvInput}
+                  onChange={(e) => handleLtvInputChange(e.target.value)}
+                  placeholder="0.00"
+                  className="bg-hovered w-full rounded-sm border border-transparent px-3 py-2 font-zen text-sm outline-none transition-colors focus:border-primary"
+                />
               </div>
             </div>
           </div>

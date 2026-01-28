@@ -16,6 +16,16 @@ export type ModalProps = {
     defaultTargetToken?: SwapToken;
   };
 
+  // Borrow & Repay
+  borrow: {
+    market: Market;
+    position?: MarketPosition | null;
+    defaultMode?: 'borrow' | 'repay';
+    isMarketPage?: boolean;
+    refetch?: () => void;
+    liquiditySourcing?: LiquiditySourcingResult;
+  };
+
   // Supply & Withdraw
   supply: {
     market: Market;

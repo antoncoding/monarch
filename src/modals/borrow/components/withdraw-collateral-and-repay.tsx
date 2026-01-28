@@ -247,6 +247,27 @@ export function WithdrawCollateralAndRepay({
           />
         </div>
 
+        {/* Outstanding Debt Display */}
+        {currentPosition && BigInt(currentPosition.state.borrowAssets) > 0n && (
+          <div className="mb-4 rounded-sm border border-orange-500/20 bg-orange-500/5 p-3">
+            <div className="flex items-center justify-between">
+              <span className="font-zen text-xs opacity-60">Outstanding Debt</span>
+              <div className="flex items-center gap-2">
+                <TokenIcon
+                  address={market.loanAsset.address}
+                  chainId={market.morphoBlue.chain.id}
+                  symbol={market.loanAsset.symbol}
+                  width={16}
+                  height={16}
+                />
+                <span className="font-zen text-sm font-medium">
+                  {formatBalance(BigInt(currentPosition.state.borrowAssets), market.loanAsset.decimals)} {market.loanAsset.symbol}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mt-12 space-y-4">
           {/* Withdraw Input Section */}
           <div className="mb-1">
