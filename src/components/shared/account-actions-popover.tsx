@@ -2,7 +2,7 @@
 
 import { useCallback, type ReactNode } from 'react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { LuCopy, LuUser } from 'react-icons/lu';
+import { LuCopy, LuUser, LuWallet } from 'react-icons/lu';
 import { SiEthereum } from 'react-icons/si';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
@@ -42,6 +42,10 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
     window.open(explorerUrl, '_blank', 'noopener,noreferrer');
   }, [address, chainId]);
 
+  const handleViewDeBank = useCallback(() => {
+    window.open(`https://debank.com/profile/${address}`, '_blank', 'noopener,noreferrer');
+  }, [address]);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -58,13 +62,19 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
           onClick={handleViewAccount}
           startContent={<LuUser className="h-4 w-4" />}
         >
-          View Account
+          View Monarch Portfolio
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleViewExplorer}
           startContent={<SiEthereum className="h-4 w-4" />}
         >
           View on Explorer
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleViewDeBank}
+          startContent={<LuWallet className="h-4 w-4" />}
+        >
+          View on DeBank
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
