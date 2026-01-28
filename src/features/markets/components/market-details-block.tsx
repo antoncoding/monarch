@@ -261,7 +261,7 @@ export function MarketDetailsBlock({
                         )}
                         {extraLiquidity != null && extraLiquidity > 0n && (
                           <Tooltip
-                            className='z-2000'
+                            className="z-[2000]"
                             content={`+${formatReadable(formatBalance(extraLiquidity.toString(), market.loanAsset.decimals))} ${market.loanAsset.symbol} available from Public Allocator vaults`}
                           >
                             <LuDroplets className="mr-0.5 h-3 w-3" />

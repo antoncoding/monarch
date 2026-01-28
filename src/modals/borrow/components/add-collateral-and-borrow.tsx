@@ -287,12 +287,11 @@ export function AddCollateralAndBorrow({
                   Available: {formatReadable(formatBalance(effectiveAvailableLiquidity, market.loanAsset.decimals))}{' '}
                   {market.loanAsset.symbol}
                   {extraLiquidity > 0n && (
-                    
-                    <Tooltip 
+                    <Tooltip
                       content="Includes extra liquidity sourced from Public Allocator vaults"
-                      className='z-2000'
+                      className="z-[2000]"
                     >
-                      <span className='inline-flex ml-0.5'>
+                      <span className="inline-flex ml-0.5">
                         <LuDroplets className="h-3 w-3" />
                       </span>
                     </Tooltip>
