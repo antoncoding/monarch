@@ -1,5 +1,3 @@
-// eslint-disable @typescript-eslint/prefer-nullish-coalescing
-
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
@@ -7,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
-import { BorrowModal } from '@/modals/borrow/borrow-modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
 import Header from '@/components/layout/header/Header';
@@ -50,8 +47,6 @@ function MarketContent() {
   const { open: openModal } = useModal();
   const selectedTab = useMarketDetailPreferences((s) => s.selectedTab);
   const setSelectedTab = useMarketDetailPreferences((s) => s.setSelectedTab);
-  const [showBorrowModal, setShowBorrowModal] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
   const [showSupplierFiltersModal, setShowSupplierFiltersModal] = useState(false);
   const [minSupplierShares, setMinSupplierShares] = useState('');
@@ -215,24 +210,10 @@ function MarketContent() {
     });
   }, [suppliersData]);
 
-  // Unified refetch function for both market and user position
-  const handleRefreshAll = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      await Promise.all([refetchMarket(), refetchUserPosition()]);
-    } catch (error) {
-      console.error('Failed to refresh data:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
+  // Refetch function for both market and user position
+  const handleRefresh = useCallback(() => {
+    void Promise.all([refetchMarket(), refetchUserPosition()]);
   }, [refetchMarket, refetchUserPosition]);
-
-  // Non-async wrapper for components that expect void returns
-  const handleRefreshAllSync = useCallback(() => {
-    void handleRefreshAll().catch((error) => {
-      console.error('Failed to refresh data:', error);
-    });
-  }, [handleRefreshAll]);
 
   // 7. Early returns for loading/error states
   if (isMarketLoading) {
@@ -262,11 +243,33 @@ function MarketContent() {
 
   // Handlers for supply/borrow actions
   const handleSupplyClick = () => {
-    openModal('supply', { market, position: userPosition, isMarketPage: true, refetch: handleRefreshAllSync, liquiditySourcing });
+    openModal('supply', {
+      market,
+      position: userPosition,
+      isMarketPage: true,
+      refetch: handleRefresh,
+      liquiditySourcing,
+      defaultMode: 'supply',
+    });
+  };
+
+  const handleWithdrawClick = () => {
+    openModal('supply', {
+      market,
+      position: userPosition,
+      isMarketPage: true,
+      refetch: handleRefresh,
+      liquiditySourcing,
+      defaultMode: 'withdraw',
+    });
   };
 
   const handleBorrowClick = () => {
-    setShowBorrowModal(true);
+    openModal('borrow', { market, position: userPosition, refetch: handleRefresh, liquiditySourcing, defaultMode: 'borrow' });
+  };
+
+  const handleRepayClick = () => {
+    openModal('borrow', { market, position: userPosition, refetch: handleRefresh, liquiditySourcing, defaultMode: 'repay' });
   };
 
   const handleAccrueInterest = async () => {
@@ -306,21 +309,11 @@ function MarketContent() {
           oraclePrice={formattedOraclePrice}
           allWarnings={allWarnings}
           onSupplyClick={handleSupplyClick}
+          onWithdrawClick={handleWithdrawClick}
           onBorrowClick={handleBorrowClick}
+          onRepayClick={handleRepayClick}
           accrueInterest={handleAccrueInterest}
         />
-
-        {showBorrowModal && (
-          <BorrowModal
-            market={market}
-            onOpenChange={setShowBorrowModal}
-            oraclePrice={oraclePrice}
-            refetch={handleRefreshAllSync}
-            isRefreshing={isRefreshing}
-            position={userPosition}
-            liquiditySourcing={liquiditySourcing}
-          />
-        )}
 
         {showTransactionFiltersModal && (
           <TransactionFiltersModal

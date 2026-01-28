@@ -12,8 +12,9 @@ import { BsArrowUpCircle, BsArrowDownLeftCircle, BsFillLightningFill } from 'rea
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { AiOutlineStop } from 'react-icons/ai';
 import { FiExternalLink } from 'react-icons/fi';
-import { LuCopy } from 'react-icons/lu';
+import { LuCopy, LuArrowDownToLine, LuRefreshCw } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
+import { SplitActionButton } from '@/components/ui/split-action-button';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { BlacklistConfirmationModal } from '@/features/markets/components/blacklist-confirmation-modal';
@@ -23,12 +24,12 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { AddressIdentity } from '@/components/shared/address-identity';
 import { CampaignBadge } from '@/features/market-detail/components/campaign-badge';
-import { PositionPill } from '@/features/market-detail/components/position-pill';
 import { OracleTypeInfo } from '@/features/markets/components/oracle/MarketOracle/OracleTypeInfo';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { convertApyToApr } from '@/utils/rateMath';
+import { formatReadable } from '@/utils/balance';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getMarketURL } from '@/utils/external';
@@ -117,6 +118,127 @@ function RiskIcon({ level }: { level: RiskLevel }): React.ReactNode {
   }
 }
 
+// Extracted action buttons component for cleaner code
+type ActionButtonsProps = {
+  market: Market;
+  userPosition: MarketPosition | null;
+  onSupplyClick: () => void;
+  onWithdrawClick: () => void;
+  onBorrowClick: () => void;
+  onRepayClick: () => void;
+};
+
+function ActionButtons({
+  market,
+  userPosition,
+  onSupplyClick,
+  onWithdrawClick,
+  onBorrowClick,
+  onRepayClick,
+}: ActionButtonsProps): React.ReactNode {
+  // Compute position states once
+  const hasSupply = userPosition !== null && BigInt(userPosition.state.supplyShares) > 0n;
+  const hasBorrow = userPosition !== null && BigInt(userPosition.state.borrowShares) > 0n;
+  const hasCollateral = userPosition !== null && BigInt(userPosition.state.collateral) > 0n;
+  const hasBorrowPosition = hasBorrow || hasCollateral;
+
+  const supplyTooltip =
+    hasSupply && userPosition ? (
+      <div className="flex items-center gap-3">
+        <TokenIcon
+          address={market.loanAsset.address}
+          chainId={market.morphoBlue.chain.id}
+          symbol={market.loanAsset.symbol}
+          width={20}
+          height={20}
+        />
+        <div>
+          <p className="text-xs text-secondary">Supplied</p>
+          <p className="text-sm font-medium tabular-nums">
+            {formatReadable(Number(formatUnits(BigInt(userPosition.state.supplyAssets), market.loanAsset.decimals)))}{' '}
+            {market.loanAsset.symbol}
+          </p>
+        </div>
+      </div>
+    ) : undefined;
+
+  const borrowTooltip =
+    hasBorrowPosition && userPosition ? (
+      <div className="space-y-2">
+        {hasCollateral && (
+          <div className="flex items-center gap-3">
+            <TokenIcon
+              address={market.collateralAsset.address}
+              chainId={market.morphoBlue.chain.id}
+              symbol={market.collateralAsset.symbol}
+              width={20}
+              height={20}
+            />
+            <div>
+              <p className="text-xs text-secondary">Collateral</p>
+              <p className="text-sm font-medium tabular-nums">
+                {formatReadable(Number(formatUnits(BigInt(userPosition.state.collateral), market.collateralAsset.decimals)))}{' '}
+                {market.collateralAsset.symbol}
+              </p>
+            </div>
+          </div>
+        )}
+        {hasBorrow && (
+          <div className="flex items-center gap-3">
+            <TokenIcon
+              address={market.loanAsset.address}
+              chainId={market.morphoBlue.chain.id}
+              symbol={market.loanAsset.symbol}
+              width={20}
+              height={20}
+            />
+            <div>
+              <p className="text-xs text-secondary">Borrowed</p>
+              <p className="text-sm font-medium tabular-nums">
+                {formatReadable(Number(formatUnits(BigInt(userPosition.state.borrowAssets), market.loanAsset.decimals)))}{' '}
+                {market.loanAsset.symbol}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    ) : undefined;
+
+  return (
+    <>
+      <SplitActionButton
+        label="Supply"
+        icon={<BsArrowUpCircle className="h-4 w-4" />}
+        onClick={onSupplyClick}
+        indicator={{ show: hasSupply, tooltip: supplyTooltip }}
+        dropdownItems={[
+          {
+            label: 'Withdraw',
+            icon: <LuArrowDownToLine className="h-4 w-4" />,
+            onClick: onWithdrawClick,
+            disabled: !hasSupply,
+          },
+        ]}
+      />
+
+      <SplitActionButton
+        label="Borrow"
+        icon={<BsArrowDownLeftCircle className="h-4 w-4" />}
+        onClick={onBorrowClick}
+        indicator={{ show: hasBorrowPosition, tooltip: borrowTooltip }}
+        dropdownItems={[
+          {
+            label: 'Repay',
+            icon: <LuRefreshCw className="h-4 w-4" />,
+            onClick: onRepayClick,
+            disabled: !hasBorrow,
+          },
+        ]}
+      />
+    </>
+  );
+}
+
 type MarketHeaderProps = {
   market: Market;
   marketId: string;
@@ -125,7 +247,9 @@ type MarketHeaderProps = {
   oraclePrice: string;
   allWarnings: WarningWithDetail[];
   onSupplyClick: () => void;
+  onWithdrawClick: () => void;
   onBorrowClick: () => void;
+  onRepayClick: () => void;
   accrueInterest: () => void;
 };
 
@@ -137,7 +261,9 @@ export function MarketHeader({
   oraclePrice,
   allWarnings,
   onSupplyClick,
+  onWithdrawClick,
   onBorrowClick,
+  onRepayClick,
   accrueInterest,
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -350,41 +476,24 @@ export function MarketHeader({
               </div>
             </div>
 
-            {/* Position Pill + Action Buttons + Dropdown */}
+            {/* Action Buttons + Dropdown */}
             <div className="flex flex-wrap items-center gap-2">
-              {userPosition && (
-                <PositionPill
-                  position={userPosition}
-                  onSupplyClick={onSupplyClick}
-                  onBorrowClick={onBorrowClick}
-                />
-              )}
-              {/* Prominent Supply & Borrow Buttons */}
-              <Button
-                size="sm"
-                variant="surface"
-                onClick={onSupplyClick}
-                className="gap-1.5"
-              >
-                <BsArrowUpCircle className="h-4 w-4" />
-                Supply
-              </Button>
-              <Button
-                size="sm"
-                variant="surface"
-                onClick={onBorrowClick}
-                className="gap-1.5"
-              >
-                <BsArrowDownLeftCircle className="h-4 w-4" />
-                Borrow
-              </Button>
+              <ActionButtons
+                market={market}
+                userPosition={userPosition}
+                onSupplyClick={onSupplyClick}
+                onWithdrawClick={onWithdrawClick}
+                onBorrowClick={onBorrowClick}
+                onRepayClick={onRepayClick}
+              />
+
               {/* Advanced Options Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    size="sm"
-                    variant="surface"
-                    className="px-2"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-6 min-w-0"
                   >
                     <IoEllipsisVertical className="h-4 w-4" />
                   </Button>
