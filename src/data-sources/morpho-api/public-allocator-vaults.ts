@@ -69,10 +69,7 @@ type PublicAllocatorVaultsApiResponse = {
  * Batch-fetches supplying vaults with their public allocator configuration.
  * Only returns vaults that have publicAllocatorConfig enabled (non-null).
  */
-export const fetchPublicAllocatorVaults = async (
-  addresses: string[],
-  chainId: SupportedNetworks,
-): Promise<PublicAllocatorVault[]> => {
+export const fetchPublicAllocatorVaults = async (addresses: string[], chainId: SupportedNetworks): Promise<PublicAllocatorVault[]> => {
   if (addresses.length === 0) return [];
 
   const response = await morphoGraphqlFetcher<PublicAllocatorVaultsApiResponse>(publicAllocatorVaultsQuery, {
@@ -88,7 +85,5 @@ export const fetchPublicAllocatorVaults = async (
   if (!items) return [];
 
   // Filter to only vaults with PA enabled
-  return items.filter(
-    (vault): vault is PublicAllocatorVault => vault.publicAllocatorConfig !== null,
-  );
+  return items.filter((vault): vault is PublicAllocatorVault => vault.publicAllocatorConfig !== null);
 };

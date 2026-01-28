@@ -32,10 +32,7 @@ type PullLiquidityModalProps = {
  * 2. Target market: flowCap.maxIn
  * 3. Target market: supplyCap - currentSupply (remaining vault capacity)
  */
-function getVaultPullableAmount(
-  vault: ProcessedPublicAllocatorVault,
-  targetMarketKey: string,
-): bigint {
+function getVaultPullableAmount(vault: ProcessedPublicAllocatorVault, targetMarketKey: string): bigint {
   let total = 0n;
 
   for (const alloc of vault.state.allocation) {
@@ -63,9 +60,7 @@ function getVaultPullableAmount(
   }
 
   // Cap by remaining supply cap for the target market in this vault
-  const targetAlloc = vault.state.allocation.find(
-    (a) => a.market.uniqueKey === targetMarketKey,
-  );
+  const targetAlloc = vault.state.allocation.find((a) => a.market.uniqueKey === targetMarketKey);
   if (targetAlloc) {
     const supplyCap = BigInt(targetAlloc.supplyCap);
     const currentSupply = BigInt(targetAlloc.supplyAssets);
@@ -111,9 +106,7 @@ function getVaultPullableAmountLive(
   }
 
   // Cap by remaining supply cap (uses API data — supply caps rarely change)
-  const targetAlloc = vault.state.allocation.find(
-    (a) => a.market.uniqueKey === targetMarketKey,
-  );
+  const targetAlloc = vault.state.allocation.find((a) => a.market.uniqueKey === targetMarketKey);
   if (targetAlloc) {
     const supplyCap = BigInt(targetAlloc.supplyCap);
     // Use live supply if available, fall back to API
@@ -233,11 +226,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
   const symbol = market.loanAsset.symbol;
 
   // Batch-fetch all PA-enabled vaults upfront (API data)
-  const {
-    vaults: paVaults,
-    isLoading: isVaultsLoading,
-    error: vaultsError,
-  } = usePublicAllocatorVaults(supplyingVaultAddresses, network);
+  const { vaults: paVaults, isLoading: isVaultsLoading, error: vaultsError } = usePublicAllocatorVaults(supplyingVaultAddresses, network);
 
   // Only show vaults with pullable liquidity (using API data for the initial list)
   const vaultsWithLiquidity = useMemo(
@@ -257,21 +246,13 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
   const apiMaxPullable = selectedEntry?.pullable ?? 0n;
 
   // ── Live on-chain data for the selected vault ──
-  const selectedVaultMarketIds = useMemo(
-    () => selectedVault?.state.allocation.map((a) => a.market.uniqueKey) ?? [],
-    [selectedVault],
-  );
+  const selectedVaultMarketIds = useMemo(() => selectedVault?.state.allocation.map((a) => a.market.uniqueKey) ?? [], [selectedVault]);
 
   const {
     liveData,
     isLoading: isLiveDataLoading,
     error: _liveDataError,
-  } = usePublicAllocatorLiveData(
-    selectedVault?.address as Address | undefined,
-    network,
-    selectedVaultMarketIds,
-    !!selectedVault,
-  );
+  } = usePublicAllocatorLiveData(selectedVault?.address as Address | undefined, network, selectedVaultMarketIds, !!selectedVault);
 
   // Compute live-verified max pullable (falls back to API if live data unavailable)
   const liveMaxPullable = useMemo(() => {
@@ -336,9 +317,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
   const handlePullLiquidity = useCallback(async () => {
     if (!market.collateralAsset || !selectedVault || autoWithdrawals.length === 0) return;
 
-    const allocationMap = new Map(
-      selectedVault.state.allocation.map((a) => [a.market.uniqueKey, a]),
-    );
+    const allocationMap = new Map(selectedVault.state.allocation.map((a) => [a.market.uniqueKey, a]));
 
     const sources = autoWithdrawals
       .map(({ marketKey, amount }) => {
@@ -413,8 +392,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                   {vaultsWithLiquidity.map(({ vault, pullable }) => {
                     const isSelected = selectedVaultAddress === vault.address;
                     // Show live-verified pullable for the selected vault
-                    const displayPullable =
-                      isSelected && liveMaxPullable !== null ? liveMaxPullable : pullable;
+                    const displayPullable = isSelected && liveMaxPullable !== null ? liveMaxPullable : pullable;
                     return (
                       <button
                         type="button"
@@ -438,11 +416,10 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span className="tabular-nums text-xs text-secondary">
-                            {Number(formatUnits(displayPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} {symbol}
+                            {Number(formatUnits(displayPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })}{' '}
+                            {symbol}
                           </span>
-                          {isSelected && isVerifyingLive && (
-                            <Spinner size={10} />
-                          )}
+                          {isSelected && isVerifyingLive && <Spinner size={10} />}
                         </div>
                       </button>
                     );
@@ -454,16 +431,19 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
               {selectedVault && (
                 <div>
                   <div className="mb-1 flex items-center justify-between">
-                    <span className="font-zen text-xs opacity-50">Pull amount</span>
+                    <p className="mb-2 text-xs uppercase tracking-wider text-secondary">Pull Amount</p>
                     <button
                       type="button"
                       onClick={handleSetMax}
                       className="cursor-pointer font-inter text-xs opacity-50 transition hover:opacity-100"
                     >
-                      Liquidity:{' '}
-                      {Number(formatUnits(maxPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 4 })}{' '}
+                      Liquidity: {Number(formatUnits(maxPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 4 })}{' '}
                       {symbol}
-                      {isVerifyingLive && <span className="ml-1 inline-block"><Spinner size={10} /></span>}
+                      {isVerifyingLive && (
+                        <span className="ml-1 inline-block">
+                          <Spinner size={10} />
+                        </span>
+                      )}
                     </button>
                   </div>
                   <div className="relative">
@@ -489,33 +469,18 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                       </button>
                     )}
                   </div>
-                  {validationError && parsedAmount > 0n && (
-                    <p className="mt-1 text-sm text-red-500">{validationError}</p>
-                  )}
+                  {validationError && parsedAmount > 0n && <p className="mt-1 text-sm text-red-500">{validationError}</p>}
                 </div>
               )}
 
-              {/* Summary */}
-              {selectedVault && parsedAmount > 0n && !validationError && (
+              {/* Show fee if there is any */}
+              {selectedVault && selectedVault.feeBigInt !== 0n && parsedAmount > 0n && !validationError && (
                 <div className="space-y-2 rounded border border-border bg-surface-soft p-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-secondary">Pull Amount</span>
-                    <span className="tabular-nums">
-                      {formatUnits(parsedAmount, decimals)} {symbol}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-secondary">Source Markets</span>
-                    <span className="text-xs text-secondary">
-                      {autoWithdrawals.length} market{autoWithdrawals.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
                     <span className="text-secondary">Fee</span>
-                    <span className="tabular-nums">
-                      {selectedVault.feeBigInt === 0n ? 'Free' : `${formatUnits(selectedVault.feeBigInt, 18)} ETH`}
-                    </span>
+                    <span className="tabular-nums text-xs">{formatUnits(selectedVault.feeBigInt, 18)} ETH</span>
                   </div>
+                  )
                 </div>
               )}
             </>
@@ -528,7 +493,10 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
       </ModalBody>
 
       <ModalFooter>
-        <Button variant="default" onClick={() => onOpenChange(false)}>
+        <Button
+          variant="default"
+          onClick={() => onOpenChange(false)}
+        >
           Cancel
         </Button>
         {isNetworkSupported && selectedVault && (

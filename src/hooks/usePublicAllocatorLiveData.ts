@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { type Address } from 'viem';
+import type { Address } from 'viem';
 import { useReadContracts } from 'wagmi';
 import { publicAllocatorAbi } from '@/abis/public-allocator';
 import morphoABI from '@/abis/morpho';
@@ -113,11 +113,7 @@ export function usePublicAllocatorLiveData(
       const marketResult = rawResults[baseIdx + 2];
 
       // Skip if any call failed
-      if (
-        flowCapsResult?.status !== 'success' ||
-        positionResult?.status !== 'success' ||
-        marketResult?.status !== 'success'
-      ) {
+      if (flowCapsResult?.status !== 'success' || positionResult?.status !== 'success' || marketResult?.status !== 'success') {
         continue;
       }
 
@@ -137,10 +133,7 @@ export function usePublicAllocatorLiveData(
       const totalBorrowAssets = marketData[2];
 
       // Convert supply shares to assets
-      const vaultSupplyAssets =
-        totalSupplyShares > 0n
-          ? (supplyShares * totalSupplyAssets) / totalSupplyShares
-          : 0n;
+      const vaultSupplyAssets = totalSupplyShares > 0n ? (supplyShares * totalSupplyAssets) / totalSupplyShares : 0n;
 
       // Market liquidity = total supply - total borrow
       const marketLiquidity = totalSupplyAssets - totalBorrowAssets;

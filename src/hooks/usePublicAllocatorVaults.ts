@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  fetchPublicAllocatorVaults,
-  type PublicAllocatorVault,
-} from '@/data-sources/morpho-api/public-allocator-vaults';
+import { fetchPublicAllocatorVaults, type PublicAllocatorVault } from '@/data-sources/morpho-api/public-allocator-vaults';
 import type { SupportedNetworks } from '@/utils/networks';
 
 export type FlowCapsByMarket = Map<string, { maxIn: bigint; maxOut: bigint }>;
@@ -20,10 +17,7 @@ export type ProcessedPublicAllocatorVault = PublicAllocatorVault & {
  * those with public allocator enabled. Returns processed data with flow caps
  * mapped by market ID for easy lookup.
  */
-export function usePublicAllocatorVaults(
-  supplyingVaultAddresses: string[],
-  chainId: SupportedNetworks,
-) {
+export function usePublicAllocatorVaults(supplyingVaultAddresses: string[], chainId: SupportedNetworks) {
   const addressesKey = supplyingVaultAddresses.sort().join(',');
 
   const {
