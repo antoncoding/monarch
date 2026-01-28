@@ -265,11 +265,11 @@ function MarketContent() {
   };
 
   const handleBorrowClick = () => {
-    openModal('borrow', { market, position: userPosition, refetch: handleRefresh, liquiditySourcing, defaultMode: 'borrow' });
+    openModal('borrow', { market, refetch: handleRefresh, liquiditySourcing, defaultMode: 'borrow' });
   };
 
   const handleRepayClick = () => {
-    openModal('borrow', { market, position: userPosition, refetch: handleRefresh, liquiditySourcing, defaultMode: 'repay' });
+    openModal('borrow', { market, refetch: handleRefresh, liquiditySourcing, defaultMode: 'repay' });
   };
 
   const handleAccrueInterest = async () => {

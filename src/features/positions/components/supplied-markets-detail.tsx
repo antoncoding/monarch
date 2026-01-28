@@ -22,7 +22,6 @@ function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosit
   const { open } = useModal();
   const suppliedAmount = Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals));
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
-  const hasBorrowPosition = BigInt(position.state.borrowAssets) > 0n || BigInt(position.state.collateral) > 0n;
 
   return (
     <TableRow
@@ -75,21 +74,6 @@ function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosit
         style={{ minWidth: '180px' }}
       >
         <div className="flex items-center justify-end gap-2">
-          {hasBorrowPosition && (
-            <Button
-              size="sm"
-              variant="surface"
-              onClick={() => {
-                open('borrow', {
-                  market: position.market,
-                  position,
-                  defaultMode: 'repay',
-                });
-              }}
-            >
-              Manage Borrow
-            </Button>
-          )}
           <Button
             size="sm"
             variant="surface"
