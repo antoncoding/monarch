@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import type { Address } from 'viem';
+import { type Address, zeroAddress } from 'viem';
 import { usePublicAllocatorVaults, type ProcessedPublicAllocatorVault } from '@/hooks/usePublicAllocatorVaults';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import {
@@ -99,7 +99,7 @@ export function useMarketLiquiditySourcing(market: Market | undefined, network: 
    */
   const computeReallocation = useCallback(
     (extraAmountNeeded: bigint): ReallocationPlan | null => {
-      if (!market || !market.collateralAsset || !allocatorAddress || extraAmountNeeded <= 0n || vaultsWithPullable.length === 0) {
+      if (!market || !allocatorAddress || extraAmountNeeded <= 0n || vaultsWithPullable.length === 0) {
         return null;
       }
 
@@ -133,7 +133,7 @@ export function useMarketLiquiditySourcing(market: Market | undefined, network: 
       // Build target market params
       const targetMarketParams: PAMarketParams = {
         loanToken: market.loanAsset.address as Address,
-        collateralToken: market.collateralAsset.address as Address,
+        collateralToken: (market.collateralAsset?.address ?? zeroAddress) as Address,
         oracle: market.oracleAddress as Address,
         irm: market.irmAddress as Address,
         lltv: BigInt(market.lltv),
