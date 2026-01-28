@@ -5,6 +5,7 @@ import { erc20Abi } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
 import type { Market, MarketPosition } from '@/utils/types';
+import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { AddCollateralAndBorrow } from './components/add-collateral-and-borrow';
 import { WithdrawCollateralAndRepay } from './components/withdraw-collateral-and-repay';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -16,9 +17,10 @@ type BorrowModalProps = {
   refetch?: () => void;
   isRefreshing?: boolean;
   position: MarketPosition | null;
+  liquiditySourcing?: LiquiditySourcingResult;
 };
 
-export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefreshing = false, position }: BorrowModalProps): JSX.Element {
+export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefreshing = false, position, liquiditySourcing }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>('borrow');
   const { address: account } = useConnection();
 
@@ -113,6 +115,7 @@ export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefr
             oraclePrice={oraclePrice}
             onSuccess={refetch}
             isRefreshing={isRefreshing}
+            liquiditySourcing={liquiditySourcing}
           />
         ) : (
           <WithdrawCollateralAndRepay

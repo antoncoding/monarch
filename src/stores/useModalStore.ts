@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import type { Market, MarketPosition, GroupedPosition } from '@/utils/types';
 import type { SwapToken } from '@/features/swap/types';
 import type { SupportedNetworks } from '@/utils/networks';
+import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 
 /**
  * Registry of Zustand-managed modals (Pattern 2).
@@ -22,6 +23,7 @@ export type ModalProps = {
     defaultMode?: 'supply' | 'withdraw';
     isMarketPage?: boolean;
     refetch?: () => void;
+    liquiditySourcing?: LiquiditySourcingResult;
   };
 
   // Rebalance

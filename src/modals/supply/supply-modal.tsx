@@ -3,6 +3,7 @@ import { LuArrowRightLeft } from 'react-icons/lu';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import type { Market, MarketPosition } from '@/utils/types';
+import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
 import { SupplyModalContent } from './supply-modal-content';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -14,6 +15,7 @@ type SupplyModalV2Props = {
   refetch?: () => void;
   isMarketPage?: boolean;
   defaultMode?: 'supply' | 'withdraw';
+  liquiditySourcing?: LiquiditySourcingResult;
 };
 
 export function SupplyModalV2({
@@ -23,6 +25,7 @@ export function SupplyModalV2({
   refetch,
   isMarketPage,
   defaultMode = 'supply',
+  liquiditySourcing,
 }: SupplyModalV2Props): JSX.Element {
   const [mode, setMode] = useState<'supply' | 'withdraw'>(defaultMode);
   const [supplyPreviewAmount, setSupplyPreviewAmount] = useState<bigint | undefined>();
@@ -100,6 +103,7 @@ export function SupplyModalV2({
           mode="supply"
           showRewards
           supplyDelta={supplyDelta}
+          extraLiquidity={mode === 'withdraw' ? liquiditySourcing?.totalAvailableExtraLiquidity : undefined}
         />
 
         {mode === 'supply' ? (
@@ -116,6 +120,7 @@ export function SupplyModalV2({
             onClose={() => onOpenChange(false)}
             refetch={refetch ?? (() => {})}
             onAmountChange={setWithdrawPreviewAmount}
+            liquiditySourcing={liquiditySourcing}
           />
         )}
       </ModalBody>

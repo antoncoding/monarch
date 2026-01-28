@@ -57,7 +57,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       isAprDisplay: false,
       trustedVaultsWarningDismissed: false,
       showDeveloperOptions: false,
-      usePublicAllocator: false,
+      usePublicAllocator: true,
 
       // Actions
       setUsePermit2: (use) => set({ usePermit2: use }),

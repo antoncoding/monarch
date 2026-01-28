@@ -13,12 +13,14 @@ import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useTransactionTracking } from '@/hooks/useTransactionTracking';
+import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 
 type UseBorrowTransactionProps = {
   market: Market;
   collateralAmount: bigint;
   borrowAmount: bigint;
   onSuccess?: () => void;
+  liquiditySourcing?: LiquiditySourcingResult;
 };
 
 // Define step types similar to useRebalance
@@ -30,7 +32,7 @@ export type BorrowStepType =
   | 'approve_token' // For standard flow: Step 2 (if needed)
   | 'execute'; // Common final step
 
-export function useBorrowTransaction({ market, collateralAmount, borrowAmount, onSuccess }: UseBorrowTransactionProps) {
+export function useBorrowTransaction({ market, collateralAmount, borrowAmount, onSuccess, liquiditySourcing }: UseBorrowTransactionProps) {
   const { usePermit2: usePermit2Setting } = useAppSettings();
   const [useEth, setUseEth] = useState<boolean>(false);
 
@@ -133,6 +135,18 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
 
     try {
       const transactions: `0x${string}`[] = [];
+      let reallocationFee = 0n;
+
+      // --- Public Allocator: prepend reallocateTo if borrow exceeds market liquidity ---
+      const marketLiquidity = BigInt(market.state.liquidityAssets);
+      if (borrowAmount > 0n && borrowAmount > marketLiquidity && liquiditySourcing?.canSourceLiquidity) {
+        const extraNeeded = borrowAmount - marketLiquidity;
+        const reallocation = liquiditySourcing.computeReallocation(extraNeeded);
+        if (reallocation) {
+          transactions.push(reallocation.bundlerCalldata);
+          reallocationFee = reallocation.fee;
+        }
+      }
 
       // --- ETH Flow: Skip permit2/ERC20 approval, native ETH can't be permit-signed ---
       if (useEth) {
@@ -278,7 +292,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
           functionName: 'multicall',
           args: [transactions],
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
-        value: useEth ? collateralAmount : 0n,
+        value: (useEth ? collateralAmount : 0n) + reallocationFee,
       });
 
       batchAddUserMarkets([
@@ -316,6 +330,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     bundlerAddress,
     toast,
     tracking,
+    liquiditySourcing,
   ]);
 
   // Combined approval and borrow flow
