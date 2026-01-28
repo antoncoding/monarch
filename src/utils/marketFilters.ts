@@ -5,6 +5,7 @@
  * different market views (main markets page, same-loan-asset tables, etc.)
  */
 
+import { LOCKED_MARKET_APY_THRESHOLD } from '@/constants/markets';
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import { parsePriceFeedVendors, type PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
@@ -32,9 +33,10 @@ export type MarketFilterOptions = {
   // Network filter
   selectedNetwork?: SupportedNetworks | null;
 
-  // Token visibility
+  // Risk guards
   showUnknownTokens?: boolean;
   showUnknownOracle?: boolean;
+  showLockedMarkets?: boolean;
 
   // Asset filters
   selectedCollaterals?: string[];
@@ -102,6 +104,19 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean): MarketFil
     const isUnknown = isCustom || (info?.hasUnknown ?? false);
 
     return !isUnknown;
+  };
+};
+
+/**
+ * Filter out locked/frozen markets with extreme APY (> 1500%)
+ */
+export const createLockedMarketFilter = (showLocked: boolean): MarketFilter => {
+  if (showLocked) {
+    return () => true;
+  }
+  return (market) => {
+    const supplyApy = market.state?.supplyApy ?? 0;
+    return supplyApy <= LOCKED_MARKET_APY_THRESHOLD;
   };
 };
 
@@ -260,6 +275,11 @@ export const filterMarkets = (markets: Market[], options: MarketFilterOptions): 
   // Unknown oracle filter
   if (options.showUnknownOracle !== undefined) {
     filters.push(createUnknownOracleFilter(options.showUnknownOracle));
+  }
+
+  // Locked market filter
+  if (options.showLockedMarkets !== undefined) {
+    filters.push(createLockedMarketFilter(options.showLockedMarkets));
   }
 
   // Collateral filter

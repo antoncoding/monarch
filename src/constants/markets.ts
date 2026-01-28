@@ -1,2 +1,3 @@
 export const DEFAULT_MIN_SUPPLY_USD = 1000;
 export const DEFAULT_MIN_LIQUIDITY_USD = 10_000;
+export const LOCKED_MARKET_APY_THRESHOLD = 15; // APY where 1.0 = 100%, so 15 = 1500%

@@ -14,6 +14,8 @@ export function FiltersPanel() {
     setIncludeUnknownTokens,
     showUnknownOracle,
     setShowUnknownOracle,
+    showLockedMarkets,
+    setShowLockedMarkets,
     usdMinSupply,
     setUsdMinSupply,
     usdMinBorrow,
@@ -60,6 +62,16 @@ export function FiltersPanel() {
           selected={showUnwhitelistedMarkets}
           onChange={setShowUnwhitelistedMarkets}
           ariaLabel="Toggle unwhitelisted markets"
+          thumbIconOn={GoShield}
+          thumbIconOff={GoShieldCheck}
+        />
+        <Divider />
+        <SettingToggleItem
+          title="Show Locked Markets"
+          description="Display frozen markets with extreme APY (> 1500%). These are typically dead markets with inflated rates."
+          selected={showLockedMarkets}
+          onChange={setShowLockedMarkets}
+          ariaLabel="Toggle locked markets"
           thumbIconOn={GoShield}
           thumbIconOff={GoShieldCheck}
         />

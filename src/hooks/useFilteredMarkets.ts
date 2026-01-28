@@ -28,6 +28,7 @@ export const useFilteredMarkets = (): Market[] => {
       selectedNetwork: filters.selectedNetwork,
       showUnknownTokens: preferences.includeUnknownTokens,
       showUnknownOracle: preferences.showUnknownOracle,
+      showLockedMarkets: preferences.showLockedMarkets,
       selectedCollaterals: filters.selectedCollaterals,
       selectedLoanAssets: filters.selectedLoanAssets,
       selectedOracles: filters.selectedOracles,

@@ -23,6 +23,7 @@ export const blacklistedMarkets = [
   '0x7e79c25831c97175922df132d09b02f93103a2306b1d71e57a7714ddd4c15d13', // Relend USDC / USDC: Should be considered unrecoverable
   '0x1dca6989b0d2b0a546530b3a739e91402eee2e1536a2d3ded4f5ce589a9cd1c2', //
   '0xfdb8221edcae73f73485d55c30e706906114bc2ff4634870c5c57e8fb83eae6a', // USDC / K on arbitrum
+  '0x0f9563442d64ab3bd3bcb27058db0b0d4046a4c46f0acd811dacae9551d2b129', // sdeUSD / USDC market from Elixir affected by incident
 ];
 
 // Market specially whitelisted by Monarch, lowercase
@@ -79,20 +80,6 @@ export const marketOverrideRules: MarketOverrideRule[] = [
       },
     ],
   },
-  {
-    marketIds: [
-      '0x0f9563442d64ab3bd3bcb27058db0b0d4046a4c46f0acd811dacae9551d2b129'
-    ],
-    forceUnwhitelisted: true,
-    warnings: [
-      {
-        code: 'sdeUSD_incident',
-        level: 'alert',
-        description: 'This market was affected by the Elixir’s sdeUSD incident. Consider using an alternative market.',
-        category: 'asset',
-      },
-    ],
-  }
 ];
 
 // Helper functions to query the override rules
