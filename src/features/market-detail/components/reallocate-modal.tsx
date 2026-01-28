@@ -221,7 +221,7 @@ export function ReallocateModal({ market, network, onOpenChange, onSuccess }: Re
     >
       <ModalHeader
         title="Reallocate Liquidity"
-        description={`Pull liquidity into the ${market.collateralAsset.symbol}/${symbol} market from other markets within a vault`}
+        description={`Pull liquidity into the ${symbol}/${market.collateralAsset.symbol} market from other markets within a vault`}
         mainIcon={<BsArrowRepeat className="h-5 w-5" />}
         onClose={() => onOpenChange(false)}
       />
@@ -291,7 +291,7 @@ export function ReallocateModal({ market, network, onOpenChange, onSuccess }: Re
                             height={16}
                           />
                           <span className="text-sm">
-                            {market.collateralAsset.symbol}/{symbol}
+                            {symbol}/{market.collateralAsset.symbol}
                           </span>
                           {targetFlowCap && !isFlowCapsLoading && (
                             <span className="text-xs text-secondary">
