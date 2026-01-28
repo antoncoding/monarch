@@ -17,8 +17,8 @@ type AppSettingsState = {
   // Developer options
   showDeveloperOptions: boolean;
 
-  // Experimental features
-  showExperimentalFeatures: boolean;
+  // Public Allocator (source liquidity)
+  usePublicAllocator: boolean;
 };
 
 type AppSettingsActions = {
@@ -29,7 +29,7 @@ type AppSettingsActions = {
   setIsAprDisplay: (isApr: boolean) => void;
   setTrustedVaultsWarningDismissed: (dismissed: boolean) => void;
   setShowDeveloperOptions: (show: boolean) => void;
-  setShowExperimentalFeatures: (show: boolean) => void;
+  setUsePublicAllocator: (show: boolean) => void;
 
   // Bulk update for migration
   setAll: (state: Partial<AppSettingsState>) => void;
@@ -57,7 +57,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       isAprDisplay: false,
       trustedVaultsWarningDismissed: false,
       showDeveloperOptions: false,
-      showExperimentalFeatures: false,
+      usePublicAllocator: false,
 
       // Actions
       setUsePermit2: (use) => set({ usePermit2: use }),
@@ -67,7 +67,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       setIsAprDisplay: (isApr) => set({ isAprDisplay: isApr }),
       setTrustedVaultsWarningDismissed: (dismissed) => set({ trustedVaultsWarningDismissed: dismissed }),
       setShowDeveloperOptions: (show) => set({ showDeveloperOptions: show }),
-      setShowExperimentalFeatures: (show) => set({ showExperimentalFeatures: show }),
+      setUsePublicAllocator: (show) => set({ usePublicAllocator: show }),
       setAll: (state) => set(state),
     }),
     {

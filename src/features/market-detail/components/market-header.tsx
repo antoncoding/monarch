@@ -139,7 +139,7 @@ export function MarketHeader({
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { short: rateLabel } = useRateLabel();
-  const { isAprDisplay, showDeveloperOptions, showExperimentalFeatures } = useAppSettings();
+  const { isAprDisplay, showDeveloperOptions, usePublicAllocator } = useAppSettings();
   const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
 
@@ -355,7 +355,7 @@ export function MarketHeader({
                   >
                     Borrow
                   </DropdownMenuItem>
-                  {showExperimentalFeatures && (
+                  {usePublicAllocator && (
                     <DropdownMenuItem
                       onClick={onPullLiquidity}
                       startContent={<BsArrowRepeat className="h-4 w-4" />}
