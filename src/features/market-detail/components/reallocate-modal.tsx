@@ -169,6 +169,8 @@ export function ReallocateModal({ market, network, onOpenChange, onSuccess }: Re
 
   // Build sorted withdrawals and execute
   const handleReallocate = useCallback(async () => {
+    if (!market.collateralAsset) return;
+
     const withdrawals: {
       marketParams: { loanToken: Address; collateralToken: Address; oracle: Address; irm: Address; lltv: bigint };
       amount: bigint;
@@ -365,7 +367,9 @@ export function ReallocateModal({ market, network, onOpenChange, onSuccess }: Re
         {isNetworkSupported && isReady && (
           <ExecuteTransactionButton
             targetChainId={chainId}
-            onClick={() => void handleReallocate()}
+            onClick={() => {
+              handleReallocate().catch(console.error);
+            }}
             disabled={!canExecute}
             isLoading={isConfirming}
             variant="primary"
@@ -447,6 +451,9 @@ function SourceMarketRow({ alloc, chainId, decimals, symbol, flowCap, isFlowCaps
           placeholder="0.0"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === '-' || e.key === 'e') e.preventDefault();
+          }}
           className="w-full rounded border border-border bg-surface px-3 py-1.5 text-sm tabular-nums text-primary outline-none focus:border-blue-500"
         />
       </div>

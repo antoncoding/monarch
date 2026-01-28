@@ -50,7 +50,7 @@ export function usePublicAllocator({ vaultAddress, chainId, marketIds, onSuccess
     },
   });
 
-  const fee = feeData !== undefined ? BigInt(feeData) : 0n;
+  const fee = feeData ?? 0n;
 
   // Build flow cap read calls
   const flowCapCalls = useMemo(() => {
@@ -89,7 +89,7 @@ export function usePublicAllocator({ vaultAddress, chainId, marketIds, onSuccess
   }, [flowCapsData, marketIds]);
 
   // Transaction hook for reallocateTo
-  const { sendTransaction, isConfirming } = useTransactionWithToast({
+  const { sendTransactionAsync, isConfirming } = useTransactionWithToast({
     toastId: 'public-allocator-reallocate',
     pendingText: 'Reallocating Liquidity',
     successText: 'Reallocation Complete',
@@ -133,7 +133,7 @@ export function usePublicAllocator({ vaultAddress, chainId, marketIds, onSuccess
 
     await switchChainAsync({ chainId });
 
-    sendTransaction({
+    await sendTransactionAsync({
       to: allocatorAddress,
       data: encodeFunctionData({
         abi: publicAllocatorAbi,

@@ -62,6 +62,10 @@ export const fetchVaultAllocations = async (vaultAddress: string, chainId: Suppo
     chainId,
   });
 
+  if (response?.errors?.length) {
+    console.warn('fetchVaultAllocations errors:', response.errors);
+  }
+
   if (!response?.data?.vaultByAddress) {
     return null;
   }

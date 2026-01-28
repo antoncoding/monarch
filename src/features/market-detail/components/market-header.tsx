@@ -356,20 +356,20 @@ export function MarketHeader({
                     Borrow
                   </DropdownMenuItem>
                   {showDeveloperOptions && (
-                    <DropdownMenuItem
-                      onClick={accrueInterest}
-                      startContent={<BsFillLightningFill className="h-4 w-4" />}
-                    >
-                      Accrue Interest
-                    </DropdownMenuItem>
-                  )}
-                  {showDeveloperOptions && (
-                    <DropdownMenuItem
-                      onClick={onReallocate}
-                      startContent={<BsArrowRepeat className="h-4 w-4" />}
-                    >
-                      Reallocate
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem
+                        onClick={accrueInterest}
+                        startContent={<BsFillLightningFill className="h-4 w-4" />}
+                      >
+                        Accrue Interest
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={onReallocate}
+                        startContent={<BsArrowRepeat className="h-4 w-4" />}
+                      >
+                        Reallocate
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuItem
                     onClick={() => window.open(getMarketURL(marketId, network), '_blank')}
