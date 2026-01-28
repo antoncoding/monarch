@@ -35,6 +35,8 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
     setIncludeUnknownTokens,
     showUnknownOracle,
     setShowUnknownOracle,
+    showLockedMarkets,
+    setShowLockedMarkets,
     trustedVaultsOnly,
     setTrustedVaultsOnly,
     minSupplyEnabled,
@@ -63,7 +65,7 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
     });
   };
 
-  const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets;
+  const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets && showLockedMarkets;
   const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode;
   const hasActiveFilters = advancedFilterActive || !basicGuardianAllAllowed;
 
@@ -142,13 +144,23 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
                 </FilterRow>
                 <FilterRow
                   title="Show Unwhitelisted Markets"
-                  description="Surface markets that haven't been vetted."
+                  description="Display markets not listed by Morpho."
                 >
                   <IconSwitch
                     selected={showUnwhitelistedMarkets}
                     onChange={setShowUnwhitelistedMarkets}
                     size="xs"
                     color="destructive"
+                  />
+                </FilterRow>
+                <FilterRow
+                  title="Show Locked Markets"
+                  description="Display frozen markets with extreme APY (> 1500%)."
+                >
+                  <IconSwitch
+                    selected={showLockedMarkets}
+                    onChange={setShowLockedMarkets}
+                    size="xs"
                   />
                 </FilterRow>
               </FilterSection>
