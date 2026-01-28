@@ -265,7 +265,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
   const {
     liveData,
     isLoading: isLiveDataLoading,
-    error: liveDataError,
+    error: _liveDataError,
   } = usePublicAllocatorLiveData(
     selectedVault?.address as Address | undefined,
     network,
@@ -373,8 +373,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
 
   const canExecute = !!selectedVault && parsedAmount > 0n && !validationError && !isConfirming;
 
-  // Whether live data is currently loading for the selected vault
-  const isVerifyingOnChain = !!selectedVault && isLiveDataLoading && !liveData;
+  const isVerifyingLive = !!selectedVault && isLiveDataLoading && !liveData;
 
   return (
     <Modal
@@ -438,33 +437,18 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                           <span className="font-medium">{vault.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          {isSelected && isVerifyingOnChain && (
-                            <Spinner size={12} />
-                          )}
                           <span className="tabular-nums text-xs text-secondary">
                             {Number(formatUnits(displayPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} {symbol}
                           </span>
+                          {isSelected && isVerifyingLive && (
+                            <Spinner size={10} />
+                          )}
                         </div>
                       </button>
                     );
                   })}
                 </div>
               </div>
-
-              {/* On-chain verification indicator */}
-              {isVerifyingOnChain && (
-                <div className="flex items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-400/20 dark:bg-blue-400/10 dark:text-blue-300">
-                  <Spinner size={12} />
-                  <span>Verifying on-chain...</span>
-                </div>
-              )}
-
-              {/* Live data error fallback notice */}
-              {selectedVault && liveDataError && !liveData && (
-                <div className="rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-700 dark:border-yellow-400/20 dark:bg-yellow-400/10 dark:text-yellow-300">
-                  Using cached data — on-chain verification unavailable
-                </div>
-              )}
 
               {/* Amount Input */}
               {selectedVault && (
@@ -479,6 +463,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                       Liquidity:{' '}
                       {Number(formatUnits(maxPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 4 })}{' '}
                       {symbol}
+                      {isVerifyingLive && <span className="ml-1 inline-block"><Spinner size={10} /></span>}
                     </button>
                   </div>
                   <div className="relative">
@@ -531,12 +516,6 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                       {selectedVault.feeBigInt === 0n ? 'Free' : `${formatUnits(selectedVault.feeBigInt, 18)} ETH`}
                     </span>
                   </div>
-                  {liveData && (
-                    <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                      <span>✓</span>
-                      <span>Verified on-chain</span>
-                    </div>
-                  )}
                 </div>
               )}
             </>
