@@ -129,7 +129,9 @@ export function usePublicAllocator({ vaultAddress, chainId, marketIds, onSuccess
       lltv: bigint;
     },
   ) => {
-    if (!allocatorAddress || !vaultAddress) return;
+    if (!allocatorAddress || !vaultAddress) {
+      throw new Error('Public Allocator: missing allocator address or vault address');
+    }
 
     await switchChainAsync({ chainId });
 

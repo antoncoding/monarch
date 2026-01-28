@@ -223,7 +223,7 @@ export function ReallocateModal({ market, network, onOpenChange, onSuccess }: Re
     >
       <ModalHeader
         title="Reallocate Liquidity"
-        description={`Pull liquidity into the ${symbol}/${market.collateralAsset.symbol} market from other markets within a vault`}
+        description={`Pull liquidity into the ${symbol}/${market.collateralAsset?.symbol ?? 'idle'} market from other markets within a vault`}
         mainIcon={<BsArrowRepeat className="h-5 w-5" />}
         onClose={() => onOpenChange(false)}
       />
@@ -285,15 +285,17 @@ export function ReallocateModal({ market, network, onOpenChange, onSuccess }: Re
                       <div className="flex items-center justify-between">
                         <span className="text-xs uppercase tracking-wider text-secondary">Target Market</span>
                         <div className="flex items-center gap-2">
-                          <TokenIcon
-                            address={market.collateralAsset.address}
-                            chainId={chainId}
-                            symbol={market.collateralAsset.symbol}
-                            width={16}
-                            height={16}
-                          />
+                          {market.collateralAsset && (
+                            <TokenIcon
+                              address={market.collateralAsset.address}
+                              chainId={chainId}
+                              symbol={market.collateralAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          )}
                           <span className="text-sm">
-                            {symbol}/{market.collateralAsset.symbol}
+                            {symbol}/{market.collateralAsset?.symbol ?? 'idle'}
                           </span>
                           {targetFlowCap && !isFlowCapsLoading && (
                             <span className="text-xs text-secondary">
