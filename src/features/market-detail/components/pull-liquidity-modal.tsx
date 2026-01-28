@@ -53,8 +53,12 @@ function getVaultPullableAmount(
   }
 
   // Cap by target market's maxIn flow cap
+  // If no flow cap configured for target market, maxIn = 0 (no inflow allowed)
   const targetCap = vault.flowCapsByMarket.get(targetMarketKey);
-  if (targetCap && total > targetCap.maxIn) {
+  if (!targetCap) {
+    return 0n;
+  }
+  if (total > targetCap.maxIn) {
     total = targetCap.maxIn;
   }
 

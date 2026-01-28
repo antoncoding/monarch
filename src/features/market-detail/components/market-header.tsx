@@ -139,7 +139,7 @@ export function MarketHeader({
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { short: rateLabel } = useRateLabel();
-  const { isAprDisplay, showDeveloperOptions } = useAppSettings();
+  const { isAprDisplay, showDeveloperOptions, showExperimentalFeatures } = useAppSettings();
   const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
 
@@ -355,21 +355,21 @@ export function MarketHeader({
                   >
                     Borrow
                   </DropdownMenuItem>
+                  {showExperimentalFeatures && (
+                    <DropdownMenuItem
+                      onClick={onPullLiquidity}
+                      startContent={<BsArrowRepeat className="h-4 w-4" />}
+                    >
+                      Source Liquidity
+                    </DropdownMenuItem>
+                  )}
                   {showDeveloperOptions && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={accrueInterest}
-                        startContent={<BsFillLightningFill className="h-4 w-4" />}
-                      >
-                        Accrue Interest
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={onPullLiquidity}
-                        startContent={<BsArrowRepeat className="h-4 w-4" />}
-                      >
-                        Pull Liquidity
-                      </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem
+                      onClick={accrueInterest}
+                      startContent={<BsFillLightningFill className="h-4 w-4" />}
+                    >
+                      Accrue Interest
+                    </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
                     onClick={() => window.open(getMarketURL(marketId, network), '_blank')}

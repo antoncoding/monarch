@@ -12,7 +12,7 @@ type ExperimentalPanelProps = {
 
 export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps) {
   const { trendingConfig, setTrendingEnabled } = useMarketPreferences();
-  const { showDeveloperOptions, setShowDeveloperOptions } = useAppSettings();
+  const { showDeveloperOptions, setShowDeveloperOptions, showExperimentalFeatures, setShowExperimentalFeatures } = useAppSettings();
 
   return (
     <div className="flex flex-col gap-4">
@@ -35,10 +35,21 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
       </div>
 
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Experimental</h3>
+        <SettingToggleItem
+          title="Source Liquidity"
+          description="Enable sourcing extra liquidity from vault reserves via the Public Allocator when withdrawing or borrowing."
+          selected={showExperimentalFeatures}
+          onChange={setShowExperimentalFeatures}
+          ariaLabel="Toggle experimental features"
+        />
+      </div>
+
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
         <h3 className="text-xs uppercase text-secondary">Developer</h3>
         <SettingToggleItem
           title="Developer Options"
-          description="Show advanced developer tools like Accrue Interest and Reallocate in market detail views."
+          description="Show advanced developer tools like Accrue Interest in market detail views."
           selected={showDeveloperOptions}
           onChange={setShowDeveloperOptions}
           ariaLabel="Toggle developer options"
