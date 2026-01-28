@@ -122,7 +122,7 @@ type MarketHeaderProps = {
   onSupplyClick: () => void;
   onBorrowClick: () => void;
   accrueInterest: () => void;
-  onReallocate: () => void;
+  onPullLiquidity: () => void;
 };
 
 export function MarketHeader({
@@ -135,7 +135,7 @@ export function MarketHeader({
   onSupplyClick,
   onBorrowClick,
   accrueInterest,
-  onReallocate,
+  onPullLiquidity,
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { short: rateLabel } = useRateLabel();
@@ -364,10 +364,10 @@ export function MarketHeader({
                         Accrue Interest
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={onReallocate}
+                        onClick={onPullLiquidity}
                         startContent={<BsArrowRepeat className="h-4 w-4" />}
                       >
-                        Reallocate
+                        Pull Liquidity
                       </DropdownMenuItem>
                     </>
                   )}

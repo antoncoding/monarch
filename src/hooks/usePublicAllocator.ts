@@ -1,92 +1,42 @@
-import { useMemo } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
-import { useReadContract, useReadContracts, useSwitchChain } from 'wagmi';
+import { useSwitchChain } from 'wagmi';
 import { publicAllocatorAbi } from '@/abis/public-allocator';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import type { SupportedNetworks } from '@/utils/networks';
 
-type FlowCapResult = {
-  marketId: `0x${string}`;
-  maxIn: bigint;
-  maxOut: bigint;
+type MarketParams = {
+  loanToken: Address;
+  collateralToken: Address;
+  oracle: Address;
+  irm: Address;
+  lltv: bigint;
 };
 
 type UsePublicAllocatorArgs = {
   vaultAddress?: Address;
   chainId: SupportedNetworks;
-  /** Market IDs (uniqueKeys as bytes32) to query flow caps for */
-  marketIds?: `0x${string}`[];
+  /** Fee in wei (from API publicAllocatorConfig.fee) */
+  fee?: bigint;
   onSuccess?: () => void;
 };
 
 /**
- * Hook for interacting with the Public Allocator contract.
+ * Hook for executing Public Allocator transactions.
+ *
+ * Flow cap data and fees now come from the Morpho API (via usePublicAllocatorVaults),
+ * so this hook only handles transaction execution.
  *
  * Provides:
- * - `fee`: The ETH fee required for reallocation for the given vault
- * - `flowCaps`: Flow cap data (maxIn, maxOut) for each requested market
- * - `reallocate`: Function to execute `reallocateTo` on the Public Allocator
+ * - `reallocate`: Low-level function to execute `reallocateTo` on the Public Allocator
+ * - `pullLiquidity`: Higher-level function that handles sorting and execution
+ * - `isConfirming`: Whether a transaction is pending confirmation
  */
-export function usePublicAllocator({ vaultAddress, chainId, marketIds, onSuccess }: UsePublicAllocatorArgs) {
+export function usePublicAllocator({ vaultAddress, chainId, fee = 0n, onSuccess }: UsePublicAllocatorArgs) {
   const allocatorAddress = PUBLIC_ALLOCATOR_ADDRESSES[chainId];
   const isSupported = !!allocatorAddress;
 
   const { mutateAsync: switchChainAsync } = useSwitchChain();
-
-  // Read the ETH fee for this vault
-  const {
-    data: feeData,
-    isLoading: isFeeLoading,
-    refetch: refetchFee,
-  } = useReadContract({
-    address: allocatorAddress,
-    abi: publicAllocatorAbi,
-    functionName: 'fee',
-    args: vaultAddress ? [vaultAddress] : undefined,
-    chainId,
-    query: {
-      enabled: isSupported && !!vaultAddress,
-    },
-  });
-
-  const fee = feeData ?? 0n;
-
-  // Build flow cap read calls
-  const flowCapCalls = useMemo(() => {
-    if (!allocatorAddress || !vaultAddress || !marketIds?.length) return [];
-    return marketIds.map((marketId) => ({
-      address: allocatorAddress as Address,
-      abi: publicAllocatorAbi,
-      functionName: 'flowCaps' as const,
-      args: [vaultAddress, marketId] as const,
-      chainId,
-    }));
-  }, [allocatorAddress, vaultAddress, marketIds, chainId]);
-
-  const {
-    data: flowCapsData,
-    isLoading: isFlowCapsLoading,
-    refetch: refetchFlowCaps,
-  } = useReadContracts({
-    contracts: flowCapCalls,
-    query: {
-      enabled: flowCapCalls.length > 0,
-    },
-  });
-
-  // Parse flow caps results
-  const flowCaps: FlowCapResult[] = useMemo(() => {
-    if (!flowCapsData || !marketIds?.length) return [];
-    return marketIds.map((marketId, i) => {
-      const result = flowCapsData[i];
-      if (result?.status === 'success' && Array.isArray(result.result)) {
-        const [maxIn, maxOut] = result.result as [bigint, bigint];
-        return { marketId, maxIn, maxOut };
-      }
-      return { marketId, maxIn: 0n, maxOut: 0n };
-    });
-  }, [flowCapsData, marketIds]);
 
   // Transaction hook for reallocateTo
   const { sendTransactionAsync, isConfirming } = useTransactionWithToast({
@@ -97,11 +47,7 @@ export function usePublicAllocator({ vaultAddress, chainId, marketIds, onSuccess
     chainId,
     pendingDescription: 'Moving liquidity between markets via the Public Allocator...',
     successDescription: 'Liquidity has been successfully reallocated',
-    onSuccess: () => {
-      void refetchFee();
-      void refetchFlowCaps();
-      onSuccess?.();
-    },
+    onSuccess,
   });
 
   /**
@@ -112,22 +58,10 @@ export function usePublicAllocator({ vaultAddress, chainId, marketIds, onSuccess
    */
   const reallocate = async (
     withdrawals: {
-      marketParams: {
-        loanToken: Address;
-        collateralToken: Address;
-        oracle: Address;
-        irm: Address;
-        lltv: bigint;
-      };
+      marketParams: MarketParams;
       amount: bigint;
     }[],
-    supplyMarketParams: {
-      loanToken: Address;
-      collateralToken: Address;
-      oracle: Address;
-      irm: Address;
-      lltv: bigint;
-    },
+    supplyMarketParams: MarketParams,
   ) => {
     if (!allocatorAddress || !vaultAddress) {
       throw new Error('Public Allocator: missing allocator address or vault address');
@@ -147,13 +81,38 @@ export function usePublicAllocator({ vaultAddress, chainId, marketIds, onSuccess
     });
   };
 
+  /**
+   * Pull liquidity from source markets into the target market.
+   * Handles sorting withdrawals by market ID (required by the contract).
+   *
+   * @param sourceMarkets - Array of source markets with their params, amounts, and sort keys
+   * @param targetMarketParams - The target market to supply pulled liquidity to
+   */
+  const pullLiquidity = async (
+    sourceMarkets: {
+      marketParams: MarketParams;
+      amount: bigint;
+      sortKey: string; // uniqueKey for sorting
+    }[],
+    targetMarketParams: MarketParams,
+  ) => {
+    // Contract requires withdrawals sorted by market ID (bytes32 ascending)
+    const sorted = [...sourceMarkets].sort((a, b) =>
+      a.sortKey.toLowerCase() < b.sortKey.toLowerCase() ? -1 : a.sortKey.toLowerCase() > b.sortKey.toLowerCase() ? 1 : 0,
+    );
+
+    const withdrawals = sorted.map(({ marketParams, amount }) => ({
+      marketParams,
+      amount,
+    }));
+
+    await reallocate(withdrawals, targetMarketParams);
+  };
+
   return {
     isSupported,
-    fee,
-    isFeeLoading,
-    flowCaps,
-    isFlowCapsLoading,
     reallocate,
+    pullLiquidity,
     isConfirming,
   };
 }
