@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useMarketPreferences, type TrendingConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
-import { useLiquidationsQuery } from '@/hooks/queries/useLiquidationsQuery';
-import { useMonarchLiquidatedKeys } from '@/hooks/queries/useMonarchLiquidationsQuery';
 
 // Re-export types for convenience
 export type { FlowTimeWindow } from '@/stores/useMarketPreferences';
@@ -81,6 +79,8 @@ const fetchMarketMetricsPage = async (params: MarketMetricsParams, limit: number
   searchParams.set('offset', String(offset));
 
   const response = await fetch(`/api/monarch/metrics?${searchParams.toString()}`);
+
+  console.log('response', response)
 
   if (!response.ok) {
     throw new Error('Failed to fetch market metrics');
@@ -178,6 +178,8 @@ export const useMarketMetricsMap = (params: MarketMetricsParams = {}) => {
       map.set(key, market);
     }
     console.log('[Metrics] Loaded', map.size, 'of', data.total, 'markets');
+
+    console.log('map', map.get('8453-0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836'))
     return map;
   }, [data?.markets, data?.total]);
 
@@ -267,8 +269,6 @@ export const useTrendingMarketKeys = () => {
   }, [metricsMap, trendingConfig]);
 };
 
-const LIQUIDATIONS_STALE_THRESHOLD_MS = (2 * 60 + 5) * 60 * 1000;
-
 /**
  * Returns whether a market has ever been liquidated.
  * Primary: Uses Monarch API /v1/liquidations endpoint
@@ -278,17 +278,12 @@ const LIQUIDATIONS_STALE_THRESHOLD_MS = (2 * 60 + 5) * 60 * 1000;
  * once Monarch API stability is confirmed.
  */
 export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean => {
-  const { liquidatedKeys, lastUpdatedAt, isLoading } = useMonarchLiquidatedKeys();
-  const isStale = lastUpdatedAt * 1000 < Date.now() - LIQUIDATIONS_STALE_THRESHOLD_MS;
-  const needsFallback = !isLoading && (isStale || liquidatedKeys.size === 0);
-
-  const { data: fallbackKeys } = useLiquidationsQuery({ enabled: needsFallback });
-
+  const { metricsMap } = useMarketMetricsMap();
+  
+  
   return useMemo(() => {
     const key = `${chainId}-${uniqueKey.toLowerCase()}`;
-    if (!needsFallback) {
-      return liquidatedKeys.has(key);
-    }
-    return fallbackKeys?.has(uniqueKey.toLowerCase()) ?? false;
-  }, [liquidatedKeys, needsFallback, chainId, uniqueKey, fallbackKeys]);
+    const metrics = metricsMap.get(key);
+    return metrics?.everLiquidated ?? false;
+  }, [metricsMap, chainId, uniqueKey]);
 };
