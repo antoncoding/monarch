@@ -15,7 +15,8 @@ type MarketsFiltersState = {
   selectedNetwork: SupportedNetworks | null;
   selectedOracles: PriceFeedVendors[];
   searchQuery: string;
-  trendingMode: boolean; // Filter toggle - thresholds are in useMarketPreferences
+  trendingMode: boolean; // Official trending filter (backend-computed)
+  customTagMode: boolean; // User's custom tag filter
 };
 
 type MarketsFiltersActions = {
@@ -25,6 +26,7 @@ type MarketsFiltersActions = {
   setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
   setSearchQuery: (query: string) => void;
   toggleTrendingMode: () => void;
+  toggleCustomTagMode: () => void;
   resetFilters: () => void;
 };
 
@@ -37,6 +39,7 @@ const DEFAULT_STATE: MarketsFiltersState = {
   selectedOracles: [],
   searchQuery: '',
   trendingMode: false,
+  customTagMode: false,
 };
 
 /**
@@ -57,6 +60,7 @@ export const useMarketsFilters = create<MarketsFiltersStore>()((set) => ({
   setSelectedOracles: (oracles) => set({ selectedOracles: oracles }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   toggleTrendingMode: () => set((state) => ({ trendingMode: !state.trendingMode })),
+  toggleCustomTagMode: () => set((state) => ({ customTagMode: !state.customTagMode })),
 
   resetFilters: () => set(DEFAULT_STATE),
 }));

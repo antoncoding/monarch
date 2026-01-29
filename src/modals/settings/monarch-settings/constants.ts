@@ -23,7 +23,7 @@ export const SETTINGS_CATEGORIES: CategoryConfig[] = [
 ];
 
 export const DETAIL_TITLES: Record<Exclude<DetailView, null>, string> = {
-  'trending-config': 'Configure Trending',
+  'trending-config': 'Configure Custom Tag',
   'trusted-vaults': 'Trusted Vaults',
   'blacklisted-markets': 'Blacklisted Markets',
   'rpc-config': 'Custom RPC',

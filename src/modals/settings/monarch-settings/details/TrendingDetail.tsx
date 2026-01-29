@@ -4,10 +4,11 @@ import { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
-import { useMarketPreferences, type FlowTimeWindow, type TrendingWindowConfig } from '@/stores/useMarketPreferences';
-import { useMarketMetricsMap, isMarketTrending, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
+import { useMarketPreferences, type FlowTimeWindow, type CustomTagWindowConfig } from '@/stores/useMarketPreferences';
+import { useMarketMetricsMap, matchesCustomTag, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { formatReadable } from '@/utils/balance';
+import { CustomTagIconPicker } from '@/components/shared/custom-tag-icons';
 import type { Market } from '@/utils/types';
 
 const TIME_WINDOWS: { value: FlowTimeWindow; label: string }[] = [
@@ -17,8 +18,8 @@ const TIME_WINDOWS: { value: FlowTimeWindow; label: string }[] = [
   { value: '30d', label: '30d' },
 ];
 
-function generateFilterSummary(config: { enabled: boolean; windows: Record<FlowTimeWindow, TrendingWindowConfig> }): string {
-  if (!config.enabled) return 'Trending detection is disabled';
+function generateFilterSummary(config: { enabled: boolean; windows: Record<FlowTimeWindow, CustomTagWindowConfig> }): string {
+  if (!config.enabled) return 'Custom tag is disabled';
 
   const parts: string[] = [];
 
@@ -91,10 +92,10 @@ function CompactInput({
 }
 
 export function TrendingDetail() {
-  const { trendingConfig, setTrendingEnabled, setTrendingWindowConfig } = useMarketPreferences();
+  const { customTagConfig, setCustomTagEnabled, setCustomTagIcon, setCustomTagWindowConfig } = useMarketPreferences();
   const { metricsMap } = useMarketMetricsMap();
   const { allMarkets } = useProcessedMarkets();
-  const isEnabled = trendingConfig.enabled;
+  const isEnabled = customTagConfig.enabled;
 
   const matchingMarkets = useMemo(() => {
     if (!isEnabled || metricsMap.size === 0) return [];
@@ -102,7 +103,7 @@ export function TrendingDetail() {
     const matches: Array<{ market: Market; supplyFlowPct1h: number }> = [];
 
     for (const [key, metrics] of metricsMap) {
-      if (isMarketTrending(metrics, trendingConfig)) {
+      if (matchesCustomTag(metrics, customTagConfig)) {
         const market = allMarkets.find((m) => getMetricsKey(m.morphoBlue.chain.id, m.uniqueKey) === key);
         if (market) {
           matches.push({
@@ -114,18 +115,28 @@ export function TrendingDetail() {
     }
 
     return matches.sort((a, b) => (b.market.state?.supplyAssetsUsd ?? 0) - (a.market.state?.supplyAssetsUsd ?? 0));
-  }, [isEnabled, metricsMap, trendingConfig, allMarkets]);
+  }, [isEnabled, metricsMap, customTagConfig, allMarkets]);
 
   const totalMatches = matchingMarkets.length;
 
-  const handleChange = (window: FlowTimeWindow, field: keyof TrendingWindowConfig, value: string) => {
-    setTrendingWindowConfig(window, { [field]: value });
+  const handleChange = (window: FlowTimeWindow, field: keyof CustomTagWindowConfig, value: string) => {
+    setCustomTagWindowConfig(window, { [field]: value });
   };
 
-  const filterSummary = generateFilterSummary(trendingConfig);
+  const filterSummary = generateFilterSummary(customTagConfig);
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Icon Picker */}
+      <div className="flex flex-col gap-2">
+        <span className="text-xs text-secondary">Choose an icon for your custom tag:</span>
+        <CustomTagIconPicker
+          selectedIcon={customTagConfig.icon}
+          onSelect={setCustomTagIcon}
+          disabled={!isEnabled}
+        />
+      </div>
+
       {/* Toggle + Summary */}
       <div className="flex items-start justify-between gap-4 rounded bg-surface p-4">
         <div className="flex-1">
@@ -133,7 +144,7 @@ export function TrendingDetail() {
         </div>
         <IconSwitch
           selected={isEnabled}
-          onChange={setTrendingEnabled}
+          onChange={setCustomTagEnabled}
           size="xs"
           color="primary"
         />
@@ -150,7 +161,7 @@ export function TrendingDetail() {
 
         {/* Rows */}
         {TIME_WINDOWS.map(({ value: window, label }) => {
-          const config = trendingConfig.windows[window];
+          const config = customTagConfig.windows[window];
 
           return (
             <div

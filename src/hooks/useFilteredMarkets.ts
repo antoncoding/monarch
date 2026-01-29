@@ -5,7 +5,7 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
-import { useTrendingMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
+import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
@@ -18,7 +18,8 @@ export const useFilteredMarkets = (): Market[] => {
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();
-  const trendingKeys = useTrendingMarketKeys();
+  const officialTrendingKeys = useOfficialTrendingMarketKeys();
+  const customTagKeys = useCustomTagMarketKeys();
 
   return useMemo(() => {
     let markets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
@@ -62,10 +63,19 @@ export const useFilteredMarkets = (): Market[] => {
       });
     }
 
-    if (filters.trendingMode && trendingKeys.size > 0) {
+    // Official trending filter (backend-computed)
+    if (filters.trendingMode && officialTrendingKeys.size > 0) {
       markets = markets.filter((market) => {
         const key = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
-        return trendingKeys.has(key);
+        return officialTrendingKeys.has(key);
+      });
+    }
+
+    // Custom tag filter (user-defined)
+    if (filters.customTagMode && customTagKeys.size > 0) {
+      markets = markets.filter((market) => {
+        const key = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
+        return customTagKeys.has(key);
       });
     }
 
@@ -110,5 +120,5 @@ export const useFilteredMarkets = (): Market[] => {
     }
 
     return markets;
-  }, [allMarkets, whitelistedMarkets, showUnwhitelistedMarkets, filters, preferences, trustedVaults, findToken, trendingKeys]);
+  }, [allMarkets, whitelistedMarkets, showUnwhitelistedMarkets, filters, preferences, trustedVaults, findToken, officialTrendingKeys, customTagKeys]);
 };

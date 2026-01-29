@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useMarketPreferences, type TrendingConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
+import { useMarketPreferences, type CustomTagConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
 
 // Re-export types for convenience
 export type { FlowTimeWindow } from '@/stores/useMarketPreferences';
+
+// Legacy alias
+export type TrendingConfig = CustomTagConfig;
 
 // Flow data for a specific time window
 export type MarketFlowData = {
@@ -40,6 +43,9 @@ export type MarketMetrics = {
   // Key flags
   everLiquidated: boolean;
   marketScore: number | null;
+  // Backend-computed trending (official)
+  isTrending: boolean;
+  trendingReason: string | null;
   // State and flows
   currentState: MarketCurrentState;
   flows: Record<FlowTimeWindow, MarketFlowData>;
@@ -127,18 +133,14 @@ const fetchAllMarketMetrics = async (params: MarketMetricsParams): Promise<Marke
 
 /**
  * Fetches enhanced market metrics from the Monarch monitoring API.
- * Pre-fetched and cached for 15 minutes.
+ * Pre-fetched and cached for 5 minutes.
  *
  * Returns rich metadata including:
  * - Flow data (1h, 24h, 7d, 30d) for supply/borrow
  * - Individual vs vault supply breakdown
  * - Liquidation history flag
+ * - Backend-computed trending signal
  * - Market scores (future)
- *
- * @example
- * ```tsx
- * const { data, isLoading } = useMarketMetricsQuery();
- * ```
  */
 export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
   const { chainId, sortBy, sortOrder, enabled = true } = params;
@@ -156,13 +158,6 @@ export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
 /**
  * Returns a Map for O(1) lookup of market metrics by key.
  * Key format: `${chainId}-${uniqueKey.toLowerCase()}`
- *
- * @example
- * ```tsx
- * const { metricsMap, isLoading } = useMarketMetricsMap();
- * const metrics = metricsMap.get(getMetricsKey(chainId, uniqueKey));
- * if (metrics?.everLiquidated) { ... }
- * ```
  */
 export const useMarketMetricsMap = (params: MarketMetricsParams = {}) => {
   const { data, isLoading, ...rest } = useMarketMetricsQuery(params);
@@ -185,26 +180,24 @@ export const useMarketMetricsMap = (params: MarketMetricsParams = {}) => {
 
 /**
  * Convert flow assets (BigInt string) to human-readable number.
- * @param flowAssets - The flow assets as BigInt string
- * @param decimals - Token decimals
  */
 export const parseFlowAssets = (flowAssets: string, decimals: number): number => {
   return Number(flowAssets) / 10 ** decimals;
 };
 
 /**
- * Determines if a market is trending based on flow thresholds.
+ * Check if a market matches a custom tag config.
  * All non-empty thresholds must be met (AND logic).
  * Only positive flows (inflows) are considered.
  */
-export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: TrendingConfig): boolean => {
-  if (!trendingConfig.enabled) return false;
+export const matchesCustomTag = (metrics: MarketMetrics, config: CustomTagConfig): boolean => {
+  if (!config.enabled) return false;
 
-  for (const [window, config] of Object.entries(trendingConfig.windows)) {
-    const supplyPct = config?.minSupplyFlowPct ?? '';
-    const supplyUsd = config?.minSupplyFlowUsd ?? '';
-    const borrowPct = config?.minBorrowFlowPct ?? '';
-    const borrowUsd = config?.minBorrowFlowUsd ?? '';
+  for (const [window, windowConfig] of Object.entries(config.windows)) {
+    const supplyPct = windowConfig?.minSupplyFlowPct ?? '';
+    const supplyUsd = windowConfig?.minSupplyFlowUsd ?? '';
+    const borrowPct = windowConfig?.minBorrowFlowPct ?? '';
+    const borrowUsd = windowConfig?.minBorrowFlowUsd ?? '';
 
     const hasSupplyThreshold = supplyPct || supplyUsd;
     const hasBorrowThreshold = borrowPct || borrowUsd;
@@ -234,7 +227,7 @@ export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: Trendin
     }
   }
 
-  const hasAnyThreshold = Object.values(trendingConfig.windows).some((c) => {
+  const hasAnyThreshold = Object.values(config.windows).some((c) => {
     const supplyPct = c?.minSupplyFlowPct ?? '';
     const supplyUsd = c?.minSupplyFlowUsd ?? '';
     const borrowPct = c?.minBorrowFlowPct ?? '';
@@ -245,30 +238,52 @@ export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: Trendin
   return hasAnyThreshold;
 };
 
+// Legacy alias
+export const isMarketTrending = matchesCustomTag;
+
 /**
- * Returns a Set of market keys that are currently trending.
- * Uses metricsMap for O(1) lookup and filters based on trending config from preferences.
+ * Returns a Set of market keys that are officially trending (backend-computed).
+ * Uses isTrending field from Monarch API.
  */
-export const useTrendingMarketKeys = () => {
+export const useOfficialTrendingMarketKeys = () => {
   const { metricsMap } = useMarketMetricsMap();
-  const { trendingConfig } = useMarketPreferences();
 
   return useMemo(() => {
     const keys = new Set<string>();
-    if (!trendingConfig.enabled) return keys;
-
     for (const [key, metrics] of metricsMap) {
-      if (isMarketTrending(metrics, trendingConfig)) {
+      if (metrics.isTrending) {
         keys.add(key);
       }
     }
     return keys;
-  }, [metricsMap, trendingConfig]);
+  }, [metricsMap]);
 };
 
 /**
+ * Returns a Set of market keys matching user's custom tag config.
+ */
+export const useCustomTagMarketKeys = () => {
+  const { metricsMap } = useMarketMetricsMap();
+  const { customTagConfig } = useMarketPreferences();
+
+  return useMemo(() => {
+    const keys = new Set<string>();
+    if (!customTagConfig.enabled) return keys;
+
+    for (const [key, metrics] of metricsMap) {
+      if (matchesCustomTag(metrics, customTagConfig)) {
+        keys.add(key);
+      }
+    }
+    return keys;
+  }, [metricsMap, customTagConfig]);
+};
+
+// Legacy alias - now returns official trending (breaking change, but intended)
+export const useTrendingMarketKeys = useOfficialTrendingMarketKeys;
+
+/**
  * Returns whether a market has ever been liquidated.
- * Uses everLiquidated field from Monarch API market metrics.
  */
 export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean => {
   const { metricsMap } = useMarketMetricsMap();

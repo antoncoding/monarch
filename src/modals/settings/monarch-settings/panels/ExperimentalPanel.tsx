@@ -11,29 +11,43 @@ type ExperimentalPanelProps = {
 };
 
 export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps) {
-  const { trendingConfig, setTrendingEnabled } = useMarketPreferences();
+  const { showOfficialTrending, setShowOfficialTrending, customTagConfig, setCustomTagEnabled } = useMarketPreferences();
   const { showDeveloperOptions, setShowDeveloperOptions, usePublicAllocator, setUsePublicAllocator } = useAppSettings();
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Official Trending */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
-        <h3 className="text-xs uppercase text-secondary">Trending</h3>
+        <h3 className="text-xs uppercase text-secondary">🔥 Official Trending</h3>
         <SettingToggleItem
-          title="Enable Trending Filter"
-          description="Show a 'Trending' filter option in the markets filter popover."
-          selected={trendingConfig.enabled}
-          onChange={setTrendingEnabled}
-          ariaLabel="Toggle trending markets"
+          title="Show Trending Markets"
+          description="Display the 🔥 icon on officially trending markets (backend-computed based on flow activity)."
+          selected={showOfficialTrending}
+          onChange={setShowOfficialTrending}
+          ariaLabel="Toggle official trending display"
+        />
+      </div>
+
+      {/* Custom Tags */}
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">🏷️ Custom Tags</h3>
+        <SettingToggleItem
+          title="Enable Custom Tags"
+          description="Create your own market tags based on flow criteria. Choose an icon and set thresholds."
+          selected={customTagConfig.enabled}
+          onChange={setCustomTagEnabled}
+          ariaLabel="Toggle custom tags"
         />
         <Divider />
         <SettingActionItem
-          title="Configure Criteria"
-          description="Set thresholds for what makes a market 'trending'."
+          title="Configure Custom Tag"
+          description="Set thresholds and choose an icon for your custom tag."
           buttonLabel="Configure"
           onClick={() => onNavigateToDetail?.('trending-config')}
         />
       </div>
 
+      {/* Liquidity Sourcing */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
         <h3 className="text-xs uppercase text-secondary">Liquidity Sourcing</h3>
         <SettingToggleItem
@@ -45,6 +59,7 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
         />
       </div>
 
+      {/* Developer */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
         <h3 className="text-xs uppercase text-secondary">Developer</h3>
         <SettingToggleItem

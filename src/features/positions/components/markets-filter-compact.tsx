@@ -48,10 +48,11 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
     usdMinSupply,
     usdMinBorrow,
     usdMinLiquidity,
-    trendingConfig,
+    showOfficialTrending,
+    customTagConfig,
   } = useMarketPreferences();
 
-  const { trendingMode, toggleTrendingMode } = useMarketsFilters();
+  const { trendingMode, toggleTrendingMode, customTagMode, toggleCustomTagMode } = useMarketsFilters();
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const trustedVaultCount = trustedVaults.length;
@@ -66,7 +67,7 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
   };
 
   const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets && showLockedMarkets;
-  const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode;
+  const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode;
   const hasActiveFilters = advancedFilterActive || !basicGuardianAllAllowed;
 
   const isButtonVariant = variant === 'button';
@@ -244,24 +245,39 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
                     />
                   </div>
                 </FilterRow>
-                {trendingConfig.enabled && (
+                {/* Official Trending Filter (backend-computed) */}
+                {showOfficialTrending && (
                   <FilterRow
-                    title="Trending Only"
-                    description="Show markets matching your trending criteria"
+                    title="🔥 Trending Only"
+                    description="Show officially trending markets"
+                  >
+                    <IconSwitch
+                      selected={trendingMode}
+                      onChange={toggleTrendingMode}
+                      size="xs"
+                      color="primary"
+                    />
+                  </FilterRow>
+                )}
+                {/* Custom Tag Filter (user-defined) */}
+                {customTagConfig.enabled && (
+                  <FilterRow
+                    title="Custom Tag Only"
+                    description="Show markets matching your custom tag"
                   >
                     <div className="flex items-center gap-1.5">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleOpenDetailView('trending-config')}
-                        aria-label="Configure trending"
+                        aria-label="Configure custom tag"
                         className="h-6 w-6"
                       >
                         <GoGear className="h-3.5 w-3.5" />
                       </Button>
                       <IconSwitch
-                        selected={trendingMode}
-                        onChange={toggleTrendingMode}
+                        selected={customTagMode}
+                        onChange={toggleCustomTagMode}
                         size="xs"
                         color="primary"
                       />

@@ -4,10 +4,10 @@ import { SortColumn } from '@/features/markets/components/constants';
 import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from '@/features/markets/components/column-visibility';
 
-// Trending feature types
+// Custom Tags feature types
 export type FlowTimeWindow = '1h' | '24h' | '7d' | '30d';
 
-export type TrendingWindowConfig = {
+export type CustomTagWindowConfig = {
   // Supply flow thresholds (both must be met if set - AND logic)
   minSupplyFlowPct: string; // e.g. "6" = 6% of current supply
   minSupplyFlowUsd: string; // Absolute USD threshold
@@ -16,20 +16,35 @@ export type TrendingWindowConfig = {
   minBorrowFlowUsd: string;
 };
 
-export type TrendingConfig = {
+// Available icons for custom tags (react-icons identifiers)
+export const CUSTOM_TAG_ICONS = [
+  'fire', 'rocket', 'star', 'bolt', 'gem',
+  'chart', 'target', 'eye', 'bookmark', 'flag',
+  'heart', 'coins', 'trophy', 'zap', 'trending',
+  'sparkles', 'flame', 'diamond', 'crown', 'lightning',
+] as const;
+export type CustomTagIconId = (typeof CUSTOM_TAG_ICONS)[number];
+
+export type CustomTagConfig = {
   enabled: boolean;
-  windows: Record<FlowTimeWindow, TrendingWindowConfig>;
+  icon: CustomTagIconId; // User-selected icon for their custom tag
+  windows: Record<FlowTimeWindow, CustomTagWindowConfig>;
 };
 
-const DEFAULT_TRENDING_CONFIG: TrendingConfig = {
+const DEFAULT_CUSTOM_TAG_CONFIG: CustomTagConfig = {
   enabled: false,
+  icon: 'bookmark',
   windows: {
     '1h': { minSupplyFlowPct: '6', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
-    '24h': { minSupplyFlowPct: '', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
-    '7d': { minSupplyFlowPct: '', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
+    '24h': { minSupplyFlowPct: '3', minSupplyFlowUsd: '', minBorrowFlowPct: '2', minBorrowFlowUsd: '' },
+    '7d': { minSupplyFlowPct: '5', minSupplyFlowUsd: '', minBorrowFlowPct: '1', minBorrowFlowUsd: '' },
     '30d': { minSupplyFlowPct: '', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
   },
 };
+
+// Legacy alias for backwards compatibility
+export type TrendingWindowConfig = CustomTagWindowConfig;
+export type TrendingConfig = CustomTagConfig;
 
 type MarketPreferencesState = {
   // Sorting
@@ -60,8 +75,14 @@ type MarketPreferencesState = {
   minBorrowEnabled: boolean;
   minLiquidityEnabled: boolean;
 
-  // Trending Config (Beta)
-  trendingConfig: TrendingConfig;
+  // Official Trending (backend-computed)
+  showOfficialTrending: boolean; // Default ON - show 🔥 for API's isTrending
+
+  // Custom Tags (user-defined)
+  customTagConfig: CustomTagConfig;
+
+  // Legacy alias (points to customTagConfig)
+  trendingConfig: CustomTagConfig;
 };
 
 type MarketPreferencesActions = {
@@ -95,9 +116,17 @@ type MarketPreferencesActions = {
   setMinBorrowEnabled: (enabled: boolean) => void;
   setMinLiquidityEnabled: (enabled: boolean) => void;
 
-  // Trending Config (Beta)
+  // Official Trending
+  setShowOfficialTrending: (show: boolean) => void;
+
+  // Custom Tags
+  setCustomTagEnabled: (enabled: boolean) => void;
+  setCustomTagIcon: (icon: CustomTagIconId) => void;
+  setCustomTagWindowConfig: (window: FlowTimeWindow, config: Partial<CustomTagWindowConfig>) => void;
+
+  // Legacy aliases
   setTrendingEnabled: (enabled: boolean) => void;
-  setTrendingWindowConfig: (window: FlowTimeWindow, config: Partial<TrendingWindowConfig>) => void;
+  setTrendingWindowConfig: (window: FlowTimeWindow, config: Partial<CustomTagWindowConfig>) => void;
 
   // Bulk update for migration
   setAll: (state: Partial<MarketPreferencesState>) => void;
@@ -134,7 +163,12 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       minSupplyEnabled: false,
       minBorrowEnabled: false,
       minLiquidityEnabled: false,
-      trendingConfig: DEFAULT_TRENDING_CONFIG,
+      showOfficialTrending: true, // Default ON
+      customTagConfig: DEFAULT_CUSTOM_TAG_CONFIG,
+      // Legacy alias getter
+      get trendingConfig() {
+        return this.customTagConfig;
+      },
 
       setSortColumn: (column) => set({ sortColumn: column }),
       setSortDirection: (direction) => set({ sortDirection: direction }),
@@ -166,20 +200,46 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       setMinSupplyEnabled: (enabled) => set({ minSupplyEnabled: enabled }),
       setMinBorrowEnabled: (enabled) => set({ minBorrowEnabled: enabled }),
       setMinLiquidityEnabled: (enabled) => set({ minLiquidityEnabled: enabled }),
-      setTrendingEnabled: (enabled) =>
+
+      // Official Trending
+      setShowOfficialTrending: (show) => set({ showOfficialTrending: show }),
+
+      // Custom Tags
+      setCustomTagEnabled: (enabled) =>
         set((state) => ({
-          trendingConfig: { ...state.trendingConfig, enabled },
+          customTagConfig: { ...state.customTagConfig, enabled },
         })),
-      setTrendingWindowConfig: (window, config) =>
+      setCustomTagIcon: (icon) =>
         set((state) => ({
-          trendingConfig: {
-            ...state.trendingConfig,
+          customTagConfig: { ...state.customTagConfig, icon },
+        })),
+      setCustomTagWindowConfig: (window, config) =>
+        set((state) => ({
+          customTagConfig: {
+            ...state.customTagConfig,
             windows: {
-              ...state.trendingConfig.windows,
-              [window]: { ...state.trendingConfig.windows[window], ...config },
+              ...state.customTagConfig.windows,
+              [window]: { ...state.customTagConfig.windows[window], ...config },
             },
           },
         })),
+
+      // Legacy aliases (point to custom tag methods)
+      setTrendingEnabled: (enabled) =>
+        set((state) => ({
+          customTagConfig: { ...state.customTagConfig, enabled },
+        })),
+      setTrendingWindowConfig: (window, config) =>
+        set((state) => ({
+          customTagConfig: {
+            ...state.customTagConfig,
+            windows: {
+              ...state.customTagConfig.windows,
+              [window]: { ...state.customTagConfig.windows[window], ...config },
+            },
+          },
+        })),
+
       setAll: (state) => set(state),
     }),
     {
