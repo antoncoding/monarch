@@ -7,6 +7,7 @@ import EmptyScreen from '@/components/status/empty-screen';
 import AssetFilter from '@/features/markets/components/filters/asset-filter';
 import OracleFilter from '@/features/markets/components/filters/oracle-filter';
 import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
+import type { ModalZIndex } from '@/components/common/Modal';
 import { ClearFiltersButton } from '@/components/shared/clear-filters-button';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
@@ -53,6 +54,8 @@ type MarketsTableWithSameLoanAssetProps = {
   uniqueCollateralTokens?: ERC20Token[];
   // Optional: Hide the select column (useful for single-select mode)
   showSelectColumn?: boolean;
+  // Optional: Override z-index for filter modal (use 'top' when inside another modal)
+  filterZIndex?: ModalZIndex;
 };
 
 enum SortColumn {
@@ -309,6 +312,7 @@ export function MarketsTableWithSameLoanAsset({
   disabled = false,
   uniqueCollateralTokens,
   showSelectColumn = true,
+  filterZIndex,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
   const { showUnwhitelistedMarkets, isAprDisplay } = useAppSettings();
@@ -593,11 +597,11 @@ export function MarketsTableWithSameLoanAsset({
         />
         {hasActiveFilters && <ClearFiltersButton onClick={clearAllFilters} />}
         <div className="flex items-center gap-2 sm:ml-auto">
-          <MarketFilter variant="button" />
+          <MarketFilter variant="button" zIndex={filterZIndex} />
           <Button
             variant="default"
             size="md"
-            onClick={() => openModal('marketSettings', {})}
+            onClick={() => openModal('marketSettings', filterZIndex ? { zIndex: 'top' } : {})}
             className="w-10 min-w-10 px-0"
             aria-label="Market settings"
           >

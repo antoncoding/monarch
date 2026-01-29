@@ -3,7 +3,7 @@ import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Input } from '@/components/ui/input';
-import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
+import { Modal, ModalBody, ModalHeader, type ModalZIndex } from '@/components/common/Modal';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { COLUMN_DESCRIPTIONS, COLUMN_LABELS, DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from './column-visibility';
@@ -11,6 +11,7 @@ import { COLUMN_DESCRIPTIONS, COLUMN_LABELS, DEFAULT_COLUMN_VISIBILITY, type Col
 type MarketSettingsModalProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  zIndex?: ModalZIndex;
 };
 
 type SettingItemProps = {
@@ -31,7 +32,7 @@ function SettingItem({ title, description, children }: SettingItemProps) {
   );
 }
 
-export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSettingsModalProps) {
+export default function MarketSettingsModal({ isOpen, onOpenChange, zIndex = 'settings' }: MarketSettingsModalProps) {
   const { columnVisibility, setColumnVisibility, entriesPerPage, setEntriesPerPage } = useMarketPreferences();
   const { short: rateShort } = useRateLabel();
 
@@ -67,7 +68,7 @@ export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSett
       onOpenChange={onOpenChange}
       backdrop="blur"
       size="md"
-      zIndex="settings"
+      zIndex={zIndex}
     >
       {(onClose) => (
         <>
