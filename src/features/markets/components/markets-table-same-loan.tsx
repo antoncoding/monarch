@@ -598,18 +598,15 @@ export function MarketsTableWithSameLoanAsset({
         {hasActiveFilters && <ClearFiltersButton onClick={clearAllFilters} />}
         <div className="flex items-center gap-2 sm:ml-auto">
           <MarketFilter variant="button" zIndex={filterZIndex} />
-          {/* Hide table settings when inside a nested modal (filterZIndex is set) */}
-          {!filterZIndex && (
-            <Button
-              variant="default"
-              size="md"
-              onClick={() => openModal('marketSettings', {})}
-              className="w-10 min-w-10 px-0"
-              aria-label="Market settings"
-            >
-              <GearIcon />
-            </Button>
-          )}
+          <Button
+            variant="default"
+            size="md"
+            onClick={() => openModal('marketSettings', filterZIndex ? { zIndex: 'top' } : {})}
+            className="w-10 min-w-10 px-0"
+            aria-label="Market settings"
+          >
+            <GearIcon />
+          </Button>
         </div>
       </div>
 

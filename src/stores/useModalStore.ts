@@ -49,7 +49,9 @@ export type ModalProps = {
   };
 
   // Settings & Configuration
-  marketSettings: Record<string, never>; // No props needed - uses useMarketPreferences() store
+  marketSettings: {
+    zIndex?: 'settings' | 'top'; // Override z-index when opened from nested modals
+  };
 
   monarchSettings: {
     initialCategory?: 'transaction' | 'display' | 'filters' | 'preferences' | 'experimental';
