@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
-import { useMarketPreferences, type FlowTimeWindow, type TrendingWindowConfig } from '@/stores/useMarketPreferences';
-import { useMarketMetricsMap, isMarketTrending, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
+import { useMarketPreferences, type FlowTimeWindow, type TrendingWindowConfig, CUSTOM_TAG_ICONS, type CustomTagIcon } from '@/stores/useMarketPreferences';
+import { useMarketMetricsMap, matchesCustomSignal, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { formatReadable } from '@/utils/balance';
 import type { Market } from '@/utils/types';
@@ -17,8 +17,8 @@ const TIME_WINDOWS: { value: FlowTimeWindow; label: string }[] = [
   { value: '30d', label: '30d' },
 ];
 
-function generateFilterSummary(config: { enabled: boolean; windows: Record<FlowTimeWindow, TrendingWindowConfig> }): string {
-  if (!config.enabled) return 'Trending detection is disabled';
+function generateFilterSummary(config: { enabled: boolean; icon: CustomTagIcon; windows: Record<FlowTimeWindow, TrendingWindowConfig> }): string {
+  if (!config.enabled) return 'Custom tag is disabled';
 
   const parts: string[] = [];
 
@@ -91,7 +91,7 @@ function CompactInput({
 }
 
 export function TrendingDetail() {
-  const { trendingConfig, setTrendingEnabled, setTrendingWindowConfig } = useMarketPreferences();
+  const { trendingConfig, setTrendingEnabled, setTrendingIcon, setTrendingWindowConfig } = useMarketPreferences();
   const { metricsMap } = useMarketMetricsMap();
   const { allMarkets } = useProcessedMarkets();
   const isEnabled = trendingConfig.enabled;
@@ -102,7 +102,7 @@ export function TrendingDetail() {
     const matches: Array<{ market: Market; supplyFlowPct1h: number }> = [];
 
     for (const [key, metrics] of metricsMap) {
-      if (isMarketTrending(metrics, trendingConfig)) {
+      if (matchesCustomSignal(metrics, trendingConfig)) {
         const market = allMarkets.find((m) => getMetricsKey(m.morphoBlue.chain.id, m.uniqueKey) === key);
         if (market) {
           matches.push({
@@ -126,6 +126,27 @@ export function TrendingDetail() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Icon Picker */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-secondary">Tag icon:</span>
+        <div className="flex gap-1">
+          {CUSTOM_TAG_ICONS.map((icon) => (
+            <button
+              key={icon}
+              type="button"
+              onClick={() => setTrendingIcon(icon)}
+              className={`flex h-8 w-8 items-center justify-center rounded-md text-lg transition-all ${
+                trendingConfig.icon === icon
+                  ? 'bg-primary/20 ring-2 ring-primary'
+                  : 'bg-surface hover:bg-default-100'
+              }`}
+            >
+              {icon}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Toggle + Summary */}
       <div className="flex items-start justify-between gap-4 rounded bg-surface p-4">
         <div className="flex-1">

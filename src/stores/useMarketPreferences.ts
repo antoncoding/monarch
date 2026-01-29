@@ -4,7 +4,7 @@ import { SortColumn } from '@/features/markets/components/constants';
 import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from '@/features/markets/components/column-visibility';
 
-// Trending feature types
+// Custom Tags feature types (user-defined market filters)
 export type FlowTimeWindow = '1h' | '24h' | '7d' | '30d';
 
 export type TrendingWindowConfig = {
@@ -16,13 +16,19 @@ export type TrendingWindowConfig = {
   minBorrowFlowUsd: string;
 };
 
+// Available icons for custom tags
+export const CUSTOM_TAG_ICONS = ['🏷️', '⭐', '🔥', '💎', '🚀', '📈', '💰', '⚡', '🎯', '👀'] as const;
+export type CustomTagIcon = (typeof CUSTOM_TAG_ICONS)[number];
+
 export type TrendingConfig = {
   enabled: boolean;
+  icon: CustomTagIcon; // User-selected icon for their custom tag
   windows: Record<FlowTimeWindow, TrendingWindowConfig>;
 };
 
 const DEFAULT_TRENDING_CONFIG: TrendingConfig = {
   enabled: false,
+  icon: '🏷️',
   windows: {
     '1h': { minSupplyFlowPct: '6', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
     '24h': { minSupplyFlowPct: '', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
@@ -95,8 +101,9 @@ type MarketPreferencesActions = {
   setMinBorrowEnabled: (enabled: boolean) => void;
   setMinLiquidityEnabled: (enabled: boolean) => void;
 
-  // Trending Config (Beta)
+  // Custom Tags Config (user-defined market filters)
   setTrendingEnabled: (enabled: boolean) => void;
+  setTrendingIcon: (icon: CustomTagIcon) => void;
   setTrendingWindowConfig: (window: FlowTimeWindow, config: Partial<TrendingWindowConfig>) => void;
 
   // Bulk update for migration
@@ -169,6 +176,10 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       setTrendingEnabled: (enabled) =>
         set((state) => ({
           trendingConfig: { ...state.trendingConfig, enabled },
+        })),
+      setTrendingIcon: (icon) =>
+        set((state) => ({
+          trendingConfig: { ...state.trendingConfig, icon },
         })),
       setTrendingWindowConfig: (window, config) =>
         set((state) => ({

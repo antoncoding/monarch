@@ -5,7 +5,7 @@ import { LuUser } from 'react-icons/lu';
 import { IoWarningOutline } from 'react-icons/io5';
 import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { useTrendingMarketKeys, getMetricsKey, useEverLiquidated } from '@/hooks/queries/useMarketMetricsQuery';
+import { useTrendingMarketKeys, useCustomSignalMarketKeys, getMetricsKey, useEverLiquidated, useMarketMetricsMap } from '@/hooks/queries/useMarketMetricsQuery';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
@@ -23,8 +23,17 @@ type MarketIndicatorsProps = {
 export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
   const hasLiquidationProtection = useEverLiquidated(market.morphoBlue.chain.id, market.uniqueKey);
   const { trendingConfig } = useMarketPreferences();
+  const { metricsMap } = useMarketMetricsMap();
+
+  // Backend-computed trending (official "hot markets")
   const trendingKeys = useTrendingMarketKeys();
-  const isTrending = trendingConfig.enabled && trendingKeys.has(getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey));
+  const marketKey = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
+  const isTrending = trendingKeys.has(marketKey);
+  const trendingReason = metricsMap.get(marketKey)?.trendingReason;
+
+  // User's custom tag
+  const customTagKeys = useCustomSignalMarketKeys();
+  const hasCustomTag = trendingConfig.enabled && customTagKeys.has(marketKey);
   const warnings = showRisk ? computeMarketWarnings(market, true) : [];
   const hasWarnings = warnings.length > 0;
   const alertWarning = warnings.find((w) => w.level === 'alert');
@@ -101,6 +110,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         whitelisted={market.whitelisted}
       />
 
+      {/* Backend-computed trending (official) */}
       {isTrending && (
         <Tooltip
           content={
@@ -111,7 +121,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
                   className="text-orange-500"
                 />
               }
-              detail="This market is trending based on flow metrics"
+              detail={trendingReason ?? 'This market is trending'}
             />
           }
         >
@@ -120,6 +130,22 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
               size={ICON_SIZE + 2}
               className="text-orange-500"
             />
+          </div>
+        </Tooltip>
+      )}
+
+      {/* User's custom tag */}
+      {hasCustomTag && (
+        <Tooltip
+          content={
+            <TooltipContent
+              icon={<span className="text-base">{trendingConfig.icon}</span>}
+              detail="Matches your custom tag criteria"
+            />
+          }
+        >
+          <div className="flex-shrink-0 text-base">
+            {trendingConfig.icon}
           </div>
         </Tooltip>
       )}
