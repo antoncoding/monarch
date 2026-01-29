@@ -147,7 +147,7 @@ export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
     queryKey: ['market-metrics', { chainId, sortBy, sortOrder }],
     queryFn: () => fetchAllMarketMetrics({ chainId, sortBy, sortOrder }),
     staleTime: 5 * 60 * 1000, // 5 minutes - matches API update frequency
-    refetchInterval: 1 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000, // Match staleTime - no point refetching more often
     refetchOnWindowFocus: false, // Don't refetch on focus since data is slow-changing
     enabled,
   });
@@ -268,16 +268,11 @@ export const useTrendingMarketKeys = () => {
 
 /**
  * Returns whether a market has ever been liquidated.
- * Primary: Uses Monarch API /v1/liquidations endpoint
- * Fallback: Uses old Morpho API/Subgraph if Monarch data is stale (>2 hours)
- *
- * @deprecated_fallback The fallback to useLiquidationsQuery can be removed
- * once Monarch API stability is confirmed.
+ * Uses everLiquidated field from Monarch API market metrics.
  */
 export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean => {
   const { metricsMap } = useMarketMetricsMap();
-  
-  
+
   return useMemo(() => {
     const key = `${chainId}-${uniqueKey.toLowerCase()}`;
     const metrics = metricsMap.get(key);
