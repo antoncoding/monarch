@@ -146,6 +146,7 @@ Fallback: Subgraph (The Graph / Goldsky)
 | Data Type | Source | Refresh | Query Hook |
 |-----------|--------|---------|------------|
 | Markets list | Morpho API/Subgraph | 5 min stale | `useMarketsQuery` |
+| Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
 | Market state (APY, utilization) | Morpho API | 30s stale | `useMarketData` |
 | User positions | Morpho API + on-chain | 5 min | `useUserPositions` |
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
@@ -153,7 +154,7 @@ Fallback: Subgraph (The Graph / Goldsky)
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
 | Oracle prices | Morpho API | 5 min | `useOracleDataQuery` |
 | Merkl rewards | Merkl API | On demand | `useMerklCampaignsQuery` |
-| Liquidations | Morpho API | On demand | `useLiquidationsQuery` |
+| Market liquidations | Morpho API/Subgraph | 5 min stale | `useMarketLiquidations` |
 
 ### Data Flow Patterns
 
@@ -225,11 +226,12 @@ All hooks in `/src/hooks/queries/` follow React Query patterns:
 | Hook | Key | Stale Time | Refetch | Focus |
 |------|-----|------------|---------|-------|
 | `useMarketsQuery` | `['markets']` | 5 min | 5 min | Yes |
+| `useMarketMetricsQuery` | `['market-metrics', ...]` | 5 min | 5 min | No |
 | `useTokensQuery` | `['tokens']` | 5 min | 5 min | Yes |
 | `useOracleDataQuery` | `['oracle-data']` | 5 min | 5 min | Yes |
 | `useUserBalancesQuery` | `['user-balances', addr, networks]` | 30s | - | Yes |
 | `useUserVaultsV2Query` | `['user-vaults-v2', addr]` | 60s | - | Yes |
-| `useLiquidationsQuery` | `['liquidations']` | 10 min | 10 min | Yes |
+| `useMarketLiquidations` | `['marketLiquidations', id, net]` | 5 min | - | Yes |
 | `useUserTransactionsQuery` | `['user-transactions', ...]` | 60s | - | No |
 | `useAllocationsQuery` | `['vault-allocations', ...]` | 30s | - | No |
 
