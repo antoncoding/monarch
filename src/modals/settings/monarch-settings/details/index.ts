@@ -1,4 +1,4 @@
-export { TrendingDetail } from './TrendingDetail';
+export { CustomTagDetail } from './CustomTagDetail';
 export { TrustedVaultsDetail } from './TrustedVaultsDetail';
 export { BlacklistedMarketsDetail } from './BlacklistedMarketsDetail';
 export { RpcDetail } from './RpcDetail';

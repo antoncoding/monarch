@@ -35,7 +35,12 @@ type CustomTagIconProps = {
 export function CustomTagIcon({ iconId, size = 14, className = '' }: CustomTagIconProps) {
   const IconComponent = ICON_MAP[iconId];
   if (!IconComponent) return null;
-  return <IconComponent size={size} className={className} />;
+  return (
+    <IconComponent
+      size={size}
+      className={className}
+    />
+  );
 }
 
 /**

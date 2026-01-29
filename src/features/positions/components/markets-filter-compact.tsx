@@ -23,7 +23,7 @@ type MarketFilterProps = {
   variant?: 'ghost' | 'button';
 };
 
-type DetailViewType = 'filter-thresholds' | 'trusted-vaults' | 'trending-config';
+type DetailViewType = 'filter-thresholds' | 'trusted-vaults' | 'custom-tag-config';
 
 export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
@@ -67,7 +67,8 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
   };
 
   const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets && showLockedMarkets;
-  const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode;
+  const advancedFilterActive =
+    trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode;
   const hasActiveFilters = advancedFilterActive || !basicGuardianAllAllowed;
 
   const isButtonVariant = variant === 'button';
@@ -269,7 +270,7 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleOpenDetailView('trending-config')}
+                        onClick={() => handleOpenDetailView('custom-tag-config')}
                         aria-label="Configure custom tag"
                         className="h-6 w-6"
                       >

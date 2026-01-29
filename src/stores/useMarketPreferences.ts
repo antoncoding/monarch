@@ -5,7 +5,7 @@ import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from '@/features/markets/components/column-visibility';
 
 // Custom Tags feature types
-export type FlowTimeWindow = '1h' | '24h' | '7d' | '30d';
+export type FlowTimeWindow = '1h' | '24h' | '7d';
 
 export type CustomTagWindowConfig = {
   // Supply flow threshold (percentage, can be negative for outflows)
@@ -15,10 +15,7 @@ export type CustomTagWindowConfig = {
 };
 
 // Available icons for custom tags (react-icons identifiers)
-export const CUSTOM_TAG_ICONS = [
-  'star', 'bookmark', 'flag', 'target', 'eye',
-  'gem', 'bolt', 'chart', 'rocket', 'heart',
-] as const;
+export const CUSTOM_TAG_ICONS = ['star', 'bookmark', 'flag', 'target', 'eye', 'gem', 'bolt', 'chart', 'rocket', 'heart'] as const;
 export type CustomTagIconId = (typeof CUSTOM_TAG_ICONS)[number];
 
 export type CustomTagConfig = {
@@ -34,7 +31,6 @@ const DEFAULT_CUSTOM_TAG_CONFIG: CustomTagConfig = {
     '1h': { supplyFlowPct: '', borrowFlowPct: '' },
     '24h': { supplyFlowPct: '3', borrowFlowPct: '2' },
     '7d': { supplyFlowPct: '', borrowFlowPct: '' },
-    '30d': { supplyFlowPct: '', borrowFlowPct: '' },
   },
 };
 

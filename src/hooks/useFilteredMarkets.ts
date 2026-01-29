@@ -120,5 +120,15 @@ export const useFilteredMarkets = (): Market[] => {
     }
 
     return markets;
-  }, [allMarkets, whitelistedMarkets, showUnwhitelistedMarkets, filters, preferences, trustedVaults, findToken, officialTrendingKeys, customTagKeys]);
+  }, [
+    allMarkets,
+    whitelistedMarkets,
+    showUnwhitelistedMarkets,
+    filters,
+    preferences,
+    trustedVaults,
+    findToken,
+    officialTrendingKeys,
+    customTagKeys,
+  ]);
 };

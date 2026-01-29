@@ -6,7 +6,13 @@ import { IoWarningOutline } from 'react-icons/io5';
 import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CustomTagIcon } from '@/components/shared/custom-tag-icons';
-import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey, useEverLiquidated, useMarketMetricsMap } from '@/hooks/queries/useMarketMetricsQuery';
+import {
+  useOfficialTrendingMarketKeys,
+  useCustomTagMarketKeys,
+  getMetricsKey,
+  useEverLiquidated,
+  useMarketMetricsMap,
+} from '@/hooks/queries/useMarketMetricsQuery';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
@@ -143,14 +149,23 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         <Tooltip
           content={
             <TooltipContent
-              icon={<CustomTagIcon iconId={customTagConfig.icon} size={ICON_SIZE} className="text-primary" />}
+              icon={
+                <CustomTagIcon
+                  iconId={customTagConfig.icon}
+                  size={ICON_SIZE}
+                  className="text-primary"
+                />
+              }
               title="Custom Tag"
               detail="Matches your custom tag criteria"
             />
           }
         >
           <div className="flex-shrink-0 text-primary">
-            <CustomTagIcon iconId={customTagConfig.icon} size={ICON_SIZE} />
+            <CustomTagIcon
+              iconId={customTagConfig.icon}
+              size={ICON_SIZE}
+            />
           </div>
         </Tooltip>
       )}

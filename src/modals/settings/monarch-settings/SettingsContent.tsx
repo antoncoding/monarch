@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { slideVariants, slideTransition, type SlideDirection } from '@/components/common/settings-modal';
 import { SettingsHeader } from './SettingsHeader';
 import { TransactionPanel, DisplayPanel, FiltersPanel, PreferencesPanel, ExperimentalPanel } from './panels';
-import { TrendingDetail, TrustedVaultsDetail, BlacklistedMarketsDetail, RpcDetail, ThresholdsDetail } from './details';
+import { CustomTagDetail, TrustedVaultsDetail, BlacklistedMarketsDetail, RpcDetail, ThresholdsDetail } from './details';
 import type { SettingsCategory, DetailView } from './constants';
 
 type PanelProps = {
@@ -20,7 +20,7 @@ const PANEL_COMPONENTS: Record<SettingsCategory, React.ComponentType<PanelProps>
 };
 
 const DETAIL_COMPONENTS: Record<Exclude<DetailView, null>, React.ComponentType> = {
-  'trending-config': TrendingDetail,
+  'custom-tag-config': CustomTagDetail,
   'trusted-vaults': TrustedVaultsDetail,
   'blacklisted-markets': BlacklistedMarketsDetail,
   'rpc-config': RpcDetail,

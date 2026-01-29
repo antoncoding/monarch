@@ -8,13 +8,13 @@ import { useMarketPreferences, type FlowTimeWindow, type CustomTagWindowConfig }
 import { useMarketMetricsMap, matchesCustomTag, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { CustomTagIconPicker, CustomTagIcon } from '@/components/shared/custom-tag-icons';
+import { logEvent } from '@/utils/gtag';
 import type { Market } from '@/utils/types';
 
 const TIME_WINDOWS: { value: FlowTimeWindow; label: string }[] = [
   { value: '1h', label: '1 Hour' },
   { value: '24h', label: '24 Hours' },
   { value: '7d', label: '7 Days' },
-  { value: '30d', label: '30 Days' },
 ];
 
 function formatThreshold(value: string): string {
@@ -48,15 +48,7 @@ function generateFilterSummary(config: { enabled: boolean; windows: Record<FlowT
   return parts.join(' | ');
 }
 
-function PercentInput({
-  value,
-  onChange,
-  placeholder = '0',
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
+function PercentInput({ value, onChange, placeholder = '0' }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <div className="flex items-center">
       <Input
@@ -78,7 +70,7 @@ function PercentInput({
   );
 }
 
-export function TrendingDetail() {
+export function CustomTagDetail() {
   const { customTagConfig, setCustomTagEnabled, setCustomTagIcon, setCustomTagWindowConfig } = useMarketPreferences();
   const { metricsMap } = useMarketMetricsMap();
   const { allMarkets } = useProcessedMarkets();
@@ -116,6 +108,16 @@ export function TrendingDetail() {
     setCustomTagWindowConfig(window, { [field]: value });
   };
 
+  const handleToggleEnabled = (enabled: boolean) => {
+    setCustomTagEnabled(enabled);
+    logEvent({
+      action: enabled ? 'custom_tag_enabled' : 'custom_tag_disabled',
+      category: 'settings',
+      label: 'custom_tag',
+      value: enabled ? 1 : 0,
+    });
+  };
+
   const filterSummary = generateFilterSummary(customTagConfig);
 
   return (
@@ -124,7 +126,10 @@ export function TrendingDetail() {
       <div className="flex items-center justify-between rounded-lg border border-border bg-surface p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <CustomTagIcon iconId={customTagConfig.icon} size={20} />
+            <CustomTagIcon
+              iconId={customTagConfig.icon}
+              size={20}
+            />
           </div>
           <div>
             <p className="text-sm font-medium text-primary">Custom Tag</p>
@@ -133,7 +138,7 @@ export function TrendingDetail() {
         </div>
         <IconSwitch
           selected={isEnabled}
-          onChange={setCustomTagEnabled}
+          onChange={handleToggleEnabled}
           size="sm"
           color="primary"
         />
@@ -155,9 +160,7 @@ export function TrendingDetail() {
           <div className="overflow-hidden rounded-lg border border-border">
             <div className="border-b border-border bg-surface px-4 py-3">
               <span className="text-xs font-medium text-secondary uppercase">Flow Thresholds</span>
-              <p className="text-[10px] text-secondary mt-1">
-                Use positive values for growth (≥5%), negative for decline (≤-3%)
-              </p>
+              <p className="text-[10px] text-secondary mt-1">Use positive values for growth (≥5%), negative for decline (≤-3%)</p>
             </div>
 
             {/* Header */}
@@ -219,13 +222,12 @@ export function TrendingDetail() {
                         iconSize={16}
                       />
                       <span className={`text-xs ${m.supplyFlowPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {m.supplyFlowPct >= 0 ? '+' : ''}{m.supplyFlowPct.toFixed(1)}%
+                        {m.supplyFlowPct >= 0 ? '+' : ''}
+                        {m.supplyFlowPct.toFixed(1)}%
                       </span>
                     </div>
                   ))}
-                  {totalMatches > 3 && (
-                    <span className="text-xs text-secondary">+{totalMatches - 3} more</span>
-                  )}
+                  {totalMatches > 3 && <span className="text-xs text-secondary">+{totalMatches - 3} more</span>}
                 </div>
               ) : (
                 <span className="text-xs text-secondary">No markets match current criteria</span>

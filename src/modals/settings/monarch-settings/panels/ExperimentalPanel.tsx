@@ -45,7 +45,7 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
               title="Configure Custom Tag"
               description="Set thresholds and choose an icon."
               buttonLabel="Configure"
-              onClick={() => onNavigateToDetail?.('trending-config')}
+              onClick={() => onNavigateToDetail?.('custom-tag-config')}
             />
           </>
         )}
