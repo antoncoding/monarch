@@ -6,7 +6,6 @@ import { MarketsTableWithSameLoanAsset } from '@/features/markets/components/mar
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/ui/spinner';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
-import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
@@ -110,7 +109,6 @@ export function MarketSelectionModal({
         description={description}
         mainIcon={<FiSearch className="h-5 w-5" />}
         onClose={() => onOpenChange(false)}
-        actions={<MarketFilter variant="button" />}
       />
       <ModalBody>
         {marketsLoading ? (
