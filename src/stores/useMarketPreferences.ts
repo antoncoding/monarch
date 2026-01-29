@@ -229,6 +229,55 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
     }),
     {
       name: 'monarch_store_marketPreferences',
+      version: 2,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Record<string, unknown>;
+
+        if (version < 2) {
+          // Migration from v1 to v2:
+          // 1. Migrate legacy trendingConfig to customTagConfig
+          // 2. Remove 30d window, keep only 1h, 24h, 7d
+          // 3. Map old icon names to new ones
+
+          const legacyIconMap: Record<string, CustomTagIconId> = {
+            star: 'trend-up',
+            bookmark: 'trend-up',
+            flag: 'trend-down',
+            target: 'rocket',
+            chart: 'trend-up',
+            heart: 'gem',
+          };
+
+          // Get existing config (could be from trendingConfig or customTagConfig)
+          const existingConfig = (state.customTagConfig ?? state.trendingConfig ?? {}) as Partial<CustomTagConfig>;
+
+          // Migrate icon
+          const oldIcon = existingConfig.icon as string | undefined;
+          const newIcon: CustomTagIconId =
+            oldIcon && CUSTOM_TAG_ICONS.includes(oldIcon as CustomTagIconId)
+              ? (oldIcon as CustomTagIconId)
+              : (legacyIconMap[oldIcon ?? ''] ?? 'trend-up');
+
+          // Migrate windows (remove 30d)
+          const oldWindows = existingConfig.windows as Record<string, CustomTagWindowConfig> | undefined;
+          const newWindows: Record<FlowTimeWindow, CustomTagWindowConfig> = {
+            '1h': oldWindows?.['1h'] ?? DEFAULT_CUSTOM_TAG_CONFIG.windows['1h'],
+            '24h': oldWindows?.['24h'] ?? DEFAULT_CUSTOM_TAG_CONFIG.windows['24h'],
+            '7d': oldWindows?.['7d'] ?? DEFAULT_CUSTOM_TAG_CONFIG.windows['7d'],
+          };
+
+          state.customTagConfig = {
+            enabled: existingConfig.enabled ?? false,
+            icon: newIcon,
+            windows: newWindows,
+          };
+
+          // Clean up legacy field
+          state.trendingConfig = undefined;
+        }
+
+        return state;
+      },
     },
   ),
 );
