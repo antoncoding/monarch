@@ -18,10 +18,8 @@ export type CustomTagWindowConfig = {
 
 // Available icons for custom tags (react-icons identifiers)
 export const CUSTOM_TAG_ICONS = [
-  'fire', 'rocket', 'star', 'bolt', 'gem',
-  'chart', 'target', 'eye', 'bookmark', 'flag',
-  'heart', 'coins', 'trophy', 'zap', 'trending',
-  'sparkles', 'flame', 'diamond', 'crown', 'lightning',
+  'star', 'bookmark', 'flag', 'target', 'eye',
+  'gem', 'bolt', 'chart', 'rocket', 'heart',
 ] as const;
 export type CustomTagIconId = (typeof CUSTOM_TAG_ICONS)[number];
 

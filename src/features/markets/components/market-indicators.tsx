@@ -120,17 +120,18 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
             <TooltipContent
               icon={
                 <AiOutlineFire
-                  size={ICON_SIZE + 2}
+                  size={ICON_SIZE}
                   className="text-orange-500"
                 />
               }
-              detail={trendingReason ?? 'This market is trending'}
+              title="Trending"
+              detail={trendingReason ?? 'This market is trending based on flow activity'}
             />
           }
         >
           <div className="flex-shrink-0">
             <AiOutlineFire
-              size={ICON_SIZE + 2}
+              size={ICON_SIZE}
               className="text-orange-500"
             />
           </div>
@@ -143,6 +144,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
           content={
             <TooltipContent
               icon={<CustomTagIcon iconId={customTagConfig.icon} size={ICON_SIZE} className="text-primary" />}
+              title="Custom Tag"
               detail="Matches your custom tag criteria"
             />
           }

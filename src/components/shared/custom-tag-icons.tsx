@@ -1,11 +1,9 @@
 'use client';
 
 import type { IconType } from 'react-icons';
-import { AiOutlineFire, AiOutlineRocket, AiOutlineStar, AiOutlineThunderbolt, AiOutlineEye, AiOutlineHeart, AiOutlineTrophy, AiOutlineCrown } from 'react-icons/ai';
-import { BiTrendingUp, BiTargetLock, BiBookmark, BiFlag } from 'react-icons/bi';
-import { FaGem, FaCoins, FaBolt, FaChartLine } from 'react-icons/fa';
-import { HiOutlineSparkles, HiOutlineLightningBolt } from 'react-icons/hi';
-import { IoFlameOutline, IoDiamondOutline } from 'react-icons/io5';
+import { AiOutlineStar, AiOutlineThunderbolt, AiOutlineEye, AiOutlineHeart, AiOutlineRocket } from 'react-icons/ai';
+import { BiTargetLock, BiBookmark, BiFlag } from 'react-icons/bi';
+import { FaGem, FaChartLine } from 'react-icons/fa';
 import type { CustomTagIconId } from '@/stores/useMarketPreferences';
 
 /**
@@ -13,26 +11,16 @@ import type { CustomTagIconId } from '@/stores/useMarketPreferences';
  * Keep this in sync with CUSTOM_TAG_ICONS in useMarketPreferences.
  */
 export const ICON_MAP: Record<CustomTagIconId, IconType> = {
-  fire: AiOutlineFire,
-  rocket: AiOutlineRocket,
   star: AiOutlineStar,
-  bolt: AiOutlineThunderbolt,
-  gem: FaGem,
-  chart: FaChartLine,
-  target: BiTargetLock,
-  eye: AiOutlineEye,
   bookmark: BiBookmark,
   flag: BiFlag,
+  target: BiTargetLock,
+  eye: AiOutlineEye,
+  gem: FaGem,
+  bolt: AiOutlineThunderbolt,
+  chart: FaChartLine,
+  rocket: AiOutlineRocket,
   heart: AiOutlineHeart,
-  coins: FaCoins,
-  trophy: AiOutlineTrophy,
-  zap: FaBolt,
-  trending: BiTrendingUp,
-  sparkles: HiOutlineSparkles,
-  flame: IoFlameOutline,
-  diamond: IoDiamondOutline,
-  crown: AiOutlineCrown,
-  lightning: HiOutlineLightningBolt,
 };
 
 type CustomTagIconProps = {
@@ -61,7 +49,7 @@ type IconPickerProps = {
 
 export function CustomTagIconPicker({ selectedIcon, onSelect, disabled = false }: IconPickerProps) {
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1.5">
       {(Object.keys(ICON_MAP) as CustomTagIconId[]).map((iconId) => {
         const IconComponent = ICON_MAP[iconId];
         const isSelected = iconId === selectedIcon;
@@ -72,11 +60,11 @@ export function CustomTagIconPicker({ selectedIcon, onSelect, disabled = false }
             type="button"
             onClick={() => onSelect(iconId)}
             disabled={disabled}
-            className={`flex h-8 w-8 items-center justify-center rounded-md transition-all ${
+            className={`flex h-8 w-8 items-center justify-center rounded-md border transition-all ${
               isSelected
-                ? 'bg-primary/20 ring-2 ring-primary text-primary'
-                : 'bg-surface hover:bg-default-100 text-secondary'
-            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-surface text-secondary hover:border-primary/50 hover:text-primary'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             title={iconId}
           >
             <IconComponent size={16} />

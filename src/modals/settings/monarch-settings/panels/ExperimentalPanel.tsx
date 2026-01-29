@@ -18,10 +18,10 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
     <div className="flex flex-col gap-4">
       {/* Official Trending */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
-        <h3 className="text-xs uppercase text-secondary">🔥 Official Trending</h3>
+        <h3 className="text-xs uppercase text-secondary">Official Trending</h3>
         <SettingToggleItem
           title="Show Trending Markets"
-          description="Display the 🔥 icon on officially trending markets (backend-computed based on flow activity)."
+          description="Display trending icon on officially trending markets (backend-computed based on flow activity)."
           selected={showOfficialTrending}
           onChange={setShowOfficialTrending}
           ariaLabel="Toggle official trending display"
@@ -30,21 +30,25 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
 
       {/* Custom Tags */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
-        <h3 className="text-xs uppercase text-secondary">🏷️ Custom Tags</h3>
+        <h3 className="text-xs uppercase text-secondary">Custom Tags</h3>
         <SettingToggleItem
           title="Enable Custom Tags"
-          description="Create your own market tags based on flow criteria. Choose an icon and set thresholds."
+          description="Create your own market tags based on flow criteria."
           selected={customTagConfig.enabled}
           onChange={setCustomTagEnabled}
           ariaLabel="Toggle custom tags"
         />
-        <Divider />
-        <SettingActionItem
-          title="Configure Custom Tag"
-          description="Set thresholds and choose an icon for your custom tag."
-          buttonLabel="Configure"
-          onClick={() => onNavigateToDetail?.('trending-config')}
-        />
+        {customTagConfig.enabled && (
+          <>
+            <Divider />
+            <SettingActionItem
+              title="Configure Custom Tag"
+              description="Set thresholds and choose an icon."
+              buttonLabel="Configure"
+              onClick={() => onNavigateToDetail?.('trending-config')}
+            />
+          </>
+        )}
       </div>
 
       {/* Liquidity Sourcing */}

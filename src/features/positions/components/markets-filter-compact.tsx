@@ -248,7 +248,7 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
                 {/* Official Trending Filter (backend-computed) */}
                 {showOfficialTrending && (
                   <FilterRow
-                    title="🔥 Trending Only"
+                    title="Trending Only"
                     description="Show officially trending markets"
                   >
                     <IconSwitch
