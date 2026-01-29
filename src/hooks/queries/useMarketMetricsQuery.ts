@@ -80,8 +80,6 @@ const fetchMarketMetricsPage = async (params: MarketMetricsParams, limit: number
 
   const response = await fetch(`/api/monarch/metrics?${searchParams.toString()}`);
 
-  console.log('response', response)
-
   if (!response.ok) {
     throw new Error('Failed to fetch market metrics');
   }
@@ -179,7 +177,6 @@ export const useMarketMetricsMap = (params: MarketMetricsParams = {}) => {
     }
     console.log('[Metrics] Loaded', map.size, 'of', data.total, 'markets');
 
-    console.log('map', map.get('8453-0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836'))
     return map;
   }, [data?.markets, data?.total]);
 

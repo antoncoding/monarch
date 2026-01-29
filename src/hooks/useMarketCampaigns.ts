@@ -62,7 +62,7 @@ export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCa
       return true;
     });
 
-    console.log(`[useMarketCampaigns] Active Campaigns for market ${normalizedMarketId.slice(0, 6)}`, allMarketCampaigns);
+    console.debug(`[useMarketCampaigns] Active Campaigns for market ${normalizedMarketId.slice(0, 6)}`, allMarketCampaigns);
 
     const activeCampaigns = allMarketCampaigns.filter((campaign) => campaign.isActive);
 
