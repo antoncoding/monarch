@@ -15,7 +15,7 @@ export type CustomTagWindowConfig = {
 };
 
 // Available icons for custom tags (react-icons identifiers)
-export const CUSTOM_TAG_ICONS = ['star', 'bookmark', 'flag', 'target', 'eye', 'gem', 'bolt', 'chart', 'rocket', 'heart'] as const;
+export const CUSTOM_TAG_ICONS = ['trend-up', 'trend-down', 'rocket', 'gem', 'bolt', 'eye'] as const;
 export type CustomTagIconId = (typeof CUSTOM_TAG_ICONS)[number];
 
 export type CustomTagConfig = {
@@ -26,7 +26,7 @@ export type CustomTagConfig = {
 
 const DEFAULT_CUSTOM_TAG_CONFIG: CustomTagConfig = {
   enabled: false,
-  icon: 'bookmark',
+  icon: 'trend-up',
   windows: {
     '1h': { supplyFlowPct: '', borrowFlowPct: '' },
     '24h': { supplyFlowPct: '3', borrowFlowPct: '2' },

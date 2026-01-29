@@ -1,9 +1,9 @@
 'use client';
 
 import type { IconType } from 'react-icons';
-import { AiOutlineStar, AiOutlineThunderbolt, AiOutlineEye, AiOutlineHeart, AiOutlineRocket } from 'react-icons/ai';
-import { BiTargetLock, BiBookmark, BiFlag } from 'react-icons/bi';
-import { FaGem, FaChartLine } from 'react-icons/fa';
+import { AiOutlineThunderbolt, AiOutlineEye, AiOutlineRocket } from 'react-icons/ai';
+import { FaGem } from 'react-icons/fa';
+import { TbTrendingUp, TbTrendingDown } from 'react-icons/tb';
 import type { CustomTagIconId } from '@/stores/useMarketPreferences';
 
 /**
@@ -11,16 +11,12 @@ import type { CustomTagIconId } from '@/stores/useMarketPreferences';
  * Keep this in sync with CUSTOM_TAG_ICONS in useMarketPreferences.
  */
 export const ICON_MAP: Record<CustomTagIconId, IconType> = {
-  star: AiOutlineStar,
-  bookmark: BiBookmark,
-  flag: BiFlag,
-  target: BiTargetLock,
-  eye: AiOutlineEye,
+  'trend-up': TbTrendingUp,
+  'trend-down': TbTrendingDown,
+  rocket: AiOutlineRocket,
   gem: FaGem,
   bolt: AiOutlineThunderbolt,
-  chart: FaChartLine,
-  rocket: AiOutlineRocket,
-  heart: AiOutlineHeart,
+  eye: AiOutlineEye,
 };
 
 type CustomTagIconProps = {
