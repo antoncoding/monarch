@@ -8,12 +8,10 @@ import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from '@/features/mar
 export type FlowTimeWindow = '1h' | '24h' | '7d' | '30d';
 
 export type CustomTagWindowConfig = {
-  // Supply flow thresholds (both must be met if set - AND logic)
-  minSupplyFlowPct: string; // e.g. "6" = 6% of current supply
-  minSupplyFlowUsd: string; // Absolute USD threshold
-  // Borrow flow thresholds (both must be met if set - AND logic)
-  minBorrowFlowPct: string;
-  minBorrowFlowUsd: string;
+  // Supply flow threshold (percentage, can be negative for outflows)
+  supplyFlowPct: string; // e.g. "5" = +5% growth, "-3" = -3% outflow
+  // Borrow flow threshold (percentage, can be negative)
+  borrowFlowPct: string;
 };
 
 // Available icons for custom tags (react-icons identifiers)
@@ -33,10 +31,10 @@ const DEFAULT_CUSTOM_TAG_CONFIG: CustomTagConfig = {
   enabled: false,
   icon: 'bookmark',
   windows: {
-    '1h': { minSupplyFlowPct: '6', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
-    '24h': { minSupplyFlowPct: '3', minSupplyFlowUsd: '', minBorrowFlowPct: '2', minBorrowFlowUsd: '' },
-    '7d': { minSupplyFlowPct: '5', minSupplyFlowUsd: '', minBorrowFlowPct: '1', minBorrowFlowUsd: '' },
-    '30d': { minSupplyFlowPct: '', minSupplyFlowUsd: '', minBorrowFlowPct: '', minBorrowFlowUsd: '' },
+    '1h': { supplyFlowPct: '', borrowFlowPct: '' },
+    '24h': { supplyFlowPct: '3', borrowFlowPct: '2' },
+    '7d': { supplyFlowPct: '', borrowFlowPct: '' },
+    '30d': { supplyFlowPct: '', borrowFlowPct: '' },
   },
 };
 

@@ -188,51 +188,50 @@ export const parseFlowAssets = (flowAssets: string, decimals: number): number =>
 /**
  * Check if a market matches a custom tag config.
  * All non-empty thresholds must be met (AND logic).
- * Only positive flows (inflows) are considered.
+ * Supports both positive (inflows) and negative (outflows) thresholds.
+ *
+ * Logic:
+ * - Positive threshold (e.g., "5"): actual >= threshold (growth of 5% or more)
+ * - Negative threshold (e.g., "-3"): actual <= threshold (decline of 3% or more)
  */
 export const matchesCustomTag = (metrics: MarketMetrics, config: CustomTagConfig): boolean => {
   if (!config.enabled) return false;
 
   for (const [window, windowConfig] of Object.entries(config.windows)) {
-    const supplyPct = windowConfig?.minSupplyFlowPct ?? '';
-    const supplyUsd = windowConfig?.minSupplyFlowUsd ?? '';
-    const borrowPct = windowConfig?.minBorrowFlowPct ?? '';
-    const borrowUsd = windowConfig?.minBorrowFlowUsd ?? '';
+    const supplyPct = windowConfig?.supplyFlowPct ?? '';
+    const borrowPct = windowConfig?.borrowFlowPct ?? '';
 
-    const hasSupplyThreshold = supplyPct || supplyUsd;
-    const hasBorrowThreshold = borrowPct || borrowUsd;
+    const hasSupplyThreshold = supplyPct !== '';
+    const hasBorrowThreshold = borrowPct !== '';
 
     if (!hasSupplyThreshold && !hasBorrowThreshold) continue;
 
     const flow = metrics.flows[window as FlowTimeWindow];
     if (!flow) return false;
 
-    if (supplyPct) {
-      const actualPct = flow.supplyFlowPct ?? 0;
-      if (actualPct < Number(supplyPct)) return false;
-    }
-    if (supplyUsd) {
-      const actualUsd = flow.supplyFlowUsd ?? 0;
-      if (actualUsd < Number(supplyUsd)) return false;
+    // Check supply threshold
+    if (hasSupplyThreshold) {
+      const threshold = Number(supplyPct);
+      const actual = flow.supplyFlowPct ?? 0;
+      // Positive threshold: actual must be >= threshold
+      // Negative threshold: actual must be <= threshold (more negative)
+      if (threshold >= 0 && actual < threshold) return false;
+      if (threshold < 0 && actual > threshold) return false;
     }
 
-    if (borrowPct) {
+    // Check borrow threshold
+    if (hasBorrowThreshold) {
+      const threshold = Number(borrowPct);
       const borrowBase = metrics.currentState.borrowUsd;
-      const actualPct = borrowBase > 0 ? ((flow.borrowFlowUsd ?? 0) / borrowBase) * 100 : 0;
-      if (actualPct < Number(borrowPct)) return false;
-    }
-    if (borrowUsd) {
-      const actualUsd = flow.borrowFlowUsd ?? 0;
-      if (actualUsd < Number(borrowUsd)) return false;
+      const actual = borrowBase > 0 ? ((flow.borrowFlowUsd ?? 0) / borrowBase) * 100 : 0;
+      if (threshold >= 0 && actual < threshold) return false;
+      if (threshold < 0 && actual > threshold) return false;
     }
   }
 
+  // Must have at least one threshold set
   const hasAnyThreshold = Object.values(config.windows).some((c) => {
-    const supplyPct = c?.minSupplyFlowPct ?? '';
-    const supplyUsd = c?.minSupplyFlowUsd ?? '';
-    const borrowPct = c?.minBorrowFlowPct ?? '';
-    const borrowUsd = c?.minBorrowFlowUsd ?? '';
-    return supplyPct || supplyUsd || borrowPct || borrowUsd;
+    return (c?.supplyFlowPct ?? '') !== '' || (c?.borrowFlowPct ?? '') !== '';
   });
 
   return hasAnyThreshold;

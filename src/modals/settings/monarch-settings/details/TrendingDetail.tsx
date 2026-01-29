@@ -7,16 +7,21 @@ import { MarketIdentity, MarketIdentityMode } from '@/features/markets/component
 import { useMarketPreferences, type FlowTimeWindow, type CustomTagWindowConfig } from '@/stores/useMarketPreferences';
 import { useMarketMetricsMap, matchesCustomTag, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
-import { formatReadable } from '@/utils/balance';
 import { CustomTagIconPicker, CustomTagIcon } from '@/components/shared/custom-tag-icons';
 import type { Market } from '@/utils/types';
 
 const TIME_WINDOWS: { value: FlowTimeWindow; label: string }[] = [
-  { value: '1h', label: '1h' },
-  { value: '24h', label: '24h' },
-  { value: '7d', label: '7d' },
-  { value: '30d', label: '30d' },
+  { value: '1h', label: '1 Hour' },
+  { value: '24h', label: '24 Hours' },
+  { value: '7d', label: '7 Days' },
+  { value: '30d', label: '30 Days' },
 ];
+
+function formatThreshold(value: string): string {
+  if (!value || value === '') return '-';
+  const num = Number(value);
+  return num >= 0 ? `≥${value}%` : `≤${value}%`;
+}
 
 function generateFilterSummary(config: { enabled: boolean; windows: Record<FlowTimeWindow, CustomTagWindowConfig> }): string {
   if (!config.enabled) return 'Disabled';
@@ -27,66 +32,48 @@ function generateFilterSummary(config: { enabled: boolean; windows: Record<FlowT
     const windowConfig = config.windows?.[window];
     if (!windowConfig) continue;
 
-    const windowParts: string[] = [];
+    const supply = windowConfig.supplyFlowPct ?? '';
+    const borrow = windowConfig.borrowFlowPct ?? '';
 
-    const supplyPct = windowConfig.minSupplyFlowPct ?? '';
-    const supplyUsd = windowConfig.minSupplyFlowUsd ?? '';
-    const supplyParts: string[] = [];
-    if (supplyPct) supplyParts.push(`+${supplyPct}%`);
-    if (supplyUsd) supplyParts.push(`+$${formatReadable(Number(supplyUsd))}`);
-    if (supplyParts.length > 0) {
-      windowParts.push(`supply ${supplyParts.join(' & ')}`);
-    }
+    if (!supply && !borrow) continue;
 
-    const borrowPct = windowConfig.minBorrowFlowPct ?? '';
-    const borrowUsd = windowConfig.minBorrowFlowUsd ?? '';
-    const borrowParts: string[] = [];
-    if (borrowPct) borrowParts.push(`+${borrowPct}%`);
-    if (borrowUsd) borrowParts.push(`+$${formatReadable(Number(borrowUsd))}`);
-    if (borrowParts.length > 0) {
-      windowParts.push(`borrow ${borrowParts.join(' & ')}`);
-    }
+    const conditions: string[] = [];
+    if (supply) conditions.push(`Supply ${formatThreshold(supply)}`);
+    if (borrow) conditions.push(`Borrow ${formatThreshold(borrow)}`);
 
-    if (windowParts.length > 0) {
-      parts.push(`${label}: ${windowParts.join(', ')}`);
-    }
+    parts.push(`${label}: ${conditions.join(', ')}`);
   }
 
   if (parts.length === 0) return 'No thresholds set';
   return parts.join(' | ');
 }
 
-function CompactInput({
+function PercentInput({
   value,
   onChange,
-  disabled,
-  prefix,
-  suffix,
+  placeholder = '0',
 }: {
   value: string;
   onChange: (v: string) => void;
-  disabled: boolean;
-  prefix?: string;
-  suffix?: string;
+  placeholder?: string;
 }) {
   return (
-    <div className="flex items-center gap-0.5">
-      {prefix && <span className="font-inter text-[10px] text-secondary">{prefix}</span>}
+    <div className="flex items-center">
       <Input
         type="text"
-        inputMode="numeric"
+        inputMode="decimal"
         value={value}
         onChange={(e) => {
-          const stripped = e.target.value.replace(/[^0-9.]/g, '');
-          const parts = stripped.split('.');
-          const result = parts.length <= 1 ? stripped : `${parts[0]}.${parts.slice(1).join('')}`;
-          onChange(result);
+          // Allow negative numbers and decimals
+          const v = e.target.value;
+          if (v === '' || v === '-' || /^-?\d*\.?\d*$/.test(v)) {
+            onChange(v);
+          }
         }}
-        placeholder="-"
-        disabled={disabled}
-        className="font-inter h-6 w-12 px-1 text-center text-xs"
+        placeholder={placeholder}
+        className="font-inter h-8 w-16 px-2 text-center text-sm"
       />
-      {suffix && <span className="font-inter text-[10px] text-secondary">{suffix}</span>}
+      <span className="ml-1 text-xs text-secondary">%</span>
     </div>
   );
 }
@@ -100,15 +87,21 @@ export function TrendingDetail() {
   const matchingMarkets = useMemo(() => {
     if (!isEnabled || metricsMap.size === 0) return [];
 
-    const matches: Array<{ market: Market; supplyFlowPct1h: number }> = [];
+    const matches: Array<{ market: Market; supplyFlowPct: number; window: string }> = [];
 
     for (const [key, metrics] of metricsMap) {
       if (matchesCustomTag(metrics, customTagConfig)) {
         const market = allMarkets.find((m) => getMetricsKey(m.morphoBlue.chain.id, m.uniqueKey) === key);
         if (market) {
+          // Find which window matched for display
+          const matchedWindow = TIME_WINDOWS.find(({ value }) => {
+            const cfg = customTagConfig.windows[value];
+            return cfg.supplyFlowPct || cfg.borrowFlowPct;
+          });
           matches.push({
             market,
-            supplyFlowPct1h: metrics.flows['1h']?.supplyFlowPct ?? 0,
+            supplyFlowPct: metrics.flows['24h']?.supplyFlowPct ?? 0,
+            window: matchedWindow?.label ?? '24h',
           });
         }
       }
@@ -135,7 +128,7 @@ export function TrendingDetail() {
           </div>
           <div>
             <p className="text-sm font-medium text-primary">Custom Tag</p>
-            <p className="text-xs text-secondary">{filterSummary}</p>
+            <p className="text-xs text-secondary max-w-[200px] truncate">{filterSummary}</p>
           </div>
         </div>
         <IconSwitch
@@ -151,23 +144,27 @@ export function TrendingDetail() {
         <>
           {/* Icon Picker */}
           <div className="flex flex-col gap-2 rounded-lg border border-border p-4">
-            <span className="text-xs font-medium text-secondary uppercase">Choose Icon</span>
+            <span className="text-xs font-medium text-secondary uppercase">Icon</span>
             <CustomTagIconPicker
               selectedIcon={customTagConfig.icon}
               onSelect={setCustomTagIcon}
             />
           </div>
 
-          {/* Compact threshold table */}
+          {/* Threshold table - simplified */}
           <div className="overflow-hidden rounded-lg border border-border">
-            <div className="border-b border-border bg-surface px-3 py-2">
+            <div className="border-b border-border bg-surface px-4 py-3">
               <span className="text-xs font-medium text-secondary uppercase">Flow Thresholds</span>
+              <p className="text-[10px] text-secondary mt-1">
+                Use positive values for growth (≥5%), negative for decline (≤-3%)
+              </p>
             </div>
+
             {/* Header */}
-            <div className="grid grid-cols-[50px_1fr_1fr] gap-2 border-b border-border px-3 py-2">
-              <div />
-              <div className="text-[10px] font-medium uppercase tracking-wide text-secondary">Supply</div>
-              <div className="text-[10px] font-medium uppercase tracking-wide text-secondary">Borrow</div>
+            <div className="grid grid-cols-3 gap-4 border-b border-border px-4 py-2 bg-surface/50">
+              <div className="text-xs font-medium text-secondary">Period</div>
+              <div className="text-xs font-medium text-secondary text-center">Supply</div>
+              <div className="text-xs font-medium text-secondary text-center">Borrow</div>
             </div>
 
             {/* Rows */}
@@ -177,39 +174,19 @@ export function TrendingDetail() {
               return (
                 <div
                   key={window}
-                  className="grid grid-cols-[50px_1fr_1fr] items-center gap-2 border-b border-border px-3 py-2 last:border-b-0"
+                  className="grid grid-cols-3 gap-4 items-center px-4 py-3 border-b border-border last:border-b-0"
                 >
-                  <div className="text-xs font-medium text-primary">{label}</div>
-
-                  {/* Supply inputs */}
-                  <div className="flex items-center gap-1.5">
-                    <CompactInput
-                      value={config.minSupplyFlowPct}
-                      onChange={(v) => handleChange(window, 'minSupplyFlowPct', v)}
-                      disabled={false}
-                      suffix="%"
-                    />
-                    <CompactInput
-                      value={config.minSupplyFlowUsd}
-                      onChange={(v) => handleChange(window, 'minSupplyFlowUsd', v.replace(/[^0-9]/g, ''))}
-                      disabled={false}
-                      prefix="$"
+                  <div className="text-sm text-primary">{label}</div>
+                  <div className="flex justify-center">
+                    <PercentInput
+                      value={config.supplyFlowPct}
+                      onChange={(v) => handleChange(window, 'supplyFlowPct', v)}
                     />
                   </div>
-
-                  {/* Borrow inputs */}
-                  <div className="flex items-center gap-1.5">
-                    <CompactInput
-                      value={config.minBorrowFlowPct}
-                      onChange={(v) => handleChange(window, 'minBorrowFlowPct', v)}
-                      disabled={false}
-                      suffix="%"
-                    />
-                    <CompactInput
-                      value={config.minBorrowFlowUsd}
-                      onChange={(v) => handleChange(window, 'minBorrowFlowUsd', v.replace(/[^0-9]/g, ''))}
-                      disabled={false}
-                      prefix="$"
+                  <div className="flex justify-center">
+                    <PercentInput
+                      value={config.borrowFlowPct}
+                      onChange={(v) => handleChange(window, 'borrowFlowPct', v)}
                     />
                   </div>
                 </div>
@@ -219,15 +196,15 @@ export function TrendingDetail() {
 
           {/* Preview */}
           <div className="overflow-hidden rounded-lg border border-border">
-            <div className="flex items-center justify-between border-b border-border bg-surface px-3 py-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-secondary">Preview</span>
+            <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-2">
+              <span className="text-xs font-medium uppercase text-secondary">Preview</span>
               <span className="text-xs text-secondary">
                 {totalMatches > 0 ? `${totalMatches} match${totalMatches !== 1 ? 'es' : ''}` : 'No matches'}
               </span>
             </div>
-            <div className="px-3 py-2">
+            <div className="p-4">
               {matchingMarkets.length > 0 ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   {matchingMarkets.slice(0, 3).map((m) => (
                     <div
                       key={m.market.uniqueKey}
@@ -241,10 +218,14 @@ export function TrendingDetail() {
                         showOracle={false}
                         iconSize={16}
                       />
-                      <span className="text-xs text-green-500">+{m.supplyFlowPct1h.toFixed(1)}%</span>
+                      <span className={`text-xs ${m.supplyFlowPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {m.supplyFlowPct >= 0 ? '+' : ''}{m.supplyFlowPct.toFixed(1)}%
+                      </span>
                     </div>
                   ))}
-                  {totalMatches > 3 && <span className="text-[10px] text-secondary">+{totalMatches - 3} more</span>}
+                  {totalMatches > 3 && (
+                    <span className="text-xs text-secondary">+{totalMatches - 3} more</span>
+                  )}
                 </div>
               ) : (
                 <span className="text-xs text-secondary">No markets match current criteria</span>
