@@ -40,6 +40,9 @@ export type MarketMetrics = {
   // Key flags
   everLiquidated: boolean;
   marketScore: number | null;
+  // Backend-computed trending signal (our curated "hot markets")
+  isTrending: boolean;
+  trendingReason: string | null;
   // State and flows
   currentState: MarketCurrentState;
   flows: Record<FlowTimeWindow, MarketFlowData>;
@@ -193,14 +196,16 @@ export const parseFlowAssets = (flowAssets: string, decimals: number): number =>
 };
 
 /**
- * Determines if a market is trending based on flow thresholds.
+ * Determines if a market matches user's custom signal thresholds.
  * All non-empty thresholds must be met (AND logic).
  * Only positive flows (inflows) are considered.
+ *
+ * Note: This is for user-defined signals, separate from backend trending.
  */
-export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: TrendingConfig): boolean => {
-  if (!trendingConfig.enabled) return false;
+export const matchesCustomSignal = (metrics: MarketMetrics, signalConfig: TrendingConfig): boolean => {
+  if (!signalConfig.enabled) return false;
 
-  for (const [window, config] of Object.entries(trendingConfig.windows)) {
+  for (const [window, config] of Object.entries(signalConfig.windows)) {
     const supplyPct = config?.minSupplyFlowPct ?? '';
     const supplyUsd = config?.minSupplyFlowUsd ?? '';
     const borrowPct = config?.minBorrowFlowPct ?? '';
@@ -234,7 +239,7 @@ export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: Trendin
     }
   }
 
-  const hasAnyThreshold = Object.values(trendingConfig.windows).some((c) => {
+  const hasAnyThreshold = Object.values(signalConfig.windows).some((c) => {
     const supplyPct = c?.minSupplyFlowPct ?? '';
     const supplyUsd = c?.minSupplyFlowUsd ?? '';
     const borrowPct = c?.minBorrowFlowPct ?? '';
@@ -245,11 +250,33 @@ export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: Trendin
   return hasAnyThreshold;
 };
 
+// Legacy alias for backwards compatibility
+export const isMarketTrending = matchesCustomSignal;
+
 /**
- * Returns a Set of market keys that are currently trending.
- * Uses metricsMap for O(1) lookup and filters based on trending config from preferences.
+ * Returns a Set of market keys that are trending (backend-computed).
+ * Uses isTrending field from Monarch API - our curated "hot markets" signal.
  */
 export const useTrendingMarketKeys = () => {
+  const { metricsMap } = useMarketMetricsMap();
+
+  return useMemo(() => {
+    const keys = new Set<string>();
+
+    for (const [key, metrics] of metricsMap) {
+      if (metrics.isTrending) {
+        keys.add(key);
+      }
+    }
+    return keys;
+  }, [metricsMap]);
+};
+
+/**
+ * Returns a Set of market keys matching user's custom signal config.
+ * Separate from backend trending - for user-defined filters.
+ */
+export const useCustomSignalMarketKeys = () => {
   const { metricsMap } = useMarketMetricsMap();
   const { trendingConfig } = useMarketPreferences();
 
@@ -258,7 +285,7 @@ export const useTrendingMarketKeys = () => {
     if (!trendingConfig.enabled) return keys;
 
     for (const [key, metrics] of metricsMap) {
-      if (isMarketTrending(metrics, trendingConfig)) {
+      if (matchesCustomSignal(metrics, trendingConfig)) {
         keys.add(key);
       }
     }
