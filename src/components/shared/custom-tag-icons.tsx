@@ -65,6 +65,8 @@ export function CustomTagIconPicker({ selectedIcon, onSelect, disabled = false }
             type="button"
             onClick={() => onSelect(iconId)}
             disabled={disabled}
+            aria-pressed={isSelected}
+            aria-label={`Select ${iconId} icon`}
             className={`flex h-8 w-8 items-center justify-center rounded-md border transition-all ${
               isSelected
                 ? 'border-primary bg-primary/10 text-primary'

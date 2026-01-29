@@ -72,9 +72,6 @@ type MarketPreferencesState = {
 
   // Custom Tags (user-defined)
   customTagConfig: CustomTagConfig;
-
-  // Legacy alias (points to customTagConfig)
-  trendingConfig: CustomTagConfig;
 };
 
 type MarketPreferencesActions = {
@@ -157,10 +154,6 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       minLiquidityEnabled: false,
       showOfficialTrending: true, // Default ON
       customTagConfig: DEFAULT_CUSTOM_TAG_CONFIG,
-      // Legacy alias getter
-      get trendingConfig() {
-        return this.customTagConfig;
-      },
 
       setSortColumn: (column) => set({ sortColumn: column }),
       setSortDirection: (direction) => set({ sortDirection: direction }),

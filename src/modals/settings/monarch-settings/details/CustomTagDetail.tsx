@@ -90,10 +90,11 @@ export function CustomTagDetail() {
             const cfg = customTagConfig.windows[value];
             return cfg.supplyFlowPct || cfg.borrowFlowPct;
           });
+          const flowKey = matchedWindow?.value ?? '24h';
           matches.push({
             market,
-            supplyFlowPct: metrics.flows['24h']?.supplyFlowPct ?? 0,
-            window: matchedWindow?.label ?? '24h',
+            supplyFlowPct: metrics.flows[flowKey]?.supplyFlowPct ?? 0,
+            window: matchedWindow?.label ?? '24 Hours',
           });
         }
       }
