@@ -6,7 +6,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { cn } from '@/utils/components';
 
 export type ModalVariant = 'standard' | 'compact' | 'custom';
-export type ModalZIndex = 'base' | 'process' | 'selection' | 'settings' | 'custom';
+export type ModalZIndex = 'base' | 'process' | 'selection' | 'settings' | 'top' | 'custom';
 
 type ModalProps = {
   isOpen: boolean;
@@ -28,6 +28,7 @@ const Z_INDEX_MAP: Record<ModalZIndex, { wrapper: string; backdrop: string }> = 
   process: { wrapper: 'z-[2600]', backdrop: 'z-[2590]' },
   settings: { wrapper: 'z-[3000]', backdrop: 'z-[2990]' },
   selection: { wrapper: 'z-[3200]', backdrop: 'z-[3190]' },
+  top: { wrapper: 'z-[3400]', backdrop: 'z-[3390]' },
   custom: { wrapper: '', backdrop: '' },
 };
 

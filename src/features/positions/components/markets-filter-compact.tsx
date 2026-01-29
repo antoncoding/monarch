@@ -6,7 +6,7 @@ import { Divider } from '@/components/ui/divider';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Tooltip } from '@/components/ui/tooltip';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
+import { Modal, ModalBody, ModalFooter, ModalHeader, type ModalZIndex } from '@/components/common/Modal';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useDisclosure } from '@/hooks/useDisclosure';
@@ -21,11 +21,12 @@ import { parseNumericThreshold } from '@/utils/markets';
 type MarketFilterProps = {
   className?: string;
   variant?: 'ghost' | 'button';
+  zIndex?: ModalZIndex;
 };
 
 type DetailViewType = 'filter-thresholds' | 'trusted-vaults' | 'custom-tag-config';
 
-export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps) {
+export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings' }: MarketFilterProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const { open: openModal } = useModal();
 
@@ -105,7 +106,7 @@ export function MarketFilter({ className, variant = 'ghost' }: MarketFilterProps
         onOpenChange={onOpenChange}
         size="md"
         backdrop="opaque"
-        zIndex="settings"
+        zIndex={zIndex}
       >
         {(close) => (
           <>
