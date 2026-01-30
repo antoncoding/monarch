@@ -199,7 +199,7 @@ export function EditAllocators({
                       />
                       {feePercent !== null && (
                         <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-secondary dark:bg-gray-800">
-                          {feePercent}% fee on generated yield
+                          {feePercent > 0 ? `${feePercent}% fee on generated yield` : 'No fee'}
                         </span>
                       )}
                     </div>

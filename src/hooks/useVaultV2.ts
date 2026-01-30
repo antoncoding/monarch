@@ -484,7 +484,7 @@ export function useVaultV2({
         throw allocatorError;
       }
     },
-    [account, chainIdToUse, sendAllocatorTx, vaultAddress, cacheAllocators],
+    [account, chainIdToUse, sendAllocatorTx, vaultAddress, cacheAllocators, queryClient],
   );
 
   const swapAllocator = useCallback(
