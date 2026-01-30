@@ -10,6 +10,51 @@ import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
 import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 
+export type PerformanceFeeConfig = {
+  fee: bigint;
+  recipient: Address;
+};
+
+/**
+ * Builds timelocked transaction calls for setting performance fee recipient and fee.
+ * Recipient must be set before fee. Returns submit + execute calls for each.
+ */
+function buildPerformanceFeeCalls(config: PerformanceFeeConfig): `0x${string}`[] {
+  const txs: `0x${string}`[] = [];
+
+  // Set recipient first (required before setting fee)
+  const setRecipientTx = encodeFunctionData({
+    abi: vaultv2Abi,
+    functionName: 'setPerformanceFeeRecipient',
+    args: [config.recipient],
+  });
+
+  const submitSetRecipientTx = encodeFunctionData({
+    abi: vaultv2Abi,
+    functionName: 'submit',
+    args: [setRecipientTx],
+  });
+
+  txs.push(submitSetRecipientTx, setRecipientTx);
+
+  // Then set fee
+  const setFeeTx = encodeFunctionData({
+    abi: vaultv2Abi,
+    functionName: 'setPerformanceFee',
+    args: [config.fee],
+  });
+
+  const submitSetFeeTx = encodeFunctionData({
+    abi: vaultv2Abi,
+    functionName: 'submit',
+    args: [setFeeTx],
+  });
+
+  txs.push(submitSetFeeTx, setFeeTx);
+
+  return txs;
+}
+
 /**
  * @notice Reading and Writing hook (via wagmi) for Morpho V2 Vaults
  */
@@ -142,6 +187,17 @@ export function useVaultV2({
     errorText: 'Failed to update allocator',
     pendingDescription: 'Updating allocator status',
     successDescription: 'Allocator status changed',
+    chainId: chainIdToUse,
+    onSuccess: onTransactionSuccess,
+  });
+
+  const { isConfirming: isSwappingAllocator, sendTransactionAsync: sendSwapAllocatorTx } = useTransactionWithToast({
+    toastId: `swap-allocator-${vaultAddress ?? 'unknown'}`,
+    pendingText: 'Swapping allocator',
+    successText: 'Allocators swapped',
+    errorText: 'Failed to swap allocators',
+    pendingDescription: 'Changing from old to new allocator',
+    successDescription: 'Allocators swapped successfully',
     chainId: chainIdToUse,
     onSuccess: onTransactionSuccess,
   });
@@ -374,9 +430,12 @@ export function useVaultV2({
   );
 
   const setAllocator = useCallback(
-    async (allocator: Address, isAllocator: boolean): Promise<boolean> => {
+    async (allocator: Address, isAllocator: boolean, performanceFeeConfig?: PerformanceFeeConfig): Promise<boolean> => {
       if (!account || !vaultAddress) return false;
 
+      const txs: `0x${string}`[] = [];
+
+      // Build allocator transaction calls
       const setAllocatorTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'setIsAllocator',
@@ -389,10 +448,17 @@ export function useVaultV2({
         args: [setAllocatorTx],
       });
 
+      txs.push(submitSetAllocatorTx, setAllocatorTx);
+
+      // Add performance fee calls if provided (when adding or removing allocator)
+      if (performanceFeeConfig !== undefined) {
+        txs.push(...buildPerformanceFeeCalls(performanceFeeConfig));
+      }
+
       const multicallTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'multicall',
-        args: [[submitSetAllocatorTx, setAllocatorTx]],
+        args: [txs],
       });
 
       try {
@@ -419,6 +485,77 @@ export function useVaultV2({
       }
     },
     [account, chainIdToUse, sendAllocatorTx, vaultAddress, cacheAllocators],
+  );
+
+  const swapAllocator = useCallback(
+    async (oldAllocator: Address, newAllocator: Address, performanceFeeConfig?: PerformanceFeeConfig): Promise<boolean> => {
+      if (!account || !vaultAddress) return false;
+
+      const txs: `0x${string}`[] = [];
+
+      // Remove old allocator
+      const removeAllocatorTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'setIsAllocator',
+        args: [oldAllocator, false],
+      });
+
+      const submitRemoveAllocatorTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'submit',
+        args: [removeAllocatorTx],
+      });
+
+      txs.push(submitRemoveAllocatorTx, removeAllocatorTx);
+
+      // Add new allocator
+      const addAllocatorTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'setIsAllocator',
+        args: [newAllocator, true],
+      });
+
+      const submitAddAllocatorTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'submit',
+        args: [addAllocatorTx],
+      });
+
+      txs.push(submitAddAllocatorTx, addAllocatorTx);
+
+      // Add performance fee calls if provided
+      if (performanceFeeConfig !== undefined) {
+        txs.push(...buildPerformanceFeeCalls(performanceFeeConfig));
+      }
+
+      const multicallTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'multicall',
+        args: [txs],
+      });
+
+      try {
+        await sendSwapAllocatorTx({
+          account,
+          to: vaultAddress,
+          data: multicallTx,
+          chainId: chainIdToUse,
+        });
+
+        // Push new allocator to cache
+        cacheAllocators([newAllocator]);
+        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
+
+        return true;
+      } catch (swapError) {
+        if (swapError instanceof Error && swapError.message.toLowerCase().includes('reject')) {
+          return false;
+        }
+        console.error('Failed to swap allocator', swapError);
+        throw swapError;
+      }
+    },
+    [account, chainIdToUse, sendSwapAllocatorTx, vaultAddress, cacheAllocators, queryClient],
   );
 
   const updateCaps = useCallback(
@@ -708,7 +845,8 @@ export function useVaultV2({
     updateNameAndSymbol,
     isUpdatingMetadata,
     setAllocator,
-    isUpdatingAllocator,
+    swapAllocator,
+    isUpdatingAllocator: isUpdatingAllocator || isSwappingAllocator,
     updateCaps,
     isUpdatingCaps,
     deposit,

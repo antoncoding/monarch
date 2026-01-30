@@ -390,6 +390,10 @@ export type AgentMetadata = {
   name: string;
   strategyDescription: string;
   image: string;
+  /** Performance fee in WAD (1e18 = 100%). e.g., 0.1e18 = 10% */
+  performanceFee?: bigint;
+  /** Address that receives the performance fee */
+  performanceFeeRecipient?: Address;
 };
 
 export type MarketActivityTransaction = {

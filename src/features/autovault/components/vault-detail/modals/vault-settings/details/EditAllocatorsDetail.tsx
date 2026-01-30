@@ -17,7 +17,7 @@ export function EditAllocatorsDetail({ vaultAddress, chainId, onBack }: EditAllo
   const { address: connectedAddress } = useConnection();
 
   const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
-  const { isOwner, setAllocator, isUpdatingAllocator } = useVaultV2({
+  const { isOwner, setAllocator, swapAllocator, isUpdatingAllocator } = useVaultV2({
     vaultAddress,
     chainId,
     connectedAddress,
@@ -33,8 +33,9 @@ export function EditAllocatorsDetail({ vaultAddress, chainId, onBack }: EditAllo
       chainId={chainId}
       isOwner={isOwner}
       isUpdating={isUpdatingAllocator}
-      onAddAllocator={(allocator) => setAllocator(allocator, true)}
-      onRemoveAllocator={(allocator) => setAllocator(allocator, false)}
+      onAddAllocator={(allocator, performanceFeeConfig) => setAllocator(allocator, true, performanceFeeConfig)}
+      onRemoveAllocator={(allocator, performanceFeeConfig) => setAllocator(allocator, false, performanceFeeConfig)}
+      onSwapAllocator={swapAllocator}
       onBack={onBack}
     />
   );
