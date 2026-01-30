@@ -56,17 +56,13 @@ export function EditAllocators({
         const isMonarchAgent = findAgent(allocator) !== undefined;
 
         // If removing a Monarch agent, check if there are other Monarch agents remaining
-        const otherMonarchAgents = allocators.filter(
-          (a) => a.toLowerCase() !== allocator.toLowerCase() && findAgent(a) !== undefined
-        );
+        const otherMonarchAgents = allocators.filter((a) => a.toLowerCase() !== allocator.toLowerCase() && findAgent(a) !== undefined);
 
         // Reset performance fee to 0 if removing the last Monarch agent
         const shouldResetFee = isMonarchAgent && otherMonarchAgents.length === 0;
 
         // When resetting, set fee to 0 and recipient to zero address
-        const resetConfig: PerformanceFeeConfig | undefined = shouldResetFee
-          ? { fee: 0n, recipient: zeroAddress }
-          : undefined;
+        const resetConfig: PerformanceFeeConfig | undefined = shouldResetFee ? { fee: 0n, recipient: zeroAddress } : undefined;
 
         await onRemoveAllocator(allocator, resetConfig);
       } finally {
@@ -127,9 +123,7 @@ export function EditAllocators({
             <p className="text-xs font-medium text-secondary">Current Allocators</p>
             {allocators.map((address) => {
               const agent = findAgent(address);
-              const feePercent = agent?.performanceFee !== undefined
-                ? Number(agent.performanceFee) / 1e16
-                : null;
+              const feePercent = agent?.performanceFee !== undefined ? Number(agent.performanceFee) / 1e16 : null;
 
               return (
                 <div
@@ -150,27 +144,25 @@ export function EditAllocators({
                         </span>
                       )}
                     </div>
-                    {agent?.strategyDescription && (
-                      <p className="text-xs text-secondary">{agent.strategyDescription}</p>
-                    )}
+                    {agent?.strategyDescription && <p className="text-xs text-secondary">{agent.strategyDescription}</p>}
                   </div>
                   <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => void handleRemove(address)}
-                  disabled={!isOwner || isUpdating}
-                >
-                  {isTargetLoading(address) ? (
-                    <span className="flex items-center gap-2">
-                      <Spinner size={12} /> Removing...
-                    </span>
-                  ) : needSwitchChain ? (
-                    'Switch Network'
-                  ) : (
-                    'Remove'
-                  )}
-                </Button>
-              </div>
+                    variant="default"
+                    size="sm"
+                    onClick={() => void handleRemove(address)}
+                    disabled={!isOwner || isUpdating}
+                  >
+                    {isTargetLoading(address) ? (
+                      <span className="flex items-center gap-2">
+                        <Spinner size={12} /> Removing...
+                      </span>
+                    ) : needSwitchChain ? (
+                      'Switch Network'
+                    ) : (
+                      'Remove'
+                    )}
+                  </Button>
+                </div>
               );
             })}
           </div>
@@ -180,9 +172,10 @@ export function EditAllocators({
           <div className="space-y-3">
             <p className="text-xs font-medium text-secondary">{allocators.length > 0 ? 'Available to Add' : 'Select Allocator'}</p>
             {availableAllocators.map((agent) => {
-              const feePercent = agent.performanceFee !== undefined
-                ? Number(agent.performanceFee) / 1e16  // Convert WAD to percentage
-                : null;
+              const feePercent =
+                agent.performanceFee !== undefined
+                  ? Number(agent.performanceFee) / 1e16 // Convert WAD to percentage
+                  : null;
 
               return (
                 <div
@@ -205,25 +198,25 @@ export function EditAllocators({
                     </div>
                     <p className="text-xs text-secondary">{agent.strategyDescription}</p>
                   </div>
-                <Button
-                  variant="surface"
-                  size="sm"
-                  onClick={() => void handleAddOrSwap(agent.address as Address)}
-                  disabled={!isOwner || isUpdating}
-                >
-                  {isTargetLoading(agent.address) ? (
-                    <span className="flex items-center gap-2">
-                      <Spinner size={12} /> {currentMonarchAgent ? 'Swapping...' : 'Adding...'}
-                    </span>
-                  ) : needSwitchChain ? (
-                    'Switch Network'
-                  ) : currentMonarchAgent ? (
-                    'Swap'
-                  ) : (
-                    'Add'
-                  )}
-                </Button>
-              </div>
+                  <Button
+                    variant="surface"
+                    size="sm"
+                    onClick={() => void handleAddOrSwap(agent.address as Address)}
+                    disabled={!isOwner || isUpdating}
+                  >
+                    {isTargetLoading(agent.address) ? (
+                      <span className="flex items-center gap-2">
+                        <Spinner size={12} /> {currentMonarchAgent ? 'Swapping...' : 'Adding...'}
+                      </span>
+                    ) : needSwitchChain ? (
+                      'Switch Network'
+                    ) : currentMonarchAgent ? (
+                      'Swap'
+                    ) : (
+                      'Add'
+                    )}
+                  </Button>
+                </div>
               );
             })}
           </div>

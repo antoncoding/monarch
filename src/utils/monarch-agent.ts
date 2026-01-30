@@ -1,4 +1,4 @@
-import { zeroAddress, type Address } from 'viem';
+import { zeroAddress } from 'viem';
 import type { AgentMetadata } from './types';
 
 const agentApyImage: string = require('@/imgs/agent/agent-apy.png') as string;
@@ -10,14 +10,13 @@ export enum KnownAgents {
 
 // Performance fee constants (WAD format: 1e18 = 100%)
 const PERFORMANCE_FEE_10_PERCENT = 100000000000000000n; // 0.1e18 = 10%
-const PERFORMANCE_FEE_5_PERCENT = 50000000000000000n; // 0.05e18 = 5%
 
 // v2 rebalancer EOA // identical now
 export const v2AgentsBase: AgentMetadata[] = [
   {
-    name: 'Max APY Agent',
+    name: 'Chill APY Agent',
     address: KnownAgents.MAX_APY,
-    strategyDescription: 'Rebalances every 4 hours.',
+    strategyDescription: 'Rebalances every 4 hours. Finds highest APY for each vault independently.',
     image: agentApyImage,
     performanceFee: 0n,
     performanceFeeRecipient: zeroAddress,
@@ -25,7 +24,7 @@ export const v2AgentsBase: AgentMetadata[] = [
   {
     name: 'Rapid Max APY',
     address: KnownAgents.MAX_APY_HOURLY,
-    strategyDescription: 'Rebalances every 5 minutes if necessary, optimizing for APY.',
+    strategyDescription: 'Rebalances every 5 minutes if necessary, optimizing for highest APY considering all managed auto vaults.',
     image: agentApyImage,
     performanceFee: PERFORMANCE_FEE_10_PERCENT,
     performanceFeeRecipient: KnownAgents.MAX_APY_HOURLY,

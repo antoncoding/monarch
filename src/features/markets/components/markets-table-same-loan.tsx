@@ -597,7 +597,10 @@ export function MarketsTableWithSameLoanAsset({
         />
         {hasActiveFilters && <ClearFiltersButton onClick={clearAllFilters} />}
         <div className="flex items-center gap-2 sm:ml-auto">
-          <MarketFilter variant="button" zIndex={filterZIndex} />
+          <MarketFilter
+            variant="button"
+            zIndex={filterZIndex}
+          />
           <Button
             variant="default"
             size="md"
