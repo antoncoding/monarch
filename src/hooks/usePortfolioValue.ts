@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import type { UserVaultV2 } from '@/data-sources/morpho-api/v2-vaults-full';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import {
   type AssetBreakdownItem,

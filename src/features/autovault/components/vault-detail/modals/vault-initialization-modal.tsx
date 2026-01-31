@@ -15,8 +15,7 @@ import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1A
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
-import { v2AgentsBase } from '@/utils/monarch-agent';
-import { getMorphoAddress } from '@/utils/morpho';
+import { agents } from '@/utils/monarch-agent';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
@@ -163,7 +162,7 @@ function AgentSelectionStep({
         Choose an allocator to automate your vault's allocations. You can change this later in settings.
       </p>
       <div className="space-y-3">
-        {v2AgentsBase.map((agent) => (
+        {agents.map((agent) => (
           <AllocatorCard
             key={agent.address}
             name={agent.name}
@@ -239,7 +238,7 @@ export function VaultInitializationModal() {
   });
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [selectedAgent, setSelectedAgent] = useState<Address | null>((v2AgentsBase.at(0)?.address as Address) ?? null);
+  const [selectedAgent, setSelectedAgent] = useState<Address | null>((agents.at(0)?.address as Address) ?? null);
   const [vaultName, setVaultName] = useState<string>('');
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
   const [deployedAdapter, setDeployedAdapter] = useState<Address>(ZERO_ADDRESS);
@@ -247,10 +246,9 @@ export function VaultInitializationModal() {
 
   const publicClient = usePublicClient({ chainId });
 
-  const morphoAddress = useMemo(() => (chainId ? getMorphoAddress(chainId) : ZERO_ADDRESS), [chainId]);
   const registryAddress = useMemo(() => {
     if (!chainId) return ZERO_ADDRESS;
-    const configured = getNetworkConfig(chainId).vaultConfig?.morphoRegistry;
+    const configured = getNetworkConfig(chainId).autovaultAddresses?.morphoRegistry;
     return (configured as Address | undefined) ?? ZERO_ADDRESS;
   }, [chainId]);
 
@@ -258,10 +256,9 @@ export function VaultInitializationModal() {
   const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : (marketAdapter ?? ZERO_ADDRESS);
   const adapterDetected = adapterAddress !== ZERO_ADDRESS;
 
-  const { deploy, isDeploying, canDeploy } = useDeployMorphoMarketV1Adapter({
+  const { deploy, isDeploying, canDeploy, existingAdapter } = useDeployMorphoMarketV1Adapter({
     vaultAddress: vaultAddressValue,
     chainId,
-    morphoAddress,
   });
 
   const handleDeploy = useCallback(async () => {
@@ -278,7 +275,7 @@ export function VaultInitializationModal() {
       // Wait for transaction receipt
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-      // Parse CreateMorphoMarketV1Adapter event to get adapter address
+      // Parse CreateMorphoMarketV1AdapterV2 event to get adapter address
       const createEvent = receipt.logs.find((log) => {
         try {
           const decoded = decodeEventLog({
@@ -286,7 +283,7 @@ export function VaultInitializationModal() {
             data: log.data,
             topics: log.topics,
           });
-          return decoded.eventName === 'CreateMorphoMarketV1Adapter';
+          return decoded.eventName === 'CreateMorphoMarketV1AdapterV2';
         } catch {
           return false;
         }
@@ -300,7 +297,7 @@ export function VaultInitializationModal() {
         });
 
         // Extract adapter address from event
-        const adapter = (decoded.args as any).morphoMarketV1Adapter as Address;
+        const adapter = (decoded.args as any).morphoMarketV1AdapterV2 as Address;
         setDeployedAdapter(adapter);
 
         // Trigger refetch for subgraph sync
@@ -318,6 +315,16 @@ export function VaultInitializationModal() {
     if (adapterAddress === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS || !vaultAddress || !chainId) return;
 
     try {
+      // Look up performance fee config from the selected agent
+      const agentConfig = selectedAgent ? agents.find((a) => (a.address as Address) === selectedAgent) : undefined;
+      const performanceFeeConfig =
+        agentConfig && agentConfig.performanceFee > 0n
+          ? {
+              fee: agentConfig.performanceFee,
+              recipient: agentConfig.performanceFeeRecipient as Address,
+            }
+          : undefined;
+
       // Note: Adapter cap will be set when user configures market caps
       // Pass name and symbol if provided (will be trimmed and checked in useVaultV2)
       const success = await completeInitialization(
@@ -326,6 +333,7 @@ export function VaultInitializationModal() {
         selectedAgent ?? undefined,
         vaultName || undefined,
         vaultSymbol || undefined,
+        performanceFeeConfig,
       );
       if (!success) {
         return;
@@ -378,19 +386,27 @@ export function VaultInitializationModal() {
   useEffect(() => {
     if (!isOpen) {
       setStepIndex(0);
-      setSelectedAgent((v2AgentsBase.at(0)?.address as Address) ?? null);
+      setSelectedAgent((agents.at(0)?.address as Address) ?? null);
       setVaultName('');
       setVaultSymbol('');
       setDeployedAdapter(ZERO_ADDRESS);
     }
   }, [isOpen]);
 
-  // Auto-advance when adapter already exists (from subgraph)
+  // Auto-advance when adapter already exists (from API or on-chain check)
   useEffect(() => {
-    if (marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
+    // If adapter exists from API or on-chain, auto-advance past deploy step
+    const adapterExistsFromApi = marketAdapter !== ZERO_ADDRESS;
+    const adapterExistsOnChain = existingAdapter !== null;
+
+    if ((adapterExistsFromApi || adapterExistsOnChain) && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
+      // Use on-chain adapter if API doesn't have it yet
+      if (!adapterExistsFromApi && adapterExistsOnChain) {
+        setDeployedAdapter(existingAdapter);
+      }
       setStepIndex(1);
     }
-  }, [marketAdapter, stepIndex, deployedAdapter]);
+  }, [marketAdapter, stepIndex, deployedAdapter, existingAdapter]);
 
   const stepTitle = useMemo(() => {
     switch (currentStep) {

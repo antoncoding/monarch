@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import type { UserVaultV2 } from '@/data-sources/morpho-api/v2-vaults-full';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
