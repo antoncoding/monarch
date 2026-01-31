@@ -1,11 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import { fetchMorphoMarketV1Adapters } from '@/data-sources/subgraph/morpho-market-v1-adapters';
 import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
 import { fetchUserVaultV2AddressesAllNetworks, type UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
-import { getMorphoAddress } from '@/utils/morpho';
-import { getNetworkConfig } from '@/utils/networks';
 import { fetchUserVaultShares } from '@/utils/vaultAllocation';
 
 type UseUserVaultsV2Options = {
@@ -18,14 +15,14 @@ function filterValidVaults(vaults: UserVaultV2[]): UserVaultV2[] {
 }
 
 async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[]> {
-  // Step 1: Fetch vault addresses from subgraph across all networks
+  // Step 1: Fetch vault addresses from Morpho API (filtered by owner client-side)
   const vaultAddresses = await fetchUserVaultV2AddressesAllNetworks(userAddress);
 
   if (vaultAddresses.length === 0) {
     return [];
   }
 
-  // Step 2: Fetch full vault details from Morpho API
+  // Step 2: Fetch full vault details from Morpho API (includes adapters)
   const vaultDetails = await fetchMultipleVaultV2DetailsAcrossNetworks(vaultAddresses);
 
   // Step 3: Filter valid vaults
@@ -35,46 +32,17 @@ async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[
     return [];
   }
 
-  // Step 4: Batch fetch adapters from subgraph for each vault
-  const adapterPromises = validVaults.map(async (vault) => {
-    const networkConfig = getNetworkConfig(vault.networkId);
-    const subgraphUrl = networkConfig?.vaultConfig?.adapterSubgraphEndpoint;
-
-    if (!subgraphUrl) {
-      return { vaultAddress: vault.address, adapter: undefined };
-    }
-
-    try {
-      const morphoAddress = getMorphoAddress(vault.networkId);
-      const adapters = await fetchMorphoMarketV1Adapters({
-        subgraphUrl,
-        parentVault: vault.address as Address,
-        morpho: morphoAddress as Address,
-      });
-
-      return {
-        vaultAddress: vault.address,
-        adapter: adapters.length > 0 ? adapters[0].adapter : undefined,
-      };
-    } catch (error) {
-      console.error(`Failed to fetch adapter for vault ${vault.address}:`, error);
-      return { vaultAddress: vault.address, adapter: undefined };
-    }
-  });
-
-  const adapterResults = await Promise.all(adapterPromises);
-  const adapterMap = new Map(adapterResults.map((r) => [r.vaultAddress.toLowerCase(), r.adapter]));
-
-  // Step 5: Batch fetch user's share balances via multicall
+  // Step 4: Batch fetch user's share balances via multicall
   const shareBalances = await fetchUserVaultShares(
     validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })),
     userAddress,
   );
 
-  // Step 6: Combine all data
+  // Step 5: Combine all data - adapters are already in vault details
   const vaultsWithBalancesAndAdapters = validVaults.map((vault) => ({
     ...vault,
-    adapter: adapterMap.get(vault.address.toLowerCase()),
+    // First adapter is the MorphoMarketV1Adapter
+    adapter: vault.adapters.length > 0 ? (vault.adapters[0] as Address) : undefined,
     balance: shareBalances.get(vault.address.toLowerCase()) ?? 0n,
   }));
 
@@ -85,9 +53,8 @@ async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[
  * Fetches user's V2 vaults using React Query.
  *
  * Data fetching strategy:
- * - Fetches vault addresses from subgraph across all networks
- * - Enriches with vault details from Morpho API
- * - Fetches adapter info from subgraph
+ * - Fetches vault addresses from Morpho API (filtered by owner client-side)
+ * - Enriches with vault details from Morpho API (includes adapters)
  * - Fetches user's share balances via multicall
  * - Returns complete vault data with balances
  *

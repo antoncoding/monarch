@@ -1,46 +1,49 @@
 import { useMemo } from 'react';
 import { type Address, zeroAddress } from 'viem';
 import { useQuery } from '@tanstack/react-query';
-import { fetchMorphoMarketV1Adapters } from '@/data-sources/subgraph/morpho-market-v1-adapters';
-import { getMorphoAddress } from '@/utils/morpho';
-import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
+import { fetchVaultV2Details } from '@/data-sources/morpho-api/v2-vaults';
+import type { SupportedNetworks } from '@/utils/networks';
+
+export type MorphoMarketV1AdapterRecord = {
+  id: string;
+  adapter: Address;
+  parentVault: Address;
+};
 
 export function useMorphoMarketV1Adapters({ vaultAddress, chainId }: { vaultAddress?: Address; chainId: SupportedNetworks }) {
-  const vaultConfig = useMemo(() => {
-    try {
-      return getNetworkConfig(chainId).vaultConfig;
-    } catch (_err) {
-      return undefined;
-    }
-  }, [chainId]);
-
-  const subgraphUrl = vaultConfig?.adapterSubgraphEndpoint ?? null;
-  const morpho = useMemo(() => getMorphoAddress(chainId), [chainId]);
-
   const query = useQuery({
     queryKey: ['morpho-market-v1-adapters', vaultAddress, chainId],
     queryFn: async () => {
-      if (!vaultAddress || !subgraphUrl) {
+      if (!vaultAddress) {
         return [];
       }
 
-      const result = await fetchMorphoMarketV1Adapters({
-        subgraphUrl,
-        parentVault: vaultAddress,
-        morpho,
-      });
+      // Fetch vault details from Morpho API - adapters are included in the response
+      const vaultDetails = await fetchVaultV2Details(vaultAddress, chainId);
 
-      return result;
+      if (!vaultDetails) {
+        return [];
+      }
+
+      // The adapters array from the API contains addresses
+      // We return them in a format compatible with the previous subgraph response
+      return vaultDetails.adapters.map((adapterAddress, index) => ({
+        id: `${vaultAddress}-${index}`,
+        adapter: adapterAddress as Address,
+        parentVault: vaultAddress,
+      }));
     },
-    enabled: Boolean(vaultAddress && subgraphUrl),
+    enabled: Boolean(vaultAddress),
     staleTime: 30_000, // 30 seconds - adapter data is cacheable
   });
 
+  // For now, we just return the first adapter as the MorphoMarketV1 adapter
+  // In the future, we may need to filter by type if multiple adapter types exist
   const morphoMarketV1Adapter = useMemo(() => (query.data && query.data.length > 0 ? query.data[0].adapter : zeroAddress), [query.data]);
 
   return {
     morphoMarketV1Adapter,
-    adapters: query.data ?? [], // all market adapters (should only be just one)
+    adapters: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

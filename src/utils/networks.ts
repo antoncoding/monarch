@@ -1,6 +1,6 @@
 import { type Address, type Chain, defineChain } from 'viem';
 import { arbitrum, base, mainnet, polygon, unichain, monad, hyperEvm as hyperEvmOld } from 'viem/chains';
-import { v2AgentsBase } from './monarch-agent';
+import { baseAgents, agents } from './monarch-agent';
 import type { AgentMetadata } from './types';
 
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -60,10 +60,8 @@ export const hyperEvm = defineChain({
 
 type VaultAgentConfig = {
   v2FactoryAddress: Address;
-  vaultsSubgraphEndpoint?: string; // temporary Subgraph to fetch deployed vaults for users
   morphoRegistry: Address; // the RegistryList contract deployed by morpho!
   marketV1AdapterFactory: Address; // MorphoMarketV1AdapterFactory contract used to create adapters for markets
-  adapterSubgraphEndpoint?: string;
   strategies?: AgentMetadata[];
 };
 
@@ -73,7 +71,7 @@ type NetworkConfig = {
   name: string;
   chain: Chain;
   defaultRPC: string;
-  vaultConfig?: VaultAgentConfig;
+  autovaultAddresses?: VaultAgentConfig;
 
   // used to estimate block number from blocktime
   blocktime: number;
@@ -105,13 +103,11 @@ export const networks: NetworkConfig[] = [
     name: 'Base',
     chain: base,
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_BASE_RPC, 'base-mainnet'),
-    vaultConfig: {
+    autovaultAddresses: {
       v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
-      strategies: v2AgentsBase,
-      vaultsSubgraphEndpoint: 'https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest',
+      strategies: baseAgents,
       morphoRegistry: '0x5C2531Cbd2cf112Cf687da3Cd536708aDd7DB10a',
-      marketV1AdapterFactory: '0x133baC94306B99f6dAD85c381a5be851d8DD717c',
-      adapterSubgraphEndpoint: 'https://gateway.thegraph.com/api/subgraphs/id/8dNeYJ1jDzXQ7KUX43CzAjkuVrY2WgQCJZiDeMDq5EuN',
+      marketV1AdapterFactory: '0x9a1B378C43BA535cDB89934230F0D3890c51C0EB',
     },
     blocktime: 2,
     maxBlockDelay: 5,
@@ -136,6 +132,12 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/unichain.svg') as string,
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_UNICHAIN_RPC, 'unichain-mainnet'),
     name: 'Unichain',
+    autovaultAddresses: {
+      v2FactoryAddress: '0xC9b34c108014B44e5a189A830e7e04c56704a0c9',
+      strategies: agents,
+      morphoRegistry: '0xB9130D2A87d7c60ED7E7e4b25bdA6e3E6841becB',
+      marketV1AdapterFactory: '0x9a13bdA35F98811fbAcf097966b2C838f3F9c58C',
+    },
     blocktime: 1,
     maxBlockDelay: 10,
     explorerUrl: 'https://uniscan.xyz',
@@ -147,6 +149,12 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/arbitrum.png') as string,
     name: 'Arbitrum',
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ARBITRUM_RPC, 'arb-mainnet'),
+    autovaultAddresses: {
+      v2FactoryAddress: '0x6b46fa3cc9EBF8aB230aBAc664E37F2966Bf7971',
+      strategies: agents,
+      morphoRegistry: '0xc00eb3c7aD1aE986A7f05F5A9d71aCa39c763C65',
+      marketV1AdapterFactory: '0xeF84b1ecEbe43283ec5AF95D7a5c4D7dE0a9859b',
+    },
     blocktime: 0.25,
     maxBlockDelay: 2,
     explorerUrl: 'https://arbiscan.io',
@@ -170,6 +178,12 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/monad.svg') as string,
     name: 'Monad',
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_MONAD_RPC, 'monad-mainnet'),
+    autovaultAddresses: {
+      v2FactoryAddress: '0x8B2F922162FBb60A6a072cC784A2E4168fB0bb0c',
+      strategies: agents,
+      morphoRegistry: '0x6a42f8b46224baA4DbBBc2F860F4675eeA7bd52B',
+      marketV1AdapterFactory: '0xa00666E86C7e2FA8d2c78d9481E687e098340180',
+    },
     blocktime: 0.4,
     maxBlockDelay: 5,
     nativeTokenSymbol: 'MON',
@@ -204,14 +218,12 @@ export const getMaxBlockDelay = (chainId: SupportedNetworks): number => {
 
 export const isAgentAvailable = (chainId: number): boolean => {
   const network = getNetworkConfig(chainId);
-  if (!network || !network.vaultConfig) return false;
-
-  return network.vaultConfig.vaultsSubgraphEndpoint !== undefined;
+  return network?.autovaultAddresses !== undefined;
 };
 
 export const getAgentConfig = (chainId: SupportedNetworks): VaultAgentConfig | undefined => {
   const network = getNetworkConfig(chainId);
-  return network?.vaultConfig;
+  return network?.autovaultAddresses;
 };
 
 export const getNetworkImg = (chainId: number) => {

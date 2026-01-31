@@ -1,8 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, zeroAddress } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
 import { useConnection, useChainId } from 'wagmi';
 import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
-import { getMorphoAddress } from '@/utils/morpho';
 import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
@@ -11,11 +10,9 @@ const TX_TOAST_ID = 'deploy-morpho-market-adapter';
 export function useDeployMorphoMarketV1Adapter({
   vaultAddress,
   chainId,
-  morphoAddress,
 }: {
   vaultAddress?: Address;
   chainId?: SupportedNetworks | number;
-  morphoAddress?: Address;
 }) {
   const { address: account } = useConnection();
   const connectedChainId = useChainId();
@@ -23,18 +20,13 @@ export function useDeployMorphoMarketV1Adapter({
 
   const factoryAddress = useMemo(() => {
     try {
-      return getNetworkConfig(resolvedChainId).vaultConfig?.marketV1AdapterFactory ?? null;
+      return getNetworkConfig(resolvedChainId).autovaultAddresses?.marketV1AdapterFactory ?? null;
     } catch (_error) {
       return null;
     }
   }, [resolvedChainId]);
 
-  const morpho = useMemo(() => {
-    if (morphoAddress) return morphoAddress;
-    return getMorphoAddress(resolvedChainId);
-  }, [morphoAddress, resolvedChainId]);
-
-  const canDeploy = Boolean(factoryAddress && vaultAddress && morpho && morpho !== zeroAddress);
+  const canDeploy = Boolean(factoryAddress && vaultAddress);
 
   const { isConfirming: isDeploying, sendTransactionAsync } = useTransactionWithToast({
     toastId: TX_TOAST_ID,
@@ -54,13 +46,13 @@ export function useDeployMorphoMarketV1Adapter({
       to: factoryAddress as Address,
       data: encodeFunctionData({
         abi: adapterFactoryAbi,
-        functionName: 'createMorphoMarketV1Adapter',
-        args: [vaultAddress as Address, morpho as Address],
+        functionName: 'createMorphoMarketV1AdapterV2',
+        args: [vaultAddress as Address],
       }),
     });
 
     return txHash;
-  }, [account, canDeploy, factoryAddress, morpho, sendTransactionAsync, vaultAddress]);
+  }, [account, canDeploy, factoryAddress, sendTransactionAsync, vaultAddress]);
 
   return {
     deploy,
