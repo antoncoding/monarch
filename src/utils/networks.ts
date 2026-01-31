@@ -85,6 +85,9 @@ type NetworkConfig = {
   wrappedNativeToken?: Address;
 };
 
+// Autovault addresses from here: https://docs.morpho.org/get-started/resources/addresses/
+// Commented out networks are ones that Morpho GraphQL API doesn't support.
+// Mainnet is too expensive to operate on for now. Solution in progress.
 export const networks: NetworkConfig[] = [
   {
     network: SupportedNetworks.Mainnet,
@@ -119,6 +122,12 @@ export const networks: NetworkConfig[] = [
     chain: polygon,
     logo: require('../imgs/chains/polygon.png') as string,
     name: 'Polygon',
+    autovaultAddresses: {
+      v2FactoryAddress: '0xC11a53eE9B1eCc7a068D8e40F8F17926584F97Cf',
+      strategies: agents,
+      morphoRegistry: '0xb70a43821d2707fA9d0EDd9511CC499F468Ba564',
+      marketV1AdapterFactory: '0xc0006f52B38625C283dd2f972dD9B779A5851Dd0',
+    },
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_POLYGON_RPC, 'polygon-mainnet'),
     blocktime: 2,
     maxBlockDelay: 20,
@@ -132,12 +141,12 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/unichain.svg') as string,
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_UNICHAIN_RPC, 'unichain-mainnet'),
     name: 'Unichain',
-    autovaultAddresses: {
-      v2FactoryAddress: '0xC9b34c108014B44e5a189A830e7e04c56704a0c9',
-      strategies: agents,
-      morphoRegistry: '0xB9130D2A87d7c60ED7E7e4b25bdA6e3E6841becB',
-      marketV1AdapterFactory: '0x9a13bdA35F98811fbAcf097966b2C838f3F9c58C',
-    },
+    // autovaultAddresses: {
+    //   v2FactoryAddress: '0xC9b34c108014B44e5a189A830e7e04c56704a0c9',
+    //   strategies: agents,
+    //   morphoRegistry: '0xB9130D2A87d7c60ED7E7e4b25bdA6e3E6841becB',
+    //   marketV1AdapterFactory: '0x9a13bdA35F98811fbAcf097966b2C838f3F9c58C',
+    // },
     blocktime: 1,
     maxBlockDelay: 10,
     explorerUrl: 'https://uniscan.xyz',
@@ -149,12 +158,12 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/arbitrum.png') as string,
     name: 'Arbitrum',
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ARBITRUM_RPC, 'arb-mainnet'),
-    autovaultAddresses: {
-      v2FactoryAddress: '0x6b46fa3cc9EBF8aB230aBAc664E37F2966Bf7971',
-      strategies: agents,
-      morphoRegistry: '0xc00eb3c7aD1aE986A7f05F5A9d71aCa39c763C65',
-      marketV1AdapterFactory: '0xeF84b1ecEbe43283ec5AF95D7a5c4D7dE0a9859b',
-    },
+    // autovaultAddresses: {
+    //   v2FactoryAddress: '0x6b46fa3cc9EBF8aB230aBAc664E37F2966Bf7971',
+    //   strategies: agents,
+    //   morphoRegistry: '0xc00eb3c7aD1aE986A7f05F5A9d71aCa39c763C65',
+    //   marketV1AdapterFactory: '0xeF84b1ecEbe43283ec5AF95D7a5c4D7dE0a9859b',
+    // },
     blocktime: 0.25,
     maxBlockDelay: 2,
     explorerUrl: 'https://arbiscan.io',
@@ -165,6 +174,12 @@ export const networks: NetworkConfig[] = [
     chain: hyperEvm,
     logo: require('../imgs/chains/hyperevm.png') as string,
     name: 'HyperEVM',
+    // autovaultAddresses: {
+    //   v2FactoryAddress: '0xD7217E5687FF1071356C780b5fe4803D9D967da7',
+    //   strategies: agents,
+    //   morphoRegistry: '0x857B55cEb57dA0C2A83EE08a8dB529B931089aee',
+    //   marketV1AdapterFactory: '0xaEff6Ef4B7bbfbAadB18b634A8F11392CBeB72Be',
+    // },
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_HYPEREVM_RPC, 'hyperliquid-mainnet'),
     blocktime: 1,
     maxBlockDelay: 5,
