@@ -18,6 +18,7 @@ import { useModal } from '@/hooks/useModal';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
+import { IndexingVaultsCard } from './components/indexing-vaults-card';
 import { useConnection } from 'wagmi';
 import { SupportedNetworks } from '@/utils/networks';
 
@@ -32,11 +33,14 @@ export default function Positions() {
 
   // Fetch user's auto vaults
   const {
-    data: vaults = [],
+    data: vaultsResult,
     isLoading: isVaultsLoading,
     isRefetching: isVaultsRefetching,
     refetch: refetchVaults,
   } = useUserVaultsV2Query({ userAddress: account as Address });
+
+  const vaults = vaultsResult?.vaults ?? [];
+  const indexingVaults = vaultsResult?.indexingVaults ?? [];
 
   const router = useRouter();
 
@@ -49,7 +53,8 @@ export default function Positions() {
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
   const hasVaults = vaults && vaults.length > 0;
-  const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasVaults;
+  const hasIndexingVaults = indexingVaults && indexingVaults.length > 0;
+  const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasVaults && !hasIndexingVaults;
 
   const handleClickHistory = useCallback(() => {
     router.push(`/history/${account}`);
@@ -128,6 +133,9 @@ export default function Positions() {
               isRefetching={isVaultsRefetching}
             />
           )}
+
+          {/* Indexing vaults - recently deployed, not yet indexed by API */}
+          {!isVaultsLoading && hasIndexingVaults && <IndexingVaultsCard indexingVaults={indexingVaults} />}
 
           {/* Empty state (only if both finished loading and both empty) */}
           {showEmpty && (

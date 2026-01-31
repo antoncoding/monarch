@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData } from 'viem';
-import { useConnection, useChainId } from 'wagmi';
+import { type Address, encodeFunctionData, zeroAddress } from 'viem';
+import { useConnection, useChainId, useReadContract } from 'wagmi';
 import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
 import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
@@ -25,6 +25,26 @@ export function useDeployMorphoMarketV1Adapter({
       return null;
     }
   }, [resolvedChainId]);
+
+  // Check on-chain if an adapter already exists for this vault
+  const { data: existingAdapterOnChain } = useReadContract({
+    address: factoryAddress as Address,
+    abi: adapterFactoryAbi,
+    functionName: 'morphoMarketV1AdapterV2',
+    args: vaultAddress ? [vaultAddress] : undefined,
+    chainId: resolvedChainId,
+    query: {
+      enabled: Boolean(factoryAddress && vaultAddress),
+    },
+  });
+
+  // Adapter exists if it's not the zero address
+  const existingAdapter = useMemo(() => {
+    if (!existingAdapterOnChain || existingAdapterOnChain === zeroAddress) {
+      return null;
+    }
+    return existingAdapterOnChain as Address;
+  }, [existingAdapterOnChain]);
 
   const canDeploy = Boolean(factoryAddress && vaultAddress);
 
@@ -59,5 +79,6 @@ export function useDeployMorphoMarketV1Adapter({
     isDeploying,
     factoryAddress,
     canDeploy,
+    existingAdapter,
   };
 }

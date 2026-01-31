@@ -215,7 +215,14 @@ export function useVaultV2({
 
   // All morpho v2 vault operations have to be proposed first, and then execute
   const completeInitialization = useCallback(
-    async (morphoRegistry: Address, marketV1Adapter: Address, allocator?: Address, _name?: string, _symbol?: string): Promise<boolean> => {
+    async (
+      morphoRegistry: Address,
+      marketV1Adapter: Address,
+      allocator?: Address,
+      _name?: string,
+      _symbol?: string,
+      performanceFeeConfig?: PerformanceFeeConfig,
+    ): Promise<boolean> => {
       if (!account || !vaultAddress || marketV1Adapter === zeroAddress) return false;
 
       const txs: `0x${string}`[] = [];
@@ -339,6 +346,11 @@ export function useVaultV2({
         });
 
         txs.push(submitSetAllocatorTx, setAllocatorTx);
+      }
+
+      // Step 6.4 (Optional). Set performance fee if allocator has fee config.
+      if (performanceFeeConfig && performanceFeeConfig.fee > 0n) {
+        txs.push(...buildPerformanceFeeCalls(performanceFeeConfig));
       }
 
       // Step 7. Execute multicall with all steps.

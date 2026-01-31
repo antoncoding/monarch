@@ -256,7 +256,7 @@ export function VaultInitializationModal() {
   const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : (marketAdapter ?? ZERO_ADDRESS);
   const adapterDetected = adapterAddress !== ZERO_ADDRESS;
 
-  const { deploy, isDeploying, canDeploy } = useDeployMorphoMarketV1Adapter({
+  const { deploy, isDeploying, canDeploy, existingAdapter } = useDeployMorphoMarketV1Adapter({
     vaultAddress: vaultAddressValue,
     chainId,
   });
@@ -315,6 +315,16 @@ export function VaultInitializationModal() {
     if (adapterAddress === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS || !vaultAddress || !chainId) return;
 
     try {
+      // Look up performance fee config from the selected agent
+      const agentConfig = selectedAgent ? agents.find((a) => (a.address as Address) === selectedAgent) : undefined;
+      const performanceFeeConfig =
+        agentConfig && agentConfig.performanceFee > 0n
+          ? {
+              fee: agentConfig.performanceFee,
+              recipient: agentConfig.performanceFeeRecipient as Address,
+            }
+          : undefined;
+
       // Note: Adapter cap will be set when user configures market caps
       // Pass name and symbol if provided (will be trimmed and checked in useVaultV2)
       const success = await completeInitialization(
@@ -323,6 +333,7 @@ export function VaultInitializationModal() {
         selectedAgent ?? undefined,
         vaultName || undefined,
         vaultSymbol || undefined,
+        performanceFeeConfig,
       );
       if (!success) {
         return;
@@ -382,12 +393,20 @@ export function VaultInitializationModal() {
     }
   }, [isOpen]);
 
-  // Auto-advance when adapter already exists (from subgraph)
+  // Auto-advance when adapter already exists (from API or on-chain check)
   useEffect(() => {
-    if (marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
+    // If adapter exists from API or on-chain, auto-advance past deploy step
+    const adapterExistsFromApi = marketAdapter !== ZERO_ADDRESS;
+    const adapterExistsOnChain = existingAdapter !== null;
+
+    if ((adapterExistsFromApi || adapterExistsOnChain) && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
+      // Use on-chain adapter if API doesn't have it yet
+      if (!adapterExistsFromApi && adapterExistsOnChain) {
+        setDeployedAdapter(existingAdapter);
+      }
       setStepIndex(1);
     }
-  }, [marketAdapter, stepIndex, deployedAdapter]);
+  }, [marketAdapter, stepIndex, deployedAdapter, existingAdapter]);
 
   const stepTitle = useMemo(() => {
     switch (currentStep) {

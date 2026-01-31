@@ -4,22 +4,34 @@ import { useConnection } from 'wagmi';
 import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
 import { fetchUserVaultV2AddressesAllNetworks, type UserVaultV2 } from '@/data-sources/morpho-api/v2-vaults-full';
 import { fetchUserVaultShares } from '@/utils/vaultAllocation';
+import type { SupportedNetworks } from '@/utils/networks';
 
 type UseUserVaultsV2Options = {
   userAddress?: Address;
   enabled?: boolean;
 };
 
+// Vault that is still being indexed by the API
+export type IndexingVault = {
+  address: string;
+  networkId: SupportedNetworks;
+};
+
+export type UserVaultsV2Result = {
+  vaults: UserVaultV2[];
+  indexingVaults: IndexingVault[];
+};
+
 function filterValidVaults(vaults: UserVaultV2[]): UserVaultV2[] {
   return vaults.filter((vault) => vault.owner && vault.asset && vault.address);
 }
 
-async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[]> {
+async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultsV2Result> {
   // Step 1: Fetch vault addresses from Morpho API (filtered by owner client-side)
   const vaultAddresses = await fetchUserVaultV2AddressesAllNetworks(userAddress);
 
   if (vaultAddresses.length === 0) {
-    return [];
+    return { vaults: [], indexingVaults: [] };
   }
 
   // Step 2: Fetch full vault details from Morpho API (includes adapters)
@@ -28,17 +40,23 @@ async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[
   // Step 3: Filter valid vaults
   const validVaults = filterValidVaults(vaultDetails as UserVaultV2[]);
 
+  // Step 4: Identify vaults that are still indexing (found in localStorage but not in API)
+  const indexedAddresses = new Set(validVaults.map((v) => v.address.toLowerCase()));
+  const indexingVaults: IndexingVault[] = vaultAddresses
+    .filter((v) => !indexedAddresses.has(v.address.toLowerCase()))
+    .map((v) => ({ address: v.address, networkId: v.networkId }));
+
   if (validVaults.length === 0) {
-    return [];
+    return { vaults: [], indexingVaults };
   }
 
-  // Step 4: Batch fetch user's share balances via multicall
+  // Step 5: Batch fetch user's share balances via multicall
   const shareBalances = await fetchUserVaultShares(
     validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })),
     userAddress,
   );
 
-  // Step 5: Combine all data - adapters are already in vault details
+  // Step 6: Combine all data - adapters are already in vault details
   const vaultsWithBalancesAndAdapters = validVaults.map((vault) => ({
     ...vault,
     // First adapter is the MorphoMarketV1Adapter
@@ -46,7 +64,7 @@ async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[
     balance: shareBalances.get(vault.address.toLowerCase()) ?? 0n,
   }));
 
-  return vaultsWithBalancesAndAdapters;
+  return { vaults: vaultsWithBalancesAndAdapters, indexingVaults };
 }
 
 /**
@@ -76,11 +94,11 @@ export const useUserVaultsV2Query = (options: UseUserVaultsV2Options = {}) => {
   const userAddress = (options.userAddress ?? connectedAddress) as Address;
   const enabled = options.enabled ?? true;
 
-  return useQuery<UserVaultV2[], Error>({
+  return useQuery<UserVaultsV2Result, Error>({
     queryKey: ['user-vaults-v2', userAddress],
     queryFn: async () => {
       if (!userAddress) {
-        return [];
+        return { vaults: [], indexingVaults: [] };
       }
 
       try {
