@@ -45,6 +45,8 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
     (columnVisibility.rateAtTarget ? 1 : 0) +
     (columnVisibility.trustedBy ? 1 : 0) +
     (columnVisibility.utilizationRate ? 1 : 0) +
+    (columnVisibility.dailySupplyAPY ? 1 : 0) +
+    (columnVisibility.dailyBorrowAPY ? 1 : 0) +
     (columnVisibility.weeklySupplyAPY ? 1 : 0) +
     (columnVisibility.weeklyBorrowAPY ? 1 : 0) +
     (columnVisibility.monthlySupplyAPY ? 1 : 0) +
@@ -231,6 +233,28 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <p className="text-sm">{`${(item.state.utilization * 100).toFixed(2)}%`}</p>
+                </TableCell>
+              )}
+              {columnVisibility.dailySupplyAPY && (
+                <TableCell
+                  data-label="24h Supply"
+                  className="z-50 text-center"
+                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                >
+                  <p className="text-sm">
+                    {item.state.dailySupplyApy != null ? <RateFormatted value={item.state.dailySupplyApy} /> : '—'}
+                  </p>
+                </TableCell>
+              )}
+              {columnVisibility.dailyBorrowAPY && (
+                <TableCell
+                  data-label="24h Borrow"
+                  className="z-50 text-center"
+                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                >
+                  <p className="text-sm">
+                    {item.state.dailyBorrowApy != null ? <RateFormatted value={item.state.dailyBorrowApy} /> : '—'}
+                  </p>
                 </TableCell>
               )}
               {columnVisibility.weeklySupplyAPY && (

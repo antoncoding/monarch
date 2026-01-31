@@ -12,10 +12,12 @@ export enum SortColumn {
   TrustedBy = 11,
   UtilizationRate = 12,
   Trend = 13,
-  WeeklySupplyAPY = 14,
-  WeeklyBorrowAPY = 15,
-  MonthlySupplyAPY = 16,
-  MonthlyBorrowAPY = 17,
+  DailySupplyAPY = 14,
+  DailyBorrowAPY = 15,
+  WeeklySupplyAPY = 16,
+  WeeklyBorrowAPY = 17,
+  MonthlySupplyAPY = 18,
+  MonthlyBorrowAPY = 19,
 }
 
 // Gas cost to simplify tx flow: do not need to estimate gas for transactions

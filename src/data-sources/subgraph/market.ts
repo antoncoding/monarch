@@ -188,7 +188,9 @@ const transformSubgraphMarketToMarket = (
       timestamp,
       apyAtTarget: 0,
       rateAtTarget: '0',
-      // Subgraph doesn't support weekly/monthly APY - return null
+      // Subgraph doesn't support daily/weekly/monthly APY - return null
+      dailySupplyApy: null,
+      dailyBorrowApy: null,
       weeklySupplyApy: null,
       weeklyBorrowApy: null,
       monthlySupplyApy: null,
