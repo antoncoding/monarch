@@ -108,6 +108,8 @@ state {
   timestamp
   apyAtTarget
   rateAtTarget
+  dailySupplyApy
+  dailyBorrowApy
   weeklySupplyApy
   weeklyBorrowApy
   monthlySupplyApy
@@ -220,6 +222,8 @@ export const marketsQuery = `
       timestamp
       apyAtTarget
       rateAtTarget
+      dailySupplyApy
+      dailyBorrowApy
       weeklySupplyApy
       weeklyBorrowApy
       monthlySupplyApy

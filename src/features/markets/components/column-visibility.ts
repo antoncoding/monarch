@@ -9,6 +9,8 @@ export type ColumnVisibility = {
   rateAtTarget: boolean;
   trustedBy: boolean;
   utilizationRate: boolean;
+  dailySupplyAPY: boolean;
+  dailyBorrowAPY: boolean;
   weeklySupplyAPY: boolean;
   weeklyBorrowAPY: boolean;
   monthlySupplyAPY: boolean;
@@ -24,6 +26,8 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   rateAtTarget: false,
   trustedBy: false,
   utilizationRate: false,
+  dailySupplyAPY: false,
+  dailyBorrowAPY: false,
   weeklySupplyAPY: false,
   weeklyBorrowAPY: false,
   monthlySupplyAPY: false,
@@ -39,6 +43,8 @@ export const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   rateAtTarget: 'Target Rate',
   trustedBy: 'Trusted By',
   utilizationRate: 'Utilization',
+  dailySupplyAPY: '24h Supply APY',
+  dailyBorrowAPY: '24h Borrow APY',
   weeklySupplyAPY: '7d Supply APY',
   weeklyBorrowAPY: '7d Borrow APY',
   monthlySupplyAPY: '30d Supply APY',
@@ -54,6 +60,8 @@ export const COLUMN_DESCRIPTIONS: Record<keyof ColumnVisibility, string> = {
   rateAtTarget: 'Interest rate at target utilization',
   trustedBy: 'Highlights your trusted vaults that currently supply this market',
   utilizationRate: 'Percentage of supplied assets currently borrowed',
+  dailySupplyAPY: '24-hour average supply APY',
+  dailyBorrowAPY: '24-hour average borrow APY',
   weeklySupplyAPY: '7-day average supply APY',
   weeklyBorrowAPY: '7-day average borrow APY',
   monthlySupplyAPY: '30-day average supply APY',

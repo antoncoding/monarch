@@ -239,6 +239,24 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
                     targetColumn={SortColumn.UtilizationRate}
                   />
                 )}
+                {columnVisibility.dailySupplyAPY && (
+                  <HTSortable
+                    label="24h Supply"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.DailySupplyAPY}
+                  />
+                )}
+                {columnVisibility.dailyBorrowAPY && (
+                  <HTSortable
+                    label="24h Borrow"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.DailyBorrowAPY}
+                  />
+                )}
                 {columnVisibility.weeklySupplyAPY && (
                   <HTSortable
                     label="7d Supply"

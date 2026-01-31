@@ -322,7 +322,9 @@ export type Market = {
     apyAtTarget: number;
     rateAtTarget: string;
 
-    // Weekly and monthly APY averages (may be null for new markets or backup subgraph)
+    // Daily, weekly and monthly APY averages (may be null for new markets or backup subgraph)
+    dailySupplyApy: number | null;
+    dailyBorrowApy: number | null;
     weeklySupplyApy: number | null;
     weeklyBorrowApy: number | null;
     monthlySupplyApy: number | null;
