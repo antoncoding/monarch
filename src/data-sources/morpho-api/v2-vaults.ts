@@ -63,7 +63,7 @@ type ApiVaultV2 = {
   adapters: {
     items: {
       address: string;
-      type: "MorphoMarketV1" | "MorphoMarketV2";
+      type: 'MorphoMarketV1' | 'MorphoMarketV2';
     }[];
   };
   caps: {
@@ -105,7 +105,7 @@ function transformVault(apiVault: ApiVaultV2): VaultV2Details {
     allocators: apiVault.allocators.map((a) => a.allocator.address),
     sentinels: [], // Not available in API response
     caps: apiVault.caps.items.map(transformCap),
-    adapters: apiVault.adapters.items.filter((a => a.type === 'MorphoMarketV1')).map(a => a.address),
+    adapters: apiVault.adapters.items.filter((a) => a.type === 'MorphoMarketV1').map((a) => a.address),
     avgApy: apiVault.avgApy,
   };
 }

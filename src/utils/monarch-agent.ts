@@ -32,15 +32,15 @@ export const baseAgents: AgentMetadata[] = [
 ];
 
 export const agents = [
-    {
+  {
     name: 'Rapid Max APY',
     address: KnownAgents.MAX_APY_HOURLY,
     strategyDescription: 'Rebalances every 5 minutes if necessary, optimizing for APY.',
     image: agentApyImage,
     performanceFee: PERFORMANCE_FEE_10_PERCENT,
     performanceFeeRecipient: KnownAgents.MAX_APY_HOURLY,
-  }
-]
+  },
+];
 
 export const findAgent = (address: string): AgentMetadata | undefined => {
   return baseAgents.find((agent) => agent.address.toLowerCase() === address.toLowerCase());
