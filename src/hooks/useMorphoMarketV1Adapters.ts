@@ -27,8 +27,7 @@ export function useMorphoMarketV1Adapters({ vaultAddress, chainId }: { vaultAddr
 
       // The adapters array from the API contains addresses
       // We return them in a format compatible with the previous subgraph response
-      return vaultDetails.adapters
-        .map((adapterAddress, index) => ({
+      return vaultDetails.adapters.map((adapterAddress, index) => ({
         id: `${vaultAddress}-${index}`,
         adapter: adapterAddress as Address,
         parentVault: vaultAddress,
