@@ -188,6 +188,11 @@ const transformSubgraphMarketToMarket = (
       timestamp,
       apyAtTarget: 0,
       rateAtTarget: '0',
+      // Subgraph doesn't support weekly/monthly APY - return null
+      weeklySupplyApy: null,
+      weeklyBorrowApy: null,
+      monthlySupplyApy: null,
+      monthlyBorrowApy: null,
     },
     oracleAddress,
     morphoBlue: {
