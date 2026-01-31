@@ -9,7 +9,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import type { UserVaultV2 } from '@/data-sources/morpho-api/v2-vaults-full';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
