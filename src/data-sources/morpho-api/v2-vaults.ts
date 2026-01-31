@@ -114,6 +114,7 @@ function transformVault(apiVault: ApiVaultV2): VaultV2Details {
  * Core function to fetch VaultV2 details from Morpho API
  * Handles both single and multiple vault addresses
  * Note: API only accepts one address at a time, so we fetch individually
+ * Note: This API is usually slow on indexing new events, causing returned data to be stale. MUST refetch from RPC for critical data.
  *
  * @param vaultAddresses - Array of vault addresses
  * @param network - The network/chain ID

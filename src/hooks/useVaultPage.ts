@@ -94,6 +94,9 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     return true;
   }, [vaultDataQuery.isLoading, contract.isLoading, adapterQuery.isLoading, isVaultInitialized]);
 
+  console.log('needsInitialization', needsInitialization, isVaultInitialized);
+  console.log('adapterQuery', adapterQuery);
+
   // Aggregated refetch function (convenience)
   const refetchAll = useCallback(() => {
     void vaultDataQuery.refetch();

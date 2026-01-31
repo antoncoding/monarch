@@ -300,7 +300,10 @@ export function VaultInitializationModal() {
         const adapter = (decoded.args as any).morphoMarketV1AdapterV2 as Address;
         setDeployedAdapter(adapter);
 
-        // Trigger refetch for subgraph sync
+        // Cache immediately so RPC validation picks it up
+        addAdapters([adapter]);
+
+        // Trigger refetch for adapter detection
         void refetchAdapter();
 
         // Auto-advance to next step
@@ -309,7 +312,7 @@ export function VaultInitializationModal() {
     } catch (_error) {
       // Error is handled by useDeployMorphoMarketV1Adapter hook
     }
-  }, [deploy, publicClient, refetchAdapter]);
+  }, [deploy, publicClient, refetchAdapter, addAdapters]);
 
   const handleCompleteInitialization = useCallback(async () => {
     if (adapterAddress === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS || !vaultAddress || !chainId) return;
