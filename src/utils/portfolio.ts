@@ -1,7 +1,7 @@
 import { formatUnits } from 'viem';
 import { getTokenPriceKey, type TokenPriceInput } from '@/data-sources/morpho-api/prices';
 import type { MarketPositionWithEarnings } from './types';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import type { UserVaultV2 } from '@/data-sources/morpho-api/v2-vaults-full';
 
 // Normalized balance type for all position sources
 export type TokenBalance = {

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
-import { fetchUserVaultV2AddressesAllNetworks, type UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import { fetchUserVaultV2AddressesAllNetworks, type UserVaultV2 } from '@/data-sources/morpho-api/v2-vaults-full';
 import { fetchUserVaultShares } from '@/utils/vaultAllocation';
 
 type UseUserVaultsV2Options = {

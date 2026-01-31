@@ -7,7 +7,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { MarketRiskIndicators } from '@/features/markets/components/market-risk-indicators';
 import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import type { UserVaultV2 } from '@/data-sources/morpho-api/v2-vaults-full';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { formatBalance } from '@/utils/balance';
