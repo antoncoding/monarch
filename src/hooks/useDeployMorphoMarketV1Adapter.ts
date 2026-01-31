@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection, useChainId } from 'wagmi';
-import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
+import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory-v2';
 import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 

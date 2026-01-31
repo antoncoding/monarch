@@ -1,10 +1,10 @@
 import type { Address } from 'viem';
 import { getClient } from '@/utils/rpc';
-import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
-import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
+import { adapterFactoryAbi as adapterFactoryAbiV2 } from '@/abis/morpho-market-v1-adapter-factory-v2';
+import { getNetworkConfig, SupportedNetworks } from '@/utils/networks';
 
 // V1 factory ABI - only the check function we need
-const adapterFactoryV1Abi = [
+const adapterFactoryAbiV1 = [
   {
     inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
     name: 'isMorphoMarketV1Adapter',
@@ -14,9 +14,9 @@ const adapterFactoryV1Abi = [
   },
 ] as const;
 
-// V1 factory addresses (only Base has a separate V1 factory)
+// V1 factory addresses (only check Base because some autovault users might have set this up)
 const V1_FACTORY_ADDRESSES: Partial<Record<SupportedNetworks, Address>> = {
-  // Base V1 factory address if needed in the future
+  [SupportedNetworks.Base]: '0x133baC94306B99f6dAD85c381a5be851d8DD717c', // Replace with actual address
 };
 
 type AdapterValidationResult = {
@@ -47,7 +47,7 @@ export async function batchIsMorphoMarketV1Adapter(addresses: Address[], chainId
   // Build multicall contracts for V2 factory
   const v2Contracts = addresses.map((addr) => ({
     address: v2FactoryAddress,
-    abi: adapterFactoryAbi,
+    abi: adapterFactoryAbiV2,
     functionName: 'isMorphoMarketV1AdapterV2' as const,
     args: [addr],
   }));
@@ -56,7 +56,7 @@ export async function batchIsMorphoMarketV1Adapter(addresses: Address[], chainId
   const v1Contracts = v1FactoryAddress
     ? addresses.map((addr) => ({
         address: v1FactoryAddress,
-        abi: adapterFactoryV1Abi,
+        abi: adapterFactoryAbiV1,
         functionName: 'isMorphoMarketV1Adapter' as const,
         args: [addr],
       }))

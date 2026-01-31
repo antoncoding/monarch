@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { AllocatorCard } from '@/components/shared/allocator-card';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/ui/spinner';
-import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
+import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory-v2';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
