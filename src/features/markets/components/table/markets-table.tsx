@@ -239,6 +239,42 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
                     targetColumn={SortColumn.UtilizationRate}
                   />
                 )}
+                {columnVisibility.weeklySupplyAPY && (
+                  <HTSortable
+                    label="7d Supply"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.WeeklySupplyAPY}
+                  />
+                )}
+                {columnVisibility.weeklyBorrowAPY && (
+                  <HTSortable
+                    label="7d Borrow"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.WeeklyBorrowAPY}
+                  />
+                )}
+                {columnVisibility.monthlySupplyAPY && (
+                  <HTSortable
+                    label="30d Supply"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.MonthlySupplyAPY}
+                  />
+                )}
+                {columnVisibility.monthlyBorrowAPY && (
+                  <HTSortable
+                    label="30d Borrow"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.MonthlyBorrowAPY}
+                  />
+                )}
                 <TableHead
                   className="font-normal px-2 py-2 whitespace-nowrap"
                   style={{ padding: '0.35rem 0.8rem' }}

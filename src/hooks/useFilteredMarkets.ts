@@ -112,6 +112,10 @@ export const useFilteredMarkets = (): Market[] => {
       [SortColumn.TrustedBy]: '',
       [SortColumn.UtilizationRate]: 'state.utilization',
       [SortColumn.Trend]: '', // Trend is a filter mode, not a sort
+      [SortColumn.WeeklySupplyAPY]: 'state.weeklySupplyApy',
+      [SortColumn.WeeklyBorrowAPY]: 'state.weeklyBorrowApy',
+      [SortColumn.MonthlySupplyAPY]: 'state.monthlySupplyApy',
+      [SortColumn.MonthlyBorrowAPY]: 'state.monthlyBorrowApy',
     };
 
     const propertyPath = sortPropertyMap[preferences.sortColumn];

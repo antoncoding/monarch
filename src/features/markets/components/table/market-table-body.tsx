@@ -44,7 +44,11 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
     (columnVisibility.borrowAPY ? 1 : 0) +
     (columnVisibility.rateAtTarget ? 1 : 0) +
     (columnVisibility.trustedBy ? 1 : 0) +
-    (columnVisibility.utilizationRate ? 1 : 0);
+    (columnVisibility.utilizationRate ? 1 : 0) +
+    (columnVisibility.weeklySupplyAPY ? 1 : 0) +
+    (columnVisibility.weeklyBorrowAPY ? 1 : 0) +
+    (columnVisibility.monthlySupplyAPY ? 1 : 0) +
+    (columnVisibility.monthlyBorrowAPY ? 1 : 0);
 
   const getTrustedVaultsForMarket = (market: Market): TrustedVault[] => {
     if (!columnVisibility.trustedBy || !market.supplyingVaults?.length) {
@@ -227,6 +231,50 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <p className="text-sm">{`${(item.state.utilization * 100).toFixed(2)}%`}</p>
+                </TableCell>
+              )}
+              {columnVisibility.weeklySupplyAPY && (
+                <TableCell
+                  data-label="7d Supply"
+                  className="z-50 text-center"
+                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                >
+                  <p className="text-sm">
+                    {item.state.weeklySupplyApy != null ? <RateFormatted value={item.state.weeklySupplyApy} /> : '—'}
+                  </p>
+                </TableCell>
+              )}
+              {columnVisibility.weeklyBorrowAPY && (
+                <TableCell
+                  data-label="7d Borrow"
+                  className="z-50 text-center"
+                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                >
+                  <p className="text-sm">
+                    {item.state.weeklyBorrowApy != null ? <RateFormatted value={item.state.weeklyBorrowApy} /> : '—'}
+                  </p>
+                </TableCell>
+              )}
+              {columnVisibility.monthlySupplyAPY && (
+                <TableCell
+                  data-label="30d Supply"
+                  className="z-50 text-center"
+                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                >
+                  <p className="text-sm">
+                    {item.state.monthlySupplyApy != null ? <RateFormatted value={item.state.monthlySupplyApy} /> : '—'}
+                  </p>
+                </TableCell>
+              )}
+              {columnVisibility.monthlyBorrowAPY && (
+                <TableCell
+                  data-label="30d Borrow"
+                  className="z-50 text-center"
+                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                >
+                  <p className="text-sm">
+                    {item.state.monthlyBorrowApy != null ? <RateFormatted value={item.state.monthlyBorrowApy} /> : '—'}
+                  </p>
                 </TableCell>
               )}
               <TableCell style={{ minWidth: '90px' }}>

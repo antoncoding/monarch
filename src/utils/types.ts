@@ -321,6 +321,12 @@ export type Market = {
 
     apyAtTarget: number;
     rateAtTarget: string;
+
+    // Weekly and monthly APY averages (may be null for new markets or backup subgraph)
+    weeklySupplyApy: number | null;
+    weeklyBorrowApy: number | null;
+    monthlySupplyApy: number | null;
+    monthlyBorrowApy: number | null;
   };
   realizedBadDebt: {
     underlying: string;
