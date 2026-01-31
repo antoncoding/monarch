@@ -1,9 +1,10 @@
-import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, zeroAddress } from 'viem';
-import { useConnection, useChainId, useReadContract } from 'wagmi';
+import { useCallback } from 'react';
+import { type Address, encodeFunctionData } from 'viem';
+import { useConnection, useChainId } from 'wagmi';
 import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
-import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
+import { type SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
+import { useExistingAdapterOnChain } from './useExistingAdapterOnChain';
 
 const TX_TOAST_ID = 'deploy-morpho-market-adapter';
 
@@ -18,33 +19,11 @@ export function useDeployMorphoMarketV1Adapter({
   const connectedChainId = useChainId();
   const resolvedChainId = (chainId ?? connectedChainId) as SupportedNetworks;
 
-  const factoryAddress = useMemo(() => {
-    try {
-      return getNetworkConfig(resolvedChainId).autovaultAddresses?.marketV1AdapterFactory ?? null;
-    } catch (_error) {
-      return null;
-    }
-  }, [resolvedChainId]);
-
-  // Check on-chain if an adapter already exists for this vault
-  const { data: existingAdapterOnChain } = useReadContract({
-    address: factoryAddress as Address,
-    abi: adapterFactoryAbi,
-    functionName: 'morphoMarketV1AdapterV2',
-    args: vaultAddress ? [vaultAddress] : undefined,
+  // Use shared hook for on-chain adapter check
+  const { existingAdapter, factoryAddress } = useExistingAdapterOnChain({
+    vaultAddress,
     chainId: resolvedChainId,
-    query: {
-      enabled: Boolean(factoryAddress && vaultAddress),
-    },
   });
-
-  // Adapter exists if it's not the zero address
-  const existingAdapter = useMemo(() => {
-    if (!existingAdapterOnChain || existingAdapterOnChain === zeroAddress) {
-      return null;
-    }
-    return existingAdapterOnChain as Address;
-  }, [existingAdapterOnChain]);
 
   const canDeploy = Boolean(factoryAddress && vaultAddress);
 
