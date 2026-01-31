@@ -576,6 +576,7 @@ export const vaultV2Query = `
       adapters {
         items {
           address
+          type
         }
       }
     }
@@ -593,6 +594,29 @@ export const assetPricesQuery = `
           id
         }
         priceUsd
+      }
+    }
+  }
+`;
+
+/**
+ * Lightweight query to fetch V2 vault addresses with owner info
+ * Used to find vaults by owner (filtered client-side)
+ */
+export const vaultV2sOwnerQuery = `
+  query VaultV2sOwner($first: Int, $skip: Int) {
+    vaultV2s(first: $first, skip: $skip) {
+      items {
+        address
+        owner {
+          address
+        }
+        chain {
+          id
+        }
+      }
+      pageInfo {
+        countTotal
       }
     }
   }

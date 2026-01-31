@@ -232,7 +232,7 @@ export default function VaultContent() {
           />
 
           {/* Setup Banner - Show if vault needs initialization */}
-          {needsInitialization && vaultContract.isOwner && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
+          {needsInitialization && vaultContract.isOwner && networkConfig?.autovaultAddresses?.marketV1AdapterFactory && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Complete vault setup</p>
@@ -314,7 +314,7 @@ export default function VaultContent() {
       </div>
 
       {/* Initialization Modal - Pulls own data from URL params */}
-      {networkConfig?.vaultConfig?.marketV1AdapterFactory && <VaultInitializationModal />}
+      {networkConfig?.autovaultAddresses?.marketV1AdapterFactory && <VaultInitializationModal />}
     </div>
   );
 }

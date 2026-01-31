@@ -7,7 +7,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import type { PerformanceFeeConfig } from '@/hooks/useVaultV2';
 import type { SupportedNetworks } from '@/utils/networks';
-import { v2AgentsBase, findAgent } from '@/utils/monarch-agent';
+import { baseAgents, findAgent } from '@/utils/monarch-agent';
 import { getAgentLabel, getAgentIcon } from './agent-display';
 import { AddressIdentity } from '@/components/shared/address-identity';
 
@@ -40,7 +40,7 @@ export function EditAllocators({
 
   // Find if there's already a Monarch agent assigned
   const currentMonarchAgent = useMemo(() => {
-    const monarchAddresses = new Set(v2AgentsBase.map((a) => a.address.toLowerCase()));
+    const monarchAddresses = new Set(baseAgents.map((a) => a.address.toLowerCase()));
     return allocators.find((a) => monarchAddresses.has(a.toLowerCase())) as Address | undefined;
   }, [allocators]);
 
@@ -103,7 +103,7 @@ export function EditAllocators({
 
   const availableAllocators = useMemo(() => {
     const currentAddresses = new Set(allocators.map((a) => a.toLowerCase()));
-    return v2AgentsBase.filter((agent) => !currentAddresses.has(agent.address.toLowerCase()));
+    return baseAgents.filter((agent) => !currentAddresses.has(agent.address.toLowerCase()));
   }, [allocators]);
 
   const isTargetLoading = (address: string) => isUpdating && targetAllocator === address;
