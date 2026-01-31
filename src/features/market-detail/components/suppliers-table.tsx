@@ -12,6 +12,7 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useMarketSuppliers } from '@/hooks/useMarketSuppliers';
+import { useSupplierPositionChanges, type SupplierPositionChange } from '@/hooks/useSupplierPositionChanges';
 import { formatSimple } from '@/utils/balance';
 import type { Market } from '@/utils/types';
 
@@ -22,11 +23,89 @@ type SuppliersTableProps = {
   onOpenFiltersModal: () => void;
 };
 
+type PositionChangeIndicatorProps = {
+  change: SupplierPositionChange | undefined;
+  decimals: number;
+  currentAssets: bigint;
+  symbol: string;
+};
+
+/**
+ * Displays a 7-day position change indicator with arrow and percentage
+ */
+function PositionChangeIndicator({ change, decimals, currentAssets, symbol }: PositionChangeIndicatorProps) {
+  if (!change || change.transactionCount === 0) {
+    return <span className="text-secondary">−</span>;
+  }
+
+  const netChange = change.netChange;
+  const isPositive = netChange > 0n;
+  const isNegative = netChange < 0n;
+  const isNeutral = netChange === 0n;
+
+  // Calculate percentage change relative to current position
+  // If current position is 0, we can't calculate percentage
+  let percentChange = 0;
+  if (currentAssets > 0n && netChange !== 0n) {
+    // Previous assets = current - net change
+    const previousAssets = currentAssets - netChange;
+    if (previousAssets > 0n) {
+      percentChange = (Number(netChange) / Number(previousAssets)) * 100;
+    } else if (isPositive) {
+      // New position entirely from 7d activity
+      percentChange = 100;
+    }
+  }
+
+  const absChange = netChange < 0n ? -netChange : netChange;
+  const formattedChange = formatSimple(Number(formatUnits(absChange, decimals)));
+  const formattedPercent = Math.abs(percentChange) < 0.01 && percentChange !== 0 ? '<0.01' : Math.abs(percentChange).toFixed(2);
+
+  // Color and arrow based on direction
+  let colorClass = 'text-secondary';
+  let arrow = '−';
+  if (isPositive) {
+    colorClass = 'text-green-500';
+    arrow = '↑';
+  } else if (isNegative) {
+    colorClass = 'text-red-500';
+    arrow = '↓';
+  }
+
+  const tooltipContent = (
+    <TooltipContent
+      title="7d Position Change"
+      detail={
+        isNeutral
+          ? 'No net change in the last 7 days'
+          : `${isPositive ? '+' : '-'}${formattedChange} ${symbol} (${isPositive ? '+' : '-'}${formattedPercent}%)`
+      }
+      secondaryDetail={`${change.transactionCount} transaction${change.transactionCount > 1 ? 's' : ''}`}
+    />
+  );
+
+  return (
+    <Tooltip content={tooltipContent}>
+      <span className={`cursor-help ${colorClass}`}>
+        {arrow}
+        {!isNeutral && <span className="ml-0.5">{formattedPercent}%</span>}
+      </span>
+    </Tooltip>
+  );
+}
+
 export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal }: SuppliersTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
   const { data: paginatedData, isLoading, isFetching } = useMarketSuppliers(market?.uniqueKey, chainId, minShares, currentPage, pageSize);
+
+  // Fetch 7-day position changes
+  const { data: positionChanges, isLoading: isLoadingChanges } = useSupplierPositionChanges(
+    market?.uniqueKey,
+    market?.loanAsset?.address,
+    chainId,
+  );
 
   const suppliers = paginatedData?.items ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;
@@ -107,6 +186,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
               <TableRow>
                 <TableHead className="text-left">ACCOUNT</TableHead>
                 <TableHead className="text-right">SUPPLIED</TableHead>
+                <TableHead className="text-right">7D</TableHead>
                 <TableHead className="text-right">% OF SUPPLY</TableHead>
               </TableRow>
             </TableHeader>
@@ -114,7 +194,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
               {suppliersWithAssets.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={3}
+                    colSpan={4}
                     className="text-center text-gray-400"
                   >
                     No suppliers found for this market
@@ -126,6 +206,9 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                   const supplierAssets = BigInt(supplier.supplyAssets);
                   const percentOfSupply = totalSupply > 0n ? (Number(supplierAssets) / Number(totalSupply)) * 100 : 0;
                   const percentDisplay = percentOfSupply < 0.01 && percentOfSupply > 0 ? '<0.01%' : `${percentOfSupply.toFixed(2)}%`;
+
+                  // Get position change for this supplier
+                  const positionChange = positionChanges.get(supplier.userAddress.toLowerCase());
 
                   return (
                     <TableRow key={`supplier-${supplier.userAddress}`}>
@@ -150,6 +233,18 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                             />
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {isLoadingChanges ? (
+                          <Spinner size={12} />
+                        ) : (
+                          <PositionChangeIndicator
+                            change={positionChange}
+                            decimals={market.loanAsset.decimals}
+                            currentAssets={supplierAssets}
+                            symbol={market.loanAsset.symbol}
+                          />
+                        )}
                       </TableCell>
                       <TableCell className="text-right text-sm">{percentDisplay}</TableCell>
                     </TableRow>
