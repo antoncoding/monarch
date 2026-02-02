@@ -37,7 +37,7 @@ export type NotificationConfig = {
 export const NOTIFICATIONS: NotificationConfig[] = [
   {
     id: 'position-history-chart-2026-02',
-    message: '✨ New: Position History — see how your allocations evolved over time!',
+    message: '✨ New: Position History Graph — analyze any account\'s allocation changes over time',
     type: 'info',
     category: 'global',
     action: {
