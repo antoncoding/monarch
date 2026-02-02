@@ -1,13 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { CHART_COLORS, type useChartColors } from '@/constants/chartColors';
+import { TIMEFRAME_CONFIG, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
 
-export const TIMEFRAME_LABELS: Record<string, string> = {
-  '1d': '1D',
-  '7d': '7D',
-  '30d': '30D',
-  '3m': '3M',
-  '6m': '6M',
-};
+// Derive labels from centralized config
+export const TIMEFRAME_LABELS: Record<ChartTimeframe, string> = Object.fromEntries(
+  Object.entries(TIMEFRAME_CONFIG).map(([key, config]) => [key, config.label]),
+) as Record<ChartTimeframe, string>;
 
 type GradientConfig = {
   id: string;

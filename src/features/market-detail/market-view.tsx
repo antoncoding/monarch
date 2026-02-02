@@ -30,6 +30,7 @@ import { useAllMarketBorrowers, useAllMarketSuppliers } from '@/hooks/useAllMark
 import { MarketHeader } from './components/market-header';
 import RateChart from './components/charts/rate-chart';
 import VolumeChart from './components/charts/volume-chart';
+import { SupplierPositionsChart } from './components/charts/supplier-positions-chart';
 import { SuppliersPieChart } from './components/charts/suppliers-pie-chart';
 import { BorrowersPieChart } from './components/charts/borrowers-pie-chart';
 import { DebtAtRiskChart } from './components/charts/debt-at-risk-chart';
@@ -369,6 +370,14 @@ function MarketContent() {
 
             <div className="mt-6">
               <RateChart
+                marketId={marketId as string}
+                chainId={network}
+                market={market}
+              />
+            </div>
+
+            <div className="mt-6">
+              <SupplierPositionsChart
                 marketId={marketId as string}
                 chainId={network}
                 market={market}
