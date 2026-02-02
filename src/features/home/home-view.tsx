@@ -64,7 +64,7 @@ function HomePage() {
           />
 
           {/* Main hero content */}
-          <div className="flex-1 flex items-center">
+          <div className="flex-1 flex items-center relative z-10">
             <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
               {/* Two-column grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
