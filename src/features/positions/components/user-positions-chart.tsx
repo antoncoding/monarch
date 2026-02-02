@@ -244,7 +244,7 @@ function ChartContent({
                       stroke="none"
                       strokeWidth={0}
                       fill={color}
-                      fillOpacity={0.45}
+                      fillOpacity={0.6}
                     />
                   );
                 })}
@@ -279,7 +279,7 @@ function ChartContent({
                   strokeWidth={0}
                 >
                   {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.6} />
                   ))}
                 </Pie>
               </PieChart>
