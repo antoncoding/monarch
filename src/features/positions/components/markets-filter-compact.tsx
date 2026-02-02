@@ -1,6 +1,6 @@
 'use client';
 
-import { GoFilter, GoGear } from 'react-icons/go';
+import { GoFilter, GoGear, GoShield, GoShieldCheck, GoStar } from 'react-icons/go';
 import { Button } from '@/components/ui/button';
 import { Divider } from '@/components/ui/divider';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
@@ -51,12 +51,14 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
     usdMinLiquidity,
     showOfficialTrending,
     customTagConfig,
+    starredMarkets,
   } = useMarketPreferences();
 
-  const { trendingMode, toggleTrendingMode, customTagMode, toggleCustomTagMode } = useMarketsFilters();
+  const { trendingMode, toggleTrendingMode, customTagMode, toggleCustomTagMode, starredOnly, toggleStarredOnly } = useMarketsFilters();
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const trustedVaultCount = trustedVaults.length;
+  const starredCount = starredMarkets.length;
 
   // Navigate to a specific detail view, then reopen filter when settings closes
   const handleOpenDetailView = (detailView: DetailViewType) => {
@@ -67,10 +69,11 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
     });
   };
 
-  const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets && showLockedMarkets;
+  // Guards are active when the "show" flags are FALSE (meaning risky content is hidden)
+  const anyGuardActive = !includeUnknownTokens || !showUnknownOracle || !showUnwhitelistedMarkets || !showLockedMarkets;
   const advancedFilterActive =
-    trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode;
-  const hasActiveFilters = advancedFilterActive || !basicGuardianAllAllowed;
+    trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode || starredOnly;
+  const hasActiveFilters = advancedFilterActive || anyGuardActive;
 
   const isButtonVariant = variant === 'button';
 
@@ -123,47 +126,58 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
             >
               <FilterSection
                 title="Risk Guards"
-                helper="Control visibility of unverified markets and tokens."
+                helper="Toggle guards to hide unverified or risky markets."
               >
                 <FilterRow
-                  title="Show Unknown Tokens"
-                  description="Display tokens outside of the curated list."
+                  title="Hide Unknown Tokens"
+                  description="Filter out tokens outside of the curated list."
                 >
                   <IconSwitch
-                    selected={includeUnknownTokens}
-                    onChange={setIncludeUnknownTokens}
+                    selected={!includeUnknownTokens}
+                    onChange={(checked) => setIncludeUnknownTokens(!checked)}
                     size="xs"
+                    color="success"
+                    thumbIconOn={GoShieldCheck}
+                    thumbIconOff={GoShield}
                   />
                 </FilterRow>
                 <FilterRow
-                  title="Show Unknown Oracles"
-                  description="Include markets with unverified oracle feeds."
+                  title="Hide Unknown Oracles"
+                  description="Filter out markets with unverified oracle feeds."
                 >
                   <IconSwitch
-                    selected={showUnknownOracle}
-                    onChange={setShowUnknownOracle}
+                    selected={!showUnknownOracle}
+                    onChange={(checked) => setShowUnknownOracle(!checked)}
                     size="xs"
+                    color="success"
+                    thumbIconOn={GoShieldCheck}
+                    thumbIconOff={GoShield}
                   />
                 </FilterRow>
                 <FilterRow
-                  title="Show Unwhitelisted Markets"
-                  description="Display markets not listed by Morpho."
+                  title="Hide Unwhitelisted Markets"
+                  description="Filter out markets not listed by Morpho."
                 >
                   <IconSwitch
-                    selected={showUnwhitelistedMarkets}
-                    onChange={setShowUnwhitelistedMarkets}
+                    selected={!showUnwhitelistedMarkets}
+                    onChange={(checked) => setShowUnwhitelistedMarkets(!checked)}
                     size="xs"
-                    color="destructive"
+                    color="success"
+                    thumbIconOn={GoShieldCheck}
+                    thumbIconOff={GoShield}
                   />
                 </FilterRow>
                 <FilterRow
-                  title="Show Locked Markets"
-                  description="Display frozen markets with extreme APY (> 1500%)."
+                  title="Hide Locked Markets"
+                  description="Filter out frozen markets with extreme APY (> 1500%)."
                 >
                   <IconSwitch
-                    selected={showLockedMarkets}
-                    onChange={setShowLockedMarkets}
+                    selected={!showLockedMarkets}
+                    onChange={(checked) => setShowLockedMarkets(!checked)}
                     size="xs"
+                    color="success"
+                    thumbIconOn={GoShieldCheck}
+                    thumbIconOff={GoShield}
                   />
                 </FilterRow>
               </FilterSection>
@@ -226,6 +240,20 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
                 title="My Preferences"
                 helper="Filters based on your configured preferences."
               >
+                <FilterRow
+                  title="Starred Only"
+                  description={`Show your ${starredCount} starred market${starredCount !== 1 ? 's' : ''}`}
+                >
+                  <IconSwitch
+                    selected={starredOnly}
+                    onChange={toggleStarredOnly}
+                    size="xs"
+                    color="primary"
+                    thumbIconOn={GoStar}
+                    thumbIconOff={GoStar}
+                    disabled={starredCount === 0}
+                  />
+                </FilterRow>
                 <FilterRow
                   title="Trusted Vaults Only"
                   description={`Show markets supplied by your ${trustedVaultCount} trusted vault${trustedVaultCount !== 1 ? 's' : ''}`}

@@ -36,44 +36,49 @@ export function FiltersPanel() {
       {/* Risk Guards Section */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
         <h3 className="text-xs uppercase text-secondary">Risk Guards</h3>
+        <p className="-mt-2 text-xs text-secondary">Enable guards to filter out unverified or risky markets.</p>
         <SettingToggleItem
-          title="Show Unknown Tokens"
-          description="Display tokens that aren't in our recognized token list. These will appear with a question mark icon."
-          selected={includeUnknownTokens}
-          onChange={setIncludeUnknownTokens}
-          ariaLabel="Toggle unknown tokens"
-          thumbIconOn={GoShield}
-          thumbIconOff={GoShieldCheck}
+          title="Hide Unknown Tokens"
+          description="Filter out tokens that aren't in our recognized token list. These would appear with a question mark icon."
+          selected={!includeUnknownTokens}
+          onChange={(checked) => setIncludeUnknownTokens(!checked)}
+          ariaLabel="Toggle hide unknown tokens"
+          color="success"
+          thumbIconOn={GoShieldCheck}
+          thumbIconOff={GoShield}
         />
         <Divider />
         <SettingToggleItem
-          title="Show Unknown Oracles"
-          description="Display markets using oracle implementations that haven't been verified yet."
-          selected={showUnknownOracle}
-          onChange={setShowUnknownOracle}
-          ariaLabel="Toggle unknown oracles"
-          thumbIconOn={GoShield}
-          thumbIconOff={GoShieldCheck}
+          title="Hide Unknown Oracles"
+          description="Filter out markets using oracle implementations that haven't been verified yet."
+          selected={!showUnknownOracle}
+          onChange={(checked) => setShowUnknownOracle(!checked)}
+          ariaLabel="Toggle hide unknown oracles"
+          color="success"
+          thumbIconOn={GoShieldCheck}
+          thumbIconOff={GoShield}
         />
         <Divider />
         <SettingToggleItem
-          title="Show Unwhitelisted Markets"
-          description="Display markets that haven't been verified or whitelisted by the Morpho team."
-          selected={showUnwhitelistedMarkets}
-          onChange={setShowUnwhitelistedMarkets}
-          ariaLabel="Toggle unwhitelisted markets"
-          thumbIconOn={GoShield}
-          thumbIconOff={GoShieldCheck}
+          title="Hide Unwhitelisted Markets"
+          description="Filter out markets that haven't been verified or whitelisted by the Morpho team."
+          selected={!showUnwhitelistedMarkets}
+          onChange={(checked) => setShowUnwhitelistedMarkets(!checked)}
+          ariaLabel="Toggle hide unwhitelisted markets"
+          color="success"
+          thumbIconOn={GoShieldCheck}
+          thumbIconOff={GoShield}
         />
         <Divider />
         <SettingToggleItem
-          title="Show Locked Markets"
-          description="Display frozen markets with extreme APY (> 1500%). These are typically dead markets with inflated rates."
-          selected={showLockedMarkets}
-          onChange={setShowLockedMarkets}
-          ariaLabel="Toggle locked markets"
-          thumbIconOn={GoShield}
-          thumbIconOff={GoShieldCheck}
+          title="Hide Locked Markets"
+          description="Filter out frozen markets with extreme APY (> 1500%). These are typically dead markets with inflated rates."
+          selected={!showLockedMarkets}
+          onChange={(checked) => setShowLockedMarkets(!checked)}
+          ariaLabel="Toggle hide locked markets"
+          color="success"
+          thumbIconOn={GoShieldCheck}
+          thumbIconOff={GoShield}
         />
       </div>
 

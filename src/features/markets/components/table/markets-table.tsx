@@ -9,6 +9,7 @@ import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { buildTrustedVaultMap } from '@/utils/vaults';
 import { SortColumn } from '../constants';
@@ -52,7 +53,10 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
     minSupplyEnabled,
     minBorrowEnabled,
     minLiquidityEnabled,
+    starredMarkets,
   } = useMarketPreferences();
+
+  const { starredOnly } = useMarketsFilters();
 
   // Handle column header clicks for sorting
   const titleOnclick = useCallback(
@@ -88,11 +92,17 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
 
   // Determine empty state hint based on active filters
   const getEmptyStateHint = () => {
+    if (starredOnly && starredMarkets.length === 0) {
+      return 'You have no starred markets. Star some markets first, then use this filter.';
+    }
+    if (starredOnly) {
+      return 'Disable the Starred Only filter to see all markets.';
+    }
     if (!includeUnknownTokens) {
-      return "Try enabling 'Show Unknown Tokens' in settings, or adjust your current filters.";
+      return "Try disabling 'Hide Unknown Tokens' guard in filters.";
     }
     if (!showUnknownOracle) {
-      return "Try enabling 'Show Unknown Oracles' in settings, or adjust your oracle filters.";
+      return "Try disabling 'Hide Unknown Oracles' guard in filters.";
     }
     if (trustedVaultsOnly) {
       return 'Disable the Trusted Vaults filter or update your trusted list in Settings.';
