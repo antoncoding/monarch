@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import { useActiveNotifications } from '@/hooks/useActiveNotifications';
 import { useNotificationStore } from '@/stores/useNotificationStore';
+import { GridAccent } from '@/components/landing';
 
 export function NotificationBanner() {
   const { currentNotification, totalCount, isLoading } = useActiveNotifications();
@@ -21,11 +22,12 @@ export function NotificationBanner() {
   const action = currentNotification.action;
 
   return (
-    <div className="relative w-full bg-primary">
+    <div className="relative w-full bg-primary overflow-hidden">
       {/* Grid background overlay */}
-      <div
-        className="pointer-events-none absolute inset-0 bg-dot-grid opacity-30"
-        aria-hidden="true"
+      <GridAccent
+        position="top-strip"
+        variant="dots"
+        className="opacity-40"
       />
 
       {/* Content container - same height as header */}

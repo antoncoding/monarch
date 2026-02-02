@@ -36,17 +36,17 @@ export type NotificationConfig = {
  */
 export const NOTIFICATIONS: NotificationConfig[] = [
   {
-    id: 'position-history-chart-2026-02',
+    id: 'position-history-chart-2026-02-01',
     message: '💎 New feature: Position History Graph — analyze any account\'s allocation changes over time!',
     type: 'info',
     category: 'global',
-    expiresAt: new Date('2026-02-16'),
+    expiresAt: new Date('2026-02-10'),
   },
   {
     id: 'custom-tags-2026-02',
     message: '💎 New feature: Custom Tags — create your own tags on market flow metrics! Try it in Settings → Experimental',
     type: 'info',
     category: 'global',
-    expiresAt: new Date('2026-02-16'),
+    expiresAt: new Date('2026-02-10'),
   },
 ];

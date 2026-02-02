@@ -35,7 +35,7 @@ export type ActiveNotificationsResult = {
  * ```
  */
 export const useActiveNotifications = (): ActiveNotificationsResult => {
-  const isDismissed = useNotificationStore((s) => s.isDismissed);
+  const dismissedIds = useNotificationStore((s) => s.dismissedIds);
   const conditions = useNotificationConditions();
 
   const { activeNotifications, isLoading } = useMemo(() => {
@@ -49,7 +49,7 @@ export const useActiveNotifications = (): ActiveNotificationsResult => {
       }
 
       // Check if dismissed
-      if (isDismissed(notification.id)) {
+      if (dismissedIds.includes(notification.id)) {
         return false;
       }
 
@@ -81,7 +81,7 @@ export const useActiveNotifications = (): ActiveNotificationsResult => {
       activeNotifications: active,
       isLoading: hasLoadingCondition,
     };
-  }, [isDismissed, conditions]);
+  }, [dismissedIds, conditions]);
 
   const currentNotification = activeNotifications[0] ?? null;
   const totalCount = activeNotifications.length;
