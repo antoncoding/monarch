@@ -40,10 +40,6 @@ export const NOTIFICATIONS: NotificationConfig[] = [
     message: '💎 New feature: Position History Graph — analyze any account\'s allocation changes over time!',
     type: 'info',
     category: 'global',
-    action: {
-      label: 'View Positions',
-      href: '/positions',
-    },
     expiresAt: new Date('2026-02-16'),
   },
   {
@@ -51,10 +47,6 @@ export const NOTIFICATIONS: NotificationConfig[] = [
     message: '💎 New feature: Custom Tags — create your own tags on market flow metrics! Try it in Settings → Experimental',
     type: 'info',
     category: 'global',
-    action: {
-      label: 'Explore Markets',
-      href: '/markets',
-    },
     expiresAt: new Date('2026-02-16'),
   },
 ];
