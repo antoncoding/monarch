@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware';
 type NotificationState = {
   /** Set of dismissed notification IDs */
   dismissedIds: string[];
+  /** Whether the store has been hydrated from localStorage */
+  _hasHydrated: boolean;
 };
 
 type NotificationActions = {
@@ -37,6 +39,7 @@ export const useNotificationStore = create<NotificationStore>()(
   persist(
     (set, get) => ({
       dismissedIds: [],
+      _hasHydrated: false,
 
       dismiss: (id) => {
         const { dismissedIds } = get();
@@ -53,6 +56,10 @@ export const useNotificationStore = create<NotificationStore>()(
     }),
     {
       name: 'monarch_store_notifications',
+      partialize: (state) => ({ dismissedIds: state.dismissedIds }),
+      onRehydrateStorage: () => () => {
+        useNotificationStore.setState({ _hasHydrated: true });
+      },
     },
   ),
 );

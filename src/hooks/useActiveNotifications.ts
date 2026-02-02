@@ -36,9 +36,15 @@ export type ActiveNotificationsResult = {
  */
 export const useActiveNotifications = (): ActiveNotificationsResult => {
   const dismissedIds = useNotificationStore((s) => s.dismissedIds);
+  const hasHydrated = useNotificationStore((s) => s._hasHydrated);
   const conditions = useNotificationConditions();
 
   const { activeNotifications, isLoading } = useMemo(() => {
+    // Don't show any notifications until the store has hydrated from localStorage
+    // This prevents dismissed notifications from flashing briefly on page load
+    if (!hasHydrated) {
+      return { activeNotifications: [], isLoading: true };
+    }
     const now = new Date();
     let hasLoadingCondition = false;
 
@@ -81,7 +87,7 @@ export const useActiveNotifications = (): ActiveNotificationsResult => {
       activeNotifications: active,
       isLoading: hasLoadingCondition,
     };
-  }, [dismissedIds, conditions]);
+  }, [dismissedIds, conditions, hasHydrated]);
 
   const currentNotification = activeNotifications[0] ?? null;
   const totalCount = activeNotifications.length;
