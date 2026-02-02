@@ -304,5 +304,5 @@ export function usePositionHistoryChart({
     }
 
     return { dataPoints, markets: marketInfoList, debugInfo };
-  }, [markets, loanAssetDecimals, chainId, startTimestamp, endTimestamp, transactions, snapshots, debug]);
+  }, [markets, loanAssetDecimals, startTimestamp, endTimestamp, transactions, snapshots, debug]);
 }

@@ -20,7 +20,6 @@ type BaseChartProps = {
   mode?: ChartMode;
   height?: number;
   debug?: boolean;
-  showHeader?: boolean;
 };
 
 // Props for using with GroupedPosition (positions page)
@@ -224,7 +223,7 @@ function ChartContent({
                   content={({ active, payload, label }) => {
                     if (!active || !payload || payload.length === 0) return null;
 
-                    const dataPoint = dataPoints.find((dp) => dp.timestamp === label);
+                    const dataPoint = dataPoints.find((dp) => dp.timestamp === Number(label));
                     const total = dataPoint?.total ?? 0;
 
                     return (
