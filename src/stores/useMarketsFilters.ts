@@ -17,6 +17,7 @@ type MarketsFiltersState = {
   searchQuery: string;
   trendingMode: boolean; // Official trending filter (backend-computed)
   customTagMode: boolean; // User's custom tag filter
+  starredOnly: boolean; // Show only starred markets
 };
 
 type MarketsFiltersActions = {
@@ -27,6 +28,7 @@ type MarketsFiltersActions = {
   setSearchQuery: (query: string) => void;
   toggleTrendingMode: () => void;
   toggleCustomTagMode: () => void;
+  toggleStarredOnly: () => void;
   resetFilters: () => void;
 };
 
@@ -40,6 +42,7 @@ const DEFAULT_STATE: MarketsFiltersState = {
   searchQuery: '',
   trendingMode: false,
   customTagMode: false,
+  starredOnly: false,
 };
 
 /**
@@ -61,6 +64,7 @@ export const useMarketsFilters = create<MarketsFiltersStore>()((set) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   toggleTrendingMode: () => set((state) => ({ trendingMode: !state.trendingMode })),
   toggleCustomTagMode: () => set((state) => ({ customTagMode: !state.customTagMode })),
+  toggleStarredOnly: () => set((state) => ({ starredOnly: !state.starredOnly })),
 
   resetFilters: () => set(DEFAULT_STATE),
 }));

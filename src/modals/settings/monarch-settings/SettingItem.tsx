@@ -15,6 +15,7 @@ type SettingToggleItemProps = {
   thumbIconOff?: IconType;
   badge?: ReactNode;
   disabled?: boolean;
+  color?: 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
 };
 
 export function SettingToggleItem({
@@ -27,6 +28,7 @@ export function SettingToggleItem({
   thumbIconOff,
   badge,
   disabled,
+  color = 'primary',
 }: SettingToggleItemProps) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -41,7 +43,7 @@ export function SettingToggleItem({
         selected={selected}
         onChange={onChange}
         size="xs"
-        color="primary"
+        color={color}
         thumbIconOn={thumbIconOn}
         thumbIconOff={thumbIconOff}
         aria-label={ariaLabel}

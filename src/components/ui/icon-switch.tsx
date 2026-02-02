@@ -9,7 +9,7 @@ export type IconSwitchProps = {
   defaultSelected?: boolean;
   selected?: boolean;
   size?: 'xs' | 'sm' | 'md' | 'lg';
-  color?: 'primary' | 'secondary' | 'accent' | 'destructive';
+  color?: 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
   onChange?: (selected: boolean) => void;
   thumbIcon?: React.ComponentType<{ className?: string }> | null;
   thumbIconOn?: React.ComponentType<{ className?: string }>;
@@ -128,6 +128,7 @@ const TRACK_COLOR: Record<NonNullable<IconSwitchProps['color']>, string> = {
   secondary: 'bg-[var(--color-background-secondary)]',
   accent: 'bg-[var(--palette-bg-hovered)]',
   destructive: 'bg-[#d92d20]',
+  success: 'bg-[#16a34a]',
 };
 
 export function IconSwitch({

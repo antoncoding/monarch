@@ -79,6 +79,12 @@ export const useFilteredMarkets = (): Market[] => {
       });
     }
 
+    // Starred markets filter
+    if (filters.starredOnly && preferences.starredMarkets.length > 0) {
+      const starredSet = new Set(preferences.starredMarkets);
+      markets = markets.filter((market) => starredSet.has(market.uniqueKey));
+    }
+
     if (preferences.sortColumn === SortColumn.Starred) {
       return sortMarkets(markets, createStarredSort(preferences.starredMarkets), 1);
     }
