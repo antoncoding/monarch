@@ -35,16 +35,26 @@ export type NotificationConfig = {
  * Personalized notifications require a conditionId that maps to useNotificationConditions.
  */
 export const NOTIFICATIONS: NotificationConfig[] = [
-  // Example global notification (uncomment to test):
-  // {
-  //   id: 'autovault-launch-2026',
-  //   message: 'AutoVault is now live! Deploy your own automated lending vault.',
-  //   type: 'info',
-  //   category: 'global',
-  //   action: {
-  //     label: 'Try AutoVault',
-  //     href: '/autovault',
-  //   },
-  //   expiresAt: new Date('2026-01-04'),
-  // },
+  {
+    id: 'position-history-chart-2026-02',
+    message: '✨ New: Position History — see how your allocations evolved over time!',
+    type: 'info',
+    category: 'global',
+    action: {
+      label: 'View Positions',
+      href: '/positions',
+    },
+    expiresAt: new Date('2026-02-16'),
+  },
+  {
+    id: 'custom-tags-2026-02',
+    message: '🏷️ New: Custom Tags — filter markets by flow thresholds in Settings → Experimental',
+    type: 'info',
+    category: 'global',
+    action: {
+      label: 'Explore Markets',
+      href: '/markets',
+    },
+    expiresAt: new Date('2026-02-16'),
+  },
 ];
