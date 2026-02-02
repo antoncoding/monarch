@@ -7,12 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useChartColors } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
 import { chartTooltipCursor } from '@/features/market-detail/components/charts/chart-utils';
-import { getCollateralColorFromPalette } from '@/features/positions/utils/colors';
-import {
-  usePositionHistoryChart,
-  type PositionHistoryDataPoint,
-  type MarketInfo,
-} from '@/hooks/usePositionHistoryChart';
+import { usePositionHistoryChart, type PositionHistoryDataPoint, type MarketInfo } from '@/hooks/usePositionHistoryChart';
 import type { GroupedPosition, UserTransaction } from '@/utils/types';
 import type { PositionSnapshot } from '@/utils/positions';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -60,6 +55,7 @@ export type UserPositionsChartProps = GroupedPositionChartProps | StandaloneChar
 
 // Pie chart data type
 type PieDataPoint = {
+  key: string; // unique market key
   name: string;
   value: number;
   color: string;
@@ -82,22 +78,55 @@ function ChartContent({
   // Track which data point is being hovered (for synced pie chart)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Get color for a market based on its collateral address
+  // Build a map of market uniqueKey -> index for consistent color assignment
+  // Note: markets from hook already have lowercase uniqueKeys
+  const marketColorMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    markets.forEach((market, index) => {
+      map[market.uniqueKey] = index;
+    });
+    return map;
+  }, [markets]);
+
+  // Get color for a market based on its index in the markets array
   const getMarketColor = useCallback(
-    (collateralAddress: string): string => {
-      return getCollateralColorFromPalette(collateralAddress, chartColors.pie);
+    (marketKey: string): string => {
+      const index = marketColorMap[marketKey] ?? 0;
+      return chartColors.pie[index % chartColors.pie.length];
     },
-    [chartColors.pie],
+    [marketColorMap, chartColors.pie],
   );
 
+  // Detect duplicate collateral symbols and create display names
+  const marketDisplayNames = useMemo(() => {
+    const symbolCounts: Record<string, number> = {};
 
+    // First pass: count occurrences
+    markets.forEach((market) => {
+      symbolCounts[market.collateralSymbol] = (symbolCounts[market.collateralSymbol] || 0) + 1;
+    });
+
+    // Second pass: create display names
+    const names: Record<string, string> = {};
+    markets.forEach((market) => {
+      if (symbolCounts[market.collateralSymbol] > 1) {
+        // Duplicate symbol - add market key prefix (first 8 chars)
+        const keyPrefix = market.uniqueKey.slice(0, 8);
+        names[market.uniqueKey] = `${market.collateralSymbol} (${keyPrefix}...)`;
+      } else {
+        names[market.uniqueKey] = market.collateralSymbol;
+      }
+    });
+
+    return names;
+  }, [markets]);
 
   // Current data point for pie chart (hovered or latest)
   const currentDataPoint = useMemo(() => {
     if (hoveredIndex !== null && dataPoints[hoveredIndex]) {
       return dataPoints[hoveredIndex];
     }
-    return dataPoints[dataPoints.length - 1];
+    return dataPoints.at(-1);
   }, [hoveredIndex, dataPoints]);
 
   // Pie chart data derived from current data point
@@ -109,15 +138,16 @@ function ChartContent({
       .map((market) => {
         const value = Number(currentDataPoint[market.uniqueKey] ?? 0);
         return {
-          name: market.collateralSymbol,
+          key: market.uniqueKey,
+          name: marketDisplayNames[market.uniqueKey] || market.collateralSymbol,
           value,
-          color: getMarketColor(market.collateralAddress),
+          color: getMarketColor(market.uniqueKey),
           percentage: total > 0 ? (value / total) * 100 : 0,
         };
       })
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
-  }, [currentDataPoint, markets, getMarketColor]);
+  }, [currentDataPoint, markets, getMarketColor, marketDisplayNames]);
 
   // Format date for display
   const formatDate = (timestamp: number) => {
@@ -145,7 +175,10 @@ function ChartContent({
             <h3 className="text-sm font-medium text-secondary">Position History</h3>
           </div>
           <div className="w-full px-2">
-            <ResponsiveContainer width="100%" height={height}>
+            <ResponsiveContainer
+              width="100%"
+              height={height}
+            >
               <AreaChart
                 data={dataPoints}
                 margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
@@ -156,7 +189,11 @@ function ChartContent({
                 }}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
-                <CartesianGrid strokeDasharray="0" stroke="var(--color-border)" strokeOpacity={0.25} />
+                <CartesianGrid
+                  strokeDasharray="0"
+                  stroke="var(--color-border)"
+                  strokeOpacity={0.25}
+                />
                 <XAxis
                   dataKey="timestamp"
                   type="number"
@@ -204,17 +241,21 @@ function ChartContent({
                           {payload
                             .filter((entry) => Number(entry.value) > 0)
                             .map((entry) => {
-                              const market = markets.find((m) => m.uniqueKey === entry.dataKey);
+                              const marketKey = String(entry.dataKey);
+                              const displayName = marketDisplayNames[marketKey] || 'Unknown';
                               const value = Number(entry.value) || 0;
                               const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                               return (
-                                <div key={entry.dataKey} className="flex items-center justify-between gap-4">
+                                <div
+                                  key={marketKey}
+                                  className="flex items-center justify-between gap-4"
+                                >
                                   <div className="flex items-center gap-1.5">
                                     <span
                                       className="h-2 w-2 rounded-full"
                                       style={{ backgroundColor: entry.color }}
                                     />
-                                    <span className="text-secondary">{market?.collateralSymbol ?? 'Unknown'}</span>
+                                    <span className="text-secondary">{displayName}</span>
                                   </div>
                                   <span className="tabular-nums">
                                     {formatReadable(value)} <span className="text-secondary">({pct}%)</span>
@@ -225,21 +266,24 @@ function ChartContent({
                         </div>
                         <div className="mt-1.5 pt-1.5 border-t border-border/50 flex justify-between font-medium">
                           <span className="text-secondary">Total</span>
-                          <span className="tabular-nums">{formatReadable(total)} {loanAssetSymbol}</span>
+                          <span className="tabular-nums">
+                            {formatReadable(total)} {loanAssetSymbol}
+                          </span>
                         </div>
                       </div>
                     );
                   }}
                 />
                 {markets.map((market) => {
-                  const key = market.uniqueKey.toLowerCase();
-                  const color = getMarketColor(market.collateralAddress);
+                  const key = market.uniqueKey;
+                  const color = getMarketColor(key);
+                  const displayName = marketDisplayNames[key] || market.collateralSymbol;
                   return (
                     <Area
                       key={key}
                       type="stepAfter"
                       dataKey={key}
-                      name={market.collateralSymbol}
+                      name={displayName}
                       stackId="1"
                       stroke="none"
                       strokeWidth={0}
@@ -259,14 +303,13 @@ function ChartContent({
           {/* Desktop: vertical layout */}
           <div className="flex flex-col items-center">
             <div className="text-center mb-1">
-              <p className="text-[10px] text-secondary uppercase tracking-wide">
-                {isHistorical ? 'Historical' : 'Current'}
-              </p>
-              {currentTimestamp && (
-                <p className="text-xs text-secondary">{formatDate(currentTimestamp)}</p>
-              )}
+              <p className="text-[10px] text-secondary uppercase tracking-wide">{isHistorical ? 'Historical' : 'Current'}</p>
+              {currentTimestamp && <p className="text-xs text-secondary">{formatDate(currentTimestamp)}</p>}
             </div>
-            <ResponsiveContainer width={120} height={120}>
+            <ResponsiveContainer
+              width={120}
+              height={120}
+            >
               <PieChart>
                 <Pie
                   data={pieData}
@@ -278,8 +321,12 @@ function ChartContent({
                   dataKey="value"
                   strokeWidth={0}
                 >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.6} />
+                  {pieData.map((entry) => (
+                    <Cell
+                      key={entry.key}
+                      fill={entry.color}
+                      fillOpacity={0.6}
+                    />
                   ))}
                 </Pie>
               </PieChart>
@@ -289,7 +336,10 @@ function ChartContent({
           <div className="flex-1 sm:flex-none sm:w-full px-2">
             <div className="space-y-0.5">
               {pieData.slice(0, 5).map((entry) => (
-                <div key={entry.name} className="flex items-center justify-between text-[10px]">
+                <div
+                  key={entry.key}
+                  className="flex items-center justify-between text-[10px]"
+                >
                   <div className="flex items-center gap-1 min-w-0">
                     <span
                       className="h-2 w-2 rounded-full flex-shrink-0"
@@ -300,9 +350,7 @@ function ChartContent({
                   <span className="tabular-nums text-secondary ml-2">{entry.percentage.toFixed(1)}%</span>
                 </div>
               ))}
-              {pieData.length > 5 && (
-                <p className="text-[10px] text-secondary text-center">+{pieData.length - 5} more</p>
-              )}
+              {pieData.length > 5 && <p className="text-[10px] text-secondary text-center">+{pieData.length - 5} more</p>}
             </div>
           </div>
         </div>

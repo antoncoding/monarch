@@ -110,12 +110,7 @@ function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosit
 }
 
 // shared similar style with @vault-allocation-detail.tsx
-export function SuppliedMarketsDetail({
-  groupedPosition,
-  transactions,
-  snapshotsByChain,
-  chainBlockData,
-}: SuppliedMarketsDetailProps) {
+export function SuppliedMarketsDetail({ groupedPosition, transactions, snapshotsByChain, chainBlockData }: SuppliedMarketsDetailProps) {
   const { short: rateLabel } = useRateLabel();
 
   // Sort markets by size
