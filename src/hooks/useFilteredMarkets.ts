@@ -6,6 +6,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
+import { useBrowseBlacklistKeys } from '@/hooks/queries/useBrowseBlacklistQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
@@ -20,10 +21,16 @@ export const useFilteredMarkets = (): Market[] => {
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys();
   const customTagKeys = useCustomTagMarketKeys();
+  const browseBlacklistKeys = useBrowseBlacklistKeys();
 
   return useMemo(() => {
     let markets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
     if (markets.length === 0) return [];
+
+    // Apply global browse blacklist (does not affect positions or vault allocations)
+    if (browseBlacklistKeys.size > 0) {
+      markets = markets.filter((market) => !browseBlacklistKeys.has(market.uniqueKey.toLowerCase()));
+    }
 
     markets = filterMarkets(markets, {
       selectedNetwork: filters.selectedNetwork,
@@ -136,5 +143,6 @@ export const useFilteredMarkets = (): Market[] => {
     findToken,
     officialTrendingKeys,
     customTagKeys,
+    browseBlacklistKeys,
   ]);
 };
