@@ -130,6 +130,7 @@ function ChartContent({
   }, [hoveredIndex, dataPoints]);
 
   // Pie chart data derived from current data point
+  // Keep all markets for consistent height, sort by value descending
   const pieData = useMemo((): PieDataPoint[] => {
     if (!currentDataPoint) return [];
 
@@ -142,10 +143,9 @@ function ChartContent({
           name: marketDisplayNames[market.uniqueKey] || market.collateralSymbol,
           value,
           color: getMarketColor(market.uniqueKey),
-          percentage: total > 0 ? (value / total) * 100 : 0,
+          percentage: total > 0 && value > 0 ? (value / total) * 100 : 0,
         };
       })
-      .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
   }, [currentDataPoint, markets, getMarketColor, marketDisplayNames]);
 
@@ -238,31 +238,26 @@ function ChartContent({
                           })}
                         </p>
                         <div className="space-y-0.5">
-                          {payload
-                            .filter((entry) => Number(entry.value) > 0)
-                            .map((entry) => {
-                              const marketKey = String(entry.dataKey);
-                              const displayName = marketDisplayNames[marketKey] || 'Unknown';
-                              const value = Number(entry.value) || 0;
-                              const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-                              return (
-                                <div
-                                  key={marketKey}
-                                  className="flex items-center justify-between gap-4"
-                                >
-                                  <div className="flex items-center gap-1.5">
-                                    <span
-                                      className="h-2 w-2 rounded-full"
-                                      style={{ backgroundColor: entry.color }}
-                                    />
-                                    <span className="text-secondary">{displayName}</span>
-                                  </div>
-                                  <span className="tabular-nums">
-                                    {formatReadable(value)} <span className="text-secondary">({pct}%)</span>
-                                  </span>
+                          {/* Sort by value descending, show only non-zero */}
+                          {pieData
+                            .filter((entry) => entry.value > 0)
+                            .map((entry) => (
+                              <div
+                                key={entry.key}
+                                className="flex items-center justify-between gap-4"
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className="h-2 w-2 rounded-full"
+                                    style={{ backgroundColor: entry.color }}
+                                  />
+                                  <span className="text-secondary">{entry.name}</span>
                                 </div>
-                              );
-                            })}
+                                <span className="tabular-nums">
+                                  {formatReadable(entry.value)} <span className="text-secondary">({entry.percentage.toFixed(1)}%)</span>
+                                </span>
+                              </div>
+                            ))}
                         </div>
                         <div className="mt-1.5 pt-1.5 border-t border-border/50 flex justify-between font-medium">
                           <span className="text-secondary">Total</span>
@@ -332,24 +327,27 @@ function ChartContent({
               </PieChart>
             </ResponsiveContainer>
           </div>
-          {/* Legend */}
+          {/* Legend - show all markets, dim zero values */}
           <div className="flex-1 sm:flex-none sm:w-full px-2">
             <div className="space-y-0.5">
-              {pieData.slice(0, 5).map((entry) => (
-                <div
-                  key={entry.key}
-                  className="flex items-center justify-between text-[10px]"
-                >
-                  <div className="flex items-center gap-1 min-w-0">
-                    <span
-                      className="h-2 w-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: entry.color }}
-                    />
-                    <span className="truncate text-secondary">{entry.name}</span>
+              {pieData.slice(0, 5).map((entry) => {
+                const isZero = entry.value === 0;
+                return (
+                  <div
+                    key={entry.key}
+                    className={`flex items-center justify-between text-[10px] ${isZero ? 'opacity-30' : ''}`}
+                  >
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span
+                        className="h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      <span className="truncate text-secondary">{entry.name}</span>
+                    </div>
+                    <span className="tabular-nums text-secondary ml-2">{isZero ? '—' : `${entry.percentage.toFixed(1)}%`}</span>
                   </div>
-                  <span className="tabular-nums text-secondary ml-2">{entry.percentage.toFixed(1)}%</span>
-                </div>
-              ))}
+                );
+              })}
               {pieData.length > 5 && <p className="text-[10px] text-secondary text-center">+{pieData.length - 5} more</p>}
             </div>
           </div>
