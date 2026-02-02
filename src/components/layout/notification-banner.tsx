@@ -67,7 +67,7 @@ export function NotificationBanner() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="absolute right-4 p-1 text-primary-foreground/80 transition-colors hover:text-primary-foreground sm:right-6 md:right-8"
+            className="absolute right-4 z-10 p-1 text-primary-foreground/80 transition-colors hover:text-primary-foreground sm:right-6 md:right-8"
             aria-label="Dismiss notification"
           >
             <Cross2Icon className="h-5 w-5" />

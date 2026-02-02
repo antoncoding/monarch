@@ -37,7 +37,7 @@ export type NotificationConfig = {
 export const NOTIFICATIONS: NotificationConfig[] = [
   {
     id: 'position-history-chart-2026-02',
-    message: '✨ New: Position History Graph — analyze any account\'s allocation changes over time',
+    message: '💎 New feature: Position History Graph — analyze any account\'s allocation changes over time!',
     type: 'info',
     category: 'global',
     action: {
@@ -48,7 +48,7 @@ export const NOTIFICATIONS: NotificationConfig[] = [
   },
   {
     id: 'custom-tags-2026-02',
-    message: '🏷️ New: Custom Tags — filter markets by flow thresholds in Settings → Experimental',
+    message: '💎 New feature: Custom Tags — create your own tags on market flow metrics! Try it in Settings → Experimental',
     type: 'info',
     category: 'global',
     action: {
