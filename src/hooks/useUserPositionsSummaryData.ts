@@ -112,6 +112,8 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     refetch,
     loadingStates,
     actualBlockData: actualBlockData ?? {},
+    transactions: txData?.items ?? [],
+    snapshotsByChain: allSnapshots ?? {},
   };
 };
 

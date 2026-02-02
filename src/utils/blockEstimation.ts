@@ -60,9 +60,7 @@ export async function fetchBlocksWithTimestamps(
   currentTimestamp: number,
 ): Promise<BlockWithTimestamp[]> {
   // First, estimate all block numbers
-  const estimatedBlocks = targetTimestamps.map((ts) =>
-    estimateBlockAtTimestamp(chainId, ts, currentBlock, currentTimestamp),
-  );
+  const estimatedBlocks = targetTimestamps.map((ts) => estimateBlockAtTimestamp(chainId, ts, currentBlock, currentTimestamp));
 
   // Fetch all block timestamps in parallel
   const blockPromises = estimatedBlocks.map(async (blockNum, index) => {

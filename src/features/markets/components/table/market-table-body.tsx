@@ -241,9 +241,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">
-                    {item.state.dailySupplyApy != null ? <RateFormatted value={item.state.dailySupplyApy} /> : '—'}
-                  </p>
+                  <p className="text-sm">{item.state.dailySupplyApy != null ? <RateFormatted value={item.state.dailySupplyApy} /> : '—'}</p>
                 </TableCell>
               )}
               {columnVisibility.dailyBorrowAPY && (
@@ -252,9 +250,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">
-                    {item.state.dailyBorrowApy != null ? <RateFormatted value={item.state.dailyBorrowApy} /> : '—'}
-                  </p>
+                  <p className="text-sm">{item.state.dailyBorrowApy != null ? <RateFormatted value={item.state.dailyBorrowApy} /> : '—'}</p>
                 </TableCell>
               )}
               {columnVisibility.weeklySupplyAPY && (
