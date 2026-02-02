@@ -8,14 +8,18 @@ import { MarketRiskIndicators } from '@/features/markets/components/market-risk-
 import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useModal } from '@/hooks/useModal';
-import { formatReadable, formatBalance } from '@/utils/balance';
+import { formatBalance } from '@/utils/balance';
 import type { MarketPosition, GroupedPosition } from '@/utils/types';
-import { getCollateralColorFromPalette, OTHER_COLOR } from '@/features/positions/utils/colors';
-import { useChartColors } from '@/constants/chartColors';
 import { AllocationCell } from './allocation-cell';
+import { UserPositionsChart } from './user-positions-chart';
+import type { UserTransaction } from '@/utils/types';
+import type { PositionSnapshot } from '@/utils/positions';
+
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
-  showCollateralExposure: boolean;
+  transactions: UserTransaction[];
+  snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  chainBlockData: Record<number, { block: number; timestamp: number }>;
 };
 
 function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosition; totalSupply: number; rateLabel: string }) {
@@ -106,9 +110,13 @@ function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosit
 }
 
 // shared similar style with @vault-allocation-detail.tsx
-export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure }: SuppliedMarketsDetailProps) {
+export function SuppliedMarketsDetail({
+  groupedPosition,
+  transactions,
+  snapshotsByChain,
+  chainBlockData,
+}: SuppliedMarketsDetailProps) {
   const { short: rateLabel } = useRateLabel();
-  const { pie: pieColors } = useChartColors();
 
   // Sort markets by size
   const sortedMarkets = [...groupedPosition.markets].sort(
@@ -128,45 +136,14 @@ export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure 
       className="overflow-hidden"
     >
       <div className="bg-surface bg-opacity-20">
-        {/* Conditionally render collateral exposure section */}
-        {showCollateralExposure && (
-          <div className="mb-4 flex items-center justify-center">
-            <div className="my-4 w-1/2">
-              <h3 className="mb-2 text-base font-semibold">Collateral Exposure</h3>
-              <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-200">
-                {groupedPosition.processedCollaterals.map((collateral, colIndex) => (
-                  <div
-                    key={`${collateral.address}-${colIndex}`}
-                    className="h-full opacity-70"
-                    style={{
-                      width: `${collateral.percentage}%`,
-                      backgroundColor:
-                        collateral.symbol === 'Others' ? OTHER_COLOR : getCollateralColorFromPalette(collateral.address, pieColors),
-                    }}
-                    title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
-                  />
-                ))}
-              </div>
-              <div className="mt-1 flex flex-wrap justify-center text-xs">
-                {groupedPosition.processedCollaterals.map((collateral, colIndex) => (
-                  <span
-                    key={`${collateral.address}-${colIndex}`}
-                    className="mb-1 mr-2 opacity-70"
-                  >
-                    <span
-                      style={{
-                        color: collateral.symbol === 'Others' ? OTHER_COLOR : getCollateralColorFromPalette(collateral.address, pieColors),
-                      }}
-                    >
-                      ■
-                    </span>{' '}
-                    {collateral.symbol}: {formatReadable(collateral.percentage)}%
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Position History Chart with synchronized pie */}
+        <UserPositionsChart
+          variant="grouped"
+          groupedPosition={groupedPosition}
+          transactions={transactions}
+          snapshotsByChain={snapshotsByChain}
+          chainBlockData={chainBlockData}
+        />
 
         {/* Markets Table - Always visible */}
         <Table className="no-hover-effect w-full font-zen">

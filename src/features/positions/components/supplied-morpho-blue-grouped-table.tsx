@@ -109,10 +109,12 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
     isRefetching,
     isEarningsLoading,
     actualBlockData,
+    transactions,
+    snapshotsByChain,
   } = useUserPositionsSummaryData(account, period);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const { showCollateralExposure, setShowCollateralExposure, showEarningsInUsd, setShowEarningsInUsd } = usePositionsPreferences();
+  const { showEarningsInUsd, setShowEarningsInUsd } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
   const { address } = useConnection();
   const { isAprDisplay } = useAppSettings();
@@ -389,7 +391,9 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                           >
                             <SuppliedMarketsDetail
                               groupedPosition={groupedPosition}
-                              showCollateralExposure={showCollateralExposure}
+                              transactions={transactions}
+                              snapshotsByChain={snapshotsByChain}
+                              chainBlockData={actualBlockData}
                             />
                           </motion.div>
                         </TableCell>
@@ -451,16 +455,6 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                 title="Display Options"
                 helper="Customize what information is shown in the table"
               >
-                <FilterRow
-                  title="Show Collateral Exposure"
-                  description="Display detailed collateral breakdown for each position"
-                >
-                  <IconSwitch
-                    selected={showCollateralExposure}
-                    onChange={setShowCollateralExposure}
-                    size="xs"
-                  />
-                </FilterRow>
                 <FilterRow
                   title="Show Earnings in USD"
                   description="Display accrued interest in USD alongside token amount"
