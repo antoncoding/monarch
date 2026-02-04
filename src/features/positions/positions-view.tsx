@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { IoIosSwap } from 'react-icons/io';
 import { GoHistory } from 'react-icons/go';
@@ -14,7 +14,9 @@ import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
+import { useVaultHistoricalApy } from '@/hooks/useVaultHistoricalApy';
 import { useModal } from '@/hooks/useModal';
+import { usePositionsFilters } from '@/stores/usePositionsFilters';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
@@ -25,6 +27,7 @@ export default function Positions() {
   const { account } = useParams<{ account: string }>();
   const { open } = useModal();
   const { chainId } = useConnection();
+  const period = usePositionsFilters((s) => s.period);
 
   const { loading: isMarketsLoading } = useProcessedMarkets();
 
@@ -37,6 +40,18 @@ export default function Positions() {
     isRefetching: isVaultsRefetching,
     refetch: refetchVaults,
   } = useUserVaultsV2Query({ userAddress: account as Address });
+
+  // Fetch historical APY for vaults
+  const { data: vaultApyData, isLoading: isVaultApyLoading } = useVaultHistoricalApy(vaults, period);
+
+  // Merge APY data into vaults
+  const vaultsWithApy = useMemo(() => {
+    if (!vaultApyData) return vaults;
+    return vaults.map((vault) => ({
+      ...vault,
+      actualApy: vaultApyData.get(vault.address.toLowerCase())?.actualApy,
+    }));
+  }, [vaults, vaultApyData]);
 
   const router = useRouter();
 
@@ -122,8 +137,10 @@ export default function Positions() {
 
           {!isVaultsLoading && hasVaults && (
             <UserVaultsTable
-              vaults={vaults}
+              vaults={vaultsWithApy}
               account={account}
+              period={period}
+              isEarningsLoading={isVaultApyLoading}
               refetch={() => void refetchVaults()}
               isRefetching={isVaultsRefetching}
             />

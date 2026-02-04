@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
+import { PulseLoader } from 'react-spinners';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { formatUnits } from 'viem';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -12,6 +13,7 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAppSettings } from '@/stores/useAppSettings';
+import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -21,14 +23,29 @@ import { VaultAllocationDetail } from './vault-allocation-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { VaultActionsDropdown } from './vault-actions-dropdown';
 
+const periodLabels = {
+  day: '1D',
+  week: '7D',
+  month: '30D',
+} as const;
+
 type UserVaultsTableProps = {
   vaults: UserVaultV2[];
   account: string;
+  period: EarningsPeriod;
+  isEarningsLoading?: boolean;
   refetch?: () => void;
   isRefetching?: boolean;
 };
 
-export function UserVaultsTable({ vaults, account, refetch, isRefetching = false }: UserVaultsTableProps) {
+export function UserVaultsTable({
+  vaults,
+  account,
+  period,
+  isEarningsLoading = false,
+  refetch,
+  isRefetching = false,
+}: UserVaultsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { findToken } = useTokensQuery();
   const { isAprDisplay } = useAppSettings();
@@ -89,7 +106,10 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
               <TableHead className="w-10">Network</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
-              <TableHead>Interest Accrued</TableHead>
+              <TableHead>
+                {rateLabel} ({periodLabels[period]})
+              </TableHead>
+              <TableHead>Interest Accrued ({periodLabels[period]})</TableHead>
               <TableHead>Collateral</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -97,7 +117,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
           <TableBody className="text-sm">
             {activeVaults.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6}>
+                <TableCell colSpan={7}>
                   <div className="flex min-h-[200px] items-center justify-center">
                     <p className="text-sm text-secondary">No active positions in auto vaults.</p>
                   </div>
@@ -131,6 +151,10 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
 
                 const avgApy = vault.avgApy;
                 const displayRate = avgApy !== null && avgApy !== undefined && isAprDisplay ? convertApyToApr(avgApy) : avgApy;
+
+                // Historical APY display
+                const historicalApy = vault.actualApy;
+                const historicalDisplayRate = historicalApy !== undefined && isAprDisplay ? convertApyToApr(historicalApy) : historicalApy;
 
                 return (
                   <Fragment key={rowKey}>
@@ -168,7 +192,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                         </div>
                       </TableCell>
 
-                      {/* APY/APR */}
+                      {/* APY/APR (now) */}
                       <TableCell data-label={`${rateLabel} (now)`}>
                         <div className="flex items-center justify-center">
                           <span className="font-medium">
@@ -177,8 +201,34 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                         </div>
                       </TableCell>
 
-                      {/* Interest Accrued - TODO: implement vault earnings calculation */}
-                      <TableCell data-label="Interest Accrued">
+                      {/* Historical APY/APR */}
+                      <TableCell data-label={`${rateLabel} (${periodLabels[period]})`}>
+                        <div className="flex items-center justify-center">
+                          {isEarningsLoading ? (
+                            <PulseLoader
+                              size={4}
+                              color="#f45f2d"
+                              margin={3}
+                            />
+                          ) : (
+                            <Tooltip
+                              content={
+                                <TooltipContent
+                                  title={`Historical ${rateLabel}`}
+                                  detail={`Annualized yield derived from share price change over the last ${periodLabels[period]}.`}
+                                />
+                              }
+                            >
+                              <span className="cursor-help font-medium">
+                                {historicalDisplayRate !== undefined ? `${formatReadable((historicalDisplayRate * 100).toString())}%` : '-'}
+                              </span>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Interest Accrued */}
+                      <TableCell data-label={`Interest Accrued (${periodLabels[period]})`}>
                         <div className="flex items-center justify-center">
                           <span className="font-medium">-</span>
                         </div>
@@ -211,7 +261,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                       {isExpanded && (
                         <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                           <TableCell
-                            colSpan={6}
+                            colSpan={7}
                             className="bg-surface"
                           >
                             <motion.div
