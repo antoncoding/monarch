@@ -35,10 +35,10 @@ type UseVaultAllocationsReturn = {
  * 5. Returns typed, ready-to-use allocation structures
  */
 export function useVaultAllocations({ vaultAddress, chainId, enabled = true }: UseVaultAllocationsArgs): UseVaultAllocationsReturn {
-  const { allMarkets } = useProcessedMarkets();
+  const { allMarkets, loading: marketsLoading } = useProcessedMarkets();
 
   // Pull vault data directly - TanStack Query handles deduplication
-  const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
+  const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
 
   const collateralCaps = vaultData?.capsData?.collateralCaps ?? [];
   const marketCaps = vaultData?.capsData?.marketCaps ?? [];
@@ -108,14 +108,20 @@ export function useVaultAllocations({ vaultAddress, chainId, enabled = true }: U
   const allValidCaps = useMemo(() => [...validCollateralCaps, ...validMarketCaps], [validCollateralCaps, validMarketCaps]);
 
   // Fetch allocations only for valid, recognized caps
-  const { allocations, isLoading, error, refetch } = useAllocationsQuery({
+  const {
+    allocations,
+    isLoading: allocationsLoading,
+    error,
+    refetch,
+  } = useAllocationsQuery({
     vaultAddress,
     chainId,
     caps: allValidCaps,
     enabled: enabled && allValidCaps.length > 0,
   });
 
-  const loading = isLoading;
+  // Loading if any dependency is loading
+  const loading = marketsLoading || vaultDataLoading || allocationsLoading;
 
   // Create allocation map for efficient lookup
   const allocationMap = useMemo(() => {

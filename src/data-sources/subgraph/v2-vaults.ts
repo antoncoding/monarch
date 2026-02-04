@@ -29,6 +29,7 @@ export type UserVaultV2 = VaultV2Details & {
   networkId: SupportedNetworks;
   balance?: bigint; // User's redeemable assets (from previewRedeem)
   adapter?: Address; // MorphoMarketV1Adapter address
+  actualApy?: number; // Historical APY for the selected period
 };
 
 /**

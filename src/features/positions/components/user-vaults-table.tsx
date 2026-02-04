@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
+import { PulseLoader } from 'react-spinners';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { formatUnits } from 'viem';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -12,6 +13,7 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAppSettings } from '@/stores/useAppSettings';
+import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -20,16 +22,36 @@ import { convertApyToApr } from '@/utils/rateMath';
 import { VaultAllocationDetail } from './vault-allocation-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { VaultActionsDropdown } from './vault-actions-dropdown';
-import { AggregatedVaultRiskIndicators } from './vault-risk-indicators';
+
+const periodLabels = {
+  day: '1D',
+  week: '7D',
+  month: '30D',
+} as const;
+
+const formatRate = (rate: number | null | undefined, isApr: boolean): string => {
+  if (rate === null || rate === undefined) return '-';
+  const displayRate = isApr ? convertApyToApr(rate) : rate;
+  return `${formatReadable((displayRate * 100).toString())}%`;
+};
 
 type UserVaultsTableProps = {
   vaults: UserVaultV2[];
   account: string;
+  period: EarningsPeriod;
+  isEarningsLoading?: boolean;
   refetch?: () => void;
   isRefetching?: boolean;
 };
 
-export function UserVaultsTable({ vaults, account, refetch, isRefetching = false }: UserVaultsTableProps) {
+export function UserVaultsTable({
+  vaults,
+  account,
+  period,
+  isEarningsLoading = false,
+  refetch,
+  isRefetching = false,
+}: UserVaultsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { findToken } = useTokensQuery();
   const { isAprDisplay } = useAppSettings();
@@ -90,9 +112,11 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
               <TableHead className="w-10">Network</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
-              <TableHead>Interest Accrued</TableHead>
+              <TableHead>
+                {rateLabel} ({periodLabels[period]})
+              </TableHead>
+              <TableHead>Interest Accrued ({periodLabels[period]})</TableHead>
               <TableHead>Collateral</TableHead>
-              <TableHead>Risk Tiers</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -112,27 +136,19 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                 const token = findToken(vault.asset, vault.networkId);
                 const networkImg = getNetworkImg(vault.networkId);
 
-                // Extract unique collateral addresses from caps
-                const collateralAddresses = vault.caps
-                  .map((cap) => parseCapIdParams(cap.idParams).collateralToken)
-                  .filter((collat) => collat !== undefined);
+                // Extract unique collateral addresses from caps and transform for display
+                const uniqueCollateralAddresses = [
+                  ...new Set(vault.caps.map((cap) => parseCapIdParams(cap.idParams).collateralToken).filter((addr) => addr !== undefined)),
+                ];
 
-                const uniqueCollateralAddresses = Array.from(new Set(collateralAddresses));
+                const collaterals = uniqueCollateralAddresses.map((address) => ({
+                  address,
+                  symbol: findToken(address, vault.networkId)?.symbol ?? 'Unknown',
+                  amount: 1, // Placeholder - we're just showing presence
+                }));
 
-                // Transform to format expected by CollateralIconsDisplay
-                const collaterals = uniqueCollateralAddresses
-                  .map((address) => {
-                    const collateralToken = findToken(address, vault.networkId);
-                    return {
-                      address,
-                      symbol: collateralToken?.symbol ?? 'Unknown',
-                      amount: 1, // Use 1 as placeholder since we're just showing presence
-                    };
-                  })
-                  .filter((c) => c !== null);
-
-                const avgApy = vault.avgApy;
-                const displayRate = avgApy !== null && avgApy !== undefined && isAprDisplay ? convertApyToApr(avgApy) : avgApy;
+                const currentRateDisplay = formatRate(vault.avgApy, isAprDisplay);
+                const historicalRateDisplay = formatRate(vault.actualApy, isAprDisplay);
 
                 return (
                   <Fragment key={rowKey}>
@@ -170,17 +186,39 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                         </div>
                       </TableCell>
 
-                      {/* APY/APR */}
+                      {/* APY/APR (now) */}
                       <TableCell data-label={`${rateLabel} (now)`}>
                         <div className="flex items-center justify-center">
-                          <span className="font-medium">
-                            {displayRate !== null && displayRate !== undefined ? `${(displayRate * 100).toFixed(2)}%` : '-'}
-                          </span>
+                          <span className="font-medium">{currentRateDisplay}</span>
                         </div>
                       </TableCell>
 
-                      {/* Interest Accrued - TODO: implement vault earnings calculation */}
-                      <TableCell data-label="Interest Accrued">
+                      {/* Historical APY/APR */}
+                      <TableCell data-label={`${rateLabel} (${periodLabels[period]})`}>
+                        <div className="flex items-center justify-center">
+                          {isEarningsLoading ? (
+                            <PulseLoader
+                              size={4}
+                              color="#f45f2d"
+                              margin={3}
+                            />
+                          ) : (
+                            <Tooltip
+                              content={
+                                <TooltipContent
+                                  title={`Historical ${rateLabel}`}
+                                  detail={`Annualized yield derived from share price change over the last ${periodLabels[period]}.`}
+                                />
+                              }
+                            >
+                              <span className="cursor-help font-medium">{historicalRateDisplay}</span>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Interest Accrued */}
+                      <TableCell data-label={`Interest Accrued (${periodLabels[period]})`}>
                         <div className="flex items-center justify-center">
                           <span className="font-medium">-</span>
                         </div>
@@ -194,16 +232,6 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                           maxDisplay={5}
                           iconSize={20}
                         />
-                      </TableCell>
-
-                      {/* Risk Tiers */}
-                      <TableCell
-                        data-label="Risk Tiers"
-                        className="align-middle"
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          <AggregatedVaultRiskIndicators vault={vault} />
-                        </div>
                       </TableCell>
 
                       {/* Actions */}
