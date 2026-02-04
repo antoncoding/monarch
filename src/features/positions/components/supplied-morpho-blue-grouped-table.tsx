@@ -357,6 +357,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                           account={account}
                           chainId={groupedPosition.chainId}
                           tokenAddress={groupedPosition.loanAssetAddress}
+                          tokenSymbol={groupedPosition.loanAssetSymbol}
                           isOwner={isOwner}
                           onRebalanceClick={() => {
                             if (!isOwner) {

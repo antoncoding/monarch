@@ -3,9 +3,9 @@
 import type React from 'react';
 import { useRouter } from 'next/navigation';
 import { GoHistory } from 'react-icons/go';
-import { TbReport } from 'react-icons/tb';
+import { TbReport, TbArrowsRightLeft } from 'react-icons/tb';
 import { IoEllipsisVertical } from 'react-icons/io5';
-import { TbArrowsRightLeft } from 'react-icons/tb';
+import { FiExternalLink } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
@@ -13,11 +13,19 @@ type PositionActionsDropdownProps = {
   account: string;
   chainId: number;
   tokenAddress: string;
+  tokenSymbol: string;
   isOwner: boolean;
   onRebalanceClick: () => void;
 };
 
-export function PositionActionsDropdown({ account, chainId, tokenAddress, isOwner, onRebalanceClick }: PositionActionsDropdownProps) {
+export function PositionActionsDropdown({
+  account,
+  chainId,
+  tokenAddress,
+  tokenSymbol,
+  isOwner,
+  onRebalanceClick,
+}: PositionActionsDropdownProps) {
   const router = useRouter();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -37,6 +45,11 @@ export function PositionActionsDropdown({ account, chainId, tokenAddress, isOwne
   const handleViewReport = () => {
     const reportUrl = `/positions/report/${account}?chainId=${chainId}&tokenAddress=${tokenAddress}`;
     router.push(reportUrl);
+  };
+
+  const handleViewDetails = () => {
+    const detailsUrl = `/position/${chainId}/${tokenSymbol}/${account}`;
+    router.push(detailsUrl);
   };
 
   return (
@@ -77,6 +90,12 @@ export function PositionActionsDropdown({ account, chainId, tokenAddress, isOwne
             startContent={<TbReport className="h-4 w-4" />}
           >
             View Report
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={handleViewDetails}
+            startContent={<FiExternalLink className="h-4 w-4" />}
+          >
+            View Details
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
