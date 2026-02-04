@@ -37,7 +37,7 @@ export function OverviewTab({
     <div className="space-y-6">
       {/* Period Selector */}
       <div className="flex items-center justify-between">
-        <span className="text-sm text-secondary">Time Period</span>
+        <span />
         <PositionPeriodSelector
           period={period}
           onPeriodChange={onPeriodChange}

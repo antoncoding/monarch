@@ -20,12 +20,22 @@ export const usePositionDetailPreferences = create<PositionDetailPreferencesStor
   persist(
     (set) => ({
       selectedTab: 'overview',
-      period: 'week',
+      period: 'month',
       setSelectedTab: (tab) => set({ selectedTab: tab }),
       setPeriod: (period) => set({ period }),
     }),
     {
       name: 'monarch_store_positionDetailPreferences',
+      version: 2,
+      migrate: (state, version) => {
+        if (!state || typeof state !== 'object') {
+          return { selectedTab: 'overview', period: 'month' } as PositionDetailPreferencesState;
+        }
+        if (version < 2) {
+          return { ...state, period: 'month' } as PositionDetailPreferencesState;
+        }
+        return state as PositionDetailPreferencesState;
+      },
       onRehydrateStorage: () => (state) => {
         if (state && (state.selectedTab as string) === 'report') {
           state.selectedTab = 'overview';

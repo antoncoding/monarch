@@ -230,7 +230,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                             content={
                               <TooltipContent
                                 title={`Historical ${rateLabel}`}
-                                detail={`Annualized yield derived from your actual interest earned over the last ${periodLabels[period]}.`}
+                                detail={`Annualized yield from interest earned over the last ${periodLabels[period]}, weighted by your balance over time.`}
                               />
                             }
                           >

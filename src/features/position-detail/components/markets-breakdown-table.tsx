@@ -137,7 +137,7 @@ function MarketRow({
             content={
               <TooltipContent
                 title={`Realized ${rateLabel} (${periodLabel})`}
-                detail="Annualized yield derived from your actual interest earned"
+                detail="Annualized yield from interest earned over the period, weighted by your balance over time."
               />
             }
           >

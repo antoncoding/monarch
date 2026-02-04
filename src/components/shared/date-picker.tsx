@@ -20,9 +20,20 @@ export type DatePickerProps = {
   isInvalid?: boolean;
   errorMessage?: string;
   granularity?: 'day' | 'hour';
+  popoverClassName?: string;
 };
 
-function DatePicker({ label, value, onChange, minValue, maxValue, isInvalid, errorMessage, granularity = 'day' }: DatePickerProps) {
+function DatePicker({
+  label,
+  value,
+  onChange,
+  minValue,
+  maxValue,
+  isInvalid,
+  errorMessage,
+  granularity = 'day',
+  popoverClassName,
+}: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
   // Get timezone from value, or use local timezone
@@ -149,7 +160,7 @@ function DatePicker({ label, value, onChange, minValue, maxValue, isInvalid, err
           </button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-auto p-0 font-zen"
+          className={cn('w-auto p-0 font-zen', popoverClassName)}
           align="start"
         >
           <Calendar

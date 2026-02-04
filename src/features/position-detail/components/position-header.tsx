@@ -78,6 +78,14 @@ export function PositionHeader({
     return `${(displayRate * 100).toFixed(2)}%`;
   })();
 
+  // Actual/realized APY from earnings
+  const formattedActualRate = (() => {
+    if (!groupedPosition || !groupedPosition.actualApy) return null;
+    const rate = groupedPosition.actualApy;
+    const displayRate = isAprDisplay ? convertApyToApr(rate) : rate;
+    return `${(displayRate * 100).toFixed(2)}%`;
+  })();
+
   const totalSupplyFormatted = groupedPosition ? formatReadable(groupedPosition.totalSupply) : null;
 
   // Calculate total earnings
@@ -209,6 +217,27 @@ export function PositionHeader({
                   <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
                 ) : (
                   <p className="tabular-nums text-lg">{formattedRate}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-secondary">
+                  {rateLabel} ({periodLabel})
+                </p>
+                {isLoading || isEarningsLoading ? (
+                  <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
+                ) : formattedActualRate ? (
+                  <Tooltip
+                    content={
+                      <TooltipContent
+                        title={`Realized ${rateLabel}`}
+                        detail="Annualized yield from interest earned over the period, weighted by your balance over time."
+                      />
+                    }
+                  >
+                    <p className="tabular-nums text-lg cursor-help">{formattedActualRate}</p>
+                  </Tooltip>
+                ) : (
+                  <p className="tabular-nums text-lg text-secondary">-</p>
                 )}
               </div>
               <div>

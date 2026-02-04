@@ -21,16 +21,18 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
+import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
 import { UserTxTypes, type Market } from '@/utils/types';
+import { actionTypeToText } from '@/utils/morpho';
 import type { GroupedPosition } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 type HistoryTabProps = {
   groupedPosition: GroupedPosition;
@@ -211,31 +213,31 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
           <TableHeader>
             <TableRow className="text-secondary">
               <TableHead
-                className="z-10 text-left"
+                className="px-4 py-3 text-left"
                 style={{ minWidth: '100px' }}
               >
                 Action
               </TableHead>
               <TableHead
-                className="z-10 text-left"
+                className="px-4 py-3 text-left"
                 style={{ minWidth: '200px' }}
               >
                 Market
               </TableHead>
               <TableHead
-                className="z-10 text-right"
+                className="px-4 py-3 text-right"
                 style={{ minWidth: '120px' }}
               >
                 Amount
               </TableHead>
               <TableHead
-                className="z-10 text-center"
+                className="px-4 py-3 text-center"
                 style={{ minWidth: '120px' }}
               >
                 Tx Hash
               </TableHead>
               <TableHead
-                className="z-10 text-right"
+                className="px-4 py-3 text-right"
                 style={{ minWidth: '90px' }}
               >
                 Time
@@ -261,35 +263,48 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
                 const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market | undefined;
                 if (!market) return null;
 
-                const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
-                const side = tx.type === UserTxTypes.MarketSupply ? 'Supply' : 'Withdraw';
+                const isSupply = tx.type === UserTxTypes.MarketSupply;
+                const isWithdraw = tx.type === UserTxTypes.MarketWithdraw;
+                const actionLabel = actionTypeToText(tx.type);
+                const sign = isSupply ? '+' : '-';
+                const actionClass = isSupply ? 'text-green-500' : isWithdraw ? 'text-red-500' : 'text-secondary';
 
                 return (
                   <TableRow
                     key={`${tx.hash}-${index}`}
                     className="hover:bg-hovered"
                   >
-                    <TableCell style={{ minWidth: '100px' }}>
+                    <TableCell
+                      className="px-4 py-3"
+                      style={{ minWidth: '100px' }}
+                    >
                       <span
-                        className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${
-                          side === 'Supply' ? 'text-primary' : 'text-secondary'
-                        }`}
+                        className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${actionClass}`}
                       >
-                        {side}
+                        {actionLabel}
                       </span>
                     </TableCell>
 
-                    <TableCell style={{ minWidth: '200px' }}>
+                    <TableCell
+                      className="px-4 py-3"
+                      style={{ minWidth: '200px' }}
+                    >
                       <Link
                         href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
                         className="no-underline hover:no-underline"
                       >
                         <div className="flex items-center justify-start gap-2">
+                          <MarketIdBadge
+                            marketId={market.uniqueKey}
+                            chainId={market.morphoBlue.chain.id}
+                            showLink={false}
+                          />
                           <MarketIdentity
                             market={market}
                             chainId={market.morphoBlue.chain.id}
-                            mode={MarketIdentityMode.Badge}
+                            mode={MarketIdentityMode.Minimum}
                             focus={MarketIdentityFocus.Collateral}
+                            showLltv={false}
                             showOracle={false}
                           />
                         </div>
@@ -297,7 +312,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
                     </TableCell>
 
                     <TableCell
-                      className="text-right"
+                      className="px-4 py-3 text-right"
                       style={{ minWidth: '120px' }}
                     >
                       <div className="flex items-center justify-end gap-1.5 text-sm">
@@ -315,7 +330,10 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
                       </div>
                     </TableCell>
 
-                    <TableCell style={{ minWidth: '120px' }}>
+                    <TableCell
+                      className="px-4 py-3"
+                      style={{ minWidth: '120px' }}
+                    >
                       <div className="flex justify-center">
                         <TransactionIdentity
                           txHash={tx.hash}
@@ -325,7 +343,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
                     </TableCell>
 
                     <TableCell
-                      className="text-right"
+                      className="px-4 py-3 text-right"
                       style={{ minWidth: '90px' }}
                     >
                       <span className="text-xs text-secondary whitespace-nowrap">{moment.unix(tx.timestamp).fromNow()}</span>
@@ -376,24 +394,26 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
                 title="Date Range"
                 helper="Filter transactions by date"
               >
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-secondary w-16">From:</span>
+                <div className="grid gap-3">
+                  <div className="grid grid-cols-[44px,1fr] items-center gap-3">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-secondary">From</span>
                     <DatePicker
                       value={startDate ?? undefined}
                       onChange={handleStartDateChange}
                       maxValue={maxDate}
                       granularity="day"
+                      popoverClassName="z-[3600]"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-secondary w-16">To:</span>
+                  <div className="grid grid-cols-[44px,1fr] items-center gap-3">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-secondary">To</span>
                     <DatePicker
                       value={endDate ?? undefined}
                       onChange={handleEndDateChange}
                       minValue={startDate ?? undefined}
                       maxValue={maxDate}
                       granularity="day"
+                      popoverClassName="z-[3600]"
                     />
                   </div>
                   {hasActiveFilters && (
