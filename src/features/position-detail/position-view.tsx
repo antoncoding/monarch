@@ -2,20 +2,21 @@
 
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useConnection } from 'wagmi';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
-import LoadingScreen from '@/components/status/loading-screen';
+import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
-import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { usePositionDetailPreferences, type PositionDetailTab } from '@/stores/usePositionDetailPreferences';
-import { usePositionsFilters } from '@/stores/usePositionsFilters';
-import { groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
-import type { SupportedNetworks } from '@/utils/networks';
+import { usePositionDetailData } from './hooks/usePositionDetailData';
+import { PositionBreadcrumbs } from './components/position-breadcrumbs';
 import { PositionHeader } from './components/position-header';
 import { OverviewTab } from './components/overview-tab';
-import { ReportTab } from './components/report-tab';
 import { HistoryTab } from './components/history-tab';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
 type PositionDetailContentProps = {
   chainId: number;
@@ -23,144 +24,173 @@ type PositionDetailContentProps = {
   userAddress: string;
 };
 
+const PERIOD_LABELS: Record<EarningsPeriod, string> = {
+  day: '24h',
+  week: '7d',
+  month: '30d',
+};
+
 export default function PositionDetailContent({ chainId, loanAssetAddress, userAddress }: PositionDetailContentProps) {
   const router = useRouter();
+  const { address: connectedAddress } = useConnection();
 
-  // Tab preferences
+  // Preferences (tab + period)
   const selectedTab = usePositionDetailPreferences((s) => s.selectedTab);
   const setSelectedTab = usePositionDetailPreferences((s) => s.setSelectedTab);
+  const period = usePositionDetailPreferences((s) => s.period);
+  const setPeriod = usePositionDetailPreferences((s) => s.setPeriod);
 
-  // Period filter from positions store
-  const period = usePositionsFilters((s) => s.period);
+  // Check if current user is the position owner
+  const isOwner = connectedAddress === userAddress;
 
-  // Data loading
+  // Get token info for early display
+  const { findToken } = useTokensQuery();
+  const tokenInfo = findToken(loanAssetAddress, chainId);
+  const loanAssetSymbol = tokenInfo?.symbol;
+
+  // Markets loading (needed for some data)
   const { loading: isMarketsLoading } = useProcessedMarkets();
+
+  // Position data
   const {
-    positions: marketPositions,
-    isPositionsLoading,
+    currentPosition,
+    allPositions,
+    isLoading: isPositionsLoading,
     isEarningsLoading,
     isRefetching,
     refetch,
     actualBlockData,
-  } = useUserPositionsSummaryData(userAddress, period, [chainId as SupportedNetworks]);
+    transactions,
+    snapshotsByChain,
+  } = usePositionDetailData({
+    chainId: chainId as SupportedNetworks,
+    loanAssetAddress,
+    userAddress,
+    period,
+  });
 
-  const loading = isMarketsLoading || isPositionsLoading;
+  const isLoading = isMarketsLoading || isPositionsLoading;
+  const periodLabel = PERIOD_LABELS[period];
 
-  // Group and process positions
-  const groupedPositions = useMemo(() => {
-    const grouped = groupPositionsByLoanAsset(marketPositions);
-    return processCollaterals(grouped);
-  }, [marketPositions]);
-
-  // Find the current position based on chainId and loanAssetAddress
-  const currentPosition = useMemo(() => {
-    return groupedPositions.find((pos) => pos.chainId === chainId && pos.loanAssetAddress.toLowerCase() === loanAssetAddress.toLowerCase());
-  }, [groupedPositions, chainId, loanAssetAddress]);
-
-  // Get all user positions for the position switcher (across all chains)
-  const { positions: allUserPositions } = useUserPositionsSummaryData(userAddress, period);
-
-  const allGroupedPositions = useMemo(() => {
-    const grouped = groupPositionsByLoanAsset(allUserPositions);
-    return processCollaterals(grouped);
-  }, [allUserPositions]);
+  // Filter transactions relevant to this position's markets
+  const relevantTransactions = useMemo(() => {
+    if (!currentPosition) return [];
+    const marketKeys = new Set(currentPosition.markets.map((m) => m.market.uniqueKey.toLowerCase()));
+    return transactions.filter((tx) => tx.data.market && marketKeys.has(tx.data.market.uniqueKey.toLowerCase()));
+  }, [transactions, currentPosition]);
 
   // Handle refetch
   const handleRefetch = () => {
     refetch();
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex flex-col justify-between font-zen">
-        <Header />
-        <div className="container h-full gap-8">
-          <LoadingScreen
-            message={isMarketsLoading ? 'Loading markets...' : 'Loading position...'}
-            className="mt-10"
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // No position found
-  if (!currentPosition) {
-    return (
-      <div className="flex flex-col justify-between font-zen">
-        <Header />
-        <div className="container h-full gap-8">
-          <EmptyScreen
-            message="No position found for this asset on this network."
-            className="mt-10"
-          />
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => router.push(`/positions/${userAddress}`)}
-              className="text-primary hover:underline"
-            >
-              View all positions
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Always render the shell - progressive loading
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
       <div className="container h-full gap-8 pb-12">
-        {/* Position Header */}
+        {/* Breadcrumbs - always visible */}
+        <div className="mt-6">
+          <PositionBreadcrumbs
+            userAddress={userAddress}
+            chainId={chainId as SupportedNetworks}
+            loanAssetAddress={loanAssetAddress}
+            loanAssetSymbol={currentPosition?.loanAssetSymbol ?? loanAssetSymbol}
+          />
+        </div>
+
+        {/* Position Header - supports loading state, includes earnings */}
         <PositionHeader
           groupedPosition={currentPosition}
           chainId={chainId as SupportedNetworks}
           userAddress={userAddress}
-          allPositions={allGroupedPositions}
+          allPositions={allPositions}
+          loanAssetAddress={loanAssetAddress}
+          loanAssetSymbol={loanAssetSymbol}
           onRefetch={handleRefetch}
           isRefetching={isRefetching}
+          isLoading={isLoading}
+          isEarningsLoading={isEarningsLoading}
+          periodLabel={periodLabel}
         />
 
-        {/* Tabs Section */}
-        <Tabs
-          value={selectedTab}
-          onValueChange={(value) => setSelectedTab(value as PositionDetailTab)}
-          className="mt-8 w-full"
-        >
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="report">Report</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview">
-            <OverviewTab
-              groupedPosition={currentPosition}
-              chainId={chainId as SupportedNetworks}
-              isEarningsLoading={isEarningsLoading}
-              actualBlockData={actualBlockData}
-              period={period}
+        {/* No position found - show after loading completes */}
+        {!isLoading && !currentPosition && (
+          <div className="mt-8">
+            <EmptyScreen
+              message="No position found for this asset on this network."
+              className="mt-10"
             />
-          </TabsContent>
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => router.push(`/positions/${userAddress}`)}
+                className="text-primary hover:underline"
+              >
+                View all positions
+              </button>
+            </div>
+          </div>
+        )}
 
-          <TabsContent value="report">
-            <ReportTab
+        {/* Position History Chart - Always visible above tabs */}
+        {currentPosition && (
+          <div className="mt-6">
+            <UserPositionsChart
+              variant="grouped"
               groupedPosition={currentPosition}
-              chainId={chainId as SupportedNetworks}
-              userAddress={userAddress}
+              transactions={relevantTransactions}
+              snapshotsByChain={snapshotsByChain}
+              chainBlockData={actualBlockData}
             />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="history">
-            <HistoryTab
-              groupedPosition={currentPosition}
-              chainId={chainId as SupportedNetworks}
-              userAddress={userAddress}
-            />
-          </TabsContent>
-        </Tabs>
+        {/* Tabs Section - show when we have position or still loading */}
+        {(currentPosition || isLoading) && (
+          <Tabs
+            value={selectedTab}
+            onValueChange={(value) => setSelectedTab(value as PositionDetailTab)}
+            className="mt-6 w-full"
+          >
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+
+            {/* Loading skeleton for tab content */}
+            {isLoading && !currentPosition && (
+              <div className="space-y-6 mt-4">
+                <div className="h-12 w-full animate-pulse rounded bg-hovered" />
+                <div className="h-[300px] w-full animate-pulse rounded bg-hovered" />
+              </div>
+            )}
+
+            {currentPosition && (
+              <>
+                <TabsContent value="overview">
+                  <OverviewTab
+                    groupedPosition={currentPosition}
+                    chainId={chainId as SupportedNetworks}
+                    isEarningsLoading={isEarningsLoading}
+                    actualBlockData={actualBlockData}
+                    period={period}
+                    onPeriodChange={setPeriod}
+                    isOwner={isOwner}
+                  />
+                </TabsContent>
+
+                <TabsContent value="history">
+                  <HistoryTab
+                    groupedPosition={currentPosition}
+                    chainId={chainId as SupportedNetworks}
+                    userAddress={userAddress}
+                  />
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
+        )}
       </div>
     </div>
   );

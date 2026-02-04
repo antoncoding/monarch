@@ -9,6 +9,7 @@ import { GearIcon } from '@radix-ui/react-icons';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
+import { Divider } from '@/components/ui/divider';
 import { FilterSection } from '@/components/ui/filter-components';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -23,12 +24,13 @@ import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/featu
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import { useDisclosure } from '@/hooks/useDisclosure';
-import { useHistoryPreferences } from '@/stores/useHistoryPreferences';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
 import { UserTxTypes, type Market } from '@/utils/types';
 import type { GroupedPosition } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
+
+const PAGE_SIZE = 20;
 
 type HistoryTabProps = {
   groupedPosition: GroupedPosition;
@@ -44,17 +46,14 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
   const [endDate, setEndDate] = useState<ZonedDateTime | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Settings state from Zustand store
-  const { entriesPerPage: pageSize, setEntriesPerPage: setPageSize } = useHistoryPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
-  const [customPageSize, setCustomPageSize] = useState(pageSize.toString());
 
   // Get market IDs for this position
   const marketIdFilter = useMemo(() => {
     return groupedPosition.markets.map((m) => m.market.uniqueKey);
   }, [groupedPosition.markets]);
 
-  // Fetch transactions
+  // Fetch transactions with pagination
   const {
     data,
     isLoading: loadingHistory,
@@ -62,8 +61,8 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
   } = useUserTransactionsQuery({
     filters: {
       userAddress: [userAddress],
-      first: pageSize,
-      skip: (currentPage - 1) * pageSize,
+      first: PAGE_SIZE,
+      skip: (currentPage - 1) * PAGE_SIZE,
       marketUniqueKeys: marketIdFilter,
       chainId: chainId,
       timestampGte: startDate ? Math.floor(startDate.toDate().getTime() / 1000) : undefined,
@@ -74,7 +73,8 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
 
   const loading = loadingHistory || loadingMarkets;
   const history = data?.items ?? [];
-  const totalPages = data ? Math.ceil(data.pageInfo.countTotal / pageSize) : 0;
+  const totalPages = data ? Math.ceil(data.pageInfo.countTotal / PAGE_SIZE) : 0;
+  const totalEntries = data?.pageInfo.countTotal ?? 0;
 
   const maxDate = useMemo(() => now(getLocalTimeZone()), []);
 
@@ -99,15 +99,6 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
     })();
   };
 
-  const handlePageSizeUpdate = () => {
-    const value = Number(customPageSize);
-    if (!Number.isNaN(value) && value > 0) {
-      setPageSize(value);
-      setCurrentPage(1);
-    }
-    setCustomPageSize(value > 0 ? String(value) : pageSize.toString());
-  };
-
   const hasActiveFilters = startDate !== null || endDate !== null;
 
   const clearAllFilters = () => {
@@ -117,7 +108,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
   };
 
   // Skeleton loading rows
-  const renderSkeletonRows = (count = 5) => {
+  const renderSkeletonRows = (count = 8) => {
     return Array.from({ length: count }).map((_, idx) => (
       <TableRow key={`skeleton-${idx}`}>
         <TableCell style={{ minWidth: '100px' }}>
@@ -182,7 +173,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
         content={
           <TooltipContent
             title="Settings"
-            detail="Configure view settings"
+            detail="Configure date filters"
           />
         }
       >
@@ -200,24 +191,17 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
 
   return (
     <div className="space-y-4">
-      {/* Date Filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        <DatePicker
-          value={startDate ?? undefined}
-          onChange={handleStartDateChange}
-          maxValue={maxDate}
-          granularity="day"
-        />
-        <span className="text-secondary text-sm">to</span>
-        <DatePicker
-          value={endDate ?? undefined}
-          onChange={handleEndDateChange}
-          minValue={startDate ?? undefined}
-          maxValue={maxDate}
-          granularity="day"
-        />
-        {hasActiveFilters && <ClearFiltersButton onClick={clearAllFilters} />}
-      </div>
+      {/* Active filters indicator */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2 text-sm text-secondary">
+          <span>
+            Filtered: {startDate && moment(startDate.toDate()).format('MMM D, YYYY')}
+            {startDate && endDate && ' - '}
+            {endDate && moment(endDate.toDate()).format('MMM D, YYYY')}
+          </span>
+          <ClearFiltersButton onClick={clearAllFilters} />
+        </div>
+      )}
 
       <TableContainerWithHeader
         title="Transaction History"
@@ -288,7 +272,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
                     <TableCell style={{ minWidth: '100px' }}>
                       <span
                         className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${
-                          side === 'Supply' ? 'text-green-500' : 'text-red-500'
+                          side === 'Supply' ? 'text-primary' : 'text-secondary'
                         }`}
                       >
                         {side}
@@ -354,19 +338,20 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
         </Table>
       </TableContainerWithHeader>
 
+      {/* Pagination */}
       {!loading && totalPages > 1 && (
         <TablePagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalEntries={totalPages * pageSize}
-          pageSize={pageSize}
+          totalEntries={totalEntries}
+          pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
           isLoading={loading}
-          showEntryCount={false}
+          showEntryCount
         />
       )}
 
-      {/* Settings Modal */}
+      {/* Settings Modal with Date Filters */}
       <Modal
         isOpen={isSettingsOpen}
         onOpenChange={onSettingsOpenChange}
@@ -378,8 +363,8 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
           <>
             <ModalHeader
               variant="compact"
-              title="View Settings"
-              description="Configure how transaction history is displayed"
+              title="Filter Settings"
+              description="Configure date range for transaction history"
               mainIcon={<GearIcon />}
               onClose={close}
             />
@@ -388,31 +373,41 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
               className="flex flex-col gap-4"
             >
               <FilterSection
-                title="Pagination"
-                helper="Number of transactions shown per page"
+                title="Date Range"
+                helper="Filter transactions by date"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex flex-col gap-1 pr-4">
-                    <span className="font-zen text-sm font-medium text-primary">Entries Per Page</span>
-                    <span className="font-zen text-xs text-secondary">Adjust the number of transactions per page</span>
-                  </div>
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      type="number"
-                      placeholder="10"
-                      value={customPageSize}
-                      onChange={(e) => setCustomPageSize(e.target.value)}
-                      min="1"
-                      className="bg-hovered h-8 w-20 rounded p-2 text-sm focus:border-primary focus:outline-none"
-                      onKeyDown={(e) => e.key === 'Enter' && handlePageSizeUpdate()}
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-secondary w-16">From:</span>
+                    <DatePicker
+                      value={startDate ?? undefined}
+                      onChange={handleStartDateChange}
+                      maxValue={maxDate}
+                      granularity="day"
                     />
-                    <Button
-                      size="sm"
-                      onClick={handlePageSizeUpdate}
-                    >
-                      Update
-                    </Button>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-secondary w-16">To:</span>
+                    <DatePicker
+                      value={endDate ?? undefined}
+                      onChange={handleEndDateChange}
+                      minValue={startDate ?? undefined}
+                      maxValue={maxDate}
+                      granularity="day"
+                    />
+                  </div>
+                  {hasActiveFilters && (
+                    <>
+                      <Divider />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearAllFilters}
+                      >
+                        Clear Date Filters
+                      </Button>
+                    </>
+                  )}
                 </div>
               </FilterSection>
             </ModalBody>

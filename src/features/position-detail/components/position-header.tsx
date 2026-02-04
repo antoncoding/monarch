@@ -7,28 +7,46 @@ import { TbArrowsRightLeft } from 'react-icons/tb';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { AccountIdentity } from '@/components/shared/account-identity';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { CollateralIconsDisplay } from '@/features/positions/components/collateral-icons-display';
 import { useModalStore } from '@/stores/useModalStore';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useAppSettings } from '@/stores/useAppSettings';
-import { formatReadable } from '@/utils/balance';
+import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';
+import { getGroupedEarnings } from '@/utils/positions';
 import type { GroupedPosition } from '@/utils/types';
 
 type PositionHeaderProps = {
-  groupedPosition: GroupedPosition;
+  groupedPosition?: GroupedPosition;
   chainId: SupportedNetworks;
   userAddress: string;
   allPositions: GroupedPosition[];
+  loanAssetAddress: string;
+  loanAssetSymbol?: string;
   onRefetch: () => void;
   isRefetching: boolean;
+  isLoading: boolean;
+  isEarningsLoading: boolean;
+  periodLabel: string;
 };
 
-export function PositionHeader({ groupedPosition, chainId, userAddress, allPositions, onRefetch, isRefetching }: PositionHeaderProps) {
+export function PositionHeader({
+  groupedPosition,
+  chainId,
+  userAddress,
+  allPositions,
+  loanAssetAddress,
+  loanAssetSymbol,
+  onRefetch,
+  isRefetching,
+  isLoading,
+  isEarningsLoading,
+  periodLabel,
+}: PositionHeaderProps) {
   const router = useRouter();
   const { address } = useConnection();
   const { isAprDisplay } = useAppSettings();
@@ -38,11 +56,14 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
   const isOwner = address === userAddress;
   const networkImg = getNetworkImg(chainId);
 
+  const displaySymbol = groupedPosition?.loanAssetSymbol ?? loanAssetSymbol ?? '';
+
   const handlePositionChange = (position: GroupedPosition) => {
     router.push(`/position/${position.chainId}/${position.loanAssetAddress}/${userAddress}`);
   };
 
   const handleRebalanceClick = () => {
+    if (!groupedPosition) return;
     openModal('rebalance', {
       groupedPosition,
       refetch: onRefetch,
@@ -51,13 +72,18 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
   };
 
   const formattedRate = (() => {
+    if (!groupedPosition) return null;
     const rate = groupedPosition.totalWeightedApy;
     const displayRate = isAprDisplay ? convertApyToApr(rate) : rate;
     return `${(displayRate * 100).toFixed(2)}%`;
   })();
 
-  // Calculate total value in USD if we had price data
-  const totalSupplyFormatted = formatReadable(groupedPosition.totalSupply);
+  const totalSupplyFormatted = groupedPosition ? formatReadable(groupedPosition.totalSupply) : null;
+
+  // Calculate total earnings
+  const totalEarnings = groupedPosition ? getGroupedEarnings(groupedPosition) : 0n;
+  const earningsFormatted =
+    groupedPosition && totalEarnings > 0n ? formatReadable(Number(formatBalance(totalEarnings, groupedPosition.loanAssetDecimals))) : null;
 
   return (
     <div className="mt-6 mb-6 space-y-4">
@@ -68,9 +94,9 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
             {/* Token icon with network overlay */}
             <div className="relative">
               <TokenIcon
-                address={groupedPosition.loanAssetAddress}
+                address={groupedPosition?.loanAssetAddress ?? loanAssetAddress}
                 chainId={chainId}
-                symbol={groupedPosition.loanAssetSymbol}
+                symbol={displaySymbol}
                 width={48}
                 height={48}
               />
@@ -95,7 +121,7 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
                       type="button"
                       className="flex items-center gap-2 text-2xl hover:text-primary transition-colors"
                     >
-                      <span>{groupedPosition.loanAssetSymbol}</span>
+                      <span>{displaySymbol || <span className="h-6 w-16 animate-pulse rounded bg-hovered inline-block" />}</span>
                       <span className="text-secondary">Position</span>
                       {allPositions.length > 1 && <ChevronDownIcon className="h-5 w-5 text-secondary" />}
                     </button>
@@ -107,7 +133,9 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
                           key={`${pos.loanAssetAddress}-${pos.chainId}`}
                           onClick={() => handlePositionChange(pos)}
                           className={
-                            pos.loanAssetAddress === groupedPosition.loanAssetAddress && pos.chainId === chainId ? 'bg-hovered' : ''
+                            pos.loanAssetAddress === (groupedPosition?.loanAssetAddress ?? loanAssetAddress) && pos.chainId === chainId
+                              ? 'bg-hovered'
+                              : ''
                           }
                         >
                           <div className="flex items-center gap-2">
@@ -135,46 +163,76 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
                   )}
                 </DropdownMenu>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-secondary">
-                {networkImg && (
-                  <div className="flex items-center gap-1">
-                    <Image
-                      src={networkImg}
-                      alt={chainId.toString()}
-                      width={14}
-                      height={14}
-                    />
-                    <span>{getNetworkName(chainId)}</span>
-                  </div>
-                )}
-                <span className="text-border">·</span>
-                <span>
-                  {groupedPosition.markets.length} Market{groupedPosition.markets.length !== 1 ? 's' : ''}
-                </span>
-              </div>
+              {/* Collaterals in subtitle */}
+              {groupedPosition && groupedPosition.collaterals.length > 0 && (
+                <div className="mt-1 flex items-center gap-1 text-sm text-secondary">
+                  <span>Collaterals:</span>
+                  <CollateralIconsDisplay
+                    collaterals={groupedPosition.collaterals}
+                    chainId={chainId}
+                    maxDisplay={5}
+                    iconSize={16}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           {/* RIGHT: Stats + Actions */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
             {/* Key Stats */}
-            <div className="hidden lg:flex items-center gap-6 border-r border-border pr-6">
+            <div className="flex items-center gap-6 border-r border-border pr-6">
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Total Supply</p>
                 <div className="flex items-center gap-2">
-                  <p className="tabular-nums text-lg">{totalSupplyFormatted}</p>
-                  <TokenIcon
-                    address={groupedPosition.loanAssetAddress}
-                    chainId={chainId}
-                    symbol={groupedPosition.loanAssetSymbol}
-                    width={18}
-                    height={18}
-                  />
+                  {isLoading ? (
+                    <div className="h-6 w-20 animate-pulse rounded bg-hovered" />
+                  ) : (
+                    <>
+                      <p className="tabular-nums text-lg">{totalSupplyFormatted}</p>
+                      {groupedPosition && (
+                        <TokenIcon
+                          address={groupedPosition.loanAssetAddress}
+                          chainId={chainId}
+                          symbol={groupedPosition.loanAssetSymbol}
+                          width={18}
+                          height={18}
+                        />
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Avg {rateLabel}</p>
-                <p className="tabular-nums text-lg">{formattedRate}</p>
+                {isLoading ? (
+                  <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
+                ) : (
+                  <p className="tabular-nums text-lg">{formattedRate}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-secondary">Earned ({periodLabel})</p>
+                <div className="flex items-center gap-2">
+                  {isLoading || isEarningsLoading ? (
+                    <div className="h-6 w-20 animate-pulse rounded bg-hovered" />
+                  ) : earningsFormatted ? (
+                    <>
+                      <p className="tabular-nums text-lg">+{earningsFormatted}</p>
+                      {groupedPosition && (
+                        <TokenIcon
+                          address={groupedPosition.loanAssetAddress}
+                          chainId={chainId}
+                          symbol={groupedPosition.loanAssetSymbol}
+                          width={18}
+                          height={18}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <p className="tabular-nums text-lg text-secondary">-</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -194,6 +252,7 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
                       variant="primary"
                       size="md"
                       onClick={handleRebalanceClick}
+                      disabled={isLoading || !groupedPosition}
                     >
                       <TbArrowsRightLeft className="h-4 w-4" />
                       Rebalance
@@ -202,42 +261,6 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
                 </Tooltip>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Mobile Stats Row */}
-        <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-4 lg:hidden">
-          <div>
-            <p className="text-xs text-secondary">Total Supply</p>
-            <div className="flex items-center gap-1">
-              <p className="tabular-nums">{totalSupplyFormatted}</p>
-              <TokenIcon
-                address={groupedPosition.loanAssetAddress}
-                chainId={chainId}
-                symbol={groupedPosition.loanAssetSymbol}
-                width={14}
-                height={14}
-              />
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-secondary">Avg {rateLabel}</p>
-            <p className="tabular-nums">{formattedRate}</p>
-          </div>
-        </div>
-
-        {/* Account Identity Row */}
-        <div className="mt-4 border-t border-border pt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-secondary">Account:</span>
-              <AccountIdentity
-                address={userAddress as `0x${string}`}
-                chainId={chainId}
-                variant="compact"
-              />
-            </div>
-            {isOwner && <span className="badge text-xs text-green-500">Your Position</span>}
           </div>
         </div>
       </div>
