@@ -28,7 +28,13 @@ export const usePositionsWithEarnings = (
 ): MarketPositionWithEarnings[] => {
   return useMemo(() => {
     if (!transactions || transactions.length === 0) {
-      return positions.map((p) => ({ ...p, earned: '0' }));
+      return positions.map((p) => ({
+        ...p,
+        earned: '0',
+        actualApy: 0,
+        avgCapital: '0',
+        effectiveTime: 0,
+      }));
     }
 
     return positions.map((position) => {
@@ -55,6 +61,9 @@ export const usePositionsWithEarnings = (
       return {
         ...position,
         earned: earnings.earned.toString(),
+        actualApy: earnings.apy,
+        avgCapital: earnings.avgCapital.toString(),
+        effectiveTime: earnings.effectiveTime,
       };
     });
   }, [positions, transactions, snapshotsByChain, chainBlockData, endTimestamp]);

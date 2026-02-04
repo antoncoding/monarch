@@ -277,6 +277,28 @@ export function getGroupedEarnings(groupedPosition: GroupedPosition): bigint {
 }
 
 /**
+ * Get weighted actual APY for a group of positions
+ * Weighted by time-weighted average capital (avgCapital) from each position
+ *
+ * @param groupedPosition - The grouped position
+ * @returns The weighted actual APY as a number
+ */
+export function getGroupedActualApy(groupedPosition: GroupedPosition): number {
+  let totalWeightedApy = 0;
+  let totalAvgCapital = 0n;
+
+  for (const position of groupedPosition.markets) {
+    const avgCapital = BigInt(position.avgCapital ?? '0');
+    if (avgCapital > 0n) {
+      totalWeightedApy += Number(avgCapital) * position.actualApy;
+      totalAvgCapital += avgCapital;
+    }
+  }
+
+  return totalAvgCapital > 0n ? totalWeightedApy / Number(totalAvgCapital) : 0;
+}
+
+/**
  * Group positions by loan asset
  *
  * @param positions - Array of positions with earnings
@@ -301,6 +323,7 @@ export function groupPositionsByLoanAsset(positions: MarketPositionWithEarnings[
           chainId,
           totalSupply: 0,
           totalWeightedApy: 0,
+          actualApy: 0,
           collaterals: [],
           markets: [],
           processedCollaterals: [],
@@ -347,6 +370,8 @@ export function groupPositionsByLoanAsset(positions: MarketPositionWithEarnings[
       } else {
         groupedPosition.totalWeightedApy = 0; // Avoid division by zero
       }
+      // Calculate weighted actual APY across markets
+      groupedPosition.actualApy = getGroupedActualApy(groupedPosition);
       return groupedPosition;
     })
     .sort((a, b) => b.totalSupply - a.totalSupply);
@@ -398,5 +423,8 @@ export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]
   return positions.map((position) => ({
     ...position,
     earned: '0',
+    actualApy: 0,
+    avgCapital: '0',
+    effectiveTime: 0,
   }));
 }

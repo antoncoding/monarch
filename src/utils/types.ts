@@ -22,6 +22,9 @@ export type MarketPosition = {
 
 export type MarketPositionWithEarnings = MarketPosition & {
   earned: string;
+  actualApy: number; // Historical APY for the period
+  avgCapital: string; // Time-weighted average capital
+  effectiveTime: number; // Seconds held in period
 };
 
 export enum UserTxTypes {
@@ -227,6 +230,7 @@ export type GroupedPosition = {
   loanAssetSymbol: string;
   totalSupply: number;
   totalWeightedApy: number;
+  actualApy: number; // Weighted historical APY across all markets
 
   earned?: PositionEarnings;
 

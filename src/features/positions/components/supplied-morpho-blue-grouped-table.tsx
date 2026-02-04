@@ -28,7 +28,6 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
-import type { GroupedPosition } from '@/utils/types';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { PositionActionsDropdown } from './position-actions-dropdown';
@@ -162,7 +161,10 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
               <TableHead className="w-10">Network</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
-              <TableHead>Interest Accrued ({period})</TableHead>
+              <TableHead>
+                {rateLabel} ({periodLabels[period]})
+              </TableHead>
+              <TableHead>Interest Accrued ({periodLabels[period]})</TableHead>
               <TableHead>Collateral</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -211,6 +213,35 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                     <TableCell data-label={`${rateLabel} (now)`}>
                       <div className="flex items-center justify-center">
                         <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Actual APY for period */}
+                    <TableCell data-label={`${rateLabel} (${periodLabels[period]})`}>
+                      <div className="flex items-center justify-center">
+                        {isEarningsLoading ? (
+                          <PulseLoader
+                            size={4}
+                            color="#f45f2d"
+                            margin={3}
+                          />
+                        ) : (
+                          <Tooltip
+                            content={
+                              <TooltipContent
+                                title={`Historical ${rateLabel}`}
+                                detail={`Annualized yield derived from your actual interest earned over the last ${periodLabels[period]}.`}
+                              />
+                            }
+                          >
+                            <span className="cursor-help font-medium">
+                              {formatReadable(
+                                (isAprDisplay ? convertApyToApr(groupedPosition.actualApy) : groupedPosition.actualApy) * 100,
+                              )}
+                              %
+                            </span>
+                          </Tooltip>
+                        )}
                       </div>
                     </TableCell>
 
@@ -308,7 +339,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                     {expandedRows.has(rowKey) && (
                       <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                         <TableCell
-                          colSpan={6}
+                          colSpan={7}
                           className="bg-surface"
                         >
                           <motion.div
