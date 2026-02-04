@@ -29,6 +29,12 @@ const periodLabels = {
   month: '30D',
 } as const;
 
+const formatRate = (rate: number | null | undefined, isApr: boolean): string => {
+  if (rate === null || rate === undefined) return '-';
+  const displayRate = isApr ? convertApyToApr(rate) : rate;
+  return `${formatReadable((displayRate * 100).toString())}%`;
+};
+
 type UserVaultsTableProps = {
   vaults: UserVaultV2[];
   account: string;
@@ -130,31 +136,19 @@ export function UserVaultsTable({
                 const token = findToken(vault.asset, vault.networkId);
                 const networkImg = getNetworkImg(vault.networkId);
 
-                // Extract unique collateral addresses from caps
-                const collateralAddresses = vault.caps
-                  .map((cap) => parseCapIdParams(cap.idParams).collateralToken)
-                  .filter((collat) => collat !== undefined);
+                // Extract unique collateral addresses from caps and transform for display
+                const uniqueCollateralAddresses = [
+                  ...new Set(vault.caps.map((cap) => parseCapIdParams(cap.idParams).collateralToken).filter((addr) => addr !== undefined)),
+                ];
 
-                const uniqueCollateralAddresses = Array.from(new Set(collateralAddresses));
+                const collaterals = uniqueCollateralAddresses.map((address) => ({
+                  address,
+                  symbol: findToken(address, vault.networkId)?.symbol ?? 'Unknown',
+                  amount: 1, // Placeholder - we're just showing presence
+                }));
 
-                // Transform to format expected by CollateralIconsDisplay
-                const collaterals = uniqueCollateralAddresses
-                  .map((address) => {
-                    const collateralToken = findToken(address, vault.networkId);
-                    return {
-                      address,
-                      symbol: collateralToken?.symbol ?? 'Unknown',
-                      amount: 1, // Use 1 as placeholder since we're just showing presence
-                    };
-                  })
-                  .filter((c) => c !== null);
-
-                const avgApy = vault.avgApy;
-                const displayRate = avgApy !== null && avgApy !== undefined && isAprDisplay ? convertApyToApr(avgApy) : avgApy;
-
-                // Historical APY display
-                const historicalApy = vault.actualApy;
-                const historicalDisplayRate = historicalApy !== undefined && isAprDisplay ? convertApyToApr(historicalApy) : historicalApy;
+                const currentRateDisplay = formatRate(vault.avgApy, isAprDisplay);
+                const historicalRateDisplay = formatRate(vault.actualApy, isAprDisplay);
 
                 return (
                   <Fragment key={rowKey}>
@@ -195,9 +189,7 @@ export function UserVaultsTable({
                       {/* APY/APR (now) */}
                       <TableCell data-label={`${rateLabel} (now)`}>
                         <div className="flex items-center justify-center">
-                          <span className="font-medium">
-                            {displayRate !== null && displayRate !== undefined ? `${(displayRate * 100).toFixed(2)}%` : '-'}
-                          </span>
+                          <span className="font-medium">{currentRateDisplay}</span>
                         </div>
                       </TableCell>
 
@@ -219,9 +211,7 @@ export function UserVaultsTable({
                                 />
                               }
                             >
-                              <span className="cursor-help font-medium">
-                                {historicalDisplayRate !== undefined ? `${formatReadable((historicalDisplayRate * 100).toString())}%` : '-'}
-                              </span>
+                              <span className="cursor-help font-medium">{historicalRateDisplay}</span>
                             </Tooltip>
                           )}
                         </div>

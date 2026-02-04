@@ -97,16 +97,8 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
 
           const startTimestamp = blockData.timestamp;
 
-          // Create multicall contracts for current share prices
-          const currentContracts = networkVaults.map((vault) => ({
-            address: vault.address as Address,
-            abi: vaultv2Abi,
-            functionName: 'convertToAssets' as const,
-            args: [ONE_SHARE],
-          }));
-
-          // Create multicall contracts for past share prices
-          const pastContracts = networkVaults.map((vault) => ({
+          // Create multicall contracts for share price queries (same for current and past)
+          const contracts = networkVaults.map((vault) => ({
             address: vault.address as Address,
             abi: vaultv2Abi,
             functionName: 'convertToAssets' as const,
@@ -116,15 +108,8 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
           try {
             // Fetch current and past share prices in parallel
             const [currentResults, pastResults] = await Promise.all([
-              client.multicall({
-                contracts: currentContracts,
-                allowFailure: true,
-              }),
-              client.multicall({
-                contracts: pastContracts,
-                allowFailure: true,
-                blockNumber: BigInt(pastBlock),
-              }),
+              client.multicall({ contracts, allowFailure: true }),
+              client.multicall({ contracts, allowFailure: true, blockNumber: BigInt(pastBlock) }),
             ]);
 
             // Calculate APY for each vault

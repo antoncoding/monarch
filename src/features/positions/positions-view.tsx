@@ -78,8 +78,6 @@ export default function Positions() {
           <h1 className="font-zen">Portfolio</h1>
 
           <div className="flex mt-8 gap-2">
-            {' '}
-            {/* aligned with portfolio  */}
             <Button
               variant="default"
               onClick={() => open('bridgeSwap', {})}
