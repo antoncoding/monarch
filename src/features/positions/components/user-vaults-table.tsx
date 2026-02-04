@@ -20,7 +20,6 @@ import { convertApyToApr } from '@/utils/rateMath';
 import { VaultAllocationDetail } from './vault-allocation-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { VaultActionsDropdown } from './vault-actions-dropdown';
-import { AggregatedVaultRiskIndicators } from './vault-risk-indicators';
 
 type UserVaultsTableProps = {
   vaults: UserVaultV2[];
@@ -92,14 +91,13 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
               <TableHead>{rateLabel} (now)</TableHead>
               <TableHead>Interest Accrued</TableHead>
               <TableHead>Collateral</TableHead>
-              <TableHead>Risk Tiers</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="text-sm">
             {activeVaults.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={6}>
                   <div className="flex min-h-[200px] items-center justify-center">
                     <p className="text-sm text-secondary">No active positions in auto vaults.</p>
                   </div>
@@ -196,16 +194,6 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                         />
                       </TableCell>
 
-                      {/* Risk Tiers */}
-                      <TableCell
-                        data-label="Risk Tiers"
-                        className="align-middle"
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          <AggregatedVaultRiskIndicators vault={vault} />
-                        </div>
-                      </TableCell>
-
                       {/* Actions */}
                       <TableCell data-label="Actions">
                         <div className="flex justify-center">
@@ -223,7 +211,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                       {isExpanded && (
                         <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                           <TableCell
-                            colSpan={7}
+                            colSpan={6}
                             className="bg-surface"
                           >
                             <motion.div
