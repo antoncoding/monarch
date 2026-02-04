@@ -13,19 +13,11 @@ type PositionActionsDropdownProps = {
   account: string;
   chainId: number;
   tokenAddress: string;
-  tokenSymbol: string;
   isOwner: boolean;
   onRebalanceClick: () => void;
 };
 
-export function PositionActionsDropdown({
-  account,
-  chainId,
-  tokenAddress,
-  tokenSymbol,
-  isOwner,
-  onRebalanceClick,
-}: PositionActionsDropdownProps) {
+export function PositionActionsDropdown({ account, chainId, tokenAddress, isOwner, onRebalanceClick }: PositionActionsDropdownProps) {
   const router = useRouter();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -48,7 +40,7 @@ export function PositionActionsDropdown({
   };
 
   const handleViewDetails = () => {
-    const detailsUrl = `/position/${chainId}/${tokenSymbol}/${account}`;
+    const detailsUrl = `/position/${chainId}/${tokenAddress}/${account}`;
     router.push(detailsUrl);
   };
 

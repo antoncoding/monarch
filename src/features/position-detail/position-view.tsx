@@ -19,11 +19,11 @@ import { HistoryTab } from './components/history-tab';
 
 type PositionDetailContentProps = {
   chainId: number;
-  loanAsset: string;
+  loanAssetAddress: string;
   userAddress: string;
 };
 
-export default function PositionDetailContent({ chainId, loanAsset, userAddress }: PositionDetailContentProps) {
+export default function PositionDetailContent({ chainId, loanAssetAddress, userAddress }: PositionDetailContentProps) {
   const router = useRouter();
 
   // Tab preferences
@@ -52,14 +52,10 @@ export default function PositionDetailContent({ chainId, loanAsset, userAddress 
     return processCollaterals(grouped);
   }, [marketPositions]);
 
-  // Find the current position based on chainId and loanAsset
+  // Find the current position based on chainId and loanAssetAddress
   const currentPosition = useMemo(() => {
-    return groupedPositions.find(
-      (pos) =>
-        pos.chainId === chainId &&
-        (pos.loanAssetSymbol.toLowerCase() === loanAsset.toLowerCase() || pos.loanAssetAddress.toLowerCase() === loanAsset.toLowerCase()),
-    );
-  }, [groupedPositions, chainId, loanAsset]);
+    return groupedPositions.find((pos) => pos.chainId === chainId && pos.loanAssetAddress.toLowerCase() === loanAssetAddress.toLowerCase());
+  }, [groupedPositions, chainId, loanAssetAddress]);
 
   // Get all user positions for the position switcher (across all chains)
   const { positions: allUserPositions } = useUserPositionsSummaryData(userAddress, period);
@@ -96,7 +92,7 @@ export default function PositionDetailContent({ chainId, loanAsset, userAddress 
         <Header />
         <div className="container h-full gap-8">
           <EmptyScreen
-            message={`No ${loanAsset} position found on this network.`}
+            message="No position found for this asset on this network."
             className="mt-10"
           />
           <div className="mt-4 text-center">

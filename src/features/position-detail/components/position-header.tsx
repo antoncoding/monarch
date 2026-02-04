@@ -39,7 +39,7 @@ export function PositionHeader({ groupedPosition, chainId, userAddress, allPosit
   const networkImg = getNetworkImg(chainId);
 
   const handlePositionChange = (position: GroupedPosition) => {
-    router.push(`/position/${position.chainId}/${position.loanAssetSymbol}/${userAddress}`);
+    router.push(`/position/${position.chainId}/${position.loanAssetAddress}/${userAddress}`);
   };
 
   const handleRebalanceClick = () => {

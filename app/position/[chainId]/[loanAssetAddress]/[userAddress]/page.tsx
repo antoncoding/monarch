@@ -9,13 +9,13 @@ export const metadata: Metadata = {
 export default async function PositionDetailPage({
   params,
 }: {
-  params: Promise<{ chainId: string; loanAsset: string; userAddress: string }>;
+  params: Promise<{ chainId: string; loanAssetAddress: string; userAddress: string }>;
 }) {
   const p = await params;
   return (
     <PositionDetailContent
       chainId={Number(p.chainId)}
-      loanAsset={p.loanAsset}
+      loanAssetAddress={p.loanAssetAddress}
       userAddress={p.userAddress}
     />
   );
