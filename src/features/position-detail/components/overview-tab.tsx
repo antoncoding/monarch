@@ -1,6 +1,5 @@
 'use client';
 
-import { PositionPeriodSelector } from './position-period-selector';
 import { MarketsBreakdownTable } from './markets-breakdown-table';
 import type { GroupedPosition } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -14,6 +13,8 @@ type OverviewTabProps = {
   period: EarningsPeriod;
   onPeriodChange: (period: EarningsPeriod) => void;
   isOwner: boolean;
+  onRefetch: () => void;
+  isRefetching: boolean;
 };
 
 const PERIOD_LABELS: Record<EarningsPeriod, string> = {
@@ -30,30 +31,23 @@ export function OverviewTab({
   period,
   onPeriodChange,
   isOwner,
+  onRefetch,
+  isRefetching,
 }: OverviewTabProps) {
   const periodLabel = PERIOD_LABELS[period];
 
   return (
-    <div className="space-y-6">
-      {/* Period Selector */}
-      <div className="flex items-center justify-between">
-        <span />
-        <PositionPeriodSelector
-          period={period}
-          onPeriodChange={onPeriodChange}
-          className="w-[120px]"
-        />
-      </div>
-
-      {/* Markets Breakdown Table */}
-      <MarketsBreakdownTable
-        markets={groupedPosition.markets}
-        chainId={chainId}
-        isEarningsLoading={isEarningsLoading}
-        actualBlockData={actualBlockData}
-        periodLabel={periodLabel}
-        isOwner={isOwner}
-      />
-    </div>
+    <MarketsBreakdownTable
+      markets={groupedPosition.markets}
+      chainId={chainId}
+      isEarningsLoading={isEarningsLoading}
+      actualBlockData={actualBlockData}
+      period={period}
+      periodLabel={periodLabel}
+      onPeriodChange={onPeriodChange}
+      isOwner={isOwner}
+      onRefetch={onRefetch}
+      isRefetching={isRefetching}
+    />
   );
 }

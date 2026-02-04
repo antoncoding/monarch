@@ -7,6 +7,7 @@ type PositionPeriodSelectorProps = {
   period: EarningsPeriod;
   onPeriodChange: (period: EarningsPeriod) => void;
   className?: string;
+  contentClassName?: string;
 };
 
 const PERIOD_OPTIONS: { value: EarningsPeriod; label: string }[] = [
@@ -15,7 +16,7 @@ const PERIOD_OPTIONS: { value: EarningsPeriod; label: string }[] = [
   { value: 'month', label: '30 days' },
 ];
 
-export function PositionPeriodSelector({ period, onPeriodChange, className }: PositionPeriodSelectorProps) {
+export function PositionPeriodSelector({ period, onPeriodChange, className, contentClassName }: PositionPeriodSelectorProps) {
   return (
     <Select
       value={period}
@@ -24,7 +25,7 @@ export function PositionPeriodSelector({ period, onPeriodChange, className }: Po
       <SelectTrigger className={className}>
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className={contentClassName}>
         {PERIOD_OPTIONS.map((option) => (
           <SelectItem
             key={option.value}

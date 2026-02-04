@@ -18,6 +18,7 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';
 import { getGroupedEarnings } from '@/utils/positions';
+import { cn } from '@/utils/components';
 import type { GroupedPosition } from '@/utils/types';
 
 type PositionHeaderProps = {
@@ -55,6 +56,7 @@ export function PositionHeader({
 
   const isOwner = address === userAddress;
   const networkImg = getNetworkImg(chainId);
+  const showActions = isOwner;
 
   const displaySymbol = groupedPosition?.loanAssetSymbol ?? loanAssetSymbol ?? '';
 
@@ -189,12 +191,12 @@ export function PositionHeader({
           {/* RIGHT: Stats + Actions */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
             {/* Key Stats */}
-            <div className="flex items-center gap-6 border-r border-border pr-6">
+            <div className={cn('flex items-center gap-6', showActions && 'border-r border-border pr-6')}>
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Total Supply</p>
                 <div className="flex items-center gap-2">
                   {isLoading ? (
-                    <div className="h-6 w-20 animate-pulse rounded bg-hovered" />
+                    <div className="mt-2 h-6 w-20 animate-pulse rounded bg-hovered" />
                   ) : (
                     <>
                       <p className="tabular-nums text-lg">{totalSupplyFormatted}</p>
@@ -214,28 +216,28 @@ export function PositionHeader({
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Avg {rateLabel}</p>
                 {isLoading ? (
-                  <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
+                  <div className="mt-2 h-6 w-16 animate-pulse rounded bg-hovered" />
                 ) : (
                   <p className="tabular-nums text-lg">{formattedRate}</p>
                 )}
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wider text-secondary">
-                  {rateLabel} ({periodLabel})
-                </p>
+                <Tooltip
+                  content={
+                    <TooltipContent
+                      title={`Realized ${rateLabel}`}
+                      detail="Annualized yield from interest earned over the period, weighted by your balance over time."
+                    />
+                  }
+                >
+                  <p className="text-xs uppercase tracking-wider text-secondary cursor-help border-b border-dotted border-secondary w-fit font-normal opacity-80">
+                    Realized {rateLabel} ({periodLabel})
+                  </p>
+                </Tooltip>
                 {isLoading || isEarningsLoading ? (
-                  <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
+                  <div className="mt-2 h-6 w-16 animate-pulse rounded bg-hovered" />
                 ) : formattedActualRate ? (
-                  <Tooltip
-                    content={
-                      <TooltipContent
-                        title={`Realized ${rateLabel}`}
-                        detail="Annualized yield from interest earned over the period, weighted by your balance over time."
-                      />
-                    }
-                  >
-                    <p className="tabular-nums text-lg cursor-help">{formattedActualRate}</p>
-                  </Tooltip>
+                  <p className="tabular-nums text-lg">{formattedActualRate}</p>
                 ) : (
                   <p className="tabular-nums text-lg text-secondary">-</p>
                 )}
@@ -244,10 +246,13 @@ export function PositionHeader({
                 <p className="text-xs uppercase tracking-wider text-secondary">Earned ({periodLabel})</p>
                 <div className="flex items-center gap-2">
                   {isLoading || isEarningsLoading ? (
-                    <div className="h-6 w-20 animate-pulse rounded bg-hovered" />
+                    <div className="mt-2 h-6 w-20 animate-pulse rounded bg-hovered" />
                   ) : earningsFormatted ? (
                     <>
-                      <p className="tabular-nums text-lg">+{earningsFormatted}</p>
+                      <p className="tabular-nums text-lg">
+                        <span className="font-inter">+</span>
+                        {earningsFormatted}
+                      </p>
                       {groupedPosition && (
                         <TokenIcon
                           address={groupedPosition.loanAssetAddress}
@@ -266,8 +271,8 @@ export function PositionHeader({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              {isOwner && (
+            {showActions && (
+              <div className="flex flex-wrap items-center gap-2">
                 <Tooltip
                   content={
                     <TooltipContent
@@ -288,8 +293,8 @@ export function PositionHeader({
                     </Button>
                   </span>
                 </Tooltip>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

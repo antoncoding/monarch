@@ -167,16 +167,19 @@ function ChartContent({
   return (
     <Card className="mb-4 overflow-hidden border border-border bg-surface">
       {/* Responsive: stack vertically on mobile, side-by-side on larger screens */}
-      <div className="flex flex-col sm:flex-row">
+      <div className="flex flex-col sm:flex-row items-stretch">
         {/* Stacked Area Chart - Left side */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex flex-col self-stretch">
           <div className="px-4 pt-3 pb-1">
             <h3 className="text-sm font-medium text-secondary">Position History</h3>
           </div>
-          <div className="w-full px-2">
+          <div
+            className="w-full px-2 flex-1"
+            style={{ minHeight: height }}
+          >
             <ResponsiveContainer
               width="100%"
-              height={height}
+              height="100%"
             >
               <AreaChart
                 data={dataPoints}

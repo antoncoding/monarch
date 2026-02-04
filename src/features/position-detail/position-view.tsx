@@ -96,6 +96,7 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
             chainId={chainId as SupportedNetworks}
             loanAssetAddress={loanAssetAddress}
             loanAssetSymbol={currentPosition?.loanAssetSymbol ?? loanAssetSymbol}
+            allPositions={allPositions}
           />
         </div>
 
@@ -177,6 +178,8 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
                     period={period}
                     onPeriodChange={setPeriod}
                     isOwner={isOwner}
+                    onRefetch={handleRefetch}
+                    isRefetching={isRefetching}
                   />
                 </TabsContent>
 

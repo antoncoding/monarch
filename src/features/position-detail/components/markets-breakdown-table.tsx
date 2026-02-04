@@ -5,27 +5,40 @@ import Link from 'next/link';
 import { formatUnits } from 'viem';
 import { PulseLoader } from 'react-spinners';
 import moment from 'moment';
+import { GearIcon } from '@radix-ui/react-icons';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
+import { Button } from '@/components/ui/button';
+import { Divider } from '@/components/ui/divider';
+import { FilterSection } from '@/components/ui/filter-components';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { MarketActionsCell } from './market-actions-cell';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { convertApyToApr } from '@/utils/rateMath';
+import { useDisclosure } from '@/hooks/useDisclosure';
+import { PositionPeriodSelector } from './position-period-selector';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
+import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
 export type MarketsBreakdownTableProps = {
   markets: MarketPositionWithEarnings[];
   chainId: SupportedNetworks;
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
+  period: EarningsPeriod;
   periodLabel: string;
+  onPeriodChange: (period: EarningsPeriod) => void;
   isOwner: boolean;
+  onRefetch: () => void;
+  isRefetching: boolean;
 };
 
 type MarketRowProps = {
@@ -133,16 +146,7 @@ function MarketRow({
         ) : actualApy === 0 ? (
           <span className="text-secondary">-</span>
         ) : (
-          <Tooltip
-            content={
-              <TooltipContent
-                title={`Realized ${rateLabel} (${periodLabel})`}
-                detail="Annualized yield from interest earned over the period, weighted by your balance over time."
-              />
-            }
-          >
-            <span className="cursor-help">{(displayActualRate * 100).toFixed(2)}%</span>
-          </Tooltip>
+          <span>{(displayActualRate * 100).toFixed(2)}%</span>
         )}
       </TableCell>
 
@@ -179,7 +183,10 @@ function MarketRow({
             })()}
           >
             <div className="flex items-center justify-end gap-1.5 cursor-help">
-              <span>+{formatReadable(Number(formatBalance(earned, loanDecimals)))}</span>
+              <span>
+                <span className="font-inter">+</span>
+                {formatReadable(Number(formatBalance(earned, loanDecimals)))}
+              </span>
               <TokenIcon
                 address={market.loanAsset.address}
                 chainId={chainId}
@@ -194,7 +201,7 @@ function MarketRow({
 
       {/* Actions */}
       <TableCell
-        className="px-4 py-3"
+        className="px-4 py-3 text-right"
         style={{ minWidth: '180px' }}
       >
         <MarketActionsCell
@@ -211,11 +218,16 @@ export function MarketsBreakdownTable({
   chainId,
   isEarningsLoading,
   actualBlockData,
+  period,
   periodLabel,
+  onPeriodChange,
   isOwner,
+  onRefetch,
+  isRefetching,
 }: MarketsBreakdownTableProps) {
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
+  const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
 
   const sortedMarkets = useMemo(() => {
     return [...markets].sort((a, b) => {
@@ -225,8 +237,52 @@ export function MarketsBreakdownTable({
     });
   }, [markets]);
 
+  const headerActions = (
+    <>
+      <Tooltip
+        content={
+          <TooltipContent
+            title="Refresh"
+            detail="Fetch latest position data"
+          />
+        }
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRefetch}
+          disabled={isRefetching}
+          className="text-secondary min-w-0 px-2"
+        >
+          <RefetchIcon isLoading={isRefetching} />
+        </Button>
+      </Tooltip>
+      <Tooltip
+        content={
+          <TooltipContent
+            title="Table Settings"
+            detail="Configure realized rate timeframe"
+          />
+        }
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-secondary min-w-0 px-2"
+          onClick={onSettingsOpen}
+        >
+          <GearIcon className="h-3 w-3" />
+        </Button>
+      </Tooltip>
+    </>
+  );
+
   return (
-    <TableContainerWithHeader title="Markets Breakdown">
+    <>
+      <TableContainerWithHeader
+        title="Markets Breakdown"
+        actions={headerActions}
+      >
       <Table>
         <TableHeader>
           <TableRow className="text-secondary">
@@ -252,7 +308,18 @@ export function MarketsBreakdownTable({
               className="px-4 py-3 text-right"
               style={{ minWidth: '90px' }}
             >
-              {rateLabel} ({periodLabel})
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title={`Realized ${rateLabel} (${periodLabel})`}
+                    detail="Annualized yield from interest earned over the period, weighted by your balance over time."
+                  />
+                }
+              >
+                <span className="cursor-help border-b border-dotted border-secondary font-normal text-secondary/80">
+                  Realized {rateLabel} ({periodLabel})
+                </span>
+              </Tooltip>
             </TableHead>
             <TableHead
               className="px-4 py-3 text-right"
@@ -284,6 +351,59 @@ export function MarketsBreakdownTable({
           ))}
         </TableBody>
       </Table>
-    </TableContainerWithHeader>
+      </TableContainerWithHeader>
+
+      <Modal
+        isOpen={isSettingsOpen}
+        onOpenChange={onSettingsOpenChange}
+        size="md"
+        backdrop="opaque"
+        zIndex="settings"
+      >
+        {(close) => (
+          <>
+            <ModalHeader
+              variant="compact"
+              title="Table Settings"
+              description="Configure realized rate timeframe"
+              mainIcon={<GearIcon />}
+              onClose={close}
+            />
+            <ModalBody
+              variant="compact"
+              className="flex flex-col gap-4"
+            >
+              <FilterSection
+                title="Timeframe"
+                helper="Used for realized rate and earned values"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-1 pr-4">
+                    <span className="font-zen text-sm font-medium text-primary">Period</span>
+                    <span className="font-zen text-xs text-secondary">Based on your balance over time</span>
+                  </div>
+                  <PositionPeriodSelector
+                    period={period}
+                    onPeriodChange={onPeriodChange}
+                    className="w-[120px]"
+                    contentClassName="z-[3600]"
+                  />
+                </div>
+              </FilterSection>
+              <Divider />
+            </ModalBody>
+            <ModalFooter className="justify-end">
+              <Button
+                color="primary"
+                size="sm"
+                onClick={close}
+              >
+                Done
+              </Button>
+            </ModalFooter>
+          </>
+        )}
+      </Modal>
+    </>
   );
 }

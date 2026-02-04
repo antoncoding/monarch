@@ -13,7 +13,7 @@ export function MarketActionsCell({ position, isOwner }: MarketActionsCellProps)
   const { open } = useModal();
 
   if (!isOwner) {
-    return <span className="text-xs text-secondary">-</span>;
+    return <span className="block w-full text-right text-xs text-secondary">-</span>;
   }
 
   return (
