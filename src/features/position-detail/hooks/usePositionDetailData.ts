@@ -30,35 +30,26 @@ export function usePositionDetailData({
   userAddress,
   period,
 }: UsePositionDetailDataParams): UsePositionDetailDataResult {
-  // Fetch positions for current chain (with earnings)
+  // Fetch all positions across all chains (used for switcher and filtered for current chain)
   const { positions, isPositionsLoading, isEarningsLoading, isRefetching, refetch, actualBlockData, transactions, snapshotsByChain } =
-    useUserPositionsSummaryData(userAddress, period, [chainId]);
+    useUserPositionsSummaryData(userAddress, period);
 
-  // Fetch all positions across all chains (for position switcher)
-  const { positions: allChainPositions, isPositionsLoading: isAllPositionsLoading } = useUserPositionsSummaryData(userAddress, period);
-
-  // Group positions for current chain
-  const groupedPositions = useMemo(() => {
+  // Group all positions across all chains
+  const allPositions = useMemo(() => {
     if (!positions) return [];
     const grouped = groupPositionsByLoanAsset(positions);
     return processCollaterals(grouped);
   }, [positions]);
 
-  // Group all positions across all chains (for switcher)
-  const allPositions = useMemo(() => {
-    if (!allChainPositions) return [];
-    const grouped = groupPositionsByLoanAsset(allChainPositions);
-    return processCollaterals(grouped);
-  }, [allChainPositions]);
-
+  // Find current position from the all-chains result
   const currentPosition = useMemo(() => {
-    return groupedPositions.find((p) => p.loanAssetAddress.toLowerCase() === loanAssetAddress.toLowerCase() && p.chainId === chainId);
-  }, [groupedPositions, loanAssetAddress, chainId]);
+    return allPositions.find((p) => p.loanAssetAddress.toLowerCase() === loanAssetAddress.toLowerCase() && p.chainId === chainId);
+  }, [allPositions, loanAssetAddress, chainId]);
 
   return {
     currentPosition,
     allPositions,
-    isLoading: isPositionsLoading || isAllPositionsLoading,
+    isLoading: isPositionsLoading,
     isEarningsLoading,
     isRefetching,
     refetch,

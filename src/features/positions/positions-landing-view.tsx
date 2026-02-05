@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RiArrowRightLine, RiBookmarkFill } from 'react-icons/ri';
 import { FiSearch } from 'react-icons/fi';
 import { isAddress } from 'viem';
@@ -40,6 +41,7 @@ function AddressBadges({ address }: { address: string }) {
 }
 
 export default function PositionsLandingView() {
+  const router = useRouter();
   const { address } = useConnection();
   const toast = useStyledToast();
   const [inputAddress, setInputAddress] = useState<string>('');
@@ -151,7 +153,7 @@ export default function PositionsLandingView() {
       return;
     }
     if (isAddress(inputAddress.toLowerCase(), { strict: false })) {
-      window.location.href = `/positions/${inputAddress}`;
+      router.push(`/positions/${inputAddress}`);
     } else {
       toast.error('Invalid address', `The address ${inputAddress} is not valid.`);
     }
@@ -301,7 +303,7 @@ export default function PositionsLandingView() {
                   >
                     <div className="flex items-center gap-3">
                       <Avatar
-                        address={entry.address}
+                        address={entry.address as `0x${string}`}
                         size={20}
                       />
                       <Link

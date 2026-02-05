@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RiArrowRightLine, RiBookmarkFill } from 'react-icons/ri';
 import { FiSearch } from 'react-icons/fi';
 import { isAddress } from 'viem';
@@ -17,6 +18,7 @@ import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { cn } from '@/utils';
 
 export default function RewardsLandingView() {
+  const router = useRouter();
   const { address } = useConnection();
   const toast = useStyledToast();
   const [inputAddress, setInputAddress] = useState<string>('');
@@ -62,7 +64,7 @@ export default function RewardsLandingView() {
       return;
     }
     if (isAddress(inputAddress.toLowerCase(), { strict: false })) {
-      window.location.href = `/rewards/${inputAddress}`;
+      router.push(`/rewards/${inputAddress}`);
     } else {
       toast.error('Invalid address', `The address ${inputAddress} is not valid.`);
     }
@@ -202,7 +204,7 @@ export default function RewardsLandingView() {
                 >
                   <div className="flex items-center gap-3">
                     <Avatar
-                      address={entry.address}
+                      address={entry.address as `0x${string}`}
                       size={20}
                     />
                     <Link
