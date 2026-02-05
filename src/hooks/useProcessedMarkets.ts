@@ -170,14 +170,16 @@ export const useProcessedMarkets = () => {
         }
       }
 
-      if (collateralPrice !== undefined && Number.isFinite(collateralPrice)) {
-        if (shouldComputeUsd(nextState.collateralAssetsUsd ?? null, nextState.collateralAssets)) {
-          nextState = {
-            ...nextState,
-            collateralAssetsUsd: computeUsdValue(nextState.collateralAssets, market.collateralAsset.decimals, collateralPrice),
-          };
-          changed = true;
-        }
+      if (
+        collateralPrice !== undefined &&
+        Number.isFinite(collateralPrice) &&
+        shouldComputeUsd(nextState.collateralAssetsUsd ?? null, nextState.collateralAssets)
+      ) {
+        nextState = {
+          ...nextState,
+          collateralAssetsUsd: computeUsdValue(nextState.collateralAssets, market.collateralAsset.decimals, collateralPrice),
+        };
+        changed = true;
       }
 
       return changed ? { ...market, state: nextState } : market;

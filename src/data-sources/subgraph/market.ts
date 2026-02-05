@@ -186,9 +186,9 @@ export const fetchSubgraphMarket = async (uniqueKey: string, network: SupportedN
       return null;
     }
 
-  const majorPrices = await fetchMajorPrices();
+    const majorPrices = await fetchMajorPrices();
 
-  return transformSubgraphMarketToMarket(marketData, network, majorPrices);
+    return transformSubgraphMarketToMarket(marketData, network, majorPrices);
   } catch (error) {
     console.error(`Error fetching subgraph market ${uniqueKey} on ${network}:`, error);
     return null;
@@ -233,7 +233,7 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
       return [];
     }
 
-    const majorPrices = await fetchLocalMajorPrices();
+    const majorPrices = await fetchMajorPrices();
     return marketsData.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
   } catch (error) {
     console.error(`Error fetching subgraph markets on ${network}:`, error);
