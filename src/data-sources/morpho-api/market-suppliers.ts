@@ -65,7 +65,7 @@ export const fetchMorphoMarketSuppliers = async (
 
     // Map to unified type, filtering out items with null state
     const mappedItems = items
-      .filter((item) => item.state !== null)
+      .filter((item): item is typeof item & { state: NonNullable<typeof item.state> } => item.state !== null)
       .map((item) => ({
         userAddress: item.user.address,
         supplyShares: item.state.supplyShares,
