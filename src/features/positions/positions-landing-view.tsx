@@ -199,7 +199,8 @@ export default function PositionsLandingView() {
         <div className="mt-6">
           <PositionBreadcrumbs
             showPosition={false}
-            placeholderLabel="0x0000000000000000000000000000000000000000"
+            placeholderLabel="Search address"
+            rootLabel="Position"
           />
         </div>
 

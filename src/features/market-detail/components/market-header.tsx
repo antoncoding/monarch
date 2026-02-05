@@ -240,32 +240,63 @@ function ActionButtons({
 }
 
 type MarketHeaderProps = {
-  market: Market;
-  marketId: string;
+  market?: Market | null;
+  marketId?: string;
   network: SupportedNetworks;
-  userPosition: MarketPosition | null;
-  oraclePrice: string;
-  allWarnings: WarningWithDetail[];
-  onSupplyClick: () => void;
-  onWithdrawClick: () => void;
-  onBorrowClick: () => void;
-  onRepayClick: () => void;
-  accrueInterest: () => void;
+  userPosition?: MarketPosition | null;
+  oraclePrice?: string;
+  allWarnings?: WarningWithDetail[];
+  onSupplyClick?: () => void;
+  onWithdrawClick?: () => void;
+  onBorrowClick?: () => void;
+  onRepayClick?: () => void;
+  accrueInterest?: () => void;
+  isLoading?: boolean;
 };
+
+function MarketHeaderSkeleton(): React.ReactNode {
+  return (
+    <div className="mt-6 mb-6 space-y-4">
+      <div className="rounded border border-border bg-surface px-6 py-4 shadow-sm">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex -space-x-3">
+              <div className="h-10 w-10 animate-pulse rounded-full bg-hovered" />
+              <div className="h-10 w-10 animate-pulse rounded-full bg-hovered" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-6 w-40 animate-pulse rounded bg-hovered" />
+              <div className="h-4 w-56 animate-pulse rounded bg-hovered" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-28 animate-pulse rounded bg-hovered" />
+            <div className="h-8 w-28 animate-pulse rounded bg-hovered" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function MarketHeader({
   market,
   marketId,
   network,
-  userPosition,
+  userPosition = null,
   oraclePrice,
-  allWarnings,
-  onSupplyClick,
-  onWithdrawClick,
-  onBorrowClick,
-  onRepayClick,
-  accrueInterest,
+  allWarnings = [],
+  onSupplyClick = () => {},
+  onWithdrawClick = () => {},
+  onBorrowClick = () => {},
+  onRepayClick = () => {},
+  accrueInterest = () => {},
+  isLoading = false,
 }: MarketHeaderProps) {
+  if (isLoading || !market) {
+    return <MarketHeaderSkeleton />;
+  }
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [isBlacklistModalOpen, setIsBlacklistModalOpen] = useState(false);
   const { short: rateLabel } = useRateLabel();
@@ -275,6 +306,8 @@ export function MarketHeader({
   const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
   const isStarred = starredMarkets.includes(market.uniqueKey);
+  const resolvedMarketId = marketId ?? market.uniqueKey;
+  const resolvedOraclePrice = oraclePrice ?? '0';
 
   const handleToggleStar = () => {
     if (isStarred) {
@@ -298,8 +331,8 @@ export function MarketHeader({
 
   const handleCopyMarketId = async () => {
     try {
-      await navigator.clipboard.writeText(marketId);
-      toast.success('Market ID copied', `${marketId.slice(0, 10)}...${marketId.slice(-6)}`);
+      await navigator.clipboard.writeText(resolvedMarketId);
+      toast.success('Market ID copied', `${resolvedMarketId.slice(0, 10)}...${resolvedMarketId.slice(-6)}`);
     } catch {
       // Clipboard API not available
     }
@@ -313,7 +346,7 @@ export function MarketHeader({
   const formattedLltv = `${formatUnits(BigInt(market.lltv), 16)}%`;
 
   const campaignBadgeProps = {
-    marketId,
+    marketId: resolvedMarketId,
     loanTokenAddress: market.loanAsset.address,
     chainId: market.morphoBlue.chain.id,
     whitelisted: market.whitelisted,
@@ -464,13 +497,13 @@ export function MarketHeader({
                   content={
                     <TooltipContent
                       title="Oracle Price"
-                      detail={`1 ${market.collateralAsset.symbol} = ${Number(oraclePrice).toPrecision(6)} ${market.loanAsset.symbol}`}
+                      detail={`1 ${market.collateralAsset.symbol} = ${Number(resolvedOraclePrice).toPrecision(6)} ${market.loanAsset.symbol}`}
                     />
                   }
                 >
                   <div className="cursor-help">
                     <p className="text-xs uppercase tracking-wider text-secondary">Oracle</p>
-                    <p className="tabular-nums text-lg">{Number(oraclePrice).toFixed(2)}</p>
+                    <p className="tabular-nums text-lg">{Number(resolvedOraclePrice).toFixed(2)}</p>
                   </div>
                 </Tooltip>
               </div>
@@ -522,7 +555,7 @@ export function MarketHeader({
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
-                    onClick={() => window.open(getMarketURL(marketId, network), '_blank')}
+                    onClick={() => window.open(getMarketURL(resolvedMarketId, network), '_blank')}
                     startContent={<FiExternalLink className="h-4 w-4" />}
                   >
                     View on Morpho
@@ -557,7 +590,7 @@ export function MarketHeader({
           </div>
           <div>
             <p className="text-xs text-secondary">Oracle</p>
-            <p className="tabular-nums">{Number(oraclePrice).toFixed(2)}</p>
+            <p className="tabular-nums">{Number(resolvedOraclePrice).toFixed(2)}</p>
           </div>
         </div>
 

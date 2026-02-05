@@ -204,13 +204,15 @@ export function PositionBreadcrumbs({
                   height={14}
                 />
               )}
-              <TokenIcon
-                address={loanAssetAddress}
-                chainId={chainId}
-                symbol={loanAssetSymbol ?? ''}
-                width={14}
-                height={14}
-              />
+              {loanAssetAddress && chainId && (
+                <TokenIcon
+                  address={loanAssetAddress}
+                  chainId={chainId}
+                  symbol={loanAssetSymbol ?? ''}
+                  width={14}
+                  height={14}
+                />
+              )}
               <span>{loanAssetSymbol ?? 'Position'}</span>
               <ChevronDownIcon className="h-4 w-4 text-secondary" />
             </button>
@@ -235,7 +237,7 @@ export function PositionBreadcrumbs({
                     key={`${pos.loanAssetAddress}-${pos.chainId}`}
                     onClick={() => handlePositionChange(pos)}
                     className={
-                      pos.loanAssetAddress.toLowerCase() === loanAssetAddress.toLowerCase() && pos.chainId === chainId ? 'bg-hovered' : ''
+                      pos.loanAssetAddress.toLowerCase() === loanAssetAddress?.toLowerCase() && pos.chainId === chainId ? 'bg-hovered' : ''
                     }
                   >
                     <div className="flex items-center gap-2">
