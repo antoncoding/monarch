@@ -74,13 +74,18 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
       uniqueTokens.set(getTokenPriceKey(token.address, token.chainId), token);
     });
 
-    supportedTokens.forEach((token) => {
-      if (!token.peg || !neededPegs.has(token.peg)) return;
-      token.networks.forEach((network) => {
-        if (!chainIds.has(network.chain.id)) return;
-        const key = getTokenPriceKey(network.address, network.chain.id);
+    chainIds.forEach((chainId) => {
+      neededPegs.forEach((peg) => {
+        const referenceToken = supportedTokens.find((token) => {
+          return token.peg === peg && token.networks.some((network) => network.chain.id === chainId);
+        });
+        if (!referenceToken) return;
+        const network = referenceToken.networks.find((n) => n.chain.id === chainId);
+        if (!network) return;
+
+        const key = getTokenPriceKey(network.address, chainId);
         if (!uniqueTokens.has(key)) {
-          uniqueTokens.set(key, { address: network.address.toLowerCase(), chainId: network.chain.id });
+          uniqueTokens.set(key, { address: network.address.toLowerCase(), chainId });
         }
       });
     });

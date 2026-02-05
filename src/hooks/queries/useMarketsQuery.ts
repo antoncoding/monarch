@@ -59,6 +59,7 @@ export const useMarketsQuery = () => {
                 console.log(`Fetched ${networkMarkets.length} markets via Subgraph for ${network}`);
               } catch (subgraphError) {
                 console.error(`Failed to fetch markets via Subgraph for ${network}:`, subgraphError);
+                throw subgraphError;
               }
             }
 

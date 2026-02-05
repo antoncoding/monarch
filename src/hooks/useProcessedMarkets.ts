@@ -143,6 +143,7 @@ export const useProcessedMarkets = () => {
 
   const allMarketsWithUsd = useMemo<Market[]>(() => {
     if (!processedData.allMarkets.length) return processedData.allMarkets;
+    if (tokensForUsdFallback.length === 0 || tokenPrices.size === 0) return processedData.allMarkets;
 
     return processedData.allMarkets.map((market) => {
       const chainId = market.morphoBlue.chain.id;
@@ -184,7 +185,7 @@ export const useProcessedMarkets = () => {
 
       return changed ? { ...market, state: nextState } : market;
     });
-  }, [processedData.allMarkets, tokenPrices]);
+  }, [processedData.allMarkets, tokenPrices, tokensForUsdFallback]);
 
   const whitelistedMarketsWithUsd = useMemo(() => {
     return allMarketsWithUsd.filter((market) => market.whitelisted);
