@@ -10,7 +10,7 @@ type MorphoAPIBorrowersResponse = {
         state: {
           borrowAssets: string;
           collateral: string;
-        };
+        } | null;  // API can return null state for some positions
         user: {
           address: string;
         };
@@ -64,12 +64,14 @@ export const fetchMorphoMarketBorrowers = async (
     const items = result.data?.marketPositions?.items ?? [];
     const totalCount = result.data?.marketPositions?.pageInfo?.countTotal ?? 0;
 
-    // Map to unified type
-    const mappedItems = items.map((item) => ({
-      userAddress: item.user.address,
-      borrowAssets: item.state.borrowAssets,
-      collateral: item.state.collateral,
-    }));
+    // Map to unified type, filtering out items with null state
+    const mappedItems = items
+      .filter((item): item is typeof item & { state: NonNullable<typeof item.state> } => item.state !== null)
+      .map((item) => ({
+        userAddress: item.user.address,
+        borrowAssets: item.state.borrowAssets,
+        collateral: item.state.collateral,
+      }));
 
     return {
       items: mappedItems,
