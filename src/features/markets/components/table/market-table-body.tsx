@@ -118,7 +118,9 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                     }
                   }}
                 >
-                  <p className="text-lg text-orange-500 group-hover:opacity-100">{isStared ? <GoStarFill /> : <GoStar />}</p>
+                  <p className="text-lg text-orange-500 group-hover:opacity-100">
+                    {isStared ? <GoStarFill size={15} /> : <GoStar size={15} />}
+                  </p>
                 </button>
               </TableCell>
               <TableCell

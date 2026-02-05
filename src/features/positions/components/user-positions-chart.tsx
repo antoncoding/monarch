@@ -5,6 +5,7 @@ import type { Address } from 'viem';
 import { Card } from '@/components/ui/card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useChartColors } from '@/constants/chartColors';
+import { getCollateralColorFromPalette } from '@/features/positions/utils/colors';
 import { formatReadable } from '@/utils/balance';
 import { chartTooltipCursor } from '@/features/market-detail/components/charts/chart-utils';
 import { usePositionHistoryChart, type PositionHistoryDataPoint, type MarketInfo } from '@/hooks/usePositionHistoryChart';
@@ -77,23 +78,10 @@ function ChartContent({
   // Track which data point is being hovered (for synced pie chart)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Build a map of market uniqueKey -> index for consistent color assignment
-  // Note: markets from hook already have lowercase uniqueKeys
-  const marketColorMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    markets.forEach((market, index) => {
-      map[market.uniqueKey] = index;
-    });
-    return map;
-  }, [markets]);
-
-  // Get color for a market based on its index in the markets array
+  // Get consistent color for a market based on its unique key
   const getMarketColor = useCallback(
-    (marketKey: string): string => {
-      const index = marketColorMap[marketKey] ?? 0;
-      return chartColors.pie[index % chartColors.pie.length];
-    },
-    [marketColorMap, chartColors.pie],
+    (marketKey: string): string => getCollateralColorFromPalette(marketKey.toLowerCase(), chartColors.pie),
+    [chartColors.pie],
   );
 
   // Detect duplicate collateral symbols and create display names
@@ -167,16 +155,19 @@ function ChartContent({
   return (
     <Card className="mb-4 overflow-hidden border border-border bg-surface">
       {/* Responsive: stack vertically on mobile, side-by-side on larger screens */}
-      <div className="flex flex-col sm:flex-row">
+      <div className="flex flex-col sm:flex-row items-stretch">
         {/* Stacked Area Chart - Left side */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex flex-col self-stretch">
           <div className="px-4 pt-3 pb-1">
             <h3 className="text-sm font-medium text-secondary">Position History</h3>
           </div>
-          <div className="w-full px-2">
+          <div
+            className="w-full px-2 flex-1"
+            style={{ minHeight: height }}
+          >
             <ResponsiveContainer
               width="100%"
-              height={height}
+              height="100%"
             >
               <AreaChart
                 data={dataPoints}

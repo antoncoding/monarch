@@ -7,12 +7,14 @@ import Link from 'next/link';
 import { FaCircle } from 'react-icons/fa';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { LuCopy } from 'react-icons/lu';
+import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { useConnection, useEnsName } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountActionsPopover } from '@/components/shared/account-actions-popover';
 import { Name } from '@/components/shared/name';
 import { useAddressLabel } from '@/hooks/useAddressLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
 import type { Address } from 'viem';
@@ -26,6 +28,7 @@ type AccountIdentityProps = {
   showCopy?: boolean;
   showAddress?: boolean;
   showActions?: boolean;
+  showBookmark?: boolean;
   className?: string;
 };
 
@@ -49,11 +52,13 @@ export function AccountIdentity({
   showCopy = false,
   showAddress = false,
   showActions = true,
+  showBookmark = false,
   className,
 }: AccountIdentityProps) {
   const { address: connectedAddress, isConnected } = useConnection();
   const [mounted, setMounted] = useState(false);
   const toast = useStyledToast();
+  const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
   const { vaultName, shortAddress } = useAddressLabel(address);
   const { data: ensName } = useEnsName({
     address: address as `0x${string}`,
@@ -250,6 +255,8 @@ export function AccountIdentity({
     return compactElement;
   }
 
+  const isBookmarked = showBookmark ? isAddressBookmarked(address) : false;
+
   // Full variant - avatar + address badge + extra info badges (all on one line, centered)
   const fullContent = (
     <>
@@ -309,6 +316,21 @@ export function AccountIdentity({
         >
           <ExternalLinkIcon className="h-4 w-4" />
         </a>
+      )}
+
+      {showBookmark && (
+        <button
+          type="button"
+          className={clsx('rounded-sm p-1 transition-colors', isBookmarked ? 'text-primary' : 'text-secondary hover:text-primary')}
+          aria-label={isBookmarked ? 'Remove address bookmark' : 'Bookmark address'}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleAddressBookmark(address);
+          }}
+        >
+          {isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
+        </button>
       )}
     </>
   );

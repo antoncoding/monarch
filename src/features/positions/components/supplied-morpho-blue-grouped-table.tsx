@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import moment from 'moment';
 import { PulseLoader } from 'react-spinners';
+import { useRouter } from 'next/navigation';
 import { useConnection } from 'wagmi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { PositionActionsDropdown } from './position-actions-dropdown';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
+import { RiArrowRightLine } from 'react-icons/ri';
 
 type SuppliedMorphoBlueGroupedTableProps = {
   account: string;
@@ -59,6 +61,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { open: openModal } = useModalStore();
+  const router = useRouter();
 
   const toast = useStyledToast();
 
@@ -230,7 +233,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                             content={
                               <TooltipContent
                                 title={`Historical ${rateLabel}`}
-                                detail={`Annualized yield derived from your actual interest earned over the last ${periodLabels[period]}.`}
+                                detail={`Annualized yield from interest earned over the last ${periodLabels[period]}, weighted by your balance over time.`}
                               />
                             }
                           >
@@ -314,11 +317,8 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                       data-label="Actions"
                       className="justify-center px-4 py-3"
                     >
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center gap-2">
                         <PositionActionsDropdown
-                          account={account}
-                          chainId={groupedPosition.chainId}
-                          tokenAddress={groupedPosition.loanAssetAddress}
                           isOwner={isOwner}
                           onRebalanceClick={() => {
                             if (!isOwner) {
@@ -332,6 +332,27 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                             });
                           }}
                         />
+                        <Tooltip
+                          content={
+                            <TooltipContent
+                              title="View Details"
+                              detail="Go one level deeper"
+                            />
+                          }
+                        >
+                          <Button
+                            size="xs"
+                            variant="surface"
+                            className="text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/position/${groupedPosition.chainId}/${groupedPosition.loanAssetAddress}/${account}`);
+                            }}
+                            aria-label="View position details"
+                          >
+                            <RiArrowRightLine className="h-3.5 w-3.5" />
+                          </Button>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>

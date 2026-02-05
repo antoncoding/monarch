@@ -6,8 +6,8 @@ import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem'
 import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Spinner } from '@/components/ui/spinner';
 import Header from '@/components/layout/header/Header';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
@@ -28,6 +28,7 @@ import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketLiquiditySourcing } from '@/hooks/useMarketLiquiditySourcing';
 import { useAllMarketBorrowers, useAllMarketSuppliers } from '@/hooks/useAllMarketPositions';
 import { MarketHeader } from './components/market-header';
+import { TokenIcon } from '@/components/shared/token-icon';
 import RateChart from './components/charts/rate-chart';
 import VolumeChart from './components/charts/volume-chart';
 import { SupplierPositionsChart } from './components/charts/supplier-positions-chart';
@@ -217,28 +218,51 @@ function MarketContent() {
   }, [refetchMarket, refetchUserPosition]);
 
   // 7. Early returns for loading/error states
-  if (isMarketLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Spinner size={24} />
-      </div>
-    );
-  }
-
   if (marketError) {
     return <div className="text-center text-red-500">Error: {(marketError as Error).message}</div>;
   }
 
-  if (!market) {
+  if (isMarketLoading || !market) {
+    const marketIdLabel =
+      typeof marketId === 'string' && marketId.length > 10 ? `${marketId.slice(0, 6)}...${marketId.slice(-4)}` : 'Market';
+
     return (
-      <>
+      <div className="flex flex-col font-zen">
         <Header />
-        <div className="container mx-auto px-4 py-8 pb-4 font-zen">
-          <div className="flex h-screen items-center justify-center">
-            <Spinner size={24} />
+        <div className="container h-full gap-8 pb-12">
+          <div className="mt-6">
+            <Breadcrumbs
+              items={[
+                { label: 'Market', href: '/markets' },
+                {
+                  label: (
+                    <span className="inline-flex items-center gap-2 text-primary">
+                      <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-hovered" />
+                      {marketIdLabel}
+                    </span>
+                  ),
+                  isCurrent: true,
+                },
+              ]}
+            />
+          </div>
+          <MarketHeader
+            market={market}
+            marketId={marketId as string}
+            network={network}
+            isLoading={true}
+          />
+
+          <div className="mt-8">
+            <div className="flex items-center gap-4 border-b border-border pb-2 text-sm text-secondary">
+              <span className="text-primary">Trend</span>
+              <span>Analysis</span>
+              <span>Activities</span>
+              <span>Positions</span>
+            </div>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -301,6 +325,30 @@ function MarketContent() {
     <>
       <Header />
       <div className="font-zen container h-full gap-8 pb-12">
+        <div className="mt-6">
+          <Breadcrumbs
+            items={[
+              { label: 'Market', href: '/markets' },
+              {
+                label: market ? (
+                  <span className="inline-flex items-center gap-2 text-primary">
+                    <TokenIcon
+                      address={market.loanAsset.address}
+                      chainId={network}
+                      symbol={market.loanAsset.symbol}
+                      width={14}
+                      height={14}
+                    />
+                    {`${market.uniqueKey.slice(0, 6)}...${market.uniqueKey.slice(-4)}`}
+                  </span>
+                ) : (
+                  <span className="text-secondary">Market</span>
+                ),
+                isCurrent: true,
+              },
+            ]}
+          />
+        </div>
         {/* Unified Market Header */}
         <MarketHeader
           market={market}

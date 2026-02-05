@@ -426,5 +426,7 @@ export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]
     actualApy: 0,
     avgCapital: '0',
     effectiveTime: 0,
+    totalDeposits: '0',
+    totalWithdraws: '0',
   }));
 }

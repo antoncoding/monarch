@@ -98,7 +98,12 @@ export function Navbar() {
       <div className="flex items-center gap-1">
         {/* Nav links with dashed dividers */}
         <div className="flex items-center">
-          <NavbarLink href="/markets">Markets</NavbarLink>
+          <NavbarLink
+            href="/markets"
+            matchKey="/market"
+          >
+            Markets
+          </NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
           <NavbarLink
             href="/autovault"
@@ -109,7 +114,12 @@ export function Navbar() {
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
           {mounted ? (
             <>
-              <NavbarLink href={address ? `/positions/${address}` : '/positions'}>Portfolio</NavbarLink>
+              <NavbarLink
+                href={address ? `/positions/${address}` : '/positions'}
+                matchKey="/position"
+              >
+                Portfolio
+              </NavbarLink>
               <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
               <NavbarLink
                 href={address ? `/rewards/${address}` : '/rewards'}
@@ -120,7 +130,12 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <NavbarLink href="/positions">Portfolio</NavbarLink>
+              <NavbarLink
+                href="/positions"
+                matchKey="/position"
+              >
+                Portfolio
+              </NavbarLink>
               <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
               <NavbarLink
                 href="/rewards"

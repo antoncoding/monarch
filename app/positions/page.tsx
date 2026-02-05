@@ -1,5 +1,5 @@
-import SearchOrConnect from '@/components/SearchOrConnect/SearchOrConnect';
 import { generateMetadata } from '@/utils/generateMetadata';
+import PositionsLandingView from '@/features/positions/positions-landing-view';
 
 export const metadata = generateMetadata({
   title: 'Portfolio | Monarch',
@@ -9,10 +9,5 @@ export const metadata = generateMetadata({
 });
 
 export default function LogIn() {
-  return (
-    <SearchOrConnect
-      path="positions"
-      title="Positions"
-    />
-  );
+  return <PositionsLandingView />;
 }

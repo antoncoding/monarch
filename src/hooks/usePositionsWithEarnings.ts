@@ -34,6 +34,8 @@ export const usePositionsWithEarnings = (
         actualApy: 0,
         avgCapital: '0',
         effectiveTime: 0,
+        totalDeposits: '0',
+        totalWithdraws: '0',
       }));
     }
 
@@ -64,6 +66,8 @@ export const usePositionsWithEarnings = (
         actualApy: earnings.apy,
         avgCapital: earnings.avgCapital.toString(),
         effectiveTime: earnings.effectiveTime,
+        totalDeposits: earnings.totalDeposits.toString(),
+        totalWithdraws: earnings.totalWithdraws.toString(),
       };
     });
   }, [positions, transactions, snapshotsByChain, chainBlockData, endTimestamp]);

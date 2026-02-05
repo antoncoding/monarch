@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Chain } from 'viem';
 
 import Header from '@/components/layout/header/Header';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
@@ -149,7 +150,14 @@ export default function Markets() {
         <Header />
       </div>
       <div className="container h-full gap-8">
-        <h1 className="pt-12 pb-4 font-zen"> Markets </h1>
+        <div className="mt-6 mb-2">
+          <Breadcrumbs
+            items={[
+              { label: 'Market', href: '/markets' },
+              { label: 'All Markets', isCurrent: true },
+            ]}
+          />
+        </div>
 
         <div className="pb-2 pt-2">
           <CompactFilterBar

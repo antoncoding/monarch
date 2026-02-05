@@ -3,8 +3,10 @@
 import { useCallback, type ReactNode } from 'react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { LuCopy, LuUser, LuWallet } from 'react-icons/lu';
+import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { SiEthereum } from 'react-icons/si';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
 import type { Address } from 'viem';
@@ -23,6 +25,8 @@ type AccountActionsPopoverProps = {
  */
 export function AccountActionsPopover({ address, chainId, children }: AccountActionsPopoverProps) {
   const toast = useStyledToast();
+  const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
+  const isBookmarked = isAddressBookmarked(address);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -53,16 +57,16 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem
-          onClick={() => void handleCopy()}
-          startContent={<LuCopy className="h-4 w-4" />}
-        >
-          Copy Address
-        </DropdownMenuItem>
-        <DropdownMenuItem
           onClick={handleViewAccount}
           startContent={<LuUser className="h-4 w-4" />}
         >
-          View Monarch Portfolio
+          View Portfolio
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => toggleAddressBookmark(address)}
+          startContent={isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
+        >
+          {isBookmarked ? 'Remove Bookmark' : 'Bookmark Address'}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleViewExplorer}
@@ -75,6 +79,12 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
           startContent={<LuWallet className="h-4 w-4" />}
         >
           View on DeBank
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => void handleCopy()}
+          startContent={<LuCopy className="h-4 w-4" />}
+        >
+          Copy Address
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

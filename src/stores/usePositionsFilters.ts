@@ -23,7 +23,7 @@ type PositionsFiltersActions = {
 type PositionsFiltersStore = PositionsFiltersState & PositionsFiltersActions;
 
 const DEFAULT_STATE: PositionsFiltersState = {
-  period: 'day',
+  period: 'month',
 };
 
 /**
@@ -51,6 +51,16 @@ export const usePositionsFilters = create<PositionsFiltersStore>()(
     }),
     {
       name: 'monarch_store_positionsFilters',
+      version: 2,
+      migrate: (state, version) => {
+        if (!state || typeof state !== 'object') {
+          return DEFAULT_STATE;
+        }
+        if (version < 2) {
+          return { ...state, period: 'month' } as PositionsFiltersState;
+        }
+        return state as PositionsFiltersState;
+      },
     },
   ),
 );
