@@ -5,57 +5,10 @@ import type { SupportedNetworks } from '@/utils/networks';
 import type { SubgraphMarket, SubgraphMarketQueryResponse, SubgraphMarketsQueryResponse, SubgraphToken } from '@/utils/subgraph-types';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import { blacklistTokens, type ERC20Token, findToken, type UnknownERC20Token, TokenPeg } from '@/utils/tokens';
+import { fetchMajorPrices, type MajorPrices } from '@/utils/majorPrices';
 import type { Market, MarketWarning } from '@/utils/types';
 import { SUBGRAPH_NO_PRICE, UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
 import { subgraphGraphqlFetcher } from './fetchers';
-
-// Define the structure for the fetched prices locally
-type LocalMajorPrices = {
-  [TokenPeg.BTC]?: number;
-  [TokenPeg.ETH]?: number;
-};
-
-// Define expected type for CoinGecko API response
-type CoinGeckoPriceResponse = {
-  bitcoin?: { usd?: number };
-  ethereum?: { usd?: number };
-};
-
-// CoinGecko API endpoint
-const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd';
-
-// Fetcher for major prices needed for estimation
-const priceCache: { data?: LocalMajorPrices; ts?: number } = {};
-const fetchLocalMajorPrices = async (): Promise<LocalMajorPrices> => {
-  if (priceCache.data && Date.now() - (priceCache.ts ?? 0) < 60_000) {
-    return priceCache.data;
-  }
-  try {
-    const response = await fetch(COINGECKO_API_URL);
-    if (!response.ok) {
-      throw new Error(`Internal CoinGecko API request failed with status ${response.status}`);
-    }
-    // Type the JSON response
-    const data = (await response.json()) as CoinGeckoPriceResponse;
-    const prices: LocalMajorPrices = {
-      [TokenPeg.BTC]: data.bitcoin?.usd,
-      [TokenPeg.ETH]: data.ethereum?.usd,
-    };
-    // Filter out undefined prices
-    const result = Object.entries(prices).reduce((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key as keyof LocalMajorPrices] = value;
-      }
-      return acc;
-    }, {} as LocalMajorPrices);
-    priceCache.data = result;
-    priceCache.ts = Date.now();
-    return result;
-  } catch (err) {
-    console.error('Failed to fetch internal major token prices for subgraph estimation:', err);
-    return {}; // Return empty object on error
-  }
-};
 
 // Helper to safely parse BigDecimal/BigInt strings
 const safeParseFloat = (value: string | null | undefined): number => {
@@ -79,7 +32,7 @@ const safeParseInt = (value: string | null | undefined): number => {
 const transformSubgraphMarketToMarket = (
   subgraphMarket: Partial<SubgraphMarket>,
   network: SupportedNetworks,
-  majorPrices: LocalMajorPrices,
+  majorPrices: MajorPrices,
 ): Market => {
   const marketId = subgraphMarket.id ?? '';
   const lltv = subgraphMarket.lltv ?? '0';
@@ -233,9 +186,9 @@ export const fetchSubgraphMarket = async (uniqueKey: string, network: SupportedN
       return null;
     }
 
-    const majorPrices = await fetchLocalMajorPrices();
+  const majorPrices = await fetchMajorPrices();
 
-    return transformSubgraphMarketToMarket(marketData, network, majorPrices);
+  return transformSubgraphMarketToMarket(marketData, network, majorPrices);
   } catch (error) {
     console.error(`Error fetching subgraph market ${uniqueKey} on ${network}:`, error);
     return null;
