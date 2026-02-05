@@ -214,7 +214,7 @@ export function PositionHeader({
                 </div>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wider text-secondary">Avg {rateLabel}</p>
+                <p className="text-xs uppercase tracking-wider text-secondary">Live {rateLabel}</p>
                 {isLoading ? (
                   <div className="mt-2 h-6 w-16 animate-pulse rounded bg-hovered" />
                 ) : (

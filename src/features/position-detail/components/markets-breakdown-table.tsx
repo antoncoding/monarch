@@ -89,8 +89,9 @@ function MarketRow({
             chainId={chainId}
             mode={MarketIdentityMode.Focused}
             focus={MarketIdentityFocus.Collateral}
+            showId
             showLltv
-            showOracle={false}
+            showOracle
             iconSize={18}
           />
         </Link>
@@ -113,7 +114,7 @@ function MarketRow({
         </div>
       </TableCell>
 
-      {/* Current APY */}
+      {/* Live APY */}
       <TableCell
         className="px-4 py-3 text-right"
         style={{ minWidth: '80px' }}
@@ -121,7 +122,7 @@ function MarketRow({
         <Tooltip
           content={
             <TooltipContent
-              title={`Current ${rateLabel}`}
+              title={`Live ${rateLabel}`}
               detail="Live rate from market state"
             />
           }
@@ -166,36 +167,19 @@ function MarketRow({
         ) : earned === 0n ? (
           <span className="text-secondary">-</span>
         ) : (
-          <Tooltip
-            content={(() => {
-              const blockData = actualBlockData[chainId];
-              if (!blockData) return 'Loading timestamp data...';
-
-              const startTimestamp = blockData.timestamp * 1000;
-              const endTimestamp = Date.now();
-
-              return (
-                <TooltipContent
-                  title={`Interest Earned (${periodLabel})`}
-                  detail={`From ${moment(startTimestamp).format('MMM D, YYYY HH:mm')} to ${moment(endTimestamp).format('MMM D, YYYY HH:mm')}`}
-                />
-              );
-            })()}
-          >
-            <div className="flex items-center justify-end gap-1.5 cursor-help">
-              <span>
-                <span className="font-inter">+</span>
-                {formatReadable(Number(formatBalance(earned, loanDecimals)))}
-              </span>
-              <TokenIcon
-                address={market.loanAsset.address}
-                chainId={chainId}
-                symbol={market.loanAsset.symbol}
-                width={14}
-                height={14}
-              />
-            </div>
-          </Tooltip>
+          <div className="flex items-center justify-end gap-1.5">
+            <span>
+              <span className="font-inter">+</span>
+              {formatReadable(Number(formatBalance(earned, loanDecimals)))}
+            </span>
+            <TokenIcon
+              address={market.loanAsset.address}
+              chainId={chainId}
+              symbol={market.loanAsset.symbol}
+              width={14}
+              height={14}
+            />
+          </div>
         )}
       </TableCell>
 
@@ -302,7 +286,7 @@ export function MarketsBreakdownTable({
               className="px-4 py-3 text-right"
               style={{ minWidth: '80px' }}
             >
-              {rateLabel}
+              Live {rateLabel}
             </TableHead>
             <TableHead
               className="px-4 py-3 text-right"
@@ -325,7 +309,26 @@ export function MarketsBreakdownTable({
               className="px-4 py-3 text-right"
               style={{ minWidth: '110px' }}
             >
-              Earned ({periodLabel})
+              <Tooltip
+                content={(() => {
+                  const blockData = actualBlockData[chainId];
+                  if (!blockData) return 'Loading timestamp data...';
+
+                  const startTimestamp = blockData.timestamp * 1000;
+                  const endTimestamp = Date.now();
+
+                  return (
+                    <TooltipContent
+                      title={`Interest Earned (${periodLabel})`}
+                      detail={`From ${moment(startTimestamp).format('MMM D, YYYY HH:mm')} to ${moment(endTimestamp).format('MMM D, YYYY HH:mm')}`}
+                    />
+                  );
+                })()}
+              >
+                <span className="cursor-help border-b border-dotted border-secondary font-normal text-secondary/80">
+                  Earned ({periodLabel})
+                </span>
+              </Tooltip>
             </TableHead>
             <TableHead
               className="px-4 py-3 text-right"
