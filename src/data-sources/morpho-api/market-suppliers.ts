@@ -9,7 +9,7 @@ type MorphoAPISuppliersResponse = {
       items?: {
         state: {
           supplyShares: string;
-        } | null;  // API can return null state for some positions
+        } | null; // API can return null state for some positions
         user: {
           address: string;
         };
