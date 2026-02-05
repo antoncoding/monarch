@@ -1,29 +1,31 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
-import { Tooltip } from '@/components/ui/tooltip';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { BsQuestionCircle } from 'react-icons/bs';
 import type { Address } from 'viem';
 import { useReadContract } from 'wagmi';
 import { erc20Abi } from 'viem';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import Header from '@/components/layout/header/Header';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useUserRewardsQuery } from '@/hooks/queries/useUserRewardsQuery';
 
 import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
+import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHO_LEGACY, MORPHO_TOKEN_BASE, MORPHO_TOKEN_MAINNET } from '@/utils/tokens';
 import type { MarketRewardType, RewardAmount, AggregatedRewardType } from '@/utils/types';
-import InfoCard from './components/info-card';
 import RewardTable from './components/reward-table';
+import { PositionBreadcrumbs } from '@/features/position-detail/components/position-breadcrumbs';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
   const { rewards, distributions, merklRewardsWithProofs, isLoading, isRefetching, refetch } = useUserRewardsQuery(account);
+  const addVisitedAddress = usePortfolioBookmarks((s) => s.addVisitedAddress);
 
   const { data: morphoBalanceMainnet, refetch: refetchMainnet } = useReadContract({
     address: MORPHO_TOKEN_MAINNET,
@@ -153,129 +155,128 @@ export default function Rewards() {
     handleRefresh();
   });
 
+  useEffect(() => {
+    if (account) {
+      addVisitedAddress(account);
+    }
+  }, [account, addVisitedAddress]);
+
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
 
       <div className="container h-full gap-8">
-        <div className="pb-4">
-          <h1 className="font-zen">Reward</h1>
+        <div className="mt-6">
+          <PositionBreadcrumbs
+            userAddress={account}
+            showPosition={false}
+            rootLabel="Rewards"
+            rootHref="/rewards"
+            addressPath="rewards"
+          />
         </div>
-        <div className="flex flex-col items-center justify-between pb-8 sm:flex-row">
+
+        <div className="mt-4 flex flex-col gap-4 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <AccountIdentity
             address={account as Address}
             chainId={SupportedNetworks.Mainnet}
             variant="full"
             showAddress
+            showBookmark
           />
-        </div>
-        <div className="space-y-4">
-          <section>
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h2 className="font-zen text-xl"> Morpho Token </h2>
+          <div className="flex flex-wrap items-center gap-6">
+            <Tooltip
+              content={
+                <TooltipContent
+                  title="MORPHO Balance"
+                  detail="Your total MORPHO token balance across all supported chains"
+                />
+              }
+            >
+              <div className="cursor-help">
+                <p className="text-xs uppercase tracking-wider text-secondary">Balance</p>
+                <div className="mt-1 flex items-center gap-2 text-lg">
+                  <span className="tabular-nums">{formatSimple(formatBalance(morphoBalance, 18))}</span>
+                  <TokenIcon
+                    address={MORPHO_TOKEN_MAINNET}
+                    chainId={SupportedNetworks.Mainnet}
+                    width={18}
+                    height={18}
+                  />
+                </div>
+              </div>
+            </Tooltip>
+
+            <Tooltip
+              content={
+                <TooltipContent
+                  title="Claimable"
+                  detail="Rewards available to claim now"
+                />
+              }
+            >
+              <div className="cursor-help">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs uppercase tracking-wider text-secondary">Claimable</p>
+                  {canClaim && <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-[10px] text-green-500">Available</span>}
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-lg">
+                  <span className="tabular-nums">{formatSimple(formatBalance(totalClaimable, 18))}</span>
+                  <TokenIcon
+                    address={MORPHO_TOKEN_MAINNET}
+                    chainId={SupportedNetworks.Mainnet}
+                    width={18}
+                    height={18}
+                  />
+                </div>
+              </div>
+            </Tooltip>
+
+            {showLegacy && (
+              <div className="flex items-center gap-4">
                 <Tooltip
                   content={
                     <TooltipContent
-                      className="max-w-[400px]"
-                      title="MORPHO Token"
-                      detail="Morpho Token allows users to engage in Morpho DAO, cast votes on proposals, and participate in governance."
+                      title="Legacy MORPHO"
+                      detail="Legacy MORPHO tokens that need to be wrapped"
                     />
                   }
-                  placement="right"
                 >
-                  <div>
-                    <BsQuestionCircle className="cursor-help text-secondary" />
+                  <div className="cursor-help">
+                    <p className="text-xs uppercase tracking-wider text-secondary">Legacy MORPHO</p>
+                    <div className="mt-1 flex items-center gap-2 text-lg">
+                      {morphoBalanceLegacy && <span className="tabular-nums">{formatSimple(formatBalance(morphoBalanceLegacy, 18))}</span>}
+                      <TokenIcon
+                        address={MORPHO_TOKEN_MAINNET}
+                        chainId={SupportedNetworks.Mainnet}
+                        width={18}
+                        height={18}
+                      />
+                    </div>
                   </div>
                 </Tooltip>
-              </div>
-            </div>
-            {/* morpho token blocks */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <InfoCard
-                title="Balance"
-                tooltip={{
-                  title: 'MORPHO Balance',
-                  detail: 'Your total MORPHO token balance across all supported chains',
-                }}
-              >
-                <div className="flex items-center gap-2 text-base">
-                  <span className="font-base">{formatSimple(formatBalance(morphoBalance, 18))}</span>
-                  <TokenIcon
-                    address={MORPHO_TOKEN_MAINNET}
-                    chainId={SupportedNetworks.Mainnet}
-                    width={18}
-                    height={18}
-                  />
-                </div>
-              </InfoCard>
-
-              <InfoCard
-                title="Claimable"
-                badge={
-                  canClaim
-                    ? {
-                        text: 'Available',
-                        variant: 'success',
-                        tooltip: {
-                          title: 'Claim Available',
-                          detail: "Click 'Claim' in the rewards table below to claim your MORPHO tokens",
-                        },
-                      }
-                    : undefined
-                }
-              >
-                <div className="flex items-center gap-2 text-base">
-                  <span>{formatSimple(formatBalance(totalClaimable, 18))}</span>
-                  <TokenIcon
-                    address={MORPHO_TOKEN_MAINNET}
-                    chainId={SupportedNetworks.Mainnet}
-                    width={18}
-                    height={18}
-                  />
-                </div>
-              </InfoCard>
-
-              {showLegacy && (
-                <InfoCard
-                  title="Legacy MORPHO"
-                  tooltip={{
-                    title: 'Legacy MORPHO',
-                    detail: 'Your legacy MORPHO tokens that need to be wrapped to the new token',
-                  }}
-                  button={{
-                    text: 'Wrap Now',
-                    variant: 'success',
-                    onClick: () => {
-                      void wrap();
-                    },
-                    disabled: !!transaction?.isModalVisible,
-                  }}
+                <Button
+                  variant="surface"
+                  size="sm"
+                  onClick={() => void wrap()}
+                  disabled={!!transaction?.isModalVisible}
                 >
-                  <div className="flex items-center gap-2 text-base">
-                    {morphoBalanceLegacy && <span>{formatSimple(formatBalance(morphoBalanceLegacy, 18))}</span>}
-                    <TokenIcon
-                      address={MORPHO_TOKEN_MAINNET}
-                      chainId={SupportedNetworks.Mainnet}
-                      width={18}
-                      height={18}
-                    />
-                  </div>
-                </InfoCard>
-              )}
-            </div>
-          </section>
-          <section>
-            <RewardTable
-              account={account}
-              rewards={allRewards}
-              distributions={distributions}
-              merklRewardsWithProofs={merklRewardsWithProofs}
-              onRefresh={handleRefresh}
-              isRefetching={isRefetching}
-              isLoading={isLoading}
-            />
-          </section>
+                  Wrap Now
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="space-y-6">
+          <RewardTable
+            account={account}
+            rewards={allRewards}
+            distributions={distributions}
+            merklRewardsWithProofs={merklRewardsWithProofs}
+            onRefresh={handleRefresh}
+            isRefetching={isRefetching}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>

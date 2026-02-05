@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { TbArrowsRightLeft } from 'react-icons/tb';
+import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -14,6 +15,7 @@ import { CollateralIconsDisplay } from '@/features/positions/components/collater
 import { useModalStore } from '@/stores/useModalStore';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';
@@ -53,10 +55,13 @@ export function PositionHeader({
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { open: openModal } = useModalStore();
+  const { togglePositionBookmark, isPositionBookmarked } = usePortfolioBookmarks();
 
   const isOwner = address === userAddress;
   const networkImg = getNetworkImg(chainId);
-  const showActions = isOwner;
+  const showRebalance = isOwner;
+  const isPositionSaved =
+    groupedPosition && isPositionBookmarked(userAddress, chainId, groupedPosition.loanAssetAddress);
 
   const displaySymbol = groupedPosition?.loanAssetSymbol ?? loanAssetSymbol ?? '';
 
@@ -191,7 +196,7 @@ export function PositionHeader({
           {/* RIGHT: Stats + Actions */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
             {/* Key Stats */}
-            <div className={cn('flex items-center gap-6', showActions && 'border-r border-border pr-6')}>
+            <div className={cn('flex items-center gap-6', showRebalance && 'border-r border-border pr-6')}>
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Total Supply</p>
                 <div className="flex items-center gap-2">
@@ -271,8 +276,38 @@ export function PositionHeader({
             </div>
 
             {/* Action Buttons */}
-            {showActions && (
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title={isPositionSaved ? 'Remove bookmark' : 'Bookmark position'}
+                    detail="Save this position for quick access"
+                  />
+                }
+              >
+                <span>
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    className={isPositionSaved ? 'text-primary' : 'text-secondary'}
+                    onClick={() => {
+                      if (!groupedPosition) return;
+                      togglePositionBookmark({
+                        address: userAddress,
+                        chainId,
+                        loanAssetAddress: groupedPosition.loanAssetAddress,
+                        loanAssetSymbol: groupedPosition.loanAssetSymbol,
+                      });
+                    }}
+                    disabled={!groupedPosition}
+                    aria-label={isPositionSaved ? 'Remove position bookmark' : 'Bookmark position'}
+                  >
+                    {isPositionSaved ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
+                  </Button>
+                </span>
+              </Tooltip>
+
+              {showRebalance && (
                 <Tooltip
                   content={
                     <TooltipContent
@@ -293,8 +328,8 @@ export function PositionHeader({
                     </Button>
                   </span>
                 </Tooltip>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

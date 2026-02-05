@@ -24,23 +24,41 @@ import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/n
 import type { GroupedPosition } from '@/utils/types';
 
 type PositionBreadcrumbsProps = {
-  userAddress: string;
-  chainId: SupportedNetworks;
-  loanAssetAddress: string;
+  userAddress?: string;
+  chainId?: SupportedNetworks;
+  loanAssetAddress?: string;
   loanAssetSymbol?: string;
-  allPositions: GroupedPosition[];
+  allPositions?: GroupedPosition[];
+  showPosition?: boolean;
+  placeholderLabel?: string;
+  rootLabel?: string;
+  rootHref?: string;
+  addressPath?: string;
 };
 
-export function PositionBreadcrumbs({ userAddress, chainId, loanAssetAddress, loanAssetSymbol, allPositions }: PositionBreadcrumbsProps) {
+export function PositionBreadcrumbs({
+  userAddress,
+  chainId,
+  loanAssetAddress,
+  loanAssetSymbol,
+  allPositions = [],
+  showPosition = true,
+  placeholderLabel,
+  rootLabel = 'Portfolio',
+  rootHref = '/positions',
+  addressPath = 'positions',
+}: PositionBreadcrumbsProps) {
   const router = useRouter();
   const toast = useStyledToast();
   const [searchOpen, setSearchOpen] = useState(false);
   const [inputAddress, setInputAddress] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const networkImg = getNetworkImg(chainId);
-  const networkName = getNetworkName(chainId);
-  const hasMultiplePositions = allPositions.length > 1;
+  const networkImg = chainId ? getNetworkImg(chainId) : null;
+  const networkName = chainId ? getNetworkName(chainId) : null;
+  const hasMultiplePositions = showPosition && allPositions.length > 1;
+  const hasAddress = !!userAddress;
+  const addressValue = userAddress ?? '';
   const positionsByChain = useMemo(() => {
     const grouped = new Map<number, GroupedPosition[]>();
     allPositions.forEach((pos) => {
@@ -57,13 +75,14 @@ export function PositionBreadcrumbs({ userAddress, chainId, loanAssetAddress, lo
   }, [allPositions]);
 
   const handlePositionChange = (position: GroupedPosition) => {
-    router.push(`/position/${position.chainId}/${position.loanAssetAddress}/${userAddress}`);
+    if (!userAddress) return;
+    router.push(`/position/${position.chainId}/${position.loanAssetAddress}/${addressValue}`);
   };
 
   const handleAddressSearch = () => {
     if (!inputAddress.trim()) return;
     if (isAddress(inputAddress.toLowerCase(), { strict: false })) {
-      router.push(`/positions/${inputAddress}`);
+      router.push(`/${addressPath}/${inputAddress}`);
       setSearchOpen(false);
       setInputAddress('');
     } else {
@@ -109,57 +128,73 @@ export function PositionBreadcrumbs({ userAddress, chainId, loanAssetAddress, lo
 
   return (
     <nav className="flex items-center gap-2 text-sm text-secondary flex-nowrap overflow-x-auto leading-none py-1">
-      <span className="text-secondary">Portfolio</span>
-      <span className="text-primary/60">/</span>
-      <div className="flex items-center gap-1.5 self-center">
-        <div className="relative">
-          <div
-            className={cn(
-              'transition-opacity duration-200',
-              searchOpen ? 'opacity-0 pointer-events-none absolute' : 'opacity-100',
-            )}
-          >
-            <Link
-              href={`/positions/${userAddress}`}
-              className="no-underline hover:no-underline text-secondary hover:text-primary border-b border-dotted border-secondary/60 hover:border-solid hover:border-secondary hover:underline hover:underline-offset-2"
-            >
-              {userAddress}
-            </Link>
-          </div>
-          <div
-            className={cn(
-              'overflow-hidden transition-all duration-200 ease-out',
-              searchOpen ? 'max-w-[260px] opacity-100' : 'max-w-0 opacity-0 pointer-events-none h-0',
-            )}
-          >
-            <Input
-              ref={inputRef}
-              value={inputAddress}
-              onValueChange={setInputAddress}
-              onKeyDown={handleSearchKeyDown}
-              onBlur={handleSearchBlur}
-              placeholder="0x..."
-              variant="filled"
-              size="sm"
-              className="w-[260px] align-middle"
-            />
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-secondary min-w-0 px-2"
-          aria-label={searchOpen ? 'Search address' : 'Open address search'}
-          onClick={handleSearchClick}
-        >
-          <FiSearch className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+      <Link
+        href={rootHref}
+        className="no-underline hover:no-underline text-secondary hover:text-primary"
+      >
+        {rootLabel}
+      </Link>
 
-      <ChevronRightIcon className="h-4 w-4 text-primary/60" />
+      {!hasAddress && placeholderLabel && (
+        <>
+          <span className="text-primary/60">/</span>
+          <span className="text-secondary">{placeholderLabel}</span>
+        </>
+      )}
+
+      {hasAddress && <span className="text-primary/60">/</span>}
+
+      {hasAddress && (
+        <div className="flex items-center gap-1.5 self-center">
+          <div className="relative">
+            <div
+              className={cn(
+                'transition-opacity duration-200',
+                searchOpen ? 'opacity-0 pointer-events-none absolute' : 'opacity-100',
+              )}
+            >
+              <Link
+                href={`/${addressPath}/${addressValue}`}
+                className="no-underline hover:no-underline text-secondary hover:text-primary border-b border-dotted border-secondary/60 hover:border-solid hover:border-secondary hover:underline hover:underline-offset-2"
+              >
+                {addressValue}
+              </Link>
+            </div>
+            <div
+              className={cn(
+                'overflow-hidden transition-all duration-200 ease-out',
+                searchOpen ? 'max-w-[260px] opacity-100' : 'max-w-0 opacity-0 pointer-events-none h-0',
+              )}
+            >
+              <Input
+                ref={inputRef}
+                value={inputAddress}
+                onValueChange={setInputAddress}
+                onKeyDown={handleSearchKeyDown}
+                onBlur={handleSearchBlur}
+                placeholder="0x..."
+                variant="filled"
+                size="sm"
+                className="w-[260px] align-middle"
+              />
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-secondary min-w-0 px-2"
+            aria-label={searchOpen ? 'Search address' : 'Open address search'}
+            onClick={handleSearchClick}
+          >
+            <FiSearch className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
+      {showPosition && hasAddress && <ChevronRightIcon className="h-4 w-4 text-primary/60" />}
 
       {/* Current position: Chain + Asset (dropdown if multiple positions) */}
-      {hasMultiplePositions ? (
+      {showPosition && hasAddress && hasMultiplePositions ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -225,7 +260,7 @@ export function PositionBreadcrumbs({ userAddress, chainId, loanAssetAddress, lo
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-      ) : (
+      ) : showPosition && hasAddress ? (
         <div className="flex items-center gap-1.5 text-primary">
           {networkImg && (
             <Image
@@ -235,16 +270,19 @@ export function PositionBreadcrumbs({ userAddress, chainId, loanAssetAddress, lo
               height={14}
             />
           )}
-          <TokenIcon
-            address={loanAssetAddress}
-            chainId={chainId}
-            symbol={loanAssetSymbol ?? ''}
-            width={14}
-            height={14}
-          />
+          {loanAssetAddress && chainId && (
+            <TokenIcon
+              address={loanAssetAddress}
+              chainId={chainId}
+              symbol={loanAssetSymbol ?? ''}
+              width={14}
+              height={14}
+            />
+          )}
           <span>{loanAssetSymbol ?? 'Position'}</span>
         </div>
-      )}
+      ) : null}
+
     </nav>
   );
 }

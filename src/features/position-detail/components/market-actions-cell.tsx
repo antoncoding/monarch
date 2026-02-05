@@ -32,19 +32,6 @@ export function MarketActionsCell({ position, isOwner }: MarketActionsCellProps)
       >
         Withdraw
       </Button>
-      <Button
-        size="sm"
-        variant="surface"
-        onClick={(e) => {
-          e.stopPropagation();
-          open('supply', {
-            market: position.market,
-            position,
-          });
-        }}
-      >
-        Supply
-      </Button>
     </div>
   );
 }

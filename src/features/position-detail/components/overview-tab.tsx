@@ -1,6 +1,8 @@
 'use client';
 
 import { MarketsBreakdownTable } from './markets-breakdown-table';
+import { YieldAnalysisDistribution } from './yield-analysis-distribution';
+import { YieldAnalysisYieldBreakdown } from './yield-analysis-yield-breakdown';
 import type { GroupedPosition } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
@@ -11,7 +13,6 @@ type OverviewTabProps = {
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   period: EarningsPeriod;
-  onPeriodChange: (period: EarningsPeriod) => void;
   isOwner: boolean;
   onRefetch: () => void;
   isRefetching: boolean;
@@ -29,7 +30,6 @@ export function OverviewTab({
   isEarningsLoading,
   actualBlockData,
   period,
-  onPeriodChange,
   isOwner,
   onRefetch,
   isRefetching,
@@ -37,17 +37,27 @@ export function OverviewTab({
   const periodLabel = PERIOD_LABELS[period];
 
   return (
-    <MarketsBreakdownTable
-      markets={groupedPosition.markets}
-      chainId={chainId}
-      isEarningsLoading={isEarningsLoading}
-      actualBlockData={actualBlockData}
-      period={period}
-      periodLabel={periodLabel}
-      onPeriodChange={onPeriodChange}
-      isOwner={isOwner}
-      onRefetch={onRefetch}
-      isRefetching={isRefetching}
-    />
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <YieldAnalysisDistribution
+          markets={groupedPosition.markets}
+          periodLabel={periodLabel}
+        />
+        <YieldAnalysisYieldBreakdown
+          markets={groupedPosition.markets}
+          periodLabel={periodLabel}
+        />
+      </div>
+      <MarketsBreakdownTable
+        markets={groupedPosition.markets}
+        chainId={chainId}
+        isEarningsLoading={isEarningsLoading}
+        actualBlockData={actualBlockData}
+        periodLabel={periodLabel}
+        isOwner={isOwner}
+        onRefetch={onRefetch}
+        isRefetching={isRefetching}
+      />
+    </div>
   );
 }

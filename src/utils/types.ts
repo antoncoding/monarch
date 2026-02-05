@@ -25,6 +25,8 @@ export type MarketPositionWithEarnings = MarketPosition & {
   actualApy: number; // Historical APY for the period
   avgCapital: string; // Time-weighted average capital
   effectiveTime: number; // Seconds held in period
+  totalDeposits: string;
+  totalWithdraws: string;
 };
 
 export enum UserTxTypes {

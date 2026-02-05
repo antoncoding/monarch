@@ -77,7 +77,7 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
     chainIds.forEach((chainId) => {
       neededPegs.forEach((peg) => {
         const referenceToken = supportedTokens.find((token) => {
-          return token.peg === peg && token.networks.some((network) => network.chain.id === chainId);
+          return token.peg === peg && token.networks.some((_network) => _network.chain.id === chainId);
         });
         if (!referenceToken) return;
         const network = referenceToken.networks.find((n) => n.chain.id === chainId);

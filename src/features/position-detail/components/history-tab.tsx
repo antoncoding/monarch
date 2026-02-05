@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import { now, getLocalTimeZone, type ZonedDateTime } from '@internationalized/date';
 import moment from 'moment';
 import { formatUnits } from 'viem';
@@ -20,6 +19,7 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
+import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import { useDisclosure } from '@/hooks/useDisclosure';
@@ -27,7 +27,8 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
 import { UserTxTypes, type Market } from '@/utils/types';
 import { actionTypeToText } from '@/utils/morpho';
-import type { GroupedPosition } from '@/utils/types';
+import type { GroupedPosition, UserTransaction } from '@/utils/types';
+import type { PositionSnapshot } from '@/utils/positions';
 import type { SupportedNetworks } from '@/utils/networks';
 
 const PAGE_SIZE = 10;
@@ -36,9 +37,12 @@ type HistoryTabProps = {
   groupedPosition: GroupedPosition;
   chainId: SupportedNetworks;
   userAddress: string;
+  transactions: UserTransaction[];
+  snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  actualBlockData: Record<number, { block: number; timestamp: number }>;
 };
 
-export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTabProps) {
+export function HistoryTab({ groupedPosition, chainId, userAddress, transactions, snapshotsByChain, actualBlockData }: HistoryTabProps) {
   const { allMarkets, loading: loadingMarkets } = useProcessedMarkets();
   const toast = useStyledToast();
 
@@ -231,6 +235,14 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
 
   return (
     <div className="space-y-4">
+      <UserPositionsChart
+        variant="grouped"
+        groupedPosition={groupedPosition}
+        transactions={transactions}
+        snapshotsByChain={snapshotsByChain}
+        chainBlockData={actualBlockData}
+        height={220}
+      />
       <TableContainerWithHeader
         title="Transaction History"
         actions={headerActions}
@@ -315,23 +327,18 @@ export function HistoryTab({ groupedPosition, chainId, userAddress }: HistoryTab
                       className="px-4 py-3"
                       style={{ minWidth: '200px' }}
                     >
-                      <Link
-                        href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
-                        className="no-underline hover:no-underline"
-                      >
-                        <div className="flex items-center justify-start gap-2">
-                          <MarketIdentity
-                            market={market}
-                            chainId={market.morphoBlue.chain.id}
-                            mode={MarketIdentityMode.Focused}
-                            focus={MarketIdentityFocus.Collateral}
-                            showId
-                            showLltv
-                            showOracle
-                            iconSize={18}
-                          />
-                        </div>
-                      </Link>
+                      <div className="flex items-center justify-start gap-2">
+                        <MarketIdentity
+                          market={market}
+                          chainId={market.morphoBlue.chain.id}
+                          mode={MarketIdentityMode.Focused}
+                          focus={MarketIdentityFocus.Collateral}
+                          showId
+                          showLltv
+                          showOracle
+                          iconSize={18}
+                        />
+                      </div>
                     </TableCell>
 
                     <TableCell

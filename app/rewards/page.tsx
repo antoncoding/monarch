@@ -1,5 +1,5 @@
-import SearchOrConnect from '@/components/SearchOrConnect/SearchOrConnect';
 import { generateMetadata } from '@/utils/generateMetadata';
+import RewardsLandingView from '@/features/rewards/rewards-landing-view';
 
 export const metadata = generateMetadata({
   title: 'Rewards | Monarch',
@@ -9,10 +9,5 @@ export const metadata = generateMetadata({
 });
 
 export default function LogIn() {
-  return (
-    <SearchOrConnect
-      path="rewards"
-      title="Rewards"
-    />
-  );
+  return <RewardsLandingView />;
 }
