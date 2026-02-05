@@ -56,12 +56,12 @@ export default function PositionsLandingView() {
     }, {});
   }, [visitedAddresses]);
 
-  const positionKey = (address: string, chainId: number, loanAssetAddress: string) =>
-    `${address.toLowerCase()}-${chainId}-${loanAssetAddress.toLowerCase()}`;
+  const buildPositionKey = (ownerAddress: string, chainId: number, loanAssetAddress: string) =>
+    `${ownerAddress.toLowerCase()}-${chainId}-${loanAssetAddress.toLowerCase()}`;
 
   const visitedPositionMap = useMemo(() => {
     return visitedPositions.reduce<Record<string, number>>((acc, entry) => {
-      acc[positionKey(entry.address, entry.chainId, entry.loanAssetAddress)] = entry.lastVisited;
+      acc[buildPositionKey(entry.address, entry.chainId, entry.loanAssetAddress)] = entry.lastVisited;
       return acc;
     }, {});
   }, [visitedPositions]);
@@ -94,8 +94,7 @@ export default function PositionsLandingView() {
     });
 
     positionBookmarks.forEach((entry) => {
-      const lastSeen =
-        visitedPositionMap[positionKey(entry.address, entry.chainId, entry.loanAssetAddress)] ?? entry.addedAt;
+      const lastSeen = visitedPositionMap[buildPositionKey(entry.address, entry.chainId, entry.loanAssetAddress)] ?? entry.addedAt;
       items.push({
         key: `position-${entry.address}-${entry.chainId}-${entry.loanAssetAddress}`,
         type: 'position',
@@ -122,9 +121,9 @@ export default function PositionsLandingView() {
     });
 
     visitedPositions.forEach((entry) => {
-      const key = positionKey(entry.address, entry.chainId, entry.loanAssetAddress);
+      const key = buildPositionKey(entry.address, entry.chainId, entry.loanAssetAddress);
       const alreadyBookmarked = positionBookmarks.some(
-        (bookmark) => positionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) === key,
+        (bookmark) => buildPositionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) === key,
       );
       if (alreadyBookmarked) return;
       items.push({

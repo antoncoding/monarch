@@ -15,20 +15,12 @@ type BreadcrumbsProps = {
 
 export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   return (
-    <nav
-      className={cn(
-        'flex items-center gap-2 text-sm text-secondary flex-nowrap overflow-x-auto leading-none py-1 font-zen',
-        className,
-      )}
-    >
+    <nav className={cn('flex items-center gap-2 text-sm text-secondary flex-nowrap overflow-x-auto leading-none py-1 font-zen', className)}>
       {items.map((item, index) => {
         const content = item.href ? (
           <Link
             href={item.href}
-            className={cn(
-              'no-underline hover:no-underline text-secondary',
-              item.isCurrent ? 'text-primary' : 'hover:text-primary',
-            )}
+            className={cn('no-underline hover:no-underline text-secondary', item.isCurrent ? 'text-primary' : 'hover:text-primary')}
           >
             {item.label}
           </Link>

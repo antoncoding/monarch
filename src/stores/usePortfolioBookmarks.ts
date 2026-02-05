@@ -74,9 +74,7 @@ export const usePortfolioBookmarks = create<PortfolioBookmarksStore>()(
         const key = positionKey(normalizedAddress, entry.chainId, normalizedAsset);
         const now = Date.now();
         const next = [
-          ...get().visitedPositions.filter(
-            (pos) => positionKey(pos.address, pos.chainId, pos.loanAssetAddress) !== key,
-          ),
+          ...get().visitedPositions.filter((pos) => positionKey(pos.address, pos.chainId, pos.loanAssetAddress) !== key),
           {
             address: normalizedAddress,
             chainId: entry.chainId,

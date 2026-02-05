@@ -293,10 +293,6 @@ export function MarketHeader({
   accrueInterest = () => {},
   isLoading = false,
 }: MarketHeaderProps) {
-  if (isLoading || !market) {
-    return <MarketHeaderSkeleton />;
-  }
-
   const [isExpanded, setIsExpanded] = useState(false);
   const [isBlacklistModalOpen, setIsBlacklistModalOpen] = useState(false);
   const { short: rateLabel } = useRateLabel();
@@ -305,6 +301,11 @@ export function MarketHeader({
   const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
+
+  if (isLoading || !market) {
+    return <MarketHeaderSkeleton />;
+  }
+
   const isStarred = starredMarkets.includes(market.uniqueKey);
   const resolvedMarketId = marketId ?? market.uniqueKey;
   const resolvedOraclePrice = oraclePrice ?? '0';
