@@ -33,18 +33,22 @@ export const useAllMarketBorrowers = (marketId: string | undefined, network: Sup
     queryFn: async () => {
       if (!marketId || !network) return null;
 
+      let result = null;
+
       // Try Morpho API first
       if (supportsMorphoApi(network)) {
         try {
-          const result = await fetchMorphoMarketBorrowers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
-          return result;
-        } catch (morphoError) {
-          console.error('Failed to fetch all borrowers via Morpho API:', morphoError);
+          result = await fetchMorphoMarketBorrowers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
+        } catch {
+          // Morpho API failed, will fall back to subgraph
         }
       }
 
-      // Fallback to Subgraph
-      const result = await fetchSubgraphMarketBorrowers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
+      // Fallback to Subgraph if Morpho API failed or returned empty
+      if (!result || result.items?.length === 0) {
+        result = await fetchSubgraphMarketBorrowers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
+      }
+
       return result;
     },
     enabled: !!marketId && !!network,
@@ -69,18 +73,22 @@ export const useAllMarketSuppliers = (marketId: string | undefined, network: Sup
     queryFn: async () => {
       if (!marketId || !network) return null;
 
+      let result = null;
+
       // Try Morpho API first
       if (supportsMorphoApi(network)) {
         try {
-          const result = await fetchMorphoMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
-          return result;
-        } catch (morphoError) {
-          console.error('Failed to fetch all suppliers via Morpho API:', morphoError);
+          result = await fetchMorphoMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
+        } catch {
+          // Morpho API failed, will fall back to subgraph
         }
       }
 
-      // Fallback to Subgraph
-      const result = await fetchSubgraphMarketSuppliers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
+      // Fallback to Subgraph if Morpho API failed or returned empty
+      if (!result || result.items?.length === 0) {
+        result = await fetchSubgraphMarketSuppliers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
+      }
+
       return result;
     },
     enabled: !!marketId && !!network,
