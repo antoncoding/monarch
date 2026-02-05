@@ -19,14 +19,24 @@ type VisitedAddress = {
   lastVisited: number;
 };
 
+type VisitedPosition = {
+  address: string;
+  chainId: number;
+  loanAssetAddress: string;
+  loanAssetSymbol?: string;
+  lastVisited: number;
+};
+
 type PortfolioBookmarksState = {
   addressBookmarks: AddressBookmark[];
   positionBookmarks: PositionBookmark[];
   visitedAddresses: VisitedAddress[];
+  visitedPositions: VisitedPosition[];
 };
 
 type PortfolioBookmarksActions = {
   addVisitedAddress: (address: string) => void;
+  addVisitedPosition: (entry: Omit<VisitedPosition, 'lastVisited'>) => void;
   toggleAddressBookmark: (address: string) => void;
   togglePositionBookmark: (entry: Omit<PositionBookmark, 'addedAt'>) => void;
   isAddressBookmarked: (address: string) => boolean;
@@ -36,6 +46,7 @@ type PortfolioBookmarksActions = {
 type PortfolioBookmarksStore = PortfolioBookmarksState & PortfolioBookmarksActions;
 
 const MAX_VISITED = 12;
+const MAX_VISITED_POSITIONS = 12;
 
 const normalizeAddress = (address: string) => address.toLowerCase();
 
@@ -48,6 +59,7 @@ export const usePortfolioBookmarks = create<PortfolioBookmarksStore>()(
       addressBookmarks: [],
       positionBookmarks: [],
       visitedAddresses: [],
+      visitedPositions: [],
       addVisitedAddress: (address) => {
         const normalized = normalizeAddress(address);
         const now = Date.now();
@@ -55,6 +67,27 @@ export const usePortfolioBookmarks = create<PortfolioBookmarksStore>()(
           .sort((a, b) => b.lastVisited - a.lastVisited)
           .slice(0, MAX_VISITED);
         set({ visitedAddresses: next });
+      },
+      addVisitedPosition: (entry) => {
+        const normalizedAddress = normalizeAddress(entry.address);
+        const normalizedAsset = normalizeAddress(entry.loanAssetAddress);
+        const key = positionKey(normalizedAddress, entry.chainId, normalizedAsset);
+        const now = Date.now();
+        const next = [
+          ...get().visitedPositions.filter(
+            (pos) => positionKey(pos.address, pos.chainId, pos.loanAssetAddress) !== key,
+          ),
+          {
+            address: normalizedAddress,
+            chainId: entry.chainId,
+            loanAssetAddress: normalizedAsset,
+            loanAssetSymbol: entry.loanAssetSymbol,
+            lastVisited: now,
+          },
+        ]
+          .sort((a, b) => b.lastVisited - a.lastVisited)
+          .slice(0, MAX_VISITED_POSITIONS);
+        set({ visitedPositions: next });
       },
       toggleAddressBookmark: (address) => {
         const normalized = normalizeAddress(address);

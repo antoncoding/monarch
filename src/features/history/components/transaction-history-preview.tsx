@@ -22,9 +22,16 @@ type TransactionHistoryPreviewProps = {
   chainId: number;
   isVaultAdapter?: boolean;
   emptyMessage?: string;
+  viewAllHref?: string;
 };
 
-export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = false, emptyMessage }: TransactionHistoryPreviewProps) {
+export function TransactionHistoryPreview({
+  account,
+  chainId,
+  isVaultAdapter = false,
+  emptyMessage,
+  viewAllHref,
+}: TransactionHistoryPreviewProps) {
   const [isViewAllHovered, setIsViewAllHovered] = useState(false);
   const { allMarkets } = useProcessedMarkets();
 
@@ -46,11 +53,9 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
   const isInitialized = !loading;
 
   const historyLink = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set('chainId', chainId.toString());
-    if (isVaultAdapter) params.set('isVaultAdapter', 'true');
-    return `/history/${account}?${params.toString()}`;
-  }, [account, chainId, isVaultAdapter]);
+    if (viewAllHref) return viewAllHref;
+    return `/positions/${account}`;
+  }, [account, viewAllHref]);
 
   const actions = (
     <Link
@@ -63,7 +68,7 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
         animate={{ x: isViewAllHovered ? -2 : 0 }}
         transition={{ duration: 0.2 }}
       >
-        View All
+        Details
       </motion.span>
       <motion.span
         initial={{ opacity: 0, x: -4 }}

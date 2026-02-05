@@ -34,10 +34,10 @@ const PERIOD_LABELS: Record<EarningsPeriod, string> = {
 type PositionDetailTab = 'analysis' | 'history';
 
 export default function PositionDetailContent({ chainId, loanAssetAddress, userAddress }: PositionDetailContentProps) {
-  const router = useRouter();
+  const _router = useRouter();
   const { address: connectedAddress } = useConnection();
   const [selectedTab, setSelectedTab] = useState<PositionDetailTab>('analysis');
-  const addVisitedAddress = usePortfolioBookmarks((s) => s.addVisitedAddress);
+  const { addVisitedAddress, addVisitedPosition } = usePortfolioBookmarks();
 
   // Preferences (period)
   const period = usePositionDetailPreferences((s) => s.period);
@@ -92,6 +92,16 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
       addVisitedAddress(userAddress);
     }
   }, [userAddress, addVisitedAddress]);
+
+  useEffect(() => {
+    if (!userAddress || !loanAssetAddress || !chainId) return;
+    addVisitedPosition({
+      address: userAddress,
+      chainId,
+      loanAssetAddress,
+      loanAssetSymbol,
+    });
+  }, [userAddress, chainId, loanAssetAddress, loanAssetSymbol, addVisitedPosition]);
 
   // Always render the shell - progressive loading
   return (
@@ -162,15 +172,6 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
                 message="No position found for this asset on this network."
                 className="mt-10"
               />
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => router.push(`/positions/${userAddress}`)}
-                  className="text-primary hover:underline"
-                >
-                  View all positions
-                </button>
-              </div>
             </div>
           )}
 

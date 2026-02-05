@@ -47,7 +47,7 @@ export default function PositionsLandingView() {
 
   const { findToken } = useTokensQuery();
 
-  const { addressBookmarks, positionBookmarks, visitedAddresses } = usePortfolioBookmarks();
+  const { addressBookmarks, positionBookmarks, visitedAddresses, visitedPositions } = usePortfolioBookmarks();
 
   const visitedMap = useMemo(() => {
     return visitedAddresses.reduce<Record<string, number>>((acc, entry) => {
@@ -55,6 +55,16 @@ export default function PositionsLandingView() {
       return acc;
     }, {});
   }, [visitedAddresses]);
+
+  const positionKey = (address: string, chainId: number, loanAssetAddress: string) =>
+    `${address.toLowerCase()}-${chainId}-${loanAssetAddress.toLowerCase()}`;
+
+  const visitedPositionMap = useMemo(() => {
+    return visitedPositions.reduce<Record<string, number>>((acc, entry) => {
+      acc[positionKey(entry.address, entry.chainId, entry.loanAssetAddress)] = entry.lastVisited;
+      return acc;
+    }, {});
+  }, [visitedPositions]);
 
   const MAX_ITEMS = 10;
 
@@ -84,6 +94,8 @@ export default function PositionsLandingView() {
     });
 
     positionBookmarks.forEach((entry) => {
+      const lastSeen =
+        visitedPositionMap[positionKey(entry.address, entry.chainId, entry.loanAssetAddress)] ?? entry.addedAt;
       items.push({
         key: `position-${entry.address}-${entry.chainId}-${entry.loanAssetAddress}`,
         type: 'position',
@@ -93,7 +105,7 @@ export default function PositionsLandingView() {
         loanAssetSymbol: entry.loanAssetSymbol,
         isBookmarked: true,
         bookmarkKind: 'position',
-        lastSeen: entry.addedAt,
+        lastSeen,
       });
     });
 
@@ -109,13 +121,31 @@ export default function PositionsLandingView() {
       });
     });
 
+    visitedPositions.forEach((entry) => {
+      const key = positionKey(entry.address, entry.chainId, entry.loanAssetAddress);
+      const alreadyBookmarked = positionBookmarks.some(
+        (bookmark) => positionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) === key,
+      );
+      if (alreadyBookmarked) return;
+      items.push({
+        key: `recent-position-${entry.address}-${entry.chainId}-${entry.loanAssetAddress}`,
+        type: 'position',
+        address: entry.address,
+        chainId: entry.chainId,
+        loanAssetAddress: entry.loanAssetAddress,
+        loanAssetSymbol: entry.loanAssetSymbol,
+        isBookmarked: false,
+        lastSeen: entry.lastVisited,
+      });
+    });
+
     return items
       .sort((a, b) => {
         if (a.isBookmarked !== b.isBookmarked) return a.isBookmarked ? -1 : 1;
         return b.lastSeen - a.lastSeen;
       })
       .slice(0, MAX_ITEMS);
-  }, [addressBookmarks, positionBookmarks, visitedAddresses, visitedMap]);
+  }, [addressBookmarks, positionBookmarks, visitedAddresses, visitedPositions, visitedMap, visitedPositionMap]);
 
   const handleAddressSearch = () => {
     if (!inputAddress.trim()) {

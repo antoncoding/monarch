@@ -97,6 +97,12 @@ export default function VaultContent() {
   const tokenDecimals = vaultData?.tokenDecimals;
   const tokenSymbol = vaultData?.tokenSymbol;
   const assetAddress = vaultData?.assetAddress as Address | undefined;
+  const adapterAddress = adapterQuery.morphoMarketV1Adapter as Address | undefined;
+
+  const adapterPortfolioHref = useMemo(() => {
+    if (!adapterAddress || !assetAddress) return undefined;
+    return `/position/${chainId}/${assetAddress}/${adapterAddress}`;
+  }, [adapterAddress, assetAddress, chainId]);
 
   // UI state from Zustand stores (for vault-view banners only)
   const { open: openSettings } = useVaultSettingsModalStore();
@@ -222,7 +228,7 @@ export default function VaultContent() {
             allocators={vaultData?.allocators}
             collaterals={collateralAddresses}
             curator={vaultData?.curator}
-            adapter={adapterQuery.morphoMarketV1Adapter ?? undefined}
+            adapter={adapterAddress}
             onDeposit={handleDeposit}
             onWithdraw={handleWithdraw}
             onRefresh={handleRefreshVault}
@@ -296,12 +302,13 @@ export default function VaultContent() {
           />
 
           {/* Transaction History Preview - only show when vault is fully set up */}
-          {adapterQuery.morphoMarketV1Adapter && isVaultInitialized && !capsUninitialized && (
+          {adapterAddress && isVaultInitialized && !capsUninitialized && (
             <TransactionHistoryPreview
-              account={adapterQuery.morphoMarketV1Adapter}
+              account={adapterAddress}
               chainId={chainId}
               isVaultAdapter={true}
               emptyMessage="Setup complete, your automated rebalance will show up here once it's triggered."
+              viewAllHref={adapterPortfolioHref}
             />
           )}
 
