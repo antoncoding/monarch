@@ -28,49 +28,54 @@ export const useMarketsQuery = () => {
   return useQuery({
     queryKey: ['markets'],
     queryFn: async () => {
-      const combinedMarkets: Market[] = [];
-      const fetchErrors: unknown[] = [];
-
       try {
-        // Fetch markets for each network based on its data source
-        await Promise.all(
+        const combinedMarkets: Market[] = [];
+        const fetchErrors: unknown[] = [];
+
+        // Fetch markets for each network based on its data source.
+        // Use allSettled so a single chain failure cannot reject the whole query.
+        const results = await Promise.allSettled(
           ALL_SUPPORTED_NETWORKS.map(async (network) => {
-            try {
-              let networkMarkets: Market[] = [];
-              let trySubgraph = false;
+            let networkMarkets: Market[] = [];
+            let trySubgraph = !supportsMorphoApi(network);
 
-              // Try Morpho API first if supported
-              if (supportsMorphoApi(network)) {
-                try {
-                  console.log(`Attempting to fetch markets via Morpho API for ${network}`);
-                  networkMarkets = await fetchMorphoMarkets(network);
-                } catch (morphoError) {
-                  trySubgraph = true;
-                  console.error(`Failed to fetch markets via Morpho API for ${network}:`, morphoError);
-                  // Continue to Subgraph fallback
-                }
-              } else {
+            // Try Morpho API first if supported
+            if (!trySubgraph) {
+              try {
+                console.log(`Attempting to fetch markets via Morpho API for ${network}`);
+                networkMarkets = await fetchMorphoMarkets(network);
+              } catch (morphoError) {
                 trySubgraph = true;
+                console.error(`Failed to fetch markets via Morpho API for ${network}:`, morphoError);
+                // Continue to Subgraph fallback
               }
-
-              // If Morpho API failed or not supported, try Subgraph
-              if (trySubgraph) {
-                try {
-                  console.log(`Attempting to fetch markets via Subgraph for ${network}`);
-                  networkMarkets = await fetchSubgraphMarkets(network);
-                  console.log(`Fetched ${networkMarkets.length} markets via Subgraph for ${network}`);
-                } catch (subgraphError) {
-                  console.error(`Failed to fetch markets via Subgraph for ${network}:`, subgraphError);
-                }
-              }
-
-              combinedMarkets.push(...networkMarkets);
-            } catch (networkError) {
-              console.error(`Failed to fetch markets for network ${network}:`, networkError);
-              fetchErrors.push(networkError);
             }
+
+            // If Morpho API failed or not supported, try Subgraph
+            if (trySubgraph) {
+              try {
+                console.log(`Attempting to fetch markets via Subgraph for ${network}`);
+                networkMarkets = await fetchSubgraphMarkets(network);
+                console.log(`Fetched ${networkMarkets.length} markets via Subgraph for ${network}`);
+              } catch (subgraphError) {
+                console.error(`Failed to fetch markets via Subgraph for ${network}:`, subgraphError);
+                throw subgraphError;
+              }
+            }
+
+            return networkMarkets;
           }),
         );
+
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            combinedMarkets.push(...result.value);
+          } else {
+            const network = ALL_SUPPORTED_NETWORKS[index];
+            console.error(`Failed to fetch markets for network ${network}:`, result.reason);
+            fetchErrors.push(result.reason);
+          }
+        });
 
         // Apply basic filtering
         const filtered = combinedMarkets
@@ -81,6 +86,11 @@ export const useMarketsQuery = () => {
         // If any network fetch failed, log but still return what we got
         if (fetchErrors.length > 0) {
           console.warn(`Failed to fetch markets from ${fetchErrors.length} network(s)`, fetchErrors[0]);
+        }
+
+        // If everything failed, surface an error so the UI can react.
+        if (filtered.length === 0 && fetchErrors.length > 0) {
+          throw fetchErrors[0];
         }
 
         return filtered;

@@ -720,6 +720,18 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'USR',
+    img: require('../imgs/tokens/usr.png') as string,
+    decimals: 18,
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0x0aD339d66BF4AeD5ce31c64Bc37B3244b6394A77',
+      },
+    ],
+    peg: TokenPeg.USD,
+  },
+  {
     symbol: 'WHYPE',
     img: require('../imgs/tokens/whype.png') as string,
     decimals: 18,
