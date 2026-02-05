@@ -147,12 +147,7 @@ export function PositionBreadcrumbs({
       {hasAddress && (
         <div className="flex items-center gap-1.5 self-center">
           <div className="relative">
-            <div
-              className={cn(
-                'transition-opacity duration-200',
-                searchOpen ? 'opacity-0 pointer-events-none absolute' : 'opacity-100',
-              )}
-            >
+            <div className={cn('transition-opacity duration-200', searchOpen ? 'opacity-0 pointer-events-none absolute' : 'opacity-100')}>
               <Link
                 href={`/${addressPath}/${addressValue}`}
                 className="no-underline hover:no-underline text-secondary hover:text-primary border-b border-dotted border-secondary/60 hover:border-solid hover:border-secondary hover:underline hover:underline-offset-2"
@@ -282,7 +277,6 @@ export function PositionBreadcrumbs({
           <span>{loanAssetSymbol ?? 'Position'}</span>
         </div>
       ) : null}
-
     </nav>
   );
 }

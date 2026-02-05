@@ -57,22 +57,16 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem
-          onClick={() => void handleCopy()}
-          startContent={<LuCopy className="h-4 w-4" />}
+          onClick={handleViewAccount}
+          startContent={<LuUser className="h-4 w-4" />}
         >
-          Copy Address
+          View Portfolio
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => toggleAddressBookmark(address)}
           startContent={isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
         >
           {isBookmarked ? 'Remove Bookmark' : 'Bookmark Address'}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={handleViewAccount}
-          startContent={<LuUser className="h-4 w-4" />}
-        >
-          View Monarch Portfolio
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleViewExplorer}
@@ -85,6 +79,12 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
           startContent={<LuWallet className="h-4 w-4" />}
         >
           View on DeBank
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => void handleCopy()}
+          startContent={<LuCopy className="h-4 w-4" />}
+        >
+          Copy Address
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

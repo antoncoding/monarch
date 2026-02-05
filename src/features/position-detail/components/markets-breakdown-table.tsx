@@ -16,6 +16,7 @@ import { MarketActionsCell } from './market-actions-cell';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable, formatBalance } from '@/utils/balance';
+import { convertApyToApr } from '@/utils/rateMath';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
@@ -316,11 +317,10 @@ export function MarketsBreakdownTable({
   );
 
   return (
-    <>
-      <TableContainerWithHeader
-        title="Markets Breakdown"
-        actions={headerActions}
-      >
+    <TableContainerWithHeader
+      title="Markets Breakdown"
+      actions={headerActions}
+    >
       <Table>
         <TableHeader>
           <TableRow className="text-secondary">
@@ -437,7 +437,6 @@ export function MarketsBreakdownTable({
           ))}
         </TableBody>
       </Table>
-      </TableContainerWithHeader>
-    </>
+    </TableContainerWithHeader>
   );
 }

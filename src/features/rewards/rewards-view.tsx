@@ -10,6 +10,7 @@ import Header from '@/components/layout/header/Header';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
+import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useUserRewardsQuery } from '@/hooks/queries/useUserRewardsQuery';
 
@@ -25,7 +26,7 @@ import { PositionBreadcrumbs } from '@/features/position-detail/components/posit
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
   const { rewards, distributions, merklRewardsWithProofs, isLoading, isRefetching, refetch } = useUserRewardsQuery(account);
-  const addVisitedAddress = usePortfolioBookmarks((s) => s.addVisitedAddress);
+  const { addVisitedAddress, toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
 
   const { data: morphoBalanceMainnet, refetch: refetchMainnet } = useReadContract({
     address: MORPHO_TOKEN_MAINNET,
@@ -146,9 +147,10 @@ export default function Rewards() {
     }, 0n);
   }, [allRewards]);
 
-  const canClaim = totalClaimable > 0n;
+  const _canClaim = totalClaimable > 0n;
 
   const showLegacy = morphoBalanceLegacy !== undefined && morphoBalanceLegacy !== 0n;
+  const isBookmarked = isAddressBookmarked(account as Address);
 
   const { wrap, transaction } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
     // Refresh rewards data after successful wrap
@@ -176,64 +178,76 @@ export default function Rewards() {
           />
         </div>
 
-        <div className="mt-4 flex flex-col gap-4 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <AccountIdentity
-            address={account as Address}
-            chainId={SupportedNetworks.Mainnet}
-            variant="full"
-            showAddress
-            showBookmark
-          />
-          <div className="flex flex-wrap items-center gap-6">
-            <Tooltip
-              content={
-                <TooltipContent
-                  title="MORPHO Balance"
-                  detail="Your total MORPHO token balance across all supported chains"
-                />
-              }
+        <div className="mt-4 flex flex-col gap-4 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-2">
+            <AccountIdentity
+              address={account as Address}
+              chainId={SupportedNetworks.Mainnet}
+              variant="full"
+              showAddress
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-w-0 px-1 text-secondary hover:text-primary hover:bg-transparent"
+              aria-label={isBookmarked ? 'Remove address bookmark' : 'Bookmark address'}
+              onClick={() => toggleAddressBookmark(account as Address)}
             >
-              <div className="cursor-help">
-                <p className="text-xs uppercase tracking-wider text-secondary">Balance</p>
-                <div className="mt-1 flex items-center gap-2 text-lg">
-                  <span className="tabular-nums">{formatSimple(formatBalance(morphoBalance, 18))}</span>
-                  <TokenIcon
-                    address={MORPHO_TOKEN_MAINNET}
-                    chainId={SupportedNetworks.Mainnet}
-                    width={18}
-                    height={18}
-                  />
-                </div>
-              </div>
-            </Tooltip>
+              {isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
+            </Button>
+          </div>
 
-            <Tooltip
-              content={
-                <TooltipContent
-                  title="Claimable"
-                  detail="Rewards available to claim now"
-                />
-              }
-            >
-              <div className="cursor-help">
-                <div className="flex items-center gap-2">
-                  <p className="text-xs uppercase tracking-wider text-secondary">Claimable</p>
-                  {canClaim && <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-[10px] text-green-500">Available</span>}
-                </div>
-                <div className="mt-1 flex items-center gap-2 text-lg">
-                  <span className="tabular-nums">{formatSimple(formatBalance(totalClaimable, 18))}</span>
-                  <TokenIcon
-                    address={MORPHO_TOKEN_MAINNET}
-                    chainId={SupportedNetworks.Mainnet}
-                    width={18}
-                    height={18}
+          <div className="flex w-full flex-wrap items-center gap-6 sm:justify-end sm:text-right">
+            <div className="flex flex-col gap-1">
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title="MORPHO Balance"
+                    detail="Your total MORPHO token balance across all supported chains"
                   />
-                </div>
+                }
+              >
+                <span className="cursor-help text-xs uppercase tracking-wider text-secondary border-b border-dotted border-secondary/60">
+                  Balance
+                </span>
+              </Tooltip>
+              <div className="flex items-center gap-2 text-lg">
+                <span className="tabular-nums">{formatSimple(formatBalance(morphoBalance, 18))}</span>
+                <TokenIcon
+                  address={MORPHO_TOKEN_MAINNET}
+                  chainId={SupportedNetworks.Mainnet}
+                  width={18}
+                  height={18}
+                />
               </div>
-            </Tooltip>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title="Claimable"
+                    detail="Rewards available to claim now"
+                  />
+                }
+              >
+                <span className="cursor-help text-xs uppercase tracking-wider text-secondary border-b border-dotted border-secondary/60">
+                  Claimable
+                </span>
+              </Tooltip>
+              <div className="flex items-center gap-2 text-lg">
+                <span className="tabular-nums">{formatSimple(formatBalance(totalClaimable, 18))}</span>
+                <TokenIcon
+                  address={MORPHO_TOKEN_MAINNET}
+                  chainId={SupportedNetworks.Mainnet}
+                  width={18}
+                  height={18}
+                />
+              </div>
+            </div>
 
             {showLegacy && (
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col gap-1">
                 <Tooltip
                   content={
                     <TooltipContent
@@ -242,27 +256,27 @@ export default function Rewards() {
                     />
                   }
                 >
-                  <div className="cursor-help">
-                    <p className="text-xs uppercase tracking-wider text-secondary">Legacy MORPHO</p>
-                    <div className="mt-1 flex items-center gap-2 text-lg">
-                      {morphoBalanceLegacy && <span className="tabular-nums">{formatSimple(formatBalance(morphoBalanceLegacy, 18))}</span>}
-                      <TokenIcon
-                        address={MORPHO_TOKEN_MAINNET}
-                        chainId={SupportedNetworks.Mainnet}
-                        width={18}
-                        height={18}
-                      />
-                    </div>
-                  </div>
+                  <span className="cursor-help text-xs uppercase tracking-wider text-secondary border-b border-dotted border-secondary/60">
+                    Legacy MORPHO
+                  </span>
                 </Tooltip>
-                <Button
-                  variant="surface"
-                  size="sm"
-                  onClick={() => void wrap()}
-                  disabled={!!transaction?.isModalVisible}
-                >
-                  Wrap Now
-                </Button>
+                <div className="flex items-center gap-3 text-lg">
+                  {morphoBalanceLegacy && <span className="tabular-nums">{formatSimple(formatBalance(morphoBalanceLegacy, 18))}</span>}
+                  <TokenIcon
+                    address={MORPHO_TOKEN_MAINNET}
+                    chainId={SupportedNetworks.Mainnet}
+                    width={18}
+                    height={18}
+                  />
+                  <Button
+                    variant="surface"
+                    size="sm"
+                    onClick={() => void wrap()}
+                    disabled={!!transaction?.isModalVisible}
+                  >
+                    Wrap Now
+                  </Button>
+                </div>
               </div>
             )}
           </div>

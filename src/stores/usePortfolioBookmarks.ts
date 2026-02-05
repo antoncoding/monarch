@@ -51,10 +51,7 @@ export const usePortfolioBookmarks = create<PortfolioBookmarksStore>()(
       addVisitedAddress: (address) => {
         const normalized = normalizeAddress(address);
         const now = Date.now();
-        const next = [
-          ...get().visitedAddresses.filter((entry) => entry.address !== normalized),
-          { address: normalized, lastVisited: now },
-        ]
+        const next = [...get().visitedAddresses.filter((entry) => entry.address !== normalized), { address: normalized, lastVisited: now }]
           .sort((a, b) => b.lastVisited - a.lastVisited)
           .slice(0, MAX_VISITED);
         set({ visitedAddresses: next });
@@ -80,14 +77,12 @@ export const usePortfolioBookmarks = create<PortfolioBookmarksStore>()(
         const normalizedAsset = normalizeAddress(entry.loanAssetAddress);
         const key = positionKey(normalizedAddress, entry.chainId, normalizedAsset);
         const exists = get().positionBookmarks.some(
-          (bookmark) =>
-            positionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) === key,
+          (bookmark) => positionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) === key,
         );
         if (exists) {
           set({
             positionBookmarks: get().positionBookmarks.filter(
-              (bookmark) =>
-                positionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) !== key,
+              (bookmark) => positionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) !== key,
             ),
           });
           return;
@@ -102,8 +97,7 @@ export const usePortfolioBookmarks = create<PortfolioBookmarksStore>()(
               addedAt: Date.now(),
             },
             ...get().positionBookmarks.filter(
-              (bookmark) =>
-                positionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) !== key,
+              (bookmark) => positionKey(bookmark.address, bookmark.chainId, bookmark.loanAssetAddress) !== key,
             ),
           ],
         });

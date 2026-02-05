@@ -72,7 +72,7 @@ export function YieldAnalysisDistribution({ markets, periodLabel }: YieldAnalysi
       const avgBalance = formatReadable(Number(formatBalance(avgCapital, decimals)));
       return {
         key: position.market.uniqueKey,
-        label: marketDisplayNames[position.market.uniqueKey] ?? (position.market.collateralAsset?.symbol ?? 'Unknown'),
+        label: marketDisplayNames[position.market.uniqueKey] ?? position.market.collateralAsset?.symbol ?? 'Unknown',
         value: toPercent(weightedCapital),
         percentage: toPercent(weightedCapital),
         color: getCollateralColorFromPalette(position.market.uniqueKey.toLowerCase(), chartColors.pie),
@@ -139,9 +139,7 @@ export function YieldAnalysisDistribution({ markets, periodLabel }: YieldAnalysi
                       <div className="rounded-md border border-border bg-background px-3 py-2 text-xs shadow-lg">
                         <p className="font-medium">{entry.label}</p>
                         <p className="text-secondary">{entry.percentage.toFixed(2)}% time-weighted share</p>
-                        {entry.avgBalance && !entry.isOther && (
-                          <p className="text-secondary">Avg balance: {entry.avgBalance}</p>
-                        )}
+                        {entry.avgBalance && !entry.isOther && <p className="text-secondary">Avg balance: {entry.avgBalance}</p>}
                       </div>
                     );
                   }}

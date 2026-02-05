@@ -60,8 +60,7 @@ export function PositionHeader({
   const isOwner = address === userAddress;
   const networkImg = getNetworkImg(chainId);
   const showRebalance = isOwner;
-  const isPositionSaved =
-    groupedPosition && isPositionBookmarked(userAddress, chainId, groupedPosition.loanAssetAddress);
+  const isPositionSaved = groupedPosition && isPositionBookmarked(userAddress, chainId, groupedPosition.loanAssetAddress);
 
   const displaySymbol = groupedPosition?.loanAssetSymbol ?? loanAssetSymbol ?? '';
 

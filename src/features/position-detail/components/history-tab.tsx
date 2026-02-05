@@ -170,9 +170,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
     <>
       {hasActiveFilters && (
         <div className="flex items-center gap-2 pr-2">
-          <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">
-            Filtered: {filterLabel}
-          </span>
+          <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">Filtered: {filterLabel}</span>
           <Tooltip
             content={
               <TooltipContent
@@ -316,11 +314,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
                       className="px-4 py-3"
                       style={{ minWidth: '100px' }}
                     >
-                      <span
-                        className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${actionClass}`}
-                      >
-                        {actionLabel}
-                      </span>
+                      <span className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${actionClass}`}>{actionLabel}</span>
                     </TableCell>
 
                     <TableCell

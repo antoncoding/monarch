@@ -162,7 +162,6 @@ export default function PositionsLandingView() {
     return new Date(timestamp).toLocaleDateString();
   };
 
-
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
@@ -259,7 +258,7 @@ export default function PositionsLandingView() {
                     ? findToken(entry.loanAssetAddress, entry.chainId)
                     : undefined;
                 const symbol = entry.loanAssetSymbol ?? tokenInfo?.symbol ?? 'Token';
-                const chainName = entry.chainId ? getNetworkName(entry.chainId) ?? `Chain ${entry.chainId}` : '';
+                const chainName = entry.chainId ? (getNetworkName(entry.chainId) ?? `Chain ${entry.chainId}`) : '';
                 const link =
                   entry.type === 'position' && entry.chainId && entry.loanAssetAddress
                     ? `/position/${entry.chainId}/${entry.loanAssetAddress}/${entry.address}`
@@ -289,22 +288,22 @@ export default function PositionsLandingView() {
                               <span className="text-secondary">{'>'}</span>
                               <span className="flex items-center gap-1 text-sm text-primary">
                                 <TokenIcon
-                                    address={entry.loanAssetAddress ?? ''}
-                                    chainId={entry.chainId ?? 1}
-                                    symbol={symbol}
-                                    width={14}
-                                    height={14}
-                                  />
-                                  {symbol}
-                                </span>
-                                {chainName && <span className="text-xs text-secondary">({chainName})</span>}
-                              </>
-                            )}
-                          </span>
+                                  address={entry.loanAssetAddress ?? ''}
+                                  chainId={entry.chainId ?? 1}
+                                  symbol={symbol}
+                                  width={14}
+                                  height={14}
+                                />
+                                {symbol}
+                              </span>
+                              {chainName && <span className="text-xs text-secondary">({chainName})</span>}
+                            </>
+                          )}
+                        </span>
                       </Link>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-secondary">
-                    {entry.bookmarkKind === entry.type && <RiBookmarkFill className="h-3.5 w-3.5 text-primary" />}
+                      {entry.bookmarkKind === entry.type && <RiBookmarkFill className="h-3.5 w-3.5 text-primary" />}
                       <span>Last seen {formatLastSeen(entry.lastSeen)}</span>
                     </div>
                   </div>

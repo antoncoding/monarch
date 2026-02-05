@@ -29,8 +29,7 @@ export default function RewardsLandingView() {
     const items: { key: string; address: string; isBookmarked: boolean; lastSeen: number }[] = [];
 
     addressBookmarks.forEach((entry) => {
-      const lastSeen =
-        visitedAddresses.find((visited) => visited.address === entry.address)?.lastVisited ?? entry.addedAt;
+      const lastSeen = visitedAddresses.find((visited) => visited.address === entry.address)?.lastVisited ?? entry.addedAt;
       items.push({
         key: `bookmark-${entry.address}`,
         address: entry.address,
@@ -210,9 +209,7 @@ export default function RewardsLandingView() {
                       href={`/rewards/${entry.address}`}
                       className="no-underline hover:no-underline text-secondary hover:text-primary"
                     >
-                      <span className="rounded bg-hovered px-2 py-1 text-xs font-monospace text-secondary">
-                        {shorten(entry.address)}
-                      </span>
+                      <span className="rounded bg-hovered px-2 py-1 text-xs font-monospace text-secondary">{shorten(entry.address)}</span>
                     </Link>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-secondary">
