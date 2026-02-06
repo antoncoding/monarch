@@ -93,6 +93,8 @@ export function useOracleMetadata(chainId: SupportedNetworks | number | undefine
       if (!chainId) return {};
 
       const data = await fetchOracleMetadata(chainId);
+      console.log(`[useOracleMetadata] Fetched chain ${chainId}: ${data?.oracles?.length ?? 0} oracles`);
+      
       if (!data?.oracles) return {};
 
       // Store as plain object (serializable)
@@ -101,11 +103,12 @@ export function useOracleMetadata(chainId: SupportedNetworks | number | undefine
         record[oracle.address.toLowerCase()] = oracle;
       }
 
+      console.log(`[useOracleMetadata] Stored ${Object.keys(record).length} oracles for chain ${chainId}`);
       return record;
     },
     enabled: !!chainId,
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 5, // 5 minutes (reduced for debugging)
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 
   return query;
