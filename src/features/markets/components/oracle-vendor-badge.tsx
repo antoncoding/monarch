@@ -37,7 +37,14 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
  */
 
 function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
-  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const { data: oracleMetadataMap, isLoading, isError } = useOracleMetadata(chainId);
+
+  // Debug logging - remove after fixing
+  if (process.env.NODE_ENV === 'development' && oracleAddress) {
+    const metadataCount = oracleMetadataMap ? Object.keys(oracleMetadataMap).length : 0;
+    const hasOracleInMetadata = oracleMetadataMap ? !!oracleMetadataMap[oracleAddress.toLowerCase()] : false;
+    console.log(`[OracleVendorBadge] chainId=${chainId}, oracleAddress=${oracleAddress?.slice(0, 10)}..., metadataCount=${metadataCount}, hasOracle=${hasOracleInMetadata}, isLoading=${isLoading}, isError=${isError}`);
+  }
 
   // check whether it's standard oracle or not.
   const isCustom = getOracleType(oracleData) === OracleType.Custom;
