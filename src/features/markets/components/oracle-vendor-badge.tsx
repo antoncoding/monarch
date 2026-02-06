@@ -40,10 +40,12 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
   const { data: oracleMetadataMap, isLoading, isError } = useOracleMetadata(chainId);
 
   // Debug logging - remove after fixing
-  if (process.env.NODE_ENV === 'development' && oracleAddress) {
+  if (oracleAddress) {
     const metadataCount = oracleMetadataMap ? Object.keys(oracleMetadataMap).length : 0;
     const hasOracleInMetadata = oracleMetadataMap ? !!oracleMetadataMap[oracleAddress.toLowerCase()] : false;
-    console.log(`[OracleVendorBadge] chainId=${chainId}, oracleAddress=${oracleAddress?.slice(0, 10)}..., metadataCount=${metadataCount}, hasOracle=${hasOracleInMetadata}, isLoading=${isLoading}, isError=${isError}`);
+    const oracleInMetadata = oracleMetadataMap ? oracleMetadataMap[oracleAddress.toLowerCase()] : null;
+    const provider = oracleInMetadata?.data?.baseFeedOne?.provider ?? 'none';
+    console.log(`[OracleVendorBadge] chainId=${chainId}, oracle=${oracleAddress?.slice(0, 10)}..., metadataCount=${metadataCount}, found=${hasOracleInMetadata}, provider=${provider}, loading=${isLoading}, error=${isError}`);
   }
 
   // check whether it's standard oracle or not.
