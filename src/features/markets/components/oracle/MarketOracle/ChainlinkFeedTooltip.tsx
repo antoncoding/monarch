@@ -12,9 +12,33 @@ type ChainlinkFeedTooltipProps = {
   chainId: number;
 };
 
+/**
+ * Get display label for Chainlink feed tier
+ */
+function getTierLabel(tier: string | undefined): { label: string; color: string } | null {
+  if (!tier) return null;
+
+  const tierLower = tier.toLowerCase();
+  switch (tierLower) {
+    case 'verified':
+      return { label: 'Verified', color: 'text-green-600 dark:text-green-400' };
+    case 'high':
+      return { label: 'Monitored', color: 'text-blue-600 dark:text-blue-400' };
+    case 'medium':
+      return { label: 'Medium Risk', color: 'text-yellow-600 dark:text-yellow-400' };
+    case 'low':
+      return { label: 'Low Risk', color: 'text-orange-600 dark:text-orange-400' };
+    case 'custom':
+      return { label: 'Custom', color: 'text-gray-600 dark:text-gray-400' };
+    default:
+      return { label: tier, color: 'text-gray-600 dark:text-gray-400' };
+  }
+}
+
 export function ChainlinkFeedTooltip({ feed, feedData, chainId }: ChainlinkFeedTooltipProps) {
   const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
+  const tierInfo = getTierLabel(feedData?.tier);
 
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Chainlink];
 
@@ -33,6 +57,7 @@ export function ChainlinkFeedTooltip({ feed, feedData, chainId }: ChainlinkFeedT
           </div>
         )}
         <div className="font-zen font-bold">Chainlink Feed</div>
+        {tierInfo && <span className={`text-xs font-medium ${tierInfo.color}`}>({tierInfo.label})</span>}
       </div>
 
       {/* Feed pair name */}

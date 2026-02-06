@@ -11,6 +11,7 @@ export type EnrichedFeed = {
   pair: [string, string] | [];
   provider: OracleFeedProvider;
   decimals?: number;
+  tier?: string; // Chainlink feed category: "verified", "high", "medium", "low", "custom", etc.
 };
 
 export type OracleOutputData = {

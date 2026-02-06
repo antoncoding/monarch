@@ -70,6 +70,7 @@ export type FeedData = {
   description: string;
   pair: [string, string];
   decimals: number;
+  tier?: string; // Chainlink feed category: "verified", "high", "medium", "low", "custom", etc.
 };
 
 export type FeedVendorResult = {
@@ -103,6 +104,7 @@ export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefin
     description: feed.description,
     pair: feed.pair.length === 2 ? (feed.pair as [string, string]) : ['Unknown', 'Unknown'],
     decimals: feed.decimals ?? 18,
+    tier: feed.tier,
   };
 
   return {
