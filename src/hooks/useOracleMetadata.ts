@@ -64,7 +64,10 @@ export type OracleMetadataMap = Map<string, OracleOutput>;
 async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile | null> {
   try {
     // Use internal API route to fetch oracle metadata
-    const response = await fetch(`/api/oracle-metadata/${chainId}`);
+    const url = `/api/oracle-metadata/${chainId}`;
+    console.log(`[fetchOracleMetadata] Fetching ${url}`);
+    const response = await fetch(url);
+    console.log(`[fetchOracleMetadata] Response status: ${response.status}`);
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -75,7 +78,9 @@ async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile 
       return null;
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log(`[fetchOracleMetadata] Parsed JSON for chain ${chainId}: oracles=${data?.oracles?.length ?? 'undefined'}`);
+    return data;
   } catch (error) {
     console.warn(`[oracle-metadata] Error fetching for chain ${chainId}:`, error);
     return null;
@@ -90,12 +95,16 @@ export function useOracleMetadata(chainId: SupportedNetworks | number | undefine
   const query = useQuery({
     queryKey: ['oracle-metadata', chainId],
     queryFn: async (): Promise<OracleMetadataRecord> => {
+      console.log(`[useOracleMetadata] queryFn called for chain ${chainId}`);
       if (!chainId) return {};
 
       const data = await fetchOracleMetadata(chainId);
-      console.log(`[useOracleMetadata] Fetched chain ${chainId}: ${data?.oracles?.length ?? 0} oracles`);
+      console.log(`[useOracleMetadata] Fetched chain ${chainId}: ${data?.oracles?.length ?? 0} oracles, version=${data?.version}`);
       
-      if (!data?.oracles) return {};
+      if (!data?.oracles) {
+        console.log(`[useOracleMetadata] No oracles in response for chain ${chainId}`);
+        return {};
+      }
 
       // Store as plain object (serializable)
       const record: OracleMetadataRecord = {};
@@ -107,9 +116,12 @@ export function useOracleMetadata(chainId: SupportedNetworks | number | undefine
       return record;
     },
     enabled: !!chainId,
-    staleTime: 1000 * 60 * 5, // 5 minutes (reduced for debugging)
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 0, // Always refetch for debugging
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Debug: log query state
+  console.log(`[useOracleMetadata] Hook state for chain ${chainId}: status=${query.status}, dataUpdatedAt=${query.dataUpdatedAt}, isFetching=${query.isFetching}`);
 
   return query;
 }
