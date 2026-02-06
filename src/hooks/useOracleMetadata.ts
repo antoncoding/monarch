@@ -171,7 +171,8 @@ export function getFeedFromOracleData(oracleData: OracleOutputData | undefined, 
 export function useAllOracleMetadata() {
   const queries = useQueries({
     queries: ALL_SUPPORTED_NETWORKS.map((chainId) => ({
-      queryKey: ['oracle-metadata', chainId],
+      // Use different query key to avoid cache collision with useOracleMetadata
+      queryKey: ['oracle-metadata-raw', chainId],
       queryFn: async (): Promise<OracleMetadataFile | null> => {
         return fetchOracleMetadata(chainId);
       },
