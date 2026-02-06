@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
+import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -13,6 +14,7 @@ import type { Market } from '@/utils/types';
 
 export const useFilteredMarkets = (): Market[] => {
   const { allMarkets, whitelistedMarkets } = useProcessedMarkets();
+  const { data: oracleMetadataMap } = useAllOracleMetadata();
   const filters = useMarketsFilters();
   const preferences = useMarketPreferences();
   const { showUnwhitelistedMarkets } = useAppSettings();
@@ -49,6 +51,7 @@ export const useFilteredMarkets = (): Market[] => {
       },
       findToken,
       searchQuery: filters.searchQuery,
+      oracleMetadataMap,
     });
 
     if (preferences.trustedVaultsOnly) {
@@ -142,5 +145,6 @@ export const useFilteredMarkets = (): Market[] => {
     findToken,
     officialTrendingKeys,
     customTagKeys,
+    oracleMetadataMap,
   ]);
 };

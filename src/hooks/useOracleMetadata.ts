@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import type { SupportedNetworks } from '@/utils/networks';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 
 // Types matching the oracle scanner output
 export type OracleFeedProvider = 'Chainlink' | 'Redstone' | 'Compound' | 'Lido' | 'Oval' | 'Pyth' | 'Pendle' | 'Spectra' | null;
@@ -119,4 +119,42 @@ export function getFeedFromOracleData(oracleData: OracleOutputData | undefined, 
   }
 
   return null;
+}
+
+/**
+ * Hook to fetch oracle metadata for ALL supported networks
+ * Returns a merged map with all oracles from all chains
+ * Key format: lowercase oracle address (oracles are unique per chain but address is unique globally)
+ */
+export function useAllOracleMetadata() {
+  const queries = useQueries({
+    queries: ALL_SUPPORTED_NETWORKS.map((chainId) => ({
+      queryKey: ['oracle-metadata', chainId],
+      queryFn: async (): Promise<OracleMetadataFile | null> => {
+        return fetchOracleMetadata(chainId);
+      },
+      staleTime: 1000 * 60 * 30,
+      gcTime: 1000 * 60 * 60,
+    })),
+  });
+
+  // Merge all results into a single map
+  const mergedMap = new Map<string, OracleOutput>();
+
+  for (const query of queries) {
+    if (query.data?.oracles) {
+      for (const oracle of query.data.oracles) {
+        mergedMap.set(oracle.address.toLowerCase(), oracle);
+      }
+    }
+  }
+
+  const isLoading = queries.some((q) => q.isLoading);
+  const isError = queries.some((q) => q.isError);
+
+  return {
+    data: mergedMap,
+    isLoading,
+    isError,
+  };
 }

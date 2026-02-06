@@ -6,6 +6,7 @@
  */
 
 import { LOCKED_MARKET_APY_THRESHOLD } from '@/constants/markets';
+import type { OracleMetadataMap } from '@/hooks/useOracleMetadata';
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import { parsePriceFeedVendors, type PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
@@ -56,6 +57,9 @@ export type MarketFilterOptions = {
 
   // Starred markets
   staredIds?: string[];
+
+  // Oracle metadata for vendor detection
+  oracleMetadataMap?: OracleMetadataMap;
 };
 
 // ============================================================================
@@ -92,14 +96,17 @@ export const createUnknownTokenFilter = (
 /**
  * Filter by unknown oracles
  */
-export const createUnknownOracleFilter = (showUnknownOracle: boolean): MarketFilter => {
+export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMetadataMap?: OracleMetadataMap): MarketFilter => {
   if (showUnknownOracle) {
     return () => true;
   }
   return (market) => {
     if (!market.oracle) return false;
 
-    const info = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id);
+    const info = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id, {
+      metadataMap: oracleMetadataMap,
+      oracleAddress: market.oracleAddress,
+    });
     const isCustom = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id) === OracleType.Custom;
     const isUnknown = isCustom || (info?.hasUnknown ?? false);
 
@@ -151,13 +158,16 @@ export const createLoanAssetFilter = (selectedLoanAssets: string[]): MarketFilte
 /**
  * Filter by selected oracles
  */
-export const createOracleFilter = (selectedOracles: PriceFeedVendors[]): MarketFilter => {
+export const createOracleFilter = (selectedOracles: PriceFeedVendors[], oracleMetadataMap?: OracleMetadataMap): MarketFilter => {
   if (selectedOracles.length === 0) {
     return () => true;
   }
   return (market) => {
     if (!market.oracle) return false;
-    const marketOracles = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id).vendors;
+    const marketOracles = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id, {
+      metadataMap: oracleMetadataMap,
+      oracleAddress: market.oracleAddress,
+    }).vendors;
     return marketOracles.some((oracle) => selectedOracles.includes(oracle));
   };
 };
@@ -216,13 +226,16 @@ export const createMinLiquidityFilter = (config: UsdFilterConfig): MarketFilter 
 /**
  * Filter by search query (collateral, loan, market ID, oracle vendors)
  */
-export const createSearchFilter = (searchQuery: string): MarketFilter => {
+export const createSearchFilter = (searchQuery: string, oracleMetadataMap?: OracleMetadataMap): MarketFilter => {
   if (!searchQuery || searchQuery.trim() === '') {
     return () => true;
   }
   const lowercaseQuery = searchQuery.toLowerCase().trim();
   return (market) => {
-    const { vendors } = parsePriceFeedVendors(market.oracle?.data, market.morphoBlue.chain.id);
+    const { vendors } = parsePriceFeedVendors(market.oracle?.data, market.morphoBlue.chain.id, {
+      metadataMap: oracleMetadataMap,
+      oracleAddress: market.oracleAddress,
+    });
     const vendorsName = vendors.join(',');
     return (
       market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||
@@ -274,7 +287,7 @@ export const filterMarkets = (markets: Market[], options: MarketFilterOptions): 
 
   // Unknown oracle filter
   if (options.showUnknownOracle !== undefined) {
-    filters.push(createUnknownOracleFilter(options.showUnknownOracle));
+    filters.push(createUnknownOracleFilter(options.showUnknownOracle, options.oracleMetadataMap));
   }
 
   // Locked market filter
@@ -294,7 +307,7 @@ export const filterMarkets = (markets: Market[], options: MarketFilterOptions): 
 
   // Oracle filter
   if (options.selectedOracles) {
-    filters.push(createOracleFilter(options.selectedOracles));
+    filters.push(createOracleFilter(options.selectedOracles, options.oracleMetadataMap));
   }
 
   // USD filters (with enabled flags)
@@ -306,7 +319,7 @@ export const filterMarkets = (markets: Market[], options: MarketFilterOptions): 
 
   // Search filter
   if (options.searchQuery) {
-    filters.push(createSearchFilter(options.searchQuery));
+    filters.push(createSearchFilter(options.searchQuery, options.oracleMetadataMap));
   }
 
   return applyFilters(markets, filters);
