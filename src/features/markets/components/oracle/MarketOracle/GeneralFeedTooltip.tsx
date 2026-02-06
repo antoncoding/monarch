@@ -1,22 +1,24 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
-import type { GeneralPriceFeed } from '@/constants/oracle/general-feeds/types';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import { PriceFeedVendors, OracleVendorIcons, mapProviderToVendor, type FeedData } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
+import type { OracleFeedProvider } from '@/hooks/useOracleMetadata';
 
 type GeneralFeedTooltipProps = {
   feed: OracleFeed;
-  feedData: GeneralPriceFeed;
+  feedData?: FeedData | null;
   chainId: number;
 };
 
 export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedTooltipProps) {
-  const [baseAsset, quoteAsset] = feedData.pair;
+  const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
+  const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
 
-  const vendorIcon = OracleVendorIcons[feedData.vendor as PriceFeedVendors] || OracleVendorIcons[PriceFeedVendors.Unknown];
+  const vendor = feedData?.vendor ? mapProviderToVendor(feedData.vendor as OracleFeedProvider) : PriceFeedVendors.Unknown;
+  const vendorIcon = OracleVendorIcons[vendor] || OracleVendorIcons[PriceFeedVendors.Unknown];
 
   return (
     <div className="flex max-w-xs flex-col gap-3">
@@ -26,34 +28,25 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
           <div className="flex-shrink-0">
             <Image
               src={vendorIcon}
-              alt={feedData.vendor}
+              alt={feedData?.vendor ?? 'Unknown'}
               width={16}
               height={16}
             />
           </div>
         )}
-        <div className="font-zen font-bold">Price Feed Details</div>
+        <div className="font-zen font-bold">{feedData?.vendor ?? 'Price'} Feed</div>
       </div>
 
-      {/* Feed pair name with vendor badge */}
+      {/* Feed pair name */}
       <div className="flex items-center gap-2">
         <div className="font-zen text-base font-semibold text-gray-800 dark:text-gray-200">
           {baseAsset} / {quoteAsset}
         </div>
       </div>
 
-      {/* Feed Details */}
-      <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-        <div className="flex justify-between font-zen text-sm">
-          <span className="text-gray-600 dark:text-gray-400">Vendor:</span>
-          <span className="font-medium">{feedData.vendor}</span>
-        </div>
-      </div>
-
       {/* Description */}
-      {feedData.description && (
+      {feedData?.description && (
         <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          <div className="mb-2 font-zen text-sm font-medium text-gray-700 dark:text-gray-300">Description:</div>
           <div className="font-zen text-xs text-gray-600 dark:text-gray-400">{feedData.description}</div>
         </div>
       )}
@@ -75,7 +68,7 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
               height={12}
               className="rounded-sm"
             />
-            Etherscan
+            Explorer
           </Link>
         </div>
       </div>

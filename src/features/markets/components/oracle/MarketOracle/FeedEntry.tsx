@@ -18,14 +18,13 @@ type FeedEntryProps = {
 };
 
 export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null {
-  // Use centralized feed detection - moved before early return to avoid conditional hook calls
+  // Use centralized feed detection
   const feedVendorResult = useMemo(() => {
     if (!feed?.address) return null;
     return detectFeedVendor(feed.address as Address, chainId);
   }, [feed?.address, chainId, feed?.pair]);
 
   if (!feed) return null;
-
   if (!feedVendorResult) return null;
 
   const { vendor, data, assetPair } = feedVendorResult;
@@ -41,17 +40,14 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
   const isChainlink = vendor === PriceFeedVendors.Chainlink;
   const isCompound = vendor === PriceFeedVendors.Compound;
   const isRedstone = vendor === PriceFeedVendors.Redstone;
-  // Type-safe SVR check using discriminated union
-  const isSVR = vendor === PriceFeedVendors.Chainlink && data?.isSVR;
 
   const getTooltipContent = () => {
-    // Use discriminated union for type-safe tooltip selection
     switch (vendor) {
       case PriceFeedVendors.Chainlink:
         return (
           <ChainlinkFeedTooltip
             feed={feed}
-            chainlinkData={data}
+            feedData={data}
             chainId={chainId}
           />
         );
@@ -60,7 +56,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         return (
           <CompoundFeedTooltip
             feed={feed}
-            compoundData={data}
+            feedData={data}
             chainId={chainId}
           />
         );
@@ -69,7 +65,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         return (
           <RedstoneFeedTooltip
             feed={feed}
-            redstoneData={data}
+            feedData={data}
             chainId={chainId}
           />
         );
@@ -86,7 +82,6 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         );
 
       case PriceFeedVendors.Unknown:
-        // For unknown feeds, check if we have general feed data or fallback to unknown
         if (data) {
           return (
             <GeneralFeedTooltip
@@ -132,12 +127,6 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         )}
 
         <div className="flex flex-shrink-0 items-center gap-1">
-          {isSVR && (
-            <span className="whitespace-nowrap rounded bg-orange-100 px-1 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-              SVR
-            </span>
-          )}
-
           {(isChainlink || isCompound || isRedstone) && vendorIcon ? (
             <Image
               src={vendorIcon}
