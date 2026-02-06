@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 
@@ -100,6 +101,8 @@ export function getOracleFromMetadata(
   oracleAddress: string | undefined,
 ): OracleOutput | undefined {
   if (!metadataMap || !oracleAddress) return undefined;
+  // Defensive check - ensure it's actually a Map
+  if (!(metadataMap instanceof Map)) return undefined;
   return metadataMap.get(oracleAddress.toLowerCase());
 }
 
@@ -138,19 +141,21 @@ export function useAllOracleMetadata() {
     })),
   });
 
-  // Merge all results into a single map
-  const mergedMap = new Map<string, OracleOutput>();
-
-  for (const query of queries) {
-    if (query.data?.oracles) {
-      for (const oracle of query.data.oracles) {
-        mergedMap.set(oracle.address.toLowerCase(), oracle);
-      }
-    }
-  }
-
   const isLoading = queries.some((q) => q.isLoading);
   const isError = queries.some((q) => q.isError);
+
+  // Merge all results into a single map (memoized to prevent recreation)
+  const mergedMap = useMemo(() => {
+    const map = new Map<string, OracleOutput>();
+    for (const query of queries) {
+      if (query.data?.oracles) {
+        for (const oracle of query.data.oracles) {
+          map.set(oracle.address.toLowerCase(), oracle);
+        }
+      }
+    }
+    return map;
+  }, [queries]);
 
   return {
     data: mergedMap,
