@@ -56,31 +56,27 @@ export type OracleMetadataFile = {
   oracles: OracleOutput[];
 };
 
-// Store as Record for serializability, convert to Map when needed
+// Store as Record for serializability
 export type OracleMetadataRecord = Record<string, OracleOutput>;
 // Keep Map type for backward compatibility in function signatures
 export type OracleMetadataMap = Map<string, OracleOutput>;
 
+/**
+ * Fetch oracle metadata from internal API route
+ */
 async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile | null> {
   try {
-    // Use internal API route to fetch oracle metadata
-    const url = `/api/oracle-metadata/${chainId}`;
-    console.log(`[fetchOracleMetadata] Fetching ${url}`);
-    const response = await fetch(url);
-    console.log(`[fetchOracleMetadata] Response status: ${response.status}`);
+    const response = await fetch(`/api/oracle-metadata/${chainId}`);
 
     if (!response.ok) {
       if (response.status === 404) {
-        // No data for this chain - not an error
         return null;
       }
       console.warn(`[oracle-metadata] Failed to fetch for chain ${chainId}: ${response.status}`);
       return null;
     }
 
-    const data = await response.json();
-    console.log(`[fetchOracleMetadata] Parsed JSON for chain ${chainId}: oracles=${data?.oracles?.length ?? 'undefined'}`);
-    return data;
+    return response.json();
   } catch (error) {
     console.warn(`[oracle-metadata] Error fetching for chain ${chainId}:`, error);
     return null;
@@ -88,42 +84,33 @@ async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile 
 }
 
 /**
+ * Transform raw oracle file to address-keyed record
+ */
+function transformToRecord(data: OracleMetadataFile | null | undefined): OracleMetadataRecord {
+  if (!data?.oracles) return {};
+
+  const record: OracleMetadataRecord = {};
+  for (const oracle of data.oracles) {
+    if (oracle?.address) {
+      record[oracle.address.toLowerCase()] = oracle;
+    }
+  }
+  return record;
+}
+
+/**
  * Hook to fetch oracle metadata from the centralized Gist
- * Returns a Record (serializable) and a helper to convert to Map
+ * Uses React Query's select option to transform raw data to address-keyed record
  */
 export function useOracleMetadata(chainId: SupportedNetworks | number | undefined) {
-  const query = useQuery({
+  return useQuery({
     queryKey: ['oracle-metadata', chainId],
-    queryFn: async (): Promise<OracleMetadataRecord> => {
-      console.log(`[useOracleMetadata] queryFn called for chain ${chainId}`);
-      if (!chainId) return {};
-
-      const data = await fetchOracleMetadata(chainId);
-      console.log(`[useOracleMetadata] Fetched chain ${chainId}: ${data?.oracles?.length ?? 0} oracles, version=${data?.version}`);
-      
-      if (!data?.oracles) {
-        console.log(`[useOracleMetadata] No oracles in response for chain ${chainId}`);
-        return {};
-      }
-
-      // Store as plain object (serializable)
-      const record: OracleMetadataRecord = {};
-      for (const oracle of data.oracles) {
-        record[oracle.address.toLowerCase()] = oracle;
-      }
-
-      console.log(`[useOracleMetadata] Stored ${Object.keys(record).length} oracles for chain ${chainId}`);
-      return record;
-    },
+    queryFn: () => (chainId ? fetchOracleMetadata(chainId) : Promise.resolve(null)),
+    select: transformToRecord,
     enabled: !!chainId,
-    staleTime: 0, // Always refetch for debugging
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 60, // 1 hour
   });
-
-  // Debug: log query state
-  console.log(`[useOracleMetadata] Hook state for chain ${chainId}: status=${query.status}, dataUpdatedAt=${query.dataUpdatedAt}, isFetching=${query.isFetching}`);
-
-  return query;
 }
 
 /**
@@ -142,12 +129,12 @@ export function getOracleFromMetadata(
     return metadataRecord.get(key);
   }
 
-  // It's a plain object
   return metadataRecord[key];
 }
 
 /**
  * Get feed info by address from an oracle's data
+ * Includes null guards for malformed external data
  */
 export function getFeedFromOracleData(oracleData: OracleOutputData | undefined, feedAddress: string): EnrichedFeed | null {
   if (!oracleData || !feedAddress) return null;
@@ -156,7 +143,8 @@ export function getFeedFromOracleData(oracleData: OracleOutputData | undefined, 
   const feeds = [oracleData.baseFeedOne, oracleData.baseFeedTwo, oracleData.quoteFeedOne, oracleData.quoteFeedTwo];
 
   for (const feed of feeds) {
-    if (feed && feed.address.toLowerCase() === lowerFeed) {
+    // Null guard: ensure feed exists and has a valid address string
+    if (feed && typeof feed.address === 'string' && feed.address && feed.address.toLowerCase() === lowerFeed) {
       return feed;
     }
   }
@@ -171,11 +159,8 @@ export function getFeedFromOracleData(oracleData: OracleOutputData | undefined, 
 export function useAllOracleMetadata() {
   const queries = useQueries({
     queries: ALL_SUPPORTED_NETWORKS.map((chainId) => ({
-      // Use different query key to avoid cache collision with useOracleMetadata
-      queryKey: ['oracle-metadata-raw', chainId],
-      queryFn: async (): Promise<OracleMetadataFile | null> => {
-        return fetchOracleMetadata(chainId);
-      },
+      queryKey: ['oracle-metadata', chainId],
+      queryFn: () => fetchOracleMetadata(chainId),
       staleTime: 1000 * 60 * 30,
       gcTime: 1000 * 60 * 60,
     })),
@@ -184,18 +169,26 @@ export function useAllOracleMetadata() {
   const isLoading = queries.some((q) => q.isLoading);
   const isError = queries.some((q) => q.isError);
 
-  // Merge all results into a single record (memoized)
+  // Create stable dependency based on data update timestamps
+  // This prevents unnecessary recalculations when queries array reference changes
+  const dataUpdateKey = queries.map((q) => q.dataUpdatedAt).join(',');
+
+  // Merge all results into a single record
   const mergedRecord = useMemo(() => {
     const record: OracleMetadataRecord = {};
     for (const query of queries) {
-      if (query.data?.oracles) {
-        for (const oracle of query.data.oracles) {
-          record[oracle.address.toLowerCase()] = oracle;
+      const oracles = query.data?.oracles;
+      if (oracles) {
+        for (const oracle of oracles) {
+          if (oracle?.address) {
+            record[oracle.address.toLowerCase()] = oracle;
+          }
         }
       }
     }
     return record;
-  }, [queries]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataUpdateKey]);
 
   return {
     data: mergedRecord,

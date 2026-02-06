@@ -5,10 +5,7 @@ const ORACLE_GIST_BASE_URL = process.env.ORACLE_GIST_BASE_URL;
 export async function GET(request: Request, { params }: { params: Promise<{ chainId: string }> }) {
   const { chainId } = await params;
 
-  console.log(`[oracle-metadata API] Fetching for chain ${chainId}, GIST_URL=${ORACLE_GIST_BASE_URL ? 'set' : 'NOT SET'}`);
-
   if (!ORACLE_GIST_BASE_URL) {
-    console.error('[oracle-metadata API] ORACLE_GIST_BASE_URL not configured!');
     return NextResponse.json({ error: 'Oracle metadata source not configured' }, { status: 500 });
   }
 
