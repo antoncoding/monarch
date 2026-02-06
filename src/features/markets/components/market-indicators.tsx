@@ -88,7 +88,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
   const customTagKeys = useCustomTagMarketKeys();
   const hasCustomTag = customTagConfig.enabled && customTagKeys.has(marketKey);
 
-  const warnings = showRisk ? computeMarketWarnings(market, true) : [];
+  const warnings = showRisk ? computeMarketWarnings(market, { considerWhitelist: true }) : [];
   const hasWarnings = warnings.length > 0;
   const alertWarning = warnings.find((w) => w.level === 'alert');
   const warningLevel = alertWarning ? 'alert' : warnings.length > 0 ? 'warning' : null;

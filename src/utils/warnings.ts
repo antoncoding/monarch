@@ -1,3 +1,4 @@
+import type { OracleMetadataRecord } from '@/hooks/useOracleMetadata';
 import type { Market, MarketWarning } from '@/utils/types';
 import { monarchWhitelistedMarkets, getMarketOverrideWarnings } from './markets';
 import { getOracleType, OracleType, parsePriceFeedVendors, checkFeedsPath } from './oracle';
@@ -142,7 +143,16 @@ const UNRECOGNIZED_FEEDS_TAGGED: WarningWithDetail = {
   category: WarningCategory.oracle,
 };
 
-export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = false) => {
+type MarketWarningsOptions = {
+  considerWhitelist?: boolean;
+  oracleMetadataMap?: OracleMetadataRecord;
+};
+
+export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?: boolean | MarketWarningsOptions) => {
+  // Handle legacy boolean parameter for backward compatibility
+  const options: MarketWarningsOptions =
+    typeof optionsOrWhitelist === 'boolean' ? { considerWhitelist: optionsOrWhitelist } : optionsOrWhitelist ?? {};
+  const { considerWhitelist = false, oracleMetadataMap } = options;
   const result = [];
 
   const allDetails = [...morphoOfficialWarnings, ...subgraphWarnings];
@@ -186,7 +196,11 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
 
   // if any of the feeds are not null but also not recognized, return appropriate feed warning
   if (oracleType === OracleType.Standard && market.oracle?.data) {
-    const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id);
+    const metadataOptions = oracleMetadataMap
+      ? { metadataMap: oracleMetadataMap, oracleAddress: market.oracleAddress }
+      : undefined;
+
+    const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id, metadataOptions);
 
     // Completely unknown feeds get the stronger warning
     if (vendorInfo.hasCompletelyUnknown) {
@@ -205,6 +219,7 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
         market.morphoBlue.chain.id,
         market.collateralAsset.symbol,
         market.loanAsset.symbol,
+        metadataOptions,
       );
 
       if (feedsPathResult.hasUnknownFeed) {

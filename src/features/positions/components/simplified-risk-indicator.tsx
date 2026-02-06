@@ -9,7 +9,7 @@ type SimplifiedRiskIndicatorProps = {
 };
 
 const computeRiskLevel = (market: Market): { level: RiskLevel; description: string } => {
-  const warnings = computeMarketWarnings(market, true);
+  const warnings = computeMarketWarnings(market, { considerWhitelist: true });
 
   const hasAlert = warnings.some((w) => w.level === 'alert');
   const hasWarning = warnings.some((w) => w.level === 'warning');
