@@ -4,7 +4,7 @@ import { getCompoundFeed, type CompoundFeedEntry, isCompoundFeed } from '@/const
 import { getGeneralFeed, isGeneralFeed } from '@/constants/oracle/general-feeds';
 import type { GeneralPriceFeed } from '@/constants/oracle/general-feeds/types';
 import { getRedstoneOracle, type RedstoneOracleEntry, isRedstoneOracle } from '@/constants/oracle/redstone-data';
-import type { EnrichedFeed, OracleFeedProvider } from '@/hooks/useOracleMetadata';
+import { getFeedFromOracleData, getOracleFromMetadata, type EnrichedFeed, type OracleFeedProvider, type OracleMetadataMap } from '@/hooks/useOracleMetadata';
 import { isSupportedChain } from './networks';
 import type { MorphoChainlinkOracleData, OracleFeed } from './types';
 
@@ -312,7 +312,16 @@ export function getOracleType(oracleData: MorphoChainlinkOracleData | null | und
   return OracleType.Custom;
 }
 
-export function parsePriceFeedVendors(oracleData: MorphoChainlinkOracleData | null | undefined, chainId: number): VendorInfo {
+type ParsePriceFeedVendorsOptions = {
+  metadataMap?: OracleMetadataMap;
+  oracleAddress?: string;
+};
+
+export function parsePriceFeedVendors(
+  oracleData: MorphoChainlinkOracleData | null | undefined,
+  chainId: number,
+  options?: ParsePriceFeedVendorsOptions,
+): VendorInfo {
   if (!oracleData) {
     return {
       coreVendors: [],
@@ -344,15 +353,28 @@ export function parsePriceFeedVendors(oracleData: MorphoChainlinkOracleData | nu
   let hasCompletelyUnknown = false;
   let hasTaggedUnknown = false;
 
+  // Try to get enriched metadata for this oracle
+  const oracleMetadata =
+    options?.metadataMap && options.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
+  const oracleMetadataData = oracleMetadata?.data;
+
   for (const feed of feeds) {
     if (feed?.address) {
-      const feedResult = detectFeedVendor(feed.address, chainId);
+      // Prefer metadata-based detection if available
+      let feedResult: FeedVendorResult;
+      if (oracleMetadataData) {
+        const enrichedFeed = getFeedFromOracleData(oracleMetadataData, feed.address);
+        feedResult = enrichedFeed ? detectFeedVendorFromMetadata(enrichedFeed) : detectFeedVendor(feed.address, chainId);
+      } else {
+        feedResult = detectFeedVendor(feed.address, chainId);
+      }
 
       if (feedResult.vendor === PriceFeedVendors.Unknown) {
-        // Check if this unknown feed actually has data (tagged by Morpho)
-        if (feedResult.data) {
-          // It's tagged by Morpho but not in our core vendors enum
-          taggedVendors.add(feedResult.data.vendor);
+        // Check if this unknown feed actually has data (tagged by Morpho/metadata)
+        const taggedVendor = feedResult.data?.vendor;
+        if (taggedVendor && taggedVendor !== 'Unknown') {
+          // It's tagged but not in our core vendors enum
+          taggedVendors.add(taggedVendor);
           hasTaggedUnknown = true;
         } else {
           // Completely unknown feed
