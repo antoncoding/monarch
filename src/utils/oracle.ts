@@ -1,3 +1,19 @@
+/**
+ * Oracle Utilities
+ *
+ * This module provides utilities for working with oracle data from two sources:
+ * 1. Morpho API - Basic oracle/feed info (OracleFeed, MorphoChainlinkOracleData)
+ * 2. Oracles Scanner - Extended metadata (EnrichedFeed via useOracleMetadata hook)
+ *
+ * Type hierarchy:
+ * - OracleFeed: Basic feed from Morpho API
+ * - EnrichedFeed: Extended feed from oracles scanner (includes provider, tier, etc.)
+ * - FeedData: Simplified type for UI components
+ *
+ * For full type system documentation, see:
+ * https://github.com/monarch-xyz/oracles/blob/master/docs/TYPES.md
+ */
+
 import { zeroAddress, type Address } from 'viem';
 import {
   getFeedFromOracleData,

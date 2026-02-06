@@ -2,7 +2,20 @@ import { useMemo } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 
-// Types matching the oracle scanner output
+/**
+ * Oracle Metadata Types
+ *
+ * These types mirror the output from the oracles scanner (monarch-xyz/oracles repo).
+ * For the complete type system documentation, see:
+ * https://github.com/monarch-xyz/oracles/blob/master/docs/TYPES.md
+ *
+ * Data flow:
+ * 1. Oracles scanner fetches from provider APIs (Chainlink, Redstone, etc.)
+ * 2. Scanner publishes enriched data to GitHub Gist
+ * 3. This hook fetches from /api/oracle-metadata/{chainId} (proxies Gist)
+ * 4. Components use getOracleFromMetadata() + getFeedFromOracleData() to access data
+ */
+
 export type OracleFeedProvider = 'Chainlink' | 'Redstone' | 'Compound' | 'Lido' | 'Oval' | 'Pyth' | 'Pendle' | 'Spectra' | null;
 
 export type EnrichedFeed = {
