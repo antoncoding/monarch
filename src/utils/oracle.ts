@@ -4,6 +4,7 @@ import { getCompoundFeed, type CompoundFeedEntry, isCompoundFeed } from '@/const
 import { getGeneralFeed, isGeneralFeed } from '@/constants/oracle/general-feeds';
 import type { GeneralPriceFeed } from '@/constants/oracle/general-feeds/types';
 import { getRedstoneOracle, type RedstoneOracleEntry, isRedstoneOracle } from '@/constants/oracle/redstone-data';
+import type { EnrichedFeed, OracleFeedProvider } from '@/hooks/useOracleMetadata';
 import { isSupportedChain } from './networks';
 import type { MorphoChainlinkOracleData, OracleFeed } from './types';
 
@@ -41,6 +42,66 @@ export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
   [PriceFeedVendors.Lido]: require('../imgs/oracles/lido.png') as string,
   [PriceFeedVendors.Unknown]: '',
 };
+
+/**
+ * Map provider string from oracle metadata to FE enum
+ */
+export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVendors {
+  if (!provider) return PriceFeedVendors.Unknown;
+
+  const mapping: Record<string, PriceFeedVendors> = {
+    Chainlink: PriceFeedVendors.Chainlink,
+    Redstone: PriceFeedVendors.Redstone,
+    Compound: PriceFeedVendors.Compound,
+    Lido: PriceFeedVendors.Lido,
+    Oval: PriceFeedVendors.Oval,
+    Pyth: PriceFeedVendors.PythNetwork,
+  };
+
+  return mapping[provider] ?? PriceFeedVendors.Unknown;
+}
+
+/**
+ * Detect feed vendor from enriched metadata (preferred)
+ * Use this when oracle metadata is available from useOracleMetadata hook
+ */
+export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefined): FeedVendorResult {
+  if (!feed) {
+    return {
+      vendor: PriceFeedVendors.Unknown,
+      data: null,
+      assetPair: { baseAsset: 'Unknown', quoteAsset: 'Unknown' },
+    } satisfies UnknownFeedResult;
+  }
+
+  const vendor = mapProviderToVendor(feed.provider);
+  const [baseAsset, quoteAsset] = feed.pair.length === 2 ? feed.pair : ['Unknown', 'Unknown'];
+
+  // Create a GeneralPriceFeed-like structure for compatibility
+  const feedData: GeneralPriceFeed = {
+    chainId: 0, // Will be filled by caller if needed
+    address: feed.address,
+    vendor: feed.provider ?? 'Unknown',
+    description: feed.description,
+    pair: feed.pair.length === 2 ? (feed.pair as [string, string]) : ['Unknown', 'Unknown'],
+    decimals: feed.decimals ?? 18,
+  };
+
+  if (vendor === PriceFeedVendors.Unknown) {
+    return {
+      vendor: PriceFeedVendors.Unknown,
+      data: feedData,
+      assetPair: { baseAsset, quoteAsset },
+    } satisfies UnknownFeedResult;
+  }
+
+  // Return as GeneralFeedResult for known vendors
+  return {
+    vendor,
+    data: feedData,
+    assetPair: { baseAsset, quoteAsset },
+  } as FeedVendorResult;
+}
 
 export function getOracleTypeDescription(oracleType: OracleType): string {
   if (oracleType === OracleType.Standard) return 'Standard Oracle';
