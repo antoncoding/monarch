@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
-import { detectFeedVendor, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import { getFeedFromOracleData, getOracleFromMetadata, type OracleMetadataMap } from '@/hooks/useOracleMetadata';
+import { detectFeedVendor, detectFeedVendorFromMetadata, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
 import { CompoundFeedTooltip } from './CompoundFeedTooltip';
@@ -15,14 +16,29 @@ import { UnknownFeedTooltip } from './UnknownFeedTooltip';
 type FeedEntryProps = {
   feed: OracleFeed | null;
   chainId: number;
+  oracleAddress?: string;
+  oracleMetadataMap?: OracleMetadataMap;
 };
 
-export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null {
-  // Use centralized feed detection
+export function FeedEntry({ feed, chainId, oracleAddress, oracleMetadataMap }: FeedEntryProps): JSX.Element | null {
+  // Use metadata-based detection when available, fallback to legacy
   const feedVendorResult = useMemo(() => {
     if (!feed?.address) return null;
+
+    // Try metadata-based detection first
+    if (oracleMetadataMap && oracleAddress) {
+      const oracleMetadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
+      if (oracleMetadata?.data) {
+        const enrichedFeed = getFeedFromOracleData(oracleMetadata.data, feed.address);
+        if (enrichedFeed) {
+          return detectFeedVendorFromMetadata(enrichedFeed);
+        }
+      }
+    }
+
+    // Fallback to legacy detection (will return Unknown without static data)
     return detectFeedVendor(feed.address as Address, chainId);
-  }, [feed?.address, chainId, feed?.pair]);
+  }, [feed?.address, chainId, oracleAddress, oracleMetadataMap]);
 
   if (!feed) return null;
   if (!feedVendorResult) return null;

@@ -56,6 +56,7 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, s
           quoteFeedOne={oracleData?.quoteFeedOne}
           quoteFeedTwo={oracleData?.quoteFeedTwo}
           chainId={chainId}
+          oracleAddress={oracleAddress}
         />
       ) : showCustom ? (
         <div className="space-y-1">

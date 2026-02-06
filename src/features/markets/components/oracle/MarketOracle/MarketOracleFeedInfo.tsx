@@ -1,3 +1,6 @@
+'use client';
+
+import { useOracleMetadata } from '@/hooks/useOracleMetadata';
 import type { OracleFeed } from '@/utils/types';
 import { FeedEntry } from './FeedEntry';
 
@@ -7,6 +10,7 @@ type MarketOracleFeedInfoProps = {
   quoteFeedOne: OracleFeed | null | undefined;
   quoteFeedTwo: OracleFeed | null | undefined;
   chainId: number;
+  oracleAddress?: string;
 };
 
 export function MarketOracleFeedInfo({
@@ -15,7 +19,9 @@ export function MarketOracleFeedInfo({
   quoteFeedOne,
   quoteFeedTwo,
   chainId,
+  oracleAddress,
 }: MarketOracleFeedInfoProps): JSX.Element {
+  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
   const hasAnyFeed = baseFeedOne || baseFeedTwo || quoteFeedOne || quoteFeedTwo;
 
   if (!hasAnyFeed) {
@@ -32,12 +38,16 @@ export function MarketOracleFeedInfo({
               <FeedEntry
                 feed={baseFeedOne}
                 chainId={chainId}
+                oracleAddress={oracleAddress}
+                oracleMetadataMap={oracleMetadataMap}
               />
             )}
             {baseFeedTwo && (
               <FeedEntry
                 feed={baseFeedTwo}
                 chainId={chainId}
+                oracleAddress={oracleAddress}
+                oracleMetadataMap={oracleMetadataMap}
               />
             )}
           </div>
@@ -52,12 +62,16 @@ export function MarketOracleFeedInfo({
               <FeedEntry
                 feed={quoteFeedOne}
                 chainId={chainId}
+                oracleAddress={oracleAddress}
+                oracleMetadataMap={oracleMetadataMap}
               />
             )}
             {quoteFeedTwo && (
               <FeedEntry
                 feed={quoteFeedTwo}
                 chainId={chainId}
+                oracleAddress={oracleAddress}
+                oracleMetadataMap={oracleMetadataMap}
               />
             )}
           </div>
