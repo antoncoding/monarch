@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import type { Address } from 'viem';
 import { Card } from '@/components/ui/card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useChartColors } from '@/constants/chartColors';
-import { getCollateralColorFromPalette } from '@/features/positions/utils/colors';
 import { formatReadable } from '@/utils/balance';
 import { chartTooltipCursor } from '@/features/market-detail/components/charts/chart-utils';
 import { usePositionHistoryChart, type PositionHistoryDataPoint, type MarketInfo } from '@/hooks/usePositionHistoryChart';
@@ -78,11 +77,14 @@ function ChartContent({
   // Track which data point is being hovered (for synced pie chart)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Get consistent color for a market based on its unique key
-  const getMarketColor = useCallback(
-    (marketKey: string): string => getCollateralColorFromPalette(marketKey.toLowerCase(), chartColors.pie),
-    [chartColors.pie],
-  );
+  // Assign colors by market order to guarantee distinct colors within this chart
+  const marketColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const [i, market] of markets.entries()) {
+      map[market.uniqueKey] = chartColors.pie[i % chartColors.pie.length];
+    }
+    return map;
+  }, [markets, chartColors.pie]);
 
   // Detect duplicate collateral symbols and create display names
   const marketDisplayNames = useMemo(() => {
@@ -129,12 +131,12 @@ function ChartContent({
           key: market.uniqueKey,
           name: marketDisplayNames[market.uniqueKey] || market.collateralSymbol,
           value,
-          color: getMarketColor(market.uniqueKey),
+          color: marketColorMap[market.uniqueKey] ?? chartColors.pie[0],
           percentage: total > 0 && value > 0 ? (value / total) * 100 : 0,
         };
       })
       .sort((a, b) => b.value - a.value);
-  }, [currentDataPoint, markets, getMarketColor, marketDisplayNames]);
+  }, [currentDataPoint, markets, marketColorMap, chartColors.pie, marketDisplayNames]);
 
   // Format date for display
   const formatDate = (timestamp: number) => {
@@ -261,7 +263,7 @@ function ChartContent({
                 />
                 {markets.map((market) => {
                   const key = market.uniqueKey;
-                  const color = getMarketColor(key);
+                  const color = marketColorMap[key] ?? chartColors.pie[0];
                   const displayName = marketDisplayNames[key] || market.collateralSymbol;
                   return (
                     <Area

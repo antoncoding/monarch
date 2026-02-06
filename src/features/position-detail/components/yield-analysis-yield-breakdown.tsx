@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { useChartColors } from '@/constants/chartColors';
-import { getCollateralColorFromPalette, OTHER_COLOR } from '@/features/positions/utils/colors';
+import { getColorByIndex, OTHER_COLOR } from '@/features/positions/utils/colors';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 
@@ -67,11 +67,11 @@ export function YieldAnalysisYieldBreakdown({ markets, periodLabel }: YieldAnaly
           key: position.market.uniqueKey,
           label: marketDisplayNames[position.market.uniqueKey] ?? position.market.collateralAsset?.symbol ?? 'Unknown',
           percentage: toPercent(earned),
-          color: getCollateralColorFromPalette(position.market.uniqueKey.toLowerCase(), chartColors.pie),
           earnedAmount: `${earnedAmount} ${position.market.loanAsset.symbol ?? ''}`.trim(),
         };
       })
-      .sort((a, b) => b.percentage - a.percentage);
+      .sort((a, b) => b.percentage - a.percentage)
+      .map((entry, i) => ({ ...entry, color: getColorByIndex(i, chartColors.pie) }));
 
     if (formattedEntries.length <= MAX_PIE_ITEMS) return formattedEntries;
 
