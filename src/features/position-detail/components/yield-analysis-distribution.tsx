@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { useChartColors } from '@/constants/chartColors';
-import { getCollateralColorFromPalette, OTHER_COLOR } from '@/features/positions/utils/colors';
+import { getColorByIndex, OTHER_COLOR } from '@/features/positions/utils/colors';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 
@@ -67,7 +67,7 @@ export function YieldAnalysisDistribution({ markets, periodLabel }: YieldAnalysi
 
     const toPercent = (value: bigint) => Number((value * 10_000n) / totalWeighted) / 100;
 
-    const entries: PieEntry[] = weighted.map(({ position, avgCapital, weightedCapital }) => {
+    const entries: PieEntry[] = weighted.map(({ position, avgCapital, weightedCapital }, i) => {
       const decimals = position.market.loanAsset.decimals;
       const avgBalance = formatReadable(Number(formatBalance(avgCapital, decimals)));
       return {
@@ -75,7 +75,7 @@ export function YieldAnalysisDistribution({ markets, periodLabel }: YieldAnalysi
         label: marketDisplayNames[position.market.uniqueKey] ?? position.market.collateralAsset?.symbol ?? 'Unknown',
         value: toPercent(weightedCapital),
         percentage: toPercent(weightedCapital),
-        color: getCollateralColorFromPalette(position.market.uniqueKey.toLowerCase(), chartColors.pie),
+        color: getColorByIndex(i, chartColors.pie),
         avgBalance: `${avgBalance} ${position.market.loanAsset.symbol ?? ''}`.trim(),
       };
     });
