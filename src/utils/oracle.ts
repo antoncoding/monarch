@@ -4,7 +4,7 @@ import {
   getOracleFromMetadata,
   type EnrichedFeed,
   type OracleFeedProvider,
-  type OracleMetadataMap,
+  type OracleMetadataRecord,
   type OracleOutputData,
 } from '@/hooks/useOracleMetadata';
 import { isSupportedChain } from './networks';
@@ -170,7 +170,7 @@ export function getOracleType(oracleData: MorphoChainlinkOracleData | null | und
 }
 
 type ParsePriceFeedVendorsOptions = {
-  metadataMap?: OracleMetadataMap;
+  metadataMap?: OracleMetadataRecord;
   oracleAddress?: string;
 };
 

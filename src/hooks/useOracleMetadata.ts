@@ -42,7 +42,9 @@ export type OracleMetadataFile = {
   oracles: OracleOutput[];
 };
 
-// Create a lookup map for fast access by oracle address
+// Store as Record for serializability, convert to Map when needed
+export type OracleMetadataRecord = Record<string, OracleOutput>;
+// Keep Map type for backward compatibility in function signatures
 export type OracleMetadataMap = Map<string, OracleOutput>;
 
 async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile | null> {
@@ -68,42 +70,51 @@ async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile 
 
 /**
  * Hook to fetch oracle metadata from the centralized Gist
- * Returns a map for O(1) lookup by oracle address
+ * Returns a Record (serializable) and a helper to convert to Map
  */
 export function useOracleMetadata(chainId: SupportedNetworks | number | undefined) {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['oracle-metadata', chainId],
-    queryFn: async (): Promise<OracleMetadataMap> => {
-      if (!chainId) return new Map();
+    queryFn: async (): Promise<OracleMetadataRecord> => {
+      if (!chainId) return {};
 
       const data = await fetchOracleMetadata(chainId);
-      if (!data?.oracles) return new Map();
+      if (!data?.oracles) return {};
 
-      // Create lookup map by lowercase address
-      const map = new Map<string, OracleOutput>();
+      // Store as plain object (serializable)
+      const record: OracleMetadataRecord = {};
       for (const oracle of data.oracles) {
-        map.set(oracle.address.toLowerCase(), oracle);
+        record[oracle.address.toLowerCase()] = oracle;
       }
 
-      return map;
+      return record;
     },
     enabled: !!chainId,
-    staleTime: 1000 * 60 * 30, // 30 minutes - data is updated every 6 hours
+    staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
   });
+
+  return query;
 }
 
 /**
- * Get oracle output by address from the metadata map
+ * Get oracle output by address from the metadata record
  */
 export function getOracleFromMetadata(
-  metadataMap: OracleMetadataMap | undefined,
+  metadataRecord: OracleMetadataRecord | OracleMetadataMap | undefined,
   oracleAddress: string | undefined,
 ): OracleOutput | undefined {
-  if (!metadataMap || !oracleAddress) return undefined;
-  // Defensive check - ensure it's actually a Map
-  if (!(metadataMap instanceof Map)) return undefined;
-  return metadataMap.get(oracleAddress.toLowerCase());
+  if (!metadataRecord || !oracleAddress) return undefined;
+
+  const key = oracleAddress.toLowerCase();
+
+  // Handle both Map and Record
+  if (metadataRecord instanceof Map) {
+    return metadataRecord.get(key);
+  }
+
+  // It's a plain object
+  return metadataRecord[key];
 }
 
 /**
@@ -126,8 +137,7 @@ export function getFeedFromOracleData(oracleData: OracleOutputData | undefined, 
 
 /**
  * Hook to fetch oracle metadata for ALL supported networks
- * Returns a merged map with all oracles from all chains
- * Key format: lowercase oracle address (oracles are unique per chain but address is unique globally)
+ * Returns a merged record with all oracles from all chains
  */
 export function useAllOracleMetadata() {
   const queries = useQueries({
@@ -144,21 +154,21 @@ export function useAllOracleMetadata() {
   const isLoading = queries.some((q) => q.isLoading);
   const isError = queries.some((q) => q.isError);
 
-  // Merge all results into a single map (memoized to prevent recreation)
-  const mergedMap = useMemo(() => {
-    const map = new Map<string, OracleOutput>();
+  // Merge all results into a single record (memoized)
+  const mergedRecord = useMemo(() => {
+    const record: OracleMetadataRecord = {};
     for (const query of queries) {
       if (query.data?.oracles) {
         for (const oracle of query.data.oracles) {
-          map.set(oracle.address.toLowerCase(), oracle);
+          record[oracle.address.toLowerCase()] = oracle;
         }
       }
     }
-    return map;
+    return record;
   }, [queries]);
 
   return {
-    data: mergedMap,
+    data: mergedRecord,
     isLoading,
     isError,
   };

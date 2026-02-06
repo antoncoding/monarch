@@ -6,7 +6,7 @@
  */
 
 import { LOCKED_MARKET_APY_THRESHOLD } from '@/constants/markets';
-import type { OracleMetadataMap } from '@/hooks/useOracleMetadata';
+import type { OracleMetadataRecord } from '@/hooks/useOracleMetadata';
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import { parsePriceFeedVendors, type PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
@@ -59,7 +59,7 @@ export type MarketFilterOptions = {
   staredIds?: string[];
 
   // Oracle metadata for vendor detection
-  oracleMetadataMap?: OracleMetadataMap;
+  oracleMetadataMap?: OracleMetadataRecord;
 };
 
 // ============================================================================
@@ -96,7 +96,7 @@ export const createUnknownTokenFilter = (
 /**
  * Filter by unknown oracles
  */
-export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMetadataMap?: OracleMetadataMap): MarketFilter => {
+export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMetadataMap?: OracleMetadataRecord): MarketFilter => {
   if (showUnknownOracle) {
     return () => true;
   }
@@ -158,7 +158,7 @@ export const createLoanAssetFilter = (selectedLoanAssets: string[]): MarketFilte
 /**
  * Filter by selected oracles
  */
-export const createOracleFilter = (selectedOracles: PriceFeedVendors[], oracleMetadataMap?: OracleMetadataMap): MarketFilter => {
+export const createOracleFilter = (selectedOracles: PriceFeedVendors[], oracleMetadataMap?: OracleMetadataRecord): MarketFilter => {
   if (selectedOracles.length === 0) {
     return () => true;
   }
@@ -226,7 +226,7 @@ export const createMinLiquidityFilter = (config: UsdFilterConfig): MarketFilter 
 /**
  * Filter by search query (collateral, loan, market ID, oracle vendors)
  */
-export const createSearchFilter = (searchQuery: string, oracleMetadataMap?: OracleMetadataMap): MarketFilter => {
+export const createSearchFilter = (searchQuery: string, oracleMetadataMap?: OracleMetadataRecord): MarketFilter => {
   if (!searchQuery || searchQuery.trim() === '') {
     return () => true;
   }

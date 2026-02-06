@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
-import { getFeedFromOracleData, getOracleFromMetadata, type OracleMetadataMap } from '@/hooks/useOracleMetadata';
+import { getFeedFromOracleData, getOracleFromMetadata, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
 import { detectFeedVendor, detectFeedVendorFromMetadata, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
@@ -17,7 +17,7 @@ type FeedEntryProps = {
   feed: OracleFeed | null;
   chainId: number;
   oracleAddress?: string;
-  oracleMetadataMap?: OracleMetadataMap;
+  oracleMetadataMap?: OracleMetadataRecord;
 };
 
 export function FeedEntry({ feed, chainId, oracleAddress, oracleMetadataMap }: FeedEntryProps): JSX.Element | null {
