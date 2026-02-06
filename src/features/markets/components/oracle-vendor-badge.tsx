@@ -38,7 +38,7 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
 
 function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
-  
+
   // check whether it's standard oracle or not.
   const isCustom = getOracleType(oracleData) === OracleType.Custom;
 

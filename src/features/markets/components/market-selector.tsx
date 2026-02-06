@@ -47,6 +47,7 @@ export function MarketSelector({ market, onAdd, disabled = false }: MarketSelect
           <div className="flex items-center gap-2 text-xs opacity-70">
             <OracleVendorBadge
               oracleData={market.oracle?.data}
+              oracleAddress={market.oracleAddress}
               showText={false}
               chainId={market.morphoBlue.chain.id}
             />

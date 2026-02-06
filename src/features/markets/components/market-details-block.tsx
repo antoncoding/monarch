@@ -139,6 +139,7 @@ export function MarketDetailsBlock({
                 <span>·</span>
                 <OracleVendorBadge
                   oracleData={market.oracle?.data}
+                  oracleAddress={market.oracleAddress}
                   showText={false}
                   chainId={market.morphoBlue.chain.id}
                 />
@@ -180,6 +181,7 @@ export function MarketDetailsBlock({
                   <div className="flex items-center gap-2">
                     <OracleVendorBadge
                       oracleData={market.oracle?.data}
+                      oracleAddress={market.oracleAddress}
                       showText
                       useTooltip={false}
                       chainId={market.morphoBlue.chain.id}
