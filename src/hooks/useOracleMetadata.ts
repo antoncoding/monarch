@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { SupportedNetworks } from '@/utils/networks';
 
-// Gist base URL for oracle metadata
-const GIST_RAW_BASE = 'https://gist.githubusercontent.com/starksama/087ce4682243a059d77b1361fcccf221/raw';
-
 // Types matching the oracle scanner output
 export type OracleFeedProvider = 'Chainlink' | 'Redstone' | 'Compound' | 'Lido' | 'Oval' | 'Pyth' | 'Pendle' | 'Spectra' | null;
 
@@ -49,11 +46,14 @@ export type OracleMetadataMap = Map<string, OracleOutput>;
 
 async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile | null> {
   try {
-    const response = await fetch(`${GIST_RAW_BASE}/oracles.${chainId}.json`, {
-      cache: 'no-store', // Always get fresh data
-    });
+    // Use internal API route to fetch oracle metadata
+    const response = await fetch(`/api/oracle-metadata/${chainId}`);
 
     if (!response.ok) {
+      if (response.status === 404) {
+        // No data for this chain - not an error
+        return null;
+      }
       console.warn(`[oracle-metadata] Failed to fetch for chain ${chainId}: ${response.status}`);
       return null;
     }
