@@ -112,13 +112,40 @@ export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefin
   }
 
   const vendor = mapProviderToVendor(feed.provider);
-  const [baseAsset, quoteAsset] = feed.pair.length === 2 ? feed.pair : ['Unknown', 'Unknown'];
+
+  // Try to extract pair from feed.pair, or fallback to parsing description
+  let baseAsset = 'Unknown';
+  let quoteAsset = 'Unknown';
+
+  if (feed.pair.length === 2) {
+    [baseAsset, quoteAsset] = feed.pair;
+  } else if (feed.description) {
+    // Fallback: try to parse description for pair info
+    // Handle formats like "ETH / USD", "sYUSD_FUNDAMENTAL", "WETH_ETH"
+    const slashMatch = feed.description.match(/^(.+?)\s*\/\s*(.+)$/);
+    if (slashMatch) {
+      baseAsset = slashMatch[1].trim();
+      quoteAsset = slashMatch[2].trim();
+    } else {
+      const fundamentalMatch = feed.description.match(/^(.+?)_FUNDAMENTAL$/i);
+      if (fundamentalMatch) {
+        baseAsset = fundamentalMatch[1];
+        quoteAsset = 'USD';
+      } else {
+        const underscoreMatch = feed.description.match(/^([A-Za-z0-9]+)_([A-Za-z0-9]+)$/);
+        if (underscoreMatch) {
+          baseAsset = underscoreMatch[1];
+          quoteAsset = underscoreMatch[2];
+        }
+      }
+    }
+  }
 
   const feedData: FeedData = {
     address: feed.address,
     vendor: feed.provider ?? 'Unknown',
     description: feed.description,
-    pair: feed.pair.length === 2 ? (feed.pair as [string, string]) : ['Unknown', 'Unknown'],
+    pair: [baseAsset, quoteAsset] as [string, string],
     decimals: feed.decimals ?? 18,
     tier: feed.tier,
   };
