@@ -85,7 +85,11 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
 
   const totalPages = Math.ceil(markets.length / entriesPerPage);
 
-  const containerClassName = ['flex flex-col gap-2 pb-4', loading || isEmpty || markets.length === 0 ? 'container items-center' : className]
+  const containerClassName = [
+    'flex flex-col gap-2 pb-4',
+    className ?? 'w-full',
+    loading || isEmpty || markets.length === 0 ? 'items-center' : '',
+  ]
     .filter((value): value is string => Boolean(value))
     .join(' ');
   const tableClassNames = ['responsive', tableClassName].filter((value): value is string => Boolean(value)).join(' ');
