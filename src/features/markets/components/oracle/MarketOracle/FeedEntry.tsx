@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
-import { detectFeedVendor, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import { getFeedFromOracleData, getOracleFromMetadata, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
+import { detectFeedVendor, detectFeedVendorFromMetadata, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
 import { CompoundFeedTooltip } from './CompoundFeedTooltip';
@@ -15,17 +16,31 @@ import { UnknownFeedTooltip } from './UnknownFeedTooltip';
 type FeedEntryProps = {
   feed: OracleFeed | null;
   chainId: number;
+  oracleAddress?: string;
+  oracleMetadataMap?: OracleMetadataRecord;
 };
 
-export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null {
-  // Use centralized feed detection - moved before early return to avoid conditional hook calls
+export function FeedEntry({ feed, chainId, oracleAddress, oracleMetadataMap }: FeedEntryProps): JSX.Element | null {
+  // Use metadata-based detection when available, fallback to legacy
   const feedVendorResult = useMemo(() => {
     if (!feed?.address) return null;
+
+    // Try metadata-based detection first
+    if (oracleMetadataMap && oracleAddress) {
+      const oracleMetadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
+      if (oracleMetadata?.data) {
+        const enrichedFeed = getFeedFromOracleData(oracleMetadata.data, feed.address);
+        if (enrichedFeed) {
+          return detectFeedVendorFromMetadata(enrichedFeed);
+        }
+      }
+    }
+
+    // Fallback to legacy detection (will return Unknown without static data)
     return detectFeedVendor(feed.address as Address, chainId);
-  }, [feed?.address, chainId, feed?.pair]);
+  }, [feed?.address, chainId, oracleAddress, oracleMetadataMap]);
 
   if (!feed) return null;
-
   if (!feedVendorResult) return null;
 
   const { vendor, data, assetPair } = feedVendorResult;
@@ -41,17 +56,14 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
   const isChainlink = vendor === PriceFeedVendors.Chainlink;
   const isCompound = vendor === PriceFeedVendors.Compound;
   const isRedstone = vendor === PriceFeedVendors.Redstone;
-  // Type-safe SVR check using discriminated union
-  const isSVR = vendor === PriceFeedVendors.Chainlink && data?.isSVR;
 
   const getTooltipContent = () => {
-    // Use discriminated union for type-safe tooltip selection
     switch (vendor) {
       case PriceFeedVendors.Chainlink:
         return (
           <ChainlinkFeedTooltip
             feed={feed}
-            chainlinkData={data}
+            feedData={data}
             chainId={chainId}
           />
         );
@@ -60,7 +72,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         return (
           <CompoundFeedTooltip
             feed={feed}
-            compoundData={data}
+            feedData={data}
             chainId={chainId}
           />
         );
@@ -69,7 +81,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         return (
           <RedstoneFeedTooltip
             feed={feed}
-            redstoneData={data}
+            feedData={data}
             chainId={chainId}
           />
         );
@@ -86,7 +98,6 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         );
 
       case PriceFeedVendors.Unknown:
-        // For unknown feeds, check if we have general feed data or fallback to unknown
         if (data) {
           return (
             <GeneralFeedTooltip
@@ -132,12 +143,6 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         )}
 
         <div className="flex flex-shrink-0 items-center gap-1">
-          {isSVR && (
-            <span className="whitespace-nowrap rounded bg-orange-100 px-1 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-              SVR
-            </span>
-          )}
-
           {(isChainlink || isCompound || isRedstone) && vendorIcon ? (
             <Image
               src={vendorIcon}

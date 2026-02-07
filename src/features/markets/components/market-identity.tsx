@@ -179,6 +179,7 @@ export function MarketIdentity({
           {showOracle && (
             <OracleVendorBadge
               oracleData={market.oracle?.data}
+              oracleAddress={market.oracleAddress}
               chainId={chainId}
               useTooltip
               showText={false}
@@ -218,6 +219,7 @@ export function MarketIdentity({
         {showOracle && (
           <OracleVendorBadge
             oracleData={market.oracle?.data}
+            oracleAddress={market.oracleAddress}
             chainId={chainId}
             useTooltip
             showText={false}
@@ -259,6 +261,7 @@ export function MarketIdentity({
           {showOracle && (
             <OracleVendorBadge
               oracleData={market.oracle?.data}
+              oracleAddress={market.oracleAddress}
               chainId={chainId}
               useTooltip
               showText={false}
@@ -292,6 +295,7 @@ export function MarketIdentity({
           {showOracle && (
             <OracleVendorBadge
               oracleData={market.oracle?.data}
+              oracleAddress={market.oracleAddress}
               chainId={chainId}
               useTooltip
               showText={false}
@@ -328,6 +332,7 @@ export function MarketIdentity({
         {showOracle && (
           <OracleVendorBadge
             oracleData={market.oracle?.data}
+            oracleAddress={market.oracleAddress}
             chainId={chainId}
             useTooltip
             showText={false}
@@ -358,6 +363,7 @@ export function MarketIdentity({
         {showOracle && (
           <OracleVendorBadge
             oracleData={market.oracle?.data}
+            oracleAddress={market.oracleAddress}
             chainId={chainId}
             useTooltip
             showText={false}

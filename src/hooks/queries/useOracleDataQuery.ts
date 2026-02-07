@@ -1,25 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
-import oracleCacheData from '@/constants/oracle/oracle-cache.json';
 import { oraclesQuery } from '@/graphql/morpho-api-queries';
 import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 import type { MorphoChainlinkOracleData, OraclesQueryResponse } from '@/utils/types';
 import { URLS } from '@/utils/urls';
-
-type CachedOracleEntry = {
-  address: string;
-  chainId: number;
-  data: MorphoChainlinkOracleData;
-};
-
-const oracleCache: CachedOracleEntry[] = oracleCacheData as CachedOracleEntry[];
-
-// Load static cache at module level
-const staticCacheMap = new Map<string, MorphoChainlinkOracleData>();
-for (const entry of oracleCache) {
-  const key = `${entry.address.toLowerCase()}-${entry.chainId}`;
-  staticCacheMap.set(key, entry.data);
-}
 
 const createKey = (address: string, chainId: number): string => {
   return `${address.toLowerCase()}-${chainId}`;
@@ -83,22 +67,16 @@ export const useOracleDataQuery = () => {
     refetchOnWindowFocus: true,
   });
 
-  const mergedMap = useMemo(() => {
-    const merged = new Map(staticCacheMap);
-    if (query.data) {
-      for (const [key, data] of query.data) {
-        merged.set(key, data);
-      }
-    }
-    return merged;
+  const dataMap = useMemo(() => {
+    return query.data ?? new Map<string, MorphoChainlinkOracleData>();
   }, [query.data]);
 
   const getOracleData = useCallback(
     (oracleAddress: string, chainId: number): MorphoChainlinkOracleData | null => {
       const key = createKey(oracleAddress, chainId);
-      return mergedMap.get(key) ?? null;
+      return dataMap.get(key) ?? null;
     },
-    [mergedMap],
+    [dataMap],
   );
 
   return {

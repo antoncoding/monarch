@@ -1,13 +1,17 @@
+'use client';
+
 import React from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoWarningOutline, IoHelpCircleOutline } from 'react-icons/io5';
 import { OracleType, OracleVendorIcons, type PriceFeedVendors, getOracleType, parsePriceFeedVendors } from '@/utils/oracle';
+import { useOracleMetadata } from '@/hooks/useOracleMetadata';
 import type { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleVendorBadgeProps = {
   oracleData: MorphoChainlinkOracleData | null | undefined;
   chainId: number;
+  oracleAddress?: string;
   useTooltip?: boolean;
   showText?: boolean;
 };
@@ -32,11 +36,16 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
  * IoHelpCircleOutline: For unknown feeds
  */
 
-function OracleVendorBadge({ oracleData, chainId, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
+function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
+  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+
   // check whether it's standard oracle or not.
   const isCustom = getOracleType(oracleData) === OracleType.Custom;
 
-  const vendorInfo = parsePriceFeedVendors(oracleData, chainId);
+  const vendorInfo = parsePriceFeedVendors(oracleData, chainId, {
+    metadataMap: oracleMetadataMap,
+    oracleAddress,
+  });
   const { coreVendors, taggedVendors, hasCompletelyUnknown, hasTaggedUnknown, vendors, hasUnknown } = vendorInfo;
 
   const content = (
