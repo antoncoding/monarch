@@ -151,7 +151,7 @@ type MarketWarningsOptions = {
 export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?: boolean | MarketWarningsOptions) => {
   // Handle legacy boolean parameter for backward compatibility
   const options: MarketWarningsOptions =
-    typeof optionsOrWhitelist === 'boolean' ? { considerWhitelist: optionsOrWhitelist } : optionsOrWhitelist ?? {};
+    typeof optionsOrWhitelist === 'boolean' ? { considerWhitelist: optionsOrWhitelist } : (optionsOrWhitelist ?? {});
   const { considerWhitelist = false, oracleMetadataMap } = options;
   const result = [];
 
@@ -196,9 +196,7 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
 
   // if any of the feeds are not null but also not recognized, return appropriate feed warning
   if (oracleType === OracleType.Standard && market.oracle?.data) {
-    const metadataOptions = oracleMetadataMap
-      ? { metadataMap: oracleMetadataMap, oracleAddress: market.oracleAddress }
-      : undefined;
+    const metadataOptions = oracleMetadataMap ? { metadataMap: oracleMetadataMap, oracleAddress: market.oracleAddress } : undefined;
 
     const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id, metadataOptions);
 

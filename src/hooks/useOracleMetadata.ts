@@ -25,6 +25,10 @@ export type EnrichedFeed = {
   provider: OracleFeedProvider;
   decimals?: number;
   tier?: string; // Chainlink feed category: "verified", "high", "medium", "low", "custom", etc.
+  heartbeat?: number;
+  deviationThreshold?: number;
+  ens?: string; // Chainlink ENS name for feed URL (e.g. "eth-usd")
+  feedType?: string; // Redstone feed type: "market" or "fundamental"
 };
 
 export type OracleOutputData = {

@@ -7,7 +7,7 @@
  *
  * Type hierarchy:
  * - OracleFeed: Basic feed from Morpho API
- * - EnrichedFeed: Extended feed from oracles scanner (includes provider, tier, etc.)
+ * - EnrichedFeed: Extended feed from oracles scanner (includes provider, tier, heartbeat, deviationThreshold, ens, feedType)
  * - FeedData: Simplified type for UI components
  *
  * For full type system documentation, see:
@@ -23,7 +23,7 @@ import {
   type OracleMetadataRecord,
   type OracleOutputData,
 } from '@/hooks/useOracleMetadata';
-import { isSupportedChain } from './networks';
+import { SupportedNetworks, isSupportedChain } from './networks';
 import type { MorphoChainlinkOracleData, OracleFeed } from './types';
 
 type VendorInfo = {
@@ -79,6 +79,25 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
   return mapping[provider] ?? PriceFeedVendors.Unknown;
 }
 
+/**
+ * Generate Chainlink feed URL from ENS name
+ */
+export function getChainlinkFeedUrl(chainId: number, ens: string): string {
+  const networkPaths: Partial<Record<SupportedNetworks, string>> = {
+    [SupportedNetworks.Mainnet]: 'ethereum/mainnet',
+    [SupportedNetworks.Base]: 'base/base',
+    [SupportedNetworks.Polygon]: 'polygon/mainnet',
+    [SupportedNetworks.Arbitrum]: 'arbitrum/mainnet',
+    [SupportedNetworks.HyperEVM]: 'hyperliquid/mainnet',
+    [SupportedNetworks.Monad]: 'monad/mainnet',
+  };
+
+  const path = networkPaths[chainId as SupportedNetworks];
+  if (!path) return '';
+
+  return `https://data.chain.link/feeds/${path}/${ens}`;
+}
+
 // Simplified feed data structure (replacing old vendor-specific types)
 export type FeedData = {
   address: string;
@@ -87,6 +106,10 @@ export type FeedData = {
   pair: [string, string];
   decimals: number;
   tier?: string; // Chainlink feed category: "verified", "high", "medium", "low", "custom", etc.
+  heartbeat?: number;
+  deviationThreshold?: number;
+  ens?: string; // Chainlink ENS name for feed URL (e.g. "eth-usd")
+  feedType?: string; // Redstone feed type: "market" or "fundamental"
 };
 
 export type FeedVendorResult = {
@@ -148,6 +171,10 @@ export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefin
     pair: [baseAsset, quoteAsset] as [string, string],
     decimals: feed.decimals ?? 18,
     tier: feed.tier,
+    heartbeat: feed.heartbeat,
+    deviationThreshold: feed.deviationThreshold,
+    ens: feed.ens,
+    feedType: feed.feedType,
   };
 
   return {

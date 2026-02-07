@@ -1,10 +1,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
+import { useGlobalModal } from '@/contexts/GlobalModalContext';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import { PriceFeedVendors, OracleVendorIcons, type FeedData } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
+import { RedstoneTypesModal } from './RedstoneTypesModal';
 
 type RedstoneFeedTooltipProps = {
   feed: OracleFeed;
@@ -13,10 +16,13 @@ type RedstoneFeedTooltipProps = {
 };
 
 export function RedstoneFeedTooltip({ feed, feedData, chainId }: RedstoneFeedTooltipProps) {
+  const { toggleModal, closeModal } = useGlobalModal();
   const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
 
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Redstone];
+
+  const hasDetails = feedData?.feedType != null || feedData?.heartbeat != null || feedData?.deviationThreshold != null;
 
   return (
     <div className="flex max-w-xs flex-col gap-3">
@@ -32,7 +38,7 @@ export function RedstoneFeedTooltip({ feed, feedData, chainId }: RedstoneFeedToo
             />
           </div>
         )}
-        <div className="font-zen font-bold">Redstone Feed</div>
+        <div className="font-zen font-bold">Redstone Feed Details</div>
       </div>
 
       {/* Feed pair name */}
@@ -42,8 +48,48 @@ export function RedstoneFeedTooltip({ feed, feedData, chainId }: RedstoneFeedToo
         </div>
       </div>
 
-      {/* Feed description if available */}
-      {feedData?.description && <div className="text-sm text-gray-600 dark:text-gray-400">{feedData.description}</div>}
+      {/* Redstone Specific Data */}
+      {hasDetails && (
+        <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
+          {feedData?.feedType != null && (
+            <div className="flex items-center justify-between font-zen text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Type:</span>
+              <div className="flex items-center gap-1">
+                <span className="font-medium">{feedData.feedType === 'fundamental' ? 'Fundamental' : 'Standard'}</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleModal(
+                      <RedstoneTypesModal
+                        isOpen
+                        onClose={() => closeModal()}
+                      />,
+                    );
+                  }}
+                  className="cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
+                  type="button"
+                  aria-label="Learn about feed types"
+                >
+                  <IoHelpCircleOutline size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+          {feedData?.heartbeat != null && (
+            <div className="flex justify-between font-zen text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Heartbeat:</span>
+              <span className="font-medium">{feedData.heartbeat}s</span>
+            </div>
+          )}
+          {feedData?.deviationThreshold != null && (
+            <div className="flex justify-between font-zen text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Deviation Threshold:</span>
+              <span className="font-medium">{feedData.deviationThreshold}%</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* External Links */}
       <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
@@ -62,7 +108,7 @@ export function RedstoneFeedTooltip({ feed, feedData, chainId }: RedstoneFeedToo
               height={12}
               className="rounded-sm"
             />
-            Explorer
+            Etherscan
           </Link>
         </div>
       </div>
