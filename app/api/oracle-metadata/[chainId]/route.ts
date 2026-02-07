@@ -17,7 +17,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ chai
   try {
     const url = `${ORACLE_GIST_BASE_URL}/oracles.${chainId}.json`;
     const response = await fetch(url, {
-      next: { revalidate: 1800 }, // Cache for 30 minutes
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -29,11 +29,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ chai
 
     const data = await response.json();
 
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
-      },
-    });
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Failed to fetch oracle metadata:', error);
     return NextResponse.json({ error: 'Failed to fetch oracle metadata' }, { status: 500 });
