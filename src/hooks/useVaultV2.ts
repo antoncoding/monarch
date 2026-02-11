@@ -8,6 +8,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
+import { findAgent } from '@/utils/monarch-agent';
 import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 
 export type PerformanceFeeConfig = {
@@ -339,6 +340,14 @@ export function useVaultV2({
         });
 
         txs.push(submitSetAllocatorTx, setAllocatorTx);
+
+        // Step 6.4 (Optional). Apply performance fee if allocator is a known agent with a fee.
+        const agent = findAgent(allocator);
+        if (agent?.performanceFee !== undefined && agent.performanceFeeRecipient) {
+          txs.push(
+            ...buildPerformanceFeeCalls({ fee: agent.performanceFee, recipient: agent.performanceFeeRecipient }),
+          );
+        }
       }
 
       // Step 7. Execute multicall with all steps.
