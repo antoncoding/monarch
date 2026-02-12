@@ -245,10 +245,11 @@ export function getOracleType(
   chainId?: number,
   metadataMap?: OracleMetadataRecord,
 ) {
-  // Check scanner metadata for meta oracle type
+  // Check scanner metadata for oracle type (meta or standard with vault-only)
   if (metadataMap && oracleAddress) {
     const metadata = getOracleFromMetadata(metadataMap, oracleAddress);
     if (metadata?.type === 'meta') return OracleType.Meta;
+    if (metadata?.type === 'standard') return OracleType.Standard;
   }
 
   // Morpho API only contains oracleData if it follows the standard MorphoOracle structure with feeds
