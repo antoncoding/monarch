@@ -289,6 +289,17 @@ const supportedTokens = [
     ],
   },
   {
+    symbol: 'PT-reUSD-25JUN2026',
+    img: require('../imgs/tokens/pt-reusd.svg') as string,
+    decimals: 6,
+    networks: [
+      {
+        chain: mainnet,
+        address: '0x3EAA0F0f0A5d3D595ae4e4b0D27f439d01c3E7b2',
+      },
+    ],
+  },
+  {
     symbol: 'wstETH',
     img: require('../imgs/tokens/wsteth.webp') as string,
     decimals: 18,
@@ -566,6 +577,18 @@ const supportedTokens = [
       {
         chain: arbitrum,
         address: '0x41CA7586cC1311807B4605fBB748a3B8862b42b5',
+      },
+    ],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'pmUSD',
+    img: require('../imgs/tokens/pmusd.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        chain: mainnet,
+        address: '0xc0c17dd08263c16f6b64e772fb9b723bf1344ddf',
       },
     ],
     peg: TokenPeg.USD,

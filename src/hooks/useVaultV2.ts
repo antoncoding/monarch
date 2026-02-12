@@ -344,9 +344,7 @@ export function useVaultV2({
         // Step 6.4 (Optional). Apply performance fee if allocator is a known agent with a fee.
         const agent = findAgent(allocator);
         if (agent?.performanceFee !== undefined && agent.performanceFeeRecipient) {
-          txs.push(
-            ...buildPerformanceFeeCalls({ fee: agent.performanceFee, recipient: agent.performanceFeeRecipient }),
-          );
+          txs.push(...buildPerformanceFeeCalls({ fee: agent.performanceFee, recipient: agent.performanceFeeRecipient }));
         }
       }
 

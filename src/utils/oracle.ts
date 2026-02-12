@@ -18,7 +18,9 @@ import { zeroAddress, type Address } from 'viem';
 import {
   getFeedFromOracleData,
   getOracleFromMetadata,
+  isMetaOracleData,
   type EnrichedFeed,
+  type MetaOracleOutputData,
   type OracleFeedProvider,
   type OracleMetadataRecord,
   type OracleOutputData,
@@ -39,6 +41,7 @@ type VendorInfo = {
 export enum OracleType {
   Standard = 'Standard',
   Custom = 'Custom',
+  Meta = 'Meta',
 }
 
 export enum PriceFeedVendors {
@@ -211,6 +214,7 @@ export function detectFeedVendor(_feedAddress: Address | string, _chainId: numbe
 
 export function getOracleTypeDescription(oracleType: OracleType): string {
   if (oracleType === OracleType.Standard) return 'Standard Oracle';
+  if (oracleType === OracleType.Meta) return 'Meta Oracle';
   return 'Custom Oracle';
 }
 
@@ -235,7 +239,18 @@ function getFeedPath(
   return { base: 'Unknown', quote: 'Unknown' };
 }
 
-export function getOracleType(oracleData: MorphoChainlinkOracleData | null | undefined, oracleAddress?: string, chainId?: number) {
+export function getOracleType(
+  oracleData: MorphoChainlinkOracleData | null | undefined,
+  oracleAddress?: string,
+  chainId?: number,
+  metadataMap?: OracleMetadataRecord,
+) {
+  // Check scanner metadata for meta oracle type
+  if (metadataMap && oracleAddress) {
+    const metadata = getOracleFromMetadata(metadataMap, oracleAddress);
+    if (metadata?.type === 'meta') return OracleType.Meta;
+  }
+
   // Morpho API only contains oracleData if it follows the standard MorphoOracle structure with feeds
   if (!oracleData) return OracleType.Custom;
 
@@ -294,7 +309,7 @@ export function parsePriceFeedVendors(
   // Try to get enriched metadata for this oracle
   const oracleMetadata =
     options?.metadataMap && options.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
-  const oracleMetadataData = oracleMetadata?.data;
+  const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
 
   for (const feed of feeds) {
     if (feed?.address) {
@@ -341,6 +356,64 @@ export function parsePriceFeedVendors(
   };
 }
 
+/**
+ * Classify enriched feeds into vendor categories.
+ * Shared by parsePriceFeedVendors (after enriched lookup) and parseMetaOracleVendors.
+ */
+function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
+  const coreVendors = new Set<PriceFeedVendors>();
+  const taggedVendors = new Set<string>();
+  let hasCompletelyUnknown = false;
+  let hasTaggedUnknown = false;
+
+  for (const feed of feeds) {
+    if (feed?.address) {
+      const feedResult = detectFeedVendorFromMetadata(feed);
+
+      if (feedResult.vendor === PriceFeedVendors.Unknown) {
+        const taggedVendor = feedResult.data?.vendor;
+        if (taggedVendor && taggedVendor !== 'Unknown') {
+          taggedVendors.add(taggedVendor);
+          hasTaggedUnknown = true;
+        } else {
+          hasCompletelyUnknown = true;
+        }
+      } else {
+        coreVendors.add(feedResult.vendor);
+      }
+    }
+  }
+
+  const hasFeeds = feeds.some((feed) => feed?.address);
+  if (!hasFeeds) {
+    hasCompletelyUnknown = true;
+  }
+
+  const legacyVendors = Array.from(coreVendors);
+  const legacyHasUnknown = hasCompletelyUnknown || hasTaggedUnknown;
+
+  return {
+    coreVendors: Array.from(coreVendors),
+    taggedVendors: Array.from(taggedVendors),
+    hasCompletelyUnknown,
+    hasTaggedUnknown,
+    vendors: legacyVendors,
+    hasUnknown: legacyHasUnknown,
+  };
+}
+
+/**
+ * Extract vendors from a meta oracle's primary and backup oracle feeds
+ */
+export function parseMetaOracleVendors(metaData: MetaOracleOutputData): VendorInfo {
+  const { primary, backup } = metaData.oracleSources;
+  const feeds = [
+    ...(primary ? [primary.baseFeedOne, primary.baseFeedTwo, primary.quoteFeedOne, primary.quoteFeedTwo] : []),
+    ...(backup ? [backup.baseFeedOne, backup.baseFeedTwo, backup.quoteFeedOne, backup.quoteFeedTwo] : []),
+  ];
+  return classifyEnrichedFeeds(feeds);
+}
+
 type CheckFeedsPathResult = {
   isValid: boolean;
   hasUnknownFeed?: boolean;
@@ -356,44 +429,21 @@ function normalizeSymbol(symbol: string): string {
   return normalized === 'weth' ? 'eth' : normalized;
 }
 
-export function checkFeedsPath(
-  oracleData: MorphoChainlinkOracleData | null | undefined,
-  chainId: number,
-  collateralSymbol: string,
-  loanSymbol: string,
-  options?: ParsePriceFeedVendorsOptions,
-): CheckFeedsPathResult {
-  if (!oracleData) {
-    return {
-      isValid: false,
-      missingPath: 'No oracle data provided',
-    };
-  }
+type FeedPathEntry = {
+  path: { base: string; quote: string };
+  type: 'base1' | 'base2' | 'quote1' | 'quote2' | 'baseVault' | 'quoteVault';
+  hasData: boolean;
+};
 
-  // Get metadata for feed path resolution
-  const oracleMetadata =
-    options?.metadataMap && options?.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
-  const oracleMetadataData = oracleMetadata?.data;
-
-  const feeds = [
-    { feed: oracleData.baseFeedOne, type: 'base1' as const },
-    { feed: oracleData.baseFeedTwo, type: 'base2' as const },
-    { feed: oracleData.quoteFeedOne, type: 'quote1' as const },
-    { feed: oracleData.quoteFeedTwo, type: 'quote2' as const },
-  ];
-
-  const feedPaths = feeds.map(({ feed, type }) => {
-    const path = getFeedPath(feed, chainId, oracleMetadataData);
-    return { path, type, hasData: !!feed?.address };
-  });
-
+/**
+ * Validate that feed paths compose a valid price path from collateral to loan.
+ * Shared by checkFeedsPath (standard oracles) and checkEnrichedFeedsPath (meta oracles).
+ */
+function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string, loanSymbol: string): CheckFeedsPathResult {
   const hasUnknownAssets = feedPaths.some(({ path }) => path.base === 'Unknown' || path.quote === 'Unknown');
 
   if (hasUnknownAssets) {
-    return {
-      isValid: false,
-      hasUnknownFeed: true,
-    };
+    return { isValid: false, hasUnknownFeed: true };
   }
 
   const numeratorCounts = new Map<string, number>();
@@ -406,17 +456,17 @@ export function checkFeedsPath(
     }
   };
 
-  feedPaths.forEach(({ path, type, hasData }) => {
-    if (!hasData) return;
+  for (const { path, type, hasData } of feedPaths) {
+    if (!hasData) continue;
 
-    if (type === 'base1' || type === 'base2') {
+    if (type === 'base1' || type === 'base2' || type === 'baseVault') {
       incrementCount(numeratorCounts, path.base);
       incrementCount(denominatorCounts, path.quote);
     } else {
       incrementCount(denominatorCounts, path.base);
       incrementCount(numeratorCounts, path.quote);
     }
-  });
+  }
 
   const cancelOut = (num: Map<string, number>, den: Map<string, number>) => {
     const assets = new Set([...num.keys(), ...den.keys()]);
@@ -471,6 +521,103 @@ export function checkFeedsPath(
     missingPath,
     expectedPath,
   };
+}
+
+export function checkFeedsPath(
+  oracleData: MorphoChainlinkOracleData | null | undefined,
+  chainId: number,
+  collateralSymbol: string,
+  loanSymbol: string,
+  options?: ParsePriceFeedVendorsOptions,
+): CheckFeedsPathResult {
+  if (!oracleData) {
+    return { isValid: false, missingPath: 'No oracle data provided' };
+  }
+
+  // Get metadata for feed path resolution
+  const oracleMetadata =
+    options?.metadataMap && options?.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
+  const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
+
+  const feedPaths: FeedPathEntry[] = [
+    { feed: oracleData.baseFeedOne, type: 'base1' as const },
+    { feed: oracleData.baseFeedTwo, type: 'base2' as const },
+    { feed: oracleData.quoteFeedOne, type: 'quote1' as const },
+    { feed: oracleData.quoteFeedTwo, type: 'quote2' as const },
+  ].map(({ feed, type }) => ({
+    path: getFeedPath(feed, chainId, oracleMetadataData),
+    type,
+    hasData: !!feed?.address,
+  }));
+
+  if (oracleMetadataData?.baseVault?.pair?.length === 2) {
+    feedPaths.push({
+      path: { base: oracleMetadataData.baseVault.pair[0], quote: oracleMetadataData.baseVault.pair[1] },
+      type: 'baseVault',
+      hasData: true,
+    });
+  }
+  if (oracleMetadataData?.quoteVault?.pair?.length === 2) {
+    feedPaths.push({
+      path: { base: oracleMetadataData.quoteVault.pair[0], quote: oracleMetadataData.quoteVault.pair[1] },
+      type: 'quoteVault',
+      hasData: true,
+    });
+  }
+
+  return validateFeedPaths(feedPaths, collateralSymbol, loanSymbol);
+}
+
+/**
+ * Resolve pair path directly from an enriched feed
+ */
+function getEnrichedFeedPath(feed: EnrichedFeed | null): { base: string; quote: string } {
+  if (!feed?.address) return { base: 'EMPTY', quote: 'EMPTY' };
+  if (feed.pair?.length === 2) return { base: feed.pair[0], quote: feed.pair[1] };
+  return { base: 'Unknown', quote: 'Unknown' };
+}
+
+/**
+ * Check feed paths for meta oracles using pre-enriched scanner data
+ */
+export function checkEnrichedFeedsPath(oracleData: OracleOutputData, collateralSymbol: string, loanSymbol: string): CheckFeedsPathResult {
+  const feedPaths: FeedPathEntry[] = [
+    { feed: oracleData.baseFeedOne, type: 'base1' as const },
+    { feed: oracleData.baseFeedTwo, type: 'base2' as const },
+    { feed: oracleData.quoteFeedOne, type: 'quote1' as const },
+    { feed: oracleData.quoteFeedTwo, type: 'quote2' as const },
+  ].map(({ feed, type }) => ({
+    path: getEnrichedFeedPath(feed),
+    type,
+    hasData: !!feed?.address,
+  }));
+
+  if (oracleData.baseVault?.pair?.length === 2) {
+    feedPaths.push({
+      path: { base: oracleData.baseVault.pair[0], quote: oracleData.baseVault.pair[1] },
+      type: 'baseVault',
+      hasData: true,
+    });
+  }
+  if (oracleData.quoteVault?.pair?.length === 2) {
+    feedPaths.push({
+      path: { base: oracleData.quoteVault.pair[0], quote: oracleData.quoteVault.pair[1] },
+      type: 'quoteVault',
+      hasData: true,
+    });
+  }
+
+  return validateFeedPaths(feedPaths, collateralSymbol, loanSymbol);
+}
+
+/**
+ * Format seconds into a human-readable duration (e.g. "1h", "24h", "7d")
+ */
+export function formatOracleDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86400)}d`;
 }
 
 /**

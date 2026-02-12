@@ -1,7 +1,7 @@
-import type { OracleMetadataRecord } from '@/hooks/useOracleMetadata';
+import { getOracleFromMetadata, isMetaOracleData, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
 import type { Market, MarketWarning } from '@/utils/types';
 import { monarchWhitelistedMarkets, getMarketOverrideWarnings } from './markets';
-import { getOracleType, OracleType, parsePriceFeedVendors, checkFeedsPath } from './oracle';
+import { getOracleType, OracleType, parsePriceFeedVendors, parseMetaOracleVendors, checkFeedsPath, checkEnrichedFeedsPath } from './oracle';
 import { WarningCategory, type WarningWithDetail } from './types';
 
 // Subgraph Warnings
@@ -191,7 +191,7 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
   }
 
   // Append our own oracle warnings
-  const oracleType = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id);
+  const oracleType = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id, oracleMetadataMap);
   if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
 
   // if any of the feeds are not null but also not recognized, return appropriate feed warning
@@ -230,6 +230,39 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
           ...INCOMPATIBLE_ORACLE_FEEDS,
           description: feedsPathResult.missingPath ?? INCOMPATIBLE_ORACLE_FEEDS.description,
         });
+      }
+    }
+  }
+
+  // Meta oracles: run vendor + feed path checks on both primary and backup oracle feeds
+  if (oracleType === OracleType.Meta && oracleMetadataMap) {
+    const metadata = getOracleFromMetadata(oracleMetadataMap, market.oracleAddress);
+    if (metadata?.data && isMetaOracleData(metadata.data)) {
+      const vendorInfo = parseMetaOracleVendors(metadata.data);
+      if (vendorInfo.hasCompletelyUnknown) result.push(UNRECOGNIZED_FEEDS);
+      if (vendorInfo.hasTaggedUnknown) result.push(UNRECOGNIZED_FEEDS_TAGGED);
+
+      if (market.collateralAsset?.symbol && market.loanAsset?.symbol) {
+        const primaryResult = metadata.data.oracleSources.primary
+          ? checkEnrichedFeedsPath(metadata.data.oracleSources.primary, market.collateralAsset.symbol, market.loanAsset.symbol)
+          : { isValid: true };
+        const backupResult = metadata.data.oracleSources.backup
+          ? checkEnrichedFeedsPath(metadata.data.oracleSources.backup, market.collateralAsset.symbol, market.loanAsset.symbol)
+          : { isValid: true };
+
+        const hasUnknown = primaryResult.hasUnknownFeed || backupResult.hasUnknownFeed;
+
+        if (hasUnknown) {
+          if (!result.includes(UNRECOGNIZED_FEEDS)) {
+            result.push(UNKNOWN_FEED_FOR_PAIR_MATCHING);
+          }
+        } else if (!backupResult.isValid) {
+          const backupPath = backupResult.missingPath ?? 'Backup oracle does not produce a valid price path for this pair.';
+          result.push({
+            ...INCOMPATIBLE_ORACLE_FEEDS,
+            description: `Backup oracle: ${backupPath}`,
+          });
+        }
       }
     }
   }

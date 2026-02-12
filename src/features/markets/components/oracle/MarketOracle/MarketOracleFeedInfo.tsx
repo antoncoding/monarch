@@ -1,8 +1,9 @@
 'use client';
 
-import { useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { useOracleMetadata, getOracleFromMetadata, isMetaOracleData } from '@/hooks/useOracleMetadata';
 import type { OracleFeed } from '@/utils/types';
 import { FeedEntry } from './FeedEntry';
+import { VaultEntry } from './VaultEntry';
 
 type MarketOracleFeedInfoProps = {
   baseFeedOne: OracleFeed | null | undefined;
@@ -22,18 +23,31 @@ export function MarketOracleFeedInfo({
   oracleAddress,
 }: MarketOracleFeedInfoProps): JSX.Element {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
-  const hasAnyFeed = baseFeedOne || baseFeedTwo || quoteFeedOne || quoteFeedTwo;
 
-  if (!hasAnyFeed) {
+  const oracleMetadata = oracleMetadataMap && oracleAddress ? getOracleFromMetadata(oracleMetadataMap, oracleAddress) : undefined;
+  const oracleData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
+  const baseVault = oracleData?.baseVault ?? null;
+  const quoteVault = oracleData?.quoteVault ?? null;
+
+  const hasAnyFeed = baseFeedOne || baseFeedTwo || quoteFeedOne || quoteFeedTwo;
+  const hasAnyVault = baseVault || quoteVault;
+
+  if (!hasAnyFeed && !hasAnyVault) {
     return <div className="text-center text-sm text-gray-500 dark:text-gray-400">No feed routes available</div>;
   }
 
   return (
     <div className="space-y-2">
-      {(baseFeedOne || baseFeedTwo) && (
+      {(baseVault || baseFeedOne || baseFeedTwo) && (
         <div className="flex items-center justify-between">
           <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Base:</span>
           <div className="flex justify-end gap-2">
+            {baseVault && (
+              <VaultEntry
+                vault={baseVault}
+                chainId={chainId}
+              />
+            )}
             {baseFeedOne && (
               <FeedEntry
                 feed={baseFeedOne}
@@ -54,10 +68,16 @@ export function MarketOracleFeedInfo({
         </div>
       )}
 
-      {(quoteFeedOne || quoteFeedTwo) && (
+      {(quoteVault || quoteFeedOne || quoteFeedTwo) && (
         <div className="flex items-center justify-between">
           <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Quote:</span>
           <div className="flex justify-end gap-2">
+            {quoteVault && (
+              <VaultEntry
+                vault={quoteVault}
+                chainId={chainId}
+              />
+            )}
             {quoteFeedOne && (
               <FeedEntry
                 feed={quoteFeedOne}

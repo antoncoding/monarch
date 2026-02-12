@@ -35,17 +35,41 @@ export type EnrichedFeed = {
   ptSymbol?: string; // Pendle PT token symbol
 };
 
+export type EnrichedVault = {
+  address: string;
+  symbol: string;
+  asset: string;
+  assetSymbol: string;
+  pair: [string, string];
+  conversionSample: string;
+};
+
 export type OracleOutputData = {
   baseFeedOne: EnrichedFeed | null;
   baseFeedTwo: EnrichedFeed | null;
   quoteFeedOne: EnrichedFeed | null;
   quoteFeedTwo: EnrichedFeed | null;
+  baseVault: EnrichedVault | null;
+  quoteVault: EnrichedVault | null;
+};
+
+export type MetaOracleOutputData = {
+  primaryOracle: string;
+  backupOracle: string;
+  currentOracle: string;
+  deviationThreshold: string;
+  challengeTimelockDuration: number;
+  healingTimelockDuration: number;
+  oracleSources: {
+    primary: OracleOutputData | null;
+    backup: OracleOutputData | null;
+  };
 };
 
 export type OracleOutput = {
   address: string;
   chainId: number;
-  type: 'standard' | 'custom' | 'unknown';
+  type: 'standard' | 'custom' | 'unknown' | 'meta';
   verifiedByFactory: boolean;
   isUpgradable: boolean;
   proxy: {
@@ -53,9 +77,13 @@ export type OracleOutput = {
     proxyType?: string;
     implementation?: string;
   };
-  data: OracleOutputData;
+  data: OracleOutputData | MetaOracleOutputData;
   lastScannedAt: string;
 };
+
+export function isMetaOracleData(data: OracleOutputData | MetaOracleOutputData): data is MetaOracleOutputData {
+  return 'oracleSources' in data;
+}
 
 export type OracleMetadataFile = {
   version: string;

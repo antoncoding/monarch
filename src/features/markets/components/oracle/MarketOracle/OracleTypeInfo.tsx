@@ -1,53 +1,51 @@
-import Link from 'next/link';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { AddressIdentity } from '@/components/shared/address-identity';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MarketOracleFeedInfo } from '@/features/markets/components/oracle';
-import { getExplorerURL } from '@/utils/external';
+import { Tooltip } from '@/components/ui/tooltip';
+import { useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { getOracleType, getOracleTypeDescription, OracleType } from '@/utils/oracle';
 import type { MorphoChainlinkOracleData } from '@/utils/types';
+import { MetaOracleInfo } from './MetaOracleInfo';
 
 type OracleTypeInfoProps = {
   oracleData: MorphoChainlinkOracleData | null | undefined;
   oracleAddress: string;
   chainId: number;
-  showLink?: boolean;
   showCustom?: boolean;
   useBadge?: boolean;
+  variant?: 'summary' | 'detail';
 };
 
-export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, showCustom, useBadge }: OracleTypeInfoProps) {
-  const oracleType = getOracleType(oracleData, oracleAddress, chainId);
+export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showCustom, useBadge, variant }: OracleTypeInfoProps) {
+  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const oracleType = getOracleType(oracleData, oracleAddress, chainId, oracleMetadataMap);
   const typeDescription = getOracleTypeDescription(oracleType);
 
   return (
     <>
-      {useBadge ? (
+      <div className={`flex items-center ${useBadge ? 'gap-1.5' : 'justify-between pb-2'}`}>
+        <span className={useBadge ? 'text-xs text-secondary' : undefined}>{useBadge ? 'Type:' : 'Oracle:'}</span>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-secondary">Type:</span>
           <AddressIdentity
             address={oracleAddress}
             chainId={chainId}
             label={typeDescription}
           />
-        </div>
-      ) : (
-        <div className="flex items-center justify-between pb-2">
-          <span>Oracle Type:</span>
-          {showLink ? (
-            <Link
-              href={getExplorerURL(oracleAddress, chainId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center text-sm font-medium no-underline hover:underline"
+          {oracleType === OracleType.Meta && !useBadge && (
+            <Tooltip
+              content={
+                <TooltipContent
+                  title="Meta Oracle"
+                  detail="Switches to a backup oracle if price deviation exceeds a threshold."
+                />
+              }
             >
-              {typeDescription}
-              <ExternalLinkIcon className="ml-1 h-3 w-3" />
-            </Link>
-          ) : (
-            <span className="text-sm font-medium">{typeDescription}</span>
+              <InfoCircledIcon className="h-3.5 w-3.5 cursor-help text-secondary" />
+            </Tooltip>
           )}
         </div>
-      )}
+      </div>
 
       {oracleType === OracleType.Standard ? (
         <MarketOracleFeedInfo
@@ -58,12 +56,15 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, s
           chainId={chainId}
           oracleAddress={oracleAddress}
         />
+      ) : oracleType === OracleType.Meta ? (
+        <MetaOracleInfo
+          oracleAddress={oracleAddress}
+          chainId={chainId}
+          variant={variant}
+        />
       ) : showCustom ? (
-        <div className="space-y-1">
-          <div className="text-xs text-gray-600 dark:text-gray-400">{typeDescription}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-500">
-            This market uses a custom oracle implementation that doesn't follow the standard feed structure.
-          </div>
+        <div className="text-xs text-gray-500 dark:text-gray-500">
+          This market uses a custom oracle implementation that doesn't follow the standard feed structure.
         </div>
       ) : null}
     </>
