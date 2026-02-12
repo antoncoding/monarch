@@ -34,7 +34,10 @@ function OracleFeedSection({ oracleData, chainId, label }: { oracleData: OracleO
             <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400 pl-2">{feedLabel}:</span>
             <div className="flex justify-end gap-2">
               {vault && (
-                <VaultEntry vault={vault} chainId={chainId} />
+                <VaultEntry
+                  vault={vault}
+                  chainId={chainId}
+                />
               )}
               {activeFeeds.map((enrichedFeed) => {
                 if (!enrichedFeed) return null;

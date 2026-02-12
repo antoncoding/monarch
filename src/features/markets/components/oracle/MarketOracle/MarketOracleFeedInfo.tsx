@@ -24,10 +24,8 @@ export function MarketOracleFeedInfo({
 }: MarketOracleFeedInfoProps): JSX.Element {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
 
-  const oracleMetadata = oracleMetadataMap && oracleAddress
-    ? getOracleFromMetadata(oracleMetadataMap, oracleAddress) : undefined;
-  const oracleData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data)
-    ? oracleMetadata.data : undefined;
+  const oracleMetadata = oracleMetadataMap && oracleAddress ? getOracleFromMetadata(oracleMetadataMap, oracleAddress) : undefined;
+  const oracleData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
   const baseVault = oracleData?.baseVault ?? null;
   const quoteVault = oracleData?.quoteVault ?? null;
 
@@ -45,7 +43,10 @@ export function MarketOracleFeedInfo({
           <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Base:</span>
           <div className="flex justify-end gap-2">
             {baseVault && (
-              <VaultEntry vault={baseVault} chainId={chainId} />
+              <VaultEntry
+                vault={baseVault}
+                chainId={chainId}
+              />
             )}
             {baseFeedOne && (
               <FeedEntry
@@ -72,7 +73,10 @@ export function MarketOracleFeedInfo({
           <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Quote:</span>
           <div className="flex justify-end gap-2">
             {quoteVault && (
-              <VaultEntry vault={quoteVault} chainId={chainId} />
+              <VaultEntry
+                vault={quoteVault}
+                chainId={chainId}
+              />
             )}
             {quoteFeedOne && (
               <FeedEntry
