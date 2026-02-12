@@ -86,7 +86,7 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
       ) : isVaultOnly ? (
         // Vault-only oracle - show checkmark icon
         <IoCheckmarkCircleOutline
-          className="text-green-600 dark:text-green-400"
+          className="text-secondary"
           size={16}
         />
       ) : hasCompletelyUnknown || hasTaggedUnknown ? (
