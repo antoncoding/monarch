@@ -40,6 +40,10 @@ export const monarchWhitelistedMarkets: WhitelistMarketData[] = [
     id: '0x74918a8744b4a48d233e66d0f6a318ef847cc4da2910357897f94a33c3481280', // sPinto/USDC by Pinto
     offsetWarnings: ['unrecognized_collateral_asset'],
   },
+  {
+    id: '0x9bc98c2f20ac58287ef2c860eea53a2fdc27c17a7817ff1206c0b7840cc7cd79', // Morpho API stopped tracking PT markets
+    offsetWarnings: ['unrecognized_collateral_asset'], 
+  },
 ];
 
 // Market override rules - group multiple markets under the same rule

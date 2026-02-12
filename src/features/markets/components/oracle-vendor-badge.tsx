@@ -4,8 +4,8 @@ import React from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoWarningOutline, IoHelpCircleOutline } from 'react-icons/io5';
-import { OracleType, OracleVendorIcons, type PriceFeedVendors, getOracleType, parsePriceFeedVendors } from '@/utils/oracle';
-import { useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { OracleType, OracleVendorIcons, type PriceFeedVendors, getOracleType, parseMetaOracleVendors, parsePriceFeedVendors } from '@/utils/oracle';
+import { getOracleFromMetadata, isMetaOracleData, useOracleMetadata } from '@/hooks/useOracleMetadata';
 import type { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleVendorBadgeProps = {
@@ -39,13 +39,22 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
 function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
 
-  // check whether it's standard oracle or not.
-  const isCustom = getOracleType(oracleData) === OracleType.Custom;
+  const oracleType = getOracleType(oracleData, oracleAddress, chainId, oracleMetadataMap);
+  const isCustom = oracleType === OracleType.Custom;
+  const isMeta = oracleType === OracleType.Meta;
 
-  const vendorInfo = parsePriceFeedVendors(oracleData, chainId, {
-    metadataMap: oracleMetadataMap,
-    oracleAddress,
-  });
+  const vendorInfo = (() => {
+    if (isMeta && oracleMetadataMap && oracleAddress) {
+      const metadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
+      if (metadata?.data && isMetaOracleData(metadata.data)) {
+        return parseMetaOracleVendors(metadata.data);
+      }
+    }
+    return parsePriceFeedVendors(oracleData, chainId, {
+      metadataMap: oracleMetadataMap,
+      oracleAddress,
+    });
+  })();
   const { coreVendors, taggedVendors, hasCompletelyUnknown, hasTaggedUnknown, vendors, hasUnknown } = vendorInfo;
 
   const content = (
@@ -85,6 +94,8 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
         );
       }
 
+      const oracleLabel = isMeta ? 'Meta Oracle' : 'Standard Oracle';
+
       if (hasCompletelyUnknown || hasTaggedUnknown) {
         let description = '';
         const parts = [];
@@ -106,7 +117,7 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
 
         return (
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium text-primary font-zen">Standard Oracle</p>
+            <p className="text-sm font-medium text-primary font-zen">{oracleLabel}</p>
             <p className="text-xs text-secondary font-zen">{description}</p>
           </div>
         );
@@ -116,7 +127,7 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
       const allVendors = [...coreVendors, ...taggedVendors];
       return (
         <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium text-primary font-zen">Standard Oracle</p>
+          <p className="text-sm font-medium text-primary font-zen">{oracleLabel}</p>
           <p className="text-xs text-secondary font-zen">Uses feeds from {allVendors.join(', ')}.</p>
         </div>
       );

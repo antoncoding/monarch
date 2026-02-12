@@ -685,6 +685,7 @@ export function MarketHeader({
                         oracleAddress={market.oracleAddress}
                         chainId={market.morphoBlue.chain.id}
                         useBadge
+                        variant="detail"
                       />
 
                       {/* Oracle warnings */}

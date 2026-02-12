@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
-import { getFeedFromOracleData, getOracleFromMetadata, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
+import { getFeedFromOracleData, getOracleFromMetadata, isMetaOracleData, type EnrichedFeed, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
 import { detectFeedVendor, detectFeedVendorFromMetadata, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
@@ -19,27 +19,33 @@ type FeedEntryProps = {
   chainId: number;
   oracleAddress?: string;
   oracleMetadataMap?: OracleMetadataRecord;
+  enrichedFeed?: EnrichedFeed;
 };
 
-export function FeedEntry({ feed, chainId, oracleAddress, oracleMetadataMap }: FeedEntryProps): JSX.Element | null {
+export function FeedEntry({ feed, chainId, oracleAddress, oracleMetadataMap, enrichedFeed }: FeedEntryProps): JSX.Element | null {
   // Use metadata-based detection when available, fallback to legacy
   const feedVendorResult = useMemo(() => {
     if (!feed?.address) return null;
 
+    // Use pre-enriched feed directly when provided (e.g. from meta oracle scanner data)
+    if (enrichedFeed) {
+      return detectFeedVendorFromMetadata(enrichedFeed);
+    }
+
     // Try metadata-based detection first
     if (oracleMetadataMap && oracleAddress) {
       const oracleMetadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
-      if (oracleMetadata?.data) {
-        const enrichedFeed = getFeedFromOracleData(oracleMetadata.data, feed.address);
-        if (enrichedFeed) {
-          return detectFeedVendorFromMetadata(enrichedFeed);
+      if (oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data)) {
+        const found = getFeedFromOracleData(oracleMetadata.data, feed.address);
+        if (found) {
+          return detectFeedVendorFromMetadata(found);
         }
       }
     }
 
     // Fallback to legacy detection (will return Unknown without static data)
     return detectFeedVendor(feed.address as Address, chainId);
-  }, [feed?.address, chainId, oracleAddress, oracleMetadataMap]);
+  }, [feed?.address, chainId, oracleAddress, oracleMetadataMap, enrichedFeed]);
 
   if (!feed) return null;
   if (!feedVendorResult) return null;

@@ -42,10 +42,23 @@ export type OracleOutputData = {
   quoteFeedTwo: EnrichedFeed | null;
 };
 
+export type MetaOracleOutputData = {
+  primaryOracle: string;
+  backupOracle: string;
+  currentOracle: string;
+  deviationThreshold: string;
+  challengeTimelockDuration: number;
+  healingTimelockDuration: number;
+  oracleSources: {
+    primary: OracleOutputData | null;
+    backup: OracleOutputData | null;
+  };
+};
+
 export type OracleOutput = {
   address: string;
   chainId: number;
-  type: 'standard' | 'custom' | 'unknown';
+  type: 'standard' | 'custom' | 'unknown' | 'meta';
   verifiedByFactory: boolean;
   isUpgradable: boolean;
   proxy: {
@@ -53,9 +66,13 @@ export type OracleOutput = {
     proxyType?: string;
     implementation?: string;
   };
-  data: OracleOutputData;
+  data: OracleOutputData | MetaOracleOutputData;
   lastScannedAt: string;
 };
+
+export function isMetaOracleData(data: OracleOutputData | MetaOracleOutputData): data is MetaOracleOutputData {
+  return 'oracleSources' in data;
+}
 
 export type OracleMetadataFile = {
   version: string;
