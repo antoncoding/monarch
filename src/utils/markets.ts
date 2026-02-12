@@ -42,7 +42,7 @@ export const monarchWhitelistedMarkets: WhitelistMarketData[] = [
   },
   {
     id: '0x9bc98c2f20ac58287ef2c860eea53a2fdc27c17a7817ff1206c0b7840cc7cd79', // Morpho API stopped tracking PT markets
-    offsetWarnings: ['unrecognized_collateral_asset'], 
+    offsetWarnings: ['unrecognized_collateral_asset'],
   },
 ];
 

@@ -4,7 +4,14 @@ import React from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoWarningOutline, IoHelpCircleOutline } from 'react-icons/io5';
-import { OracleType, OracleVendorIcons, type PriceFeedVendors, getOracleType, parseMetaOracleVendors, parsePriceFeedVendors } from '@/utils/oracle';
+import {
+  OracleType,
+  OracleVendorIcons,
+  type PriceFeedVendors,
+  getOracleType,
+  parseMetaOracleVendors,
+  parsePriceFeedVendors,
+} from '@/utils/oracle';
 import { getOracleFromMetadata, isMetaOracleData, useOracleMetadata } from '@/hooks/useOracleMetadata';
 import type { MorphoChainlinkOracleData } from '@/utils/types';
 

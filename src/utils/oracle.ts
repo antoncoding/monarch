@@ -565,11 +565,7 @@ function getEnrichedFeedPath(feed: EnrichedFeed | null): { base: string; quote: 
 /**
  * Check feed paths for meta oracles using pre-enriched scanner data
  */
-export function checkEnrichedFeedsPath(
-  oracleData: OracleOutputData,
-  collateralSymbol: string,
-  loanSymbol: string,
-): CheckFeedsPathResult {
+export function checkEnrichedFeedsPath(oracleData: OracleOutputData, collateralSymbol: string, loanSymbol: string): CheckFeedsPathResult {
   const feedPaths: FeedPathEntry[] = [
     { feed: oracleData.baseFeedOne, type: 'base1' as const },
     { feed: oracleData.baseFeedTwo, type: 'base2' as const },

@@ -244,14 +244,10 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
 
       if (market.collateralAsset?.symbol && market.loanAsset?.symbol) {
         const primaryResult = metadata.data.oracleSources.primary
-          ? checkEnrichedFeedsPath(
-              metadata.data.oracleSources.primary, market.collateralAsset.symbol, market.loanAsset.symbol,
-            )
+          ? checkEnrichedFeedsPath(metadata.data.oracleSources.primary, market.collateralAsset.symbol, market.loanAsset.symbol)
           : { isValid: false, hasUnknownFeed: true };
         const backupResult = metadata.data.oracleSources.backup
-          ? checkEnrichedFeedsPath(
-              metadata.data.oracleSources.backup, market.collateralAsset.symbol, market.loanAsset.symbol,
-            )
+          ? checkEnrichedFeedsPath(metadata.data.oracleSources.backup, market.collateralAsset.symbol, market.loanAsset.symbol)
           : { isValid: false, hasUnknownFeed: true };
 
         const hasUnknown = primaryResult.hasUnknownFeed || backupResult.hasUnknownFeed;

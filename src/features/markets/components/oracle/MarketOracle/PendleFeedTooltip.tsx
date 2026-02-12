@@ -14,7 +14,7 @@ type PendleFeedTooltipProps = {
 };
 
 function formatDiscountPerYear(raw: string): string {
-  if (!/^\d+$/.test(raw)) return "—";
+  if (!/^\d+$/.test(raw)) return '—';
   const formatted = formatUnits(BigInt(raw), 18);
   const percent = Number(formatted) * 100;
   return `${percent.toFixed(2)}%`;

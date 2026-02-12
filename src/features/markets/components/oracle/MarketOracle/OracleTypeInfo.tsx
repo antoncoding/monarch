@@ -25,9 +25,7 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showCustom,
   return (
     <>
       <div className={`flex items-center ${useBadge ? 'gap-1.5' : 'justify-between pb-2'}`}>
-        <span className={useBadge ? 'text-xs text-secondary' : undefined}>
-          {useBadge ? 'Type:' : 'Oracle:'}
-        </span>
+        <span className={useBadge ? 'text-xs text-secondary' : undefined}>{useBadge ? 'Type:' : 'Oracle:'}</span>
         <div className="flex items-center gap-1.5">
           <AddressIdentity
             address={oracleAddress}
@@ -35,12 +33,14 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showCustom,
             label={typeDescription}
           />
           {oracleType === OracleType.Meta && !useBadge && (
-            <Tooltip content={
-              <TooltipContent
-                title="Meta Oracle"
-                detail="Switches to a backup oracle if price deviation exceeds a threshold."
-              />
-            }>
+            <Tooltip
+              content={
+                <TooltipContent
+                  title="Meta Oracle"
+                  detail="Switches to a backup oracle if price deviation exceeds a threshold."
+                />
+              }
+            >
               <InfoCircledIcon className="h-3.5 w-3.5 cursor-help text-secondary" />
             </Tooltip>
           )}

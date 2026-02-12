@@ -4,7 +4,13 @@ import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
-import { getFeedFromOracleData, getOracleFromMetadata, isMetaOracleData, type EnrichedFeed, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
+import {
+  getFeedFromOracleData,
+  getOracleFromMetadata,
+  isMetaOracleData,
+  type EnrichedFeed,
+  type OracleMetadataRecord,
+} from '@/hooks/useOracleMetadata';
 import { detectFeedVendor, detectFeedVendorFromMetadata, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';

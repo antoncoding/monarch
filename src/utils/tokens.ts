@@ -297,7 +297,7 @@ const supportedTokens = [
         chain: mainnet,
         address: '0x3EAA0F0f0A5d3D595ae4e4b0D27f439d01c3E7b2',
       },
-    ]
+    ],
   },
   {
     symbol: 'wstETH',

@@ -75,28 +75,42 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-600 dark:text-gray-400">Primary:</span>
-            <AddressIdentity address={metaData.primaryOracle} chainId={chainId} />
+            <AddressIdentity
+              address={metaData.primaryOracle}
+              chainId={chainId}
+            />
             {isPrimaryActive && (
               <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-400/10 dark:text-green-300">
                 Active
               </span>
             )}
           </div>
-          <OracleFeedSection oracleData={metaData.oracleSources.primary} chainId={chainId} label="primary" />
+          <OracleFeedSection
+            oracleData={metaData.oracleSources.primary}
+            chainId={chainId}
+            label="primary"
+          />
         </div>
 
         {/* Backup oracle */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-600 dark:text-gray-400">Backup:</span>
-            <AddressIdentity address={metaData.backupOracle} chainId={chainId} />
+            <AddressIdentity
+              address={metaData.backupOracle}
+              chainId={chainId}
+            />
             {!isPrimaryActive && (
               <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-400/10 dark:text-green-300">
                 Active
               </span>
             )}
           </div>
-          <OracleFeedSection oracleData={metaData.oracleSources.backup} chainId={chainId} label="backup" />
+          <OracleFeedSection
+            oracleData={metaData.oracleSources.backup}
+            chainId={chainId}
+            label="backup"
+          />
         </div>
 
         {/* Parameters */}
@@ -122,5 +136,11 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
   const currentOracleData = isPrimaryActive ? metaData.oracleSources.primary : metaData.oracleSources.backup;
   if (!currentOracleData) return null;
 
-  return <OracleFeedSection oracleData={currentOracleData} chainId={chainId} label="current" />;
+  return (
+    <OracleFeedSection
+      oracleData={currentOracleData}
+      chainId={chainId}
+      label="current"
+    />
+  );
 }
