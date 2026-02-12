@@ -245,10 +245,11 @@ export function getOracleType(
   chainId?: number,
   metadataMap?: OracleMetadataRecord,
 ) {
-  // Check scanner metadata for meta oracle type
+  // Check scanner metadata for oracle type (meta or standard with vault-only)
   if (metadataMap && oracleAddress) {
     const metadata = getOracleFromMetadata(metadataMap, oracleAddress);
     if (metadata?.type === 'meta') return OracleType.Meta;
+    if (metadata?.type === 'standard') return OracleType.Standard;
   }
 
   // Morpho API only contains oracleData if it follows the standard MorphoOracle structure with feeds
@@ -289,6 +290,24 @@ export function parsePriceFeedVendors(
   }
 
   if (!oracleData.baseFeedOne && !oracleData.baseFeedTwo && !oracleData.quoteFeedOne && !oracleData.quoteFeedTwo) {
+    // Check if this is a vault-only oracle (no feeds but has vault conversion)
+    const oracleMetadata =
+      options?.metadataMap && options.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
+    const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
+    const hasVault = oracleMetadataData?.baseVault || oracleMetadataData?.quoteVault;
+
+    // Vault-only oracles are valid — don't mark as unknown
+    if (hasVault) {
+      return {
+        coreVendors: [],
+        taggedVendors: [],
+        hasCompletelyUnknown: false,
+        hasTaggedUnknown: false,
+        vendors: [],
+        hasUnknown: false,
+      };
+    }
+
     return {
       coreVendors: [],
       taggedVendors: [],
