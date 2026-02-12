@@ -550,14 +550,14 @@ export function checkFeedsPath(
     hasData: !!feed?.address,
   }));
 
-  if (oracleMetadataData?.baseVault) {
+  if (oracleMetadataData?.baseVault?.pair?.length === 2) {
     feedPaths.push({
       path: { base: oracleMetadataData.baseVault.pair[0], quote: oracleMetadataData.baseVault.pair[1] },
       type: 'baseVault',
       hasData: true,
     });
   }
-  if (oracleMetadataData?.quoteVault) {
+  if (oracleMetadataData?.quoteVault?.pair?.length === 2) {
     feedPaths.push({
       path: { base: oracleMetadataData.quoteVault.pair[0], quote: oracleMetadataData.quoteVault.pair[1] },
       type: 'quoteVault',
@@ -573,7 +573,7 @@ export function checkFeedsPath(
  */
 function getEnrichedFeedPath(feed: EnrichedFeed | null): { base: string; quote: string } {
   if (!feed?.address) return { base: 'EMPTY', quote: 'EMPTY' };
-  if (feed.pair.length === 2) return { base: feed.pair[0], quote: feed.pair[1] };
+  if (feed.pair?.length === 2) return { base: feed.pair[0], quote: feed.pair[1] };
   return { base: 'Unknown', quote: 'Unknown' };
 }
 
@@ -592,14 +592,14 @@ export function checkEnrichedFeedsPath(oracleData: OracleOutputData, collateralS
     hasData: !!feed?.address,
   }));
 
-  if (oracleData.baseVault) {
+  if (oracleData.baseVault?.pair?.length === 2) {
     feedPaths.push({
       path: { base: oracleData.baseVault.pair[0], quote: oracleData.baseVault.pair[1] },
       type: 'baseVault',
       hasData: true,
     });
   }
-  if (oracleData.quoteVault) {
+  if (oracleData.quoteVault?.pair?.length === 2) {
     feedPaths.push({
       path: { base: oracleData.quoteVault.pair[0], quote: oracleData.quoteVault.pair[1] },
       type: 'quoteVault',

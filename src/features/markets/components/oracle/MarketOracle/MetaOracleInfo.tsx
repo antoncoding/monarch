@@ -68,7 +68,7 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
   if (!oracleMetadata?.data || !isMetaOracleData(oracleMetadata.data)) return null;
 
   const metaData = oracleMetadata.data;
-  const isPrimaryActive = metaData.currentOracle.toLowerCase() === metaData.primaryOracle.toLowerCase();
+  const isPrimaryActive = metaData.currentOracle?.toLowerCase() === metaData.primaryOracle?.toLowerCase();
 
   if (variant === 'detail') {
     const deviationPct = (Number(metaData.deviationThreshold) / 1e18) * 100;

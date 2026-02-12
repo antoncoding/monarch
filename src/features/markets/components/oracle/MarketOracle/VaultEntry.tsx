@@ -10,8 +10,8 @@ type VaultEntryProps = {
 };
 
 export function VaultEntry({ vault }: VaultEntryProps): JSX.Element {
-  const baseAsset = getTruncatedAssetName(vault.pair[0]);
-  const quoteAsset = getTruncatedAssetName(vault.pair[1]);
+  const baseAsset = getTruncatedAssetName(vault.pair?.[0] ?? 'Unknown');
+  const quoteAsset = getTruncatedAssetName(vault.pair?.[1] ?? 'Unknown');
 
   return (
     <Tooltip
