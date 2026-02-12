@@ -290,6 +290,24 @@ export function parsePriceFeedVendors(
   }
 
   if (!oracleData.baseFeedOne && !oracleData.baseFeedTwo && !oracleData.quoteFeedOne && !oracleData.quoteFeedTwo) {
+    // Check if this is a vault-only oracle (no feeds but has vault conversion)
+    const oracleMetadata =
+      options?.metadataMap && options.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
+    const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
+    const hasVault = oracleMetadataData?.baseVault || oracleMetadataData?.quoteVault;
+
+    // Vault-only oracles are valid — don't mark as unknown
+    if (hasVault) {
+      return {
+        coreVendors: [],
+        taggedVendors: [],
+        hasCompletelyUnknown: false,
+        hasTaggedUnknown: false,
+        vendors: [],
+        hasUnknown: false,
+      };
+    }
+
     return {
       coreVendors: [],
       taggedVendors: [],
