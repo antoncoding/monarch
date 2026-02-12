@@ -35,11 +35,22 @@ export type EnrichedFeed = {
   ptSymbol?: string; // Pendle PT token symbol
 };
 
+export type EnrichedVault = {
+  address: string;
+  symbol: string;
+  asset: string;
+  assetSymbol: string;
+  pair: [string, string];
+  conversionSample: string;
+};
+
 export type OracleOutputData = {
   baseFeedOne: EnrichedFeed | null;
   baseFeedTwo: EnrichedFeed | null;
   quoteFeedOne: EnrichedFeed | null;
   quoteFeedTwo: EnrichedFeed | null;
+  baseVault: EnrichedVault | null;
+  quoteVault: EnrichedVault | null;
 };
 
 export type MetaOracleOutputData = {

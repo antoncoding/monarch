@@ -251,18 +251,16 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
           : { isValid: false, hasUnknownFeed: true };
 
         const hasUnknown = primaryResult.hasUnknownFeed || backupResult.hasUnknownFeed;
-        const eitherValid = primaryResult.isValid || backupResult.isValid;
 
         if (hasUnknown) {
           if (!result.includes(UNRECOGNIZED_FEEDS)) {
             result.push(UNKNOWN_FEED_FOR_PAIR_MATCHING);
           }
-        } else if (!eitherValid) {
+        } else if (!backupResult.isValid) {
+          const backupPath = backupResult.missingPath ?? 'Backup oracle does not produce a valid price path for this pair.';
           result.push({
             ...INCOMPATIBLE_ORACLE_FEEDS,
-            description:
-              'Neither the primary nor backup oracle produces a valid price path for this pair. ' +
-              'Price divergence may not be reflected even after oracle switching.',
+            description: `Backup oracle: ${backupPath}`,
           });
         }
       }

@@ -431,7 +431,7 @@ function normalizeSymbol(symbol: string): string {
 
 type FeedPathEntry = {
   path: { base: string; quote: string };
-  type: 'base1' | 'base2' | 'quote1' | 'quote2';
+  type: 'base1' | 'base2' | 'quote1' | 'quote2' | 'baseVault' | 'quoteVault';
   hasData: boolean;
 };
 
@@ -459,7 +459,7 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
   for (const { path, type, hasData } of feedPaths) {
     if (!hasData) continue;
 
-    if (type === 'base1' || type === 'base2') {
+    if (type === 'base1' || type === 'base2' || type === 'baseVault') {
       incrementCount(numeratorCounts, path.base);
       incrementCount(denominatorCounts, path.quote);
     } else {
@@ -550,6 +550,21 @@ export function checkFeedsPath(
     hasData: !!feed?.address,
   }));
 
+  if (oracleMetadataData?.baseVault) {
+    feedPaths.push({
+      path: { base: oracleMetadataData.baseVault.pair[0], quote: oracleMetadataData.baseVault.pair[1] },
+      type: 'baseVault',
+      hasData: true,
+    });
+  }
+  if (oracleMetadataData?.quoteVault) {
+    feedPaths.push({
+      path: { base: oracleMetadataData.quoteVault.pair[0], quote: oracleMetadataData.quoteVault.pair[1] },
+      type: 'quoteVault',
+      hasData: true,
+    });
+  }
+
   return validateFeedPaths(feedPaths, collateralSymbol, loanSymbol);
 }
 
@@ -576,6 +591,21 @@ export function checkEnrichedFeedsPath(oracleData: OracleOutputData, collateralS
     type,
     hasData: !!feed?.address,
   }));
+
+  if (oracleData.baseVault) {
+    feedPaths.push({
+      path: { base: oracleData.baseVault.pair[0], quote: oracleData.baseVault.pair[1] },
+      type: 'baseVault',
+      hasData: true,
+    });
+  }
+  if (oracleData.quoteVault) {
+    feedPaths.push({
+      path: { base: oracleData.quoteVault.pair[0], quote: oracleData.quoteVault.pair[1] },
+      type: 'quoteVault',
+      hasData: true,
+    });
+  }
 
   return validateFeedPaths(feedPaths, collateralSymbol, loanSymbol);
 }

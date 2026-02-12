@@ -5,6 +5,7 @@ import { AddressIdentity } from '@/components/shared/address-identity';
 import type { OracleFeed } from '@/utils/types';
 import { formatOracleDuration } from '@/utils/oracle';
 import { FeedEntry } from './FeedEntry';
+import { VaultEntry } from './VaultEntry';
 
 type MetaOracleInfoProps = {
   oracleAddress: string;
@@ -16,15 +17,15 @@ function OracleFeedSection({ oracleData, chainId, label }: { oracleData: OracleO
   if (!oracleData) return null;
 
   const feedGroups = [
-    { label: 'Base', feeds: [oracleData.baseFeedOne, oracleData.baseFeedTwo] },
-    { label: 'Quote', feeds: [oracleData.quoteFeedOne, oracleData.quoteFeedTwo] },
+    { label: 'Base', feeds: [oracleData.baseFeedOne, oracleData.baseFeedTwo], vault: oracleData.baseVault ?? null },
+    { label: 'Quote', feeds: [oracleData.quoteFeedOne, oracleData.quoteFeedTwo], vault: oracleData.quoteVault ?? null },
   ];
 
   return (
     <div className="space-y-1">
-      {feedGroups.map(({ label: feedLabel, feeds }) => {
+      {feedGroups.map(({ label: feedLabel, feeds, vault }) => {
         const activeFeeds = feeds.filter(Boolean);
-        if (activeFeeds.length === 0) return null;
+        if (activeFeeds.length === 0 && !vault) return null;
         return (
           <div
             key={`${label}-${feedLabel}`}
@@ -32,6 +33,9 @@ function OracleFeedSection({ oracleData, chainId, label }: { oracleData: OracleO
           >
             <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400 pl-2">{feedLabel}:</span>
             <div className="flex justify-end gap-2">
+              {vault && (
+                <VaultEntry vault={vault} chainId={chainId} />
+              )}
               {activeFeeds.map((enrichedFeed) => {
                 if (!enrichedFeed) return null;
                 const oracleFeed: OracleFeed = {
