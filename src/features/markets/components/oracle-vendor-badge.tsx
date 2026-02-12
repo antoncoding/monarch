@@ -3,7 +3,7 @@
 import React from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
-import { IoWarningOutline, IoHelpCircleOutline } from 'react-icons/io5';
+import { IoWarningOutline, IoHelpCircleOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
 import {
   OracleType,
   OracleVendorIcons,
@@ -50,6 +50,17 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
   const isCustom = oracleType === OracleType.Custom;
   const isMeta = oracleType === OracleType.Meta;
 
+  // Check if this is a vault-only oracle (no feeds, only vault conversion)
+  const oracleMetadata = oracleMetadataMap && oracleAddress ? getOracleFromMetadata(oracleMetadataMap, oracleAddress) : undefined;
+  const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
+  const isVaultOnly =
+    oracleType === OracleType.Standard &&
+    !oracleMetadataData?.baseFeedOne &&
+    !oracleMetadataData?.baseFeedTwo &&
+    !oracleMetadataData?.quoteFeedOne &&
+    !oracleMetadataData?.quoteFeedTwo &&
+    (oracleMetadataData?.baseVault || oracleMetadataData?.quoteVault);
+
   const vendorInfo = (() => {
     if (isMeta && oracleMetadataMap && oracleAddress) {
       const metadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
@@ -70,6 +81,12 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
       {isCustom ? (
         <IoWarningOutline
           className="text-secondary"
+          size={16}
+        />
+      ) : isVaultOnly ? (
+        // Vault-only oracle - show checkmark icon
+        <IoCheckmarkCircleOutline
+          className="text-green-600 dark:text-green-400"
           size={16}
         />
       ) : hasCompletelyUnknown || hasTaggedUnknown ? (
@@ -97,6 +114,16 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium text-primary font-zen">Custom Oracle</p>
             <p className="text-xs text-secondary font-zen">Uses an unrecognized oracle contract.</p>
+          </div>
+        );
+      }
+
+      // Vault-only oracle - special case
+      if (isVaultOnly) {
+        return (
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-primary font-zen">Standard Oracle</p>
+            <p className="text-xs text-secondary font-zen">Uses onchain vault contract for price conversion.</p>
           </div>
         );
       }
