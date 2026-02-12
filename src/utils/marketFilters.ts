@@ -6,10 +6,10 @@
  */
 
 import { LOCKED_MARKET_APY_THRESHOLD } from '@/constants/markets';
-import type { OracleMetadataRecord } from '@/hooks/useOracleMetadata';
+import { type OracleMetadataRecord, getOracleFromMetadata, isMetaOracleData } from '@/hooks/useOracleMetadata';
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
-import { parsePriceFeedVendors, type PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
+import { parsePriceFeedVendors, parseMetaOracleVendors, type PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
 import type { ERC20Token } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 
@@ -101,13 +101,24 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMeta
     return () => true;
   }
   return (market) => {
+    const oracleType = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id, oracleMetadataMap);
+
+    if (oracleType === OracleType.Meta) {
+      const metadata = getOracleFromMetadata(oracleMetadataMap, market.oracleAddress);
+      if (metadata?.data && isMetaOracleData(metadata.data)) {
+        const info = parseMetaOracleVendors(metadata.data);
+        return !info.hasUnknown;
+      }
+      return false;
+    }
+
     if (!market.oracle) return false;
 
     const info = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id, {
       metadataMap: oracleMetadataMap,
       oracleAddress: market.oracleAddress,
     });
-    const isCustom = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id) === OracleType.Custom;
+    const isCustom = oracleType === OracleType.Custom;
     const isUnknown = isCustom || (info?.hasUnknown ?? false);
 
     return !isUnknown;
