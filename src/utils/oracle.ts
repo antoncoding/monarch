@@ -48,6 +48,7 @@ export enum PriceFeedVendors {
   Oval = 'Oval',
   Compound = 'Compound',
   Lido = 'Lido',
+  Pendle = 'Pendle',
   Unknown = 'Unknown',
 }
 
@@ -58,6 +59,7 @@ export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
   [PriceFeedVendors.Oval]: require('../imgs/oracles/uma.png') as string,
   [PriceFeedVendors.Compound]: require('../imgs/oracles/compound.webp') as string,
   [PriceFeedVendors.Lido]: require('../imgs/oracles/lido.png') as string,
+  [PriceFeedVendors.Pendle]: require('../imgs/oracles/pendle.png') as string,
   [PriceFeedVendors.Unknown]: '',
 };
 
@@ -74,6 +76,7 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
     Lido: PriceFeedVendors.Lido,
     Oval: PriceFeedVendors.Oval,
     Pyth: PriceFeedVendors.PythNetwork,
+    Pendle: PriceFeedVendors.Pendle,
   };
 
   return mapping[provider] ?? PriceFeedVendors.Unknown;
@@ -110,6 +113,10 @@ export type FeedData = {
   deviationThreshold?: number;
   ens?: string; // Chainlink ENS name for feed URL (e.g. "eth-usd")
   feedType?: string; // Redstone feed type: "market" or "fundamental"
+  baseDiscountPerYear?: string; // Pendle base discount per year (raw 18-decimal value)
+  innerOracle?: string; // Pendle inner oracle address
+  pt?: string; // Pendle PT token address
+  ptSymbol?: string; // Pendle PT token symbol
 };
 
 export type FeedVendorResult = {
@@ -175,6 +182,10 @@ export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefin
     deviationThreshold: feed.deviationThreshold,
     ens: feed.ens,
     feedType: feed.feedType,
+    baseDiscountPerYear: feed.baseDiscountPerYear,
+    innerOracle: feed.innerOracle,
+    pt: feed.pt,
+    ptSymbol: feed.ptSymbol,
   };
 
   return {

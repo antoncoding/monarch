@@ -10,6 +10,7 @@ import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
 import { CompoundFeedTooltip } from './CompoundFeedTooltip';
 import { GeneralFeedTooltip } from './GeneralFeedTooltip';
+import { PendleFeedTooltip } from './PendleFeedTooltip';
 import { RedstoneFeedTooltip } from './RedstoneFeedTooltip';
 import { UnknownFeedTooltip } from './UnknownFeedTooltip';
 
@@ -56,6 +57,7 @@ export function FeedEntry({ feed, chainId, oracleAddress, oracleMetadataMap }: F
   const isChainlink = vendor === PriceFeedVendors.Chainlink;
   const isCompound = vendor === PriceFeedVendors.Compound;
   const isRedstone = vendor === PriceFeedVendors.Redstone;
+  const isPendle = vendor === PriceFeedVendors.Pendle;
 
   const getTooltipContent = () => {
     switch (vendor) {
@@ -80,6 +82,15 @@ export function FeedEntry({ feed, chainId, oracleAddress, oracleMetadataMap }: F
       case PriceFeedVendors.Redstone:
         return (
           <RedstoneFeedTooltip
+            feed={feed}
+            feedData={data}
+            chainId={chainId}
+          />
+        );
+
+      case PriceFeedVendors.Pendle:
+        return (
+          <PendleFeedTooltip
             feed={feed}
             feedData={data}
             chainId={chainId}
@@ -143,7 +154,7 @@ export function FeedEntry({ feed, chainId, oracleAddress, oracleMetadataMap }: F
         )}
 
         <div className="flex flex-shrink-0 items-center gap-1">
-          {(isChainlink || isCompound || isRedstone) && vendorIcon ? (
+          {(isChainlink || isCompound || isRedstone || isPendle) && vendorIcon ? (
             <Image
               src={vendorIcon}
               alt="Oracle"
