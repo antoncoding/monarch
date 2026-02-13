@@ -51,8 +51,10 @@ module.exports = withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
 
-  // Automatically tree-shake Sentry logger statements
-  disableLogger: true,
+  // Automatically tree-shake Sentry debug logs
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+  },
 
   // Hide source maps from users
   hideSourceMaps: true,

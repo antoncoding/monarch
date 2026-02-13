@@ -62,3 +62,6 @@ Sentry.init({
     'Pairing already exists',
   ],
 });
+
+// Required for Next.js navigation instrumentation
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
