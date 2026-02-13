@@ -100,7 +100,7 @@ export function PositionHeader({
     groupedPosition && totalEarnings > 0n ? formatReadable(Number(formatBalance(totalEarnings, groupedPosition.loanAssetDecimals))) : null;
 
   return (
-    <div className="mt-6 mb-6 space-y-4">
+    <div className="mt-3 mb-6 space-y-4">
       <div className="rounded border border-border bg-surface px-6 py-4 shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           {/* LEFT: Position Identity */}

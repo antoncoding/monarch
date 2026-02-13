@@ -114,7 +114,7 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
           className="w-full"
         >
           {/* Breadcrumbs - always visible */}
-          <div className="mt-6">
+          <div className="mt-6 min-h-10 flex items-center">
             <PositionBreadcrumbs
               userAddress={userAddress}
               chainId={chainId as SupportedNetworks}
