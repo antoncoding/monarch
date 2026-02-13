@@ -1,3 +1,5 @@
+const { withSentryConfig } = require('@sentry/nextjs');
+
 /**
  * @type {import('next').NextConfig}
  */
@@ -40,4 +42,28 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withSentryConfig(nextConfig, {
+  // Suppress source map upload logs in CI
+  silent: true,
+
+  // Source map upload config (requires SENTRY_AUTH_TOKEN)
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Tree-shake Sentry debug logs (new recommended pattern)
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
+
+  // Route events through your domain to reduce ad-blocker drops
+  tunnelRoute: '/monitoring',
+
+  // Hide source maps from users
+  hideSourceMaps: true,
+
+  // Disable telemetry
+  telemetry: false,
+});

@@ -1,8 +1,21 @@
 'use client';
 
+import { useEffect } from 'react';
+// biome-ignore lint/performance/noNamespaceImport: Sentry SDK requires namespace import
+import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
 
-export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    Sentry.withScope((scope) => {
+      scope.setTag('error_boundary', 'global');
+      if (error.digest) {
+        scope.setExtra('next_digest', error.digest);
+      }
+      Sentry.captureException(error);
+    });
+  }, [error]);
+
   return (
     <html
       lang="en"
