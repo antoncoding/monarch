@@ -5,13 +5,12 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { GearIcon } from '@radix-ui/react-icons';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
-import { TbReport } from 'react-icons/tb';
 import { useConnection } from 'wagmi';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useModal } from '@/hooks/useModal';
@@ -78,7 +77,6 @@ export function NavbarTitle() {
 export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useConnection();
-  const router = useRouter();
   const { open: openModal } = useModal();
   const [mounted, setMounted] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -187,14 +185,6 @@ export function Navbar() {
               >
                 GitHub
               </DropdownMenuItem>
-              {mounted && address && (
-                <DropdownMenuItem
-                  endContent={<TbReport className="h-4 w-4" />}
-                  onClick={() => router.push(`/positions/report/${address}`)}
-                >
-                  Report
-                </DropdownMenuItem>
-              )}
               <DropdownMenuItem
                 endContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
                 onClick={toggleTheme}
