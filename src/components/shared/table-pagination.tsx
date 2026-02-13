@@ -18,6 +18,8 @@ type TablePaginationProps = {
   showEntryCount?: boolean;
 };
 
+type PaginationToken = number | 'ellipsis';
+
 export function TablePagination({
   currentPage,
   totalPages,
@@ -54,8 +56,8 @@ export function TablePagination({
   };
 
   // Generate fixed-length page numbers to keep controls spatially stable.
-  const getPageNumbers = () => {
-    const pages: (number | 'ellipsis')[] = [];
+  const getPageNumbers = (): PaginationToken[] => {
+    const pages: PaginationToken[] = [];
 
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) {
@@ -75,7 +77,7 @@ export function TablePagination({
     return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
   };
 
-  const getItemKey = (page: number | 'ellipsis', idx: number) => {
+  const getItemKey = (page: PaginationToken, idx: number) => {
     if (page === 'ellipsis') {
       return `ellipsis-${idx}`;
     }
