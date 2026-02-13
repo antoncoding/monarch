@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { useConnection } from 'wagmi';
+import { useMemo } from 'react';
+import { type Address, erc20Abi } from 'viem';
+import { useConnection, useReadContracts } from 'wagmi';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { type SupportedNetworks, ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
+import { supportedTokens } from '@/utils/tokens';
 
 export type TokenBalance = {
   address: string;
@@ -11,32 +13,22 @@ export type TokenBalance = {
   symbol: string;
 };
 
-type TokenResponse = {
-  tokens: {
-    address: string;
-    balance: string;
-  }[];
-};
-
 type UseUserBalancesOptions = {
   address?: string;
   networkIds?: SupportedNetworks[];
   enabled?: boolean;
 };
 
+type TokenEntry = {
+  address: string;
+  chainId: number;
+};
+
 /**
- * Fetches user token balances across specified networks using React Query.
+ * Fetches user token balances across specified networks using wagmi's useReadContracts.
  *
- * Data fetching strategy:
- * - Fetches balances from API endpoint for each network
- * - Enriches balance data with token metadata from useTokensQuery
- * - Filters out tokens not found in token registry
- * - Gracefully handles individual network failures
- *
- * Cache behavior:
- * - staleTime: 30 seconds (balance data changes frequently)
- * - Refetch on window focus: enabled
- * - Only runs when address is provided
+ * Makes direct RPC multicalls from the browser — no API route needed.
+ * Wagmi groups calls by chainId and issues parallel multicalls automatically.
  *
  * @example
  * ```tsx
@@ -54,91 +46,82 @@ export const useUserBalancesQuery = (options: UseUserBalancesOptions = {}) => {
   const networksToFetch = options.networkIds ?? ALL_SUPPORTED_NETWORKS;
   const enabled = options.enabled ?? true;
 
-  return useQuery<TokenBalance[], Error>({
-    queryKey: ['user-balances', address, networksToFetch],
-    queryFn: async () => {
-      if (!address) {
-        return [];
-      }
-
-      if (networksToFetch.length === 0) {
-        return [];
-      }
-
-      try {
-        // Fetch balances from specified networks only
-        const balancePromises = networksToFetch.map(async (chainId) => {
-          try {
-            const response = await fetch(`/api/balances?address=${address}&chainId=${chainId}`);
-            if (!response.ok) {
-              const errorMessage = await response
-                .json()
-                .then((errorData) => (errorData?.error as string | undefined) ?? 'Failed to fetch balances')
-                .catch(() => 'Failed to fetch balances');
-              throw new Error(errorMessage);
-            }
-            const data = (await response.json()) as TokenResponse;
-            return { chainId, tokens: data.tokens };
-          } catch (err) {
-            console.warn(`Failed to fetch balances for chain ${chainId}:`, err);
-            return {
-              chainId,
-              tokens: [],
-              error: err instanceof Error ? err : new Error('Unknown error occurred'),
-            };
-          }
-        });
-
-        const networkResults = await Promise.all(balancePromises);
-
-        // Process and filter tokens
-        const processedBalances: TokenBalance[] = [];
-        const failedChainIds: number[] = [];
-        const errorMessages: string[] = [];
-
-        networkResults.forEach((result) => {
-          result.tokens.forEach((token) => {
-            const tokenInfo = findToken(token.address, result.chainId);
-            if (tokenInfo) {
-              processedBalances.push({
-                address: token.address,
-                balance: token.balance,
-                chainId: result.chainId,
-                decimals: tokenInfo.decimals,
-                symbol: tokenInfo.symbol,
-              });
-            }
+  // Build the list of token entries (address + chainId) for all requested networks
+  const tokenEntries = useMemo(() => {
+    const entries: TokenEntry[] = [];
+    for (const token of supportedTokens) {
+      for (const network of token.networks) {
+        if (networksToFetch.includes(network.chain.id as SupportedNetworks)) {
+          entries.push({
+            address: network.address,
+            chainId: network.chain.id,
           });
-
-          if (result.error) {
-            failedChainIds.push(result.chainId);
-            if (result.error.message) {
-              errorMessages.push(result.error.message);
-            }
-          }
-        });
-
-        // Only throw error if ALL networks failed
-        if (failedChainIds.length > 0 && failedChainIds.length === networksToFetch.length) {
-          const fallbackMessage = 'All networks failed to fetch balances';
-          const aggregatedMessage = errorMessages.length > 0 ? [...new Set(errorMessages)].join(' | ') : fallbackMessage;
-          throw new Error(aggregatedMessage);
         }
-
-        return processedBalances;
-      } catch (err) {
-        console.error('Error fetching balances:', err);
-        throw err instanceof Error ? err : new Error('Unknown error occurred');
       }
+    }
+    return entries;
+  }, [networksToFetch]);
+
+  // Build wagmi contract calls — one balanceOf per token entry
+  const contracts = useMemo(() => {
+    if (!address) return [];
+    return tokenEntries.map((entry) => ({
+      address: entry.address as Address,
+      abi: erc20Abi,
+      functionName: 'balanceOf' as const,
+      args: [address as Address] as const,
+      chainId: entry.chainId,
+    }));
+  }, [address, tokenEntries]);
+
+  const {
+    data: rawResults,
+    isLoading,
+    isError,
+    error,
+  } = useReadContracts({
+    contracts,
+    query: {
+      enabled: enabled && Boolean(address) && contracts.length > 0,
+      staleTime: 30_000,
+      refetchOnWindowFocus: true,
     },
-    enabled: enabled && Boolean(address),
-    staleTime: 30_000, // 30 seconds - balances change frequently
-    refetchOnWindowFocus: true,
   });
+
+  // Process results: filter failures and zero balances, enrich with token metadata
+  const data = useMemo(() => {
+    if (!rawResults) return undefined;
+
+    const balances: TokenBalance[] = [];
+
+    for (let i = 0; i < rawResults.length; i++) {
+      const result = rawResults[i];
+      if (result?.status !== 'success' || result.result === undefined) continue;
+
+      const balance = result.result as bigint;
+      if (balance <= 0n) continue;
+
+      const entry = tokenEntries[i];
+      const tokenInfo = findToken(entry.address, entry.chainId);
+      if (!tokenInfo) continue;
+
+      balances.push({
+        address: entry.address.toLowerCase(),
+        balance: balance.toString(10),
+        chainId: entry.chainId,
+        decimals: tokenInfo.decimals,
+        symbol: tokenInfo.symbol,
+      });
+    }
+
+    return balances;
+  }, [rawResults, tokenEntries, findToken]);
+
+  return { data, isLoading, isError, error };
 };
 
 /**
- * Helper hook to fetch balances from all networks (for backward compatibility).
+ * Helper hook to fetch balances from all networks.
  *
  * @example
  * ```tsx
