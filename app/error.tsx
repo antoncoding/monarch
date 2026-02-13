@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
+// biome-ignore lint/performance/noNamespaceImport: Sentry SDK requires namespace import
+import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
 
 export default function AppError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    // Log the error to an error reporting service in production if desired
-    console.error('App error boundary caught:', error);
+    // Report to Sentry
+    Sentry.captureException(error);
   }, [error]);
 
   return (
