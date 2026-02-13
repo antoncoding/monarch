@@ -72,17 +72,20 @@ export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
 export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVendors {
   if (!provider) return PriceFeedVendors.Unknown;
 
+  const normalizedProvider = provider.trim().toLowerCase();
+
+  if (normalizedProvider.includes('pendle')) return PriceFeedVendors.Pendle;
+
   const mapping: Record<string, PriceFeedVendors> = {
-    Chainlink: PriceFeedVendors.Chainlink,
-    Redstone: PriceFeedVendors.Redstone,
-    Compound: PriceFeedVendors.Compound,
-    Lido: PriceFeedVendors.Lido,
-    Oval: PriceFeedVendors.Oval,
-    Pyth: PriceFeedVendors.PythNetwork,
-    Pendle: PriceFeedVendors.Pendle,
+    chainlink: PriceFeedVendors.Chainlink,
+    redstone: PriceFeedVendors.Redstone,
+    compound: PriceFeedVendors.Compound,
+    lido: PriceFeedVendors.Lido,
+    oval: PriceFeedVendors.Oval,
+    pyth: PriceFeedVendors.PythNetwork,
   };
 
-  return mapping[provider] ?? PriceFeedVendors.Unknown;
+  return mapping[normalizedProvider] ?? PriceFeedVendors.Unknown;
 }
 
 /**
@@ -120,6 +123,8 @@ export type FeedData = {
   innerOracle?: string; // Pendle inner oracle address
   pt?: string; // Pendle PT token address
   ptSymbol?: string; // Pendle PT token symbol
+  pendleFeedKind?: string; // Pendle feed kind (e.g. "PendleChainlinkOracle", "LinearDiscount")
+  pendleFeedSubtype?: string; // Pendle subtype (e.g. "SparkLinearDiscountOracle")
 };
 
 export type FeedVendorResult = {
@@ -144,7 +149,13 @@ export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefin
     };
   }
 
-  const vendor = mapProviderToVendor(feed.provider);
+  const isPendleFeed =
+    feed.pendleFeedKind != null ||
+    feed.pendleFeedSubtype != null ||
+    feed.baseDiscountPerYear != null ||
+    feed.pt != null ||
+    feed.ptSymbol != null;
+  const vendor = isPendleFeed ? PriceFeedVendors.Pendle : mapProviderToVendor(feed.provider);
 
   // Try to extract pair from feed.pair, or fallback to parsing description
   let baseAsset = 'Unknown';
@@ -176,7 +187,7 @@ export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefin
 
   const feedData: FeedData = {
     address: feed.address,
-    vendor: feed.provider ?? 'Unknown',
+    vendor: feed.provider ?? (isPendleFeed ? PriceFeedVendors.Pendle : 'Unknown'),
     description: feed.description,
     pair: [baseAsset, quoteAsset] as [string, string],
     decimals: feed.decimals ?? 18,
@@ -189,6 +200,8 @@ export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefin
     innerOracle: feed.innerOracle,
     pt: feed.pt,
     ptSymbol: feed.ptSymbol,
+    pendleFeedKind: feed.pendleFeedKind,
+    pendleFeedSubtype: feed.pendleFeedSubtype,
   };
 
   return {
