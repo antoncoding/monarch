@@ -127,7 +127,7 @@ export function PositionBreadcrumbs({
   }, [searchOpen]);
 
   return (
-    <nav className="flex items-center gap-2 text-sm text-secondary flex-nowrap overflow-x-auto leading-none py-1">
+    <nav className="flex items-center gap-2 text-sm text-secondary flex-nowrap overflow-x-auto leading-none py-1 font-zen">
       <Link
         href={rootHref}
         className="no-underline hover:no-underline text-secondary hover:text-primary"

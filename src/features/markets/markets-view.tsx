@@ -150,7 +150,7 @@ export default function Markets() {
         <Header />
       </div>
       <div className="container h-full gap-8">
-        <div className="mt-6 mb-2">
+        <div className="mt-6 min-h-10 flex items-center">
           <Breadcrumbs
             items={[
               { label: 'Market', href: '/markets' },

@@ -168,7 +168,7 @@ export default function Rewards() {
       <Header />
 
       <div className="container h-full gap-8">
-        <div className="mt-6">
+        <div className="mt-6 min-h-10 flex items-center">
           <PositionBreadcrumbs
             userAddress={account}
             showPosition={false}
@@ -178,7 +178,7 @@ export default function Rewards() {
           />
         </div>
 
-        <div className="mt-4 flex flex-col gap-4 pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mt-3 flex flex-col gap-4 pb-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-2">
             <AccountIdentity
               address={account as Address}
