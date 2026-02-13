@@ -35,8 +35,6 @@ src/features/{feature-name}/
   /history/[account]   # Transaction history
   /settings            # User settings
   /admin/stats         # Admin stats
-  /api/balances        # Only API route (token balances)
-
 /src
   /data-sources        # Data fetching layer
     /morpho-api/       # Morpho API fetchers (14 files)
