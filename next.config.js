@@ -58,6 +58,9 @@ module.exports = withSentryConfig(nextConfig, {
     },
   },
 
+  // Route events through your domain to reduce ad-blocker drops
+  tunnelRoute: '/monitoring',
+
   // Hide source maps from users
   hideSourceMaps: true,
 

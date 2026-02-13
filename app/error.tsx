@@ -7,8 +7,13 @@ import { Button } from '@/components/ui/button';
 
 export default function AppError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    // Report to Sentry
-    Sentry.captureException(error);
+    Sentry.withScope((scope) => {
+      scope.setTag('error_boundary', 'app');
+      if (error.digest) {
+        scope.setExtra('next_digest', error.digest);
+      }
+      Sentry.captureException(error);
+    });
   }, [error]);
 
   return (
