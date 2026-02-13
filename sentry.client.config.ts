@@ -33,14 +33,22 @@ Sentry.init({
     if (event.request?.data) {
       event.request.data = '[Filtered]';
     }
+    // Scrub sensitive headers (same as server config)
+    if (event.request?.headers) {
+      const filtered = { ...event.request.headers };
+      for (const key of ['authorization', 'cookie', 'set-cookie']) {
+        if (key in filtered) filtered[key] = '[Filtered]';
+      }
+      event.request.headers = filtered;
+    }
     return event;
   },
 
+  // Ignore errors from browser extensions (by source URL)
+  denyUrls: [/extensions\//i, /^chrome-extension:\/\//, /^moz-extension:\/\//],
+
   // Ignore common non-actionable errors
   ignoreErrors: [
-    // Browser extensions
-    /extensions\//i,
-    /^chrome-extension:\/\//,
     // Network errors (user's connection)
     'Network request failed',
     'Failed to fetch',
