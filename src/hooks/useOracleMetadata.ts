@@ -16,7 +16,7 @@ import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks
  * 4. Components use getOracleFromMetadata() + getFeedFromOracleData() to access data
  */
 
-export type OracleFeedProvider = 'Chainlink' | 'Redstone' | 'Compound' | 'Lido' | 'Oval' | 'Pyth' | 'Pendle' | 'Spectra' | null;
+export type OracleFeedProvider = string | null;
 
 export type EnrichedFeed = {
   address: string;
@@ -33,6 +33,8 @@ export type EnrichedFeed = {
   innerOracle?: string; // Pendle inner oracle address
   pt?: string; // Pendle PT token address
   ptSymbol?: string; // Pendle PT token symbol
+  pendleFeedKind?: string; // Pendle feed kind (e.g. "PendleChainlinkOracle", "LinearDiscount")
+  pendleFeedSubtype?: string; // Pendle subtype (e.g. "SparkLinearDiscountOracle")
 };
 
 export type EnrichedVault = {

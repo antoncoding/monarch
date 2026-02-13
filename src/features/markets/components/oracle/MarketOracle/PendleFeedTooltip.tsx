@@ -23,6 +23,9 @@ function formatDiscountPerYear(raw: string): string {
 export function PendleFeedTooltip({ feed, feedData, chainId }: PendleFeedTooltipProps) {
   const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
+  const pendleFeedKind = feedData?.pendleFeedKind;
+  const isLinearDiscount = pendleFeedKind?.toLowerCase() === 'lineardiscount';
+  const typeLabel = isLinearDiscount ? 'Linear Discount' : pendleFeedKind;
 
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Pendle];
 
@@ -51,17 +54,17 @@ export function PendleFeedTooltip({ feed, feedData, chainId }: PendleFeedTooltip
       </div>
 
       {/* Pendle Specific Data */}
-      {(feedData?.ptSymbol != null || feedData?.baseDiscountPerYear != null) && (
+      {(typeLabel != null || feedData?.baseDiscountPerYear != null) && (
         <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          {feedData?.ptSymbol != null && (
+          {typeLabel != null && (
             <div className="flex justify-between font-zen text-sm">
-              <span className="text-gray-600 dark:text-gray-400">PT Token:</span>
-              <span className="font-medium">{feedData.ptSymbol}</span>
+              <span className="text-gray-600 dark:text-gray-400">Type:</span>
+              <span className="font-medium">{typeLabel}</span>
             </div>
           )}
           {feedData?.baseDiscountPerYear != null && (
             <div className="flex justify-between font-zen text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Base Discount / Year:</span>
+              <span className="text-gray-600 dark:text-gray-400">Base Discount:</span>
               <span className="font-medium">{formatDiscountPerYear(feedData.baseDiscountPerYear)}</span>
             </div>
           )}
