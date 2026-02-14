@@ -130,8 +130,20 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
 
   // Core transaction execution logic
   const executeBorrowTransaction = useCallback(async () => {
-    const minSharesToBorrow =
-      borrowAmount === 0n ? 0n : (borrowAmount * BigInt(market.state.supplyShares)) / BigInt(market.state.supplyAssets) - 1n;
+    // Morpho virtual shares/assets (from SharesMathLib.sol) - prevents division by zero on fresh markets
+    const VIRTUAL_SHARES = 1000000n; // 1e6
+    const VIRTUAL_ASSETS = 1n;
+
+    // Calculate max borrow shares using Morpho's formula with 0.5% slippage buffer
+    // Formula: shares = assets * (totalShares + VIRTUAL_SHARES) / (totalAssets + VIRTUAL_ASSETS)
+    const totalBorrowShares = BigInt(market.state.borrowShares);
+    const totalBorrowAssets = BigInt(market.state.borrowAssets);
+    const denominator = totalBorrowAssets + VIRTUAL_ASSETS;
+    const numerator = borrowAmount * (totalBorrowShares + VIRTUAL_SHARES);
+    // Round up: (a + b - 1) / b
+    const expectedShares = borrowAmount === 0n ? 0n : (numerator + denominator - 1n) / denominator;
+    // Add 0.5% buffer + 1 for safety margin
+    const maxBorrowShares = borrowAmount === 0n ? 0n : expectedShares + expectedShares / 200n + 1n;
 
     try {
       const transactions: `0x${string}`[] = [];
@@ -272,7 +284,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
             },
             borrowAmount, // asset to borrow
             0n, // shares to mint (0), we always use `assets` as param
-            minSharesToBorrow, // slippageAmount: min borrow shares
+            maxBorrowShares, // slippageAmount: max borrow shares to mint
             account as Address,
           ],
         });
