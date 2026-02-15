@@ -14,6 +14,10 @@ export const getPeriodTimestamp = (period: EarningsPeriod): number => {
       return now - 7 * 86_400;
     case 'month':
       return now - 30 * 86_400;
+    case 'sixmonth':
+      return now - 180 * 86_400;
+    case 'all':
+      return 0;
     default:
       return now - 86_400;
   }

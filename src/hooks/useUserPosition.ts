@@ -49,7 +49,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
       console.log(`Attempting fetchPositionSnapshot for ${user} on market ${marketKey}`);
       let snapshot = null;
       try {
-        snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, 0, publicClient);
+        snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, undefined, publicClient);
         console.log(`Snapshot result for ${marketKey}:`, snapshot ? 'Exists' : 'Null');
       } catch (snapshotError) {
         console.error(`Error fetching position snapshot for ${user} on market ${marketKey}:`, snapshotError);

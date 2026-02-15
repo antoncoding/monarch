@@ -187,7 +187,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
           }
 
           const marketIds = markets.map((m) => m.marketUniqueKey);
-          const snapshots = await fetchPositionsSnapshots(marketIds, user as Address, chainId, 0, publicClient);
+          const snapshots = await fetchPositionsSnapshots(marketIds, user as Address, chainId, undefined, publicClient);
 
           // Merge into allSnapshots
           snapshots.forEach((snapshot, marketId) => {

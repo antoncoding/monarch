@@ -22,6 +22,8 @@ const PERIOD_LABELS: Record<EarningsPeriod, string> = {
   day: '24h',
   week: '7d',
   month: '30d',
+  sixmonth: '6mo',
+  all: 'All time',
 };
 
 export function OverviewTab({
@@ -42,10 +44,12 @@ export function OverviewTab({
         <YieldAnalysisDistribution
           markets={groupedPosition.markets}
           periodLabel={periodLabel}
+          isLoading={isEarningsLoading}
         />
         <YieldAnalysisYieldBreakdown
           markets={groupedPosition.markets}
           periodLabel={periodLabel}
+          isLoading={isEarningsLoading}
         />
       </div>
       <MarketsBreakdownTable

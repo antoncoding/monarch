@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { PulseLoader } from 'react-spinners';
 import { Card } from '@/components/ui/card';
 import { useChartColors } from '@/constants/chartColors';
 import { getColorByIndex, OTHER_COLOR } from '@/features/positions/utils/colors';
@@ -11,6 +12,7 @@ import type { MarketPositionWithEarnings } from '@/utils/types';
 type YieldAnalysisDistributionProps = {
   markets: MarketPositionWithEarnings[];
   periodLabel: string;
+  isLoading?: boolean;
 };
 
 type PieEntry = {
@@ -25,7 +27,7 @@ type PieEntry = {
 
 const MAX_PIE_ITEMS = 6;
 
-export function YieldAnalysisDistribution({ markets, periodLabel }: YieldAnalysisDistributionProps) {
+export function YieldAnalysisDistribution({ markets, periodLabel, isLoading = false }: YieldAnalysisDistributionProps) {
   const chartColors = useChartColors();
 
   const pieData = useMemo((): PieEntry[] => {
@@ -107,7 +109,16 @@ export function YieldAnalysisDistribution({ markets, periodLabel }: YieldAnalysi
       </div>
       <div className="flex flex-col sm:flex-row items-stretch">
         <div className="flex-1 min-h-[220px] px-4 py-4">
-          {pieData.length === 0 ? (
+          {isLoading ? (
+            <div className="flex h-[220px] flex-col items-center justify-center gap-2 text-sm text-secondary">
+              <PulseLoader
+                size={4}
+                color="#f45f2d"
+                margin={3}
+              />
+              <span>Calculating...</span>
+            </div>
+          ) : pieData.length === 0 ? (
             <div className="flex h-[220px] items-center justify-center text-sm text-secondary">No activity in selected period.</div>
           ) : (
             <ResponsiveContainer
@@ -149,7 +160,15 @@ export function YieldAnalysisDistribution({ markets, periodLabel }: YieldAnalysi
           )}
         </div>
         <div className="w-full border-t border-border/40 px-4 py-4 sm:w-[280px] sm:border-l sm:border-t-0">
-          {pieData.length === 0 ? (
+          {isLoading ? (
+            <div className="flex h-[220px] items-center justify-center">
+              <PulseLoader
+                size={4}
+                color="#f45f2d"
+                margin={3}
+              />
+            </div>
+          ) : pieData.length === 0 ? (
             <div className="text-xs text-secondary">No weighted exposure to display.</div>
           ) : (
             <div className="max-h-[220px] space-y-2 overflow-auto pr-2">

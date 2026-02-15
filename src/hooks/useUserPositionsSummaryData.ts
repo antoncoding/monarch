@@ -40,11 +40,19 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     return blocks;
   }, [period, uniqueChainIds, currentBlocks]);
 
-  const { data: actualBlockData } = useBlockTimestamps(snapshotBlocks);
+  const {
+    data: actualBlockData,
+    isLoading: isLoadingBlockTimestamps,
+    isFetching: isFetchingBlockTimestamps,
+  } = useBlockTimestamps(snapshotBlocks);
 
   const endTimestamp = useMemo(() => Math.floor(Date.now() / 1000), []);
 
-  const { data: txData, isLoading: isLoadingTransactions } = useUserTransactionsQuery({
+  const {
+    data: txData,
+    isLoading: isLoadingTransactions,
+    isFetching: isFetchingTransactions,
+  } = useUserTransactionsQuery({
     filters: {
       userAddress: user ? [user] : [],
       marketUniqueKeys: positions?.map((p) => p.market.uniqueKey) ?? [],
@@ -54,7 +62,11 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     enabled: !!positions && !!user,
   });
 
-  const { data: allSnapshots, isLoading: isLoadingSnapshots } = usePositionSnapshots({
+  const {
+    data: allSnapshots,
+    isLoading: isLoadingSnapshots,
+    isFetching: isFetchingSnapshots,
+  } = usePositionSnapshots({
     positions,
     user,
     snapshotBlocks,
@@ -95,7 +107,13 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     }
   };
 
-  const isEarningsLoading = isLoadingSnapshots || isLoadingTransactions || !actualBlockData;
+  const isEarningsLoading =
+    isLoadingSnapshots ||
+    isFetchingSnapshots ||
+    isLoadingTransactions ||
+    isFetchingTransactions ||
+    isLoadingBlockTimestamps ||
+    isFetchingBlockTimestamps;
 
   const loadingStates = {
     positions: positionsLoading,
