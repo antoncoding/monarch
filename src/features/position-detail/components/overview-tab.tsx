@@ -22,6 +22,8 @@ const PERIOD_LABELS: Record<EarningsPeriod, string> = {
   day: '24h',
   week: '7d',
   month: '30d',
+  sixmonth: '6mo',
+  all: 'All time',
 };
 
 export function OverviewTab({

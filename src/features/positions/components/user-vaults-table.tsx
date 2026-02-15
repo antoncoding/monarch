@@ -23,11 +23,13 @@ import { VaultAllocationDetail } from './vault-allocation-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { VaultActionsDropdown } from './vault-actions-dropdown';
 
-const periodLabels = {
+const periodLabels: Record<EarningsPeriod, string> = {
   day: '1D',
   week: '7D',
   month: '30D',
-} as const;
+  sixmonth: '6M',
+  all: 'All',
+};
 
 const formatRate = (rate: number | null | undefined, isApr: boolean): string => {
   if (rate === null || rate === undefined) return '-';

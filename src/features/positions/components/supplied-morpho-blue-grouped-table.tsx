@@ -70,11 +70,13 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
     return account === address;
   }, [account, address]);
 
-  const periodLabels = {
+  const periodLabels: Record<EarningsPeriod, string> = {
     day: '1D',
     week: '7D',
     month: '30D',
-  } as const;
+    sixmonth: '6M',
+    all: 'All',
+  };
 
   const groupedPositions = useMemo(() => groupPositionsByLoanAsset(marketPositions), [marketPositions]);
 

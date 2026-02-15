@@ -14,6 +14,8 @@ const PERIOD_OPTIONS: { value: EarningsPeriod; label: string }[] = [
   { value: 'day', label: '24h' },
   { value: 'week', label: '7 days' },
   { value: 'month', label: '30 days' },
+  { value: 'sixmonth', label: '6 months' },
+  { value: 'all', label: 'All time' },
 ];
 
 export function PositionPeriodSelector({ period, onPeriodChange, className, contentClassName }: PositionPeriodSelectorProps) {
