@@ -32,7 +32,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
       console.log(`Attempting fetchMarketSnapshot for market ${uniqueKey}`);
       let snapshot = null;
       try {
-        snapshot = await fetchMarketSnapshot(uniqueKey, network, publicClient, 0);
+        snapshot = await fetchMarketSnapshot(uniqueKey, network, publicClient);
         console.log(`Market state (from RPC) result for ${uniqueKey}:`, snapshot ? 'Exists' : 'Null');
       } catch (snapshotError) {
         console.error(`Error fetching market snapshot for ${uniqueKey}:`, snapshotError);

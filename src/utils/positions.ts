@@ -68,7 +68,7 @@ function convertSharesToAssets(shares: bigint, totalAssets: bigint, totalShares:
  * @param marketIds - Array of market unique IDs
  * @param userAddress - The user's address
  * @param chainId - The chain ID of the network
- * @param blockNumber - The block number to fetch positions at (0 for latest)
+ * @param blockNumber - The block number to fetch positions at (undefined for latest)
  * @param client - The viem PublicClient to use for the request
  * @returns Map of marketId to PositionSnapshot
  */
@@ -76,7 +76,7 @@ export async function fetchPositionsSnapshots(
   marketIds: string[],
   userAddress: Address,
   chainId: number,
-  blockNumber: number,
+  blockNumber: number | undefined,
   client: PublicClient,
 ): Promise<Map<string, PositionSnapshot>> {
   const result = new Map<string, PositionSnapshot>();
@@ -86,7 +86,7 @@ export async function fetchPositionsSnapshots(
   }
 
   try {
-    const isNow = blockNumber === 0;
+    const isLatest = blockNumber === undefined;
     const morphoAddress = getMorphoAddress(chainId as SupportedNetworks);
 
     // Step 1: Multicall to get all position data
@@ -100,7 +100,7 @@ export async function fetchPositionsSnapshots(
     const positionResults = await client.multicall({
       contracts: positionContracts,
       allowFailure: true,
-      blockNumber: isNow ? undefined : BigInt(blockNumber),
+      blockNumber: isLatest ? undefined : BigInt(blockNumber),
     });
 
     // Process position results and identify which markets need market data
@@ -143,7 +143,7 @@ export async function fetchPositionsSnapshots(
       const marketResults = await client.multicall({
         contracts: marketContracts,
         allowFailure: true,
-        blockNumber: isNow ? undefined : BigInt(blockNumber),
+        blockNumber: isLatest ? undefined : BigInt(blockNumber),
       });
 
       // Process market results and create final snapshots
@@ -192,7 +192,7 @@ export async function fetchPositionsSnapshots(
  * @param marketId - The unique ID of the market
  * @param userAddress - The user's address
  * @param chainId - The chain ID of the network
- * @param blockNumber - The block number to fetch the position at (0 for latest)
+ * @param blockNumber - The block number to fetch the position at (undefined for latest)
  * @param client - The viem PublicClient to use for the request
  * @returns The position snapshot or null if there was an error
  */
@@ -200,7 +200,7 @@ export async function fetchPositionSnapshot(
   marketId: string,
   userAddress: Address,
   chainId: number,
-  blockNumber: number,
+  blockNumber: number | undefined,
   client: PublicClient,
 ): Promise<PositionSnapshot | null> {
   const snapshots = await fetchPositionsSnapshots([marketId], userAddress, chainId, blockNumber, client);
@@ -212,7 +212,7 @@ export async function fetchPositionSnapshot(
  *
  * @param marketId - The unique ID of the market
  * @param chainId - The chain ID of the network
- * @param blockNumber - The block number to fetch the market at (0 for latest)
+ * @param blockNumber - The block number to fetch the market at (undefined for latest)
  * @param client - The viem PublicClient to use for the request
  * @returns The market snapshot or null if there was an error
  */
@@ -220,10 +220,10 @@ export async function fetchMarketSnapshot(
   marketId: string,
   chainId: number,
   client: PublicClient,
-  blockNumber = 0,
+  blockNumber?: number,
 ): Promise<MarketSnapshot | null> {
   try {
-    const isNow = !blockNumber || blockNumber === 0;
+    const isLatest = blockNumber === undefined;
 
     // Get the market data
     const marketArray = (await client.readContract({
@@ -231,7 +231,7 @@ export async function fetchMarketSnapshot(
       abi: morphoABI,
       functionName: 'market',
       args: [marketId as `0x${string}`],
-      blockNumber: isNow ? undefined : BigInt(blockNumber!),
+      blockNumber: isLatest ? undefined : BigInt(blockNumber),
     })) as readonly bigint[];
 
     // Convert array to market object

@@ -44,10 +44,12 @@ export function OverviewTab({
         <YieldAnalysisDistribution
           markets={groupedPosition.markets}
           periodLabel={periodLabel}
+          isLoading={isEarningsLoading}
         />
         <YieldAnalysisYieldBreakdown
           markets={groupedPosition.markets}
           periodLabel={periodLabel}
+          isLoading={isEarningsLoading}
         />
       </div>
       <MarketsBreakdownTable
