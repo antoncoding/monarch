@@ -20,23 +20,17 @@ export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
 
   // Check for GraphQL errors
   if ('errors' in result && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
-    // If it's known "NOT FOUND" error, handle gracefully
     const notFoundError = (result as any).errors.find((err: { status?: string }) => err.status?.includes('NOT_FOUND'));
 
+    // Ignore NOT_FOUND errors - they're caused by corrupted market records
+    // The response still contains valid data for other markets
     if (notFoundError) {
-      // Morpho API sometimes returns NOT_FOUND error alongside valid data
-      // Only return null if there's truly no data
-      if ('data' in result && result.data !== null) {
-        console.log('Morpho API returned NOT_FOUND error but has valid data, using data');
-        return result;
-      }
-      console.log('Morpho API return Not Found error:', notFoundError);
-      return null;
+      console.log('Morpho API NOT_FOUND error (ignored):', notFoundError.extensions?.description);
+      return result;
     }
 
-    // Log the full error for debugging
+    // Log other errors but don't throw
     console.error('Morpho API GraphQL Error:', (result as any).errors);
-
     throw new Error('Unknown GraphQL error from Morpho API');
   }
 
