@@ -170,11 +170,36 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
         marketsByChain.set(marketInfo.chainId, existing);
       });
 
-      // Build market data map from allMarkets context (no need to fetch individually)
+      // Build market data map from allMarkets context
       const marketDataMap = new Map<string, Market>();
       allMarkets.forEach((market) => {
         marketDataMap.set(market.uniqueKey.toLowerCase(), market);
       });
+
+      // Find markets that need to be fetched individually (not in allMarkets cache)
+      const missingMarkets: PositionMarket[] = [];
+      finalMarketKeys.forEach((marketInfo) => {
+        if (!marketDataMap.has(marketInfo.marketUniqueKey.toLowerCase())) {
+          missingMarkets.push(marketInfo);
+        }
+      });
+
+      // Fetch missing markets individually (for non-whitelisted markets with positions)
+      if (missingMarkets.length > 0) {
+        console.log(`[Positions] Fetching ${missingMarkets.length} missing markets individually`);
+        const { fetchMorphoMarket } = await import('@/data-sources/morpho-api/market');
+
+        await Promise.all(
+          missingMarkets.map(async (marketInfo) => {
+            try {
+              const market = await fetchMorphoMarket(marketInfo.marketUniqueKey, marketInfo.chainId as SupportedNetworks);
+              marketDataMap.set(market.uniqueKey.toLowerCase(), market);
+            } catch (error) {
+              console.warn(`[Positions] Failed to fetch market ${marketInfo.marketUniqueKey}:`, error);
+            }
+          }),
+        );
+      }
 
       // Fetch snapshots for each chain using batched multicall
       const allSnapshots = new Map<string, PositionSnapshot>();
