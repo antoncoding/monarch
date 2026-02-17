@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { reportApiRouteError } from '@/utils/sentry-server';
 
 /**
  * Proxy API route for Monarch Indexer
@@ -47,6 +48,11 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
+    reportApiRouteError(error, {
+      route: '/api/admin/monarch-indexer',
+      method: 'POST',
+      status: 500,
+    });
     console.error('Monarch indexer proxy error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

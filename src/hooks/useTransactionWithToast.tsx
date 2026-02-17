@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { StyledToast, TransactionToast } from '@/components/ui/styled-toast';
+import { reportHandledError } from '@/utils/sentry';
 import { getExplorerTxURL } from '../utils/external';
 import type { SupportedNetworks } from '../utils/networks';
 
@@ -16,6 +17,15 @@ type UseTransactionWithToastProps = {
   onSuccess?: () => void;
 };
 
+const MAX_TOAST_MESSAGE_LENGTH = 160;
+
+const truncateToastMessage = (message: string): string => {
+  if (message.length <= MAX_TOAST_MESSAGE_LENGTH) {
+    return message;
+  }
+  return `${message.slice(0, MAX_TOAST_MESSAGE_LENGTH - 3)}...`;
+};
+
 export function useTransactionWithToast({
   toastId,
   pendingText,
@@ -27,11 +37,13 @@ export function useTransactionWithToast({
   onSuccess,
 }: UseTransactionWithToastProps) {
   const { data: hash, mutate: sendTransaction, error: txError, mutateAsync: sendTransactionAsync } = useSendTransaction();
+  const reportedErrorKeyRef = useRef<string | null>(null);
 
   const {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
     isError,
+    error: receiptError,
   } = useWaitForTransactionReceipt({
     hash,
     chainId: chainId,
@@ -93,11 +105,35 @@ export function useTransactionWithToast({
       }
     }
     if (isError || txError) {
+      const errorToReport = txError ?? receiptError ?? new Error('Transaction failed while waiting for confirmation');
+      const reportKey = `${toastId}:${hash ?? 'no_hash'}:${errorToReport.message}`;
+
+      if (reportedErrorKeyRef.current !== reportKey) {
+        reportHandledError(errorToReport, {
+          scope: 'transaction',
+          operation: pendingText,
+          level: 'error',
+          tags: {
+            tx_toast_id: toastId,
+            tx_chain_id: chainId ?? 'unknown',
+            tx_has_hash: Boolean(hash),
+          },
+          extras: {
+            tx_hash: hash ?? null,
+            tx_error_message: errorToReport.message,
+            tx_error_name: errorToReport.name,
+          },
+        });
+        reportedErrorKeyRef.current = reportKey;
+      }
+
+      const errorMessage = (txError ?? receiptError)?.message ?? 'Transaction Failed';
+
       toast.update(toastId, {
         render: (
           <StyledToast
             title={errorText}
-            message={txError ? txError.message : 'Transaction Failed'}
+            message={truncateToastMessage(errorMessage)}
           />
         ),
         type: 'error',
@@ -106,8 +142,23 @@ export function useTransactionWithToast({
         onClick,
         closeButton: true,
       });
+    } else {
+      reportedErrorKeyRef.current = null;
     }
-  }, [hash, isConfirmed, isError, txError, successText, successDescription, errorText, toastId, onClick]);
+  }, [
+    hash,
+    isConfirmed,
+    isError,
+    txError,
+    receiptError,
+    successText,
+    successDescription,
+    errorText,
+    toastId,
+    onClick,
+    chainId,
+    pendingText,
+  ]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };
 }

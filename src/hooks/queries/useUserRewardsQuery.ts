@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { merklClient } from '@/utils/merklApi';
+import { reportHandledError } from '@/utils/sentry';
 import type { RewardResponseType } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
@@ -152,10 +153,20 @@ async function fetchAllRewards(userAddress: string): Promise<UserRewardsData> {
   const [morphoData, merklData] = await Promise.all([
     fetchMorphoRewards(userAddress).catch((err) => {
       console.error('Morpho rewards fetch failed:', err);
+      reportHandledError(err, {
+        scope: 'user_rewards',
+        operation: 'fetch:morpho',
+        level: 'warning',
+      });
       return { rewards: [] as RewardResponseType[], distributions: [] as DistributionResponseType[] };
     }),
     fetchMerklRewards(userAddress).catch((err) => {
       console.error('Merkl rewards fetch failed:', err);
+      reportHandledError(err, {
+        scope: 'user_rewards',
+        operation: 'fetch:merkl',
+        level: 'warning',
+      });
       return { rewards: [] as RewardResponseType[], rewardsWithProofs: [] as MerklRewardWithProofs[] };
     }),
   ]);
