@@ -27,16 +27,14 @@ const arbitrumSubgraph = apiKey
   ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/XsJn88DNCHJ1kgTqYeTgHMQSK4LuG1LR75339QVeQ26`
   : undefined;
 
-const hyperevmSubgraph = 'https://api.goldsky.com/api/public/project_cmg4ky61ivud801r23qsug3es/subgraphs/morpho-blue-hyperevm/1.0.3/gn';
-
 // Map network IDs (from SupportedNetworks) to Subgraph URLs
+// Note: HyperEVM goldsky subgraph was removed (endpoint deleted)
 export const SUBGRAPH_URLS: Partial<Record<SupportedNetworks, string>> = {
   [SupportedNetworks.Base]: baseSubgraphUrl,
   [SupportedNetworks.Mainnet]: mainnetSubgraphUrl,
   [SupportedNetworks.Polygon]: polygonSubgraphUrl,
   [SupportedNetworks.Unichain]: unichainSubgraphUrl,
   [SupportedNetworks.Arbitrum]: arbitrumSubgraph,
-  [SupportedNetworks.HyperEVM]: hyperevmSubgraph,
 };
 
 export const getSubgraphUrl = (network: SupportedNetworks): string | undefined => {
