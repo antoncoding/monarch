@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { MONARCH_API_KEY, getMonarchUrl } from '../utils';
+import { reportApiRouteError } from '@/utils/sentry-server';
 
 export async function GET(req: NextRequest) {
   if (!MONARCH_API_KEY) {
@@ -29,6 +30,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(await response.json());
   } catch (error) {
+    reportApiRouteError(error, {
+      route: '/api/monarch/metrics',
+      method: 'GET',
+      status: 500,
+    });
     console.error('[Monarch Metrics API] Failed to fetch:', error);
     return NextResponse.json({ error: 'Failed to fetch market metrics' }, { status: 500 });
   }

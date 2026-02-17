@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { reportApiRouteError } from '@/utils/sentry-server';
 
 const ORACLE_GIST_BASE_URL = process.env.ORACLE_GIST_BASE_URL;
 
@@ -31,6 +32,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ chai
 
     return NextResponse.json(data);
   } catch (error) {
+    reportApiRouteError(error, {
+      route: '/api/oracle-metadata/[chainId]',
+      method: 'GET',
+      status: 500,
+      extras: {
+        chainId,
+      },
+    });
     console.error('Failed to fetch oracle metadata:', error);
     return NextResponse.json({ error: 'Failed to fetch oracle metadata' }, { status: 500 });
   }

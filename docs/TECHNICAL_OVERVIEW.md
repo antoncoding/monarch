@@ -24,6 +24,11 @@ Monarch is a client-side DeFi dashboard for the Morpho Blue lending protocol. It
 | @morpho-org/blue-sdk | 5.3.0 | Morpho Blue protocol SDK |
 | @cowprotocol/cow-sdk | 7.2.9 | Intent-based swaps |
 
+**Wagmi v3 integration notes:**
+- Prefer `useConnection()` when you need wallet state (`address`, `chainId`, `isConnected`) in one place.
+- Avoid introducing `useAccount()` + `useChainId()` pairs for new wallet-state sync logic.
+- `useTransactionWithToast` already reports `useSendTransaction` failures to Sentry; global React Query mutation telemetry should not re-capture `sendTransaction` mutation errors.
+
 ### State Management
 | Technology | Version | Purpose |
 |-----------|---------|---------|
