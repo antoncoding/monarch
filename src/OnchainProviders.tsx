@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 // biome-ignore lint/performance/noNamespaceImport: Sentry SDK requires namespace import
 import * as Sentry from '@sentry/nextjs';
-import { useAccount, useChainId, WagmiProvider } from 'wagmi';
+import { useConnection, WagmiProvider } from 'wagmi';
 import { wagmiAdapter } from '@/config/appkit';
 import { createWagmiConfig } from '@/store/createWagmiConfig';
 import { ConnectRedirectProvider } from './components/providers/ConnectRedirectProvider';
@@ -13,8 +13,7 @@ import { CustomRpcProvider, useCustomRpcContext } from './components/providers/C
 type Props = { children: ReactNode };
 
 function SentryWalletScopeSync() {
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
+  const { address, chainId, isConnected } = useConnection();
 
   useEffect(() => {
     if (isConnected && address) {

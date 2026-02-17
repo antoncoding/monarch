@@ -37,6 +37,10 @@ const ACTIONABLE_QUERY_ROOT_KEYS = new Set<string>([
   'vault-allocations',
 ]);
 
+const TRANSACTION_MUTATION_ROOT_KEYS = new Set<string>([
+  'sendTransaction',
+]);
+
 const getQueryRootKey = (queryKey: QueryKey): string => {
   const root = queryKey[0];
   return typeof root === 'string' ? root : String(root);
@@ -79,6 +83,12 @@ const queryClient = new QueryClient({
     onError: (error, _variables, _context, mutation) => {
       const mutationKey = mutation.options.mutationKey;
       const rootKey = Array.isArray(mutationKey) ? getQueryRootKey(mutationKey) : 'unknown';
+
+      // Transaction mutation failures are reported in `useTransactionWithToast`.
+      // Skip them here to avoid duplicate telemetry events.
+      if (TRANSACTION_MUTATION_ROOT_KEYS.has(rootKey)) {
+        return;
+      }
 
       reportHandledError(error, {
         scope: 'react_query_mutation',
