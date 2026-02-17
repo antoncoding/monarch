@@ -13,6 +13,16 @@ Always consult these docs for detailed information:
 
 ---
 
+## Core Philosophy
+
+1. Anchor on the user-critical failure before proposing solutions.
+2. Prefer the smallest chokepoint change over broad instrumentation.
+3. Avoid scope creep unless it is required to solve the root cause.
+4. Do not claim repo facts without evidence (no invented counts).
+5. Prevent double-capture, noisy heuristics, or duplicate logic.
+
+---
+
 ## 🛠️ Skills System
 
 This project uses **skills** for domain-specific patterns. Agents should load the relevant skill before working on related tasks.
@@ -65,6 +75,34 @@ The skill injects detailed patterns and conventions into the conversation contex
 - Diff successful vs failed responses
 - Look for patterns: timing, specific data, field combinations
 - Ask: "What's different about the failing cases?"
+
+---
+
+## First-Principles Self-Review (Before Proposing Fixes)
+
+Before proposing a solution, add a short self-review:
+
+1. What user-critical failure are we solving?
+2. Is the change scoped to the smallest chokepoint that fixes the root cause?
+3. Does it avoid scope creep (new features) unless required to solve the root cause?
+4. What evidence in the repo supports the claim? (no invented counts)
+5. What is the simplest safe rollout path?
+6. What would we NOT do to keep the change auditable and safe?
+7. What could cause double-capture, noise, or duplicate logic?
+
+If you cannot answer these briefly, do not propose the change yet.
+
+---
+
+## Plan Gate (Scope Check)
+
+If the proposed work touches more than 2 files, adds a new module, or changes runtime behavior, provide a short plan first and wait for confirmation.
+
+Plan format:
+1. Goal
+2. Smallest viable change
+3. Files touched
+4. Risk/rollback note
 
 ---
 
