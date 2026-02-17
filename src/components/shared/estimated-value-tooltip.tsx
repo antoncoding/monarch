@@ -10,7 +10,7 @@ type EstimatedValueTooltipProps = {
   className?: string;
 };
 
-const DEFAULT_DETAIL = 'This USD value is estimated using an hardcoded price.';
+const DEFAULT_DETAIL = 'This USD value is estimated using a hardcoded price.';
 
 export function EstimatedValueTooltip({ children, isEstimated, detail = DEFAULT_DETAIL, className }: EstimatedValueTooltipProps) {
   if (!isEstimated) {
