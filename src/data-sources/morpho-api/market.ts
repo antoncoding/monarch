@@ -84,23 +84,16 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
 
       const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(marketsQuery, variables);
 
-      // Handle NOT_FOUND - break pagination loop
-      if (!response) {
-        console.warn(`No markets found in Morpho API for network ${network} at skip ${skip}.`);
-        break;
-      }
-
-      if (!response.data || !response.data.markets) {
-        console.warn(`Market data not found in Morpho API response for network ${network} at skip ${skip}.`);
-        break;
+      // Handle failed pages - skip to next page instead of breaking entirely
+      // This handles corrupted market records that cause NOT_FOUND errors
+      if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {
+        console.warn(`[Markets] Skipping failed page at skip=${skip} for network ${network}`);
+        skip += pageSize; // Skip ahead to next page
+        if (totalCount > 0 && skip >= totalCount) break;
+        continue;
       }
 
       const { items, pageInfo } = response.data.markets;
-
-      if (!items || !Array.isArray(items) || !pageInfo) {
-        console.warn(`No market items or page info found in response for network ${network} at skip ${skip}.`);
-        break;
-      }
 
       // Process and add markets to the collection
       const processedMarkets = items.map(processMarketData);
