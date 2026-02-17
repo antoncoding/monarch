@@ -7,7 +7,7 @@ import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import { blacklistTokens, type ERC20Token, findToken, type UnknownERC20Token, TokenPeg } from '@/utils/tokens';
 import { fetchMajorPrices, type MajorPrices } from '@/utils/majorPrices';
 import type { Market, MarketWarning } from '@/utils/types';
-import { SUBGRAPH_NO_PRICE, UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
+import { UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
 import { subgraphGraphqlFetcher } from './fetchers';
 
 // Helper to safely parse BigDecimal/BigInt strings
@@ -104,7 +104,6 @@ const transformSubgraphMarketToMarket = (
     if (knownCollateralAsset) {
       collateralAssetPrice = getEstimateValue(knownCollateralAsset) ?? 0;
     }
-    warnings.push(SUBGRAPH_NO_PRICE);
   }
 
   const supplyAssetsUsd = formatBalance(supplyAssets, loanAsset.decimals) * loanAssetPrice;

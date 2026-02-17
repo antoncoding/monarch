@@ -182,6 +182,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   assets={item.state.supplyAssets}
                   decimals={item.loanAsset.decimals}
                   symbol={item.loanAsset.symbol}
+                  isEstimated={!item.hasUSDPrice}
                 />
               )}
               {columnVisibility.totalBorrow && (
@@ -191,6 +192,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   assets={item.state.borrowAssets}
                   decimals={item.loanAsset.decimals}
                   symbol={item.loanAsset.symbol}
+                  isEstimated={!item.hasUSDPrice}
                 />
               )}
               {columnVisibility.liquidity && (
@@ -200,6 +202,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   assets={item.state.liquidityAssets}
                   decimals={item.loanAsset.decimals}
                   symbol={item.loanAsset.symbol}
+                  isEstimated={!item.hasUSDPrice}
                 />
               )}
               {columnVisibility.supplyAPY && (
