@@ -13,13 +13,6 @@ export const SUBGRAPH_NO_ORACLE = {
   __typename: 'OracleWarning_MonarchAttached',
 };
 
-// Most subgraph markets has no price data
-export const SUBGRAPH_NO_PRICE = {
-  type: 'subgraph_no_price',
-  level: 'warning',
-  __typename: 'MarketWarning_SubgraphNoPrice',
-};
-
 export const subgraphDefaultWarnings: MarketWarning[] = [SUBGRAPH_NO_ORACLE];
 
 export const UNRECOGNIZED_LOAN = {
@@ -90,15 +83,6 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   },
 ];
 
-const subgraphWarnings: WarningWithDetail[] = [
-  {
-    code: 'subgraph_no_price',
-    level: 'warning',
-    description: 'The USD value of the market is estimated with an offchain price source.',
-    category: WarningCategory.general,
-  },
-];
-
 const BAD_DEBT: WarningWithDetail = {
   code: 'bad_debt_realized',
   level: 'warning',
@@ -155,7 +139,7 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
   const { considerWhitelist = false, oracleMetadataMap } = options;
   const result = [];
 
-  const allDetails = [...morphoOfficialWarnings, ...subgraphWarnings];
+  const allDetails = [...morphoOfficialWarnings];
 
   const whitelistedMarketData = considerWhitelist
     ? monarchWhitelistedMarkets.find((m) => m.id === market.uniqueKey.toLowerCase())

@@ -1,6 +1,7 @@
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { EstimatedValueTooltip } from '@/components/shared/estimated-value-tooltip';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import type { SortColumn } from '../constants';
@@ -68,12 +69,14 @@ export function TDTotalSupplyOrBorrow({
   assets,
   decimals,
   symbol,
+  isEstimated = false,
 }: {
   dataLabel: string;
   assetsUSD: number;
   assets: string;
   decimals: number;
   symbol: string;
+  isEstimated?: boolean;
 }) {
   return (
     <TableCell
@@ -81,7 +84,9 @@ export function TDTotalSupplyOrBorrow({
       className="z-50"
       style={{ minWidth: '120px' }}
     >
-      <p className="z-50">${`${formatReadable(Number(assetsUSD))}   `} </p>
+      <p className="z-50">
+        <EstimatedValueTooltip isEstimated={isEstimated}>${formatReadable(Number(assetsUSD))}</EstimatedValueTooltip>
+      </p>
       <p className="z-50 opacity-70">{`${formatReadable(formatBalance(assets, decimals))} ${symbol}`}</p>
     </TableCell>
   );

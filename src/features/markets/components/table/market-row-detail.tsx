@@ -1,4 +1,5 @@
 import { Info } from '@/components/Info/info';
+import { EstimatedValueTooltip } from '@/components/shared/estimated-value-tooltip';
 import { OracleTypeInfo } from '@/features/markets/components/oracle';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { formatReadable } from '@/utils/balance';
@@ -30,7 +31,11 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
         </div>
         <div className="mb-1 flex items-start justify-between">
           <p className="font-inter text-sm opacity-80">Available Liquidity</p>
-          <p className="text-right font-zen text-sm">{formatReadable(Number(market.state.liquidityAssetsUsd))}</p>
+          <p className="text-right font-zen text-sm">
+            <EstimatedValueTooltip isEstimated={!market.hasUSDPrice}>
+              {formatReadable(Number(market.state.liquidityAssetsUsd))}
+            </EstimatedValueTooltip>
+          </p>
         </div>
         <div className="mb-1 flex items-start justify-between">
           <p className="font-inter text-sm opacity-80">Utilization Rate</p>

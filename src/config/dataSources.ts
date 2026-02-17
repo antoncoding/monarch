@@ -12,7 +12,7 @@ export const supportsMorphoApi = (network: SupportedNetworks): boolean => {
     case SupportedNetworks.Arbitrum:
     case SupportedNetworks.HyperEVM:
     case SupportedNetworks.Monad:
-      return true;
+      return false;
 
     default:
       return false;
