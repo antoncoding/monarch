@@ -22,6 +22,36 @@ type ConcentrationChartProps = {
 
 const MIN_PERCENT_THRESHOLD = 0.1;
 
+// Custom tooltip at module scope
+function ConcentrationTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: ConcentrationDataPoint }[];
+}) {
+  if (!active || !payload?.[0]) return null;
+  const data = payload[0].payload;
+
+  if (data.position === 0) return null;
+
+  return (
+    <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
+      <p className="mb-2 text-xs text-secondary">Top {data.position.toLocaleString()}</p>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-6 text-sm">
+          <span className="text-secondary">Actual</span>
+          <span className="tabular-nums font-medium">{data.cumulativePercent.toFixed(1)}%</span>
+        </div>
+        <div className="flex items-center justify-between gap-6 text-sm">
+          <span className="text-secondary">If equal</span>
+          <span className="tabular-nums text-secondary">{data.idealPercent.toFixed(1)}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ConcentrationChart({ positions, totalCount, isLoading, title, color }: ConcentrationChartProps) {
   const { chartData, meaningfulCount, totalPercentShown } = useMemo(() => {
     const emptyResult = { chartData: [], meaningfulCount: 0, totalPercentShown: 0 };
@@ -74,29 +104,6 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
       top100: findPercent(100),
     };
   }, [chartData]);
-
-  function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payload: ConcentrationDataPoint }[] }) {
-    if (!active || !payload?.[0]) return null;
-    const data = payload[0].payload;
-
-    if (data.position === 0) return null;
-
-    return (
-      <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-        <p className="mb-2 text-xs text-secondary">Top {data.position.toLocaleString()}</p>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between gap-6 text-sm">
-            <span className="text-secondary">Actual</span>
-            <span className="tabular-nums font-medium">{data.cumulativePercent.toFixed(1)}%</span>
-          </div>
-          <div className="flex items-center justify-between gap-6 text-sm">
-            <span className="text-secondary">If equal</span>
-            <span className="tabular-nums text-secondary">{data.idealPercent.toFixed(1)}%</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -197,7 +204,7 @@ export function ConcentrationChart({ positions, totalCount, isLoading, title, co
             />
             <Tooltip
               cursor={chartTooltipCursor}
-              content={<CustomTooltip />}
+              content={<ConcentrationTooltip />}
             />
             <Line
               type="monotone"

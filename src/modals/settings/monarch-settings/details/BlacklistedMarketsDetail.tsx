@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { FiPlus } from 'react-icons/fi';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,10 @@ export function BlacklistedMarketsDetail() {
     useBlacklistedMarkets();
   const { success: toastSuccess } = useStyledToast();
 
-  useEffect(() => {
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, []);
 
   const { blacklistedMarkets, availableMarkets } = useMemo(() => {
     const blacklisted: Market[] = [];
@@ -132,7 +133,7 @@ export function BlacklistedMarketsDetail() {
               type="text"
               placeholder="Search to add markets (min 2 characters)..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="bg-hovered h-9 w-full rounded p-2 font-zen text-xs focus:border-primary focus:outline-none"
             />
           </div>

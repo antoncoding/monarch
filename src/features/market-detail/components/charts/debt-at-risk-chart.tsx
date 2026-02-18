@@ -24,6 +24,38 @@ type RiskDataPoint = {
   cumulativeDebtPercent: number; // Percentage of total debt
 };
 
+// Custom tooltip at module scope
+function DebtAtRiskTooltip({
+  active,
+  payload,
+  symbol,
+}: {
+  active?: boolean;
+  payload?: { value: number; payload: RiskDataPoint }[];
+  symbol: string;
+}) {
+  if (!active || !payload || !payload[0]) return null;
+  const data = payload[0].payload;
+
+  return (
+    <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
+      <p className="mb-2 text-xs text-secondary">At {data.priceDrop}% price drop</p>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-6 text-sm">
+          <span className="text-secondary">% of Total Debt</span>
+          <span className="tabular-nums font-medium">{data.cumulativeDebtPercent.toFixed(1)}%</span>
+        </div>
+        <div className="flex items-center justify-between gap-6 text-sm">
+          <span className="text-secondary">Debt at Risk</span>
+          <span className="tabular-nums">
+            {formatReadable(data.cumulativeDebt)} {symbol}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChartProps) {
   const { data: borrowers, isLoading } = useAllMarketBorrowers(market.uniqueKey, chainId);
   const chartColors = useChartColors();
@@ -105,29 +137,6 @@ export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChar
       },
     };
   }, [borrowers, oraclePrice, market.loanAsset.decimals, lltv]);
-
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { value: number; payload: RiskDataPoint }[] }) => {
-    if (!active || !payload || !payload[0]) return null;
-    const data = payload[0].payload;
-
-    return (
-      <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-        <p className="mb-2 text-xs text-secondary">At {data.priceDrop}% price drop</p>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between gap-6 text-sm">
-            <span className="text-secondary">% of Total Debt</span>
-            <span className="tabular-nums font-medium">{data.cumulativeDebtPercent.toFixed(1)}%</span>
-          </div>
-          <div className="flex items-center justify-between gap-6 text-sm">
-            <span className="text-secondary">Debt at Risk</span>
-            <span className="tabular-nums">
-              {formatReadable(data.cumulativeDebt)} {market.loanAsset.symbol}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   if (isLoading) {
     return (
@@ -214,7 +223,7 @@ export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChar
             />
             <Tooltip
               cursor={chartTooltipCursor}
-              content={<CustomTooltip />}
+              content={<DebtAtRiskTooltip symbol={market.loanAsset.symbol} />}
             />
             <Area
               type="stepAfter"

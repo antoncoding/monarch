@@ -33,10 +33,11 @@ export function BorrowModal({
 }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>(defaultMode);
 
-  // Reset mode when defaultMode changes (e.g., modal re-opened with different mode)
+  // Sync mode with defaultMode when it changes
   useEffect(() => {
     setMode(defaultMode);
   }, [defaultMode]);
+
   const { address: account } = useConnection();
 
   // Get token balances
