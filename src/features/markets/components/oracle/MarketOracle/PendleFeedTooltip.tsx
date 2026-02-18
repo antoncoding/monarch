@@ -4,13 +4,15 @@ import type { Address } from 'viem';
 import { formatUnits } from 'viem';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { PriceFeedVendors, OracleVendorIcons, type FeedData } from '@/utils/oracle';
+import { OracleVendorIcons, PriceFeedVendors, type FeedData, type FeedFreshnessStatus } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
+import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type PendleFeedTooltipProps = {
   feed: OracleFeed;
   feedData?: FeedData | null;
   chainId: number;
+  feedFreshness?: FeedFreshnessStatus;
 };
 
 function formatDiscountPerYear(raw: string): string {
@@ -20,7 +22,7 @@ function formatDiscountPerYear(raw: string): string {
   return `${percent.toFixed(2)}%`;
 }
 
-export function PendleFeedTooltip({ feed, feedData, chainId }: PendleFeedTooltipProps) {
+export function PendleFeedTooltip({ feed, feedData, chainId, feedFreshness }: PendleFeedTooltipProps) {
   const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
   const pendleFeedKind = feedData?.pendleFeedKind;
@@ -30,7 +32,7 @@ export function PendleFeedTooltip({ feed, feedData, chainId }: PendleFeedTooltip
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Pendle];
 
   return (
-    <div className="flex max-w-xs flex-col gap-3">
+    <div className="flex w-fit max-w-[22rem] flex-col gap-3">
       {/* Header with icon and title */}
       <div className="flex items-center gap-2">
         {vendorIcon && (
@@ -70,6 +72,8 @@ export function PendleFeedTooltip({ feed, feedData, chainId }: PendleFeedTooltip
           )}
         </div>
       )}
+
+      <FeedFreshnessSection feedFreshness={feedFreshness} />
 
       {/* External Links */}
       <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">

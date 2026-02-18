@@ -1,5 +1,6 @@
 'use client';
 
+import { useFeedLastUpdatedByChain } from '@/hooks/useFeedLastUpdatedByChain';
 import { useOracleMetadata, getOracleFromMetadata, isMetaOracleData } from '@/hooks/useOracleMetadata';
 import type { OracleFeed } from '@/utils/types';
 import { FeedEntry } from './FeedEntry';
@@ -23,6 +24,7 @@ export function MarketOracleFeedInfo({
   oracleAddress,
 }: MarketOracleFeedInfoProps): JSX.Element {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const { data: feedSnapshotsByAddress } = useFeedLastUpdatedByChain(chainId);
 
   const oracleMetadata = oracleMetadataMap && oracleAddress ? getOracleFromMetadata(oracleMetadataMap, oracleAddress) : undefined;
   const oracleData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
@@ -54,6 +56,7 @@ export function MarketOracleFeedInfo({
                 chainId={chainId}
                 oracleAddress={oracleAddress}
                 oracleMetadataMap={oracleMetadataMap}
+                feedSnapshotsByAddress={feedSnapshotsByAddress}
               />
             )}
             {baseFeedTwo && (
@@ -62,6 +65,7 @@ export function MarketOracleFeedInfo({
                 chainId={chainId}
                 oracleAddress={oracleAddress}
                 oracleMetadataMap={oracleMetadataMap}
+                feedSnapshotsByAddress={feedSnapshotsByAddress}
               />
             )}
           </div>
@@ -84,6 +88,7 @@ export function MarketOracleFeedInfo({
                 chainId={chainId}
                 oracleAddress={oracleAddress}
                 oracleMetadataMap={oracleMetadataMap}
+                feedSnapshotsByAddress={feedSnapshotsByAddress}
               />
             )}
             {quoteFeedTwo && (
@@ -92,6 +97,7 @@ export function MarketOracleFeedInfo({
                 chainId={chainId}
                 oracleAddress={oracleAddress}
                 oracleMetadataMap={oracleMetadataMap}
+                feedSnapshotsByAddress={feedSnapshotsByAddress}
               />
             )}
           </div>

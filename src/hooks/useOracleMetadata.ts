@@ -12,7 +12,7 @@ import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks
  * Data flow:
  * 1. Oracles scanner fetches from provider APIs (Chainlink, Redstone, etc.)
  * 2. Scanner publishes enriched data to GitHub Gist
- * 3. This hook fetches from /api/oracle-metadata/{chainId} (proxies Gist)
+ * 3. This hook fetches directly from the centralized Gist
  * 4. Components use getOracleFromMetadata() + getFeedFromOracleData() to access data
  */
 
@@ -99,12 +99,21 @@ export type OracleMetadataRecord = Record<string, OracleOutput>;
 // Keep Map type for backward compatibility in function signatures
 export type OracleMetadataMap = Map<string, OracleOutput>;
 
+const ORACLE_GIST_BASE_URL = process.env.NEXT_PUBLIC_ORACLE_GIST_BASE_URL?.replace(/\/+$/, '');
+
 /**
- * Fetch oracle metadata from internal API route
+ * Fetch oracle metadata directly from the centralized Gist.
  */
 async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile | null> {
+  if (!ORACLE_GIST_BASE_URL) {
+    console.warn('[oracle-metadata] NEXT_PUBLIC_ORACLE_GIST_BASE_URL is not configured');
+    return null;
+  }
+
   try {
-    const response = await fetch(`/api/oracle-metadata/${chainId}`);
+    const response = await fetch(`${ORACLE_GIST_BASE_URL}/oracles.${chainId}.json`, {
+      cache: 'no-store',
+    });
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -114,7 +123,7 @@ async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile 
       return null;
     }
 
-    return response.json();
+    return await response.json();
   } catch (error) {
     console.warn(`[oracle-metadata] Error fetching for chain ${chainId}:`, error);
     return null;

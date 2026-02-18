@@ -5,17 +5,19 @@ import type { Address } from 'viem';
 import { useGlobalModal } from '@/contexts/GlobalModalContext';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { PriceFeedVendors, OracleVendorIcons, type FeedData } from '@/utils/oracle';
+import { OracleVendorIcons, PriceFeedVendors, type FeedData, type FeedFreshnessStatus } from '@/utils/oracle';
 import type { OracleFeed } from '@/utils/types';
+import { FeedFreshnessSection } from './FeedFreshnessSection';
 import { RedstoneTypesModal } from './RedstoneTypesModal';
 
 type RedstoneFeedTooltipProps = {
   feed: OracleFeed;
   feedData?: FeedData | null;
   chainId: number;
+  feedFreshness?: FeedFreshnessStatus;
 };
 
-export function RedstoneFeedTooltip({ feed, feedData, chainId }: RedstoneFeedTooltipProps) {
+export function RedstoneFeedTooltip({ feed, feedData, chainId, feedFreshness }: RedstoneFeedTooltipProps) {
   const { toggleModal, closeModal } = useGlobalModal();
   const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
@@ -25,7 +27,7 @@ export function RedstoneFeedTooltip({ feed, feedData, chainId }: RedstoneFeedToo
   const hasDetails = feedData?.feedType != null || feedData?.heartbeat != null || feedData?.deviationThreshold != null;
 
   return (
-    <div className="flex max-w-xs flex-col gap-3">
+    <div className="flex w-fit max-w-[22rem] flex-col gap-3">
       {/* Header with icon and title */}
       <div className="flex items-center gap-2">
         {vendorIcon && (
@@ -90,6 +92,7 @@ export function RedstoneFeedTooltip({ feed, feedData, chainId }: RedstoneFeedToo
           )}
         </div>
       )}
+      <FeedFreshnessSection feedFreshness={feedFreshness} />
 
       {/* External Links */}
       <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
