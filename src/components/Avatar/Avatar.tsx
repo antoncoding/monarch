@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import type { Address } from 'viem';
-import { getMorphoAddress } from '@/utils/morpho';
 
 type AvatarProps = {
   address: Address;
@@ -13,20 +12,6 @@ export function Avatar({ address, size = 30, rounded = true }: AvatarProps) {
   const [useEffigy, setUseEffigy] = useState(true);
   const effigyUrl = `https://effigy.im/a/${address}.svg`;
   const dicebearUrl = `https://api.dicebear.com/7.x/pixel-art/png?seed=${address}`;
-
-  useEffect(() => {
-    const checkEffigyAvailability = async () => {
-      const effigyMockurl = `https://effigy.im/a/${getMorphoAddress(1)}.png`;
-      try {
-        const response = await fetch(effigyMockurl, { method: 'HEAD' });
-        setUseEffigy(response.ok);
-      } catch (_error) {
-        setUseEffigy(false);
-      }
-    };
-
-    void checkEffigyAvailability();
-  }, []);
 
   return (
     <div style={{ width: size, height: size }}>

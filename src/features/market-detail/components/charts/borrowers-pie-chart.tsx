@@ -35,6 +35,67 @@ type PieDataItem = {
 const TOP_POSITIONS_TO_SHOW = 8;
 const OTHER_COLOR = '#64748B'; // Grey for "Other" category
 
+// Helper function at module scope
+const formatPercentDisplay = (percent: number): string => {
+  if (percent < 0.01 && percent > 0) return '<0.01%';
+  return `${percent.toFixed(2)}%`;
+};
+
+// Custom tooltip at module scope
+function BorrowersPieTooltip({
+  active,
+  payload,
+  expandedOther,
+  market,
+}: {
+  active?: boolean;
+  payload?: { payload: PieDataItem }[];
+  expandedOther: boolean;
+  market: Market;
+}) {
+  if (!active || !payload || !payload[0]) return null;
+  const data = payload[0].payload;
+
+  return (
+    <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
+      <p className="mb-1 font-medium text-sm">{data.name}</p>
+      {!data.isOther && <p className="mb-2 font-mono text-xs text-secondary">{getSlicedAddress(data.address as `0x${string}`)}</p>}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-secondary">Borrowed</span>
+          <div className="flex items-center gap-1 tabular-nums">
+            <span>{formatSimple(data.value)}</span>
+            <TokenIcon
+              address={market.loanAsset.address}
+              chainId={market.morphoBlue.chain.id}
+              symbol={market.loanAsset.symbol}
+              width={14}
+              height={14}
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-secondary">Collateral</span>
+          <div className="flex items-center gap-1 tabular-nums">
+            <span>{formatSimple(data.collateral)}</span>
+          </div>
+        </div>
+        {!data.isOther && (
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-secondary">LTV</span>
+            <span className="tabular-nums">{data.ltv.toFixed(2)}%</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-secondary">% of Borrow</span>
+          <span className="tabular-nums">{formatPercentDisplay(data.percentage)}</span>
+        </div>
+      </div>
+      {data.isOther && <p className="mt-2 text-xs text-secondary">Click to {expandedOther ? 'collapse' : 'expand'}</p>}
+    </div>
+  );
+}
+
 export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPieChartProps) {
   const { data: borrowers, isLoading, totalCount } = useAllMarketBorrowers(market.uniqueKey, chainId);
   const { getVaultByAddress } = useVaultRegistry();
@@ -145,63 +206,6 @@ export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPie
   // Extract the "Other" entry once for use in expanded section
   const otherEntry = useMemo(() => pieData.find((d) => d.isOther), [pieData]);
 
-  // Format percentage display (matches table)
-  const formatPercentDisplay = (percent: number): string => {
-    if (percent < 0.01 && percent > 0) return '<0.01%';
-    return `${percent.toFixed(2)}%`;
-  };
-
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: PieDataItem }[] }) => {
-    if (!active || !payload || !payload[0]) return null;
-    const data = payload[0].payload;
-
-    return (
-      <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-        <p className="mb-1 font-medium text-sm">{data.name}</p>
-        {!data.isOther && <p className="mb-2 font-mono text-xs text-secondary">{getSlicedAddress(data.address as `0x${string}`)}</p>}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-secondary">Borrowed</span>
-            <div className="flex items-center gap-1 tabular-nums">
-              <span>{formatSimple(data.value)}</span>
-              <TokenIcon
-                address={market.loanAsset.address}
-                chainId={market.morphoBlue.chain.id}
-                symbol={market.loanAsset.symbol}
-                width={14}
-                height={14}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-secondary">Collateral</span>
-            <div className="flex items-center gap-1 tabular-nums">
-              <span>{formatSimple(data.collateral)}</span>
-              <TokenIcon
-                address={market.collateralAsset.address}
-                chainId={market.morphoBlue.chain.id}
-                symbol={market.collateralAsset.symbol}
-                width={14}
-                height={14}
-              />
-            </div>
-          </div>
-          {!data.isOther && (
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="text-secondary">LTV</span>
-              <span className="tabular-nums">{data.ltv.toFixed(2)}%</span>
-            </div>
-          )}
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-secondary">% of Borrow</span>
-            <span className="tabular-nums">{formatPercentDisplay(data.percentage)}</span>
-          </div>
-        </div>
-        {data.isOther && <p className="mt-2 text-xs text-secondary">Click to {expandedOther ? 'collapse' : 'expand'}</p>}
-      </div>
-    );
-  };
-
   if (isLoading) {
     return (
       <Card className="flex h-[350px] items-center justify-center border border-border bg-surface">
@@ -253,7 +257,7 @@ export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPie
                 />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<BorrowersPieTooltip expandedOther={expandedOther} market={market} />} />
             <Legend
               layout="vertical"
               align="right"

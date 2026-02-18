@@ -32,6 +32,46 @@ type PieDataItem = {
 const TOP_POSITIONS_TO_SHOW = 8;
 const OTHER_COLOR = '#64748B'; // Grey for "Other" category
 
+// Helper function at module scope
+const formatPercentDisplay = (percent: number): string => {
+  if (percent < 0.01 && percent > 0) return '<0.01%';
+  return `${percent.toFixed(2)}%`;
+};
+
+// Custom tooltip at module scope
+function SuppliersPieTooltip({
+  active,
+  payload,
+  expandedOther,
+}: {
+  active?: boolean;
+  payload?: { payload: PieDataItem }[];
+  expandedOther: boolean;
+}) {
+  if (!active || !payload || !payload[0]) return null;
+  const data = payload[0].payload;
+
+  return (
+    <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
+      <p className="mb-1 font-medium text-sm">{data.name}</p>
+      {!data.isOther && <p className="mb-2 font-mono text-xs text-secondary">{getSlicedAddress(data.address as `0x${string}`)}</p>}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-secondary">Supplied</span>
+          <div className="flex items-center gap-1 tabular-nums">
+            <span>{formatSimple(data.value)}</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-secondary">% of Supply</span>
+          <span className="tabular-nums">{formatPercentDisplay(data.percentage)}</span>
+        </div>
+      </div>
+      {data.isOther && <p className="mt-2 text-xs text-secondary">Click to {expandedOther ? 'collapse' : 'expand'}</p>}
+    </div>
+  );
+}
+
 export function SuppliersPieChart({ chainId, market }: SuppliersPieChartProps) {
   const { data: suppliers, isLoading, totalCount } = useAllMarketSuppliers(market.uniqueKey, chainId);
   const { getVaultByAddress } = useVaultRegistry();
@@ -118,44 +158,6 @@ export function SuppliersPieChart({ chainId, market }: SuppliersPieChartProps) {
   // Extract the "Other" entry once for use in expanded section
   const otherEntry = useMemo(() => pieData.find((d) => d.isOther), [pieData]);
 
-  // Format percentage display (matches table)
-  const formatPercentDisplay = (percent: number): string => {
-    if (percent < 0.01 && percent > 0) return '<0.01%';
-    return `${percent.toFixed(2)}%`;
-  };
-
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: PieDataItem }[] }) => {
-    if (!active || !payload || !payload[0]) return null;
-    const data = payload[0].payload;
-
-    return (
-      <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-        <p className="mb-1 font-medium text-sm">{data.name}</p>
-        {!data.isOther && <p className="mb-2 font-mono text-xs text-secondary">{getSlicedAddress(data.address as `0x${string}`)}</p>}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-secondary">Supplied</span>
-            <div className="flex items-center gap-1 tabular-nums">
-              <span>{formatSimple(data.value)}</span>
-              <TokenIcon
-                address={market.loanAsset.address}
-                chainId={market.morphoBlue.chain.id}
-                symbol={market.loanAsset.symbol}
-                width={14}
-                height={14}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-secondary">% of Supply</span>
-            <span className="tabular-nums">{formatPercentDisplay(data.percentage)}</span>
-          </div>
-        </div>
-        {data.isOther && <p className="mt-2 text-xs text-secondary">Click to {expandedOther ? 'collapse' : 'expand'}</p>}
-      </div>
-    );
-  };
-
   if (isLoading) {
     return (
       <Card className="flex h-full min-h-[300px] items-center justify-center border border-border bg-surface">
@@ -207,7 +209,7 @@ export function SuppliersPieChart({ chainId, market }: SuppliersPieChartProps) {
                 />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<SuppliersPieTooltip expandedOther={expandedOther} />} />
             <Legend
               layout="vertical"
               align="right"

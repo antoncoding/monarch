@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
 import { erc20Abi } from 'viem';
@@ -32,11 +32,6 @@ export function BorrowModal({
   liquiditySourcing,
 }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>(defaultMode);
-
-  // Reset mode when defaultMode changes (e.g., modal re-opened with different mode)
-  useEffect(() => {
-    setMode(defaultMode);
-  }, [defaultMode]);
   const { address: account } = useConnection();
 
   // Get token balances
@@ -95,6 +90,7 @@ export function BorrowModal({
       isOpen
       onOpenChange={onOpenChange}
       size="lg"
+      key={defaultMode}
     >
       <ModalHeader
         mainIcon={mainIcon}

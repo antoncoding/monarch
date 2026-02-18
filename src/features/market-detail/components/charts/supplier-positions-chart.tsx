@@ -25,6 +25,61 @@ type SupplierPositionsChartProps = {
 
 const TOP_SUPPLIERS_TO_SHOW = 5;
 
+// Custom tooltip component at module scope
+function SupplierPositionsTooltip({
+  active,
+  payload,
+  getDisplayName,
+  formatValue,
+}: {
+  active?: boolean;
+  payload?: { dataKey: string; value: number; color: string; payload: { timestamp: number; blockNumber: number } }[];
+  getDisplayName: (address: string) => string;
+  formatValue: (value: number) => string;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  const dataPoint = payload[0]?.payload;
+  const timestamp = dataPoint?.timestamp ?? 0;
+  const blockNumber = dataPoint?.blockNumber;
+
+  return (
+    <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
+      <div className="mb-2 space-y-0.5">
+        <p className="text-xs text-secondary">
+          {new Date(timestamp * 1000).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+        {blockNumber && <p className="font-mono text-xs text-secondary/70">Block #{blockNumber.toLocaleString()}</p>}
+      </div>
+      <div className="space-y-1">
+        {payload
+          .filter((entry) => entry.value > 0)
+          .sort((a, b) => b.value - a.value)
+          .map((entry) => (
+            <div
+              key={entry.dataKey}
+              className="flex items-center justify-between gap-4 text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="max-w-[120px] truncate text-secondary">{getDisplayName(entry.dataKey)}</span>
+              </div>
+              <span className="tabular-nums">{formatValue(entry.value)}</span>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}
+
 export function SupplierPositionsChart({ marketId, chainId, market }: SupplierPositionsChartProps) {
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
@@ -106,57 +161,6 @@ export function SupplierPositionsChart({ marketId, chainId, market }: SupplierPo
       isPartial: percentage < 90,
     };
   }, [historicalData, selectedTimeframe]);
-
-  // Custom tooltip with block number
-  const CustomTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: { dataKey: string; value: number; color: string; payload: { timestamp: number; blockNumber: number } }[];
-  }) => {
-    if (!active || !payload || payload.length === 0) return null;
-
-    const dataPoint = payload[0]?.payload;
-    const timestamp = dataPoint?.timestamp ?? 0;
-    const blockNumber = dataPoint?.blockNumber;
-
-    return (
-      <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-        <div className="mb-2 space-y-0.5">
-          <p className="text-xs text-secondary">
-            {new Date(timestamp * 1000).toLocaleString(undefined, {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </p>
-          {blockNumber && <p className="font-mono text-xs text-secondary/70">Block #{blockNumber.toLocaleString()}</p>}
-        </div>
-        <div className="space-y-1">
-          {payload
-            .filter((entry) => entry.value > 0)
-            .sort((a, b) => b.value - a.value)
-            .map((entry) => (
-              <div
-                key={entry.dataKey}
-                className="flex items-center justify-between gap-4 text-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: entry.color }}
-                  />
-                  <span className="max-w-[120px] truncate text-secondary">{getDisplayName(entry.dataKey)}</span>
-                </div>
-                <span className="tabular-nums">{formatValue(entry.value)}</span>
-              </div>
-            ))}
-        </div>
-      </div>
-    );
-  };
 
   // Custom legend with toggleable items
   const renderLegend = () => (
@@ -264,7 +268,7 @@ export function SupplierPositionsChart({ marketId, chainId, market }: SupplierPo
             />
             <Tooltip
               cursor={chartTooltipCursor}
-              content={<CustomTooltip />}
+              content={<SupplierPositionsTooltip getDisplayName={getDisplayName} formatValue={formatValue} />}
             />
             {topSuppliers.map((supplier, index) => (
               <Line

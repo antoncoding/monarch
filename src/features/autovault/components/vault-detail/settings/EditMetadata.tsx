@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useId, useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -36,30 +36,42 @@ export function EditMetadata({
   const previousName = currentName.trim();
   const previousSymbol = currentSymbol.trim();
 
-  const [nameInput, setNameInput] = useState(previousName !== '' ? previousName : defaultName);
-  const [symbolInput, setSymbolInput] = useState(previousSymbol !== '' ? previousSymbol : defaultSymbol);
+  // Track if user has edited each field
+  const nameEdited = useRef(false);
+  const symbolEdited = useRef(false);
+
+  const [nameInput, setNameInput] = useState('');
+  const [symbolInput, setSymbolInput] = useState('');
   const [metadataError, setMetadataError] = useState<string | null>(null);
+
+  // Compute values during render - use default if not edited, otherwise use stored value
+  const computedNameInput = nameEdited.current ? nameInput : (previousName !== '' ? previousName : defaultName);
+  const computedSymbolInput = symbolEdited.current ? symbolInput : (previousSymbol !== '' ? previousSymbol : defaultSymbol);
+
+  const handleNameChange = useCallback((value: string) => {
+    nameEdited.current = true;
+    setNameInput(value);
+  }, []);
+
+  const handleSymbolChange = useCallback((value: string) => {
+    symbolEdited.current = true;
+    setSymbolInput(value);
+  }, []);
 
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
     targetChainId: chainId,
   });
 
-  // Reset inputs when current values change
-  useEffect(() => {
-    setNameInput(previousName !== '' ? previousName : defaultName);
-    setSymbolInput(previousSymbol !== '' ? previousSymbol : defaultSymbol);
-  }, [previousName, previousSymbol, defaultName, defaultSymbol]);
-
-  const trimmedName = nameInput.trim();
-  const trimmedSymbol = symbolInput.trim();
-  const metadataChanged = trimmedName !== previousName || trimmedSymbol !== previousSymbol;
-
   // Clear error when inputs change
   useEffect(() => {
-    if (metadataError && metadataChanged) {
+    if (metadataError) {
       setMetadataError(null);
     }
-  }, [metadataChanged, metadataError]);
+  }, [computedNameInput, computedSymbolInput]);
+
+  const trimmedName = computedNameInput.trim();
+  const trimmedSymbol = computedSymbolInput.trim();
+  const metadataChanged = trimmedName !== previousName || trimmedSymbol !== previousSymbol;
 
   const handleMetadataSubmit = useCallback(async () => {
     if (!metadataChanged) {
@@ -96,8 +108,8 @@ export function EditMetadata({
           </label>
           <Input
             size="sm"
-            value={nameInput}
-            onChange={(event) => setNameInput(event.target.value)}
+            value={computedNameInput}
+            onChange={(event) => handleNameChange(event.target.value)}
             placeholder={defaultName}
             disabled={!isOwner}
             id={nameInputId}
@@ -117,8 +129,8 @@ export function EditMetadata({
           </label>
           <Input
             size="sm"
-            value={symbolInput}
-            onChange={(event) => setSymbolInput(event.target.value)}
+            value={computedSymbolInput}
+            onChange={(event) => handleSymbolChange(event.target.value)}
             placeholder={defaultSymbol}
             maxLength={16}
             disabled={!isOwner}
