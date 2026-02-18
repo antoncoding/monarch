@@ -12,6 +12,7 @@ type QueryProviderProps = {
 const ACTIONABLE_QUERY_ROOT_KEYS = new Set<string>([
   'all-position-snapshots',
   'enhanced-positions',
+  'feed-last-updated',
   'fresh-markets-state',
   'historicalSupplierPositions',
   'marketData',
@@ -37,9 +38,7 @@ const ACTIONABLE_QUERY_ROOT_KEYS = new Set<string>([
   'vault-allocations',
 ]);
 
-const TRANSACTION_MUTATION_ROOT_KEYS = new Set<string>([
-  'sendTransaction',
-]);
+const TRANSACTION_MUTATION_ROOT_KEYS = new Set<string>(['sendTransaction']);
 
 const getQueryRootKey = (queryKey: QueryKey): string => {
   const root = queryKey[0];

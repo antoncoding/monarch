@@ -14,7 +14,7 @@
  * https://github.com/monarch-xyz/oracles/blob/master/docs/TYPES.md
  */
 
-import { zeroAddress, type Address } from 'viem';
+import { formatUnits, zeroAddress, type Address } from 'viem';
 import {
   getFeedFromOracleData,
   getOracleFromMetadata,
@@ -650,6 +650,96 @@ export function formatOracleDuration(seconds: number): string {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
   return `${Math.floor(seconds / 86400)}d`;
+}
+
+export type FeedFreshnessStatus = {
+  updatedAt: number | null;
+  ageSeconds: number | null;
+  staleAfterSeconds: number | null;
+  isStale: boolean;
+  updateKind: FeedUpdateKind;
+  normalizedPrice: string | null;
+};
+
+export type FeedUpdateKind = 'reported' | 'derived';
+
+type FeedFreshnessOptions = {
+  updateKind?: FeedUpdateKind;
+  normalizedPrice?: string | null;
+};
+
+/**
+ * Determine if a feed is stale.
+ * If no heartbeat is available, we still expose age but avoid stale classification.
+ */
+export function getFeedFreshnessStatus(
+  updatedAt: number | null | undefined,
+  heartbeatSeconds: number | null | undefined,
+  options?: FeedFreshnessOptions,
+): FeedFreshnessStatus {
+  const updateKind = options?.updateKind ?? 'reported';
+  const normalizedPrice = options?.normalizedPrice ?? null;
+
+  if (!updatedAt || updatedAt <= 0) {
+    return {
+      updatedAt: null,
+      ageSeconds: null,
+      staleAfterSeconds: null,
+      isStale: false,
+      updateKind,
+      normalizedPrice,
+    };
+  }
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const ageSeconds = Math.max(0, nowSeconds - updatedAt);
+  const staleAfterSeconds = heartbeatSeconds && heartbeatSeconds > 0 ? heartbeatSeconds : null;
+
+  return {
+    updatedAt,
+    ageSeconds,
+    staleAfterSeconds,
+    isStale: staleAfterSeconds != null ? ageSeconds > staleAfterSeconds : false,
+    updateKind,
+    normalizedPrice,
+  };
+}
+
+/**
+ * Format unix timestamp (seconds) into local date/time.
+ */
+export function formatOracleTimestamp(seconds: number): string {
+  return new Date(seconds * 1000).toLocaleString();
+}
+
+/**
+ * Compact timestamp for tight UI surfaces: "HH:MM MM/DD"
+ */
+export function formatOracleTimestampCompact(seconds: number): string {
+  const date = new Date(seconds * 1000);
+  const hours = `${date.getHours()}`.padStart(2, '0');
+  const minutes = `${date.getMinutes()}`.padStart(2, '0');
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+
+  return `${hours}:${minutes} ${month}/${day}`;
+}
+
+/**
+ * Format raw feed answer using feed decimals into a compact plain decimal value.
+ */
+export function formatOraclePrice(answerRaw: bigint, decimals: number, maxFractionDigits = 8): string {
+  const safeDecimals = Number.isFinite(decimals) ? Math.max(0, Math.min(36, Math.floor(decimals))) : 8;
+  const raw = formatUnits(answerRaw, safeDecimals);
+
+  if (!raw.includes('.')) return raw;
+
+  const [integerPart, fractionPart = ''] = raw.split('.');
+  const trimmedFraction = fractionPart.replace(/0+$/, '');
+  if (!trimmedFraction) return integerPart;
+
+  const cappedFraction = trimmedFraction.slice(0, maxFractionDigits).replace(/0+$/, '');
+  return cappedFraction ? `${integerPart}.${cappedFraction}` : integerPart;
 }
 
 /**

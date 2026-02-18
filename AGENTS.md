@@ -21,6 +21,15 @@ Always consult these docs for detailed information:
 4. Do not claim repo facts without evidence (no invented counts).
 5. Prevent double-capture, noisy heuristics, or duplicate logic.
 
+## Post-Implementation Consolidation (Mandatory)
+
+Before closing any non-trivial change:
+
+1. Run one consolidation pass and remove duplicated logic across files (especially repeated UI blocks).
+2. Prefer one chokepoint fix for layout constraints (container-level width/spacing) over per-component ad hoc truncation.
+3. Re-check first principles against the domain model so behavior applies consistently to all valid entities (not vendor-specific shortcuts).
+4. Remove transitional code that was useful during debugging but adds long-term complexity.
+
 ---
 
 ## 🛠️ Skills System

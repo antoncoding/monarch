@@ -1,5 +1,6 @@
 'use client';
 
+import { useFeedLastUpdatedByChain, type FeedSnapshotByAddress } from '@/hooks/useFeedLastUpdatedByChain';
 import { useOracleMetadata, getOracleFromMetadata, isMetaOracleData, type OracleOutputData } from '@/hooks/useOracleMetadata';
 import { AddressIdentity } from '@/components/shared/address-identity';
 import type { OracleFeed } from '@/utils/types';
@@ -13,7 +14,17 @@ type MetaOracleInfoProps = {
   variant?: 'summary' | 'detail';
 };
 
-function OracleFeedSection({ oracleData, chainId, label }: { oracleData: OracleOutputData | null; chainId: number; label: string }) {
+function OracleFeedSection({
+  oracleData,
+  chainId,
+  label,
+  feedSnapshotsByAddress,
+}: {
+  oracleData: OracleOutputData | null;
+  chainId: number;
+  label: string;
+  feedSnapshotsByAddress: FeedSnapshotByAddress;
+}) {
   if (!oracleData) return null;
 
   const feedGroups = [
@@ -53,6 +64,7 @@ function OracleFeedSection({ oracleData, chainId, label }: { oracleData: OracleO
                     feed={oracleFeed}
                     chainId={chainId}
                     enrichedFeed={enrichedFeed}
+                    feedSnapshotsByAddress={feedSnapshotsByAddress}
                   />
                 );
               })}
@@ -66,6 +78,7 @@ function OracleFeedSection({ oracleData, chainId, label }: { oracleData: OracleO
 
 export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: MetaOracleInfoProps) {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const { data: feedSnapshotsByAddress } = useFeedLastUpdatedByChain(chainId);
 
   const oracleMetadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
   if (!oracleMetadata?.data || !isMetaOracleData(oracleMetadata.data)) return null;
@@ -96,6 +109,7 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
             oracleData={metaData.oracleSources.primary}
             chainId={chainId}
             label="primary"
+            feedSnapshotsByAddress={feedSnapshotsByAddress}
           />
         </div>
 
@@ -117,6 +131,7 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
             oracleData={metaData.oracleSources.backup}
             chainId={chainId}
             label="backup"
+            feedSnapshotsByAddress={feedSnapshotsByAddress}
           />
         </div>
 
@@ -148,6 +163,7 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
       oracleData={currentOracleData}
       chainId={chainId}
       label="current"
+      feedSnapshotsByAddress={feedSnapshotsByAddress}
     />
   );
 }

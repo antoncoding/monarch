@@ -13,7 +13,7 @@ type UnknownFeedTooltipProps = {
 
 export function UnknownFeedTooltip({ feed, chainId }: UnknownFeedTooltipProps) {
   return (
-    <div className="flex max-w-xs flex-col gap-3">
+    <div className="flex w-fit max-w-[22rem] flex-col gap-3">
       {/* Header with icon and title */}
       <div className="flex items-center gap-2">
         <IoHelpCircleOutline
