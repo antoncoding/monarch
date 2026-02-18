@@ -53,7 +53,7 @@ export function FeedFreshnessSection({ feedFreshness, className }: FeedFreshness
         </div>
       )}
 
-      {feedFreshness.isStale && feedFreshness.staleAfterSeconds != null && (
+      {feedFreshness.isStale && (
         <div className="flex items-center justify-between gap-1">
           <span className="font-zen text-xs text-gray-600 dark:text-gray-400">Status:</span>
           <span className="text-right font-zen text-xs font-medium text-yellow-700 dark:text-yellow-300">Stale</span>

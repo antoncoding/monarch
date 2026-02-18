@@ -713,16 +713,15 @@ export function formatOracleTimestamp(seconds: number): string {
 }
 
 /**
- * Compact timestamp for tight UI surfaces: "HH:MM MM/DD"
+ * Compact timestamp for tight UI surfaces, honoring user locale.
  */
 export function formatOracleTimestampCompact(seconds: number): string {
-  const date = new Date(seconds * 1000);
-  const hours = `${date.getHours()}`.padStart(2, '0');
-  const minutes = `${date.getMinutes()}`.padStart(2, '0');
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-
-  return `${hours}:${minutes} ${month}/${day}`;
+  return new Date(seconds * 1000).toLocaleString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+  });
 }
 
 /**

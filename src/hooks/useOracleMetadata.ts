@@ -123,7 +123,7 @@ async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile 
       return null;
     }
 
-    return response.json();
+    return await response.json();
   } catch (error) {
     console.warn(`[oracle-metadata] Error fetching for chain ${chainId}:`, error);
     return null;
