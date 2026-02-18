@@ -9,7 +9,8 @@ type AvatarProps = {
 };
 
 export function Avatar({ address, size = 30, rounded = true }: AvatarProps) {
-  const [useEffigy, setUseEffigy] = useState(true);
+  const [effigyErrorAddress, setEffigyErrorAddress] = useState<Address | null>(null);
+  const useEffigy = effigyErrorAddress !== address;
   const effigyUrl = `https://effigy.im/a/${address}.svg`;
   const dicebearUrl = `https://api.dicebear.com/7.x/pixel-art/png?seed=${address}`;
 
@@ -21,7 +22,7 @@ export function Avatar({ address, size = 30, rounded = true }: AvatarProps) {
         width={size}
         height={size}
         style={{ borderRadius: rounded ? '50%' : '5px' }}
-        onError={() => setUseEffigy(false)}
+        onError={() => setEffigyErrorAddress(address)}
       />
     </div>
   );
