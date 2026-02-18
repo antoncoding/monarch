@@ -69,13 +69,17 @@ export function EditMetadata({
     }
   }, [computedNameInput, computedSymbolInput, metadataError]);
 
-  // Reset edit state when upstream values change
+  // Reset name edit state when upstream name changes
   useEffect(() => {
     nameEdited.current = false;
-    symbolEdited.current = false;
     setNameInput('');
+  }, [previousName]);
+
+  // Reset symbol edit state when upstream symbol changes
+  useEffect(() => {
+    symbolEdited.current = false;
     setSymbolInput('');
-  }, [previousName, previousSymbol]);
+  }, [previousSymbol]);
 
   const trimmedName = computedNameInput.trim();
   const trimmedSymbol = computedSymbolInput.trim();

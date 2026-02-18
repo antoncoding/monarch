@@ -10,14 +10,14 @@ type AvatarProps = {
 
 export function Avatar({ address, size = 30, rounded = true }: AvatarProps) {
   const [effigyErrorAddress, setEffigyErrorAddress] = useState<Address | null>(null);
-  const useEffigy = effigyErrorAddress !== address;
+  const effigyActive = effigyErrorAddress !== address;
   const effigyUrl = `https://effigy.im/a/${address}.svg`;
   const dicebearUrl = `https://api.dicebear.com/7.x/pixel-art/png?seed=${address}`;
 
   return (
     <div style={{ width: size, height: size }}>
       <Image
-        src={useEffigy ? effigyUrl : dicebearUrl}
+        src={effigyActive ? effigyUrl : dicebearUrl}
         alt={`Avatar for ${address}`}
         width={size}
         height={size}
