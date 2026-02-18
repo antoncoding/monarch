@@ -3,10 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type Address, zeroAddress } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
-import {
-  formatOraclePrice,
-  type FeedUpdateKind,
-} from '@/utils/oracle';
+import { formatOraclePrice, type FeedUpdateKind } from '@/utils/oracle';
 import {
   isMetaOracleData,
   useOracleMetadata,
@@ -62,7 +59,11 @@ function addFeedAddress(feedSet: Set<string>, hintByAddress: Record<string, Feed
   };
 }
 
-function addStandardOracleFeeds(feedSet: Set<string>, hintByAddress: Record<string, FeedSemanticHints>, oracleData: OracleOutputData | null) {
+function addStandardOracleFeeds(
+  feedSet: Set<string>,
+  hintByAddress: Record<string, FeedSemanticHints>,
+  oracleData: OracleOutputData | null,
+) {
   if (!oracleData) return;
 
   addFeedAddress(feedSet, hintByAddress, oracleData.baseFeedOne);
