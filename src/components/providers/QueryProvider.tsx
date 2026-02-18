@@ -12,7 +12,7 @@ type QueryProviderProps = {
 const ACTIONABLE_QUERY_ROOT_KEYS = new Set<string>([
   'all-position-snapshots',
   'enhanced-positions',
-  'feed-last-updated',
+  'feed-snapshot',
   'fresh-markets-state',
   'historicalSupplierPositions',
   'marketData',

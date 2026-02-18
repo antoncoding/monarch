@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { type Address, zeroAddress } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
-import { formatOraclePrice, type FeedUpdateKind } from '@/utils/oracle';
+import {
+  formatOraclePrice,
+  type FeedUpdateKind,
+} from '@/utils/oracle';
 import {
   isMetaOracleData,
   useOracleMetadata,
@@ -23,15 +26,16 @@ type FeedSemanticHints = {
 
 export type FeedSnapshot = {
   updatedAt: number | null;
-  answerRaw: bigint | null;
-  decimals: number | null;
   normalizedPrice: string | null;
-  queryBlockTimestamp: number | null;
   updateKind: FeedUpdateKind;
 };
 
 export type FeedSnapshotByAddress = Record<string, FeedSnapshot>;
-export type FeedLastUpdatedByAddress = FeedSnapshotByAddress;
+
+type FeedMetadataSnapshot = {
+  addresses: string[];
+  hintByAddress: Record<string, FeedSemanticHints>;
+};
 
 function addNormalizedAddress(feedSet: Set<string>, address: string | null | undefined) {
   if (!address) return;
@@ -48,22 +52,17 @@ function isDerivedCandidateFeed(feed: EnrichedFeed): boolean {
 
 function addFeedAddress(feedSet: Set<string>, hintByAddress: Record<string, FeedSemanticHints>, feed: EnrichedFeed | null) {
   if (!feed?.address) return;
-  const normalized = feed.address.toLowerCase();
-  addNormalizedAddress(feedSet, normalized);
 
-  const previous = hintByAddress[normalized];
-  const nextDerivedCandidate = previous?.derivedCandidate === true || isDerivedCandidateFeed(feed);
+  const normalizedAddress = feed.address.toLowerCase();
+  addNormalizedAddress(feedSet, normalizedAddress);
 
-  hintByAddress[normalized] = {
-    derivedCandidate: nextDerivedCandidate,
+  const previousHints = hintByAddress[normalizedAddress];
+  hintByAddress[normalizedAddress] = {
+    derivedCandidate: previousHints?.derivedCandidate === true || isDerivedCandidateFeed(feed),
   };
 }
 
-function addStandardOracleFeeds(
-  feedSet: Set<string>,
-  hintByAddress: Record<string, FeedSemanticHints>,
-  oracleData: OracleOutputData | null,
-) {
+function addStandardOracleFeeds(feedSet: Set<string>, hintByAddress: Record<string, FeedSemanticHints>, oracleData: OracleOutputData | null) {
   if (!oracleData) return;
 
   addFeedAddress(feedSet, hintByAddress, oracleData.baseFeedOne);
@@ -72,10 +71,7 @@ function addStandardOracleFeeds(
   addFeedAddress(feedSet, hintByAddress, oracleData.quoteFeedTwo);
 }
 
-function getFeedDataFromMetadata(metadataRecord: OracleMetadataRecord | undefined): {
-  addresses: string[];
-  hintByAddress: Record<string, FeedSemanticHints>;
-} {
+function getFeedMetadataSnapshot(metadataRecord: OracleMetadataRecord | undefined): FeedMetadataSnapshot {
   if (!metadataRecord) {
     return {
       addresses: [],
@@ -104,34 +100,26 @@ function getFeedDataFromMetadata(metadataRecord: OracleMetadataRecord | undefine
   };
 }
 
-function createAddressFingerprint(addresses: string[]): string {
-  if (addresses.length === 0) return '0';
+function createFingerprint(values: readonly string[]): string {
+  if (values.length === 0) return '0';
 
   let hash = 2166136261;
-  for (const address of addresses) {
-    for (let index = 0; index < address.length; index += 1) {
-      hash ^= address.charCodeAt(index);
+  for (const value of values) {
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
       hash = Math.imul(hash, 16777619);
     }
   }
 
-  return `${addresses.length}:${(hash >>> 0).toString(16)}`;
+  return `${values.length}:${(hash >>> 0).toString(16)}`;
 }
 
-function createHintFingerprint(hintByAddress: Record<string, FeedSemanticHints>): string {
-  const entries = Object.entries(hintByAddress).sort(([left], [right]) => left.localeCompare(right));
-  if (entries.length === 0) return '0';
+function createHintsFingerprint(hintByAddress: Record<string, FeedSemanticHints>): string {
+  const encodedHints = Object.entries(hintByAddress)
+    .sort(([leftAddress], [rightAddress]) => leftAddress.localeCompare(rightAddress))
+    .map(([address, hints]) => `${address}:${hints.derivedCandidate ? '1' : '0'}`);
 
-  let hash = 2166136261;
-  for (const [address, hints] of entries) {
-    const encoded = `${address}:${hints.derivedCandidate ? '1' : '0'}`;
-    for (let index = 0; index < encoded.length; index += 1) {
-      hash ^= encoded.charCodeAt(index);
-      hash = Math.imul(hash, 16777619);
-    }
-  }
-
-  return `${entries.length}:${(hash >>> 0).toString(16)}`;
+  return createFingerprint(encodedHints);
 }
 
 function chunkAddresses(addresses: string[]): string[][] {
@@ -148,9 +136,9 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
   const publicClient = usePublicClient({ chainId });
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
 
-  const { addresses: feedAddresses, hintByAddress } = useMemo(() => getFeedDataFromMetadata(oracleMetadataMap), [oracleMetadataMap]);
-  const addressFingerprint = useMemo(() => createAddressFingerprint(feedAddresses), [feedAddresses]);
-  const hintFingerprint = useMemo(() => createHintFingerprint(hintByAddress), [hintByAddress]);
+  const { addresses: feedAddresses, hintByAddress } = useMemo(() => getFeedMetadataSnapshot(oracleMetadataMap), [oracleMetadataMap]);
+  const addressFingerprint = useMemo(() => createFingerprint(feedAddresses), [feedAddresses]);
+  const hintFingerprint = useMemo(() => createHintsFingerprint(hintByAddress), [hintByAddress]);
 
   const query = useQuery({
     queryKey: ['feed-snapshot', chainId, addressFingerprint, hintFingerprint],
@@ -194,11 +182,11 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
         ]);
 
         for (let resultIndex = 0; resultIndex < roundResults.length; resultIndex += 1) {
-          const result = roundResults[resultIndex];
+          const roundResult = roundResults[resultIndex];
           const feedAddress = addressChunk[resultIndex];
-          if (!result || !feedAddress || result.status !== 'success') continue;
+          if (!roundResult || !feedAddress || roundResult.status !== 'success') continue;
 
-          const [, answer, , updatedAt] = result.result as readonly [bigint, bigint, bigint, bigint, bigint];
+          const [, answer, , updatedAt] = roundResult.result as readonly [bigint, bigint, bigint, bigint, bigint];
           const decimalsResult = decimalsResults[resultIndex];
           const decimals =
             decimalsResult?.status === 'success' && Number.isFinite(Number(decimalsResult.result))
@@ -213,10 +201,7 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
 
           snapshotByAddress[feedAddress] = {
             updatedAt: updatedAtSeconds,
-            answerRaw: answer,
-            decimals,
             normalizedPrice,
-            queryBlockTimestamp,
             updateKind,
           };
         }
