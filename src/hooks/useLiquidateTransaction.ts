@@ -30,11 +30,14 @@ export function useLiquidateTransaction({
 
   const tracking = useTransactionTracking('liquidate');
   const morphoAddress = chainId ? getMorphoAddress(chainId) : undefined;
+  const hasSeizedAssets = seizedAssets > 0n;
+  const hasRepaidShares = repaidShares > 0n;
+  const hasExactlyOneLiquidationMode = hasSeizedAssets !== hasRepaidShares;
 
   // Liquidation repays debt in both modes:
   // - repaidShares > 0 (max/share-based)
   // - seizedAssets > 0 (asset-based)
-  const approvalAmount = repaidShares > 0n || seizedAssets > 0n ? repayAmount : 0n;
+  const approvalAmount = hasExactlyOneLiquidationMode ? repayAmount : 0n;
 
   const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
@@ -58,6 +61,9 @@ export function useLiquidateTransaction({
 
   const liquidate = useCallback(async () => {
     if (!account || !chainId || !morphoAddress) return;
+    if (!hasExactlyOneLiquidationMode) {
+      throw new Error('Invalid liquidation params: exactly one of seizedAssets or repaidShares must be non-zero');
+    }
 
     const marketParams = {
       loanToken: market.loanAsset.address as `0x${string}`,
@@ -70,16 +76,31 @@ export function useLiquidateTransaction({
     const liquidateTx = encodeFunctionData({
       abi: morphoAbi,
       functionName: 'liquidate',
-      args: [marketParams, borrower, seizedAssets, repaidShares, '0x'],
+      args: [marketParams, borrower, hasSeizedAssets ? seizedAssets : 0n, hasRepaidShares ? repaidShares : 0n, '0x'],
     });
 
     await sendTransactionAsync({ to: morphoAddress as Address, data: liquidateTx });
-  }, [account, chainId, market, borrower, seizedAssets, repaidShares, morphoAddress, sendTransactionAsync]);
+  }, [
+    account,
+    chainId,
+    market,
+    borrower,
+    hasExactlyOneLiquidationMode,
+    hasSeizedAssets,
+    seizedAssets,
+    hasRepaidShares,
+    repaidShares,
+    morphoAddress,
+    sendTransactionAsync,
+  ]);
 
   const handleLiquidate = useCallback(async () => {
+    if (!hasExactlyOneLiquidationMode) {
+      throw new Error('Invalid liquidation params: exactly one of seizedAssets or repaidShares must be non-zero');
+    }
     if (!isApproved) await approve();
     await liquidate();
-  }, [isApproved, approve, liquidate]);
+  }, [hasExactlyOneLiquidationMode, isApproved, approve, liquidate]);
 
   return { liquidatePending, liquidate, handleLiquidate };
 }
