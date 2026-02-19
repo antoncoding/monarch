@@ -10,10 +10,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useMarketBorrowers } from '@/hooks/useMarketBorrowers';
 import { formatSimple } from '@/utils/balance';
 import type { Market } from '@/utils/types';
+import { LiquidateModal } from '@/modals/liquidate/liquidate-modal';
 
 type BorrowersTableProps = {
   chainId: number;
@@ -25,7 +27,9 @@ type BorrowersTableProps = {
 
 export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpenFiltersModal }: BorrowersTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [liquidateBorrower, setLiquidateBorrower] = useState<Address | null>(null);
   const pageSize = 10;
+  const { showDeveloperOptions } = useAppSettings();
 
   const { data: paginatedData, isLoading, isFetching } = useMarketBorrowers(market?.uniqueKey, chainId, minShares, currentPage, pageSize);
 
@@ -117,13 +121,14 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                 <TableHead className="text-right">COLLATERAL</TableHead>
                 <TableHead className="text-right">LTV</TableHead>
                 <TableHead className="text-right">% OF BORROW</TableHead>
+                {showDeveloperOptions && <TableHead className="text-right">ACTIONS</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact">
               {borrowersWithLTV.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={showDeveloperOptions ? 6 : 5}
                     className="text-center text-gray-400"
                   >
                     No borrowers found for this market
@@ -176,6 +181,17 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                       </TableCell>
                       <TableCell className="text-right text-sm">{borrower.ltv.toFixed(2)}%</TableCell>
                       <TableCell className="text-right text-sm">{percentDisplay}</TableCell>
+                      {showDeveloperOptions && (
+                        <TableCell className="text-right">
+                          <Button
+                            variant="default"
+                            size="xs"
+                            onClick={() => setLiquidateBorrower(borrower.userAddress as Address)}
+                          >
+                            Liquidate
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })
@@ -193,6 +209,17 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
           pageSize={pageSize}
           onPageChange={handlePageChange}
           isLoading={isFetching}
+        />
+      )}
+
+      {liquidateBorrower && (
+        <LiquidateModal
+          market={market}
+          borrower={liquidateBorrower}
+          oraclePrice={oraclePrice}
+          onOpenChange={(open) => {
+            if (!open) setLiquidateBorrower(null);
+          }}
         />
       )}
     </div>

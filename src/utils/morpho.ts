@@ -1,4 +1,4 @@
-import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
+import { Market as BlueMarket, MarketParams as BlueMarketParams, MarketUtils } from '@morpho-org/blue-sdk';
 import { type Address, decodeAbiParameters, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
 import { type Market, type MarketParams, UserTxTypes } from './types';
@@ -282,6 +282,44 @@ type MarketStatePreview = {
   totalBorrowAssets: bigint;
   liquidityAssets: bigint;
 };
+
+type EstimateLiquidationRepaidAmountParams = {
+  seizedAssets: bigint;
+  repaidShares: bigint;
+  oraclePrice: bigint;
+  totalBorrowAssets: bigint;
+  totalBorrowShares: bigint;
+  lltv: bigint;
+};
+
+export function estimateLiquidationRepaidAmount({
+  seizedAssets,
+  repaidShares,
+  oraclePrice,
+  totalBorrowAssets,
+  totalBorrowShares,
+  lltv,
+}: EstimateLiquidationRepaidAmountParams): bigint {
+  const marketState = {
+    totalBorrowAssets,
+    totalBorrowShares,
+    price: oraclePrice,
+  };
+
+  if (repaidShares > 0n) {
+    return MarketUtils.toBorrowAssets(repaidShares, marketState, 'Up');
+  }
+
+  if (seizedAssets > 0n && oraclePrice > 0n) {
+    const derivedRepaidShares =
+      MarketUtils.getLiquidationRepaidShares(seizedAssets, marketState, {
+        lltv,
+      }) ?? 0n;
+    return MarketUtils.toBorrowAssets(derivedRepaidShares, marketState, 'Up');
+  }
+
+  return 0n;
+}
 
 /**
  * Simulates market state changes based on supply and borrow deltas.
