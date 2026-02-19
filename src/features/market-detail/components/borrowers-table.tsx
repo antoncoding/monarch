@@ -216,6 +216,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
         <LiquidateModal
           market={market}
           borrower={liquidateBorrower}
+          oraclePrice={oraclePrice}
           onOpenChange={(open) => {
             if (!open) setLiquidateBorrower(null);
           }}

@@ -14,8 +14,16 @@ type UseLiquidateTransactionProps = {
   borrower: Address;
   seizedAssets: bigint;
   repaidShares: bigint;
-  repayAmount: bigint; // loan token amount for approval
+  estimatedRepaidAmount: bigint; // raw loan token estimate before approval buffer
   onSuccess?: () => void;
+};
+
+const APPROVAL_BUFFER_BPS = 400n;
+const BPS_SCALE = 10_000n;
+
+const addBufferBpsUp = (amount: bigint, bps: bigint): bigint => {
+  if (amount === 0n) return 0n;
+  return (amount * (BPS_SCALE + bps) + (BPS_SCALE - 1n)) / BPS_SCALE;
 };
 
 export function useLiquidateTransaction({
@@ -23,7 +31,7 @@ export function useLiquidateTransaction({
   borrower,
   seizedAssets,
   repaidShares,
-  repayAmount,
+  estimatedRepaidAmount,
   onSuccess,
 }: UseLiquidateTransactionProps) {
   const { address: account, chainId } = useConnection();
@@ -37,7 +45,7 @@ export function useLiquidateTransaction({
   // Liquidation repays debt in both modes:
   // - repaidShares > 0 (max/share-based)
   // - seizedAssets > 0 (asset-based)
-  const approvalAmount = hasExactlyOneLiquidationMode ? repayAmount : 0n;
+  const approvalAmount = hasExactlyOneLiquidationMode ? addBufferBpsUp(estimatedRepaidAmount, APPROVAL_BUFFER_BPS) : 0n;
 
   const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,

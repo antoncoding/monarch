@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import Input from '@/components/Input/Input';
 import { useLiquidateTransaction } from '@/hooks/useLiquidateTransaction';
 import { formatBalance, formatReadable } from '@/utils/balance';
+import { estimateLiquidationRepaidAmount } from '@/utils/morpho';
 import type { Market } from '@/utils/types';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
@@ -14,6 +15,7 @@ type LiquidateModalContentProps = {
   borrower: Address;
   borrowerCollateral: bigint;
   borrowerBorrowShares: bigint;
+  oraclePrice: bigint;
   onSuccess?: () => void;
   onRefresh?: () => void;
   isLoading?: boolean;
@@ -24,11 +26,12 @@ export function LiquidateModalContent({
   borrower,
   borrowerCollateral,
   borrowerBorrowShares,
+  oraclePrice,
   onSuccess,
   onRefresh,
   isLoading,
 }: LiquidateModalContentProps): JSX.Element {
-  const [repayAmount, setRepayAmount] = useState<bigint>(BigInt(0));
+  const [seizedCollateralAmount, setSeizedCollateralAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
   const [useMaxShares, setUseMaxShares] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -52,48 +55,38 @@ export function LiquidateModalContent({
 
   // seizedAssets is in collateral token units
   // When useMaxShares is true, we repay full debt (shares) and protocol calculates collateral
-  const seizedAssets = useMaxShares ? BigInt(0) : repayAmount;
+  const seizedAssets = useMaxShares ? BigInt(0) : seizedCollateralAmount;
   const repaidShares = useMaxShares ? borrowerBorrowShares : BigInt(0);
 
-  // Calculate loan token amount for approval
-  // Convert collateral to loan token equivalent using USD values
-  let loanAmountForApproval: bigint;
-  if (useMaxShares) {
-    // Max: approve the full debt amount in loan tokens
-    loanAmountForApproval = borrowerDebtInAssets;
-  } else if (
-    seizedAssets > 0n &&
-    market.state.collateralAssetsUsd != null &&
-    market.state.borrowAssetsUsd > 0 &&
-    Number(market.state.collateralAssets) > 0 &&
-    Number(market.state.borrowAssets) > 0
-  ) {
-    // Convert collateral amount to loan token amount using USD exchange rate
-    const collateralUsdPerToken = market.state.collateralAssetsUsd / Number(market.state.collateralAssets);
-    const loanUsdPerToken = market.state.borrowAssetsUsd / Number(market.state.borrowAssets);
-    const collateralUsd = Number(seizedAssets) * collateralUsdPerToken;
-    const loanTokens = collateralUsd / loanUsdPerToken;
-    loanAmountForApproval = BigInt(Math.floor(loanTokens * 10 ** market.loanAsset.decimals));
-  } else {
-    loanAmountForApproval = 0n;
-  }
+  const estimatedRepaidAmount = useMemo(
+    () =>
+      estimateLiquidationRepaidAmount({
+        seizedAssets,
+        repaidShares,
+        oraclePrice,
+        totalBorrowAssets,
+        totalBorrowShares,
+        lltv: BigInt(market.lltv),
+      }),
+    [market.lltv, oraclePrice, repaidShares, seizedAssets, totalBorrowAssets, totalBorrowShares],
+  );
 
   const { liquidatePending, handleLiquidate } = useLiquidateTransaction({
     market,
     borrower,
     seizedAssets,
     repaidShares,
-    repayAmount: loanAmountForApproval,
+    estimatedRepaidAmount,
     onSuccess,
   });
 
   const handleMaxClick = useCallback(() => {
     setUseMaxShares(true);
-    setRepayAmount(borrowerCollateral);
-  }, [borrowerCollateral]);
+    setInputError(null);
+  }, []);
 
   const handleInputChange = useCallback((value: bigint) => {
-    setRepayAmount(value);
+    setSeizedCollateralAmount(value);
     setUseMaxShares(false);
     setInputError(null);
   }, []);
@@ -108,7 +101,7 @@ export function LiquidateModalContent({
     }
   }, [onRefresh]);
 
-  const isValid = repayAmount > 0n || useMaxShares;
+  const isValid = (seizedCollateralAmount > 0n || useMaxShares) && (useMaxShares || oraclePrice > 0n);
   const hasBorrowPosition = borrowerBorrowShares > 0n;
 
   return (
@@ -171,24 +164,45 @@ export function LiquidateModalContent({
 
       {hasBorrowPosition && (
         <div>
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex items-center gap-1">
             <span className="font text-sm text-secondary">Collateral to seize</span>
-            <button
-              type="button"
-              className="text-xs font-medium text-primary hover:underline text-secondary"
-              onClick={handleMaxClick}
-            >
-              Max
-            </button>
+            <TokenIcon
+              address={market.collateralAsset.address}
+              chainId={market.morphoBlue.chain.id}
+              symbol={market.collateralAsset.symbol}
+              width={14}
+              height={14}
+            />
           </div>
           <Input
             decimals={market.collateralAsset.decimals}
             max={borrowerCollateral}
             setValue={handleInputChange}
             setError={setInputError}
-            value={repayAmount}
+            onMaxClick={handleMaxClick}
+            value={seizedCollateralAmount}
             error={inputError}
           />
+        </div>
+      )}
+
+      {hasBorrowPosition && estimatedRepaidAmount > 0n && (
+        <div className="rounded-sm bg-hovered p-3">
+          <div className="flex items-center justify-between text-xs text-secondary">
+            <span className="flex items-center gap-1">
+              <span>Estimated repay</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <span>{formatReadable(formatBalance(estimatedRepaidAmount, market.loanAsset.decimals))}</span>
+              <TokenIcon
+                address={market.loanAsset.address}
+                chainId={market.morphoBlue.chain.id}
+                symbol={market.loanAsset.symbol}
+                width={14}
+                height={14}
+              />
+            </span>
+          </div>
         </div>
       )}
 

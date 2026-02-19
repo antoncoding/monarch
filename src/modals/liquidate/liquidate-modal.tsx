@@ -9,10 +9,11 @@ import type { Address } from 'viem';
 type LiquidateModalProps = {
   market: Market;
   borrower: Address;
+  oraclePrice: bigint;
   onOpenChange: (open: boolean) => void;
 };
 
-export function LiquidateModal({ market, borrower, onOpenChange }: LiquidateModalProps): JSX.Element {
+export function LiquidateModal({ market, borrower, oraclePrice, onOpenChange }: LiquidateModalProps): JSX.Element {
   const {
     data: borrowerPosition,
     refetch: refetchBorrowerPosition,
@@ -80,6 +81,7 @@ export function LiquidateModal({ market, borrower, onOpenChange }: LiquidateModa
           borrower={borrower}
           borrowerCollateral={borrowerCollateral}
           borrowerBorrowShares={borrowerBorrowShares}
+          oraclePrice={oraclePrice}
           onSuccess={() => onOpenChange(false)}
           onRefresh={handleRefetch}
           isLoading={isBorrowerPositionLoading}
