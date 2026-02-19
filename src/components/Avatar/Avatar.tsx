@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import type { Address } from 'viem';
 
@@ -8,16 +9,27 @@ type AvatarProps = {
 };
 
 export function Avatar({ address, size = 30, rounded = true }: AvatarProps) {
+  const [effigyErrorAddress, setEffigyErrorAddress] = useState<Address | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const effigyActive = !mounted || effigyErrorAddress !== address;
+  const effigyUrl = `https://effigy.im/a/${address}.svg`;
   const dicebearUrl = `https://api.dicebear.com/7.x/pixel-art/png?seed=${address}`;
 
   return (
     <div style={{ width: size, height: size }}>
       <Image
-        src={dicebearUrl}
+        src={effigyActive ? effigyUrl : dicebearUrl}
         alt={`Avatar for ${address}`}
         width={size}
         height={size}
         style={{ borderRadius: rounded ? '50%' : '5px' }}
+        unoptimized
+        onError={() => setEffigyErrorAddress(address)}
       />
     </div>
   );
