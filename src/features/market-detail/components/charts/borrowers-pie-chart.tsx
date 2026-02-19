@@ -257,7 +257,14 @@ export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPie
                 />
               ))}
             </Pie>
-            <Tooltip content={<BorrowersPieTooltip expandedOther={expandedOther} market={market} />} />
+            <Tooltip
+              content={
+                <BorrowersPieTooltip
+                  expandedOther={expandedOther}
+                  market={market}
+                />
+              }
+            />
             <Legend
               layout="vertical"
               align="right"

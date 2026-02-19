@@ -268,7 +268,12 @@ export function SupplierPositionsChart({ marketId, chainId, market }: SupplierPo
             />
             <Tooltip
               cursor={chartTooltipCursor}
-              content={<SupplierPositionsTooltip getDisplayName={getDisplayName} formatValue={formatValue} />}
+              content={
+                <SupplierPositionsTooltip
+                  getDisplayName={getDisplayName}
+                  formatValue={formatValue}
+                />
+              }
             />
             {topSuppliers.map((supplier, index) => (
               <Line
