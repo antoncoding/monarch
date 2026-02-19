@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { GoFilter } from 'react-icons/go';
+import { LuZap } from 'react-icons/lu';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
@@ -10,10 +11,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useMarketBorrowers } from '@/hooks/useMarketBorrowers';
 import { formatSimple } from '@/utils/balance';
 import type { Market } from '@/utils/types';
+import { LiquidateModal } from '@/modals/liquidate/liquidate-modal';
 
 type BorrowersTableProps = {
   chainId: number;
@@ -25,7 +28,9 @@ type BorrowersTableProps = {
 
 export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpenFiltersModal }: BorrowersTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [liquidateBorrower, setLiquidateBorrower] = useState<Address | null>(null);
   const pageSize = 10;
+  const { showDeveloperOptions } = useAppSettings();
 
   const { data: paginatedData, isLoading, isFetching } = useMarketBorrowers(market?.uniqueKey, chainId, minShares, currentPage, pageSize);
 
@@ -117,6 +122,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                 <TableHead className="text-right">COLLATERAL</TableHead>
                 <TableHead className="text-right">LTV</TableHead>
                 <TableHead className="text-right">% OF BORROW</TableHead>
+                {showDeveloperOptions && <TableHead className="text-right">ACTIONS</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact">
@@ -176,6 +182,18 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                       </TableCell>
                       <TableCell className="text-right text-sm">{borrower.ltv.toFixed(2)}%</TableCell>
                       <TableCell className="text-right text-sm">{percentDisplay}</TableCell>
+                      {showDeveloperOptions && (
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 min-w-0 px-2 text-red-500 hover:text-red-600"
+                            onClick={() => setLiquidateBorrower(borrower.userAddress as Address)}
+                          >
+                            <LuZap className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })
@@ -193,6 +211,16 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
           pageSize={pageSize}
           onPageChange={handlePageChange}
           isLoading={isFetching}
+        />
+      )}
+
+      {liquidateBorrower && (
+        <LiquidateModal
+          market={market}
+          borrower={liquidateBorrower}
+          onOpenChange={(open) => {
+            if (!open) setLiquidateBorrower(null);
+          }}
         />
       )}
     </div>
