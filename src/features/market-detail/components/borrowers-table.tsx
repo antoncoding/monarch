@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { GoFilter } from 'react-icons/go';
-import { LuZap } from 'react-icons/lu';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
@@ -185,12 +184,11 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                       {showDeveloperOptions && (
                         <TableCell className="text-right">
                           <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 min-w-0 px-2 text-red-500 hover:text-red-600"
+                            variant="default"
+                            size="xs"
                             onClick={() => setLiquidateBorrower(borrower.userAddress as Address)}
                           >
-                            <LuZap className="h-3.5 w-3.5" />
+                            Liquidate
                           </Button>
                         </TableCell>
                       )}

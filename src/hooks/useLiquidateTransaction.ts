@@ -21,13 +21,14 @@ export function useLiquidateTransaction({ market, borrower, seizedAssets, repaid
   const { address: account, chainId } = useConnection();
 
   const tracking = useTransactionTracking('liquidate');
-  const morphoAddress = getMorphoAddress(chainId);
+  const morphoAddress = chainId ? getMorphoAddress(chainId) : undefined;
 
   const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
-    spender: morphoAddress,
+    spender: morphoAddress ?? '0x',
     amount: 0n,
     tokenSymbol: market.loanAsset.symbol,
+    chainId,
   });
 
   const { isConfirming: liquidatePending, sendTransactionAsync } = useTransactionWithToast({
@@ -43,7 +44,7 @@ export function useLiquidateTransaction({ market, borrower, seizedAssets, repaid
   });
 
   const liquidate = useCallback(async () => {
-    if (!account || !chainId) return;
+    if (!account || !chainId || !morphoAddress) return;
 
     const marketParams = {
       loanToken: market.loanAsset.address as `0x${string}`,
@@ -59,7 +60,7 @@ export function useLiquidateTransaction({ market, borrower, seizedAssets, repaid
       args: [marketParams, borrower, seizedAssets, repaidShares, '0x'],
     });
 
-    await sendTransactionAsync({ to: morphoAddress, data: liquidateTx });
+    await sendTransactionAsync({ to: morphoAddress as Address, data: liquidateTx });
   }, [account, chainId, market, borrower, seizedAssets, repaidShares, morphoAddress, sendTransactionAsync]);
 
   const handleLiquidate = useCallback(async () => {

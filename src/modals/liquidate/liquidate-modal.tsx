@@ -3,6 +3,7 @@ import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
 import type { Market } from '@/utils/types';
 import { LiquidateModalContent } from './components/liquidate-modal-content';
 import { TokenIcon } from '@/components/shared/token-icon';
+import morphoAbi from '@/abis/morpho';
 import type { Address } from 'viem';
 
 type LiquidateModalProps = {
@@ -12,34 +13,25 @@ type LiquidateModalProps = {
 };
 
 export function LiquidateModal({ market, borrower, onOpenChange }: LiquidateModalProps): JSX.Element {
-  const { data: borrowerPosition } = useReadContract({
+  const {
+    data: borrowerPosition,
+    refetch: refetchBorrowerPosition,
+    isLoading: isBorrowerPositionLoading,
+  } = useReadContract({
     address: market.morphoBlue.address as `0x${string}`,
     functionName: 'position',
-    args: [borrower, market.uniqueKey as `0x${string}`],
-    abi: [
-      {
-        inputs: [
-          { internalType: 'address', name: 'user', type: 'address' },
-          { internalType: 'Id', name: 'id', type: 'bytes32' },
-        ],
-        name: 'position',
-        outputs: [
-          { internalType: 'uint256', name: 'supplyShares', type: 'uint256' },
-          { internalType: 'uint256', name: 'borrowShares', type: 'uint256' },
-          { internalType: 'uint256', name: 'collateral', type: 'uint256' },
-        ],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ],
+    args: [market.uniqueKey as `0x${string}`, borrower as `0x${string}`],
+    abi: morphoAbi,
     chainId: market.morphoBlue.chain.id,
     query: {
-      enabled: !!borrower,
+      enabled: !!borrower && !!market.morphoBlue.address && !!market.uniqueKey,
+      refetchInterval: 10_000,
     },
   });
 
   const borrowerCollateral = borrowerPosition ? BigInt(borrowerPosition[2]) : 0n;
-  const borrowerDebt = borrowerPosition ? BigInt(borrowerPosition[1]) : 0n;
+  const borrowerBorrowShares = borrowerPosition ? BigInt(borrowerPosition[1]) : 0n;
+  const borrowerSupplyShares = borrowerPosition ? BigInt(borrowerPosition[0]) : 0n;
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -61,6 +53,10 @@ export function LiquidateModal({ market, borrower, onOpenChange }: LiquidateModa
       </div>
     </div>
   );
+
+  const handleRefetch = () => {
+    void refetchBorrowerPosition();
+  };
 
   return (
     <Modal
@@ -84,8 +80,11 @@ export function LiquidateModal({ market, borrower, onOpenChange }: LiquidateModa
           market={market}
           borrower={borrower}
           borrowerCollateral={borrowerCollateral}
-          borrowerDebt={borrowerDebt}
+          borrowerBorrowShares={borrowerBorrowShares}
+          borrowerSupplyShares={borrowerSupplyShares}
           onSuccess={() => onOpenChange(false)}
+          onRefresh={handleRefetch}
+          isLoading={isBorrowerPositionLoading}
         />
       </ModalBody>
     </Modal>
