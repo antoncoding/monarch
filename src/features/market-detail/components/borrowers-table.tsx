@@ -128,7 +128,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
               {borrowersWithLTV.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={showDeveloperOptions ? 6 : 5}
                     className="text-center text-gray-400"
                   >
                     No borrowers found for this market
