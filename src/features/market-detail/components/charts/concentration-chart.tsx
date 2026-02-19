@@ -23,13 +23,7 @@ type ConcentrationChartProps = {
 const MIN_PERCENT_THRESHOLD = 0.1;
 
 // Custom tooltip at module scope
-function ConcentrationTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: { payload: ConcentrationDataPoint }[];
-}) {
+function ConcentrationTooltip({ active, payload }: { active?: boolean; payload?: { payload: ConcentrationDataPoint }[] }) {
   if (!active || !payload?.[0]) return null;
   const data = payload[0].payload;
 

@@ -45,8 +45,8 @@ export function EditMetadata({
   const [metadataError, setMetadataError] = useState<string | null>(null);
 
   // Compute values during render - use default if not edited, otherwise use stored value
-  const computedNameInput = nameEdited.current ? nameInput : (previousName !== '' ? previousName : defaultName);
-  const computedSymbolInput = symbolEdited.current ? symbolInput : (previousSymbol !== '' ? previousSymbol : defaultSymbol);
+  const computedNameInput = nameEdited.current ? nameInput : previousName !== '' ? previousName : defaultName;
+  const computedSymbolInput = symbolEdited.current ? symbolInput : previousSymbol !== '' ? previousSymbol : defaultSymbol;
 
   const handleNameChange = useCallback((value: string) => {
     nameEdited.current = true;

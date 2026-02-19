@@ -6,7 +6,6 @@ import { formatUnits } from 'viem';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { TokenIcon } from '@/components/shared/token-icon';
 import { useChartColors } from '@/constants/chartColors';
 import { useVaultRegistry } from '@/contexts/VaultRegistryContext';
 import { useAllMarketSuppliers } from '@/hooks/useAllMarketPositions';
