@@ -14,19 +14,30 @@ type UseLiquidateTransactionProps = {
   borrower: Address;
   seizedAssets: bigint;
   repaidShares: bigint;
+  repayAmount: bigint; // loan token amount for approval
   onSuccess?: () => void;
 };
 
-export function useLiquidateTransaction({ market, borrower, seizedAssets, repaidShares, onSuccess }: UseLiquidateTransactionProps) {
+export function useLiquidateTransaction({
+  market,
+  borrower,
+  seizedAssets,
+  repaidShares,
+  repayAmount,
+  onSuccess,
+}: UseLiquidateTransactionProps) {
   const { address: account, chainId } = useConnection();
 
   const tracking = useTransactionTracking('liquidate');
   const morphoAddress = chainId ? getMorphoAddress(chainId) : undefined;
 
+  // Approve the loan token amount needed for liquidation
+  const approvalAmount = repaidShares > 0n ? repayAmount : 0n;
+
   const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
     spender: morphoAddress ?? '0x',
-    amount: 0n,
+    amount: approvalAmount,
     tokenSymbol: market.loanAsset.symbol,
     chainId,
   });

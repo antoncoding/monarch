@@ -14,7 +14,6 @@ type LiquidateModalContentProps = {
   borrower: Address;
   borrowerCollateral: bigint;
   borrowerBorrowShares: bigint;
-  borrowerSupplyShares: bigint;
   onSuccess?: () => void;
   onRefresh?: () => void;
   isLoading?: boolean;
@@ -56,11 +55,35 @@ export function LiquidateModalContent({
   const seizedAssets = useMaxShares ? BigInt(0) : repayAmount;
   const repaidShares = useMaxShares ? borrowerBorrowShares : BigInt(0);
 
+  // Calculate loan token amount for approval
+  // Convert collateral to loan token equivalent using USD values
+  let loanAmountForApproval: bigint;
+  if (useMaxShares) {
+    // Max: approve the full debt amount in loan tokens
+    loanAmountForApproval = borrowerDebtInAssets;
+  } else if (
+    seizedAssets > 0n &&
+    market.state.collateralAssetsUsd != null &&
+    market.state.borrowAssetsUsd > 0 &&
+    Number(market.state.collateralAssets) > 0 &&
+    Number(market.state.borrowAssets) > 0
+  ) {
+    // Convert collateral amount to loan token amount using USD exchange rate
+    const collateralUsdPerToken = market.state.collateralAssetsUsd / Number(market.state.collateralAssets);
+    const loanUsdPerToken = market.state.borrowAssetsUsd / Number(market.state.borrowAssets);
+    const collateralUsd = Number(seizedAssets) * collateralUsdPerToken;
+    const loanTokens = collateralUsd / loanUsdPerToken;
+    loanAmountForApproval = BigInt(Math.floor(loanTokens * 10 ** market.loanAsset.decimals));
+  } else {
+    loanAmountForApproval = 0n;
+  }
+
   const { liquidatePending, handleLiquidate } = useLiquidateTransaction({
     market,
     borrower,
     seizedAssets,
     repaidShares,
+    repayAmount: loanAmountForApproval,
     onSuccess,
   });
 

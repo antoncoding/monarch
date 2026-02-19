@@ -31,7 +31,6 @@ export function LiquidateModal({ market, borrower, onOpenChange }: LiquidateModa
 
   const borrowerCollateral = borrowerPosition ? BigInt(borrowerPosition[2]) : 0n;
   const borrowerBorrowShares = borrowerPosition ? BigInt(borrowerPosition[1]) : 0n;
-  const borrowerSupplyShares = borrowerPosition ? BigInt(borrowerPosition[0]) : 0n;
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -81,7 +80,6 @@ export function LiquidateModal({ market, borrower, onOpenChange }: LiquidateModa
           borrower={borrower}
           borrowerCollateral={borrowerCollateral}
           borrowerBorrowShares={borrowerBorrowShares}
-          borrowerSupplyShares={borrowerSupplyShares}
           onSuccess={() => onOpenChange(false)}
           onRefresh={handleRefetch}
           isLoading={isBorrowerPositionLoading}
