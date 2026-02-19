@@ -51,6 +51,8 @@ export function LiquidateModalContent({
       ? (Number(borrowerCollateral) / Number(market.state.collateralAssets)) * (market.state.collateralAssetsUsd ?? 0)
       : 0;
 
+  // seizedAssets is in collateral token units
+  // When useMaxShares is true, we repay full debt (shares) and protocol calculates collateral
   const seizedAssets = useMaxShares ? BigInt(0) : repayAmount;
   const repaidShares = useMaxShares ? borrowerBorrowShares : BigInt(0);
 
@@ -64,8 +66,8 @@ export function LiquidateModalContent({
 
   const handleMaxClick = useCallback(() => {
     setUseMaxShares(true);
-    setRepayAmount(borrowerDebtInAssets);
-  }, [borrowerDebtInAssets]);
+    setRepayAmount(borrowerCollateral);
+  }, [borrowerCollateral]);
 
   const handleInputChange = useCallback((value: bigint) => {
     setRepayAmount(value);
@@ -147,7 +149,7 @@ export function LiquidateModalContent({
       {hasBorrowPosition && (
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <span className="font text-sm text-secondary">{useMaxShares ? 'Liquidate max' : 'Repay amount'}</span>
+            <span className="font text-sm text-secondary">Collateral to seize</span>
             <button
               type="button"
               className="text-xs font-medium text-primary hover:underline text-secondary"
@@ -157,7 +159,8 @@ export function LiquidateModalContent({
             </button>
           </div>
           <Input
-            decimals={market.loanAsset.decimals}
+            decimals={market.collateralAsset.decimals}
+            max={borrowerCollateral}
             setValue={handleInputChange}
             setError={setInputError}
             value={repayAmount}

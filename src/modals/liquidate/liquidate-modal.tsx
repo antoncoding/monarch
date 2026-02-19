@@ -73,7 +73,7 @@ export function LiquidateModal({ market, borrower, onOpenChange }: LiquidateModa
             <span className="text-xs opacity-50">/ {market.collateralAsset.symbol}</span>
           </div>
         }
-        description="Liquidate a underwater position"
+        description="Liquidate an underwater position"
       />
       <ModalBody>
         <LiquidateModalContent
