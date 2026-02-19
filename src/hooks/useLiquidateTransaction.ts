@@ -31,8 +31,10 @@ export function useLiquidateTransaction({
   const tracking = useTransactionTracking('liquidate');
   const morphoAddress = chainId ? getMorphoAddress(chainId) : undefined;
 
-  // Approve the loan token amount needed for liquidation
-  const approvalAmount = repaidShares > 0n ? repayAmount : 0n;
+  // Liquidation repays debt in both modes:
+  // - repaidShares > 0 (max/share-based)
+  // - seizedAssets > 0 (asset-based)
+  const approvalAmount = repaidShares > 0n || seizedAssets > 0n ? repayAmount : 0n;
 
   const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
