@@ -40,10 +40,15 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
   const hasActiveFilter = minShares !== '0';
   const tableKey = `borrowers-table-${currentPage}`;
 
-  // Calculate LTV for each borrower
+  // Calculate LTV and Days to Liquidation for each borrower
   // LTV = borrowAssets / (collateral * oraclePrice)
-  const borrowersWithLTV = useMemo(() => {
-    if (!oraclePrice || oraclePrice === 0n) return [];
+  // Days to Liquidation = ln(lltv/ltv) / ln(1 + borrowApy) * 365
+  // (using continuous compounding: r = ln(1 + APY) to convert annual APY to continuous rate)
+  const borrowersWithMetrics = useMemo(() => {
+    if (!oraclePrice) return [];
+
+    const lltv = Number(market.lltv) / 1e16; // lltv in WAD format (e.g., 8e17 = 80%)
+    const borrowApy = market.state.borrowApy;
 
     return borrowers.map((borrower) => {
       const borrowAssets = BigInt(borrower.borrowAssets);
@@ -54,18 +59,29 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
       const collateralValueInLoan = (collateral * oraclePrice) / BigInt(10 ** 36);
 
       // Calculate LTV as a percentage
-      // LTV = (borrowAssets / collateralValue) * 100
       let ltv = 0;
       if (collateralValueInLoan > 0n) {
         ltv = Number((borrowAssets * 10000n) / collateralValueInLoan) / 100;
       }
 
+      // Calculate Days to Liquidation
+      // Only calculate if borrower has position, LTV > 0, and borrow rate > 0
+      let daysToLiquidation: number | null = null;
+      if (ltv > 0 && borrowApy > 0 && lltv > ltv) {
+        // Use continuous compounding: LTV(t) = LTV * e^(r * t) where r = ln(1 + APY)
+        // Solve for t when LTV(t) = lltv: t = ln(lltv/ltv) / r
+        const continuousRate = Math.log(1 + borrowApy);
+        const yearsToLiquidation = Math.log(lltv / ltv) / continuousRate;
+        daysToLiquidation = Math.max(0, Math.round(yearsToLiquidation * 365));
+      }
+
       return {
         ...borrower,
         ltv,
+        daysToLiquidation,
       };
     });
-  }, [borrowers, oraclePrice]);
+  }, [borrowers, oraclePrice, market.lltv, market.state.borrowApy]);
 
   return (
     <div>
@@ -116,25 +132,35 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                 <TableHead className="text-right">BORROWED</TableHead>
                 <TableHead className="text-right">COLLATERAL</TableHead>
                 <TableHead className="text-right">LTV</TableHead>
+                <TableHead className="text-right">DAYS TO LIQ.</TableHead>
                 <TableHead className="text-right">% OF BORROW</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact">
-              {borrowersWithLTV.length === 0 && !isLoading ? (
+              {borrowersWithMetrics.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="text-center text-gray-400"
                   >
                     No borrowers found for this market
                   </TableCell>
                 </TableRow>
               ) : (
-                borrowersWithLTV.map((borrower) => {
+                borrowersWithMetrics.map((borrower) => {
                   const totalBorrow = BigInt(market.state.borrowAssets);
                   const borrowerAssets = BigInt(borrower.borrowAssets);
                   const percentOfBorrow = totalBorrow > 0n ? (Number(borrowerAssets) / Number(totalBorrow)) * 100 : 0;
                   const percentDisplay = percentOfBorrow < 0.01 && percentOfBorrow > 0 ? '<0.01%' : `${percentOfBorrow.toFixed(2)}%`;
+
+                  // Color code days to liquidation
+                  const daysDisplay = borrower.daysToLiquidation !== null
+                    ? borrower.daysToLiquidation < 30
+                      ? `${borrower.daysToLiquidation}`
+                      : borrower.daysToLiquidation > 365
+                        ? '>365'
+                        : `${borrower.daysToLiquidation}`
+                    : '—';
 
                   return (
                     <TableRow key={`borrower-${borrower.userAddress}`}>
@@ -175,6 +201,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                         </div>
                       </TableCell>
                       <TableCell className="text-right text-sm">{borrower.ltv.toFixed(2)}%</TableCell>
+                      <TableCell className="text-right text-sm">{daysDisplay}</TableCell>
                       <TableCell className="text-right text-sm">{percentDisplay}</TableCell>
                     </TableRow>
                   );
