@@ -799,7 +799,7 @@ const supportedTokens = [
   },
   {
     symbol: 'cbLTC',
-    img: require('../imgs/tokens/cbLTC.png') as string,
+    img: require('../imgs/tokens/cbltc.png') as string,
     decimals: 8,
     networks: [
       { chain: base, address: '0xcb17C9Db87B595717C857a08468793f5bAb6445F' },
