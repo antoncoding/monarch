@@ -791,7 +791,7 @@ const supportedTokens = [
   },
   {
     symbol: 'cbDOGE',
-    img: require('../imgs/tokens/cbdoge.svg') as string,
+    img: require('../imgs/tokens/cbdoge.png') as string,
     decimals: 8,
     networks: [
       { chain: base, address: '0xcbD06E5A2B0C65597161de254AA074E489dEb510' },
@@ -799,7 +799,7 @@ const supportedTokens = [
   },
   {
     symbol: 'cbLTC',
-    img: require('../imgs/tokens/cbLTC.svg') as string,
+    img: require('../imgs/tokens/cbLTC.png') as string,
     decimals: 8,
     networks: [
       { chain: base, address: '0xcb17C9Db87B595717C857a08468793f5bAb6445F' },
@@ -807,7 +807,7 @@ const supportedTokens = [
   },
   {
     symbol: 'cbXRP',
-    img: require('../imgs/tokens/cbxrp.svg') as string,
+    img: require('../imgs/tokens/cbxrp.png') as string,
     decimals: 6,
     networks: [
       { chain: base, address: '0xcb585250f852C6c6bf90434AB21A00f02833a4af' },
@@ -815,7 +815,7 @@ const supportedTokens = [
   },
   {
     symbol: 'cbADA',
-    img: require('../imgs/tokens/cbada.svg') as string,
+    img: require('../imgs/tokens/cbada.png') as string,
     decimals: 6,
     networks: [
       { chain: base, address: '0xcbADA732173e39521CDBE8bf59a6Dc85A9fc7b8c' },
