@@ -52,6 +52,7 @@ export enum PriceFeedVendors {
   Compound = 'Compound',
   Lido = 'Lido',
   Pendle = 'Pendle',
+  API3 = 'API3',
   Unknown = 'Unknown',
 }
 
@@ -63,6 +64,7 @@ export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
   [PriceFeedVendors.Compound]: require('../imgs/oracles/compound.webp') as string,
   [PriceFeedVendors.Lido]: require('../imgs/oracles/lido.png') as string,
   [PriceFeedVendors.Pendle]: require('../imgs/oracles/pendle.png') as string,
+  [PriceFeedVendors.API3]: require('../imgs/oracles/api3.svg') as string,
   [PriceFeedVendors.Unknown]: '',
 };
 
@@ -83,6 +85,7 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
     lido: PriceFeedVendors.Lido,
     oval: PriceFeedVendors.Oval,
     pyth: PriceFeedVendors.PythNetwork,
+    api3: PriceFeedVendors.API3,
   };
 
   return mapping[normalizedProvider] ?? PriceFeedVendors.Unknown;
