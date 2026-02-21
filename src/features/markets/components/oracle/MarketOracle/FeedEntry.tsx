@@ -26,6 +26,7 @@ import { CompoundFeedTooltip } from './CompoundFeedTooltip';
 import { GeneralFeedTooltip } from './GeneralFeedTooltip';
 import { PendleFeedTooltip } from './PendleFeedTooltip';
 import { RedstoneFeedTooltip } from './RedstoneFeedTooltip';
+import { API3FeedTooltip } from './API3FeedTooltip';
 import { UnknownFeedTooltip } from './UnknownFeedTooltip';
 
 type FeedEntryProps = {
@@ -125,6 +126,16 @@ export function FeedEntry({
       case PriceFeedVendors.Pendle:
         return (
           <PendleFeedTooltip
+            feed={feed}
+            feedData={data}
+            chainId={chainId}
+            feedFreshness={freshness}
+          />
+        );
+
+      case PriceFeedVendors.API3:
+        return (
+          <API3FeedTooltip
             feed={feed}
             feedData={data}
             chainId={chainId}
