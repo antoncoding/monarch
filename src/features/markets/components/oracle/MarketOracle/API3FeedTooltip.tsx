@@ -51,11 +51,6 @@ export function API3FeedTooltip({ feed, feedData, chainId, feedFreshness }: API3
         </div>
       )}
 
-      {/* API3 decimals note */}
-      <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-        <div className="font-zen text-xs text-gray-500 dark:text-gray-400">All API3 feeds use 18 decimals</div>
-      </div>
-
       <FeedFreshnessSection feedFreshness={feedFreshness} />
 
       {/* External Links */}
