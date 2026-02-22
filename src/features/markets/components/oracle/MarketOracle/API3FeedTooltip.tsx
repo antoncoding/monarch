@@ -83,13 +83,15 @@ export function API3FeedTooltip({ feed, feedData, chainId, feedFreshness }: API3
             rel="noopener noreferrer"
             className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
           >
-            <Image
-              src={vendorIcon}
-              alt="API3"
-              width={12}
-              height={12}
-              className="rounded-sm"
-            />
+            {vendorIcon && (
+              <Image
+                src={vendorIcon}
+                alt="API3"
+                width={12}
+                height={12}
+                className="rounded-sm"
+              />
+            )}
             API3 Market
           </Link>
         </div>
