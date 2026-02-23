@@ -253,14 +253,17 @@ function MarketContent() {
             isLoading={true}
           />
 
-          <div className="mt-8">
-            <div className="flex items-center gap-4 border-b border-border pb-2 text-sm text-secondary">
-              <span className="text-primary">Trend</span>
-              <span>Analysis</span>
-              <span>Activities</span>
-              <span>Positions</span>
-            </div>
-          </div>
+          <Tabs
+            value="trend"
+            className="mt-8 w-full"
+          >
+            <TabsList className="pointer-events-none">
+              <TabsTrigger value="trend">Trend</TabsTrigger>
+              <TabsTrigger value="analysis">Analysis</TabsTrigger>
+              <TabsTrigger value="activities">Activities</TabsTrigger>
+              <TabsTrigger value="positions">Positions</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
     );

@@ -258,20 +258,74 @@ function MarketHeaderSkeleton(): React.ReactNode {
   return (
     <div className="mt-6 mb-6 space-y-4">
       <div className="rounded border border-border bg-surface px-6 py-4 shadow-sm">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-6 pb-1 lg:flex-row lg:items-center lg:justify-between">
+          {/* LEFT: Market Identity skeleton */}
           <div className="flex items-center gap-4">
             <div className="flex -space-x-3">
               <div className="h-10 w-10 animate-pulse rounded-full bg-hovered" />
               <div className="h-10 w-10 animate-pulse rounded-full bg-hovered" />
             </div>
-            <div className="space-y-2">
-              <div className="h-6 w-40 animate-pulse rounded bg-hovered" />
-              <div className="h-4 w-56 animate-pulse rounded bg-hovered" />
+            <div>
+              <div className="flex items-center gap-2 pt-4">
+                <div className="h-8 w-40 animate-pulse rounded bg-hovered" />
+                <div className="h-4 w-4 animate-pulse rounded bg-hovered" />
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <div className="h-4 w-20 animate-pulse rounded bg-hovered" />
+                <span className="h-1 w-1 rounded-full bg-hovered" />
+                <div className="h-4 w-16 animate-pulse rounded bg-hovered" />
+                <span className="h-1 w-1 rounded-full bg-hovered" />
+                <div className="h-4 w-20 animate-pulse rounded bg-hovered" />
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-28 animate-pulse rounded bg-hovered" />
-            <div className="h-8 w-28 animate-pulse rounded bg-hovered" />
+
+          {/* RIGHT: Stats + Actions skeleton */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <div className="hidden lg:flex items-center gap-6 border-r border-border pr-6">
+              <div className="space-y-1.5">
+                <div className="h-3 w-20 animate-pulse rounded bg-hovered" />
+                <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-3 w-20 animate-pulse rounded bg-hovered" />
+                <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="h-3 w-14 animate-pulse rounded bg-hovered" />
+                <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="h-8 w-24 animate-pulse rounded bg-hovered" />
+              <div className="h-8 w-24 animate-pulse rounded bg-hovered" />
+              <div className="h-8 w-6 animate-pulse rounded bg-hovered" />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile stats row placeholder */}
+        <div className="mt-4 grid grid-cols-3 gap-4 border-t border-border pt-4 lg:hidden">
+          <div className="space-y-1.5">
+            <div className="h-3 w-16 animate-pulse rounded bg-hovered" />
+            <div className="h-4 w-20 animate-pulse rounded bg-hovered" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="h-3 w-16 animate-pulse rounded bg-hovered" />
+            <div className="h-4 w-20 animate-pulse rounded bg-hovered" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="h-3 w-14 animate-pulse rounded bg-hovered" />
+            <div className="h-4 w-20 animate-pulse rounded bg-hovered" />
+          </div>
+        </div>
+
+        {/* Advanced details row placeholder */}
+        <div className="mt-4 border-t border-border pt-4">
+          <div className="flex items-center justify-between">
+            <div className="h-5 w-40 animate-pulse rounded bg-hovered" />
+            <div className="h-4 w-24 animate-pulse rounded bg-hovered" />
           </div>
         </div>
       </div>
