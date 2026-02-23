@@ -14,6 +14,8 @@ type InputProps = {
   onMaxClick?: () => void;
   value?: bigint;
   error?: string | null; // current error state to show dismiss button
+  endAdornment?: React.ReactNode;
+  inputClassName?: string;
 };
 
 export default function Input({
@@ -26,6 +28,8 @@ export default function Input({
   onMaxClick,
   value,
   error,
+  endAdornment,
+  inputClassName,
 }: InputProps): JSX.Element {
   // State for the input text
   const [inputAmount, setInputAmount] = useState<string>(value ? formatBalance(value, decimals).toString() : '0');
@@ -95,16 +99,27 @@ export default function Input({
           type="number"
           value={inputAmount}
           onChange={onInputChange}
-          className="bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none"
+          className={`bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none ${
+            endAdornment != null && max !== undefined && max !== BigInt(0)
+              ? 'pr-20'
+              : endAdornment != null || (max !== undefined && max !== BigInt(0))
+                ? 'pr-12'
+                : ''
+          } ${inputClassName ?? ''}`}
         />
         {max !== undefined && max !== BigInt(0) && (
           <button
             type="button"
             onClick={handleMax}
-            className="bg-surface absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+            className={`bg-surface absolute top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100 ${
+              endAdornment != null ? 'right-9' : 'right-2'
+            }`}
           >
             Max
           </button>
+        )}
+        {endAdornment != null && (
+          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-secondary">{endAdornment}</span>
         )}
       </div>
       {error && !bypassMax && (

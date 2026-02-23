@@ -15,6 +15,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
+import { TokenIcon } from '@/components/shared/token-icon';
 
 export type WithdrawStepType = 'sourcing' | 'withdrawing';
 
@@ -281,6 +282,7 @@ export function WithdrawModalContent({
   }, [needsSourcing, liquiditySourcing, withdrawAmount, marketLiquidity]);
 
   const isLoading = isSourceConfirming || isWithdrawConfirming;
+  const amountInputClassName = 'h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums';
 
   if (!activeMarket) {
     return (
@@ -292,53 +294,61 @@ export function WithdrawModalContent({
 
   return (
     <div className="flex flex-col">
-      {/* Withdraw Input Section */}
-      <div className="mt-12 space-y-4">
-        <div>
-          <div className="flex items-center justify-between">
-            <span className="opacity-80">Withdraw amount</span>
-            <div className="flex flex-col items-end gap-1">
-              <p className="font-inter text-xs opacity-50">
-                Available: {formatReadable(formatBalance(position?.state.supplyAssets ?? BigInt(0), activeMarket.loanAsset.decimals))}{' '}
-                {activeMarket.loanAsset.symbol}
-              </p>
-            </div>
-          </div>
+      <div className="mt-5 space-y-3">
+        <div className="mb-3 flex items-center justify-between gap-3 px-1">
+          <p className="font-monospace text-xs uppercase tracking-[0.14em] text-secondary">Withdraw</p>
+        </div>
 
-          <div className="mt-2 flex items-start justify-between">
-            <div className="relative flex-grow">
-              <Input
-                decimals={activeMarket.loanAsset.decimals}
-                max={effectiveMax}
-                setValue={handleWithdrawAmountChange}
-                setError={setInputError}
-                exceedMaxErrMessage={extraLiquidity > 0n ? 'Exceeds available liquidity (incl. PA)' : 'Insufficient Liquidity'}
-                allowExceedMax={true}
-                error={inputError}
+        <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
+          <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
+            Withdraw {activeMarket.loanAsset.symbol}
+          </p>
+          <Input
+            decimals={activeMarket.loanAsset.decimals}
+            max={effectiveMax}
+            setValue={handleWithdrawAmountChange}
+            setError={setInputError}
+            exceedMaxErrMessage={extraLiquidity > 0n ? 'Exceeds available liquidity (incl. PA)' : 'Insufficient Liquidity'}
+            allowExceedMax={true}
+            error={inputError}
+            value={withdrawAmount}
+            inputClassName={amountInputClassName}
+            endAdornment={
+              <TokenIcon
+                address={activeMarket.loanAsset.address}
+                chainId={activeMarket.morphoBlue.chain.id}
+                symbol={activeMarket.loanAsset.symbol}
+                width={16}
+                height={16}
               />
+            }
+          />
+          <p className="mt-1 text-right text-xs text-secondary">
+            Available: {formatReadable(formatBalance(position?.state.supplyAssets ?? 0n, activeMarket.loanAsset.decimals))}{' '}
+            {activeMarket.loanAsset.symbol}
+          </p>
 
-              {/* Sourcing indicator */}
-              {needsSourcing && reallocationPlan && (
-                <p className="mt-1 text-xs text-blue-500">
-                  ⚡ Will source extra liquidity from {reallocationPlan.vaultName}
-                  {reallocationPlan.fee > 0n && (
-                    <span className="ml-1 opacity-70">(fee: {formatBalance(reallocationPlan.fee, 18)} ETH)</span>
-                  )}
-                </p>
-              )}
-            </div>
+          {needsSourcing && reallocationPlan && (
+            <p className="mt-1 text-right text-xs text-blue-500">
+              ⚡ Will source extra liquidity from {reallocationPlan.vaultName}
+              {reallocationPlan.fee > 0n && <span className="ml-1 opacity-70">(fee: {formatBalance(reallocationPlan.fee, 18)} ETH)</span>}
+            </p>
+          )}
+        </div>
+      </div>
 
-            <ExecuteTransactionButton
-              targetChainId={activeMarket.morphoBlue.chain.id}
-              onClick={handleWithdrawClick}
-              isLoading={isLoading}
-              disabled={!withdrawAmount || !!inputError}
-              variant="primary"
-              className="ml-2 min-w-32"
-            >
-              Withdraw
-            </ExecuteTransactionButton>
-          </div>
+      <div className="mt-4">
+        <div className="flex justify-end">
+          <ExecuteTransactionButton
+            targetChainId={activeMarket.morphoBlue.chain.id}
+            onClick={handleWithdrawClick}
+            isLoading={isLoading}
+            disabled={!withdrawAmount || !!inputError}
+            variant="primary"
+            className="min-w-32"
+          >
+            Withdraw
+          </ExecuteTransactionButton>
         </div>
       </div>
     </div>

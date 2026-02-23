@@ -101,7 +101,7 @@ export function Modal({
             'data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
             zIndexClasses.wrapper,
             !flexibleWidth && SIZE_MAP[size],
-            scrollBehavior === 'inside' && 'max-h-[85vh] overflow-y-auto',
+            scrollBehavior === 'inside' && 'max-h-[85vh] overflow-y-auto [scrollbar-gutter:stable]',
             className,
           )}
           onPointerDownOutside={(e) => {

@@ -1,40 +1,180 @@
+export const LTV_WAD = 10n ** 18n;
+export const ORACLE_PRICE_SCALE = 10n ** 36n;
+export const INFINITE_LTV = 10n ** 30n;
+const TARGET_LTV_MARGIN_WAD = 10n ** 15n; // 0.1 percentage points
+const EDITABLE_PERCENT_REGEX = /^\d*\.?\d*$/;
+
 export const LTV_THRESHOLDS = {
-  DANGER: {
-    value: 0.9,
-    colorClass: 'red-500',
-  },
-  WARNING: {
-    value: 0.75,
-    colorClass: 'orange-400',
-  },
-  SAFE: {
-    value: 0,
-    colorClass: 'emerald-500',
-  },
+  DANGER: 0.9,
+  WARNING: 0.75,
 } as const;
 
-type LTVStatus = {
-  colorClass: string;
+type LTVLevel = 'neutral' | 'safe' | 'warning' | 'danger';
+
+const clampNonNegative = (value: bigint): bigint => (value > 0n ? value : 0n);
+const divCeil = (numerator: bigint, denominator: bigint): bigint => (denominator > 0n ? (numerator + denominator - 1n) / denominator : 0n);
+
+export const getCollateralValueInLoan = (collateralAssets: bigint, oraclePrice: bigint): bigint => {
+  if (collateralAssets <= 0n || oraclePrice <= 0n) return 0n;
+  return (collateralAssets * oraclePrice) / ORACLE_PRICE_SCALE;
 };
 
-// Get LTV status and colors
-const getLTVStatus = (ltv: bigint, lltv: bigint): LTVStatus => {
-  if (ltv === BigInt(0)) return { colorClass: 'gray-500' };
+export const computeLtv = ({
+  borrowAssets,
+  collateralAssets,
+  oraclePrice,
+}: {
+  borrowAssets: bigint;
+  collateralAssets: bigint;
+  oraclePrice: bigint;
+}): bigint => {
+  if (borrowAssets <= 0n) return 0n;
+  const collateralValueInLoan = getCollateralValueInLoan(collateralAssets, oraclePrice);
+  if (collateralValueInLoan <= 0n) return INFINITE_LTV;
+  return (borrowAssets * LTV_WAD) / collateralValueInLoan;
+};
+
+export const getMaxTargetLtv = (lltv: bigint): bigint => clampNonNegative(lltv - TARGET_LTV_MARGIN_WAD);
+
+export const clampTargetLtv = (targetLtv: bigint, lltv: bigint): bigint => {
+  const maxTargetLtv = getMaxTargetLtv(lltv);
+  if (targetLtv <= 0n) return 0n;
+  if (targetLtv >= maxTargetLtv) return maxTargetLtv;
+  return targetLtv;
+};
+
+export const ltvWadToPercent = (ltv: bigint): number => Number(ltv) / 1e16;
+
+export const clampEditablePercent = (value: number, maxPercent: number): number => Math.max(0, Math.min(value, maxPercent));
+
+export const formatEditableLtvPercent = (value: number, maxPercent: number): string => {
+  const clamped = clampEditablePercent(value, maxPercent);
+  if (Number.isInteger(clamped)) return clamped.toString();
+  return clamped.toFixed(2).replace(/\.?0+$/, '');
+};
+
+export const normalizeEditablePercentInput = (value: string): string | null => {
+  const normalizedInput = value.replace(',', '.');
+  if (normalizedInput !== '' && !EDITABLE_PERCENT_REGEX.test(normalizedInput)) return null;
+  return normalizedInput;
+};
+
+export const percentToLtvWad = (percent: number): bigint => {
+  if (!Number.isFinite(percent) || percent <= 0) return 0n;
+  return BigInt(Math.round(percent * 1e16));
+};
+
+export const isInfiniteLtv = (ltv: bigint): boolean => ltv >= INFINITE_LTV;
+
+export const formatLtvPercent = (ltv: bigint, fractionDigits = 2): string =>
+  isInfiniteLtv(ltv) ? '∞' : ltvWadToPercent(ltv).toFixed(fractionDigits);
+
+export const computeRequiredCollateralAssets = ({
+  borrowAssets,
+  oraclePrice,
+  targetLtv,
+}: {
+  borrowAssets: bigint;
+  oraclePrice: bigint;
+  targetLtv: bigint;
+}): bigint => {
+  if (borrowAssets <= 0n || oraclePrice <= 0n || targetLtv <= 0n) return 0n;
+
+  const requiredCollateralValueInLoan = divCeil(borrowAssets * LTV_WAD, targetLtv);
+  return divCeil(requiredCollateralValueInLoan * ORACLE_PRICE_SCALE, oraclePrice);
+};
+
+export const computeTargetCollateralAmount = ({
+  totalBorrowAssets,
+  currentCollateralAssets,
+  oraclePrice,
+  targetLtv,
+  maxAdditionalCollateralAssets,
+}: {
+  totalBorrowAssets: bigint;
+  currentCollateralAssets: bigint;
+  oraclePrice: bigint;
+  targetLtv: bigint;
+  maxAdditionalCollateralAssets?: bigint;
+}): bigint => {
+  const requiredCollateralAssets = computeRequiredCollateralAssets({
+    borrowAssets: totalBorrowAssets,
+    oraclePrice,
+    targetLtv,
+  });
+
+  const suggestedAdditionalCollateral = clampNonNegative(requiredCollateralAssets - currentCollateralAssets);
+  if (maxAdditionalCollateralAssets == null) return suggestedAdditionalCollateral;
+  return suggestedAdditionalCollateral > maxAdditionalCollateralAssets ? maxAdditionalCollateralAssets : suggestedAdditionalCollateral;
+};
+
+export const computeTargetRepayAmount = ({
+  currentBorrowAssets,
+  projectedCollateralAssets,
+  oraclePrice,
+  targetLtv,
+  maxRepayAssets,
+}: {
+  currentBorrowAssets: bigint;
+  projectedCollateralAssets: bigint;
+  oraclePrice: bigint;
+  targetLtv: bigint;
+  maxRepayAssets?: bigint;
+}): bigint => {
+  const collateralValueInLoan = getCollateralValueInLoan(projectedCollateralAssets, oraclePrice);
+  if (currentBorrowAssets <= 0n) return 0n;
+
+  const targetBorrowAfter = collateralValueInLoan > 0n ? (collateralValueInLoan * targetLtv) / LTV_WAD : 0n;
+  const suggestedRepay = clampNonNegative(currentBorrowAssets - targetBorrowAfter);
+
+  if (maxRepayAssets == null) return suggestedRepay;
+  return suggestedRepay > maxRepayAssets ? maxRepayAssets : suggestedRepay;
+};
+
+export const computeTargetWithdrawAmount = ({
+  currentCollateralAssets,
+  borrowAssetsAfterRepay,
+  oraclePrice,
+  targetLtv,
+  maxWithdrawAssets,
+}: {
+  currentCollateralAssets: bigint;
+  borrowAssetsAfterRepay: bigint;
+  oraclePrice: bigint;
+  targetLtv: bigint;
+  maxWithdrawAssets?: bigint;
+}): bigint => {
+  const requiredCollateralAssets = computeRequiredCollateralAssets({
+    borrowAssets: borrowAssetsAfterRepay,
+    oraclePrice,
+    targetLtv,
+  });
+
+  const suggestedWithdraw = clampNonNegative(currentCollateralAssets - requiredCollateralAssets);
+  if (maxWithdrawAssets == null) return suggestedWithdraw;
+  return suggestedWithdraw > maxWithdrawAssets ? maxWithdrawAssets : suggestedWithdraw;
+};
+
+const getLtvLevel = (ltv: bigint, lltv: bigint): LTVLevel => {
+  if (ltv === 0n || lltv <= 0n) return 'neutral';
   const ratio = Number(ltv) / Number(lltv);
-
-  if (ratio >= LTV_THRESHOLDS.DANGER.value) return LTV_THRESHOLDS.DANGER;
-  if (ratio >= LTV_THRESHOLDS.WARNING.value) return LTV_THRESHOLDS.WARNING;
-  return LTV_THRESHOLDS.SAFE;
+  if (ratio >= LTV_THRESHOLDS.DANGER) return 'danger';
+  if (ratio >= LTV_THRESHOLDS.WARNING) return 'warning';
+  return 'safe';
 };
 
-// Helper function to get color classes
-export const getLTVColor = (ltv: bigint, lltv: bigint) => `text-${getLTVStatus(ltv, lltv).colorClass}`;
+export const getLTVColor = (ltv: bigint, lltv: bigint): string => {
+  const level = getLtvLevel(ltv, lltv);
+  if (level === 'danger') return 'text-red-500';
+  if (level === 'warning') return 'text-orange-400';
+  if (level === 'safe') return 'text-emerald-500';
+  return 'text-gray-500';
+};
 
 export const getLTVProgressColor = (ltv: bigint, lltv: bigint): string => {
-  if (ltv === BigInt(0)) return 'bg-gray-500/80';
-  const ratio = Number(ltv) / Number(lltv);
-
-  if (ratio >= LTV_THRESHOLDS.DANGER.value) return 'bg-red-500/80';
-  if (ratio >= LTV_THRESHOLDS.WARNING.value) return 'bg-orange-400/80';
-  return 'bg-emerald-500/80';
+  const level = getLtvLevel(ltv, lltv);
+  if (level === 'danger') return 'bg-red-500/80';
+  if (level === 'warning') return 'bg-orange-400/80';
+  if (level === 'safe') return 'bg-emerald-500/80';
+  return 'bg-gray-500/80';
 };

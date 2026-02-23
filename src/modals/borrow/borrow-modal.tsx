@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
 import { erc20Abi } from 'viem';
@@ -34,8 +34,16 @@ export function BorrowModal({
   const [mode, setMode] = useState<'borrow' | 'repay'>(() => defaultMode);
   const { address: account } = useConnection();
 
+  useEffect(() => {
+    setMode(defaultMode);
+  }, [defaultMode]);
+
   // Get token balances
-  const { data: loanTokenBalance } = useReadContract({
+  const {
+    data: loanTokenBalance,
+    refetch: refetchLoanTokenBalance,
+    isFetching: isFetchingLoanTokenBalance,
+  } = useReadContract({
     address: market.loanAsset.address as `0x${string}`,
     args: [account as `0x${string}`],
     functionName: 'balanceOf',
@@ -46,7 +54,11 @@ export function BorrowModal({
     },
   });
 
-  const { data: collateralTokenBalance } = useReadContract({
+  const {
+    data: collateralTokenBalance,
+    refetch: refetchCollateralTokenBalance,
+    isFetching: isFetchingCollateralTokenBalance,
+  } = useReadContract({
     address: market.collateralAsset.address as `0x${string}`,
     args: [account as `0x${string}`],
     functionName: 'balanceOf',
@@ -57,12 +69,34 @@ export function BorrowModal({
     },
   });
 
-  const { data: ethBalance } = useBalance({
+  const {
+    data: ethBalance,
+    refetch: refetchEthBalance,
+    isFetching: isFetchingEthBalance,
+  } = useBalance({
     address: account,
     chainId: market.morphoBlue.chain.id,
   });
 
-  const hasPosition = position && (BigInt(position.state.borrowAssets) > 0n || BigInt(position.state.collateral) > 0n);
+  const handleRefreshAll = useCallback(() => {
+    const tasks: Promise<unknown>[] = [];
+
+    if (refetch) {
+      tasks.push(Promise.resolve(refetch()));
+    }
+
+    if (account) {
+      tasks.push(refetchLoanTokenBalance());
+      tasks.push(refetchCollateralTokenBalance());
+      tasks.push(refetchEthBalance());
+    }
+
+    if (tasks.length > 0) {
+      void Promise.allSettled(tasks);
+    }
+  }, [refetch, account, refetchLoanTokenBalance, refetchCollateralTokenBalance, refetchEthBalance]);
+
+  const isRefreshingAnyData = isRefreshing || isFetchingLoanTokenBalance || isFetchingCollateralTokenBalance || isFetchingEthBalance;
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -102,17 +136,15 @@ export function BorrowModal({
         }
         description={mode === 'borrow' ? 'Borrow against collateral' : 'Repay borrowed assets'}
         actions={
-          hasPosition ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
-              className="flex items-center gap-1.5"
-            >
-              <LuArrowRightLeft className="h-3 w-3 rotate-90" />
-              {mode === 'borrow' ? 'Repay' : 'Borrow'}
-            </Button>
-          ) : undefined
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
+            className="flex items-center gap-1.5"
+          >
+            <LuArrowRightLeft className="h-3 w-3 rotate-90" />
+            {mode === 'borrow' ? 'Repay' : 'Borrow'}
+          </Button>
         }
       />
       <ModalBody>
@@ -123,8 +155,8 @@ export function BorrowModal({
             collateralTokenBalance={collateralTokenBalance}
             ethBalance={ethBalance?.value}
             oraclePrice={oraclePrice}
-            onSuccess={refetch}
-            isRefreshing={isRefreshing}
+            onSuccess={handleRefreshAll}
+            isRefreshing={isRefreshingAnyData}
             liquiditySourcing={liquiditySourcing}
           />
         ) : (
@@ -132,11 +164,9 @@ export function BorrowModal({
             market={market}
             currentPosition={position}
             loanTokenBalance={loanTokenBalance}
-            collateralTokenBalance={collateralTokenBalance}
-            ethBalance={ethBalance?.value}
             oraclePrice={oraclePrice}
-            onSuccess={refetch}
-            isRefreshing={isRefreshing}
+            onSuccess={handleRefreshAll}
+            isRefreshing={isRefreshingAnyData}
           />
         )}
       </ModalBody>

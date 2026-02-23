@@ -1,13 +1,20 @@
 import { motion } from 'framer-motion';
-import { formatBalance } from '@/utils/balance';
+
+const LTV_PERCENT_SCALE = 1e16;
+const INFINITE_LTV_THRESHOLD = 10n ** 30n;
+const formatLtvPercent = (ltv: bigint): string => {
+  if (ltv >= INFINITE_LTV_THRESHOLD) return '∞';
+  return (Number(ltv) / LTV_PERCENT_SCALE).toFixed(2);
+};
 
 type LTVWarningProps = {
   maxLTV: bigint;
   currentLTV: bigint;
   type: 'danger' | 'error';
+  customMessage?: string;
 };
 
-export function LTVWarning({ maxLTV, currentLTV, type }: LTVWarningProps) {
+export function LTVWarning({ maxLTV, currentLTV, type, customMessage }: LTVWarningProps) {
   const isDanger = type === 'danger';
 
   return (
@@ -21,15 +28,17 @@ export function LTVWarning({ maxLTV, currentLTV, type }: LTVWarningProps) {
       }`}
     >
       <p>
-        {isDanger ? (
+        {customMessage ? (
+          customMessage
+        ) : isDanger ? (
           <>
-            Warning: The resulting LTV ({formatBalance(currentLTV, 16).toPrecision(4)}%) is close to the maximum allowed LTV (
-            {formatBalance(maxLTV, 16)}%). Consider adjusting your inputs to maintain a safer position.
+            Warning: The resulting LTV ({formatLtvPercent(currentLTV)}%) is close to the maximum allowed LTV (
+            {formatLtvPercent(maxLTV)}%). Consider adjusting your inputs to maintain a safer position.
           </>
         ) : (
           <>
-            Please adjust your inputs. The resulting LTV ({formatBalance(currentLTV, 16).toPrecision(4)}
-            %) would exceed the maximum allowed LTV ({formatBalance(maxLTV, 16)}
+            Please adjust your inputs. The resulting LTV ({formatLtvPercent(currentLTV)}
+            %) would exceed the maximum allowed LTV ({formatLtvPercent(maxLTV)}
             %).
           </>
         )}

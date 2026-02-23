@@ -5,6 +5,7 @@ import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
+import { Button } from '@/components/ui/button';
 import { SupplyModalContent } from './supply-modal-content';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { WithdrawModalContent } from './withdraw-modal-content';
@@ -78,8 +79,9 @@ export function SupplyModalV2({
         onClose={() => onOpenChange(false)}
         actions={
           hasPosition ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 const newMode = mode === 'supply' ? 'withdraw' : 'supply';
                 setMode(newMode);
@@ -87,11 +89,11 @@ export function SupplyModalV2({
                 setSupplyPreviewAmount(undefined);
                 setWithdrawPreviewAmount(undefined);
               }}
-              className="flex items-center gap-1 text-sm font-medium text-primary transition hover:text-secondary"
+              className="flex items-center gap-1.5"
             >
               <LuArrowRightLeft className="h-3 w-3 rotate-90" />
               {mode === 'supply' ? 'Withdraw' : 'Supply'}
-            </button>
+            </Button>
           ) : undefined
         }
       />
