@@ -1,9 +1,19 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMerklCampaignsQuery } from '@/hooks/queries/useMerklCampaignsQuery';
 import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
+
+function DataPrefetcherContent() {
+  useMarketsQuery();
+  useTokensQuery();
+  useMerklCampaignsQuery();
+  useOracleDataQuery();
+
+  return null;
+}
 
 /**
  * Triggeres data prefetching for markets, tokens, and Merkl campaigns.
@@ -11,9 +21,11 @@ import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
  * @returns
  */
 export function DataPrefetcher() {
-  useMarketsQuery();
-  useTokensQuery();
-  useMerklCampaignsQuery();
-  useOracleDataQuery();
-  return null;
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/ui-lab')) {
+    return null;
+  }
+
+  return <DataPrefetcherContent />;
 }
