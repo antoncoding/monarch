@@ -150,23 +150,17 @@ export function AddCollateralAndBorrow({
     }
   }, [onSuccess]);
 
-  const handleCollateralAmountChange = useCallback(
-    (value: bigint) => {
-      setLastEditedField('collateral');
-      setLtvBorrowHint(null);
-      setCollateralAmount(value);
-    },
-    [],
-  );
+  const handleCollateralAmountChange = useCallback((value: bigint) => {
+    setLastEditedField('collateral');
+    setLtvBorrowHint(null);
+    setCollateralAmount(value);
+  }, []);
 
-  const handleBorrowAmountChange = useCallback(
-    (value: bigint) => {
-      setLastEditedField('borrow');
-      setLtvBorrowHint(null);
-      setBorrowAmount(value);
-    },
-    [],
-  );
+  const handleBorrowAmountChange = useCallback((value: bigint) => {
+    setLastEditedField('borrow');
+    setLtvBorrowHint(null);
+    setBorrowAmount(value);
+  }, []);
 
   const handleLtvInputChange = useCallback(
     (value: string) => {
@@ -256,6 +250,7 @@ export function AddCollateralAndBorrow({
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
+          <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">My Position</p>
           <BorrowPositionRiskCard
             market={market}
             currentCollateral={currentCollateralAssets}
@@ -405,9 +400,7 @@ export function AddCollateralAndBorrow({
                   <button
                     type="button"
                     onClick={() =>
-                      handleLtvInputChange(
-                        formatEditablePercent(Math.min(maxTargetLtvPercent, ltvWadToPercent(currentLTV) + 1)),
-                      )
+                      handleLtvInputChange(formatEditablePercent(Math.min(maxTargetLtvPercent, ltvWadToPercent(currentLTV) + 1)))
                     }
                     className="mt-2 inline-flex text-left text-xs text-secondary hover:text-primary"
                   >

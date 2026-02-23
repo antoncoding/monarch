@@ -156,22 +156,16 @@ export function WithdrawCollateralAndRepay({
     }
   }, [onSuccess]);
 
-  const handleWithdrawAmountChange = useCallback(
-    (value: bigint) => {
-      setLastEditedField('withdraw');
-      setWithdrawAmount(value);
-    },
-    [],
-  );
+  const handleWithdrawAmountChange = useCallback((value: bigint) => {
+    setLastEditedField('withdraw');
+    setWithdrawAmount(value);
+  }, []);
 
-  const handleRepayAmountChange = useCallback(
-    (value: bigint) => {
-      setLastEditedField('repay');
-      setRepayAssets(value);
-      setRepayShares(0n);
-    },
-    [],
-  );
+  const handleRepayAmountChange = useCallback((value: bigint) => {
+    setLastEditedField('repay');
+    setRepayAssets(value);
+    setRepayShares(0n);
+  }, []);
 
   const handleLtvInputChange = useCallback(
     (value: string) => {
@@ -249,6 +243,7 @@ export function WithdrawCollateralAndRepay({
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       <div className="flex flex-col">
+        <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">My Position</p>
         <BorrowPositionRiskCard
           market={market}
           currentCollateral={currentCollateralAssets}

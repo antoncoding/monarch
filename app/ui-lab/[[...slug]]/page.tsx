@@ -8,8 +8,7 @@ type UiLabPageProps = {
 
 export default async function UiLabPage({ params }: UiLabPageProps) {
   const isEnabled =
-    process.env.NODE_ENV !== 'production' &&
-    (process.env.ENABLE_UI_LAB === 'true' || process.env.NEXT_PUBLIC_ENABLE_UI_LAB === 'true');
+    process.env.NODE_ENV !== 'production' && (process.env.ENABLE_UI_LAB === 'true' || process.env.NEXT_PUBLIC_ENABLE_UI_LAB === 'true');
 
   if (!isEnabled) {
     notFound();

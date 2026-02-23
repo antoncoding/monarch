@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
 import { erc20Abi } from 'viem';
@@ -39,7 +39,11 @@ export function BorrowModal({
   }, [defaultMode]);
 
   // Get token balances
-  const { data: loanTokenBalance } = useReadContract({
+  const {
+    data: loanTokenBalance,
+    refetch: refetchLoanTokenBalance,
+    isFetching: isFetchingLoanTokenBalance,
+  } = useReadContract({
     address: market.loanAsset.address as `0x${string}`,
     args: [account as `0x${string}`],
     functionName: 'balanceOf',
@@ -50,7 +54,11 @@ export function BorrowModal({
     },
   });
 
-  const { data: collateralTokenBalance } = useReadContract({
+  const {
+    data: collateralTokenBalance,
+    refetch: refetchCollateralTokenBalance,
+    isFetching: isFetchingCollateralTokenBalance,
+  } = useReadContract({
     address: market.collateralAsset.address as `0x${string}`,
     args: [account as `0x${string}`],
     functionName: 'balanceOf',
@@ -61,10 +69,34 @@ export function BorrowModal({
     },
   });
 
-  const { data: ethBalance } = useBalance({
+  const {
+    data: ethBalance,
+    refetch: refetchEthBalance,
+    isFetching: isFetchingEthBalance,
+  } = useBalance({
     address: account,
     chainId: market.morphoBlue.chain.id,
   });
+
+  const handleRefreshAll = useCallback(() => {
+    const tasks: Promise<unknown>[] = [];
+
+    if (refetch) {
+      tasks.push(Promise.resolve(refetch()));
+    }
+
+    if (account) {
+      tasks.push(refetchLoanTokenBalance());
+      tasks.push(refetchCollateralTokenBalance());
+      tasks.push(refetchEthBalance());
+    }
+
+    if (tasks.length > 0) {
+      void Promise.allSettled(tasks);
+    }
+  }, [refetch, account, refetchLoanTokenBalance, refetchCollateralTokenBalance, refetchEthBalance]);
+
+  const isRefreshingAnyData = isRefreshing || isFetchingLoanTokenBalance || isFetchingCollateralTokenBalance || isFetchingEthBalance;
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -123,8 +155,8 @@ export function BorrowModal({
             collateralTokenBalance={collateralTokenBalance}
             ethBalance={ethBalance?.value}
             oraclePrice={oraclePrice}
-            onSuccess={refetch}
-            isRefreshing={isRefreshing}
+            onSuccess={handleRefreshAll}
+            isRefreshing={isRefreshingAnyData}
             liquiditySourcing={liquiditySourcing}
           />
         ) : (
@@ -133,8 +165,8 @@ export function BorrowModal({
             currentPosition={position}
             loanTokenBalance={loanTokenBalance}
             oraclePrice={oraclePrice}
-            onSuccess={refetch}
-            isRefreshing={isRefreshing}
+            onSuccess={handleRefreshAll}
+            isRefreshing={isRefreshingAnyData}
           />
         )}
       </ModalBody>

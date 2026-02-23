@@ -91,10 +91,7 @@ export const createUiLabMarketFixture = (): Market => ({
 
 export type UiLabBorrowPositionPreset = 'safe' | 'near-lltv';
 
-export const createUiLabBorrowPositionFixture = (
-  market: Market,
-  preset: UiLabBorrowPositionPreset = 'safe',
-): MarketPosition => {
+export const createUiLabBorrowPositionFixture = (market: Market, preset: UiLabBorrowPositionPreset = 'safe'): MarketPosition => {
   if (preset === 'near-lltv') {
     return {
       market,

@@ -10,8 +10,7 @@ export const LTV_THRESHOLDS = {
 type LTVLevel = 'neutral' | 'safe' | 'warning' | 'danger';
 
 const clampNonNegative = (value: bigint): bigint => (value > 0n ? value : 0n);
-const divCeil = (numerator: bigint, denominator: bigint): bigint =>
-  denominator > 0n ? (numerator + denominator - 1n) / denominator : 0n;
+const divCeil = (numerator: bigint, denominator: bigint): bigint => (denominator > 0n ? (numerator + denominator - 1n) / denominator : 0n);
 
 export const getCollateralValueInLoan = (collateralAssets: bigint, oraclePrice: bigint): bigint => {
   if (collateralAssets <= 0n || oraclePrice <= 0n) return 0n;

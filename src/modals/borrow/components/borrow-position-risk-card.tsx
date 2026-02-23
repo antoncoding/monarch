@@ -27,7 +27,7 @@ export function BorrowPositionRiskCard({
   lltv,
   onRefresh,
   isRefreshing = false,
-  borrowLabel = 'Total Borrowed',
+  borrowLabel = 'Borrow',
   hasChanges = false,
 }: BorrowPositionRiskCardProps): JSX.Element {
   const projectedLtvWidth = useMemo(() => {
@@ -37,25 +37,7 @@ export function BorrowPositionRiskCard({
 
   return (
     <div className="bg-hovered mb-5 rounded-sm p-4">
-      <div className="mb-3 flex items-center justify-between font-zen text-base">
-        <span>My Borrow</span>
-        {onRefresh && (
-          <button
-            type="button"
-            onClick={() => void onRefresh()}
-            className="rounded-full p-1 transition-opacity hover:opacity-70"
-            disabled={isRefreshing}
-            aria-label="Refresh position data"
-          >
-            <RefetchIcon
-              isLoading={isRefreshing}
-              className="h-4 w-4"
-            />
-          </button>
-        )}
-      </div>
-
-      <div className="mb-4 grid grid-cols-2 gap-4">
+      <div className={`mb-4 grid items-start gap-4 ${onRefresh ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]' : 'grid-cols-2'}`}>
         <div>
           <p className="mb-1 font-zen text-xs opacity-50">Total Collateral</p>
           <div className="flex items-center gap-2">
@@ -86,6 +68,20 @@ export function BorrowPositionRiskCard({
             </p>
           </div>
         </div>
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={() => void onRefresh()}
+            className="self-start rounded-full p-1 transition-opacity hover:opacity-70"
+            disabled={isRefreshing}
+            aria-label="Refresh position data"
+          >
+            <RefetchIcon
+              isLoading={isRefreshing}
+              className="h-4 w-4"
+            />
+          </button>
+        )}
       </div>
 
       <div>

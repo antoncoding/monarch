@@ -12,6 +12,7 @@ import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButt
 import { useModal } from '@/hooks/useModal';
 import { RiSparklingFill } from 'react-icons/ri';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
+import { TokenIcon } from '@/components/shared/token-icon';
 
 type SupplyModalContentProps = {
   market: Market;
@@ -69,32 +70,15 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
       void signAndSupply();
     }
   }, [permit2Authorized, useEth, usePermit2Setting, isApproved, approveAndSupply, signAndSupply]);
+  const amountInputClassName = 'h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums';
 
   return (
     <>
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
-          {/* Supply Input Section */}
-          <div className="mt-12 space-y-4">
-            {isWrappedNativeToken(market.loanAsset.address, market.morphoBlue.chain.id) && (
-              <div className="flex items-center justify-end gap-2">
-                <div className="font-inter text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
-                <IconSwitch
-                  size="sm"
-                  selected={useEth}
-                  onChange={setUseEth}
-                  thumbIcon={null}
-                  classNames={{
-                    wrapper: 'w-9 h-4 mr-0',
-                    thumb: 'w-3 h-3',
-                  }}
-                />
-              </div>
-            )}
-
-            <div>
-              <div className="mb-1 flex items-center justify-between">
-                <div />
+          <div className="mt-5 space-y-3">
+            <div className="mb-3 flex items-center justify-end gap-3 px-1">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() =>
@@ -107,72 +91,93 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                       },
                     })
                   }
-                  className="text-xs transition hover:opacity-70 flex items-center gap-1"
+                  className="inline-flex items-center gap-1 text-xs text-secondary transition hover:opacity-70"
                 >
-                  <span> Swap to {market.loanAsset.symbol} </span>
+                  <span>Swap to {market.loanAsset.symbol}</span>
                   <RiSparklingFill
                     className="h-3 w-3"
                     color={MONARCH_PRIMARY}
                   />
                 </button>
+                {isWrappedNativeToken(market.loanAsset.address, market.morphoBlue.chain.id) && (
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs text-secondary">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)}</div>
+                    <IconSwitch
+                      size="sm"
+                      selected={useEth}
+                      onChange={setUseEth}
+                      thumbIcon={null}
+                      classNames={{
+                        wrapper: 'w-9 h-4 mr-0',
+                        thumb: 'w-3 h-3',
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="opacity-80">Supply amount</span>
-                <div className="flex items-center gap-2">
-                  <p className="font-inter text-xs opacity-50">
-                    Balance:{' '}
-                    {useEth
-                      ? formatBalance(ethBalance ?? BigInt(0), 18)
-                      : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)}{' '}
-                    {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void refetchBalance()}
-                    className="opacity-50 transition hover:opacity-100"
-                    aria-label="Refetch balance"
-                  >
-                    <RefetchIcon isLoading={isRefetchingBalance} />
-                  </button>
-                </div>
-              </div>
+            </div>
 
-              <div className="mt-2 flex items-start justify-between">
-                <div className="relative flex-grow">
-                  <Input
-                    decimals={market.loanAsset.decimals}
-                    max={useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0))}
-                    setValue={handleSupplyAmountChange}
-                    setError={(error: string | null) => {
-                      if (typeof error === 'string' && !error.includes("You don't have any supplied assets")) {
-                        setInputError(error);
-                      } else {
-                        setInputError(null);
-                      }
-                    }}
-                    allowExceedMax={true} // allow exceeding max so it still show previews
-                    exceedMaxErrMessage={
-                      supplyAmount && supplyAmount > (useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0)))
-                        ? 'Insufficient Balance'
-                        : undefined
-                    }
+            <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
+              <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Supply {market.loanAsset.symbol}</p>
+              <Input
+                decimals={market.loanAsset.decimals}
+                max={useEth ? (ethBalance ?? 0n) : (tokenBalance ?? 0n)}
+                setValue={handleSupplyAmountChange}
+                setError={(error: string | null) => {
+                  if (typeof error === 'string' && !error.includes("You don't have any supplied assets")) {
+                    setInputError(error);
+                  } else {
+                    setInputError(null);
+                  }
+                }}
+                allowExceedMax={true}
+                exceedMaxErrMessage={
+                  supplyAmount && supplyAmount > (useEth ? (ethBalance ?? 0n) : (tokenBalance ?? 0n)) ? 'Insufficient Balance' : undefined
+                }
+                value={supplyAmount}
+                inputClassName={amountInputClassName}
+                endAdornment={
+                  <TokenIcon
+                    address={market.loanAsset.address}
+                    chainId={market.morphoBlue.chain.id}
+                    symbol={market.loanAsset.symbol}
+                    width={16}
+                    height={16}
                   />
-                  {inputError && !inputError.includes("You don't have any supplied assets") && (
-                    <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>
-                  )}
-                </div>
-
-                <ExecuteTransactionButton
-                  targetChainId={market.morphoBlue.chain.id}
-                  onClick={handleSupply}
-                  isLoading={isLoadingPermit2 || supplyPending}
-                  disabled={inputError !== null || !supplyAmount}
-                  variant="primary"
-                  className="ml-2 min-w-32"
+                }
+              />
+              <div className="mt-1 flex items-center justify-end gap-2 text-xs text-secondary">
+                <p>
+                  Balance: {useEth ? formatBalance(ethBalance ?? 0n, 18) : formatBalance(tokenBalance ?? 0n, market.loanAsset.decimals)}{' '}
+                  {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void refetchBalance()}
+                  className="opacity-50 transition hover:opacity-100"
+                  aria-label="Refetch balance"
                 >
-                  Supply
-                </ExecuteTransactionButton>
+                  <RefetchIcon isLoading={isRefetchingBalance} />
+                </button>
               </div>
+              {inputError && !inputError.includes("You don't have any supplied assets") && (
+                <p className="mt-1 text-right text-xs text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="flex justify-end">
+              <ExecuteTransactionButton
+                targetChainId={market.morphoBlue.chain.id}
+                onClick={handleSupply}
+                isLoading={isLoadingPermit2 || supplyPending}
+                disabled={inputError !== null || !supplyAmount}
+                variant="primary"
+                className="min-w-32"
+              >
+                Supply
+              </ExecuteTransactionButton>
             </div>
           </div>
         </div>
