@@ -2,13 +2,9 @@ import { notFound } from 'next/navigation';
 import { UiLabPageClient } from '@/features/ui-lab/ui-lab-page-client';
 
 type UiLabPageProps = {
-  params:
-    | {
-        slug?: string[];
-      }
-    | Promise<{
-        slug?: string[];
-      }>;
+  params?: Promise<{
+    slug?: string[];
+  }>;
 };
 
 export default async function UiLabPage({ params }: UiLabPageProps) {
@@ -18,7 +14,7 @@ export default async function UiLabPage({ params }: UiLabPageProps) {
     notFound();
   }
 
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = params ? await params : undefined;
 
-  return <UiLabPageClient initialSlug={resolvedParams.slug ?? []} />;
+  return <UiLabPageClient initialSlug={resolvedParams?.slug ?? []} />;
 }
