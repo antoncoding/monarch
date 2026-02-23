@@ -55,7 +55,7 @@ export function WithdrawCollateralAndRepay({
   const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
   const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
   const maxWithdrawAssets = currentCollateralAssets;
-  const hasChanges = withdrawAmount > 0n || repayAssets > 0n;
+  const hasChanges = withdrawAmount > 0n || repayAssets > 0n || repayShares > 0n;
 
   const { isLoadingPermit2, isApproved, permit2Authorized, repayPending, approveAndRepay, signAndRepay } = useRepayTransaction({
     market,
@@ -134,6 +134,7 @@ export function WithdrawCollateralAndRepay({
       }),
     [projectedBorrowAssets, projectedCollateralAssets, oraclePrice],
   );
+  const isWithdrawingAllCollateralWithDebt = projectedCollateralAssets <= 0n && projectedBorrowAssets > 0n;
 
   const maxTargetLtvPercent = useMemo(() => Math.min(100, ltvWadToPercent(clampTargetLtv(lltv, lltv))), [lltv]);
 
@@ -370,7 +371,7 @@ export function WithdrawCollateralAndRepay({
               disabled={
                 withdrawInputError !== null ||
                 repayInputError !== null ||
-                (withdrawAmount === 0n && repayAssets === 0n) ||
+                (withdrawAmount === 0n && repayAssets === 0n && repayShares === 0n) ||
                 projectedLTV >= lltv
               }
               variant="primary"
@@ -386,6 +387,11 @@ export function WithdrawCollateralAndRepay({
                   maxLTV={lltv}
                   currentLTV={projectedLTV}
                   type="error"
+                  customMessage={
+                    isWithdrawingAllCollateralWithDebt
+                      ? 'You cannot withdraw all collateral while debt remains. Repay more debt or withdraw less collateral.'
+                      : undefined
+                  }
                 />
               )}
               {projectedLTV < lltv && projectedLTV >= (lltv * 90n) / 100n && (

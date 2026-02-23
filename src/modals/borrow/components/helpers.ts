@@ -1,5 +1,6 @@
 export const LTV_WAD = 10n ** 18n;
 export const ORACLE_PRICE_SCALE = 10n ** 36n;
+export const INFINITE_LTV = 10n ** 30n;
 const TARGET_LTV_MARGIN_WAD = 10n ** 15n; // 0.1 percentage points
 const EDITABLE_PERCENT_REGEX = /^\d*\.?\d*$/;
 
@@ -27,8 +28,9 @@ export const computeLtv = ({
   collateralAssets: bigint;
   oraclePrice: bigint;
 }): bigint => {
+  if (borrowAssets <= 0n) return 0n;
   const collateralValueInLoan = getCollateralValueInLoan(collateralAssets, oraclePrice);
-  if (borrowAssets <= 0n || collateralValueInLoan <= 0n) return 0n;
+  if (collateralValueInLoan <= 0n) return INFINITE_LTV;
   return (borrowAssets * LTV_WAD) / collateralValueInLoan;
 };
 
@@ -62,7 +64,10 @@ export const percentToLtvWad = (percent: number): bigint => {
   return BigInt(Math.round(percent * 1e16));
 };
 
-export const formatLtvPercent = (ltv: bigint, fractionDigits = 2): string => ltvWadToPercent(ltv).toFixed(fractionDigits);
+export const isInfiniteLtv = (ltv: bigint): boolean => ltv >= INFINITE_LTV;
+
+export const formatLtvPercent = (ltv: bigint, fractionDigits = 2): string =>
+  isInfiniteLtv(ltv) ? '∞' : ltvWadToPercent(ltv).toFixed(fractionDigits);
 
 export const computeRequiredCollateralAssets = ({
   borrowAssets,
