@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import { UiLabPageClient } from '@/features/ui-lab/ui-lab-page-client';
 
 type UiLabPageProps = {
   params?: Promise<{
@@ -8,12 +7,15 @@ type UiLabPageProps = {
 };
 
 export default async function UiLabPage({ params }: UiLabPageProps) {
-  const isEnabled = process.env.NEXT_PUBLIC_ENABLE_UI_LAB === 'true';
+  const isEnabled =
+    process.env.NODE_ENV !== 'production' &&
+    (process.env.ENABLE_UI_LAB === 'true' || process.env.NEXT_PUBLIC_ENABLE_UI_LAB === 'true');
 
   if (!isEnabled) {
     notFound();
   }
 
+  const { UiLabPageClient } = await import('@/features/ui-lab/ui-lab-page-client');
   const resolvedParams = params ? await params : undefined;
 
   return <UiLabPageClient initialSlug={resolvedParams?.slug ?? []} />;

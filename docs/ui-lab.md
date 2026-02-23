@@ -24,7 +24,12 @@ UI Lab routes:
 - `http://localhost:3000/ui-lab/market-selection-modal`
 - `http://localhost:3000/ui-lab/supply-modal`
 
-The route is gated by `NEXT_PUBLIC_ENABLE_UI_LAB=true`.
+The route is gated and disabled in production builds by default.
+
+- Enable locally with either:
+  - `ENABLE_UI_LAB=true` (server-only)
+  - `NEXT_PUBLIC_ENABLE_UI_LAB=true`
+- In production (`NODE_ENV=production`), `/ui-lab` always returns `notFound()`.
 
 ## URL state
 
