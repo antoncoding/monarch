@@ -18,7 +18,9 @@ const buildAssetSelectionKey = (token: AssetFilterItem): string => {
 
 export const createUiLabAssetFilterItems = (): AssetFilterItem[] => {
   const symbolSet = new Set<string>(uiLabPreferredAssetSymbols);
-  return supportedTokens.filter((token) => symbolSet.has(token.symbol) && hasMainnetAddress(token)).slice(0, uiLabPreferredAssetSymbols.length);
+  return supportedTokens
+    .filter((token) => symbolSet.has(token.symbol) && hasMainnetAddress(token))
+    .slice(0, uiLabPreferredAssetSymbols.length);
 };
 
 export const createUiLabDefaultAssetSelection = (items: AssetFilterItem[]): string[] => {

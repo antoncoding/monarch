@@ -145,9 +145,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                       />
                     }
                   >
-                    <span className="cursor-help border-b border-dashed border-secondary/50">
-                      DAYS TO LIQ.
-                    </span>
+                    <span className="cursor-help border-b border-dashed border-secondary/50">DAYS TO LIQ.</span>
                   </Tooltip>
                 </TableHead>
                 <TableHead className="text-right">% OF BORROW</TableHead>
@@ -172,9 +170,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                   const percentDisplay = percentOfBorrow < 0.01 && percentOfBorrow > 0 ? '<0.01%' : `${percentOfBorrow.toFixed(2)}%`;
 
                   // Days to liquidation display
-                  const daysDisplay = borrower.daysToLiquidation !== null
-                    ? `${borrower.daysToLiquidation}`
-                    : '—';
+                  const daysDisplay = borrower.daysToLiquidation !== null ? `${borrower.daysToLiquidation}` : '—';
 
                   return (
                     <TableRow key={`borrower-${borrower.userAddress}`}>

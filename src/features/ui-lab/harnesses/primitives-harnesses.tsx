@@ -23,10 +23,16 @@ export function ButtonHarness(): JSX.Element {
       <Button variant="surface">Surface</Button>
       <Button variant="default">Default</Button>
       <Button variant="ghost">Ghost</Button>
-      <Button variant="primary" size="sm">
+      <Button
+        variant="primary"
+        size="sm"
+      >
         Small
       </Button>
-      <Button variant="primary" size="lg">
+      <Button
+        variant="primary"
+        size="lg"
+      >
         Large
       </Button>
     </div>
@@ -53,10 +59,16 @@ export function CardHarness(): JSX.Element {
         </div>
       </CardBody>
       <CardFooter className="justify-end gap-2">
-        <Button variant="ghost" size="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+        >
           Dismiss
         </Button>
-        <Button variant="primary" size="sm">
+        <Button
+          variant="primary"
+          size="sm"
+        >
           Continue
         </Button>
       </CardFooter>
@@ -67,9 +79,15 @@ export function CardHarness(): JSX.Element {
 export function TooltipHarness(): JSX.Element {
   return (
     <div className="flex items-center gap-3">
-      <Tooltip content="Current APY includes base and rewards" placement="top">
+      <Tooltip
+        content="Current APY includes base and rewards"
+        placement="top"
+      >
         <span>
-          <Button variant="surface" size="sm">
+          <Button
+            variant="surface"
+            size="sm"
+          >
             Hover me
           </Button>
         </span>
@@ -108,7 +126,12 @@ export function InputHarness(): JSX.Element {
 
   return (
     <div className="max-w-md space-y-3">
-      <Input label="Borrow Amount" value={amount} onValueChange={setAmount} endContent={<span className="text-xs text-secondary">USDC</span>} />
+      <Input
+        label="Borrow Amount"
+        value={amount}
+        onValueChange={setAmount}
+        endContent={<span className="text-xs text-secondary">USDC</span>}
+      />
       <Input
         label="Invalid State"
         value={amount}
@@ -126,7 +149,10 @@ export function SelectHarness(): JSX.Element {
   return (
     <div className="max-w-sm space-y-3">
       <p className="text-sm text-secondary">Selected network: {network}</p>
-      <Select value={network} onValueChange={setNetwork}>
+      <Select
+        value={network}
+        onValueChange={setNetwork}
+      >
         <SelectTrigger>
           <SelectValue placeholder="Select network" />
         </SelectTrigger>
@@ -188,7 +214,10 @@ export function TableHarness(): JSX.Element {
 
 export function TabsHarness(): JSX.Element {
   return (
-    <Tabs defaultValue="borrow" className="max-w-xl">
+    <Tabs
+      defaultValue="borrow"
+      className="max-w-xl"
+    >
       <TabsList>
         <TabsTrigger value="borrow">Borrow</TabsTrigger>
         <TabsTrigger value="repay">Repay</TabsTrigger>
@@ -205,7 +234,13 @@ export function SliderHarness(): JSX.Element {
   return (
     <div className="max-w-md space-y-3">
       <p className="text-sm text-secondary">Utilization target: {value[0]}%</p>
-      <Slider value={value} onValueChange={setValue} max={100} min={0} step={1} />
+      <Slider
+        value={value}
+        onValueChange={setValue}
+        max={100}
+        min={0}
+        step={1}
+      />
     </div>
   );
 }
@@ -215,8 +250,17 @@ export function CheckboxHarness(): JSX.Element {
 
   return (
     <div className="space-y-3">
-      <Checkbox checked={checked} onCheckedChange={(next) => setChecked(next === true)} label="Enable Permit2 for this flow" />
-      <Checkbox variant="highlighted" checked={checked} onCheckedChange={(next) => setChecked(next === true)} label="Use highlighted style" />
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(next) => setChecked(next === true)}
+        label="Enable Permit2 for this flow"
+      />
+      <Checkbox
+        variant="highlighted"
+        checked={checked}
+        onCheckedChange={(next) => setChecked(next === true)}
+        label="Use highlighted style"
+      />
     </div>
   );
 }
@@ -226,7 +270,10 @@ export function PopoverHarness(): JSX.Element {
     <div className="flex items-center gap-3">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="surface" size="sm">
+          <Button
+            variant="surface"
+            size="sm"
+          >
             Open popover
           </Button>
         </PopoverTrigger>

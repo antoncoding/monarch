@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { LuSunMedium } from 'react-icons/lu';
 import { uiLabCategoryLabel, uiLabCategoryOrder, uiLabRegistry } from '@/features/ui-lab/registry';
-import type { UiLabCanvasBackground, UiLabCanvasState, UiLabEntry } from '@/features/ui-lab/types';
+import type { UiLabCanvasBackground, UiLabCanvasState, UiLabDataMode, UiLabEntry } from '@/features/ui-lab/types';
 
 type UiLabPageClientProps = {
   initialSlug: string[];
@@ -30,10 +30,9 @@ const MIN_MAX_W = 360;
 const MAX_MAX_W = 1440;
 
 const createCollapsedSections = (activeCategory?: UiLabCategory): Record<UiLabCategory, boolean> => {
-  return Object.fromEntries(uiLabCategoryOrder.map((category) => [category, activeCategory ? category !== activeCategory : false])) as Record<
-    UiLabCategory,
-    boolean
-  >;
+  return Object.fromEntries(
+    uiLabCategoryOrder.map((category) => [category, activeCategory ? category !== activeCategory : false]),
+  ) as Record<UiLabCategory, boolean>;
 };
 
 const canvasBackgroundClasses: Record<UiLabCanvasBackground, string> = {
@@ -49,6 +48,18 @@ const categoryCompactLabel: Record<UiLabCategory, string> = {
   'data-display': 'DD',
   controls: 'CT',
   modals: 'MD',
+};
+
+const dataModeLabel: Record<UiLabDataMode, string> = {
+  fixture: 'Fixture data',
+  hybrid: 'Hybrid data',
+  live: 'Live data',
+};
+
+const dataModeClasses: Record<UiLabDataMode, string> = {
+  fixture: 'border-green-500/30 bg-green-500/10 text-green-500',
+  hybrid: 'border-amber-500/30 bg-amber-500/10 text-amber-500',
+  live: 'border-red-500/30 bg-red-500/10 text-red-500',
 };
 
 const clamp = (value: number, min: number, max: number): number => {
@@ -70,9 +81,7 @@ const resolveCanvasState = (entry: UiLabEntry, searchParams: ReadonlyURLSearchPa
 
   const backgroundParam = searchParams.get('bg');
   const bg =
-    backgroundParam === 'background' || backgroundParam === 'surface' || backgroundParam === 'hovered'
-      ? backgroundParam
-      : entryDefaults.bg;
+    backgroundParam === 'background' || backgroundParam === 'surface' || backgroundParam === 'hovered' ? backgroundParam : entryDefaults.bg;
 
   return {
     pad: parseNumericParam(searchParams.get('pad'), entryDefaults.pad, MIN_PAD, MAX_PAD),
@@ -190,6 +199,7 @@ export function UiLabPageClient({ initialSlug }: UiLabPageClientProps): JSX.Elem
 
   const canvasBgClass = canvasBackgroundClasses[canvas.bg];
   const isDarkTheme = theme === 'dark';
+  const selectedDataMode = selectedEntry.dataMode ?? 'fixture';
 
   return (
     <div className="flex min-h-screen bg-background text-primary font-zen">
@@ -200,12 +210,12 @@ export function UiLabPageClient({ initialSlug }: UiLabPageClientProps): JSX.Elem
       >
         <div className="h-full p-3">
           <div className={`flex items-center ${isSidebarMinimized ? 'justify-center' : 'justify-between'}`}>
-            {!isSidebarMinimized ? (
+            {isSidebarMinimized ? null : (
               <div>
                 <h1 className="text-base">UI Lab</h1>
                 <p className="text-[11px] text-secondary">Component sections</p>
               </div>
-            ) : null}
+            )}
 
             <button
               type="button"
@@ -244,7 +254,10 @@ export function UiLabPageClient({ initialSlug }: UiLabPageClientProps): JSX.Elem
                 const isCollapsed = collapsedSections[category];
 
                 return (
-                  <section key={category} className="rounded-sm border border-border/70 bg-background/60 p-1.5">
+                  <section
+                    key={category}
+                    className="rounded-sm border border-border/70 bg-background/60 p-1.5"
+                  >
                     <button
                       type="button"
                       onClick={() => toggleSection(category)}
@@ -258,7 +271,7 @@ export function UiLabPageClient({ initialSlug }: UiLabPageClientProps): JSX.Elem
                     </button>
 
                     <AnimatePresence initial={false}>
-                      {!isCollapsed ? (
+                      {isCollapsed ? null : (
                         <motion.div
                           key={`${category}-list`}
                           initial={{ height: 0, opacity: 0 }}
@@ -286,7 +299,7 @@ export function UiLabPageClient({ initialSlug }: UiLabPageClientProps): JSX.Elem
                             })}
                           </div>
                         </motion.div>
-                      ) : null}
+                      )}
                     </AnimatePresence>
                   </section>
                 );
@@ -300,12 +313,21 @@ export function UiLabPageClient({ initialSlug }: UiLabPageClientProps): JSX.Elem
         <header className="border-b border-border px-6 py-4">
           <h2 className="text-lg">{selectedEntry.title}</h2>
           <p className="mt-1 text-sm text-secondary">{selectedEntry.description}</p>
+          <span className={`mt-2 inline-flex rounded-sm border px-2 py-0.5 text-xs ${dataModeClasses[selectedDataMode]}`}>
+            {dataModeLabel[selectedDataMode]}
+          </span>
         </header>
 
         <div className="flex min-h-0 flex-1">
           <section className="min-w-0 flex-1 overflow-auto p-6">
-            <div className={`rounded-sm border border-border ${canvasBgClass}`} style={{ padding: canvas.pad }}>
-              <div className="mx-auto w-full" style={{ maxWidth: canvas.maxW }}>
+            <div
+              className={`rounded-sm border border-border ${canvasBgClass}`}
+              style={{ padding: canvas.pad }}
+            >
+              <div
+                className="mx-auto w-full"
+                style={{ maxWidth: canvas.maxW }}
+              >
                 {selectedEntry.render()}
               </div>
             </div>

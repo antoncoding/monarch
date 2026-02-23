@@ -40,7 +40,7 @@ Share the full URL to keep the same component and canvas setup.
 
 1. Add fixture data if needed in `src/features/ui-lab/fixtures`.
 2. Add a harness in `src/features/ui-lab/harnesses`.
-3. Register an entry in `src/features/ui-lab/registry.tsx`.
+3. Register an entry in the relevant section file under `src/features/ui-lab/registry/`.
 4. Open `/ui-lab/<entry-id>` and verify it renders.
 
 ## Notes
@@ -50,3 +50,7 @@ Share the full URL to keep the same component and canvas setup.
 - Shared realistic fixtures live in:
   - `src/features/ui-lab/fixtures/market-fixtures.ts`
   - `src/features/ui-lab/fixtures/component-fixtures.ts`
+- Each entry has a `dataMode`:
+  - `fixture`: deterministic local fixtures only
+  - `hybrid`: mostly fixture-based, but may still call some shared hooks
+  - `live`: intentionally uses live app data/query pipeline

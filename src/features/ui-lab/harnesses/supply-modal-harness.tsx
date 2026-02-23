@@ -20,21 +20,39 @@ export function SupplyModalHarness(): JSX.Element {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" size="sm" onClick={() => setIsOpen(true)}>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => setIsOpen(true)}
+        >
           Open Supply Modal
         </Button>
-        <Button variant={defaultMode === 'supply' ? 'surface' : 'ghost'} size="sm" onClick={() => setDefaultMode('supply')}>
+        <Button
+          variant={defaultMode === 'supply' ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setDefaultMode('supply')}
+        >
           Supply Mode
         </Button>
-        <Button variant={defaultMode === 'withdraw' ? 'surface' : 'ghost'} size="sm" onClick={() => setDefaultMode('withdraw')}>
+        <Button
+          variant={defaultMode === 'withdraw' ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setDefaultMode('withdraw')}
+        >
           Withdraw Mode
         </Button>
-        <Button variant={hasPosition ? 'surface' : 'ghost'} size="sm" onClick={() => setHasPosition((prev) => !prev)}>
+        <Button
+          variant={hasPosition ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setHasPosition((prev) => !prev)}
+        >
           {hasPosition ? 'With Position' : 'No Position'}
         </Button>
       </div>
 
-      <p className="text-sm text-secondary">Use this harness to tune `SupplyModalV2` layout while keeping market/position fixtures stable.</p>
+      <p className="text-sm text-secondary">
+        Use this harness to tune `SupplyModalV2` layout while keeping market/position fixtures stable.
+      </p>
 
       {isOpen ? (
         <SupplyModalV2

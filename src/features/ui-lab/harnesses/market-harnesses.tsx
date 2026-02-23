@@ -9,7 +9,11 @@ import { MarketDetailsBlock } from '@/features/markets/components/market-details
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { MarketSelectionModal } from '@/features/markets/components/market-selection-modal';
 import { MarketSelector } from '@/features/markets/components/market-selector';
-import { createUiLabAssetFilterItems, createUiLabDefaultAssetSelection, createUiLabMarketVariantsFixture } from '@/features/ui-lab/fixtures/component-fixtures';
+import {
+  createUiLabAssetFilterItems,
+  createUiLabDefaultAssetSelection,
+  createUiLabMarketVariantsFixture,
+} from '@/features/ui-lab/fixtures/component-fixtures';
 import { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
@@ -23,9 +27,17 @@ export function NetworkFilterHarness(): JSX.Element {
     <div className="space-y-4">
       <p className="text-sm text-secondary">Selected chain: {selectedNetwork ?? 'All networks'}</p>
       <div className="flex flex-wrap items-start gap-3">
-        <NetworkFilter selectedNetwork={selectedNetwork} setSelectedNetwork={setSelectedNetwork} variant="compact" showLabelPrefix />
+        <NetworkFilter
+          selectedNetwork={selectedNetwork}
+          setSelectedNetwork={setSelectedNetwork}
+          variant="compact"
+          showLabelPrefix
+        />
         <div className="w-[280px]">
-          <NetworkFilter selectedNetwork={selectedNetwork} setSelectedNetwork={setSelectedNetwork} />
+          <NetworkFilter
+            selectedNetwork={selectedNetwork}
+            setSelectedNetwork={setSelectedNetwork}
+          />
         </div>
       </div>
     </div>
@@ -59,7 +71,13 @@ export function MarketIdentityHarness(): JSX.Element {
     <div className="space-y-4">
       <div className="rounded-sm border border-border bg-surface p-4">
         <p className="mb-3 text-xs uppercase tracking-wide text-secondary">Focused</p>
-        <MarketIdentity market={market} chainId={market.morphoBlue.chain.id} mode={MarketIdentityMode.Focused} focus={MarketIdentityFocus.Loan} showId />
+        <MarketIdentity
+          market={market}
+          chainId={market.morphoBlue.chain.id}
+          mode={MarketIdentityMode.Focused}
+          focus={MarketIdentityFocus.Loan}
+          showId
+        />
       </div>
 
       <div className="rounded-sm border border-border bg-surface p-4">
@@ -76,7 +94,11 @@ export function MarketIdentityHarness(): JSX.Element {
 
       <div className="rounded-sm border border-border bg-surface p-4">
         <p className="mb-3 text-xs uppercase tracking-wide text-secondary">Badge</p>
-        <MarketIdentity market={market} chainId={market.morphoBlue.chain.id} mode={MarketIdentityMode.Badge} />
+        <MarketIdentity
+          market={market}
+          chainId={market.morphoBlue.chain.id}
+          mode={MarketIdentityMode.Badge}
+        />
       </div>
     </div>
   );
@@ -90,13 +112,25 @@ export function MarketDetailsBlockHarness(): JSX.Element {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant={mode === 'supply' ? 'surface' : 'ghost'} size="sm" onClick={() => setMode('supply')}>
+        <Button
+          variant={mode === 'supply' ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setMode('supply')}
+        >
           Supply Mode
         </Button>
-        <Button variant={mode === 'borrow' ? 'surface' : 'ghost'} size="sm" onClick={() => setMode('borrow')}>
+        <Button
+          variant={mode === 'borrow' ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setMode('borrow')}
+        >
           Borrow Mode
         </Button>
-        <Button variant={showPreview ? 'surface' : 'ghost'} size="sm" onClick={() => setShowPreview((prev) => !prev)}>
+        <Button
+          variant={showPreview ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setShowPreview((prev) => !prev)}
+        >
           {showPreview ? 'Preview Enabled' : 'Preview Disabled'}
         </Button>
       </div>
@@ -130,7 +164,11 @@ export function MarketSelectorHarness(): JSX.Element {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => setAddedMarketIds([])}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setAddedMarketIds([])}
+        >
           Reset Selection
         </Button>
         <p className="text-sm text-secondary">Added: {addedMarketIds.length}</p>
@@ -139,7 +177,12 @@ export function MarketSelectorHarness(): JSX.Element {
       {markets.map((market) => {
         const isAdded = addedMarketIds.includes(market.uniqueKey);
         return (
-          <MarketSelector key={market.uniqueKey} market={market} disabled={isAdded} onAdd={() => handleAdd(market.uniqueKey)} />
+          <MarketSelector
+            key={market.uniqueKey}
+            market={market}
+            disabled={isAdded}
+            onAdd={() => handleAdd(market.uniqueKey)}
+          />
         );
       })}
     </div>
@@ -157,10 +200,18 @@ export function MarketSelectionModalHarness(): JSX.Element {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" size="sm" onClick={() => setIsOpen(true)}>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => setIsOpen(true)}
+        >
           Open Market Selection Modal
         </Button>
-        <Button variant={isMultiSelect ? 'surface' : 'ghost'} size="sm" onClick={() => setIsMultiSelect((prev) => !prev)}>
+        <Button
+          variant={isMultiSelect ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setIsMultiSelect((prev) => !prev)}
+        >
           {isMultiSelect ? 'Multi Select' : 'Single Select'}
         </Button>
       </div>

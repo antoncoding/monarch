@@ -78,8 +78,15 @@ export function AccountIdentityHarness(): JSX.Element {
 export function TransactionIdentityHarness(): JSX.Element {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <TransactionIdentity txHash={uiLabTransactionHashFixtures[0]} chainId={SupportedNetworks.Mainnet} />
-      <TransactionIdentity txHash={uiLabTransactionHashFixtures[1]} chainId={SupportedNetworks.Mainnet} showFullHash />
+      <TransactionIdentity
+        txHash={uiLabTransactionHashFixtures[0]}
+        chainId={SupportedNetworks.Mainnet}
+      />
+      <TransactionIdentity
+        txHash={uiLabTransactionHashFixtures[1]}
+        chainId={SupportedNetworks.Mainnet}
+        showFullHash
+      />
     </div>
   );
 }
@@ -89,12 +96,22 @@ export function CollateralIconsDisplayHarness(): JSX.Element {
     <div className="space-y-4">
       <div className="rounded-sm border border-border bg-surface p-4">
         <p className="mb-3 text-xs uppercase tracking-wide text-secondary">Compact</p>
-        <CollateralIconsDisplay collaterals={uiLabCollateralFixtures.slice(0, 3)} chainId={SupportedNetworks.Mainnet} maxDisplay={8} iconSize={20} />
+        <CollateralIconsDisplay
+          collaterals={uiLabCollateralFixtures.slice(0, 3)}
+          chainId={SupportedNetworks.Mainnet}
+          maxDisplay={8}
+          iconSize={20}
+        />
       </div>
 
       <div className="rounded-sm border border-border bg-surface p-4">
         <p className="mb-3 text-xs uppercase tracking-wide text-secondary">Overflow + Tooltip</p>
-        <CollateralIconsDisplay collaterals={uiLabCollateralFixtures} chainId={SupportedNetworks.Mainnet} maxDisplay={4} iconSize={22} />
+        <CollateralIconsDisplay
+          collaterals={uiLabCollateralFixtures}
+          chainId={SupportedNetworks.Mainnet}
+          maxDisplay={4}
+          iconSize={22}
+        />
       </div>
     </div>
   );
@@ -118,12 +135,23 @@ export function IconSwitchHarness(): JSX.Element {
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <p className="text-sm text-secondary">Plain switch</p>
-        <IconSwitch size="sm" selected={plainEnabled} onChange={setPlainEnabled} thumbIcon={null} />
+        <IconSwitch
+          size="sm"
+          selected={plainEnabled}
+          onChange={setPlainEnabled}
+          thumbIcon={null}
+        />
       </div>
 
       <div className="flex items-center gap-4">
         <p className="text-sm text-secondary">Icon switch</p>
-        <IconSwitch size="md" selected={modeEnabled} onChange={setModeEnabled} thumbIconOn={LuSun} thumbIconOff={LuMoon} />
+        <IconSwitch
+          size="md"
+          selected={modeEnabled}
+          onChange={setModeEnabled}
+          thumbIconOn={LuSun}
+          thumbIconOff={LuMoon}
+        />
       </div>
     </div>
   );
@@ -142,8 +170,16 @@ export function RefetchIconHarness(): JSX.Element {
 
   return (
     <div className="flex items-center gap-3">
-      <Button variant="surface" size="sm" onClick={triggerRefresh} disabled={isLoading}>
-        <RefetchIcon isLoading={isLoading} className="h-4 w-4" />
+      <Button
+        variant="surface"
+        size="sm"
+        onClick={triggerRefresh}
+        disabled={isLoading}
+      >
+        <RefetchIcon
+          isLoading={isLoading}
+          className="h-4 w-4"
+        />
         {isLoading ? 'Refreshing' : 'Refresh'}
       </Button>
       <p className="text-sm text-secondary">The icon completes the active spin cycle before stopping.</p>
@@ -159,7 +195,10 @@ export function DropdownMenuHarness(): JSX.Element {
     <div className="flex items-center gap-3">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="surface" size="sm">
+          <Button
+            variant="surface"
+            size="sm"
+          >
             Open Menu
           </Button>
         </DropdownMenuTrigger>
@@ -167,15 +206,27 @@ export function DropdownMenuHarness(): JSX.Element {
           <DropdownMenuItem startContent={<LuRefreshCw className="h-4 w-4" />}>Refresh</DropdownMenuItem>
           <DropdownMenuItem startContent={<IoMdCheckmarkCircleOutline className="h-4 w-4" />}>Mark as reviewed</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem checked={showRiskSignals} onCheckedChange={(checked) => setShowRiskSignals(checked === true)}>
+          <DropdownMenuCheckboxItem
+            checked={showRiskSignals}
+            onCheckedChange={(checked) => setShowRiskSignals(checked === true)}
+          >
             Show risk signals
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'cards')}>
-            <DropdownMenuRadioItem value="table" startContent={<LuArrowRightLeft className="h-4 w-4" />}>
+          <DropdownMenuRadioGroup
+            value={viewMode}
+            onValueChange={(value) => setViewMode(value as 'table' | 'cards')}
+          >
+            <DropdownMenuRadioItem
+              value="table"
+              startContent={<LuArrowRightLeft className="h-4 w-4" />}
+            >
               Table layout
             </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="cards" startContent={<LuLayoutGrid className="h-4 w-4" />}>
+            <DropdownMenuRadioItem
+              value="cards"
+              startContent={<LuLayoutGrid className="h-4 w-4" />}
+            >
               Card layout
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
@@ -211,12 +262,23 @@ export function TableContainerWithHeaderHarness(): JSX.Element {
       title="Market Activity"
       actions={
         <>
-          <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
-            <RefetchIcon isLoading={isRefreshing} className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefetchIcon
+              isLoading={isRefreshing}
+              className="h-4 w-4"
+            />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+              >
                 Filters
               </Button>
             </DropdownMenuTrigger>
@@ -273,13 +335,25 @@ export function ToastHarness(): JSX.Element {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button variant="surface" size="sm" onClick={() => success('Allocation complete', '2.5M USDC was allocated across 3 markets.')}>
+      <Button
+        variant="surface"
+        size="sm"
+        onClick={() => success('Allocation complete', '2.5M USDC was allocated across 3 markets.')}
+      >
         Success Toast
       </Button>
-      <Button variant="surface" size="sm" onClick={() => error('Transaction reverted', 'Slippage exceeded the configured tolerance.')}>
+      <Button
+        variant="surface"
+        size="sm"
+        onClick={() => error('Transaction reverted', 'Slippage exceeded the configured tolerance.')}
+      >
         Error Toast
       </Button>
-      <Button variant="surface" size="sm" onClick={() => info('Rebalance queued', 'Execution will start after block confirmation.')}>
+      <Button
+        variant="surface"
+        size="sm"
+        onClick={() => info('Rebalance queued', 'Execution will start after block confirmation.')}
+      >
         Info Toast
       </Button>
     </div>

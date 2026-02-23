@@ -21,21 +21,39 @@ export function BorrowModalHarness(): JSX.Element {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" size="sm" onClick={() => setIsOpen(true)}>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => setIsOpen(true)}
+        >
           Open Borrow Modal
         </Button>
-        <Button variant={defaultMode === 'borrow' ? 'surface' : 'ghost'} size="sm" onClick={() => setDefaultMode('borrow')}>
+        <Button
+          variant={defaultMode === 'borrow' ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setDefaultMode('borrow')}
+        >
           Borrow Mode
         </Button>
-        <Button variant={defaultMode === 'repay' ? 'surface' : 'ghost'} size="sm" onClick={() => setDefaultMode('repay')}>
+        <Button
+          variant={defaultMode === 'repay' ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setDefaultMode('repay')}
+        >
           Repay Mode
         </Button>
-        <Button variant={hasPosition ? 'surface' : 'ghost'} size="sm" onClick={() => setHasPosition((prev) => !prev)}>
+        <Button
+          variant={hasPosition ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setHasPosition((prev) => !prev)}
+        >
           {hasPosition ? 'With Position' : 'No Position'}
         </Button>
       </div>
 
-      <p className="text-sm text-secondary">Use this harness to adjust real `BorrowModal` spacing/layout with deterministic fixture props.</p>
+      <p className="text-sm text-secondary">
+        Use this harness to adjust real `BorrowModal` spacing/layout with deterministic fixture props.
+      </p>
 
       {isOpen ? (
         <BorrowModal
