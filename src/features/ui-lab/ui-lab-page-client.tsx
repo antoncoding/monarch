@@ -146,8 +146,13 @@ export function UiLabPageClient({ initialSlug }: UiLabPageClientProps): JSX.Elem
   }, [requestedId, router, searchParamsString, selectedEntry]);
 
   useEffect(() => {
+    if (!selectedEntry) {
+      setCollapsedSections(createCollapsedSections());
+      return;
+    }
+
     setCollapsedSections(createCollapsedSections(selectedEntry.category));
-  }, [selectedEntry.category]);
+  }, [selectedEntry?.category]);
 
   useEffect(() => {
     setIsThemeMounted(true);

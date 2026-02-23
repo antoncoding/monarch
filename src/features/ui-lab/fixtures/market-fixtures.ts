@@ -119,4 +119,5 @@ export const uiLabLiquiditySourcingFixture: LiquiditySourcingResult = {
   refetch: () => {},
 };
 
-export const uiLabOraclePrice = 3250n * 10n ** 36n;
+// Morpho oracle price normalized to 1e36 with 18(collateral)-vs-6(loan) decimals accounted for.
+export const uiLabOraclePrice = 3250n * 10n ** 24n;
