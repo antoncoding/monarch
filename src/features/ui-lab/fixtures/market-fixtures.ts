@@ -89,16 +89,36 @@ export const createUiLabMarketFixture = (): Market => ({
   warnings: [],
 });
 
-export const createUiLabBorrowPositionFixture = (market: Market): MarketPosition => ({
-  market,
-  state: {
-    supplyShares: '0',
-    supplyAssets: '0',
-    borrowShares: '59940000000',
-    borrowAssets: '60000000000',
-    collateral: '82000000000000000000',
-  },
-});
+export type UiLabBorrowPositionPreset = 'safe' | 'near-lltv';
+
+export const createUiLabBorrowPositionFixture = (
+  market: Market,
+  preset: UiLabBorrowPositionPreset = 'safe',
+): MarketPosition => {
+  if (preset === 'near-lltv') {
+    return {
+      market,
+      state: {
+        supplyShares: '0',
+        supplyAssets: '0',
+        borrowShares: '70500000000',
+        borrowAssets: '70800000000',
+        collateral: '82000000000000000000',
+      },
+    };
+  }
+
+  return {
+    market,
+    state: {
+      supplyShares: '0',
+      supplyAssets: '0',
+      borrowShares: '59940000000',
+      borrowAssets: '60000000000',
+      collateral: '82000000000000000000',
+    },
+  };
+};
 
 export const createUiLabSupplyPositionFixture = (market: Market): MarketPosition => ({
   market,

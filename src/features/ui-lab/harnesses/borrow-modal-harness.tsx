@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   createUiLabBorrowPositionFixture,
   createUiLabMarketFixture,
+  type UiLabBorrowPositionPreset,
   uiLabLiquiditySourcingFixture,
   uiLabOraclePrice,
 } from '@/features/ui-lab/fixtures/market-fixtures';
@@ -14,9 +15,13 @@ export function BorrowModalHarness(): JSX.Element {
   const [isOpen, setIsOpen] = useState(true);
   const [defaultMode, setDefaultMode] = useState<'borrow' | 'repay'>('borrow');
   const [hasPosition, setHasPosition] = useState(true);
+  const [positionPreset, setPositionPreset] = useState<UiLabBorrowPositionPreset>('safe');
 
   const market = useMemo(() => createUiLabMarketFixture(), []);
-  const position = useMemo(() => (hasPosition ? createUiLabBorrowPositionFixture(market) : null), [hasPosition, market]);
+  const position = useMemo(
+    () => (hasPosition ? createUiLabBorrowPositionFixture(market, positionPreset) : null),
+    [hasPosition, market, positionPreset],
+  );
 
   return (
     <div className="space-y-4">
@@ -49,15 +54,31 @@ export function BorrowModalHarness(): JSX.Element {
         >
           {hasPosition ? 'With Position' : 'No Position'}
         </Button>
+        <Button
+          variant={positionPreset === 'safe' ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setPositionPreset('safe')}
+          disabled={!hasPosition}
+        >
+          Safe Position
+        </Button>
+        <Button
+          variant={positionPreset === 'near-lltv' ? 'surface' : 'ghost'}
+          size="sm"
+          onClick={() => setPositionPreset('near-lltv')}
+          disabled={!hasPosition}
+        >
+          Near LLTV
+        </Button>
       </div>
 
       <p className="text-sm text-secondary">
-        Use this harness to adjust real `BorrowModal` spacing/layout with deterministic fixture props.
+        Use this harness to adjust real `BorrowModal` spacing/layout with deterministic fixture props, including stressed LTV states.
       </p>
 
       {isOpen ? (
         <BorrowModal
-          key={`${defaultMode}-${hasPosition ? 'with-position' : 'no-position'}`}
+          key={`${defaultMode}-${hasPosition ? 'with-position' : 'no-position'}-${positionPreset}`}
           market={market}
           onOpenChange={setIsOpen}
           oraclePrice={uiLabOraclePrice}
