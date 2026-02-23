@@ -331,7 +331,7 @@ export function WithdrawCollateralAndRepay({
               }
             />
             <p className="mt-1 text-right text-xs text-secondary">
-              Debt: {formatBalance(maxToRepay, market.loanAsset.decimals)} {market.loanAsset.symbol}
+              Available: {formatBalance(loanTokenBalance ?? 0n, market.loanAsset.decimals)} {market.loanAsset.symbol}
             </p>
             {repayInputError && <p className="mt-1 text-right text-xs text-red-500">{repayInputError}</p>}
           </div>

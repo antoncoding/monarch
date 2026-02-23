@@ -32,8 +32,8 @@ export function LTVWarning({ maxLTV, currentLTV, type, customMessage }: LTVWarni
           customMessage
         ) : isDanger ? (
           <>
-            Warning: The resulting LTV ({formatLtvPercent(currentLTV)}%) is close to the maximum allowed LTV (
-            {formatLtvPercent(maxLTV)}%). Consider adjusting your inputs to maintain a safer position.
+            Warning: The resulting LTV ({formatLtvPercent(currentLTV)}%) is close to the maximum allowed LTV ({formatLtvPercent(maxLTV)}%).
+            Consider adjusting your inputs to maintain a safer position.
           </>
         ) : (
           <>
