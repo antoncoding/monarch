@@ -511,9 +511,11 @@ export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[])
       const borrowAssets = BigInt(position.state.borrowAssets);
       const collateralAssets = BigInt(position.state.collateral);
       const oraclePrice = position.oraclePrice ? BigInt(position.oraclePrice) : null;
+      const collateralAsset = position.market.collateralAsset;
+      const hasCollateralAsset = typeof collateralAsset?.decimals === 'number';
 
       const isActiveDebt = borrowShares > 0n;
-      const hasResidualCollateral = borrowShares === 0n && collateralAssets > 0n;
+      const hasResidualCollateral = hasCollateralAsset && borrowShares === 0n && collateralAssets > 0n;
 
       return {
         market: position.market,
@@ -523,8 +525,8 @@ export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[])
           collateral: position.state.collateral,
         },
         borrowAmount: Number(formatUnits(borrowAssets, position.market.loanAsset.decimals)),
-        collateralAmount: Number(formatUnits(collateralAssets, position.market.collateralAsset.decimals)),
-        ltvPercent: isActiveDebt ? calculatePositionLtvPercent(borrowAssets, collateralAssets, oraclePrice) : null,
+        collateralAmount: hasCollateralAsset ? Number(formatUnits(collateralAssets, collateralAsset.decimals)) : 0,
+        ltvPercent: isActiveDebt && hasCollateralAsset ? calculatePositionLtvPercent(borrowAssets, collateralAssets, oraclePrice) : null,
         isActiveDebt,
         hasResidualCollateral,
       };
