@@ -5,9 +5,9 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoUserPositionMarkets } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { SupportedNetworks } from '@/utils/networks';
-import { fetchPositionsSnapshots, type PositionSnapshot } from '@/utils/positions';
+import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, type PositionMarketOracleInput } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
-import type { Market } from '@/utils/types';
+import type { Market, MarketPosition } from '@/utils/types';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useCustomRpc } from '@/stores/useCustomRpc';
 import { useProcessedMarkets } from './useProcessedMarkets';
@@ -24,10 +24,7 @@ type InitialDataResponse = {
 };
 
 // Type for the final processed position data
-type EnhancedMarketPosition = {
-  state: PositionSnapshot;
-  market: Market;
-};
+type EnhancedMarketPosition = MarketPosition;
 
 // --- Query Keys (adjusted for two-step process) ---
 export const positionKeys = {
@@ -62,9 +59,10 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
     networksToFetch.map(async (network) => {
       let markets: PositionMarket[] = [];
       let apiError = false;
+      const morphoApiSupported = supportsMorphoApi(network);
 
       // Try Morpho API first if supported
-      if (supportsMorphoApi(network)) {
+      if (morphoApiSupported) {
         try {
           console.log(`Attempting to fetch positions via Morpho API for network ${network}`);
           markets = await fetchMorphoUserPositionMarkets(user, network);
@@ -76,7 +74,7 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
       }
 
       // If Morpho API failed or not supported, try Subgraph
-      if (markets.length === 0 && apiError) {
+      if (markets.length === 0 && (!morphoApiSupported || apiError)) {
         try {
           console.log(`Attempting to fetch positions via Subgraph for network ${network}`);
           markets = await fetchSubgraphUserPositionMarkets(user, network);
@@ -178,6 +176,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
 
       // Fetch snapshots for each chain using batched multicall
       const allSnapshots = new Map<string, PositionSnapshot>();
+      const allOraclePrices = new Map<string, string | null>();
       await Promise.all(
         Array.from(marketsByChain.entries()).map(async ([chainId, markets]) => {
           const publicClient = getClient(chainId as SupportedNetworks, customRpcUrls[chainId as SupportedNetworks] ?? undefined);
@@ -186,12 +185,23 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
             return;
           }
 
-          const marketIds = markets.map((m) => m.marketUniqueKey);
-          const snapshots = await fetchPositionsSnapshots(marketIds, user as Address, chainId, undefined, publicClient);
+          const marketInputs: PositionMarketOracleInput[] = markets.map((marketInfo) => ({
+            marketUniqueKey: marketInfo.marketUniqueKey,
+            oracleAddress: marketDataMap.get(marketInfo.marketUniqueKey.toLowerCase())?.oracleAddress ?? null,
+          }));
+          const { snapshots, oraclePrices } = await fetchLatestPositionSnapshotsWithOraclePrices(
+            marketInputs,
+            user as Address,
+            chainId,
+            publicClient,
+          );
 
           // Merge into allSnapshots
           snapshots.forEach((snapshot, marketId) => {
             allSnapshots.set(marketId.toLowerCase(), snapshot);
+          });
+          oraclePrices.forEach((oraclePrice, marketId) => {
+            allOraclePrices.set(marketId.toLowerCase(), oraclePrice);
           });
         }),
       );
@@ -213,6 +223,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
           validPositions.push({
             state: snapshot,
             market: market,
+            oraclePrice: allOraclePrices.get(marketKey) ?? null,
           });
         }
       });

@@ -19,6 +19,7 @@ import { useModal } from '@/hooks/useModal';
 import { usePositionsFilters } from '@/stores/usePositionsFilters';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
+import { BorrowedMorphoBlueTable } from './components/borrowed-morpho-blue-table';
 import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
 import { PositionBreadcrumbs } from '@/features/position-detail/components/position-breadcrumbs';
@@ -32,7 +33,16 @@ export default function Positions() {
 
   const { loading: isMarketsLoading } = useProcessedMarkets();
 
-  const { isPositionsLoading, positions: marketPositions } = useUserPositionsSummaryData(account, 'day');
+  const {
+    isPositionsLoading,
+    positions: marketPositions,
+    refetch: refetchPositions,
+    isRefetching: isPositionsRefetching,
+    isEarningsLoading,
+    actualBlockData,
+    transactions,
+    snapshotsByChain,
+  } = useUserPositionsSummaryData(account, period);
 
   // Fetch user's auto vaults
   const {
@@ -55,15 +65,25 @@ export default function Positions() {
   }, [vaults, vaultApyData]);
 
   // Calculate portfolio value from positions and vaults
-  const { totalUsd, assetBreakdown, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions, vaults);
+  const {
+    totalUsd,
+    totalDebtUsd,
+    assetBreakdown,
+    debtBreakdown,
+    isLoading: isPricesLoading,
+    error: pricesError,
+  } = usePortfolioValue(marketPositions, vaults);
 
   const loading = isMarketsLoading || isPositionsLoading;
 
   const loadingMessage = isMarketsLoading ? 'Loading markets...' : 'Loading user positions...';
 
-  const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
+  const hasSuppliedMarkets = marketPositions.some((position) => BigInt(position.state.supplyShares) > 0n);
+  const hasBorrowPositions = marketPositions.some(
+    (position) => BigInt(position.state.borrowShares) > 0n || BigInt(position.state.collateral) > 0n,
+  );
   const hasVaults = vaults && vaults.length > 0;
-  const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasVaults;
+  const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasBorrowPositions && !hasVaults;
   const isBookmarked = isAddressBookmarked(account as Address);
 
   useEffect(() => {
@@ -104,13 +124,14 @@ export default function Positions() {
             {!loading && (
               <PortfolioValueBadge
                 totalUsd={totalUsd}
+                totalDebtUsd={totalDebtUsd}
                 assetBreakdown={assetBreakdown}
+                debtBreakdown={debtBreakdown}
                 isLoading={isPricesLoading}
                 error={pricesError}
               />
             )}
-            <span className="h-4 border-l border-dashed border-border/70" />
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${loading ? '' : 'ml-2 border-l border-dashed border-border/70 pl-4'}`}>
               <Button
                 variant="default"
                 onClick={() => open('bridgeSwap', {})}
@@ -133,7 +154,26 @@ export default function Positions() {
           )}
 
           {/* Morpho Blue Positions Section */}
-          {!loading && hasSuppliedMarkets && <SuppliedMorphoBlueGroupedTable account={account} />}
+          {!loading && hasSuppliedMarkets && (
+            <SuppliedMorphoBlueGroupedTable
+              account={account}
+              positions={marketPositions}
+              refetch={refetchPositions}
+              isRefetching={isPositionsRefetching}
+              isEarningsLoading={isEarningsLoading}
+              actualBlockData={actualBlockData}
+              transactions={transactions}
+              snapshotsByChain={snapshotsByChain}
+            />
+          )}
+          {!loading && hasBorrowPositions && (
+            <BorrowedMorphoBlueTable
+              account={account}
+              positions={marketPositions}
+              onRefetch={refetchPositions}
+              isRefetching={isPositionsRefetching}
+            />
+          )}
 
           {/* Auto Vaults Section (progressive loading) */}
           {isVaultsLoading && !loading && (

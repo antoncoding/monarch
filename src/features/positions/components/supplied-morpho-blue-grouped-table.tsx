@@ -24,7 +24,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useModalStore } from '@/stores/useModalStore';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
+import type { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
@@ -35,24 +35,32 @@ import { PositionActionsDropdown } from './position-actions-dropdown';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { RiArrowRightLine } from 'react-icons/ri';
+import type { MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
+import type { PositionSnapshot } from '@/utils/positions';
 
 type SuppliedMorphoBlueGroupedTableProps = {
   account: string;
+  positions: MarketPositionWithEarnings[];
+  refetch: (onSuccess?: () => void) => Promise<void>;
+  isRefetching: boolean;
+  isEarningsLoading: boolean;
+  actualBlockData: Record<number, { block: number; timestamp: number }>;
+  transactions: UserTransaction[];
+  snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
 };
 
-export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGroupedTableProps) {
+export function SuppliedMorphoBlueGroupedTable({
+  account,
+  positions,
+  refetch,
+  isRefetching,
+  isEarningsLoading,
+  actualBlockData,
+  transactions,
+  snapshotsByChain,
+}: SuppliedMorphoBlueGroupedTableProps) {
   const period = usePositionsFilters((s) => s.period);
   const setPeriod = usePositionsFilters((s) => s.setPeriod);
-
-  const {
-    positions: marketPositions,
-    refetch,
-    isRefetching,
-    isEarningsLoading,
-    actualBlockData,
-    transactions,
-    snapshotsByChain,
-  } = useUserPositionsSummaryData(account, period);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { showEarningsInUsd, setShowEarningsInUsd } = usePositionsPreferences();
@@ -78,7 +86,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
     all: 'All',
   };
 
-  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(marketPositions), [marketPositions]);
+  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(positions), [positions]);
 
   const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
 

@@ -5,6 +5,7 @@ import type { MarketPositionWithEarnings } from '@/utils/types';
 import {
   type AssetBreakdownItem,
   calculateAssetBreakdown,
+  calculateDebtBreakdown,
   calculatePortfolioValue,
   extractTokensFromPositions,
   extractTokensFromVaults,
@@ -13,9 +14,11 @@ import { useTokenPrices } from './useTokenPrices';
 
 type UsePortfolioValueReturn = {
   totalUsd: number;
+  totalDebtUsd: number;
   nativeSuppliesUsd: number;
   vaultsUsd: number;
   assetBreakdown: AssetBreakdownItem[];
+  debtBreakdown: AssetBreakdownItem[];
   isLoading: boolean;
   error: Error | null;
 };
@@ -40,28 +43,32 @@ export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vault
   const { prices, isLoading, error } = useTokenPrices(tokens);
 
   // Calculate portfolio value and breakdown (memoized)
-  const { portfolioValue, assetBreakdown } = useMemo(() => {
+  const { portfolioValue, assetBreakdown, debtBreakdown } = useMemo(() => {
     if (isLoading || prices.size === 0) {
       return {
         portfolioValue: {
           total: 0,
-          breakdown: { nativeSupplies: 0, vaults: 0 },
+          breakdown: { nativeSupplies: 0, nativeBorrows: 0, vaults: 0 },
         },
         assetBreakdown: [],
+        debtBreakdown: [],
       };
     }
 
     return {
       portfolioValue: calculatePortfolioValue(positions, vaults, prices, findToken),
       assetBreakdown: calculateAssetBreakdown(positions, vaults, prices, findToken),
+      debtBreakdown: calculateDebtBreakdown(positions, prices),
     };
   }, [positions, vaults, prices, isLoading, findToken]);
 
   return {
     totalUsd: portfolioValue.total,
+    totalDebtUsd: portfolioValue.breakdown.nativeBorrows,
     nativeSuppliesUsd: portfolioValue.breakdown.nativeSupplies,
     vaultsUsd: portfolioValue.breakdown.vaults,
     assetBreakdown,
+    debtBreakdown,
     isLoading,
     error,
   };

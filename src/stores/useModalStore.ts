@@ -20,6 +20,7 @@ export type ModalProps = {
   borrow: {
     market: Market;
     defaultMode?: 'borrow' | 'repay';
+    toggleBorrowRepay?: boolean;
     refetch?: () => void;
     liquiditySourcing?: LiquiditySourcingResult;
   };
