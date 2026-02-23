@@ -1,6 +1,7 @@
 export const LTV_WAD = 10n ** 18n;
 export const ORACLE_PRICE_SCALE = 10n ** 36n;
 const TARGET_LTV_MARGIN_WAD = 10n ** 15n; // 0.1 percentage points
+const EDITABLE_PERCENT_REGEX = /^\d*\.?\d*$/;
 
 export const LTV_THRESHOLDS = {
   DANGER: 0.9,
@@ -42,35 +43,26 @@ export const clampTargetLtv = (targetLtv: bigint, lltv: bigint): bigint => {
 
 export const ltvWadToPercent = (ltv: bigint): number => Number(ltv) / 1e16;
 
+export const clampEditablePercent = (value: number, maxPercent: number): number => Math.max(0, Math.min(value, maxPercent));
+
+export const formatEditableLtvPercent = (value: number, maxPercent: number): string => {
+  const clamped = clampEditablePercent(value, maxPercent);
+  if (Number.isInteger(clamped)) return clamped.toString();
+  return clamped.toFixed(2).replace(/\.?0+$/, '');
+};
+
+export const normalizeEditablePercentInput = (value: string): string | null => {
+  const normalizedInput = value.replace(',', '.');
+  if (normalizedInput !== '' && !EDITABLE_PERCENT_REGEX.test(normalizedInput)) return null;
+  return normalizedInput;
+};
+
 export const percentToLtvWad = (percent: number): bigint => {
   if (!Number.isFinite(percent) || percent <= 0) return 0n;
   return BigInt(Math.round(percent * 1e16));
 };
 
 export const formatLtvPercent = (ltv: bigint, fractionDigits = 2): string => ltvWadToPercent(ltv).toFixed(fractionDigits);
-
-export const computeTargetBorrowAmount = ({
-  currentBorrowAssets,
-  projectedCollateralAssets,
-  oraclePrice,
-  targetLtv,
-  maxBorrowAssets,
-}: {
-  currentBorrowAssets: bigint;
-  projectedCollateralAssets: bigint;
-  oraclePrice: bigint;
-  targetLtv: bigint;
-  maxBorrowAssets?: bigint;
-}): bigint => {
-  const collateralValueInLoan = getCollateralValueInLoan(projectedCollateralAssets, oraclePrice);
-  if (collateralValueInLoan <= 0n || targetLtv <= 0n) return 0n;
-
-  const targetBorrowTotal = (collateralValueInLoan * targetLtv) / LTV_WAD;
-  const suggestedBorrow = clampNonNegative(targetBorrowTotal - currentBorrowAssets);
-
-  if (maxBorrowAssets == null) return suggestedBorrow;
-  return suggestedBorrow > maxBorrowAssets ? maxBorrowAssets : suggestedBorrow;
-};
 
 export const computeRequiredCollateralAssets = ({
   borrowAssets,

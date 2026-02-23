@@ -11,11 +11,14 @@ import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButt
 import { TokenIcon } from '@/components/shared/token-icon';
 import { BorrowPositionRiskCard } from './borrow-position-risk-card';
 import {
+  clampEditablePercent,
   clampTargetLtv,
   computeLtv,
   computeTargetRepayAmount,
   computeTargetWithdrawAmount,
+  formatEditableLtvPercent,
   ltvWadToPercent,
+  normalizeEditablePercentInput,
   percentToLtvWad,
 } from './helpers';
 
@@ -107,9 +110,10 @@ export function WithdrawCollateralAndRepay({
   }, [withdrawAmount, currentCollateralAssets]);
 
   const projectedBorrowAssets = useMemo(() => {
+    if (repayShares > 0n) return 0n;
     if (repayAssets >= currentBorrowAssets) return 0n;
     return currentBorrowAssets - repayAssets;
-  }, [repayAssets, currentBorrowAssets]);
+  }, [repayAssets, repayShares, currentBorrowAssets]);
 
   const currentLTV = useMemo(
     () =>
@@ -133,19 +137,10 @@ export function WithdrawCollateralAndRepay({
 
   const maxTargetLtvPercent = useMemo(() => Math.min(100, ltvWadToPercent(clampTargetLtv(lltv, lltv))), [lltv]);
 
-  const formatEditablePercent = useCallback(
-    (value: number) => {
-      const clamped = Math.max(0, Math.min(value, maxTargetLtvPercent));
-      if (Number.isInteger(clamped)) return clamped.toString();
-      return clamped.toFixed(2).replace(/\.?0+$/, '');
-    },
-    [maxTargetLtvPercent],
-  );
-
   useEffect(() => {
     if (isEditingLtvInput) return;
-    setLtvInput(formatEditablePercent(ltvWadToPercent(projectedLTV)));
-  }, [projectedLTV, formatEditablePercent, isEditingLtvInput]);
+    setLtvInput(formatEditableLtvPercent(ltvWadToPercent(projectedLTV), maxTargetLtvPercent));
+  }, [projectedLTV, maxTargetLtvPercent, isEditingLtvInput]);
 
   const handleRefresh = useCallback(() => {
     if (!onSuccess) return;
@@ -161,34 +156,35 @@ export function WithdrawCollateralAndRepay({
     setWithdrawAmount(value);
   }, []);
 
-  const handleRepayAmountChange = useCallback((value: bigint) => {
-    setLastEditedField('repay');
-    setRepayAssets(value);
+  const applyRepayAssets = useCallback((nextRepayAssets: bigint) => {
+    setRepayAssets(nextRepayAssets);
     setRepayShares(0n);
   }, []);
 
+  const handleRepayAmountChange = useCallback(
+    (value: bigint) => {
+      setLastEditedField('repay');
+      applyRepayAssets(value);
+    },
+    [applyRepayAssets],
+  );
+
   const handleLtvInputChange = useCallback(
     (value: string) => {
-      const normalizedInput = value.replace(',', '.');
-      if (normalizedInput === '') {
-        setLtvInput('');
-        return;
-      }
-      if (!/^\d*\.?\d*$/.test(normalizedInput)) return;
+      const normalizedInput = normalizeEditablePercentInput(value);
+      if (normalizedInput == null) return;
       setLtvInput(normalizedInput);
+      if (normalizedInput === '') return;
 
       const parsedPercent = Number.parseFloat(normalizedInput);
       if (!Number.isFinite(parsedPercent)) return;
-      const clampedPercent = Math.max(0, Math.min(parsedPercent, maxTargetLtvPercent));
-      if (clampedPercent !== parsedPercent) {
-        setLtvInput(formatEditablePercent(clampedPercent));
-      }
+      const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
 
       const clampedTargetLtv = clampTargetLtv(percentToLtvWad(clampedPercent), lltv);
       if (clampedTargetLtv <= 0n) return;
 
       if (lastEditedField === 'repay') {
-        const borrowAssetsAfterRepay = repayAssets >= currentBorrowAssets ? 0n : currentBorrowAssets - repayAssets;
+        const borrowAssetsAfterRepay = repayShares > 0n || repayAssets >= currentBorrowAssets ? 0n : currentBorrowAssets - repayAssets;
         const nextWithdrawAmount = computeTargetWithdrawAmount({
           currentCollateralAssets,
           borrowAssetsAfterRepay,
@@ -206,14 +202,14 @@ export function WithdrawCollateralAndRepay({
         oraclePrice,
         targetLtv: clampedTargetLtv,
       });
-      setRepayAssets(nextRepayAssets);
-      setRepayShares(0n);
+      applyRepayAssets(nextRepayAssets);
       setRepayInputError(nextRepayAssets > maxToRepay ? 'Exceeds current debt or insufficient balance' : null);
     },
     [
       lltv,
       lastEditedField,
       repayAssets,
+      repayShares,
       currentBorrowAssets,
       currentCollateralAssets,
       oraclePrice,
@@ -221,7 +217,7 @@ export function WithdrawCollateralAndRepay({
       projectedCollateralAssets,
       maxToRepay,
       maxTargetLtvPercent,
-      formatEditablePercent,
+      applyRepayAssets,
     ],
   );
 
@@ -229,13 +225,13 @@ export function WithdrawCollateralAndRepay({
     setIsEditingLtvInput(false);
     const parsedPercent = Number.parseFloat(ltvInput.replace(',', '.'));
     if (!Number.isFinite(parsedPercent)) {
-      setLtvInput(formatEditablePercent(ltvWadToPercent(projectedLTV)));
+      setLtvInput(formatEditableLtvPercent(ltvWadToPercent(projectedLTV), maxTargetLtvPercent));
       return;
     }
-    const clampedPercent = Math.max(0, Math.min(parsedPercent, maxTargetLtvPercent));
+    const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
     const clampedTargetLtv = clampTargetLtv(percentToLtvWad(clampedPercent), lltv);
-    setLtvInput(formatEditablePercent(ltvWadToPercent(clampedTargetLtv)));
-  }, [ltvInput, projectedLTV, lltv, maxTargetLtvPercent, formatEditablePercent]);
+    setLtvInput(formatEditableLtvPercent(ltvWadToPercent(clampedTargetLtv), maxTargetLtvPercent));
+  }, [ltvInput, projectedLTV, lltv, maxTargetLtvPercent]);
   const amountInputClassName = 'h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums';
   const ltvInputClassName =
     'h-10 w-full rounded bg-hovered p-2 pr-8 text-base font-medium tabular-nums focus:border-primary focus:outline-none';

@@ -17,12 +17,15 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { BorrowPositionRiskCard } from './borrow-position-risk-card';
 import {
   LTV_WAD,
+  clampEditablePercent,
   clampTargetLtv,
   computeLtv,
   computeTargetCollateralAmount,
+  formatEditableLtvPercent,
   formatLtvPercent,
   getCollateralValueInLoan,
   ltvWadToPercent,
+  normalizeEditablePercentInput,
   percentToLtvWad,
 } from './helpers';
 
@@ -109,19 +112,10 @@ export function AddCollateralAndBorrow({
 
   const maxTargetLtvPercent = useMemo(() => Math.min(100, ltvWadToPercent(clampTargetLtv(lltv, lltv))), [lltv]);
 
-  const formatEditablePercent = useCallback(
-    (value: number) => {
-      const clamped = Math.max(0, Math.min(value, maxTargetLtvPercent));
-      if (Number.isInteger(clamped)) return clamped.toString();
-      return clamped.toFixed(2).replace(/\.?0+$/, '');
-    },
-    [maxTargetLtvPercent],
-  );
-
   useEffect(() => {
     if (isEditingLtvInput) return;
-    setLtvInput(formatEditablePercent(ltvWadToPercent(projectedLTV)));
-  }, [projectedLTV, formatEditablePercent, isEditingLtvInput]);
+    setLtvInput(formatEditableLtvPercent(ltvWadToPercent(projectedLTV), maxTargetLtvPercent));
+  }, [projectedLTV, maxTargetLtvPercent, isEditingLtvInput]);
 
   useEffect(() => {
     if (!showLtvInput) {
@@ -164,21 +158,15 @@ export function AddCollateralAndBorrow({
 
   const handleLtvInputChange = useCallback(
     (value: string) => {
-      const normalizedInput = value.replace(',', '.');
-      if (normalizedInput === '') {
-        setLtvInput('');
-        return;
-      }
-      if (!/^\d*\.?\d*$/.test(normalizedInput)) return;
+      const normalizedInput = normalizeEditablePercentInput(value);
+      if (normalizedInput == null) return;
       setLtvInput(normalizedInput);
       setLtvBorrowHint(null);
+      if (normalizedInput === '') return;
 
       const parsedPercent = Number.parseFloat(normalizedInput);
       if (!Number.isFinite(parsedPercent)) return;
-      const clampedPercent = Math.max(0, Math.min(parsedPercent, maxTargetLtvPercent));
-      if (clampedPercent !== parsedPercent) {
-        setLtvInput(formatEditablePercent(clampedPercent));
-      }
+      const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
 
       const clampedTargetLtv = clampTargetLtv(percentToLtvWad(clampedPercent), lltv);
       if (clampedTargetLtv <= 0n) return;
@@ -227,7 +215,6 @@ export function AddCollateralAndBorrow({
       projectedCollateralAssets,
       effectiveAvailableLiquidity,
       maxTargetLtvPercent,
-      formatEditablePercent,
     ],
   );
 
@@ -235,13 +222,13 @@ export function AddCollateralAndBorrow({
     setIsEditingLtvInput(false);
     const parsedPercent = Number.parseFloat(ltvInput.replace(',', '.'));
     if (!Number.isFinite(parsedPercent)) {
-      setLtvInput(formatEditablePercent(ltvWadToPercent(projectedLTV)));
+      setLtvInput(formatEditableLtvPercent(ltvWadToPercent(projectedLTV), maxTargetLtvPercent));
       return;
     }
-    const clampedPercent = Math.max(0, Math.min(parsedPercent, maxTargetLtvPercent));
+    const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
     const clampedTargetLtv = clampTargetLtv(percentToLtvWad(clampedPercent), lltv);
-    setLtvInput(formatEditablePercent(ltvWadToPercent(clampedTargetLtv)));
-  }, [ltvInput, projectedLTV, lltv, maxTargetLtvPercent, formatEditablePercent]);
+    setLtvInput(formatEditableLtvPercent(ltvWadToPercent(clampedTargetLtv), maxTargetLtvPercent));
+  }, [ltvInput, projectedLTV, lltv, maxTargetLtvPercent]);
   const amountInputClassName = 'h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums';
   const ltvInputClassName =
     'h-10 w-full rounded bg-hovered p-2 pr-8 text-base font-medium tabular-nums focus:border-primary focus:outline-none';
@@ -400,7 +387,9 @@ export function AddCollateralAndBorrow({
                   <button
                     type="button"
                     onClick={() =>
-                      handleLtvInputChange(formatEditablePercent(Math.min(maxTargetLtvPercent, ltvWadToPercent(currentLTV) + 1)))
+                      handleLtvInputChange(
+                        formatEditableLtvPercent(Math.min(maxTargetLtvPercent, ltvWadToPercent(currentLTV) + 1), maxTargetLtvPercent),
+                      )
                     }
                     className="mt-2 inline-flex text-left text-xs text-secondary hover:text-primary"
                   >
