@@ -68,7 +68,7 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
         <h3 className="text-xs uppercase text-secondary">Developer</h3>
         <SettingToggleItem
           title="Developer Options"
-          description="Show advanced developer tools like Accrue Interest in market detail views."
+          description="Show advanced developer tools like Accrue Interest and Liquidate in market detail views."
           selected={showDeveloperOptions}
           onChange={setShowDeveloperOptions}
           ariaLabel="Toggle developer options"
