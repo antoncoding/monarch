@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
-import { BPS_DENOMINATOR, REPAY_BY_SHARES_BUFFER_BPS, REPAY_BY_SHARES_MIN_BUFFER_DECIMALS_OFFSET } from '@/constants/repay';
+import { BPS_DENOMINATOR, REPAY_BY_SHARES_BUFFER_BPS } from '@/constants/repay';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -28,16 +28,10 @@ const roundUpDiv = (numerator: bigint, denominator: bigint): bigint => {
   return (numerator + denominator - 1n) / denominator;
 };
 
-const getRepayBySharesBufferFloor = (tokenDecimals: number): bigint => {
-  const exponent = Math.max(0, tokenDecimals - REPAY_BY_SHARES_MIN_BUFFER_DECIMALS_OFFSET);
-  return 10n ** BigInt(exponent);
-};
-
-const calculateRepayBySharesBufferedAssets = (baseAssets: bigint, tokenDecimals: number): bigint => {
+const calculateRepayBySharesBufferedAssets = (baseAssets: bigint): bigint => {
   if (baseAssets <= 0n) return 0n;
   const bpsBuffer = roundUpDiv(baseAssets * REPAY_BY_SHARES_BUFFER_BPS, BPS_DENOMINATOR);
-  const floorBuffer = getRepayBySharesBufferFloor(tokenDecimals);
-  return baseAssets + (bpsBuffer > floorBuffer ? bpsBuffer : floorBuffer);
+  return baseAssets + bpsBuffer;
 };
 
 export function useRepayTransaction({
@@ -59,9 +53,7 @@ export function useRepayTransaction({
 
   const useRepayByShares = repayShares > 0n;
   const repayBySharesBaseAssets = useRepayByShares && repayAssets === 0n ? BigInt(currentPosition?.state.borrowAssets ?? 0) : repayAssets;
-  const repayAmountToApprove = useRepayByShares
-    ? calculateRepayBySharesBufferedAssets(repayBySharesBaseAssets, market.loanAsset.decimals)
-    : repayAssets;
+  const repayAmountToApprove = useRepayByShares ? calculateRepayBySharesBufferedAssets(repayBySharesBaseAssets) : repayAssets;
 
   const { isAuthorizingBundler, ensureBundlerAuthorization } = useBundlerAuthorizationStep({
     chainId: market.morphoBlue.chain.id,
