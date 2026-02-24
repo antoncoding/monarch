@@ -36,9 +36,17 @@ export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBund
 
       if (mode === 'signature') {
         const authorizationTxData = await authorizeBundlerWithSignature();
+        if (authorizationTxData) {
+          return {
+            authorized: true,
+            authorizationTxData: authorizationTxData as `0x${string}`,
+          };
+        }
+
+        const refreshedAuthorization = await refetchIsBundlerAuthorized();
         return {
-          authorized: true,
-          authorizationTxData: authorizationTxData as `0x${string}` | null,
+          authorized: refreshedAuthorization.data === true,
+          authorizationTxData: null,
         };
       }
 
@@ -48,7 +56,7 @@ export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBund
         authorizationTxData: null,
       };
     },
-    [isBundlerAuthorized, authorizeBundlerWithSignature, authorizeWithTransaction],
+    [isBundlerAuthorized, authorizeBundlerWithSignature, authorizeWithTransaction, refetchIsBundlerAuthorized],
   );
 
   return {
