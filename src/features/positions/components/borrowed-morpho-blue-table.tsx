@@ -107,9 +107,6 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         showOracle
                         showLltv
                       />
-                      {row.hasResidualCollateral && (
-                        <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">Inactive</span>
-                      )}
                     </div>
                   </TableCell>
 
