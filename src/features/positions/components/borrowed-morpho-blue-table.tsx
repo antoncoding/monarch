@@ -69,11 +69,11 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
         title="Market Borrows"
         actions={headerActions}
       >
-        <Table className="responsive w-full min-w-[760px]">
+        <Table className="responsive w-full min-w-[840px] table-fixed">
           <TableHeader>
             <TableRow className="w-full justify-center text-secondary">
-              <TableHead className="w-10">Network</TableHead>
-              <TableHead>Market</TableHead>
+              <TableHead className="w-16">Network</TableHead>
+              <TableHead className="w-[30%]">Market</TableHead>
               <TableHead>Loan</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
               <TableHead>Collateral</TableHead>
@@ -87,9 +87,12 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
 
               return (
                 <TableRow key={rowKey}>
-                  <TableCell className="w-10">
+                  <TableCell className="w-16">
                     <div className="flex items-center justify-center">
-                      <NetworkIcon networkId={row.market.morphoBlue.chain.id} />
+                      <NetworkIcon
+                        networkId={row.market.morphoBlue.chain.id}
+                        size={20}
+                      />
                     </div>
                   </TableCell>
 

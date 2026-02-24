@@ -19,5 +19,5 @@ export function useOraclePrice({ oracle, chainId = 1 }: Props) {
     chainId,
   });
 
-  return { price: data ? BigInt(data as string) : BigInt(0) };
+  return { price: typeof data === 'bigint' ? data : BigInt(0) };
 }

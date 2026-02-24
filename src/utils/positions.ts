@@ -1,4 +1,4 @@
-import { type Abi, type Address, formatUnits, type PublicClient } from 'viem';
+import { type Address, formatUnits, type PublicClient } from 'viem';
 import { abi as chainlinkOracleAbi } from '@/abis/chainlinkOraclev2';
 import morphoABI from '@/abis/morpho';
 import { getMorphoAddress } from './morpho';
@@ -62,6 +62,13 @@ export type BorrowPositionRow = {
 };
 
 const MARKET_ORACLE_SCALE = 10n ** 36n;
+
+function normalizeOraclePriceResult(value: unknown): string | null {
+  if (typeof value === 'bigint' || typeof value === 'number' || typeof value === 'string') {
+    return value.toString();
+  }
+  return null;
+}
 
 // Helper functions
 function arrayToPosition(arr: readonly bigint[]): Position {
@@ -250,7 +257,7 @@ export async function fetchLatestPositionSnapshotsWithOraclePrices(
   try {
     const oracleContracts = marketsWithOracle.map((market) => ({
       address: market.oracleAddress as `0x${string}`,
-      abi: chainlinkOracleAbi as Abi,
+      abi: chainlinkOracleAbi,
       functionName: 'price' as const,
     }));
 
@@ -264,7 +271,8 @@ export async function fetchLatestPositionSnapshotsWithOraclePrices(
       if (!marketKey) return;
 
       if (oracleResult.status === 'success' && oracleResult.result !== undefined && oracleResult.result !== null) {
-        oraclePrices.set(marketKey, oracleResult.result.toString());
+        const normalizedPrice = normalizeOraclePriceResult(oracleResult.result);
+        oraclePrices.set(marketKey, normalizedPrice);
       } else {
         oraclePrices.set(marketKey, null);
       }

@@ -201,8 +201,8 @@ export function SuppliedMorphoBlueGroupedTable({
                         <Image
                           src={getNetworkImg(groupedPosition.chainId) ?? ''}
                           alt={`Chain ${groupedPosition.chainId}`}
-                          width={24}
-                          height={24}
+                          width={20}
+                          height={20}
                         />
                       </div>
                     </TableCell>

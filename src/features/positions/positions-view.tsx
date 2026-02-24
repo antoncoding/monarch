@@ -120,7 +120,7 @@ export default function Positions() {
               {isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
             </Button>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-0">
             {!loading && (
               <PortfolioValueBadge
                 totalUsd={totalUsd}
@@ -131,7 +131,7 @@ export default function Positions() {
                 error={pricesError}
               />
             )}
-            <div className={`flex items-center gap-2 ${loading ? '' : 'ml-2 border-l border-dashed border-border/70 pl-4'}`}>
+            <div className={`flex items-center gap-2 ${loading ? '' : 'ml-8 border-l border-dashed border-border/70 pl-8'}`}>
               <Button
                 variant="default"
                 onClick={() => open('bridgeSwap', {})}
