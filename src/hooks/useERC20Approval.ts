@@ -47,24 +47,29 @@ export function useERC20Approval({
     successDescription: `Successfully approved ${tokenSymbol} for spender ${spender.slice(2, 8)}`,
   });
 
-  const approve = useCallback(async () => {
-    if (!account || !amount) return;
+  const approve = useCallback(
+    async (amountOverride?: bigint) => {
+      const approvalAmount = amountOverride ?? amount;
+      if (!account || !approvalAmount) return;
 
-    await sendTransactionAsync({
-      account,
-      to: token,
-      data: encodeFunctionData({
-        abi: erc20Abi,
-        functionName: 'approve',
-        args: [spender, amount],
-      }),
-    });
+      await sendTransactionAsync({
+        account,
+        to: token,
+        data: encodeFunctionData({
+          abi: erc20Abi,
+          functionName: 'approve',
+          args: [spender, approvalAmount],
+        }),
+      });
 
-    await refetchAllowance();
-  }, [account, amount, sendTransactionAsync, token, spender, refetchAllowance]);
+      await refetchAllowance();
+    },
+    [account, amount, sendTransactionAsync, token, spender, refetchAllowance],
+  );
 
   return {
     isApproved,
+    allowance: allowance ?? 0n,
     approve,
     isApproving,
   };

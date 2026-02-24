@@ -8,7 +8,7 @@ import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
-import { useMorphoAuthorization } from './useMorphoAuthorization';
+import { useBundlerAuthorizationStep } from './useBundlerAuthorizationStep';
 import { usePermit2 } from './usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
@@ -37,11 +37,12 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const totalAmount = rebalanceActions.reduce((acc, action) => acc + BigInt(action.amount), BigInt(0));
 
   // Hook for Morpho bundler authorization (both sig and tx)
-  const { isBundlerAuthorized, isAuthorizingBundler, authorizeBundlerWithSignature, authorizeWithTransaction, refetchIsBundlerAuthorized } =
-    useMorphoAuthorization({
+  const { isBundlerAuthorized, isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep(
+    {
       chainId: groupedPosition.chainId,
-      authorized: bundlerAddress,
-    });
+      bundlerAddress: bundlerAddress as Address,
+    },
+  );
 
   // Hook for Permit2 handling
   const {
@@ -266,9 +267,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         }
 
         tracking.update('authorize_bundler_sig');
-        const bundlerAuthSigTx = await authorizeBundlerWithSignature(); // Get signature for Bundler auth if needed
-        if (bundlerAuthSigTx) {
-          transactions.push(bundlerAuthSigTx);
+        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' }); // Get signature for Bundler auth if needed
+        if (authorizationTxData) {
+          transactions.push(authorizationTxData);
           await new Promise((resolve) => setTimeout(resolve, 800)); // UI delay
         }
 
@@ -292,8 +293,8 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       } else {
         // --- Standard ERC20 Flow ---
         tracking.update('authorize_bundler_tx');
-        const bundlerTxAuthorized = await authorizeWithTransaction(); // Authorize Bundler via TX if needed
-        if (!bundlerTxAuthorized) {
+        const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' }); // Authorize Bundler via TX if needed
+        if (!authorized) {
           throw new Error('Failed to authorize Bundler via transaction.'); // Stop if auth tx fails/is rejected
         }
         // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeWithTransaction
@@ -385,9 +386,8 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     usePermit2Setting,
     permit2Authorized,
     authorizePermit2,
-    authorizeBundlerWithSignature,
+    ensureBundlerAuthorization,
     signForBundlers,
-    authorizeWithTransaction,
     isTokenApproved,
     approveToken,
     generateRebalanceTxData,
