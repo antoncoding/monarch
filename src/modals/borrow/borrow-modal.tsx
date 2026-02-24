@@ -18,6 +18,7 @@ type BorrowModalProps = {
   isRefreshing?: boolean;
   position: MarketPosition | null;
   defaultMode?: 'borrow' | 'repay';
+  toggleBorrowRepay?: boolean;
   liquiditySourcing?: LiquiditySourcingResult;
 };
 
@@ -29,6 +30,7 @@ export function BorrowModal({
   isRefreshing = false,
   position,
   defaultMode = 'borrow',
+  toggleBorrowRepay = true,
   liquiditySourcing,
 }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>(() => defaultMode);
@@ -136,15 +138,17 @@ export function BorrowModal({
         }
         description={mode === 'borrow' ? 'Borrow against collateral' : 'Repay borrowed assets'}
         actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
-            className="flex items-center gap-1.5"
-          >
-            <LuArrowRightLeft className="h-3 w-3 rotate-90" />
-            {mode === 'borrow' ? 'Repay' : 'Borrow'}
-          </Button>
+          toggleBorrowRepay ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
+              className="flex items-center gap-1.5"
+            >
+              <LuArrowRightLeft className="h-3 w-3 rotate-90" />
+              {mode === 'borrow' ? 'Repay' : 'Borrow'}
+            </Button>
+          ) : undefined
         }
       />
       <ModalBody>

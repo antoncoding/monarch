@@ -17,6 +17,7 @@ export type MarketPosition = {
     borrowAssets: string;
     collateral: string;
   };
+  oraclePrice?: string | null;
   market: Market; // Now using the full Market type
 };
 

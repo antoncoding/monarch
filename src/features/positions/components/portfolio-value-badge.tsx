@@ -5,10 +5,14 @@ import { PulseLoader } from 'react-spinners';
 
 type PortfolioValueBadgeProps = {
   totalUsd: number;
+  totalDebtUsd: number;
   assetBreakdown: AssetBreakdownItem[];
+  debtBreakdown: AssetBreakdownItem[];
   isLoading: boolean;
   error: Error | null;
 };
+
+const VALUE_TEXT_CLASS = 'font-zen text-2xl font-normal tabular-nums sm:text-2xl';
 
 function formatBalance(value: number): string {
   if (value === 0) return '0';
@@ -25,9 +29,9 @@ function formatBalance(value: number): string {
   }).format(value);
 }
 
-function BreakdownTooltipContent({ items }: { items: AssetBreakdownItem[] }) {
+function BreakdownTooltipContent({ items, emptyLabel = 'No holdings' }: { items: AssetBreakdownItem[]; emptyLabel?: string }) {
   if (items.length === 0) {
-    return <span className="text-secondary text-xs">No holdings</span>;
+    return <span className="text-secondary text-xs">{emptyLabel}</span>;
   }
 
   return (
@@ -56,12 +60,12 @@ function BreakdownTooltipContent({ items }: { items: AssetBreakdownItem[] }) {
   );
 }
 
-export function PortfolioValueBadge({ totalUsd, assetBreakdown, isLoading, error }: PortfolioValueBadgeProps) {
-  const content = (
+function ValueBlock({ label, value, isLoading, error }: { label: string; value: number; isLoading: boolean; error: Error | null }) {
+  return (
     <div className="flex flex-col items-end gap-1">
-      <span className="text-xs text-secondary">Total Value</span>
+      <span className="text-xs text-secondary">{label}</span>
       {isLoading ? (
-        <div className="font-zen text-2xl font-normal sm:text-3xl min-h-8 sm:min-h-9 flex items-center justify-end">
+        <div className={`${VALUE_TEXT_CLASS} min-h-8 sm:min-h-9 flex items-center justify-end`}>
           <PulseLoader
             size={4}
             color="#f45f2d"
@@ -69,23 +73,60 @@ export function PortfolioValueBadge({ totalUsd, assetBreakdown, isLoading, error
           />
         </div>
       ) : error ? (
-        <span className="font-zen text-2xl font-normal text-secondary sm:text-2xl">—</span>
+        <span className={`${VALUE_TEXT_CLASS} text-secondary`}>—</span>
       ) : (
-        <span className="font-zen text-2xl font-normal sm:text-2xl">{formatUsdValue(totalUsd)}</span>
+        <span className={VALUE_TEXT_CLASS}>{formatUsdValue(value)}</span>
       )}
     </div>
   );
+}
 
-  if (isLoading || error) {
-    return content;
-  }
+export function PortfolioValueBadge({ totalUsd, totalDebtUsd, assetBreakdown, debtBreakdown, isLoading, error }: PortfolioValueBadgeProps) {
+  const valueContent = (
+    <ValueBlock
+      label="Total Deposit"
+      value={totalUsd}
+      isLoading={isLoading}
+      error={error}
+    />
+  );
+
+  const debtContentBlock =
+    !isLoading && !error && totalDebtUsd > 0 ? (
+      <ValueBlock
+        label="Total Debt"
+        value={totalDebtUsd}
+        isLoading={false}
+        error={null}
+      />
+    ) : null;
 
   return (
-    <Tooltip
-      content={<BreakdownTooltipContent items={assetBreakdown} />}
-      placement="bottom"
-    >
-      <span>{content}</span>
-    </Tooltip>
+    <div className="flex items-start gap-8">
+      {isLoading || error ? (
+        valueContent
+      ) : (
+        <Tooltip
+          content={<BreakdownTooltipContent items={assetBreakdown} />}
+          placement="bottom"
+        >
+          <span>{valueContent}</span>
+        </Tooltip>
+      )}
+      {debtContentBlock && <span className="h-7 self-center border-l border-dashed border-border/70" />}
+      {debtContentBlock && (
+        <Tooltip
+          content={
+            <BreakdownTooltipContent
+              items={debtBreakdown}
+              emptyLabel="No borrows"
+            />
+          }
+          placement="bottom"
+        >
+          <span>{debtContentBlock}</span>
+        </Tooltip>
+      )}
+    </div>
   );
 }

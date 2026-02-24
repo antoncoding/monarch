@@ -14,6 +14,7 @@ export type TokenBalance = {
 // Portfolio breakdown by source
 export type PortfolioBreakdown = {
   nativeSupplies: number;
+  nativeBorrows: number;
   vaults: number;
 };
 
@@ -119,6 +120,20 @@ export const positionsToBalances = (positions: MarketPositionWithEarnings[]): To
 };
 
 /**
+ * Convert native borrow positions to token balances
+ * @param positions - Array of market positions
+ * @returns Array of token balances
+ */
+export const positionsToBorrowBalances = (positions: MarketPositionWithEarnings[]): TokenBalance[] => {
+  return positions.map((position) => ({
+    tokenAddress: position.market.loanAsset.address,
+    chainId: position.market.morphoBlue.chain.id,
+    balance: BigInt(position.state.borrowAssets),
+    decimals: position.market.loanAsset.decimals,
+  }));
+};
+
+/**
  * Convert vaults to token balances
  * @param vaults - Array of user vaults
  * @param findToken - Function to find token metadata
@@ -161,6 +176,8 @@ export const calculatePortfolioValue = (
   // Convert positions to balances
   const positionBalances = positionsToBalances(positions);
   const nativeSuppliesUsd = calculateUsdValue(positionBalances, prices);
+  const borrowBalances = positionsToBorrowBalances(positions);
+  const nativeBorrowsUsd = calculateUsdValue(borrowBalances, prices);
 
   // Convert vaults to balances (if provided)
   let vaultsUsd = 0;
@@ -173,6 +190,7 @@ export const calculatePortfolioValue = (
     total: nativeSuppliesUsd + vaultsUsd,
     breakdown: {
       nativeSupplies: nativeSuppliesUsd,
+      nativeBorrows: nativeBorrowsUsd,
       vaults: vaultsUsd,
     },
   };
@@ -253,6 +271,54 @@ export const calculateAssetBreakdown = (
   }
 
   // Sort by USD value descending
+  return items.sort((a, b) => b.usdValue - a.usdValue);
+};
+
+/**
+ * Calculate per-asset debt breakdown for tooltip display
+ * Aggregates borrowed amounts by loan token across positions
+ */
+export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], prices: Map<string, number>): AssetBreakdownItem[] => {
+  const aggregated = new Map<string, { symbol: string; tokenAddress: string; chainId: number; balance: bigint; decimals: number }>();
+
+  for (const position of positions) {
+    const borrowAssets = BigInt(position.state.borrowAssets);
+    if (borrowAssets <= 0n) continue;
+
+    const { address, symbol, decimals } = position.market.loanAsset;
+    const chainId = position.market.morphoBlue.chain.id;
+    const key = getTokenPriceKey(address, chainId);
+    const existing = aggregated.get(key);
+
+    if (existing) {
+      existing.balance += borrowAssets;
+    } else {
+      aggregated.set(key, {
+        symbol,
+        tokenAddress: address,
+        chainId,
+        balance: borrowAssets,
+        decimals,
+      });
+    }
+  }
+
+  const items: AssetBreakdownItem[] = [];
+  for (const [key, data] of aggregated) {
+    const price = prices.get(key) ?? 0;
+    const balance = Number.parseFloat(formatUnits(data.balance, data.decimals));
+    const usdValue = balance * price;
+
+    items.push({
+      symbol: data.symbol,
+      tokenAddress: data.tokenAddress,
+      chainId: data.chainId,
+      balance,
+      price,
+      usdValue,
+    });
+  }
+
   return items.sort((a, b) => b.usdValue - a.usdValue);
 };
 

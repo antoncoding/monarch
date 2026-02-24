@@ -1,8 +1,9 @@
 import { type Address, formatUnits, type PublicClient } from 'viem';
+import { abi as chainlinkOracleAbi } from '@/abis/chainlinkOraclev2';
 import morphoABI from '@/abis/morpho';
 import { getMorphoAddress } from './morpho';
 import type { SupportedNetworks } from './networks';
-import type { MarketPosition, MarketPositionWithEarnings, GroupedPosition } from './types';
+import type { Market as MorphoMarket, MarketPosition, MarketPositionWithEarnings, GroupedPosition } from './types';
 
 export type PositionSnapshot = {
   supplyAssets: string;
@@ -27,7 +28,7 @@ type Position = {
   collateral: bigint;
 };
 
-type Market = {
+type MorphoMarketState = {
   totalSupplyAssets: bigint;
   totalSupplyShares: bigint;
   totalBorrowAssets: bigint;
@@ -35,6 +36,39 @@ type Market = {
   lastUpdate: bigint;
   fee: bigint;
 };
+
+export type PositionMarketOracleInput = {
+  marketUniqueKey: string;
+  oracleAddress?: string | null;
+};
+
+export type PositionSnapshotsWithOracleResult = {
+  snapshots: Map<string, PositionSnapshot>;
+  oraclePrices: Map<string, string | null>;
+};
+
+export type BorrowPositionRow = {
+  market: MorphoMarket;
+  state: {
+    borrowAssets: string;
+    borrowShares: string;
+    collateral: string;
+  };
+  borrowAmount: number;
+  collateralAmount: number;
+  ltvPercent: number | null;
+  isActiveDebt: boolean;
+  hasResidualCollateral: boolean;
+};
+
+const MARKET_ORACLE_SCALE = 10n ** 36n;
+
+function normalizeOraclePriceResult(value: unknown): string | null {
+  if (typeof value === 'bigint' || typeof value === 'number' || typeof value === 'string') {
+    return value.toString();
+  }
+  return null;
+}
 
 // Helper functions
 function arrayToPosition(arr: readonly bigint[]): Position {
@@ -45,7 +79,7 @@ function arrayToPosition(arr: readonly bigint[]): Position {
   };
 }
 
-function arrayToMarket(arr: readonly bigint[]): Market {
+function arrayToMarket(arr: readonly bigint[]): MorphoMarketState {
   return {
     totalSupplyAssets: arr[0],
     totalSupplyShares: arr[1],
@@ -184,6 +218,98 @@ export async function fetchPositionsSnapshots(
     });
     return result;
   }
+}
+
+/**
+ * Fetches latest position snapshots plus live oracle prices in batched multicalls.
+ *
+ * @param markets - Array of market keys and oracle addresses
+ * @param userAddress - The user's address
+ * @param chainId - The chain ID of the network
+ * @param client - The viem PublicClient to use for the request
+ * @returns Snapshots and oracle prices keyed by market key (lowercase)
+ */
+export async function fetchLatestPositionSnapshotsWithOraclePrices(
+  markets: PositionMarketOracleInput[],
+  userAddress: Address,
+  chainId: number,
+  client: PublicClient,
+): Promise<PositionSnapshotsWithOracleResult> {
+  const snapshots = new Map<string, PositionSnapshot>();
+  const oraclePrices = new Map<string, string | null>();
+
+  if (markets.length === 0) {
+    return { snapshots, oraclePrices };
+  }
+
+  const marketIds = markets.map((market) => market.marketUniqueKey);
+  const latestSnapshots = await fetchPositionsSnapshots(marketIds, userAddress, chainId, undefined, client);
+
+  latestSnapshots.forEach((snapshot, marketId) => {
+    snapshots.set(marketId.toLowerCase(), snapshot);
+  });
+
+  const marketsWithOracle = markets.filter((market) => market.oracleAddress);
+  if (marketsWithOracle.length === 0) {
+    return { snapshots, oraclePrices };
+  }
+
+  try {
+    const oracleContracts = marketsWithOracle.map((market) => ({
+      address: market.oracleAddress as `0x${string}`,
+      abi: chainlinkOracleAbi,
+      functionName: 'price' as const,
+    }));
+
+    const oracleResults = await client.multicall({
+      contracts: oracleContracts,
+      allowFailure: true,
+    });
+
+    oracleResults.forEach((oracleResult, index) => {
+      const marketKey = marketsWithOracle[index]?.marketUniqueKey.toLowerCase();
+      if (!marketKey) return;
+
+      if (oracleResult.status === 'success' && oracleResult.result !== undefined && oracleResult.result !== null) {
+        const normalizedPrice = normalizeOraclePriceResult(oracleResult.result);
+        oraclePrices.set(marketKey, normalizedPrice);
+      } else {
+        oraclePrices.set(marketKey, null);
+      }
+    });
+
+    return { snapshots, oraclePrices };
+  } catch (error) {
+    console.error('Error fetching batched oracle prices:', {
+      chainId,
+      marketCount: marketsWithOracle.length,
+      error,
+    });
+    return { snapshots, oraclePrices };
+  }
+}
+
+/**
+ * Compute LTV% from borrow assets, collateral assets and oracle price.
+ *
+ * @returns LTV percentage with two-decimal precision, or null when unavailable.
+ */
+export function calculatePositionLtvPercent(
+  borrowAssets: bigint,
+  collateralAssets: bigint,
+  oraclePrice: bigint | null | undefined,
+): number | null {
+  if (!oraclePrice || oraclePrice <= 0n || borrowAssets <= 0n || collateralAssets <= 0n) {
+    return null;
+  }
+
+  const collateralValueInLoan = (collateralAssets * oraclePrice) / MARKET_ORACLE_SCALE;
+  if (collateralValueInLoan <= 0n) {
+    return null;
+  }
+
+  const ltvBps = (borrowAssets * 10_000n) / collateralValueInLoan;
+  return Number(ltvBps) / 100;
 }
 
 /**
@@ -375,6 +501,53 @@ export function groupPositionsByLoanAsset(positions: MarketPositionWithEarnings[
       return groupedPosition;
     })
     .sort((a, b) => b.totalSupply - a.totalSupply);
+}
+
+/**
+ * Build flat borrow rows (no grouping) for the positions page.
+ * Includes active borrow positions and fully repaid positions with remaining collateral.
+ */
+export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[]): BorrowPositionRow[] {
+  return positions
+    .filter((position) => {
+      const borrowShares = BigInt(position.state.borrowShares);
+      const collateral = BigInt(position.state.collateral);
+      return borrowShares > 0n || collateral > 0n;
+    })
+    .map((position) => {
+      const borrowShares = BigInt(position.state.borrowShares);
+      const borrowAssets = BigInt(position.state.borrowAssets);
+      const collateralAssets = BigInt(position.state.collateral);
+      const oraclePrice = position.oraclePrice ? BigInt(position.oraclePrice) : null;
+      const collateralAsset = position.market.collateralAsset;
+      const hasCollateralAsset = typeof collateralAsset?.decimals === 'number';
+
+      const isActiveDebt = borrowShares > 0n;
+      const hasResidualCollateral = hasCollateralAsset && borrowShares === 0n && collateralAssets > 0n;
+
+      return {
+        market: position.market,
+        state: {
+          borrowAssets: position.state.borrowAssets,
+          borrowShares: position.state.borrowShares,
+          collateral: position.state.collateral,
+        },
+        borrowAmount: Number(formatUnits(borrowAssets, position.market.loanAsset.decimals)),
+        collateralAmount: hasCollateralAsset ? Number(formatUnits(collateralAssets, collateralAsset.decimals)) : 0,
+        ltvPercent: isActiveDebt && hasCollateralAsset ? calculatePositionLtvPercent(borrowAssets, collateralAssets, oraclePrice) : null,
+        isActiveDebt,
+        hasResidualCollateral,
+      };
+    })
+    .sort((a, b) => {
+      if (a.isActiveDebt !== b.isActiveDebt) {
+        return a.isActiveDebt ? -1 : 1;
+      }
+      if (b.borrowAmount !== a.borrowAmount) {
+        return b.borrowAmount - a.borrowAmount;
+      }
+      return b.collateralAmount - a.collateralAmount;
+    });
 }
 
 /**

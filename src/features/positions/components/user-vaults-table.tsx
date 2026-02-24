@@ -165,8 +165,8 @@ export function UserVaultsTable({
                             <Image
                               src={networkImg}
                               alt={`Chain ${vault.networkId}`}
-                              width={24}
-                              height={24}
+                              width={20}
+                              height={20}
                             />
                           )}
                         </div>

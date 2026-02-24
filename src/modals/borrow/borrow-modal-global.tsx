@@ -11,6 +11,7 @@ import { BorrowModal } from './borrow-modal';
 type BorrowModalGlobalProps = {
   market: Market;
   defaultMode?: 'borrow' | 'repay';
+  toggleBorrowRepay?: boolean;
   refetch?: () => void;
   liquiditySourcing?: LiquiditySourcingResult;
   onOpenChange: (open: boolean) => void;
@@ -23,6 +24,7 @@ type BorrowModalGlobalProps = {
 export function BorrowModalGlobal({
   market,
   defaultMode,
+  toggleBorrowRepay,
   refetch: externalRefetch,
   liquiditySourcing,
   onOpenChange,
@@ -50,6 +52,7 @@ export function BorrowModalGlobal({
       refetch={handleRefetch}
       position={position}
       defaultMode={defaultMode}
+      toggleBorrowRepay={toggleBorrowRepay}
       liquiditySourcing={liquiditySourcing}
     />
   );
