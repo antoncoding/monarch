@@ -50,54 +50,59 @@ export function usePermit2({ user, chainId = 1, token, spender, refetchInterval 
 
   const permit2Authorized = useMemo(() => !!allowanceToPermit2 && allowanceToPermit2 > amount, [allowanceToPermit2, amount]);
 
-  const signForBundlers = useCallback(async () => {
-    if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
+  const signForBundlers = useCallback(
+    async (amountOverride?: bigint) => {
+      if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
 
-    const deadline = moment.now() + 600;
+      const deadline = moment.now() + 600;
+      const permitAmount = amountOverride ?? amount;
 
-    const nonce = packedAllowance ? ((packedAllowance as number[])[2] as number) : 0;
+      const nonce = packedAllowance ? ((packedAllowance as number[])[2] as number) : 0;
 
-    const permitSingle = {
-      details: {
-        token: token,
-        amount: amount,
-        expiration: deadline,
-        nonce,
-      },
-      spender: spender,
-      sigDeadline: BigInt(deadline),
-    };
+      const permitSingle = {
+        details: {
+          token,
+          amount: permitAmount,
+          expiration: deadline,
+          nonce,
+        },
+        spender,
+        sigDeadline: BigInt(deadline),
+      };
 
-    // sign erc712 signature for permit2
-    const sigs = await signTypedDataAsync({
-      domain: {
-        name: 'Permit2',
-        chainId,
-        verifyingContract: PERMIT2_ADDRESS,
-      },
-      types: {
-        PermitDetails: [
-          { name: 'token', type: 'address' },
-          { name: 'amount', type: 'uint160' },
-          { name: 'expiration', type: 'uint48' },
-          { name: 'nonce', type: 'uint48' },
-        ],
-        // (PermitDetails details,address spender,uint256 sigDeadline)
-        PermitSingle: [
-          { name: 'details', type: 'PermitDetails' },
-          { name: 'spender', type: 'address' },
-          { name: 'sigDeadline', type: 'uint256' },
-        ],
-      },
-      primaryType: 'PermitSingle',
-      message: permitSingle,
-    });
+      // sign erc712 signature for permit2
+      const sigs = await signTypedDataAsync({
+        domain: {
+          name: 'Permit2',
+          chainId,
+          verifyingContract: PERMIT2_ADDRESS,
+        },
+        types: {
+          PermitDetails: [
+            { name: 'token', type: 'address' },
+            { name: 'amount', type: 'uint160' },
+            { name: 'expiration', type: 'uint48' },
+            { name: 'nonce', type: 'uint48' },
+          ],
+          // (PermitDetails details,address spender,uint256 sigDeadline)
+          PermitSingle: [
+            { name: 'details', type: 'PermitDetails' },
+            { name: 'spender', type: 'address' },
+            { name: 'sigDeadline', type: 'uint256' },
+          ],
+        },
+        primaryType: 'PermitSingle',
+        message: permitSingle,
+      });
 
-    return { sigs, permitSingle };
-  }, [user, spender, token, chainId, packedAllowance, amount, signTypedDataAsync]);
+      return { sigs, permitSingle };
+    },
+    [user, spender, token, chainId, packedAllowance, amount, signTypedDataAsync],
+  );
 
   return {
     permit2Authorized,
+    permit2Allowance: allowanceToPermit2,
     authorizePermit2,
     signForBundlers,
     isLoading: isLoadingAllowance,

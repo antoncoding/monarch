@@ -1,10 +1,13 @@
 import { useCallback } from 'react';
+import { MathLib } from '@morpho-org/blue-sdk';
 import { type Address, encodeFunctionData } from 'viem';
-import { useConnection } from 'wagmi';
+import { useConnection, usePublicClient } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
+import morphoAbi from '@/abis/morpho';
 import { BPS_DENOMINATOR, REPAY_BY_SHARES_BUFFER_BPS } from '@/constants/repay';
 import { formatBalance } from '@/utils/balance';
-import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { getBundlerV2, getMorphoAddress, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { estimateRepayAssetsForBorrowShares } from '@/utils/repay-estimation';
 import type { Market, MarketPosition } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
 import { useBundlerAuthorizationStep } from './useBundlerAuthorizationStep';
@@ -23,16 +26,52 @@ type UseRepayTransactionProps = {
   onSuccess?: () => void;
 };
 
-const roundUpDiv = (numerator: bigint, denominator: bigint): bigint => {
-  if (denominator === 0n) return 0n;
-  return (numerator + denominator - 1n) / denominator;
+type RepayExecutionPlan = {
+  repayTransferAmount: bigint;
+  repayBySharesToRepay: bigint;
 };
 
 const calculateRepayBySharesBufferedAssets = (baseAssets: bigint): bigint => {
   if (baseAssets <= 0n) return 0n;
-  const bpsBuffer = roundUpDiv(baseAssets * REPAY_BY_SHARES_BUFFER_BPS, BPS_DENOMINATOR);
+  const bpsBuffer = MathLib.mulDivUp(baseAssets, REPAY_BY_SHARES_BUFFER_BPS, BPS_DENOMINATOR);
   return baseAssets + bpsBuffer;
 };
+
+const irmAbi = [
+  {
+    inputs: [
+      {
+        components: [
+          { internalType: 'address', name: 'loanToken', type: 'address' },
+          { internalType: 'address', name: 'collateralToken', type: 'address' },
+          { internalType: 'address', name: 'oracle', type: 'address' },
+          { internalType: 'address', name: 'irm', type: 'address' },
+          { internalType: 'uint256', name: 'lltv', type: 'uint256' },
+        ],
+        internalType: 'struct MarketParams',
+        name: 'marketParams',
+        type: 'tuple',
+      },
+      {
+        components: [
+          { internalType: 'uint128', name: 'totalSupplyAssets', type: 'uint128' },
+          { internalType: 'uint128', name: 'totalSupplyShares', type: 'uint128' },
+          { internalType: 'uint128', name: 'totalBorrowAssets', type: 'uint128' },
+          { internalType: 'uint128', name: 'totalBorrowShares', type: 'uint128' },
+          { internalType: 'uint128', name: 'lastUpdate', type: 'uint128' },
+          { internalType: 'uint128', name: 'fee', type: 'uint128' },
+        ],
+        internalType: 'struct Market',
+        name: 'market',
+        type: 'tuple',
+      },
+    ],
+    name: 'borrowRateView',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
 
 export function useRepayTransaction({
   market,
@@ -48,6 +87,7 @@ export function useRepayTransaction({
   const tracking = useTransactionTracking('repay');
 
   const { address: account, chainId } = useConnection();
+  const publicClient = usePublicClient({ chainId: market.morphoBlue.chain.id });
   const toast = useStyledToast();
   const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
 
@@ -64,6 +104,7 @@ export function useRepayTransaction({
   const {
     authorizePermit2,
     permit2Authorized,
+    permit2Allowance,
     isLoading: isLoadingPermit2,
     signForBundlers,
   } = usePermit2({
@@ -76,7 +117,7 @@ export function useRepayTransaction({
     amount: repayAmountToApprove,
   });
 
-  const { isApproved, approve } = useERC20Approval({
+  const { isApproved, allowance, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
     spender: bundlerAddress as Address,
     amount: repayAmountToApprove,
@@ -130,180 +171,337 @@ export function useRepayTransaction({
     [market.loanAsset.symbol],
   );
 
-  // Core transaction execution logic
-  const executeRepayTransaction = useCallback(async () => {
-    if (!currentPosition) {
-      toast.error('No Position', 'No active position found');
-      return;
-    }
-
-    try {
-      const txs: `0x${string}`[] = [];
-
-      if (withdrawAmount > 0n) {
-        if (usePermit2Setting) {
-          const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
-          if (authorizationTxData) {
-            txs.push(authorizationTxData);
-          }
-        } else {
-          const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
-          if (!authorized) {
-            throw new Error('Failed to authorize Bundler for collateral withdrawal.');
-          }
-        }
+  const fetchLiveRepayBySharesMaxAssets = useCallback(
+    async (fallbackMaxAssets: bigint): Promise<{ maxAssetsToRepay: bigint; sharesToRepay: bigint }> => {
+      if (!useRepayByShares || repayShares <= 0n || !account || !publicClient) {
+        return { maxAssetsToRepay: fallbackMaxAssets, sharesToRepay: repayShares };
       }
 
-      // Add token approval and transfer transactions if repaying
-      if ((repayAssets > 0n || repayShares > 0n) && repayAmountToApprove > 0n) {
-        if (usePermit2Setting) {
-          const { sigs, permitSingle } = await signForBundlers();
-          const tx1 = encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'approve2',
-            args: [permitSingle, sigs, false],
-          });
-
-          // transferFrom with permit2
-          const tx2 = encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'transferFrom2',
-            args: [market.loanAsset.address as Address, repayAmountToApprove],
-          });
-
-          txs.push(tx1);
-          txs.push(tx2);
-        } else {
-          // For standard ERC20 flow, we only need to transfer the tokens
-          txs.push(
-            encodeFunctionData({
-              abi: morphoBundlerAbi,
-              functionName: 'erc20TransferFrom',
-              args: [market.loanAsset.address as Address, repayAmountToApprove],
-            }),
-          );
-        }
-      }
-
-      // Add the repay transaction if there's an amount to repay
-
-      if (useRepayByShares) {
-        const morphoRepayTx = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'morphoRepay',
-          args: [
-            {
-              loanToken: market.loanAsset.address as Address,
-              collateralToken: market.collateralAsset.address as Address,
-              oracle: market.oracleAddress as Address,
-              irm: market.irmAddress as Address,
-              lltv: BigInt(market.lltv),
-            },
-            0n, // assets to repay (0)
-            repayShares, // shares to repay
-            repayAmountToApprove, // Slippage amount: max amount to repay
-            account as Address,
-            '0x', // bytes
-          ],
-        });
-        txs.push(morphoRepayTx);
-
-        // build another erc20 transfer action, to transfer any surplus back (unused loan assets) back to the user
-        const refundTx = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'erc20Transfer',
-          args: [market.loanAsset.address as Address, account as Address, repayAmountToApprove],
-        });
-        txs.push(refundTx);
-      } else if (repayAssets > 0n) {
-        const minShares = 1n;
-        const morphoRepayTx = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'morphoRepay',
-          args: [
-            {
-              loanToken: market.loanAsset.address as Address,
-              collateralToken: market.collateralAsset.address as Address,
-              oracle: market.oracleAddress as Address,
-              irm: market.irmAddress as Address,
-              lltv: BigInt(market.lltv),
-            },
-            repayAssets, // assets to repay
-            0n, // shares to repay (0)
-            minShares, // Slippage amount: min shares to repay
-            account as Address,
-            '0x', // bytes
-          ],
-        });
-        txs.push(morphoRepayTx);
-      }
-
-      // Add the withdraw transaction if there's an amount to withdraw
-      if (withdrawAmount > 0n) {
-        const morphoWithdrawTx = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'morphoWithdrawCollateral',
-          args: [
-            {
-              loanToken: market.loanAsset.address as Address,
-              collateralToken: market.collateralAsset.address as Address,
-              oracle: market.oracleAddress as Address,
-              irm: market.irmAddress as Address,
-              lltv: BigInt(market.lltv),
-            },
-            withdrawAmount,
-            account as Address,
-          ],
-        });
-        txs.push(morphoWithdrawTx);
-      }
-
-      tracking.update('repaying');
-
-      // Add timeout to prevent rabby reverting
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      await sendTransactionAsync({
+      console.info('[repay] fetching results: live quote start', {
+        marketId: market.uniqueKey,
         account,
-        to: bundlerAddress,
-        data: (encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'multicall',
-          args: [txs],
-        }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
+        repayShares: repayShares.toString(),
+        fallbackMaxAssets: fallbackMaxAssets.toString(),
       });
 
-      tracking.complete();
-    } catch (error: unknown) {
-      console.error('Error in repay transaction:', error);
-      tracking.fail();
-      if (error instanceof Error) {
-        if (error.message.includes('User rejected')) {
-          toast.error('Transaction rejected', 'Transaction rejected by user');
-        } else {
-          toast.error('Transaction Error', 'Failed to process transaction');
+      try {
+        const marketParams = {
+          loanToken: market.loanAsset.address as Address,
+          collateralToken: market.collateralAsset.address as Address,
+          oracle: market.oracleAddress as Address,
+          irm: market.irmAddress as Address,
+          lltv: BigInt(market.lltv),
+        };
+
+        const morphoAddress = getMorphoAddress(market.morphoBlue.chain.id) as Address;
+        const [marketResult, positionResult] = await publicClient.multicall({
+          contracts: [
+            {
+              address: morphoAddress,
+              abi: morphoAbi,
+              functionName: 'market',
+              args: [market.uniqueKey as `0x${string}`],
+            },
+            {
+              address: morphoAddress,
+              abi: morphoAbi,
+              functionName: 'position',
+              args: [market.uniqueKey as `0x${string}`, account as Address],
+            },
+          ],
+          allowFailure: false,
+        });
+
+        const marketState = marketResult as readonly bigint[];
+        const positionState = positionResult as readonly bigint[];
+        const liveBorrowShares = positionState[1] ?? 0n;
+        const liveTotalBorrowAssets = marketState[2] ?? 0n;
+        const liveTotalBorrowShares = marketState[3] ?? 0n;
+        const liveLastUpdate = marketState[4] ?? 0n;
+        const sharesToRepay = repayShares > liveBorrowShares ? liveBorrowShares : repayShares;
+
+        if (sharesToRepay <= 0n || liveTotalBorrowShares <= 0n) {
+          console.info('[repay] fetching results: live quote done', {
+            marketId: market.uniqueKey,
+            sharesToRepay: sharesToRepay.toString(),
+            maxAssetsToRepay: '0',
+            reason: 'empty-borrow',
+          });
+          return { maxAssetsToRepay: 0n, sharesToRepay };
         }
-      } else {
-        toast.error('Transaction Error', 'An unexpected error occurred');
+
+        const borrowRate = await publicClient.readContract({
+          address: market.irmAddress as Address,
+          abi: irmAbi,
+          functionName: 'borrowRateView',
+          args: [
+            marketParams,
+            {
+              totalSupplyAssets: marketState[0],
+              totalSupplyShares: marketState[1],
+              totalBorrowAssets: marketState[2],
+              totalBorrowShares: marketState[3],
+              lastUpdate: marketState[4],
+              fee: marketState[5],
+            },
+          ],
+        });
+
+        const latestBlock = await publicClient.getBlock({ blockTag: 'latest' });
+        const estimation = estimateRepayAssetsForBorrowShares({
+          repayShares: sharesToRepay,
+          totalBorrowAssets: liveTotalBorrowAssets,
+          totalBorrowShares: liveTotalBorrowShares,
+          lastUpdate: liveLastUpdate,
+          borrowRate,
+          currentTimestamp: latestBlock.timestamp,
+        });
+
+        console.info('[repay] fetching results: live quote done', {
+          marketId: market.uniqueKey,
+          sharesToRepay: sharesToRepay.toString(),
+          elapsedSeconds: estimation.elapsedSeconds.toString(),
+          assetsToRepayShares: estimation.assetsToRepayShares.toString(),
+          safetyAssetsBuffer: estimation.safetyAssetsBuffer.toString(),
+          blockDriftBuffer: estimation.blockDriftBuffer.toString(),
+          maxAssetsToRepay: estimation.maxAssetsToRepay.toString(),
+        });
+
+        return {
+          maxAssetsToRepay: estimation.maxAssetsToRepay,
+          sharesToRepay,
+        };
+      } catch (error: unknown) {
+        console.warn('[repay] fetching results: live quote failed, fallback used', {
+          marketId: market.uniqueKey,
+          fallbackMaxAssets: fallbackMaxAssets.toString(),
+          error,
+        });
+        return {
+          maxAssetsToRepay: fallbackMaxAssets,
+          sharesToRepay: repayShares,
+        };
       }
+    },
+    [account, market, publicClient, repayShares, useRepayByShares],
+  );
+
+  const resolveRepayBySharesEstimation = useCallback(async (): Promise<{ maxAssetsToRepay: bigint; sharesToRepay: bigint }> => {
+    if (!useRepayByShares) {
+      return { maxAssetsToRepay: 0n, sharesToRepay: 0n };
     }
-  }, [
-    account,
-    market,
-    currentPosition,
-    withdrawAmount,
-    repayAssets,
-    repayShares,
-    sendTransactionAsync,
-    signForBundlers,
-    usePermit2Setting,
-    ensureBundlerAuthorization,
-    toast,
-    useRepayByShares,
-    repayAmountToApprove,
-    bundlerAddress,
-    tracking,
-  ]);
+    return fetchLiveRepayBySharesMaxAssets(repayAmountToApprove);
+  }, [fetchLiveRepayBySharesMaxAssets, repayAmountToApprove, useRepayByShares]);
+
+  const buildRepayExecutionPlan = useCallback(async (): Promise<RepayExecutionPlan> => {
+    if (!useRepayByShares) {
+      const plan = {
+        repayTransferAmount: repayAssets,
+        repayBySharesToRepay: 0n,
+      };
+      console.info('[repay] fetching results: execution plan', {
+        marketId: market.uniqueKey,
+        repayTransferAmount: plan.repayTransferAmount.toString(),
+      });
+      return plan;
+    }
+
+    const estimation = await resolveRepayBySharesEstimation();
+    const plan = {
+      repayTransferAmount: estimation.maxAssetsToRepay,
+      repayBySharesToRepay: estimation.sharesToRepay,
+    };
+    console.info('[repay] fetching results: execution plan', {
+      marketId: market.uniqueKey,
+      repayTransferAmount: plan.repayTransferAmount.toString(),
+      repayBySharesToRepay: plan.repayBySharesToRepay.toString(),
+    });
+    return plan;
+  }, [market.uniqueKey, repayAssets, resolveRepayBySharesEstimation, useRepayByShares]);
+
+  // Core transaction execution logic
+  const executeRepayTransaction = useCallback(
+    async (executionPlan: RepayExecutionPlan) => {
+      if (!currentPosition) {
+        toast.error('No Position', 'No active position found');
+        return;
+      }
+
+      try {
+        const txs: `0x${string}`[] = [];
+        const { repayTransferAmount, repayBySharesToRepay } = executionPlan;
+
+        if (withdrawAmount > 0n) {
+          if (usePermit2Setting) {
+            const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+            if (authorizationTxData) {
+              txs.push(authorizationTxData);
+            }
+          } else {
+            const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
+            if (!authorized) {
+              throw new Error('Failed to authorize Bundler for collateral withdrawal.');
+            }
+          }
+        }
+
+        // Add token approval and transfer transactions if repaying
+        if ((repayAssets > 0n || repayShares > 0n) && repayTransferAmount > 0n) {
+          if (usePermit2Setting) {
+            const { sigs, permitSingle } = await signForBundlers(repayTransferAmount);
+            const tx1 = encodeFunctionData({
+              abi: morphoBundlerAbi,
+              functionName: 'approve2',
+              args: [permitSingle, sigs, false],
+            });
+
+            // transferFrom with permit2
+            const tx2 = encodeFunctionData({
+              abi: morphoBundlerAbi,
+              functionName: 'transferFrom2',
+              args: [market.loanAsset.address as Address, repayTransferAmount],
+            });
+
+            txs.push(tx1);
+            txs.push(tx2);
+          } else {
+            // For standard ERC20 flow, we only need to transfer the tokens
+            txs.push(
+              encodeFunctionData({
+                abi: morphoBundlerAbi,
+                functionName: 'erc20TransferFrom',
+                args: [market.loanAsset.address as Address, repayTransferAmount],
+              }),
+            );
+          }
+        }
+
+        // Add the repay transaction if there's an amount to repay
+
+        if (useRepayByShares && repayBySharesToRepay > 0n && repayTransferAmount > 0n) {
+          const morphoRepayTx = encodeFunctionData({
+            abi: morphoBundlerAbi,
+            functionName: 'morphoRepay',
+            args: [
+              {
+                loanToken: market.loanAsset.address as Address,
+                collateralToken: market.collateralAsset.address as Address,
+                oracle: market.oracleAddress as Address,
+                irm: market.irmAddress as Address,
+                lltv: BigInt(market.lltv),
+              },
+              0n, // assets to repay (0)
+              repayBySharesToRepay, // shares to repay
+              repayTransferAmount, // Slippage amount: max amount to repay
+              account as Address,
+              '0x', // bytes
+            ],
+          });
+          txs.push(morphoRepayTx);
+
+          // build another erc20 transfer action, to transfer any surplus back (unused loan assets) back to the user
+          const refundTx = encodeFunctionData({
+            abi: morphoBundlerAbi,
+            functionName: 'erc20Transfer',
+            args: [market.loanAsset.address as Address, account as Address, repayTransferAmount],
+          });
+          txs.push(refundTx);
+        } else if (repayAssets > 0n) {
+          const minShares = 1n;
+          const morphoRepayTx = encodeFunctionData({
+            abi: morphoBundlerAbi,
+            functionName: 'morphoRepay',
+            args: [
+              {
+                loanToken: market.loanAsset.address as Address,
+                collateralToken: market.collateralAsset.address as Address,
+                oracle: market.oracleAddress as Address,
+                irm: market.irmAddress as Address,
+                lltv: BigInt(market.lltv),
+              },
+              repayAssets, // assets to repay
+              0n, // shares to repay (0)
+              minShares, // Slippage amount: min shares to repay
+              account as Address,
+              '0x', // bytes
+            ],
+          });
+          txs.push(morphoRepayTx);
+        }
+
+        // Add the withdraw transaction if there's an amount to withdraw
+        if (withdrawAmount > 0n) {
+          const morphoWithdrawTx = encodeFunctionData({
+            abi: morphoBundlerAbi,
+            functionName: 'morphoWithdrawCollateral',
+            args: [
+              {
+                loanToken: market.loanAsset.address as Address,
+                collateralToken: market.collateralAsset.address as Address,
+                oracle: market.oracleAddress as Address,
+                irm: market.irmAddress as Address,
+                lltv: BigInt(market.lltv),
+              },
+              withdrawAmount,
+              account as Address,
+            ],
+          });
+          txs.push(morphoWithdrawTx);
+        }
+
+        if (txs.length === 0) {
+          toast.info('Nothing to execute', 'No repayable debt or withdrawal amount found on-chain.');
+          tracking.complete();
+          return;
+        }
+
+        tracking.update('repaying');
+
+        // Add timeout to prevent rabby reverting
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
+        await sendTransactionAsync({
+          account,
+          to: bundlerAddress,
+          data: (encodeFunctionData({
+            abi: morphoBundlerAbi,
+            functionName: 'multicall',
+            args: [txs],
+          }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
+        });
+
+        tracking.complete();
+      } catch (error: unknown) {
+        console.error('Error in repay transaction:', error);
+        tracking.fail();
+        if (error instanceof Error) {
+          if (error.message.includes('User rejected')) {
+            toast.error('Transaction rejected', 'Transaction rejected by user');
+          } else {
+            toast.error('Transaction Error', 'Failed to process transaction');
+          }
+        } else {
+          toast.error('Transaction Error', 'An unexpected error occurred');
+        }
+      }
+    },
+    [
+      account,
+      market,
+      currentPosition,
+      withdrawAmount,
+      repayAssets,
+      repayShares,
+      sendTransactionAsync,
+      signForBundlers,
+      usePermit2Setting,
+      ensureBundlerAuthorization,
+      toast,
+      useRepayByShares,
+      bundlerAddress,
+      tracking,
+    ],
+  );
 
   // Combined approval and repay flow
   const approveAndRepay = useCallback(async () => {
@@ -326,16 +524,20 @@ export function useRepayTransaction({
         'approve',
       );
 
+      const executionPlan = await buildRepayExecutionPlan();
+
       if (usePermit2Setting) {
         // Permit2 flow
         try {
-          await authorizePermit2();
+          if (executionPlan.repayTransferAmount > 0n && permit2Allowance < executionPlan.repayTransferAmount) {
+            await authorizePermit2();
+          }
           tracking.update('signing');
 
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 500));
 
-          await executeRepayTransaction();
+          await executeRepayTransaction(executionPlan);
         } catch (error: unknown) {
           console.error('Error in Permit2 flow:', error);
           if (error instanceof Error) {
@@ -351,9 +553,10 @@ export function useRepayTransaction({
         }
       } else {
         // ERC20 approval flow or just withdraw
-        if (!isApproved) {
+        const hasRequiredAllowance = allowance >= executionPlan.repayTransferAmount;
+        if (!hasRequiredAllowance) {
           try {
-            await approve();
+            await approve(executionPlan.repayTransferAmount);
           } catch (error: unknown) {
             console.error('Error in approval:', error);
             tracking.fail();
@@ -371,7 +574,7 @@ export function useRepayTransaction({
         }
 
         tracking.update('repaying');
-        await executeRepayTransaction();
+        await executeRepayTransaction(executionPlan);
       }
     } catch (error: unknown) {
       console.error('Error in approveAndRepay:', error);
@@ -380,9 +583,11 @@ export function useRepayTransaction({
   }, [
     account,
     authorizePermit2,
+    buildRepayExecutionPlan,
     executeRepayTransaction,
     usePermit2Setting,
-    isApproved,
+    allowance,
+    permit2Allowance,
     approve,
     toast,
     tracking,
@@ -413,7 +618,21 @@ export function useRepayTransaction({
         usePermit2Setting ? 'signing' : 'repaying',
       );
 
-      await executeRepayTransaction();
+      const executionPlan = await buildRepayExecutionPlan();
+
+      if (usePermit2Setting && executionPlan.repayTransferAmount > 0n && permit2Allowance < executionPlan.repayTransferAmount) {
+        toast.info('Permit2 approval required', 'Please approve Permit2 before signing this repayment.');
+        tracking.fail();
+        return;
+      }
+
+      if (!usePermit2Setting && allowance < executionPlan.repayTransferAmount) {
+        toast.info('Token approval required', `Please approve ${market.loanAsset.symbol} before submitting repayment.`);
+        tracking.fail();
+        return;
+      }
+
+      await executeRepayTransaction(executionPlan);
     } catch (error: unknown) {
       console.error('Error in signAndRepay:', error);
       tracking.fail();
@@ -427,7 +646,20 @@ export function useRepayTransaction({
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeRepayTransaction, toast, tracking, getStepsForFlow, usePermit2Setting, market, repayAssets, withdrawAmount]);
+  }, [
+    account,
+    buildRepayExecutionPlan,
+    executeRepayTransaction,
+    getStepsForFlow,
+    allowance,
+    market,
+    permit2Allowance,
+    repayAssets,
+    toast,
+    tracking,
+    usePermit2Setting,
+    withdrawAmount,
+  ]);
 
   return {
     // Transaction tracking
