@@ -2,10 +2,12 @@ import { useCallback } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
+import { BPS_DENOMINATOR, REPAY_BY_SHARES_BUFFER_BPS, REPAY_BY_SHARES_MIN_BUFFER_DECIMALS_OFFSET } from '@/constants/repay';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market, MarketPosition } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
+import { useBundlerAuthorizationStep } from './useBundlerAuthorizationStep';
 import { usePermit2 } from './usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
@@ -19,6 +21,23 @@ type UseRepayTransactionProps = {
   repayAssets: bigint;
   repayShares: bigint;
   onSuccess?: () => void;
+};
+
+const roundUpDiv = (numerator: bigint, denominator: bigint): bigint => {
+  if (denominator === 0n) return 0n;
+  return (numerator + denominator - 1n) / denominator;
+};
+
+const getRepayBySharesBufferFloor = (tokenDecimals: number): bigint => {
+  const exponent = Math.max(0, tokenDecimals - REPAY_BY_SHARES_MIN_BUFFER_DECIMALS_OFFSET);
+  return 10n ** BigInt(exponent);
+};
+
+const calculateRepayBySharesBufferedAssets = (baseAssets: bigint, tokenDecimals: number): bigint => {
+  if (baseAssets <= 0n) return 0n;
+  const bpsBuffer = roundUpDiv(baseAssets * REPAY_BY_SHARES_BUFFER_BPS, BPS_DENOMINATOR);
+  const floorBuffer = getRepayBySharesBufferFloor(tokenDecimals);
+  return baseAssets + (bpsBuffer > floorBuffer ? bpsBuffer : floorBuffer);
 };
 
 export function useRepayTransaction({
@@ -36,11 +55,18 @@ export function useRepayTransaction({
 
   const { address: account, chainId } = useConnection();
   const toast = useStyledToast();
+  const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
 
   const useRepayByShares = repayShares > 0n;
+  const repayBySharesBaseAssets = useRepayByShares && repayAssets === 0n ? BigInt(currentPosition?.state.borrowAssets ?? 0) : repayAssets;
+  const repayAmountToApprove = useRepayByShares
+    ? calculateRepayBySharesBufferedAssets(repayBySharesBaseAssets, market.loanAsset.decimals)
+    : repayAssets;
 
-  // If we're using repay by shares, we need to add a small amount as buffer to the repay amount we're approving
-  const repayAmountToApprove = useRepayByShares ? repayAssets + 1000n : repayAssets;
+  const { isAuthorizingBundler, ensureBundlerAuthorization } = useBundlerAuthorizationStep({
+    chainId: market.morphoBlue.chain.id,
+    bundlerAddress: bundlerAddress as Address,
+  });
 
   // Get approval for loan token
   const {
@@ -50,7 +76,7 @@ export function useRepayTransaction({
     signForBundlers,
   } = usePermit2({
     user: account as `0x${string}`,
-    spender: getBundlerV2(market.morphoBlue.chain.id),
+    spender: bundlerAddress,
     token: market.loanAsset.address as `0x${string}`,
     refetchInterval: 10_000,
     chainId: market.morphoBlue.chain.id,
@@ -60,7 +86,7 @@ export function useRepayTransaction({
 
   const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
-    spender: getBundlerV2(market.morphoBlue.chain.id),
+    spender: bundlerAddress as Address,
     amount: repayAmountToApprove,
     tokenSymbol: market.loanAsset.symbol,
   });
@@ -121,6 +147,20 @@ export function useRepayTransaction({
 
     try {
       const txs: `0x${string}`[] = [];
+
+      if (withdrawAmount > 0n) {
+        if (usePermit2Setting) {
+          const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+          if (authorizationTxData) {
+            txs.push(authorizationTxData);
+          }
+        } else {
+          const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
+          if (!authorized) {
+            throw new Error('Failed to authorize Bundler for collateral withdrawal.');
+          }
+        }
+      }
 
       // Add token approval and transfer transactions if repaying
       if ((repayAssets > 0n || repayShares > 0n) && repayAmountToApprove > 0n) {
@@ -184,7 +224,6 @@ export function useRepayTransaction({
         });
         txs.push(refundTx);
       } else if (repayAssets > 0n) {
-        console.log('repayAssets', repayAssets);
         const minShares = 1n;
         const morphoRepayTx = encodeFunctionData({
           abi: morphoBundlerAbi,
@@ -234,7 +273,7 @@ export function useRepayTransaction({
 
       await sendTransactionAsync({
         account,
-        to: getBundlerV2(market.morphoBlue.chain.id),
+        to: bundlerAddress,
         data: (encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'multicall',
@@ -266,9 +305,11 @@ export function useRepayTransaction({
     sendTransactionAsync,
     signForBundlers,
     usePermit2Setting,
+    ensureBundlerAuthorization,
     toast,
     useRepayByShares,
     repayAmountToApprove,
+    bundlerAddress,
     tracking,
   ]);
 
@@ -402,7 +443,7 @@ export function useRepayTransaction({
     dismiss: tracking.dismiss,
     currentStep: tracking.currentStep as 'approve' | 'signing' | 'repaying' | null,
     // State
-    isLoadingPermit2,
+    isLoadingPermit2: isLoadingPermit2 || isAuthorizingBundler,
     isApproved,
     permit2Authorized,
     repayPending,
