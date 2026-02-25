@@ -49,6 +49,12 @@ export function ModalHeader({
   const handleClose = onClose;
   const iconButtonBaseClass =
     'flex h-8 w-8 items-center justify-center rounded-full text-secondary transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70';
+  const titleNode =
+    typeof title === 'string' ? (
+      <span className={`${titleSizeClass} leading-tight`}>{title}</span>
+    ) : (
+      <div className={`${titleSizeClass} leading-tight`}>{title}</div>
+    );
 
   // If children are provided, use them directly (for custom layouts)
   if (children) {
@@ -61,7 +67,7 @@ export function ModalHeader({
       <div className={twMerge('flex flex-col gap-2', contentRightPadding)}>
         <div className="flex items-center gap-3 text-primary font-normal">
           {mainIcon && <div className="flex-shrink-0">{mainIcon}</div>}
-          <span className={`${titleSizeClass} leading-tight`}>{title}</span>
+          {titleNode}
         </div>
         {description && <div className={`${descriptionSizeClass} text-secondary font-zen text-normal`}>{description}</div>}
       </div>

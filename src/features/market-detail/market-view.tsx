@@ -300,14 +300,6 @@ function MarketContent() {
     openModal('borrow', { market, refetch: handleRefresh, liquiditySourcing, defaultMode: 'repay' });
   };
 
-  const handleLeverageClick = () => {
-    openModal('leverage', { market, refetch: handleRefresh, defaultMode: 'leverage' });
-  };
-
-  const handleDeleverageClick = () => {
-    openModal('leverage', { market, refetch: handleRefresh, defaultMode: 'deleverage' });
-  };
-
   const handleAccrueInterest = async () => {
     const morphoAddress = market.morphoBlue.address as Address;
     await switchChainAsync({ chainId: market.morphoBlue.chain.id });
@@ -372,8 +364,6 @@ function MarketContent() {
           onWithdrawClick={handleWithdrawClick}
           onBorrowClick={handleBorrowClick}
           onRepayClick={handleRepayClick}
-          onLeverageClick={handleLeverageClick}
-          onDeleverageClick={handleDeleverageClick}
           accrueInterest={handleAccrueInterest}
         />
 

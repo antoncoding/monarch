@@ -1,9 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
-import { LuArrowRightLeft } from 'react-icons/lu';
 import { erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { Button } from '@/components/ui/button';
+import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useLeverageSupport } from '@/hooks/useLeverageSupport';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -29,7 +28,7 @@ export function LeverageModal({
   isRefreshing = false,
   position,
   defaultMode = 'leverage',
-  toggleLeverageDeleverage = true,
+  toggleLeverageDeleverage: _toggleLeverageDeleverage = true,
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
   const { address: account } = useConnection();
@@ -42,7 +41,11 @@ export function LeverageModal({
   }, [support.route]);
 
   const isStEthEthLeverageType = leveragePanelType === 'steth-eth';
-  const effectiveMode = isStEthEthLeverageType ? 'leverage' : mode;
+  const effectiveMode = mode;
+  const modeOptions = [
+    { value: 'leverage', label: `Leverage ${market.collateralAsset.symbol}` },
+    { value: 'deleverage', label: `Deleverage ${market.collateralAsset.symbol}` },
+  ];
 
   const {
     data: collateralTokenBalance,
@@ -99,24 +102,16 @@ export function LeverageModal({
         mainIcon={mainIcon}
         onClose={() => onOpenChange(false)}
         title={
-          <div className="flex items-center gap-2">
-            <span>{market.loanAsset.symbol}</span>
-            <span className="text-xs opacity-50">/ {market.collateralAsset.symbol}</span>
-          </div>
+          <ModalIntentSwitcher
+            value={effectiveMode}
+            options={modeOptions}
+            onValueChange={(nextMode) => setMode(nextMode as 'leverage' | 'deleverage')}
+          />
         }
-        description={effectiveMode === 'leverage' ? 'Amplify collateral exposure' : 'Reduce borrowed exposure'}
-        actions={
-          toggleLeverageDeleverage && !isStEthEthLeverageType ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMode(effectiveMode === 'leverage' ? 'deleverage' : 'leverage')}
-              className="flex items-center gap-1.5"
-            >
-              <LuArrowRightLeft className="h-3 w-3 rotate-90" />
-              {effectiveMode === 'leverage' ? 'Deleverage' : 'Leverage'}
-            </Button>
-          ) : undefined
+        description={
+          effectiveMode === 'leverage'
+            ? `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
+            : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
         }
       />
       <ModalBody>

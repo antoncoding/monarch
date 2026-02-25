@@ -80,6 +80,13 @@ export function RemoveCollateralAndDeleverage({
     [projectedBorrowAssets, projectedCollateralAssets, oraclePrice],
   );
 
+  const handleTransactionSuccess = useCallback(() => {
+    // WHY: clear unwind draft after confirmation so users see the refreshed live position, not stale input.
+    setWithdrawCollateralAmount(0n);
+    setWithdrawInputError(null);
+    if (onSuccess) onSuccess();
+  }, [onSuccess]);
+
   const { transaction, deleveragePending, authorizeAndDeleverage } = useDeleverageTransaction({
     market,
     route: route!,
@@ -87,7 +94,7 @@ export function RemoveCollateralAndDeleverage({
     flashLoanAmount: flashLoanAmountForTx,
     repayBySharesAmount,
     autoWithdrawCollateralAmount,
-    onSuccess,
+    onSuccess: handleTransactionSuccess,
   });
 
   const handleDeleverage = useCallback(() => {

@@ -271,6 +271,14 @@ export function AddCollateralAndLeverage({
     [currentBorrowAssets, currentCollateralAssets, oraclePrice],
   );
 
+  const handleTransactionSuccess = useCallback(() => {
+    // WHY: after a confirmed leverage tx, we reset draft inputs so the panel reflects the live position state.
+    setCollateralAmount(0n);
+    setCollateralInputError(null);
+    setMultiplierInput(formatMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS));
+    if (onSuccess) onSuccess();
+  }, [onSuccess]);
+
   const { transaction, isLoadingPermit2, isApproved, permit2Authorized, leveragePending, approveAndLeverage, signAndLeverage } =
     useLeverageTransaction({
       market,
@@ -281,7 +289,7 @@ export function AddCollateralAndLeverage({
       flashLoanAmount: quote.flashLoanAmount,
       useEth,
       useLoanAssetAsInput: useLoanAssetInput,
-      onSuccess,
+      onSuccess: handleTransactionSuccess,
     });
 
   const handleMultiplierInputChange = useCallback((value: string) => {
@@ -361,7 +369,7 @@ export function AddCollateralAndLeverage({
               <div className="mb-1 flex items-center justify-between gap-2">
                 <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
                   {useLoanAssetInput
-                    ? `Start with ${market.loanAsset.symbol} (mints ${market.collateralAsset.symbol} collateral)`
+                    ? `Mints ${market.collateralAsset.symbol} collateral`
                     : `Add Collateral ${inputAssetSymbol}`}
                 </p>
                 {isMainnetEthStEthRoute && (

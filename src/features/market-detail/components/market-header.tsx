@@ -25,7 +25,6 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { AddressIdentity } from '@/components/shared/address-identity';
 import { CampaignBadge } from '@/features/market-detail/components/campaign-badge';
 import { OracleTypeInfo } from '@/features/markets/components/oracle/MarketOracle/OracleTypeInfo';
-import { useLeverageSupport } from '@/hooks/useLeverageSupport';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -127,8 +126,6 @@ type ActionButtonsProps = {
   onWithdrawClick: () => void;
   onBorrowClick: () => void;
   onRepayClick: () => void;
-  onLeverageClick: () => void;
-  onDeleverageClick: () => void;
 };
 
 function ActionButtons({
@@ -138,11 +135,7 @@ function ActionButtons({
   onWithdrawClick,
   onBorrowClick,
   onRepayClick,
-  onLeverageClick,
-  onDeleverageClick,
 }: ActionButtonsProps): React.ReactNode {
-  const leverageSupport = useLeverageSupport({ market });
-
   // Compute position states once
   const hasSupply = userPosition !== null && BigInt(userPosition.state.supplyShares) > 0n;
   const hasBorrow = userPosition !== null && BigInt(userPosition.state.borrowShares) > 0n;
@@ -242,23 +235,6 @@ function ActionButtons({
           },
         ]}
       />
-
-      {!leverageSupport.isLoading && leverageSupport.supportsLeverage && (
-        <SplitActionButton
-          label="Leverage"
-          icon={<BsFillLightningFill className="h-4 w-4" />}
-          onClick={onLeverageClick}
-          indicator={{ show: hasBorrowPosition }}
-          dropdownItems={[
-            {
-              label: 'Deleverage',
-              icon: <LuArrowDownToLine className="h-4 w-4" />,
-              onClick: onDeleverageClick,
-              disabled: !leverageSupport.supportsDeleverage || !hasBorrow,
-            },
-          ]}
-        />
-      )}
     </>
   );
 }
@@ -274,8 +250,6 @@ type MarketHeaderProps = {
   onWithdrawClick?: () => void;
   onBorrowClick?: () => void;
   onRepayClick?: () => void;
-  onLeverageClick?: () => void;
-  onDeleverageClick?: () => void;
   accrueInterest?: () => void;
   isLoading?: boolean;
 };
@@ -370,8 +344,6 @@ export function MarketHeader({
   onWithdrawClick = () => {},
   onBorrowClick = () => {},
   onRepayClick = () => {},
-  onLeverageClick = () => {},
-  onDeleverageClick = () => {},
   accrueInterest = () => {},
   isLoading = false,
 }: MarketHeaderProps) {
@@ -601,8 +573,6 @@ export function MarketHeader({
                 onWithdrawClick={onWithdrawClick}
                 onBorrowClick={onBorrowClick}
                 onRepayClick={onRepayClick}
-                onLeverageClick={onLeverageClick}
-                onDeleverageClick={onDeleverageClick}
               />
 
               {/* Advanced Options Dropdown */}

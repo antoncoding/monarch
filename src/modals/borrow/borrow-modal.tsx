@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { LuArrowRightLeft } from 'react-icons/lu';
+import { BsFillLightningFill } from 'react-icons/bs';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
 import { erc20Abi } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
+import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { AddCollateralAndBorrow } from './components/add-collateral-and-borrow';
 import { WithdrawCollateralAndRepay } from './components/withdraw-collateral-and-repay';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { useModal } from '@/hooks/useModal';
+import { useLeverageSupport } from '@/hooks/useLeverageSupport';
 
 type BorrowModalProps = {
   market: Market;
@@ -30,15 +33,26 @@ export function BorrowModal({
   isRefreshing = false,
   position,
   defaultMode = 'borrow',
-  toggleBorrowRepay = true,
+  toggleBorrowRepay: _toggleBorrowRepay = true,
   liquiditySourcing,
 }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>(() => defaultMode);
   const { address: account } = useConnection();
+  const { open: openModal } = useModal();
+  const leverageSupport = useLeverageSupport({ market });
 
   useEffect(() => {
     setMode(defaultMode);
   }, [defaultMode]);
+
+  const handleOpenLeverage = useCallback(() => {
+    openModal('leverage', {
+      market,
+      refetch,
+      defaultMode: 'leverage',
+    });
+    onOpenChange(false);
+  }, [openModal, market, refetch, onOpenChange]);
 
   // Get token balances
   const {
@@ -131,22 +145,30 @@ export function BorrowModal({
         mainIcon={mainIcon}
         onClose={() => onOpenChange(false)}
         title={
-          <div className="flex items-center gap-2">
-            <span>{market.loanAsset.symbol}</span>
-            <span className="text-xs opacity-50">/ {market.collateralAsset.symbol}</span>
-          </div>
+          <ModalIntentSwitcher
+            value={mode}
+            options={[
+              { value: 'borrow', label: `Borrow ${market.loanAsset.symbol}` },
+              { value: 'repay', label: `Repay ${market.loanAsset.symbol}` },
+            ]}
+            onValueChange={(nextMode) => setMode(nextMode as 'borrow' | 'repay')}
+          />
         }
-        description={mode === 'borrow' ? 'Borrow against collateral' : 'Repay borrowed assets'}
+        description={
+          mode === 'borrow'
+            ? `Use ${market.collateralAsset.symbol} as collateral to borrow ${market.loanAsset.symbol}.`
+            : `Repay ${market.loanAsset.symbol} debt to reduce risk and unlock ${market.collateralAsset.symbol} collateral.`
+        }
         actions={
-          toggleBorrowRepay ? (
+          !leverageSupport.isLoading && leverageSupport.supportsLeverage ? (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
+              onClick={handleOpenLeverage}
               className="flex items-center gap-1.5"
             >
-              <LuArrowRightLeft className="h-3 w-3 rotate-90" />
-              {mode === 'borrow' ? 'Repay' : 'Borrow'}
+              <BsFillLightningFill className="h-3 w-3" />
+              Leverage
             </Button>
           ) : undefined
         }
