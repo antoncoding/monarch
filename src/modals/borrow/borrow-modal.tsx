@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BsFillLightningFill } from 'react-icons/bs';
+import { TbTrendingDown, TbTrendingUp } from 'react-icons/tb';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
 import { erc20Abi } from 'viem';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
 import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
@@ -45,14 +46,18 @@ export function BorrowModal({
     setMode(defaultMode);
   }, [defaultMode]);
 
+  const leverageModalMode = mode === 'repay' ? 'deleverage' : 'leverage';
+  const canOpenLeverageModal =
+    !leverageSupport.isLoading && (mode === 'borrow' ? leverageSupport.supportsLeverage : leverageSupport.supportsDeleverage);
+
   const handleOpenLeverage = useCallback(() => {
     openModal('leverage', {
       market,
       refetch,
-      defaultMode: 'leverage',
+      defaultMode: leverageModalMode,
     });
     onOpenChange(false);
-  }, [openModal, market, refetch, onOpenChange]);
+  }, [openModal, market, refetch, leverageModalMode, onOpenChange]);
 
   // Get token balances
   const {
@@ -160,15 +165,22 @@ export function BorrowModal({
             : `Repay ${market.loanAsset.symbol} debt to reduce risk and unlock ${market.collateralAsset.symbol} collateral.`
         }
         actions={
-          !leverageSupport.isLoading && leverageSupport.supportsLeverage ? (
+          canOpenLeverageModal ? (
             <Button
-              variant="ghost"
+              variant="default"
               size="sm"
               onClick={handleOpenLeverage}
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 hover:scale-100"
             >
-              <BsFillLightningFill className="h-3 w-3" />
-              Leverage
+              {mode === 'borrow' ? <TbTrendingUp className="h-2.5 w-2.5" /> : <TbTrendingDown className="h-2.5 w-2.5" />}
+              {mode === 'borrow' ? 'Leverage' : 'Deleverage'}
+              <Badge
+                variant="success"
+                size="sm"
+                className="ml-0.5 uppercase tracking-[0.08em]"
+              >
+                New
+              </Badge>
             </Button>
           ) : undefined
         }
