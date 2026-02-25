@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
@@ -34,13 +34,6 @@ export function LeverageModal({
   const { address: account } = useConnection();
   const support = useLeverageSupport({ market });
 
-  const leveragePanelType = useMemo(() => {
-    if (support.route?.kind === 'steth' && support.route.loanMode === 'mainnet-weth-steth-wsteth') return 'steth-eth' as const;
-    if (support.route?.kind === 'erc4626') return 'erc4626-leverage' as const;
-    return 'other' as const;
-  }, [support.route]);
-
-  const isStEthEthLeverageType = leveragePanelType === 'steth-eth';
   const effectiveMode = mode;
   const modeOptions = [
     { value: 'leverage', label: `Leverage ${market.collateralAsset.symbol}` },
@@ -127,7 +120,6 @@ export function LeverageModal({
               oraclePrice={oraclePrice}
               onSuccess={handleRefreshAll}
               isRefreshing={isRefreshingAnyData}
-              showDeleverageManualRepayNotice={isStEthEthLeverageType}
             />
           ) : support.supportsDeleverage ? (
             <RemoveCollateralAndDeleverage

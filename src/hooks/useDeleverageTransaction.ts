@@ -115,11 +115,6 @@ export function useDeleverageTransaction({
       return;
     }
 
-    if (route.kind === 'steth' && route.loanMode !== 'steth') {
-      toast.info('Unsupported route', 'This stETH route supports leverage only. Deleverage is unavailable.');
-      return;
-    }
-
     try {
       const txs: `0x${string}`[] = [];
 
@@ -179,24 +174,14 @@ export function useDeleverageTransaction({
         }),
       ];
 
-      if (route.kind === 'erc4626') {
-        const minAssetsOut = withSlippageFloor(flashLoanAmount);
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc4626Redeem',
-            args: [route.collateralVault, withdrawCollateralAmount, minAssetsOut, bundlerAddress as Address, bundlerAddress as Address],
-          }),
-        );
-      } else {
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'unwrapStEth',
-            args: [withdrawCollateralAmount],
-          }),
-        );
-      }
+      const minAssetsOut = withSlippageFloor(flashLoanAmount);
+      callbackTxs.push(
+        encodeFunctionData({
+          abi: morphoBundlerAbi,
+          functionName: 'erc4626Redeem',
+          args: [route.collateralVault, withdrawCollateralAmount, minAssetsOut, bundlerAddress as Address, bundlerAddress as Address],
+        }),
+      );
 
       if (autoWithdrawCollateralAmount > 0n) {
         // WHY: if deleverage fully clears debt, keeping collateral locked in Morpho adds friction.

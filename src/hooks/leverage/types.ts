@@ -1,21 +1,12 @@
 import type { Address } from 'viem';
 
-export type StEthLoanMode = 'steth' | 'mainnet-weth-steth-wsteth';
-
 export type Erc4626LeverageRoute = {
   kind: 'erc4626';
   collateralVault: Address;
   underlyingLoanToken: Address;
 };
 
-export type StEthLeverageRoute = {
-  kind: 'steth';
-  collateralToken: Address;
-  stEthToken: Address;
-  loanMode: StEthLoanMode;
-};
-
-export type LeverageRoute = Erc4626LeverageRoute | StEthLeverageRoute;
+export type LeverageRoute = Erc4626LeverageRoute;
 
 export type LeverageSupport = {
   isSupported: boolean;

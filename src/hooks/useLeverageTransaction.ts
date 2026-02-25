@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { type Address, encodeAbiParameters, encodeFunctionData, maxUint256, zeroAddress } from 'viem';
+import { type Address, encodeAbiParameters, encodeFunctionData, maxUint256 } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
@@ -12,7 +12,6 @@ import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { getNativeTokenSymbol } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { computeBorrowSharesWithBuffer, withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
@@ -32,19 +31,17 @@ type UseLeverageTransactionProps = {
   collateralAmountInCollateralToken: bigint;
   flashCollateralAmount: bigint;
   flashLoanAmount: bigint;
-  useEth: boolean;
   useLoanAssetAsInput: boolean;
   onSuccess?: () => void;
 };
 
 /**
- * Executes a Bundler V2 leverage transaction in a single multicall.
+ * Executes an ERC4626 leverage loop in Bundler V2.
  *
- * Important design choice:
- * We flash-loan the *loan token* (not collateral), convert it to collateral,
- * supply all collateral, then borrow the same loan amount back to the bundler
- * so Morpho can pull repayment after callback. This avoids intermediate dust
- * accounting and keeps flows deterministic for V2 supported routes.
+ * Flow:
+ * 1) transfer user input token (collateral shares or loan-asset underlying)
+ * 2) optionally deposit upfront underlying into ERC4626 collateral shares
+ * 3) flash-loan loan token, mint more collateral shares, supply collateral, then borrow back the flash amount
  */
 export function useLeverageTransaction({
   market,
@@ -53,7 +50,6 @@ export function useLeverageTransaction({
   collateralAmountInCollateralToken,
   flashCollateralAmount,
   flashLoanAmount,
-  useEth,
   useLoanAssetAsInput,
   onSuccess,
 }: UseLeverageTransactionProps) {
@@ -63,14 +59,11 @@ export function useLeverageTransaction({
   const toast = useStyledToast();
   const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
   const { batchAddUserMarkets } = useUserMarketsCache(account);
-  const supportsNativeCollateralInput = route.kind === 'steth' && route.loanMode === 'mainnet-weth-steth-wsteth';
-  const isErc4626LoanAssetInput = route.kind === 'erc4626' && useLoanAssetAsInput;
-  const inputTokenAddress = isErc4626LoanAssetInput ? (market.loanAsset.address as Address) : (market.collateralAsset.address as Address);
-  const inputTokenSymbol = isErc4626LoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
-  const inputTokenDecimals = isErc4626LoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
-  const inputTokenAmountForTransfer = useEth ? 0n : isErc4626LoanAssetInput ? collateralAmount : collateralAmountInCollateralToken;
-  const inputDisplaySymbol = useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : inputTokenSymbol;
-  const inputDisplayDecimals = useEth ? 18 : inputTokenDecimals;
+  const isLoanAssetInput = useLoanAssetAsInput;
+  const inputTokenAddress = isLoanAssetInput ? (market.loanAsset.address as Address) : (market.collateralAsset.address as Address);
+  const inputTokenSymbol = isLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
+  const inputTokenDecimals = isLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
+  const inputTokenAmountForTransfer = isLoanAssetInput ? collateralAmount : collateralAmountInCollateralToken;
 
   const { isBundlerAuthorized, isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep(
     {
@@ -104,7 +97,7 @@ export function useLeverageTransaction({
 
   const { isConfirming: leveragePending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'leverage',
-    pendingText: `Leveraging ${formatBalance(collateralAmount, inputDisplayDecimals)} ${inputDisplaySymbol}`,
+    pendingText: `Leveraging ${formatBalance(collateralAmount, inputTokenDecimals)} ${inputTokenSymbol}`,
     successText: 'Leverage Executed',
     errorText: 'Failed to execute leverage',
     chainId,
@@ -117,22 +110,7 @@ export function useLeverageTransaction({
   });
 
   const getStepsForFlow = useCallback(
-    (isEth: boolean, isPermit2: boolean) => {
-      if (isEth) {
-        return [
-          {
-            id: 'authorize_bundler_sig',
-            title: 'Authorize Morpho Bundler',
-            description: 'Sign a message to authorize the bundler for Morpho actions.',
-          },
-          {
-            id: 'execute',
-            title: 'Confirm Leverage',
-            description: 'Confirm the leverage transaction in your wallet.',
-          },
-        ];
-      }
-
+    (isPermit2: boolean) => {
       if (isPermit2) {
         return [
           {
@@ -185,11 +163,6 @@ export function useLeverageTransaction({
       return;
     }
 
-    if (useEth && !supportsNativeCollateralInput) {
-      toast.info('Unsupported route', 'Native ETH collateral input is only available on the mainnet WETH -> stETH -> wstETH route.');
-      return;
-    }
-
     if (collateralAmount <= 0n || flashLoanAmount <= 0n || flashCollateralAmount <= 0n) {
       toast.info('Invalid leverage inputs', 'Set collateral and multiplier above 1x before submitting.');
       return;
@@ -198,31 +171,7 @@ export function useLeverageTransaction({
     try {
       const txs: `0x${string}`[] = [];
 
-      if (useEth) {
-        tracking.update('authorize_bundler_sig');
-        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
-        if (authorizationTxData) {
-          txs.push(authorizationTxData);
-          await new Promise((resolve) => setTimeout(resolve, 800));
-        }
-
-        // WHY: user collateral comes in native ETH for this specific route, so we convert it to wstETH
-        // before running the flashloan callback that adds the looped collateral leg.
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'stakeEth',
-            args: [collateralAmount, 1n, zeroAddress],
-          }),
-        );
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'wrapStEth',
-            args: [maxUint256],
-          }),
-        );
-      } else if (usePermit2Setting) {
+      if (usePermit2Setting) {
         tracking.update('approve_permit2');
         if (!permit2Authorized) {
           await authorizePermit2();
@@ -238,7 +187,6 @@ export function useLeverageTransaction({
 
         tracking.update('sign_permit');
         const { sigs, permitSingle } = await signForBundlers();
-
         txs.push(
           encodeFunctionData({
             abi: morphoBundlerAbi,
@@ -260,8 +208,7 @@ export function useLeverageTransaction({
         }
       }
 
-      // User input transfer is done before flashloan so callback can supply all at once.
-      if (!useEth && inputTokenAmountForTransfer > 0n) {
+      if (inputTokenAmountForTransfer > 0n) {
         txs.push(
           encodeFunctionData({
             abi: morphoBundlerAbi,
@@ -271,9 +218,9 @@ export function useLeverageTransaction({
         );
       }
 
-      if (isErc4626LoanAssetInput) {
-        // WHY: allow users holding loan-token underlying to start leverage directly.
-        // We mint collateral shares from their upfront underlying before the flash loop leg.
+      if (isLoanAssetInput) {
+        // WHY: this lets users start with loan-token underlying for ERC4626 markets.
+        // We mint shares first so all leverage math and downstream Morpho collateral is in share units.
         txs.push(
           encodeFunctionData({
             abi: morphoBundlerAbi,
@@ -288,51 +235,12 @@ export function useLeverageTransaction({
         );
       }
 
-      const callbackTxs: `0x${string}`[] = [];
-
-      if (route.kind === 'erc4626') {
-        // Spend the full flash-loaned underlying to mint collateral shares.
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc4626Deposit',
-            args: [route.collateralVault, flashLoanAmount, withSlippageFloor(flashCollateralAmount), bundlerAddress as Address],
-          }),
-        );
-      } else if (route.loanMode === 'steth') {
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'wrapStEth',
-            args: [flashLoanAmount],
-          }),
-        );
-      } else {
-        // Dedicated mainnet WETH route: unwrap WETH -> stake ETH -> wrap stETH into wstETH collateral.
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'unwrapNative',
-            args: [flashLoanAmount],
-          }),
-        );
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'stakeEth',
-            args: [flashLoanAmount, 1n, zeroAddress],
-          }),
-        );
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'wrapStEth',
-            args: [maxUint256],
-          }),
-        );
-      }
-
-      callbackTxs.push(
+      const callbackTxs: `0x${string}`[] = [
+        encodeFunctionData({
+          abi: morphoBundlerAbi,
+          functionName: 'erc4626Deposit',
+          args: [route.collateralVault, flashLoanAmount, withSlippageFloor(flashCollateralAmount), bundlerAddress as Address],
+        }),
         encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'morphoSupplyCollateral',
@@ -349,7 +257,7 @@ export function useLeverageTransaction({
             '0x',
           ],
         }),
-      );
+      ];
 
       const maxBorrowShares = computeBorrowSharesWithBuffer({
         borrowAssets: flashLoanAmount,
@@ -377,7 +285,6 @@ export function useLeverageTransaction({
         }),
       );
 
-      // Bundler callback decodes flash data as abi.decode(data, (bytes[])).
       const flashLoanCallbackData = encodeAbiParameters([{ type: 'bytes[]' }], [callbackTxs]);
       txs.push(
         encodeFunctionData({
@@ -388,7 +295,6 @@ export function useLeverageTransaction({
       );
 
       tracking.update('execute');
-
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       await sendTransactionAsync({
@@ -399,7 +305,7 @@ export function useLeverageTransaction({
           functionName: 'multicall',
           args: [txs],
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
-        value: useEth ? collateralAmount : 0n,
+        value: 0n,
       });
 
       batchAddUserMarkets([
@@ -425,12 +331,9 @@ export function useLeverageTransaction({
     collateralAmountInCollateralToken,
     inputTokenAmountForTransfer,
     inputTokenAddress,
-    isErc4626LoanAssetInput,
+    isLoanAssetInput,
     flashCollateralAmount,
     flashLoanAmount,
-    useEth,
-    useLoanAssetAsInput,
-    supportsNativeCollateralInput,
     usePermit2Setting,
     permit2Authorized,
     authorizePermit2,
@@ -452,13 +355,13 @@ export function useLeverageTransaction({
     }
 
     try {
-      const initialStep = useEth ? 'authorize_bundler_sig' : usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
+      const initialStep = usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
       tracking.start(
-        getStepsForFlow(useEth, usePermit2Setting),
+        getStepsForFlow(usePermit2Setting),
         {
           title: 'Leverage',
           description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
-          tokenSymbol: inputDisplaySymbol,
+          tokenSymbol: inputTokenSymbol,
           amount: collateralAmount,
           marketId: market.uniqueKey,
         },
@@ -479,7 +382,7 @@ export function useLeverageTransaction({
         toast.error('Error', 'An unexpected error occurred');
       }
     }
-  }, [account, useEth, usePermit2Setting, tracking, getStepsForFlow, market, inputDisplaySymbol, collateralAmount, executeLeverage, toast]);
+  }, [account, usePermit2Setting, tracking, getStepsForFlow, market, inputTokenSymbol, collateralAmount, executeLeverage, toast]);
 
   const signAndLeverage = useCallback(async () => {
     if (!account) {
@@ -487,18 +390,13 @@ export function useLeverageTransaction({
       return;
     }
 
-    if (useEth) {
-      await approveAndLeverage();
-      return;
-    }
-
     try {
       tracking.start(
-        getStepsForFlow(false, usePermit2Setting),
+        getStepsForFlow(usePermit2Setting),
         {
           title: 'Leverage',
           description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
-          tokenSymbol: inputDisplaySymbol,
+          tokenSymbol: inputTokenSymbol,
           amount: collateralAmount,
           marketId: market.uniqueKey,
         },
@@ -519,19 +417,7 @@ export function useLeverageTransaction({
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [
-    account,
-    useEth,
-    approveAndLeverage,
-    tracking,
-    getStepsForFlow,
-    usePermit2Setting,
-    market,
-    inputDisplaySymbol,
-    collateralAmount,
-    executeLeverage,
-    toast,
-  ]);
+  }, [account, tracking, getStepsForFlow, usePermit2Setting, market, inputTokenSymbol, collateralAmount, executeLeverage, toast]);
 
   const isLoading = leveragePending || isLoadingPermit2 || isApproving || isAuthorizingBundler;
 
