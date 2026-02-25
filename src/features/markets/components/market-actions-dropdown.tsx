@@ -91,7 +91,9 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            onClick={onMarketClick}
+            onClick={() => {
+              onMarketClick();
+            }}
             startContent={<GoGraph className="h-4 w-4" />}
           >
             View Market

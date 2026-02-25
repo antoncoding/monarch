@@ -15,6 +15,7 @@ const SwapModal = lazy(() => import('@/features/swap/components/SwapModal').then
 
 // Borrow & Repay
 const BorrowModalGlobal = lazy(() => import('@/modals/borrow/borrow-modal-global').then((m) => ({ default: m.BorrowModalGlobal })));
+const LeverageModalGlobal = lazy(() => import('@/modals/leverage/leverage-modal-global').then((m) => ({ default: m.LeverageModalGlobal })));
 
 // Supply & Withdraw
 const SupplyModalV2 = lazy(() => import('@/modals/supply/supply-modal').then((m) => ({ default: m.SupplyModalV2 })));
@@ -49,6 +50,7 @@ export const MODAL_REGISTRY: {
   [K in ModalType]: ComponentType<any>;
 } = {
   borrow: BorrowModalGlobal,
+  leverage: LeverageModalGlobal,
   bridgeSwap: SwapModal,
   supply: SupplyModalV2,
   rebalance: RebalanceModal,
