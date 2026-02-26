@@ -3,7 +3,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { blacklistTokens } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
-import { zeroAddress } from 'viem';
+import { type Address, zeroAddress } from 'viem';
 
 // API response type - matches the new Morpho API shape where oracleAddress is nested
 type MorphoApiMarket = Omit<Market, 'oracleAddress' | 'whitelisted'> & {
@@ -39,7 +39,7 @@ const processMarketData = (market: MorphoApiMarket): Market => {
   const { oracle, listed, ...rest } = market;
   return {
     ...rest,
-    oracleAddress: oracle?.address ?? zeroAddress,
+    oracleAddress: (oracle?.address ?? zeroAddress) as Address,
     whitelisted: listed,
     hasUSDPrice: true,
   };

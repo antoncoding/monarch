@@ -4,9 +4,17 @@ import { LEVERAGE_MAX_MULTIPLIER_BPS, LEVERAGE_MIN_MULTIPLIER_BPS, LEVERAGE_MULT
 export const LEVERAGE_SLIPPAGE_BUFFER_BPS = 9_950n; // 0.50% tolerance
 const COMPACT_AMOUNT_LOCALE = 'en-US';
 const COMPACT_AMOUNT_MIN_THRESHOLD = 0.000001;
+const APY_RATIO_SCALE = 1_000_000_000n;
+const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 
 const minBigInt = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 const floorSub = (value: bigint, subtract: bigint): bigint => (value > subtract ? value - subtract : 0n);
+const toScaledRatio = (numerator: bigint, denominator: bigint): number | null => {
+  if (denominator <= 0n) return null;
+  const scaledRatio = (numerator * APY_RATIO_SCALE) / denominator;
+  const ratio = Number(scaledRatio) / Number(APY_RATIO_SCALE);
+  return Number.isFinite(ratio) ? ratio : null;
+};
 
 export const clampMultiplierBps = (value: bigint): bigint => {
   if (value < LEVERAGE_MIN_MULTIPLIER_BPS) return LEVERAGE_MIN_MULTIPLIER_BPS;
@@ -103,6 +111,68 @@ export const computeDeleverageProjectedPosition = ({
     previewDebtRepaid,
     maxWithdrawCollateral,
   };
+};
+
+export const computeAnnualizedApyFromGrowth = ({
+  currentValue,
+  pastValue,
+  periodSeconds,
+}: {
+  currentValue: bigint;
+  pastValue: bigint;
+  periodSeconds: number;
+}): number | null => {
+  if (currentValue <= 0n || pastValue <= 0n || periodSeconds <= 0) return null;
+
+  const growthRatio = toScaledRatio(currentValue, pastValue);
+  if (growthRatio == null || growthRatio <= 0) return null;
+
+  const annualizationFactor = SECONDS_PER_YEAR / periodSeconds;
+  const annualizedApy = growthRatio ** annualizationFactor - 1;
+
+  return Number.isFinite(annualizedApy) ? annualizedApy : null;
+};
+
+export const convertVaultSharesToUnderlyingAssets = ({
+  shares,
+  sharePriceInUnderlying,
+  oneShareUnit,
+}: {
+  shares: bigint;
+  sharePriceInUnderlying: bigint;
+  oneShareUnit: bigint;
+}): bigint => {
+  if (shares <= 0n || sharePriceInUnderlying <= 0n || oneShareUnit <= 0n) return 0n;
+  return (shares * sharePriceInUnderlying) / oneShareUnit;
+};
+
+export const computeExpectedNetCarryApy = ({
+  collateralShares,
+  borrowAssets,
+  sharePriceInUnderlying,
+  oneShareUnit,
+  vaultApy,
+  borrowApy,
+}: {
+  collateralShares: bigint;
+  borrowAssets: bigint;
+  sharePriceInUnderlying: bigint;
+  oneShareUnit: bigint;
+  vaultApy: number;
+  borrowApy: number;
+}): number | null => {
+  const collateralUnderlyingAssets = convertVaultSharesToUnderlyingAssets({
+    shares: collateralShares,
+    sharePriceInUnderlying,
+    oneShareUnit,
+  });
+  if (collateralUnderlyingAssets <= 0n) return null;
+
+  const debtToCollateralRatio = toScaledRatio(borrowAssets, collateralUnderlyingAssets);
+  if (debtToCollateralRatio == null) return null;
+
+  const netCarryApy = vaultApy - debtToCollateralRatio * borrowApy;
+  return Number.isFinite(netCarryApy) ? netCarryApy : null;
 };
 
 export function formatFullTokenAmount(value: bigint, decimals: number): string {

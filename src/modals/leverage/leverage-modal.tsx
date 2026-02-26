@@ -4,6 +4,7 @@ import { useConnection, useReadContract } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { Badge } from '@/components/ui/badge';
 import { useLeverageSupport } from '@/hooks/useLeverageSupport';
 import type { Market, MarketPosition } from '@/utils/types';
 import { AddCollateralAndLeverage } from './components/add-collateral-and-leverage';
@@ -33,6 +34,7 @@ export function LeverageModal({
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
   const { address: account } = useConnection();
   const support = useLeverageSupport({ market });
+  const isErc4626Route = support.route?.kind === 'erc4626';
 
   const effectiveMode = mode;
   const modeOptions: { value: string; label: string }[] = toggleLeverageDeleverage
@@ -102,16 +104,31 @@ export function LeverageModal({
         mainIcon={mainIcon}
         onClose={() => onOpenChange(false)}
         title={
-          <ModalIntentSwitcher
-            value={effectiveMode}
-            options={modeOptions}
-            onValueChange={(nextMode) => setMode(nextMode as 'leverage' | 'deleverage')}
-          />
+          <div className="flex items-center gap-2">
+            <ModalIntentSwitcher
+              value={effectiveMode}
+              options={modeOptions}
+              onValueChange={(nextMode) => setMode(nextMode as 'leverage' | 'deleverage')}
+            />
+            {isErc4626Route && (
+              <Badge
+                variant="success"
+                size="sm"
+                className="uppercase tracking-[0.08em]"
+              >
+                #ERC4626
+              </Badge>
+            )}
+          </div>
         }
         description={
           effectiveMode === 'leverage'
-            ? `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
-            : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
+            ? isErc4626Route
+              ? `Leverage ERC4626 vault exposure by looping ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
+              : `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
+            : isErc4626Route
+              ? `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`
+              : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
         }
       />
       <ModalBody>

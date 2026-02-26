@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 import { useConnection } from 'wagmi';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import useUserPosition from '@/hooks/useUserPosition';
-import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { LeverageModal } from './leverage-modal';
 
@@ -28,10 +27,10 @@ export function LeverageModalGlobal({
   onOpenChange,
 }: LeverageModalGlobalProps): JSX.Element {
   const { address } = useConnection();
-  const chainId = market.morphoBlue.chain.id as SupportedNetworks;
+  const chainId = market.morphoBlue.chain.id;
 
   const { price: oraclePrice } = useOraclePrice({
-    oracle: market.oracleAddress as `0x${string}`,
+    oracle: market.oracleAddress,
     chainId,
   });
 

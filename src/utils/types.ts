@@ -298,13 +298,13 @@ export type Market = {
   lltv: string;
   uniqueKey: string;
   irmAddress: string;
-  oracleAddress: string;
+  oracleAddress: Address;
   whitelisted: boolean;
   morphoBlue: {
     id: string;
     address: string;
     chain: {
-      id: number;
+      id: SupportedNetworks;
     };
   };
   loanAsset: TokenInfo;

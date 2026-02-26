@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
-import { computeLtv, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
+import { computeLtv } from '@/modals/borrow/components/helpers';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -18,10 +18,12 @@ import {
   parseMultiplierToBps,
 } from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
+import { use4626VaultAPR } from '@/hooks/use4626VaultAPR';
 import { useLeverageQuote } from '@/hooks/useLeverageQuote';
 import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
+import { convertApyToApr } from '@/utils/rateMath';
 import type { LeverageSupport } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
 
@@ -48,7 +50,7 @@ export function AddCollateralAndLeverage({
 }: AddCollateralAndLeverageProps): JSX.Element {
   const route = support.route;
   const { address: account } = useConnection();
-  const { usePermit2: usePermit2Setting } = useAppSettings();
+  const { usePermit2: usePermit2Setting, isAprDisplay } = useAppSettings();
 
   const [collateralAmount, setCollateralAmount] = useState<bigint>(0n);
   const [collateralInputError, setCollateralInputError] = useState<string | null>(null);
@@ -130,6 +132,16 @@ export function AddCollateralAndLeverage({
   );
   const lltv = BigInt(market.lltv);
   const marketLiquidity = BigInt(market.state.liquidityAssets);
+  const rateLabel = isAprDisplay ? 'APR' : 'APY';
+
+  const vaultRateInsight = use4626VaultAPR({
+    market,
+    vaultAddress: route?.kind === 'erc4626' ? route.collateralVault : undefined,
+    projectedCollateralShares: projectedCollateralAssets,
+    projectedBorrowAssets,
+    enabled: isErc4626Route,
+    lookbackDays: 3,
+  });
 
   const projectedLTV = useMemo(
     () =>
@@ -209,6 +221,33 @@ export function AddCollateralAndLeverage({
     () => formatTokenAmountPreview(quote.totalAddedCollateral, market.collateralAsset.decimals),
     [quote.totalAddedCollateral, market.collateralAsset.decimals],
   );
+  const renderRateValue = useCallback(
+    (apy: number | null): JSX.Element => {
+      if (apy == null || !Number.isFinite(apy)) return <span className="font-monospace">-</span>;
+      const displayRate = isAprDisplay ? convertApyToApr(apy) : apy;
+      if (!Number.isFinite(displayRate)) return <span className="font-monospace">-</span>;
+
+      const isNegative = displayRate < 0;
+      const absolutePercent = Math.abs(displayRate * 100).toFixed(2);
+
+      return (
+        <>
+          {isNegative && <span className="font-monospace">-</span>}
+          {absolutePercent}%
+        </>
+      );
+    },
+    [isAprDisplay],
+  );
+  const expectedNetRateClass = useMemo(() => {
+    if (vaultRateInsight.expectedNetApy == null) return 'text-secondary';
+    return vaultRateInsight.expectedNetApy >= 0 ? 'text-emerald-500' : 'text-red-500';
+  }, [vaultRateInsight.expectedNetApy]);
+  const previewBorrowApy = useMemo(() => {
+    // Prefer route-specific observed borrow carry for ERC4626 when available, fallback to market live borrow APY.
+    if (isErc4626Route && vaultRateInsight.borrowApy3d != null) return vaultRateInsight.borrowApy3d;
+    return market.state.borrowApy;
+  }, [isErc4626Route, vaultRateInsight.borrowApy3d, market.state.borrowApy]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -327,12 +366,32 @@ export function AddCollateralAndLeverage({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-secondary">Projected LTV</span>
-                  <span className={`tabular-nums ${getLTVColor(projectedLTV, lltv)}`}>{formatLtvPercent(projectedLTV)}%</span>
+                  <span className="text-secondary">Borrow {rateLabel}</span>
+                  <span className="tabular-nums">{renderRateValue(previewBorrowApy)}</span>
                 </div>
+                {isErc4626Route && (
+                  <>
+                    <div className="my-1 border-t border-white/10" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-secondary">Vault Only {rateLabel}</span>
+                      <span className="tabular-nums">
+                        {vaultRateInsight.isLoading ? '...' : renderRateValue(vaultRateInsight.vaultApy3d)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-secondary">Net {rateLabel}</span>
+                      <span className={`tabular-nums ${expectedNetRateClass}`}>
+                        {vaultRateInsight.isLoading ? '...' : renderRateValue(vaultRateInsight.expectedNetApy)}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
               {conversionErrorMessage && <p className="mt-2 text-xs text-red-500">{conversionErrorMessage}</p>}
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
+              {isErc4626Route && vaultRateInsight.error && (
+                <p className="mt-2 text-xs text-red-500">Failed to fetch 3-day vault/borrow rates: {vaultRateInsight.error}</p>
+              )}
               {insufficientLiquidity && (
                 <p className="mt-2 text-xs text-red-500">
                   Flash loan repayment borrow exceeds market liquidity ({formatBalance(marketLiquidity, market.loanAsset.decimals)}{' '}
