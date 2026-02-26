@@ -271,6 +271,7 @@ export const computeRepaySharesWithBuffer = ({
 }): bigint => {
   if (repayAssets <= 0n || totalBorrowAssets <= 0n || totalBorrowShares <= 0n) return 0n;
 
-  const expectedShares = (repayAssets * totalBorrowShares) / totalBorrowAssets;
+  const numerator = repayAssets * totalBorrowShares;
+  const expectedShares = (numerator + totalBorrowAssets - 1n) / totalBorrowAssets; // round up
   return expectedShares + expectedShares / 200n + 1n;
 };

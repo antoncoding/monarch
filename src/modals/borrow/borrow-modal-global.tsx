@@ -6,7 +6,6 @@ import type { Market } from '@/utils/types';
 import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import useUserPosition from '@/hooks/useUserPosition';
-import type { SupportedNetworks } from '@/utils/networks';
 import { BorrowModal } from './borrow-modal';
 
 type BorrowModalGlobalProps = {
@@ -31,10 +30,10 @@ export function BorrowModalGlobal({
   onOpenChange,
 }: BorrowModalGlobalProps): JSX.Element {
   const { address } = useConnection();
-  const chainId = market.morphoBlue.chain.id as SupportedNetworks;
+  const chainId = market.morphoBlue.chain.id;
 
   const { price: oraclePrice } = useOraclePrice({
-    oracle: market.oracleAddress as `0x${string}`,
+    oracle: market.oracleAddress,
     chainId,
   });
 
