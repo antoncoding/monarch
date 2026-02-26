@@ -373,7 +373,7 @@ export function AddCollateralAndLeverage({
                   <>
                     <div className="my-1 border-t border-white/10" />
                     <div className="flex items-center justify-between">
-                      <span className="text-secondary">Vault Only {rateLabel}</span>
+                      <span className="text-secondary">Vault Token {rateLabel}</span>
                       <span className="tabular-nums">
                         {vaultRateInsight.isLoading ? '...' : renderRateValue(vaultRateInsight.vaultApy3d)}
                       </span>
