@@ -10,13 +10,18 @@ import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButt
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import { erc4626Abi } from '@/abis/erc4626';
-import { clampMultiplierBps, formatMultiplierBps, parseMultiplierToBps } from '@/hooks/leverage/math';
+import {
+  clampMultiplierBps,
+  computeLeverageProjectedPosition,
+  formatMultiplierBps,
+  formatTokenAmountPreview,
+  parseMultiplierToBps,
+} from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
 import { useLeverageQuote } from '@/hooks/useLeverageQuote';
 import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
-import { formatCompactTokenAmount, formatFullTokenAmount } from '@/utils/token-amount-format';
 import type { LeverageSupport } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
 
@@ -113,8 +118,16 @@ export function AddCollateralAndLeverage({
 
   const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
   const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
-  const projectedCollateralAssets = currentCollateralAssets + quote.totalAddedCollateral;
-  const projectedBorrowAssets = currentBorrowAssets + quote.flashLoanAmount;
+  const { projectedCollateralAssets, projectedBorrowAssets } = useMemo(
+    () =>
+      computeLeverageProjectedPosition({
+        currentCollateralAssets,
+        currentBorrowAssets,
+        addedCollateralAssets: quote.totalAddedCollateral,
+        addedBorrowAssets: quote.flashLoanAmount,
+      }),
+    [currentCollateralAssets, currentBorrowAssets, quote.totalAddedCollateral, quote.flashLoanAmount],
+  );
   const lltv = BigInt(market.lltv);
   const marketLiquidity = BigInt(market.state.liquidityAssets);
 
@@ -188,6 +201,14 @@ export function AddCollateralAndLeverage({
   const inputAssetBalance = useLoanAssetInput ? (loanTokenBalance as bigint | undefined) : collateralTokenBalance;
   const inputTokenIconAddress = useLoanAssetInput ? market.loanAsset.address : market.collateralAsset.address;
   const isLoadingInputConversion = useLoanAssetInput && isLoadingUnderlyingToCollateralConversion;
+  const flashBorrowPreview = useMemo(
+    () => formatTokenAmountPreview(quote.flashLoanAmount, market.loanAsset.decimals),
+    [quote.flashLoanAmount, market.loanAsset.decimals],
+  );
+  const totalCollateralAddedPreview = useMemo(
+    () => formatTokenAmountPreview(quote.totalAddedCollateral, market.collateralAsset.decimals),
+    [quote.totalAddedCollateral, market.collateralAsset.decimals],
+  );
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -278,16 +299,8 @@ export function AddCollateralAndLeverage({
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">Flash Borrow</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <Tooltip
-                      content={
-                        <span className="font-monospace text-xs">
-                          {formatFullTokenAmount(quote.flashLoanAmount, market.loanAsset.decimals)}
-                        </span>
-                      }
-                    >
-                      <span className="cursor-help border-b border-dotted border-white/40">
-                        {formatCompactTokenAmount(quote.flashLoanAmount, market.loanAsset.decimals)}
-                      </span>
+                    <Tooltip content={<span className="font-monospace text-xs">{flashBorrowPreview.full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">{flashBorrowPreview.compact}</span>
                     </Tooltip>
                     <TokenIcon
                       address={market.loanAsset.address}
@@ -301,16 +314,8 @@ export function AddCollateralAndLeverage({
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">Total Collateral Added</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <Tooltip
-                      content={
-                        <span className="font-monospace text-xs">
-                          {formatFullTokenAmount(quote.totalAddedCollateral, market.collateralAsset.decimals)}
-                        </span>
-                      }
-                    >
-                      <span className="cursor-help border-b border-dotted border-white/40">
-                        {formatCompactTokenAmount(quote.totalAddedCollateral, market.collateralAsset.decimals)}
-                      </span>
+                    <Tooltip content={<span className="font-monospace text-xs">{totalCollateralAddedPreview.full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">{totalCollateralAddedPreview.compact}</span>
                     </Tooltip>
                     <TokenIcon
                       address={market.collateralAsset.address}

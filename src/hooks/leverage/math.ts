@@ -1,8 +1,12 @@
+import { formatUnits } from 'viem';
 import { LEVERAGE_MAX_MULTIPLIER_BPS, LEVERAGE_MIN_MULTIPLIER_BPS, LEVERAGE_MULTIPLIER_SCALE_BPS } from './types';
 
 export const LEVERAGE_SLIPPAGE_BUFFER_BPS = 9_950n; // 0.50% tolerance
-export const LTV_WAD = 10n ** 18n;
-export const ORACLE_PRICE_SCALE = 10n ** 36n;
+const COMPACT_AMOUNT_LOCALE = 'en-US';
+const COMPACT_AMOUNT_MIN_THRESHOLD = 0.000001;
+
+const minBigInt = (a: bigint, b: bigint): bigint => (a < b ? a : b);
+const floorSub = (value: bigint, subtract: bigint): bigint => (value > subtract ? value - subtract : 0n);
 
 export const clampMultiplierBps = (value: bigint): bigint => {
   if (value < LEVERAGE_MIN_MULTIPLIER_BPS) return LEVERAGE_MIN_MULTIPLIER_BPS;
@@ -35,30 +39,121 @@ export const computeFlashCollateralAmount = (userCollateralAmount: bigint, multi
   return leveragedCollateral > userCollateralAmount ? leveragedCollateral - userCollateralAmount : 0n;
 };
 
-export const computeProjectedLtv = ({
+export const computeLeverageProjectedPosition = ({
   currentBorrowAssets,
-  borrowDelta,
   currentCollateralAssets,
-  collateralDelta,
-  oraclePrice,
+  addedBorrowAssets,
+  addedCollateralAssets,
 }: {
   currentBorrowAssets: bigint;
-  borrowDelta: bigint;
   currentCollateralAssets: bigint;
-  collateralDelta: bigint;
-  oraclePrice: bigint;
-}): bigint => {
-  const projectedBorrowAssets = currentBorrowAssets + borrowDelta;
-  const projectedCollateralAssets = currentCollateralAssets + collateralDelta;
+  addedBorrowAssets: bigint;
+  addedCollateralAssets: bigint;
+}): { projectedBorrowAssets: bigint; projectedCollateralAssets: bigint } => ({
+  projectedBorrowAssets: currentBorrowAssets + addedBorrowAssets,
+  projectedCollateralAssets: currentCollateralAssets + addedCollateralAssets,
+});
 
-  if (projectedBorrowAssets <= 0n) return 0n;
-  if (projectedCollateralAssets <= 0n || oraclePrice <= 0n) return 10n ** 30n;
-
-  const collateralValueInLoan = (projectedCollateralAssets * oraclePrice) / ORACLE_PRICE_SCALE;
-  if (collateralValueInLoan <= 0n) return 10n ** 30n;
-
-  return (projectedBorrowAssets * LTV_WAD) / collateralValueInLoan;
+export type DeleverageProjectedPosition = {
+  closesDebt: boolean;
+  repayBySharesAmount: bigint;
+  flashLoanAmountForTx: bigint;
+  autoWithdrawCollateralAmount: bigint;
+  projectedCollateralAssets: bigint;
+  projectedBorrowAssets: bigint;
+  previewDebtRepaid: bigint;
+  maxWithdrawCollateral: bigint;
 };
+
+export const computeDeleverageProjectedPosition = ({
+  currentCollateralAssets,
+  currentBorrowAssets,
+  currentBorrowShares,
+  withdrawCollateralAmount,
+  rawRouteRepayAmount,
+  repayAmount,
+  maxCollateralForDebtRepay,
+}: {
+  currentCollateralAssets: bigint;
+  currentBorrowAssets: bigint;
+  currentBorrowShares: bigint;
+  withdrawCollateralAmount: bigint;
+  rawRouteRepayAmount: bigint;
+  repayAmount: bigint;
+  maxCollateralForDebtRepay: bigint;
+}): DeleverageProjectedPosition => {
+  const maxWithdrawCollateral = minBigInt(maxCollateralForDebtRepay, currentCollateralAssets);
+  const boundedWithdrawCollateral = minBigInt(withdrawCollateralAmount, currentCollateralAssets);
+  const projectedCollateralAfterInput = floorSub(currentCollateralAssets, boundedWithdrawCollateral);
+  const closesDebt = currentBorrowAssets > 0n && repayAmount >= currentBorrowAssets;
+  const repayBySharesAmount = closesDebt ? currentBorrowShares : 0n;
+  const flashLoanAmountForTx = closesDebt ? rawRouteRepayAmount : repayAmount;
+  const autoWithdrawCollateralAmount = closesDebt ? projectedCollateralAfterInput : 0n;
+  const projectedCollateralAssets = closesDebt ? 0n : projectedCollateralAfterInput;
+  const projectedBorrowAssets = floorSub(currentBorrowAssets, repayAmount);
+  const previewDebtRepaid = closesDebt ? currentBorrowAssets : repayAmount;
+
+  return {
+    closesDebt,
+    repayBySharesAmount,
+    flashLoanAmountForTx,
+    autoWithdrawCollateralAmount,
+    projectedCollateralAssets,
+    projectedBorrowAssets,
+    previewDebtRepaid,
+    maxWithdrawCollateral,
+  };
+};
+
+export function formatFullTokenAmount(value: bigint, decimals: number): string {
+  const formattedUnits = formatUnits(value, decimals);
+  const [integerPart, fractionalPart = ''] = formattedUnits.split('.');
+  const hasNegativeSign = integerPart.startsWith('-');
+  const unsignedIntegerPart = hasNegativeSign ? integerPart.slice(1) : integerPart;
+  const groupedIntegerPart = unsignedIntegerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const trimmedFractionalPart = fractionalPart.replace(/0+$/, '');
+
+  if (trimmedFractionalPart.length > 0) {
+    return `${hasNegativeSign ? '-' : ''}${groupedIntegerPart}.${trimmedFractionalPart}`;
+  }
+
+  return `${hasNegativeSign ? '-' : ''}${groupedIntegerPart}`;
+}
+
+export function formatCompactTokenAmount(value: bigint, decimals: number): string {
+  if (value === 0n) return '0';
+
+  const numericValue = Number(formatUnits(value, decimals));
+  if (!Number.isFinite(numericValue)) return formatUnits(value, decimals);
+
+  const absoluteValue = Math.abs(numericValue);
+
+  if (absoluteValue >= 1000) {
+    return new Intl.NumberFormat(COMPACT_AMOUNT_LOCALE, {
+      notation: 'compact',
+      maximumFractionDigits: 2,
+    }).format(numericValue);
+  }
+
+  if (absoluteValue >= 1) {
+    return numericValue.toLocaleString(COMPACT_AMOUNT_LOCALE, {
+      maximumFractionDigits: 4,
+    });
+  }
+
+  if (absoluteValue >= COMPACT_AMOUNT_MIN_THRESHOLD) {
+    return numericValue.toLocaleString(COMPACT_AMOUNT_LOCALE, {
+      maximumSignificantDigits: 4,
+    });
+  }
+
+  return `<${COMPACT_AMOUNT_MIN_THRESHOLD}`;
+}
+
+export const formatTokenAmountPreview = (value: bigint, decimals: number): { compact: string; full: string } => ({
+  compact: formatCompactTokenAmount(value, decimals),
+  full: formatFullTokenAmount(value, decimals),
+});
 
 export const withSlippageFloor = (value: bigint): bigint => {
   if (value <= 0n) return 0n;

@@ -177,13 +177,15 @@ export function useLeverageTransaction({
       const txs: `0x${string}`[] = [];
 
       if (usePermit2Setting) {
-        tracking.update('approve_permit2');
         if (!permit2Authorized) {
+          tracking.update('approve_permit2');
           await authorizePermit2();
           await new Promise((resolve) => setTimeout(resolve, 800));
         }
 
-        tracking.update('authorize_bundler_sig');
+        if (!isBundlerAuthorized) {
+          tracking.update('authorize_bundler_sig');
+        }
         const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
         if (authorizationTxData) {
           txs.push(authorizationTxData);
@@ -341,6 +343,7 @@ export function useLeverageTransaction({
     flashLoanAmount,
     usePermit2Setting,
     permit2Authorized,
+    isBundlerAuthorized,
     authorizePermit2,
     ensureBundlerAuthorization,
     signForBundlers,
@@ -396,6 +399,12 @@ export function useLeverageTransaction({
     }
 
     try {
+      const initialStep: LeverageStepType = permit2Authorized
+        ? isBundlerAuthorized
+          ? 'sign_permit'
+          : 'authorize_bundler_sig'
+        : 'approve_permit2';
+
       tracking.start(
         getStepsForFlow(usePermit2Setting),
         {
@@ -405,7 +414,7 @@ export function useLeverageTransaction({
           amount: collateralAmount,
           marketId: market.uniqueKey,
         },
-        'sign_permit',
+        initialStep,
       );
 
       await executeLeverage();
@@ -422,7 +431,19 @@ export function useLeverageTransaction({
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, tracking, getStepsForFlow, usePermit2Setting, market, inputTokenSymbol, collateralAmount, executeLeverage, toast]);
+  }, [
+    account,
+    tracking,
+    getStepsForFlow,
+    usePermit2Setting,
+    permit2Authorized,
+    isBundlerAuthorized,
+    market,
+    inputTokenSymbol,
+    collateralAmount,
+    executeLeverage,
+    toast,
+  ]);
 
   const isLoading = leveragePending || isLoadingPermit2 || isApproving || isAuthorizingBundler;
 

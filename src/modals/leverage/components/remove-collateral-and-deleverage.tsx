@@ -4,10 +4,10 @@ import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButt
 import { Tooltip } from '@/components/ui/tooltip';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { computeDeleverageProjectedPosition, formatTokenAmountPreview } from '@/hooks/leverage/math';
 import { useDeleverageQuote } from '@/hooks/useDeleverageQuote';
 import { useDeleverageTransaction } from '@/hooks/useDeleverageTransaction';
 import { formatBalance } from '@/utils/balance';
-import { formatCompactTokenAmount, formatFullTokenAmount } from '@/utils/token-amount-format';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LeverageSupport } from '@/hooks/leverage/types';
 import { computeLtv, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
@@ -46,19 +46,27 @@ export function RemoveCollateralAndDeleverage({
     currentBorrowAssets,
   });
 
-  const maxWithdrawCollateral = useMemo(() => {
-    if (quote.maxCollateralForDebtRepay <= 0n) return 0n;
-    return quote.maxCollateralForDebtRepay > currentCollateralAssets ? currentCollateralAssets : quote.maxCollateralForDebtRepay;
-  }, [quote.maxCollateralForDebtRepay, currentCollateralAssets]);
-
-  const projectedCollateralAfterInput =
-    withdrawCollateralAmount > currentCollateralAssets ? 0n : currentCollateralAssets - withdrawCollateralAmount;
-  const closesDebt = currentBorrowAssets > 0n && quote.repayAmount >= currentBorrowAssets;
-  const repayBySharesAmount = closesDebt ? currentBorrowShares : 0n;
-  const flashLoanAmountForTx = closesDebt ? quote.rawRouteRepayAmount : quote.repayAmount;
-  const autoWithdrawCollateralAmount = closesDebt ? projectedCollateralAfterInput : 0n;
-  const projectedCollateralAssets = closesDebt ? 0n : projectedCollateralAfterInput;
-  const projectedBorrowAssets = quote.repayAmount > currentBorrowAssets ? 0n : currentBorrowAssets - quote.repayAmount;
+  const projection = useMemo(
+    () =>
+      computeDeleverageProjectedPosition({
+        currentCollateralAssets,
+        currentBorrowAssets,
+        currentBorrowShares,
+        withdrawCollateralAmount,
+        rawRouteRepayAmount: quote.rawRouteRepayAmount,
+        repayAmount: quote.repayAmount,
+        maxCollateralForDebtRepay: quote.maxCollateralForDebtRepay,
+      }),
+    [
+      currentCollateralAssets,
+      currentBorrowAssets,
+      currentBorrowShares,
+      withdrawCollateralAmount,
+      quote.rawRouteRepayAmount,
+      quote.repayAmount,
+      quote.maxCollateralForDebtRepay,
+    ],
+  );
 
   const currentLTV = useMemo(
     () =>
@@ -73,11 +81,11 @@ export function RemoveCollateralAndDeleverage({
   const projectedLTV = useMemo(
     () =>
       computeLtv({
-        borrowAssets: projectedBorrowAssets,
-        collateralAssets: projectedCollateralAssets,
+        borrowAssets: projection.projectedBorrowAssets,
+        collateralAssets: projection.projectedCollateralAssets,
         oraclePrice,
       }),
-    [projectedBorrowAssets, projectedCollateralAssets, oraclePrice],
+    [projection.projectedBorrowAssets, projection.projectedCollateralAssets, oraclePrice],
   );
 
   const handleTransactionSuccess = useCallback(() => {
@@ -91,9 +99,9 @@ export function RemoveCollateralAndDeleverage({
     market,
     route,
     withdrawCollateralAmount,
-    flashLoanAmount: flashLoanAmountForTx,
-    repayBySharesAmount,
-    autoWithdrawCollateralAmount,
+    flashLoanAmount: projection.flashLoanAmountForTx,
+    repayBySharesAmount: projection.repayBySharesAmount,
+    autoWithdrawCollateralAmount: projection.autoWithdrawCollateralAmount,
     onSuccess: handleTransactionSuccess,
   });
 
@@ -104,7 +112,14 @@ export function RemoveCollateralAndDeleverage({
   // Treat user input as an intent change immediately so the preview card updates as soon as the amount changes.
   const hasChanges = withdrawCollateralAmount > 0n;
   const projectedOverLimit = projectedLTV >= lltv;
-  const previewDebtRepaid = closesDebt ? currentBorrowAssets : quote.repayAmount;
+  const flashBorrowPreview = useMemo(
+    () => formatTokenAmountPreview(projection.flashLoanAmountForTx, market.loanAsset.decimals),
+    [projection.flashLoanAmountForTx, market.loanAsset.decimals],
+  );
+  const debtRepaidPreview = useMemo(
+    () => formatTokenAmountPreview(projection.previewDebtRepaid, market.loanAsset.decimals),
+    [projection.previewDebtRepaid, market.loanAsset.decimals],
+  );
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -130,7 +145,7 @@ export function RemoveCollateralAndDeleverage({
               </p>
               <Input
                 decimals={market.collateralAsset.decimals}
-                max={maxWithdrawCollateral}
+                max={projection.maxWithdrawCollateral}
                 setValue={setWithdrawCollateralAmount}
                 setError={setWithdrawInputError}
                 exceedMaxErrMessage="Exceeds deleverageable collateral"
@@ -147,7 +162,7 @@ export function RemoveCollateralAndDeleverage({
                 }
               />
               <p className="mt-1 text-right text-xs text-secondary">
-                Max: {formatBalance(maxWithdrawCollateral, market.collateralAsset.decimals)} {market.collateralAsset.symbol}
+                Max: {formatBalance(projection.maxWithdrawCollateral, market.collateralAsset.decimals)} {market.collateralAsset.symbol}
               </p>
               {withdrawInputError && <p className="mt-1 text-right text-xs text-red-500">{withdrawInputError}</p>}
             </div>
@@ -158,16 +173,8 @@ export function RemoveCollateralAndDeleverage({
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">Flash Borrow</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <Tooltip
-                      content={
-                        <span className="font-monospace text-xs">
-                          {formatFullTokenAmount(flashLoanAmountForTx, market.loanAsset.decimals)}
-                        </span>
-                      }
-                    >
-                      <span className="cursor-help border-b border-dotted border-white/40">
-                        {formatCompactTokenAmount(flashLoanAmountForTx, market.loanAsset.decimals)}
-                      </span>
+                    <Tooltip content={<span className="font-monospace text-xs">{flashBorrowPreview.full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">{flashBorrowPreview.compact}</span>
                     </Tooltip>
                     <TokenIcon
                       address={market.loanAsset.address}
@@ -181,16 +188,8 @@ export function RemoveCollateralAndDeleverage({
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">Debt Repaid</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <Tooltip
-                      content={
-                        <span className="font-monospace text-xs">
-                          {formatFullTokenAmount(previewDebtRepaid, market.loanAsset.decimals)}
-                        </span>
-                      }
-                    >
-                      <span className="cursor-help border-b border-dotted border-white/40">
-                        {formatCompactTokenAmount(previewDebtRepaid, market.loanAsset.decimals)}
-                      </span>
+                    <Tooltip content={<span className="font-monospace text-xs">{debtRepaidPreview.full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">{debtRepaidPreview.compact}</span>
                     </Tooltip>
                     <TokenIcon
                       address={market.loanAsset.address}
@@ -222,7 +221,7 @@ export function RemoveCollateralAndDeleverage({
                   withdrawInputError !== null ||
                   quote.error !== null ||
                   withdrawCollateralAmount <= 0n ||
-                  flashLoanAmountForTx <= 0n ||
+                  projection.flashLoanAmountForTx <= 0n ||
                   projectedOverLimit
                 }
                 variant="primary"
