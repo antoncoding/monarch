@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useConnection } from 'wagmi';
 import type { Market } from '@/utils/types';
 import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
@@ -39,10 +40,10 @@ export function BorrowModalGlobal({
 
   const { position, refetch: refetchPosition } = useUserPosition(address, chainId, market.uniqueKey);
 
-  const handleRefetch = () => {
+  const handleRefetch = useCallback(() => {
     refetchPosition();
     externalRefetch?.();
-  };
+  }, [refetchPosition, externalRefetch]);
 
   return (
     <BorrowModal

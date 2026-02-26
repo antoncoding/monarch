@@ -89,7 +89,7 @@ export function RemoveCollateralAndDeleverage({
 
   const { transaction, deleveragePending, authorizeAndDeleverage } = useDeleverageTransaction({
     market,
-    route: route!,
+    route,
     withdrawCollateralAmount,
     flashLoanAmount: flashLoanAmountForTx,
     repayBySharesAmount,

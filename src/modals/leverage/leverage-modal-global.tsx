@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useConnection } from 'wagmi';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import useUserPosition from '@/hooks/useUserPosition';
@@ -36,10 +37,10 @@ export function LeverageModalGlobal({
 
   const { position, refetch: refetchPosition } = useUserPosition(address, chainId, market.uniqueKey);
 
-  const handleRefetch = () => {
+  const handleRefetch = useCallback(() => {
     refetchPosition();
     externalRefetch?.();
-  };
+  }, [refetchPosition, externalRefetch]);
 
   return (
     <LeverageModal

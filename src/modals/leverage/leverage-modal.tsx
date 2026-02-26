@@ -28,17 +28,24 @@ export function LeverageModal({
   isRefreshing = false,
   position,
   defaultMode = 'leverage',
-  toggleLeverageDeleverage: _toggleLeverageDeleverage = true,
+  toggleLeverageDeleverage = true,
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
   const { address: account } = useConnection();
   const support = useLeverageSupport({ market });
 
   const effectiveMode = mode;
-  const modeOptions = [
-    { value: 'leverage', label: `Leverage ${market.collateralAsset.symbol}` },
-    { value: 'deleverage', label: `Deleverage ${market.collateralAsset.symbol}` },
-  ];
+  const modeOptions: { value: string; label: string }[] = toggleLeverageDeleverage
+    ? [
+        { value: 'leverage', label: `Leverage ${market.collateralAsset.symbol}` },
+        { value: 'deleverage', label: `Deleverage ${market.collateralAsset.symbol}` },
+      ]
+    : [
+        {
+          value: effectiveMode,
+          label: effectiveMode === 'leverage' ? `Leverage ${market.collateralAsset.symbol}` : `Deleverage ${market.collateralAsset.symbol}`,
+        },
+      ];
 
   const {
     data: collateralTokenBalance,

@@ -26,7 +26,7 @@ export type LeverageStepType =
 
 type UseLeverageTransactionProps = {
   market: Market;
-  route: LeverageRoute;
+  route: LeverageRoute | null;
   collateralAmount: bigint;
   collateralAmountInCollateralToken: bigint;
   flashCollateralAmount: bigint;
@@ -160,6 +160,11 @@ export function useLeverageTransaction({
   const executeLeverage = useCallback(async () => {
     if (!account) {
       toast.info('No account connected', 'Please connect your wallet.');
+      return;
+    }
+
+    if (!route) {
+      toast.info('Unsupported route', 'This market is not supported for leverage.');
       return;
     }
 

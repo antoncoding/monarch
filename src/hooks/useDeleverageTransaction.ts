@@ -18,7 +18,7 @@ export type DeleverageStepType = 'authorize_bundler_sig' | 'authorize_bundler_tx
 
 type UseDeleverageTransactionProps = {
   market: Market;
-  route: LeverageRoute;
+  route: LeverageRoute | null;
   withdrawCollateralAmount: bigint;
   flashLoanAmount: bigint;
   repayBySharesAmount: bigint;
@@ -107,6 +107,11 @@ export function useDeleverageTransaction({
   const executeDeleverage = useCallback(async () => {
     if (!account) {
       toast.info('No account connected', 'Please connect your wallet.');
+      return;
+    }
+
+    if (!route) {
+      toast.info('Unsupported route', 'This market is not supported for deleverage.');
       return;
     }
 

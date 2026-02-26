@@ -149,7 +149,7 @@ export function AddCollateralAndLeverage({
   const { transaction, isLoadingPermit2, isApproved, permit2Authorized, leveragePending, approveAndLeverage, signAndLeverage } =
     useLeverageTransaction({
       market,
-      route: route!,
+      route,
       collateralAmount,
       collateralAmountInCollateralToken: collateralAmountForLeverageQuote,
       flashCollateralAmount: quote.flashCollateralAmount,

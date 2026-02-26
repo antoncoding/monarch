@@ -34,7 +34,7 @@ export function BorrowModal({
   isRefreshing = false,
   position,
   defaultMode = 'borrow',
-  toggleBorrowRepay: _toggleBorrowRepay = true,
+  toggleBorrowRepay = true,
   liquiditySourcing,
 }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>(() => defaultMode);
@@ -49,6 +49,12 @@ export function BorrowModal({
   const leverageModalMode = mode === 'repay' ? 'deleverage' : 'leverage';
   const canOpenLeverageModal =
     !leverageSupport.isLoading && (mode === 'borrow' ? leverageSupport.supportsLeverage : leverageSupport.supportsDeleverage);
+  const modeOptions: { value: string; label: string }[] = toggleBorrowRepay
+    ? [
+        { value: 'borrow', label: `Borrow ${market.loanAsset.symbol}` },
+        { value: 'repay', label: `Repay ${market.loanAsset.symbol}` },
+      ]
+    : [{ value: mode, label: mode === 'borrow' ? `Borrow ${market.loanAsset.symbol}` : `Repay ${market.loanAsset.symbol}` }];
 
   const handleOpenLeverage = useCallback(() => {
     openModal('leverage', {
@@ -152,10 +158,7 @@ export function BorrowModal({
         title={
           <ModalIntentSwitcher
             value={mode}
-            options={[
-              { value: 'borrow', label: `Borrow ${market.loanAsset.symbol}` },
-              { value: 'repay', label: `Repay ${market.loanAsset.symbol}` },
-            ]}
+            options={modeOptions}
             onValueChange={(nextMode) => setMode(nextMode as 'borrow' | 'repay')}
           />
         }
