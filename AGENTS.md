@@ -138,7 +138,7 @@ When touching transaction and position flows, validation MUST include all releva
 3. **Computation-backed previews**: previews must be built from real oracle/quote/conversion paths and match tx-builder inputs.
 4. **Stepper/state-machine correctness**: first step must match runtime auth/signature state, and step order must never go backwards.
 5. **Post-transaction state hygiene**: on success reset draft inputs and trigger required refetches without loops/unbounded re-renders.
-6. **Display formatting discipline**: use shared formatting utilities from `src/utils/token-amount-format.ts` (`formatCompactTokenAmount`, `formatFullTokenAmount`) and existing readable-amount helpers consistently.
+6. **Display formatting discipline**: use shared formatting utilities from `src/hooks/leverage/math.ts` (`formatCompactTokenAmount`, `formatFullTokenAmount`, `formatTokenAmountPreview`) and existing readable-amount helpers consistently (`src/utils/token-amount-format.ts` is a re-export layer).
 7. **UI clarity and duplication checks**: remove duplicate/redundant/low-signal data and keep only decision-critical information.
 8. **Null/data-corruption resilience**: guard null/undefined/stale API/contract fields so malformed data fails gracefully.
 9. **Runtime guards on optional config/routes**: avoid unsafe non-null assertions in tx-critical paths; unsupported routes/config must degrade gracefully.

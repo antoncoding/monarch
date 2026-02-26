@@ -115,9 +115,7 @@ export function LeverageModal({
         }
       />
       <ModalBody>
-        {support.isLoading ? (
-          <div className="rounded border border-white/10 bg-hovered p-4 text-sm text-secondary">Checking leverage route support...</div>
-        ) : support.isSupported ? (
+        {support.isSupported ? (
           effectiveMode === 'leverage' ? (
             <AddCollateralAndLeverage
               market={market}
@@ -142,6 +140,8 @@ export function LeverageModal({
               {support.reason ?? 'Deleverage is not available for this route.'}
             </div>
           )
+        ) : support.isLoading ? (
+          <div className="rounded border border-white/10 bg-hovered p-4 text-sm text-secondary">Checking leverage route support...</div>
         ) : (
           <div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
             {support.reason ?? 'This market is not supported by the V2 leverage routes.'}
