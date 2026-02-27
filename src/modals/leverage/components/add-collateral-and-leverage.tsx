@@ -59,6 +59,7 @@ export function AddCollateralAndLeverage({
 
   const multiplierBps = useMemo(() => clampMultiplierBps(parseMultiplierToBps(multiplierInput)), [multiplierInput]);
   const isErc4626Route = route?.kind === 'erc4626';
+  const isSwapRoute = route?.kind === 'swap';
 
   const { data: loanTokenBalance } = useReadContract({
     address: market.loanAsset.address as `0x${string}`,
@@ -89,7 +90,7 @@ export function AddCollateralAndLeverage({
   } = useReadContract({
     // WHY: for ERC4626 "start with loan asset" mode, user input is underlying assets.
     // We convert to collateral shares first so multiplier/flash math stays in collateral units.
-    address: route?.collateralVault,
+    address: route?.kind === 'erc4626' ? route.collateralVault : undefined,
     abi: erc4626Abi,
     functionName: 'previewDeposit',
     args: [collateralAmount],
@@ -116,6 +117,11 @@ export function AddCollateralAndLeverage({
     route,
     userCollateralAmount: collateralAmountForLeverageQuote,
     multiplierBps,
+    loanTokenAddress: market.loanAsset.address,
+    loanTokenDecimals: market.loanAsset.decimals,
+    collateralTokenAddress: market.collateralAsset.address,
+    collateralTokenDecimals: market.collateralAsset.decimals,
+    userAddress: account as `0x${string}` | undefined,
   });
 
   const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
@@ -171,7 +177,7 @@ export function AddCollateralAndLeverage({
     if (onSuccess) onSuccess();
   }, [onSuccess]);
 
-  const { transaction, isLoadingPermit2, isApproved, permit2Authorized, leveragePending, approveAndLeverage, signAndLeverage } =
+  const { transaction, isLoadingPermit2, permit2Authorized, leveragePending, approveAndLeverage, signAndLeverage } =
     useLeverageTransaction({
       market,
       route,
@@ -179,6 +185,7 @@ export function AddCollateralAndLeverage({
       collateralAmountInCollateralToken: collateralAmountForLeverageQuote,
       flashCollateralAmount: quote.flashCollateralAmount,
       flashLoanAmount: quote.flashLoanAmount,
+      swapPriceRoute: quote.swapPriceRoute,
       useLoanAssetAsInput: useLoanAssetInput,
       onSuccess: handleTransactionSuccess,
     });
@@ -194,16 +201,15 @@ export function AddCollateralAndLeverage({
   }, [multiplierInput]);
 
   const handleLeverage = useCallback(() => {
-    if (usePermit2Setting && permit2Authorized) {
+    const usePermit2Flow = usePermit2Setting && isErc4626Route;
+
+    if (usePermit2Flow && permit2Authorized) {
       void signAndLeverage();
       return;
     }
-    if (!usePermit2Setting && isApproved) {
-      void approveAndLeverage();
-      return;
-    }
+
     void approveAndLeverage();
-  }, [usePermit2Setting, permit2Authorized, signAndLeverage, isApproved, approveAndLeverage]);
+  }, [usePermit2Setting, isErc4626Route, permit2Authorized, signAndLeverage, approveAndLeverage]);
 
   const projectedOverLimit = projectedLTV >= lltv;
   const insufficientLiquidity = quote.flashLoanAmount > marketLiquidity;
@@ -221,6 +227,11 @@ export function AddCollateralAndLeverage({
     () => formatTokenAmountPreview(quote.totalAddedCollateral, market.collateralAsset.decimals),
     [quote.totalAddedCollateral, market.collateralAsset.decimals],
   );
+  const swapCollateralOutPreview = useMemo(
+    () => formatTokenAmountPreview(quote.flashCollateralAmount, market.collateralAsset.decimals),
+    [quote.flashCollateralAmount, market.collateralAsset.decimals],
+  );
+  const collateralPreviewForDisplay = isSwapRoute ? swapCollateralOutPreview : totalCollateralAddedPreview;
   const renderRateValue = useCallback(
     (apy: number | null): JSX.Element => {
       if (apy == null || !Number.isFinite(apy)) return <span className="font-monospace">-</span>;
@@ -336,7 +347,7 @@ export function AddCollateralAndLeverage({
               <p className="mb-2 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Transaction Preview</p>
               <div className="space-y-1 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-secondary">Flash Borrow</span>
+                  <span className="text-secondary">{isSwapRoute ? 'Flash Borrow Required' : 'Flash Borrow'}</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
                     <Tooltip content={<span className="font-monospace text-xs">{flashBorrowPreview.full}</span>}>
                       <span className="cursor-help border-b border-dotted border-white/40">{flashBorrowPreview.compact}</span>
@@ -351,10 +362,10 @@ export function AddCollateralAndLeverage({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-secondary">Total Collateral Added</span>
+                  <span className="text-secondary">{isSwapRoute ? 'Collateral From Swap (Est.)' : 'Total Collateral Added'}</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <Tooltip content={<span className="font-monospace text-xs">{totalCollateralAddedPreview.full}</span>}>
-                      <span className="cursor-help border-b border-dotted border-white/40">{totalCollateralAddedPreview.compact}</span>
+                    <Tooltip content={<span className="font-monospace text-xs">{collateralPreviewForDisplay.full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">{collateralPreviewForDisplay.compact}</span>
                     </Tooltip>
                     <TokenIcon
                       address={market.collateralAsset.address}
@@ -385,6 +396,12 @@ export function AddCollateralAndLeverage({
                       </span>
                     </div>
                   </>
+                )}
+                {isSwapRoute && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-secondary">Route</span>
+                    <span className="tabular-nums">Bundler3 + Velora</span>
+                  </div>
                 )}
               </div>
               {conversionErrorMessage && <p className="mt-2 text-xs text-red-500">{conversionErrorMessage}</p>}

@@ -35,6 +35,7 @@ export function LeverageModal({
   const { address: account } = useConnection();
   const support = useLeverageSupport({ market });
   const isErc4626Route = support.route?.kind === 'erc4626';
+  const isSwapRoute = support.route?.kind === 'swap';
 
   const effectiveMode = mode;
   const modeOptions: { value: string; label: string }[] = toggleLeverageDeleverage
@@ -119,16 +120,29 @@ export function LeverageModal({
                 #ERC4626
               </Badge>
             )}
+            {isSwapRoute && (
+              <Badge
+                variant="warning"
+                size="sm"
+                className="uppercase tracking-[0.08em]"
+              >
+                #SWAP
+              </Badge>
+            )}
           </div>
         }
         description={
           effectiveMode === 'leverage'
             ? isErc4626Route
               ? `Leverage ERC4626 vault exposure by looping ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
-              : `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
+              : isSwapRoute
+                ? `Leverage ${market.collateralAsset.symbol} exposure through Bundler3 + Velora swap routing.`
+                : `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
             : isErc4626Route
               ? `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`
-              : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
+              : isSwapRoute
+                ? `Deleverage is not yet available for the swap route on this market.`
+                : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
         }
       />
       <ModalBody>

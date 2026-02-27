@@ -30,7 +30,7 @@ export function RemoveCollateralAndDeleverage({
   onSuccess,
   isRefreshing = false,
 }: RemoveCollateralAndDeleverageProps): JSX.Element {
-  const route = support.route;
+  const route = support.route?.kind === 'erc4626' ? support.route : null;
   const [withdrawCollateralAmount, setWithdrawCollateralAmount] = useState<bigint>(0n);
   const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
 
