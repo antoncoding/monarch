@@ -1,4 +1,4 @@
-import type { Address } from 'viem';
+import { isAddress, type Address } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
 
 /**
@@ -28,4 +28,13 @@ export const WETH_BY_CHAIN: Partial<Record<SupportedNetworks, Address>> = {
 
 export const getCanonicalWethAddress = (chainId: number): Address | undefined => {
   return WETH_BY_CHAIN[chainId as SupportedNetworks];
+};
+
+/**
+ * Normalizes an address for canonical token identity checks.
+ * Returns null when the input is not a valid EVM address.
+ */
+export const toCanonicalTokenAddress = (address: string | null | undefined): Address | null => {
+  if (!address || !isAddress(address)) return null;
+  return address.toLowerCase() as Address;
 };

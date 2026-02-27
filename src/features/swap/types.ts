@@ -19,26 +19,24 @@ export type SwapQuoteDisplay = {
 };
 
 /**
- * CoW Protocol supported chains for swaps
- * Mainnet (1), Base (8453), Arbitrum (42161)
- * Note: These are chains supported by both CoW Protocol and our balance API
+ * Velora supported chains that overlap with Monarch-supported networks.
+ * Mainnet (1), Polygon (137), Unichain (130), Base (8453), Arbitrum (42161)
  */
-export const COW_SWAP_CHAINS = [1, 8453, 42_161] as const;
+export const VELORA_SWAP_CHAINS = [1, 137, 130, 8453, 42_161] as const;
 
 /**
- * CoW Protocol VaultRelayer address (same across all chains)
- * This is the address that needs to be approved to spend tokens
+ * Canonical native-token pseudo address used by Velora API.
  */
-export const COW_VAULT_RELAYER = '0xC92E8bdf79f0507f65a392b0ab4667716BFE0110' as const;
+export const VELORA_NATIVE_TOKEN_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const;
 
 /**
- * Type for CoW swap supported chain IDs
+ * Type for Velora swap supported chain IDs
  */
-export type CowSwapChainId = (typeof COW_SWAP_CHAINS)[number];
+export type VeloraSwapChainId = (typeof VELORA_SWAP_CHAINS)[number];
 
 /**
- * Check if a chain ID is supported by CoW Swap
+ * Check if a chain ID is supported by Velora swap
  */
-export function isCowSwapChain(chainId: number): chainId is CowSwapChainId {
-  return COW_SWAP_CHAINS.includes(chainId as CowSwapChainId);
+export function isVeloraSwapChain(chainId: number): chainId is VeloraSwapChainId {
+  return VELORA_SWAP_CHAINS.includes(chainId as VeloraSwapChainId);
 }

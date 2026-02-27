@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { StyledToast, TransactionToast } from '@/components/ui/styled-toast';
 import { reportHandledError } from '@/utils/sentry';
+import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import { getExplorerTxURL } from '../utils/external';
 import type { SupportedNetworks } from '../utils/networks';
 
@@ -127,7 +128,7 @@ export function useTransactionWithToast({
         reportedErrorKeyRef.current = reportKey;
       }
 
-      const errorMessage = (txError ?? receiptError)?.message ?? 'Transaction Failed';
+      const errorMessage = toUserFacingTransactionErrorMessage(txError ?? receiptError, 'Transaction failed');
 
       toast.update(toastId, {
         render: (

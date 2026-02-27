@@ -24,6 +24,7 @@ type Props = {
 export function useAllowance({ user, spender, chainId = 1, token, refetchInterval = 10_000, tokenSymbol }: Props) {
   const { chain } = useConnection();
   const chainIdFromArgumentOrConnectedWallet = chainId ?? chain?.id;
+  const hasValidAllowanceRoute = spender !== zeroAddress && token !== zeroAddress;
 
   const { data } = useReadContract({
     abi: erc20Abi,
@@ -31,7 +32,7 @@ export function useAllowance({ user, spender, chainId = 1, token, refetchInterva
     address: token,
     args: [user ?? zeroAddress, spender],
     query: {
-      enabled: !!user && !!spender && !!token,
+      enabled: !!user && hasValidAllowanceRoute,
       refetchInterval,
     },
     chainId,
@@ -48,7 +49,7 @@ export function useAllowance({ user, spender, chainId = 1, token, refetchInterva
   });
 
   const approveInfinite = useCallback(async () => {
-    if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
+    if (!user || !hasValidAllowanceRoute) throw new Error('User, spender, or token not provided');
     // some weird bug with writeContract, update to use useSendTransaction
     await sendTransactionAsync({
       account: user,
@@ -60,7 +61,7 @@ export function useAllowance({ user, spender, chainId = 1, token, refetchInterva
       }),
       chainId: chainIdFromArgumentOrConnectedWallet,
     });
-  }, [user, spender, token, sendTransactionAsync, chainIdFromArgumentOrConnectedWallet]);
+  }, [user, hasValidAllowanceRoute, sendTransactionAsync, chainIdFromArgumentOrConnectedWallet, token, spender]);
 
   const allowance = data ? data : BigInt(0);
 

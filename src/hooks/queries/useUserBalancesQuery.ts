@@ -79,6 +79,7 @@ export const useUserBalancesQuery = (options: UseUserBalancesOptions = {}) => {
     isLoading,
     isError,
     error,
+    refetch,
   } = useReadContracts({
     contracts,
     query: {
@@ -117,7 +118,7 @@ export const useUserBalancesQuery = (options: UseUserBalancesOptions = {}) => {
     return balances;
   }, [rawResults, tokenEntries, findToken]);
 
-  return { data, isLoading, isError, error };
+  return { data, isLoading, isError, error, refetch };
 };
 
 /**

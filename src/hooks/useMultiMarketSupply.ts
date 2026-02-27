@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { type Address, encodeFunctionData } from 'viem';
+import { type Address, encodeFunctionData, zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { usePermit2 } from '@/hooks/usePermit2';
@@ -8,7 +8,6 @@ import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import type { NetworkToken } from '@/types/token';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
@@ -34,6 +33,11 @@ export function useMultiMarketSupply(
   const chainId = loanAsset?.network;
   const tokenSymbol = loanAsset?.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
+  const bundlerAddress = chainId ? getBundlerV2(chainId) : zeroAddress;
+  const isBundlerAddressValid = chainId !== undefined && bundlerAddress !== zeroAddress;
+  const bundlerAddressErrorMessage = chainId
+    ? `No bundler configured for chain ${chainId}.`
+    : 'No chain selected for multi-market supply.';
 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
@@ -44,7 +48,7 @@ export function useMultiMarketSupply(
     signForBundlers,
   } = usePermit2({
     user: account as `0x${string}`,
-    spender: getBundlerV2(chainId ?? SupportedNetworks.Mainnet),
+    spender: isBundlerAddressValid ? bundlerAddress : undefined,
     token: loanAsset?.address as `0x${string}`,
     refetchInterval: 10_000,
     chainId,
@@ -54,7 +58,7 @@ export function useMultiMarketSupply(
 
   const { isApproved, approve } = useERC20Approval({
     token: loanAsset?.address as Address,
-    spender: getBundlerV2(chainId ?? SupportedNetworks.Mainnet),
+    spender: bundlerAddress,
     amount: totalAmount,
     tokenSymbol: loanAsset?.symbol ?? '',
   });
@@ -67,18 +71,23 @@ export function useMultiMarketSupply(
     chainId,
     pendingDescription: `Supplying to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
     successDescription: `Successfully supplied to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
-    onSuccess,
+    onSuccess: () => {
+      if (onSuccess) onSuccess();
+    },
   });
 
   const executeSupplyTransaction = useCallback(async () => {
     if (!account) throw new Error('No account connected');
     if (!loanAsset || !chainId) throw new Error('Invalid loan asset or chain');
+    if (!isBundlerAddressValid) throw new Error(bundlerAddressErrorMessage);
 
     const txs: `0x${string}`[] = [];
 
     let gas: bigint | undefined = undefined;
 
     try {
+      // Supply flows do not require Morpho/Bundler authorization.
+      // We only need funding/transfer steps (ETH wrap, Permit2, or ERC20 transferFrom) plus morphoSupply calls.
       // Handle ETH wrapping if needed
       if (useEth) {
         txs.push(
@@ -155,7 +164,7 @@ export function useMultiMarketSupply(
 
       await sendTransactionAsync({
         account,
-        to: getBundlerV2(chainId),
+        to: bundlerAddress,
         data: (encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'multicall',
@@ -195,6 +204,9 @@ export function useMultiMarketSupply(
     signForBundlers,
     usePermit2Setting,
     chainId,
+    bundlerAddress,
+    bundlerAddressErrorMessage,
+    isBundlerAddressValid,
     loanAsset,
     toast,
     tracking,
@@ -203,6 +215,10 @@ export function useMultiMarketSupply(
   const approveAndSupply = useCallback(async () => {
     if (!account) {
       toast.error('No account connected', 'Please connect your wallet to continue.');
+      return false;
+    }
+    if (!isBundlerAddressValid) {
+      toast.error('Unsupported network', bundlerAddressErrorMessage);
       return false;
     }
 
@@ -292,6 +308,8 @@ export function useMultiMarketSupply(
     tracking,
     tokenSymbol,
     supplies,
+    bundlerAddressErrorMessage,
+    isBundlerAddressValid,
   ]);
 
   return {

@@ -1,29 +1,58 @@
-import { useCallback, useMemo, useState } from 'react';
-import Image from 'next/image';
-import { ArrowDownIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
-import { formatUnits, parseUnits } from 'viem';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowDownIcon, ChevronDownIcon } from '@radix-ui/react-icons';
+import { IoIosSwap } from 'react-icons/io';
+import { formatUnits, isAddress, parseUnits, zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
+import { Spinner } from '@/components/ui/spinner';
 import { useUserBalancesQuery } from '@/hooks/queries/useUserBalancesQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAllowance } from '@/hooks/useAllowance';
 import { formatBalance } from '@/utils/balance';
-import { getNetworkName } from '@/utils/networks';
-import { useCowSwap } from '../hooks/useCowSwap';
+import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
+import { formatCompactTokenAmount, formatTokenAmountPreview } from '@/utils/token-amount-format';
+import { useVeloraSwap } from '../hooks/useVeloraSwap';
 import { TokenNetworkDropdown } from './TokenNetworkDropdown';
-import { COW_SWAP_CHAINS, COW_VAULT_RELAYER, type SwapToken } from '../types';
+import { SwapTokenAmountField } from './SwapTokenAmountField';
+import { VELORA_SWAP_CHAINS, type SwapToken } from '../types';
 import { DEFAULT_SLIPPAGE_PERCENT } from '../constants';
-
-const img = '/imgs/protocols/cow.svg';
 
 type SwapModalProps = {
   isOpen: boolean;
   onClose: () => void;
   defaultTargetToken?: SwapToken;
+};
+
+const MIN_SLIPPAGE_PERCENT = 0.1;
+const MAX_SLIPPAGE_PERCENT = 5;
+const DEFAULT_CHAIN_ID = 1;
+const RATE_PREVIEW_DECIMALS = 8;
+
+const formatSlippagePercent = (value: number): string => {
+  return value.toFixed(2).replace(/\.?0+$/, '');
+};
+
+const clampSlippagePercent = (value: number): number => {
+  return Math.min(MAX_SLIPPAGE_PERCENT, Math.max(MIN_SLIPPAGE_PERCENT, value));
+};
+
+const computeUnitRatePreviewAmount = (
+  baseAmount: bigint,
+  baseTokenDecimals: number,
+  quoteAmount: bigint,
+  quoteTokenDecimals: number,
+): bigint | null => {
+  if (baseAmount <= 0n || quoteAmount <= 0n) return null;
+
+  const scaledNumerator = quoteAmount * 10n ** BigInt(baseTokenDecimals + RATE_PREVIEW_DECIMALS);
+  const scaledDenominator = baseAmount * 10n ** BigInt(quoteTokenDecimals);
+  if (scaledDenominator <= 0n) return null;
+
+  return scaledNumerator / scaledDenominator;
 };
 
 export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProps) {
@@ -32,11 +61,20 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   const [targetToken, setTargetToken] = useState<SwapToken | null>(defaultTargetToken ?? null);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));
-  const [slippage, _setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
+  const [slippage, setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
+  const [slippageInput, setSlippageInput] = useState<string>(formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT));
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRateInverted, setIsRateInverted] = useState(false);
+  const amountInputClassName =
+    'h-10 w-full rounded bg-hovered px-3 pr-44 text-lg font-medium tabular-nums focus:border-primary focus:outline-none';
 
-  // Fetch user balances from CoW-supported chains
-  const { data: balances = [], isLoading: balancesLoading } = useUserBalancesQuery({
-    networkIds: COW_SWAP_CHAINS as unknown as number[],
+  // Fetch user balances from Velora-supported chains
+  const {
+    data: balances = [],
+    isLoading: balancesLoading,
+    refetch: refetchBalances,
+  } = useUserBalancesQuery({
+    networkIds: VELORA_SWAP_CHAINS as unknown as number[],
   });
 
   // Fetch all tokens for target selection
@@ -44,15 +82,6 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
 
   // Fetch markets to filter target tokens
   const { data: markets } = useMarketsQuery();
-
-  // Handle approval for source token
-  const { allowance, approveInfinite, approvePending } = useAllowance({
-    token: (sourceToken?.address ?? '0x0000000000000000000000000000000000000000') as `0x${string}`,
-    chainId: sourceToken?.chainId,
-    user: account,
-    spender: COW_VAULT_RELAYER,
-    tokenSymbol: sourceToken?.symbol,
-  });
 
   // Convert balances to SwapTokens (for source selection)
   const sourceTokens = useMemo<SwapToken[]>(() => {
@@ -72,18 +101,40 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
       });
   }, [balances]);
 
-  // Target tokens: all tokens with Morpho markets on CoW-supported chains
+  useEffect(() => {
+    if (balancesLoading) return;
+    if (!sourceToken) return;
+
+    const refreshedSourceToken = sourceTokens.find(
+      (token) => token.chainId === sourceToken.chainId && token.address.toLowerCase() === sourceToken.address.toLowerCase(),
+    );
+
+    if (!refreshedSourceToken) {
+      setSourceToken(null);
+      return;
+    }
+
+    if (
+      refreshedSourceToken.balance !== sourceToken.balance ||
+      refreshedSourceToken.decimals !== sourceToken.decimals ||
+      refreshedSourceToken.symbol !== sourceToken.symbol
+    ) {
+      setSourceToken(refreshedSourceToken);
+    }
+  }, [balancesLoading, sourceToken, sourceTokens]);
+
+  // Target tokens: all tokens with Morpho markets on Velora-supported chains
   const targetTokens = useMemo<SwapToken[]>(() => {
     if (!markets) return [];
 
     // Get unique loan asset keys (address-chainId) that have markets
     const loanAssetKeys = new Set(markets.map((m) => `${m.loanAsset.address.toLowerCase()}-${m.morphoBlue.chain.id}`));
 
-    // Filter allTokens to only those with markets on CoW-supported chains
+    // Filter allTokens to only those with markets on Velora-supported chains
     return allTokens
       .flatMap((token) =>
         token.networks
-          .filter((net) => COW_SWAP_CHAINS.includes(net.chain.id as (typeof COW_SWAP_CHAINS)[number]))
+          .filter((net) => VELORA_SWAP_CHAINS.includes(net.chain.id as (typeof VELORA_SWAP_CHAINS)[number]))
           .filter((net) => loanAssetKeys.has(`${net.address.toLowerCase()}-${net.chain.id}`))
           .map((net) => ({
             address: net.address,
@@ -107,47 +158,116 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   // Filter target tokens: exclude selected source (same token on same chain)
   const availableTargetTokens = useMemo<SwapToken[]>(() => {
     if (!sourceToken) return targetTokens;
-    return targetTokens.filter(
-      (t) => !(t.chainId === sourceToken.chainId && t.address.toLowerCase() === sourceToken.address.toLowerCase()),
-    );
+    return targetTokens.filter((t) => t.chainId === sourceToken.chainId && t.address.toLowerCase() !== sourceToken.address.toLowerCase());
   }, [targetTokens, sourceToken]);
 
-  // CoW Swap hook
-  const { quote, isQuoting, isExecuting, error, orderUid, chainsMatch, executeSwap, reset } = useCowSwap({
+  // Velora swap hook
+  const handleSwapConfirmed = useCallback(() => {
+    setInputAmount('0');
+    setAmount(BigInt(0));
+    void refetchBalances();
+  }, [refetchBalances]);
+
+  const { quote, isQuoting, isExecuting, error, chainsMatch, approvalTarget, executeSwap, reset } = useVeloraSwap({
     sourceToken,
     targetToken,
     amount,
     slippageBps: Math.round(slippage * 100),
+    onSwapConfirmed: handleSwapConfirmed,
   });
 
   // Check if approval is needed
+  const sourceTokenAddress =
+    sourceToken?.address && isAddress(sourceToken.address) ? (sourceToken.address as `0x${string}`) : (zeroAddress as `0x${string}`);
+  const spenderForAllowance =
+    approvalTarget && isAddress(approvalTarget) ? (approvalTarget as `0x${string}`) : (zeroAddress as `0x${string}`);
+
+  // Handle approval for source token
+  const { allowance, approveInfinite, approvePending } = useAllowance({
+    token: sourceTokenAddress,
+    chainId: sourceToken?.chainId,
+    user: account,
+    spender: spenderForAllowance,
+    tokenSymbol: sourceToken?.symbol,
+  });
   const needsApproval = allowance < amount && amount > BigInt(0);
 
-  // Check if chains match (for showing warning)
-  const showChainMismatch = sourceToken && targetToken && !chainsMatch;
-
   const handleSourceTokenSelect = (token: SwapToken) => {
+    if (targetToken && targetToken.chainId !== token.chainId) {
+      setTargetToken(null);
+    }
     setSourceToken(token);
     setAmount(BigInt(0));
     setInputAmount('0');
   };
 
   const handleTargetTokenSelect = (token: SwapToken) => {
+    if (sourceToken && sourceToken.chainId !== token.chainId) {
+      return;
+    }
     setTargetToken(token);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputAmount(value);
+    const normalizedInput = sanitizeDecimalInput(e.target.value);
+    if (!isValidDecimalInput(normalizedInput)) {
+      return;
+    }
+    setInputAmount(normalizedInput);
 
     if (!sourceToken) return;
 
+    const parseableInput = toParseableDecimalInput(normalizedInput);
+    if (!parseableInput) {
+      setAmount(BigInt(0));
+      return;
+    }
+
     try {
-      const parsed = parseUnits(value, sourceToken.decimals);
+      const parsed = parseUnits(parseableInput, sourceToken.decimals);
       setAmount(parsed);
     } catch {
-      // Invalid input, keep previous amount
+      // Clear parsed amount to avoid submitting a stale previous value.
+      setAmount(BigInt(0));
     }
+  };
+
+  const handleSlippageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const normalizedInput = sanitizeDecimalInput(e.target.value);
+    if (!isValidDecimalInput(normalizedInput)) {
+      return;
+    }
+    setSlippageInput(normalizedInput);
+
+    const parseableInput = toParseableDecimalInput(normalizedInput);
+    if (!parseableInput) {
+      return;
+    }
+
+    const parsed = Number(parseableInput);
+    if (Number.isNaN(parsed)) {
+      return;
+    }
+
+    setSlippage(clampSlippagePercent(parsed));
+  };
+
+  const handleSlippageBlur = () => {
+    const parseableInput = toParseableDecimalInput(slippageInput);
+    if (!parseableInput) {
+      setSlippageInput(formatSlippagePercent(slippage));
+      return;
+    }
+
+    const parsed = Number(parseableInput);
+    if (Number.isNaN(parsed)) {
+      setSlippageInput(formatSlippagePercent(slippage));
+      return;
+    }
+
+    const normalized = clampSlippagePercent(parsed);
+    setSlippage(normalized);
+    setSlippageInput(formatSlippagePercent(normalized));
   };
 
   const handleMaxClick = () => {
@@ -168,11 +288,13 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
 
   // Unified execution handler - handles approve + swap automatically
   const handleSwap = useCallback(async () => {
+    if (!sourceToken || !targetToken || !approvalTarget) return;
+
     if (needsApproval) {
       await approveInfinite();
     }
     await executeSwap();
-  }, [needsApproval, approveInfinite, executeSwap]);
+  }, [sourceToken, targetToken, approvalTarget, needsApproval, approveInfinite, executeSwap]);
 
   const isLoading = isQuoting || approvePending || isExecuting;
 
@@ -188,63 +310,79 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   const getOutputDisplay = () => {
     if (!targetToken) return 'Select token below';
     if (!sourceToken) return 'Select token above';
-    if (showChainMismatch) {
-      return <span className="text-xs text-orange-600 dark:text-orange-400">Select source on {getNetworkName(targetToken.chainId)}</span>;
-    }
     if (amount === BigInt(0)) return '0';
-    if (isQuoting) return 'Loading...';
-    if (error) return <span className="text-xs text-orange-600 dark:text-orange-400">{formatErrorMessage(error)}</span>;
-    if (quote) return <span className="text-lg">{Number(formatUnits(quote.buyAmount, targetToken.decimals)).toFixed(6)}</span>;
+    if (isQuoting) {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-xs text-secondary">
+          <Spinner
+            size={12}
+            width={2}
+            color="text-secondary"
+          />
+          Quoting
+        </span>
+      );
+    }
+    if (quote) return <span className="text-lg">{formatCompactTokenAmount(quote.buyAmount, targetToken.decimals)}</span>;
     return '0';
   };
+
+  const ratePreviewText = useMemo(() => {
+    if (!quote || !sourceToken || !targetToken || error || !chainsMatch) return null;
+
+    if (isRateInverted) {
+      const inverseRate = computeUnitRatePreviewAmount(
+        quote.buyAmount,
+        targetToken.decimals,
+        quote.sellAmount,
+        sourceToken.decimals,
+      );
+      if (!inverseRate) return null;
+      const inverseRatePreview = formatTokenAmountPreview(inverseRate, RATE_PREVIEW_DECIMALS).compact;
+      return `1 ${targetToken.symbol} ≈ ${inverseRatePreview} ${sourceToken.symbol}`;
+    }
+
+    const forwardRate = computeUnitRatePreviewAmount(
+      quote.sellAmount,
+      sourceToken.decimals,
+      quote.buyAmount,
+      targetToken.decimals,
+    );
+    if (!forwardRate) return null;
+    const forwardRatePreview = formatTokenAmountPreview(forwardRate, RATE_PREVIEW_DECIMALS).compact;
+    return `1 ${sourceToken.symbol} ≈ ${forwardRatePreview} ${targetToken.symbol}`;
+  }, [quote, sourceToken, targetToken, error, chainsMatch, isRateInverted]);
 
   return (
     <Modal
       isOpen={isOpen}
       onOpenChange={(open) => !open && handleClose()}
-      size="lg"
+      size="xl"
     >
       <ModalHeader
         title="Swap"
-        description={targetToken ? `Swap to ${targetToken.symbol} via CoW Protocol` : 'Swap tokens via CoW Protocol'}
+        description={targetToken ? `Swap to ${targetToken.symbol} via Velora` : 'Swap tokens via Velora'}
         mainIcon={
-          <div className="h-8 w-8 overflow-hidden rounded-full">
-            <Image
-              src={img}
-              alt="CoW Protocol"
-              width={32}
-              height={32}
-              className="h-full w-full object-cover"
-            />
-          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">V</div>
         }
       />
 
       <ModalBody>
         <div className="space-y-4">
           {/* From Section */}
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-xs text-secondary">From</span>
-              {sourceToken && (
-                <button
-                  type="button"
-                  onClick={handleMaxClick}
-                  className="text-xs text-secondary hover:text-primary"
-                >
-                  Balance: {sourceToken.balance ? formatBalance(sourceToken.balance, sourceToken.decimals) : '0'} {sourceToken.symbol}
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
+          <SwapTokenAmountField
+            label="From"
+            field={
               <input
                 type="text"
                 value={inputAmount}
                 onChange={handleInputChange}
                 placeholder="0"
                 disabled={!sourceToken}
-                className="h-10 flex-1 rounded-sm bg-hovered px-3 text-lg focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                className={`${amountInputClassName} disabled:cursor-not-allowed disabled:opacity-50`}
               />
+            }
+            dropdown={
               <TokenNetworkDropdown
                 selectedToken={sourceToken}
                 tokens={availableSourceTokens}
@@ -252,57 +390,108 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
                 placeholder="Select"
                 disabled={availableSourceTokens.length === 0}
                 highlightChainId={targetToken?.chainId}
+                triggerVariant="inline"
               />
-            </div>
-          </div>
+            }
+            footer={
+              sourceToken ? (
+                <div className="flex items-center justify-between text-xs text-secondary">
+                  <button
+                    type="button"
+                    onClick={handleMaxClick}
+                    className="hover:text-primary"
+                  >
+                    Balance: {sourceToken.balance ? formatBalance(sourceToken.balance, sourceToken.decimals) : '0'} {sourceToken.symbol}
+                  </button>
+                </div>
+              ) : null
+            }
+          />
 
           {/* Arrow */}
-          <div className="flex justify-center">
+          <div className="flex justify-center py-0.5">
             <ArrowDownIcon className="h-5 w-5 text-secondary" />
           </div>
 
           {/* To Section */}
-          <div>
-            <div className="mb-1.5 text-xs text-secondary">To</div>
-            <div className="flex items-center gap-2">
-              <div className="flex h-10 flex-1 items-center rounded-sm bg-hovered px-3 text-xs text-secondary">{getOutputDisplay()}</div>
+          <SwapTokenAmountField
+            label="To"
+            field={<div className={`${amountInputClassName} flex items-center text-sm text-secondary`}>{getOutputDisplay()}</div>}
+            dropdown={
               <TokenNetworkDropdown
                 selectedToken={targetToken}
                 tokens={availableTargetTokens}
                 onSelect={handleTargetTokenSelect}
                 placeholder="Select"
                 disabled={availableTargetTokens.length === 0}
+                triggerVariant="inline"
               />
-            </div>
-            <div className="mt-1.5 text-xs text-secondary">
-              {quote && sourceToken && targetToken && !error && chainsMatch && (
-                <span>
-                  1 {sourceToken.symbol} ≈{' '}
-                  {(
-                    Number(formatUnits(quote.buyAmount, targetToken.decimals)) / Number(formatUnits(quote.sellAmount, sourceToken.decimals))
-                  ).toFixed(6)}{' '}
-                  {targetToken.symbol}
+            }
+            footer={
+              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-secondary">
+                {ratePreviewText && (
+                  <button
+                    type="button"
+                    onClick={() => setIsRateInverted((prev) => !prev)}
+                    className="inline-flex shrink-0 rounded p-0.5 transition hover:bg-surface hover:text-primary"
+                    aria-label="Swap price direction"
+                  >
+                    <IoIosSwap className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <span className="truncate">{ratePreviewText}</span>
+              </div>
+            }
+          />
+
+          {/* Slippage */}
+          <div className="pt-2">
+            <div className="overflow-hidden rounded bg-hovered">
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between px-3 py-2 text-xs text-secondary transition-colors hover:text-primary"
+              >
+                <span>Settings</span>
+                <span className="inline-flex items-center gap-1">
+                  Slippage {formatSlippagePercent(slippage)}%
+                  <ChevronDownIcon className={`h-4 w-4 transition-transform ${isSettingsOpen ? 'rotate-180' : ''}`} />
                 </span>
-              )}
+              </button>
+              <AnimatePresence initial={false}>
+                {isSettingsOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-white/10 px-3 py-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-secondary">Max slippage</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            lang="en-US"
+                            value={slippageInput}
+                            onChange={handleSlippageChange}
+                            onBlur={handleSlippageBlur}
+                            className="h-7 w-16 rounded-sm bg-surface px-2 text-right text-xs focus:border-primary focus:outline-none"
+                          />
+                          <span className="text-xs text-secondary">%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
-          {/* Chain Mismatch Warning */}
-          {showChainMismatch && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="rounded bg-orange-50 p-3 text-sm dark:bg-orange-900/20"
-            >
-              <span className="text-xs text-orange-700 dark:text-orange-300">
-                Select a source token on {getNetworkName(targetToken.chainId)} to swap
-              </span>
-            </motion.div>
-          )}
-
           {/* Error Display */}
-          {error && !showChainMismatch && (
+          {error && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -313,34 +502,11 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
             </motion.div>
           )}
 
-          {/* Success Message */}
-          {orderUid && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="rounded bg-green-50 p-3 text-sm dark:bg-green-900/20"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-secondary">Order Created</span>
-                <a
-                  href={`https://explorer.cow.fi/orders/${orderUid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary underline hover:opacity-80"
-                >
-                  View in CoW Explorer
-                  <ExternalLinkIcon className="h-3 w-3" />
-                </a>
-              </div>
-            </motion.div>
-          )}
-
           {/* Empty State */}
           {!balancesLoading && sourceTokens.length === 0 && (
             <div className="py-6 text-center text-sm text-secondary">
               <p>No tokens found on supported chains</p>
-              <p className="mt-1 text-xs opacity-70">Supported: Ethereum, Base, Arbitrum</p>
+              <p className="mt-1 text-xs opacity-70">Supported: Ethereum, Polygon, Unichain, Base, Arbitrum</p>
             </div>
           )}
         </div>
@@ -351,20 +517,18 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
           variant="default"
           onClick={handleClose}
         >
-          {orderUid ? 'Close' : 'Cancel'}
+          Cancel
         </Button>
-        {!orderUid && (
-          <ExecuteTransactionButton
-            targetChainId={sourceToken?.chainId ?? 1}
-            skipChainCheck={!sourceToken || !targetToken || amount === BigInt(0) || !chainsMatch}
-            onClick={() => void handleSwap()}
-            isLoading={isLoading}
-            disabled={!sourceToken || !targetToken || !quote || amount === BigInt(0) || !!error || !chainsMatch}
-            variant="primary"
-          >
-            {needsApproval ? 'Approve & Swap' : 'Swap'}
-          </ExecuteTransactionButton>
-        )}
+        <ExecuteTransactionButton
+          targetChainId={sourceToken?.chainId ?? DEFAULT_CHAIN_ID}
+          skipChainCheck={!sourceToken || !targetToken || amount === BigInt(0) || !approvalTarget}
+          onClick={() => void handleSwap()}
+          isLoading={isLoading}
+          disabled={!sourceToken || !targetToken || !quote || amount === BigInt(0) || !!error || !chainsMatch || !approvalTarget}
+          variant="primary"
+        >
+          {needsApproval ? 'Approve & Swap' : 'Swap'}
+        </ExecuteTransactionButton>
       </ModalFooter>
     </Modal>
   );

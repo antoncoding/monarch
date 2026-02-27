@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { useAppKit } from '@reown/appkit/react';
 import { useConnection } from 'wagmi';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { getNetworkName } from '@/utils/networks';
 
@@ -130,14 +129,7 @@ export function ExecuteTransactionButton({
         isLoading={isSwitching}
         {...buttonProps}
       >
-        {isSwitching ? (
-          <div className="flex items-center gap-2">
-            <Spinner size={16} />
-            Switching...
-          </div>
-        ) : (
-          (switchChainText ?? defaultSwitchText)
-        )}
+        {switchChainText ?? defaultSwitchText}
       </Button>
     );
   }

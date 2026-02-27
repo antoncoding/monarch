@@ -4,6 +4,7 @@ import { formatUnits } from 'viem';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { NetworkIcon } from '@/components/shared/network-icon';
+import { cn } from '@/utils/components';
 import { getNetworkName } from '@/utils/networks';
 import type { SwapToken } from '../types';
 
@@ -15,6 +16,8 @@ type TokenNetworkDropdownProps = {
   disabled?: boolean;
   /** Optional chain ID to highlight tokens on (e.g., to show matching network) */
   highlightChainId?: number;
+  triggerVariant?: 'default' | 'inline';
+  triggerClassName?: string;
 };
 
 /**
@@ -28,6 +31,8 @@ export function TokenNetworkDropdown({
   placeholder = 'Select',
   disabled,
   highlightChainId,
+  triggerVariant = 'default',
+  triggerClassName,
 }: TokenNetworkDropdownProps) {
   const [query, setQuery] = useState('');
 
@@ -54,7 +59,12 @@ export function TokenNetworkDropdown({
         <button
           type="button"
           disabled={disabled}
-          className="flex h-10 min-w-[120px] items-center gap-1.5 rounded-sm bg-hovered px-4 transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+          className={cn(
+            triggerVariant === 'inline'
+              ? 'flex h-8 min-w-[108px] max-w-[180px] items-center gap-1 rounded-sm bg-hovered px-2 transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50'
+              : 'flex h-10 min-w-[120px] items-center gap-1.5 rounded-sm bg-hovered px-4 transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50',
+            triggerClassName,
+          )}
         >
           {selectedToken ? (
             <>
@@ -62,10 +72,10 @@ export function TokenNetworkDropdown({
                 address={selectedToken.address}
                 chainId={selectedToken.chainId}
                 symbol={selectedToken.symbol}
-                width={20}
-                height={20}
+                width={triggerVariant === 'inline' ? 16 : 20}
+                height={triggerVariant === 'inline' ? 16 : 20}
               />
-              <span className="font-medium">{selectedToken.symbol}</span>
+              <span className={cn('font-medium', triggerVariant === 'inline' ? 'truncate text-xs' : '')}>{selectedToken.symbol}</span>
               <NetworkIcon networkId={selectedToken.chainId} />
             </>
           ) : disabled ? (
@@ -73,7 +83,7 @@ export function TokenNetworkDropdown({
           ) : (
             <span className="text-xs text-secondary">{placeholder}</span>
           )}
-          <ChevronDownIcon className="ml-1 h-3 w-3 opacity-50" />
+          <ChevronDownIcon className={cn('opacity-50', triggerVariant === 'inline' ? 'ml-auto h-3 w-3' : 'ml-1 h-3 w-3')} />
         </button>
       </DropdownMenuTrigger>
 
