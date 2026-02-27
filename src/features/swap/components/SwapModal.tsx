@@ -13,6 +13,7 @@ import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAllowance } from '@/hooks/useAllowance';
 import { formatBalance } from '@/utils/balance';
+import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
 import { useVeloraSwap } from '../hooks/useVeloraSwap';
 import { TokenNetworkDropdown } from './TokenNetworkDropdown';
 import { SwapTokenAmountField } from './SwapTokenAmountField';
@@ -28,6 +29,14 @@ type SwapModalProps = {
 const MIN_SLIPPAGE_PERCENT = 0.1;
 const MAX_SLIPPAGE_PERCENT = 5;
 
+const formatSlippagePercent = (value: number): string => {
+  return value.toFixed(2).replace(/\.?0+$/, '');
+};
+
+const clampSlippagePercent = (value: number): number => {
+  return Math.min(MAX_SLIPPAGE_PERCENT, Math.max(MIN_SLIPPAGE_PERCENT, value));
+};
+
 const formatRateValue = (value: number): string => {
   if (!Number.isFinite(value) || value <= 0) return '0';
   if (value >= 1000) return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -42,6 +51,7 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));
   const [slippage, setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
+  const [slippageInput, setSlippageInput] = useState<string>(formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT));
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRateInverted, setIsRateInverted] = useState(false);
   const amountInputClassName =
@@ -163,37 +173,64 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputAmount(value);
+    const normalizedInput = sanitizeDecimalInput(e.target.value);
+    if (!isValidDecimalInput(normalizedInput)) {
+      return;
+    }
+    setInputAmount(normalizedInput);
 
     if (!sourceToken) return;
 
+    const parseableInput = toParseableDecimalInput(normalizedInput);
+    if (!parseableInput) {
+      setAmount(BigInt(0));
+      return;
+    }
+
     try {
-      const parsed = parseUnits(value, sourceToken.decimals);
+      const parsed = parseUnits(parseableInput, sourceToken.decimals);
       setAmount(parsed);
     } catch {
-      // Invalid input, keep previous amount
+      // Invalid input, keep previous parsed amount
     }
   };
 
   const handleSlippageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === '') {
+    const normalizedInput = sanitizeDecimalInput(e.target.value);
+    if (!isValidDecimalInput(normalizedInput)) {
+      return;
+    }
+    setSlippageInput(normalizedInput);
+
+    const parseableInput = toParseableDecimalInput(normalizedInput);
+    if (!parseableInput) {
       return;
     }
 
-    const parsed = Number(value);
+    const parsed = Number(parseableInput);
     if (Number.isNaN(parsed)) {
       return;
     }
 
-    const clamped = Math.min(MAX_SLIPPAGE_PERCENT, Math.max(MIN_SLIPPAGE_PERCENT, parsed));
-    setSlippage(clamped);
+    setSlippage(clampSlippagePercent(parsed));
   };
 
   const handleSlippageBlur = () => {
-    const normalized = Math.min(MAX_SLIPPAGE_PERCENT, Math.max(MIN_SLIPPAGE_PERCENT, slippage));
-    setSlippage(Number(normalized.toFixed(2)));
+    const parseableInput = toParseableDecimalInput(slippageInput);
+    if (!parseableInput) {
+      setSlippageInput(formatSlippagePercent(slippage));
+      return;
+    }
+
+    const parsed = Number(parseableInput);
+    if (Number.isNaN(parsed)) {
+      setSlippageInput(formatSlippagePercent(slippage));
+      return;
+    }
+
+    const normalized = clampSlippagePercent(parsed);
+    setSlippage(normalized);
+    setSlippageInput(formatSlippagePercent(normalized));
   };
 
   const handleMaxClick = () => {
@@ -370,7 +407,7 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
               >
                 <span>Settings</span>
                 <span className="inline-flex items-center gap-1">
-                  Slippage {slippage}%
+                  Slippage {formatSlippagePercent(slippage)}%
                   <ChevronDownIcon className={`h-4 w-4 transition-transform ${isSettingsOpen ? 'rotate-180' : ''}`} />
                 </span>
               </button>
@@ -388,11 +425,10 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
                         <span className="text-xs text-secondary">Max slippage</span>
                         <div className="flex items-center gap-1">
                           <input
-                            type="number"
-                            min={MIN_SLIPPAGE_PERCENT}
-                            max={MAX_SLIPPAGE_PERCENT}
-                            step="0.1"
-                            value={slippage}
+                            type="text"
+                            inputMode="decimal"
+                            lang="en-US"
+                            value={slippageInput}
                             onChange={handleSlippageChange}
                             onBlur={handleSlippageBlur}
                             className="h-7 w-16 rounded-sm bg-surface px-2 text-right text-xs focus:border-primary focus:outline-none"

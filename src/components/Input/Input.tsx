@@ -2,6 +2,7 @@ import { useCallback, useState, useEffect } from 'react';
 
 import { parseUnits } from 'viem';
 import { formatBalance } from '@/utils/balance';
+import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
 import { Button } from '@/components/ui/button';
 
 type InputProps = {
@@ -46,11 +47,21 @@ export default function Input({
   const onInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       // update the shown input text regardless
-      const inputText = e.target.value;
-      setInputAmount(inputText);
+      const normalizedInput = sanitizeDecimalInput(e.target.value);
+      if (!isValidDecimalInput(normalizedInput)) {
+        return;
+      }
+      setInputAmount(normalizedInput);
+
+      const parseableInput = toParseableDecimalInput(normalizedInput);
+      if (!parseableInput) {
+        setValue(BigInt(0));
+        if (setError) setError(null);
+        return;
+      }
 
       try {
-        const inputBigInt = parseUnits(inputText, decimals);
+        const inputBigInt = parseUnits(parseableInput, decimals);
 
         if (max !== undefined && inputBigInt > max && !bypassMax) {
           if (setError) setError(exceedMaxErrMessage ?? 'Input exceeds max');
@@ -62,9 +73,8 @@ export default function Input({
 
         setValue(inputBigInt);
         if (setError) setError(null);
-      } catch (err) {
+      } catch {
         if (setError) setError('Invalid input');
-        console.log('e', err);
       }
     },
     [decimals, setError, setInputAmount, setValue, max, exceedMaxErrMessage, allowExceedMax, bypassMax],
@@ -74,8 +84,15 @@ export default function Input({
   const handleDismissError = useCallback(() => {
     setBypassMax(true);
     if (setError) setError(null);
+
+    const parseableInput = toParseableDecimalInput(inputAmount);
+    if (!parseableInput) {
+      setValue(BigInt(0));
+      return;
+    }
+
     try {
-      const inputBigInt = parseUnits(inputAmount, decimals);
+      const inputBigInt = parseUnits(parseableInput, decimals);
       setValue(inputBigInt);
     } catch {
       // Invalid input, ignore
@@ -96,7 +113,9 @@ export default function Input({
     <div className="flex-grow">
       <div className="relative">
         <input
-          type="number"
+          type="text"
+          inputMode="decimal"
+          lang="en-US"
           value={inputAmount}
           onChange={onInputChange}
           className={`bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none ${

@@ -54,10 +54,6 @@ const buttonVariants = cva(
       isLoading: false,
     },
     compoundVariants: [
-      {
-        isLoading: true,
-        className: 'gap-2 [&>span:not(.loading-spinner)]:opacity-0 [&>svg]:opacity-0 [&>*:not(.loading-spinner)]:opacity-0',
-      },
       // Ghost button hover effects - subtle background changes with brightness adjustments
       {
         variant: 'ghost',
@@ -100,16 +96,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={isLoading ? true : props.disabled}
         {...props}
       >
-        {isLoading ? (
-          <span className="loading-spinner absolute inset-0 flex items-center justify-center">
-            <Spinner
-              size={14}
-              width={2}
-              color="text-current"
-            />
-          </span>
-        ) : null}
         {children}
+        {isLoading ? (
+          <Spinner
+            size={14}
+            width={2}
+            color="text-current"
+          />
+        ) : null}
       </Comp>
     );
   },
