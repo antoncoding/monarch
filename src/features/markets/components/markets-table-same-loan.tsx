@@ -505,7 +505,7 @@ export function MarketsTableWithSameLoanAsset({
       [SortColumn.COLLATSYMBOL]: 'collateralAsset.symbol',
       [SortColumn.Supply]: 'state.supplyAssetsUsd',
       [SortColumn.APY]: 'state.supplyApy',
-      [SortColumn.Liquidity]: 'state.liquidityAssets',
+      [SortColumn.Liquidity]: 'state.liquidityAssetsUsd',
       [SortColumn.Borrow]: 'state.borrowAssetsUsd',
       [SortColumn.BorrowAPY]: 'state.borrowApy',
       [SortColumn.RateAtTarget]: 'state.apyAtTarget',

@@ -115,7 +115,7 @@ export const useFilteredMarkets = (): Market[] => {
       [SortColumn.Supply]: 'state.supplyAssetsUsd',
       [SortColumn.Borrow]: 'state.borrowAssetsUsd',
       [SortColumn.SupplyAPY]: 'state.supplyApy',
-      [SortColumn.Liquidity]: 'state.liquidityAssets',
+      [SortColumn.Liquidity]: 'state.liquidityAssetsUsd',
       [SortColumn.BorrowAPY]: 'state.borrowApy',
       [SortColumn.RateAtTarget]: 'state.apyAtTarget',
       [SortColumn.TrustedBy]: '',

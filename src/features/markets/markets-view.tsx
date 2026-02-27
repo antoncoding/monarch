@@ -185,8 +185,8 @@ export default function Markets() {
           <MarketsTable
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
-            className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
-            tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
+            className={effectiveTableViewMode === 'compact' ? 'w-full' : 'w-fit'}
+            tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : 'w-fit'}
             onRefresh={handleRefresh}
             isMobile={isMobile}
           />
