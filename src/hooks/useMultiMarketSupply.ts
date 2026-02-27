@@ -12,6 +12,7 @@ import { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
+import { useBundlerAuthorizationStep } from './useBundlerAuthorizationStep';
 import { useStyledToast } from './useStyledToast';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 
@@ -34,6 +35,7 @@ export function useMultiMarketSupply(
   const chainId = loanAsset?.network;
   const tokenSymbol = loanAsset?.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
+  const bundlerAddress = getBundlerV2(chainId ?? SupportedNetworks.Mainnet);
 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
@@ -44,7 +46,7 @@ export function useMultiMarketSupply(
     signForBundlers,
   } = usePermit2({
     user: account as `0x${string}`,
-    spender: getBundlerV2(chainId ?? SupportedNetworks.Mainnet),
+    spender: bundlerAddress,
     token: loanAsset?.address as `0x${string}`,
     refetchInterval: 10_000,
     chainId,
@@ -54,9 +56,14 @@ export function useMultiMarketSupply(
 
   const { isApproved, approve } = useERC20Approval({
     token: loanAsset?.address as Address,
-    spender: getBundlerV2(chainId ?? SupportedNetworks.Mainnet),
+    spender: bundlerAddress,
     amount: totalAmount,
     tokenSymbol: loanAsset?.symbol ?? '',
+  });
+
+  const { isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep({
+    chainId: chainId ?? SupportedNetworks.Mainnet,
+    bundlerAddress: bundlerAddress as Address,
   });
 
   const { isConfirming: supplyPending, sendTransactionAsync } = useTransactionWithToast({
@@ -67,7 +74,10 @@ export function useMultiMarketSupply(
     chainId,
     pendingDescription: `Supplying to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
     successDescription: `Successfully supplied to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
-    onSuccess,
+    onSuccess: () => {
+      void refetchIsBundlerAuthorized();
+      if (onSuccess) onSuccess();
+    },
   });
 
   const executeSupplyTransaction = useCallback(async () => {
@@ -79,6 +89,18 @@ export function useMultiMarketSupply(
     let gas: bigint | undefined = undefined;
 
     try {
+      if (useEth || usePermit2Setting) {
+        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+        if (authorizationTxData) {
+          txs.push(authorizationTxData);
+        }
+      } else {
+        const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
+        if (!authorized) {
+          throw new Error('Failed to authorize Bundler via transaction.');
+        }
+      }
+
       // Handle ETH wrapping if needed
       if (useEth) {
         txs.push(
@@ -155,7 +177,7 @@ export function useMultiMarketSupply(
 
       await sendTransactionAsync({
         account,
-        to: getBundlerV2(chainId),
+        to: bundlerAddress,
         data: (encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'multicall',
@@ -193,8 +215,10 @@ export function useMultiMarketSupply(
     sendTransactionAsync,
     useEth,
     signForBundlers,
+    ensureBundlerAuthorization,
     usePermit2Setting,
     chainId,
+    bundlerAddress,
     loanAsset,
     toast,
     tracking,
@@ -300,6 +324,6 @@ export function useMultiMarketSupply(
     dismiss: tracking.dismiss,
     currentStep: tracking.currentStep,
     supplyPending,
-    isLoadingPermit2,
+    isLoadingPermit2: isLoadingPermit2 || isAuthorizingBundler,
   };
 }

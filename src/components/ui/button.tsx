@@ -3,9 +3,10 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/utils/index';
+import { Spinner } from './spinner';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all duration-200 ease-in-out border-0 outline-0 ring-0 focus:border-0 focus:outline-0 focus:ring-0 active:border-0 active:outline-0 active:ring-0 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'relative inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all duration-200 ease-in-out border-0 outline-0 ring-0 focus:border-0 focus:outline-0 focus:ring-0 active:border-0 active:outline-0 active:ring-0 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -55,7 +56,7 @@ const buttonVariants = cva(
     compoundVariants: [
       {
         isLoading: true,
-        className: 'gap-2 [&>span]:opacity-0 [&>svg]:opacity-0 [&>*:not(.loading-spinner)]:opacity-0',
+        className: 'gap-2 [&>span:not(.loading-spinner)]:opacity-0 [&>svg]:opacity-0 [&>*:not(.loading-spinner)]:opacity-0',
       },
       // Ghost button hover effects - subtle background changes with brightness adjustments
       {
@@ -90,7 +91,7 @@ export type ButtonProps = {
   VariantProps<typeof buttonVariants>;
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, radius, fullWidth, isLoading, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, radius, fullWidth, isLoading, asChild = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
     return (
       <Comp
@@ -98,7 +99,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={isLoading ? true : props.disabled}
         {...props}
-      />
+      >
+        {isLoading ? (
+          <span className="loading-spinner absolute inset-0 flex items-center justify-center">
+            <Spinner
+              size={14}
+              width={2}
+              color="text-current"
+            />
+          </span>
+        ) : null}
+        {children}
+      </Comp>
     );
   },
 );

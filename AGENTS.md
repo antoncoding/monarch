@@ -142,6 +142,9 @@ When touching transaction and position flows, validation MUST include all releva
 7. **UI clarity and duplication checks**: remove duplicate/redundant/low-signal data and keep only decision-critical information.
 8. **Null/data-corruption resilience**: guard null/undefined/stale API/contract fields so malformed data fails gracefully.
 9. **Runtime guards on optional config/routes**: avoid unsafe non-null assertions in tx-critical paths; unsupported routes/config must degrade gracefully.
+10. **Bundler authorization chokepoint**: every Morpho bundler transaction path (supply, borrow, repay, rebalance, leverage/deleverage) must route through `useBundlerAuthorizationStep` rather than implementing ad hoc authorization logic per hook.
+11. **Aggregator API schema separation**: quote-only request params must never be forwarded to transaction-build endpoints (e.g. Velora `version` on `/prices` but not `/transactions/:network`); enforce endpoint-specific payload/query builders and surface typed API errors.
+12. **User-rejection error normalization**: transaction hooks must map wallet rejection payloads (EIP-1193 `4001`, `ACTION_REJECTED`, viem request-argument dumps) to a short canonical UI message (`User rejected transaction.`) and never render raw payload text in inline UI/error boxes.
 
 ### REQUIRED: Regression Rule Capture
 

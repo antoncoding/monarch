@@ -22,7 +22,7 @@ Monarch is a client-side DeFi dashboard for the Morpho Blue lending protocol. It
 | Viem | 2.40.2 | Ethereum utilities |
 | @reown/appkit | 1.8.14 | Wallet connection (WalletConnect v3) |
 | @morpho-org/blue-sdk | 5.3.0 | Morpho Blue protocol SDK |
-| @cowprotocol/cow-sdk | 7.2.9 | Intent-based swaps |
+| Velora (ParaSwap) API | HTTP | Same-chain quote + transaction payloads for swaps |
 
 **Wagmi v3 integration notes:**
 - Prefer `useConnection()` when you need wallet state (`address`, `chainId`, `isConnected`) in one place.
@@ -123,6 +123,26 @@ MorphoChainlinkOracleData {
   quoteFeedOne, quoteFeedTwo: OracleFeed; // Quote token feeds
 }
 ```
+
+---
+
+## Transaction Architecture
+
+### Bundler Responsibility Matrix
+
+| Path | Bundler | Notes |
+|------|---------|-------|
+| Multi-supply / direct supply / borrow / repay / rebalance | Bundler V2 | Current production path |
+| Leverage/deleverage (current deterministic ERC4626 route) | Bundler V2 | Existing route remains unchanged |
+| Generic swap-only modal | No bundler (Velora direct tx) | Quote + tx payload from Velora API |
+| Planned: `rebalanceWithSwap`, generalized `useLeverage` (any pair) | Bundler V3 | Planned migration path for swap-dependent actions |
+
+### Authorization Model
+
+- Any flow that sends Morpho actions through Bundler V2 must pass through `useBundlerAuthorizationStep`.
+- Signature mode is used for Permit2 and native-token flows.
+- Transaction mode is used for standard ERC20 approval flow when signature mode is not selected.
+- See [`BUNDLER_STRATEGY.md`](/Users/antonasso/programming/morpho/monarch/docs/BUNDLER_STRATEGY.md) for migration rules and security guardrails.
 
 ---
 
@@ -304,6 +324,7 @@ Fallback Strategy:
 | Morpho API | `https://blue-api.morpho.org/graphql` | Markets, vaults, positions |
 | The Graph | Per-chain subgraph URLs | Fallback data, suppliers, borrowers |
 | Merkl API | `https://api.merkl.xyz` | Reward campaigns |
+| Velora API | `https://api.paraswap.io` | Swap quotes and executable tx payloads |
 | Alchemy | Per-chain RPC | Default RPC provider |
 
 ### Smart Contracts
@@ -336,3 +357,4 @@ Fallback Strategy:
 | All Stores | `/src/stores/` |
 | All Query Hooks | `/src/hooks/queries/` |
 | Vault Storage | `/src/utils/vault-storage.ts` |
+| Bundler Migration Notes | `/docs/BUNDLER_STRATEGY.md` |

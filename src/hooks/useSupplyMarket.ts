@@ -3,6 +3,7 @@ import { type Address, encodeFunctionData, erc20Abi } from 'viem';
 import { useConnection, useBalance, useReadContract } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
+import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -65,6 +66,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const { address: account, chainId } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);
   const toast = useStyledToast();
+  const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
 
   // Get token balance
   const {
@@ -100,7 +102,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     signForBundlers,
   } = usePermit2({
     user: account as `0x${string}`,
-    spender: getBundlerV2(market.morphoBlue.chain.id),
+    spender: bundlerAddress,
     token: market.loanAsset.address as `0x${string}`,
     refetchInterval: 10_000,
     chainId: market.morphoBlue.chain.id,
@@ -108,10 +110,15 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     amount: supplyAmount,
   });
 
+  const { isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep({
+    chainId: market.morphoBlue.chain.id,
+    bundlerAddress: bundlerAddress as Address,
+  });
+
   // Handle ERC20 approval
   const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
-    spender: getBundlerV2(market.morphoBlue.chain.id),
+    spender: bundlerAddress,
     amount: supplyAmount,
     tokenSymbol: market.loanAsset.symbol,
   });
@@ -130,7 +137,10 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     chainId,
     pendingDescription: `Supplying to market ${market.uniqueKey.slice(2, 8)}...`,
     successDescription: `Successfully supplied to market ${market.uniqueKey.slice(2, 8)}`,
-    onSuccess,
+    onSuccess: () => {
+      void refetchIsBundlerAuthorized();
+      if (onSuccess) onSuccess();
+    },
   });
 
   // Helper to generate steps based on flow type
@@ -164,6 +174,18 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       const txs: `0x${string}`[] = [];
 
       let gas: bigint | undefined = undefined;
+
+      if (useEth || usePermit2Setting) {
+        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+        if (authorizationTxData) {
+          txs.push(authorizationTxData);
+        }
+      } else {
+        const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
+        if (!authorized) {
+          throw new Error('Failed to authorize Bundler via transaction.');
+        }
+      }
 
       if (useEth) {
         txs.push(
@@ -235,7 +257,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
 
       await sendTransactionAsync({
         account,
-        to: getBundlerV2(market.morphoBlue.chain.id),
+        to: bundlerAddress,
         data: (encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'multicall',
@@ -268,12 +290,14 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     sendTransactionAsync,
     useEth,
     signForBundlers,
+    ensureBundlerAuthorization,
     usePermit2Setting,
     toast,
     batchAddUserMarkets,
     update,
     complete,
     fail,
+    bundlerAddress,
   ]);
 
   // Approve and supply handler
@@ -438,7 +462,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     // Transaction state
     isApproved,
     permit2Authorized,
-    isLoadingPermit2,
+    isLoadingPermit2: isLoadingPermit2 || isAuthorizingBundler,
     supplyPending,
 
     // Actions
