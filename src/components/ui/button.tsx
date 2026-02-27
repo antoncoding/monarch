@@ -87,14 +87,14 @@ export type ButtonProps = {
   VariantProps<typeof buttonVariants>;
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, radius, fullWidth, isLoading, asChild = false, children, ...props }, ref) => {
+  ({ className, variant, size, radius, fullWidth, isLoading, asChild = false, children, disabled, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, radius, fullWidth, isLoading, className }))}
         ref={ref}
-        disabled={isLoading ? true : props.disabled}
         {...props}
+        disabled={isLoading ? true : disabled}
       >
         {children}
         {isLoading ? (

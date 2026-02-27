@@ -1,4 +1,4 @@
-import type { Address } from 'viem';
+import { isAddress, isHex, type Address } from 'viem';
 import { SWAP_PARTNER, VELORA_API_BASE_URL, VELORA_PRICES_API_VERSION } from '../constants';
 
 export type VeloraSwapSide = 'SELL' | 'BUY';
@@ -145,9 +145,23 @@ const fetchVeloraJson = async <T>(url: string, init?: RequestInit): Promise<T> =
   return payload as T;
 };
 
+const parseVeloraAddressField = (value: unknown, fieldName: string): Address => {
+  if (typeof value !== 'string' || !isAddress(value)) {
+    throw new VeloraApiError(`Invalid ${fieldName} address returned by Velora`, 400, { [fieldName]: value });
+  }
+  return value as Address;
+};
+
+const parseVeloraHexDataField = (value: unknown, fieldName: string): `0x${string}` => {
+  if (typeof value !== 'string' || !isHex(value) || value.length <= 2) {
+    throw new VeloraApiError(`Invalid ${fieldName} payload returned by Velora`, 400, { [fieldName]: value });
+  }
+  return value as `0x${string}`;
+};
+
 export const getVeloraApprovalTarget = (priceRoute: VeloraPriceRoute | null): Address | null => {
   const spender = priceRoute?.tokenTransferProxy ?? priceRoute?.contractAddress;
-  if (!spender || !spender.startsWith('0x')) return null;
+  if (!spender || !isAddress(spender)) return null;
   return spender as Address;
 };
 
@@ -246,9 +260,12 @@ export const buildVeloraTransactionPayload = async ({
     );
   }
 
+  const to = parseVeloraAddressField(response.to, 'to');
+  const data = parseVeloraHexDataField(response.data, 'data');
+
   return {
-    to: response.to as Address,
-    data: response.data as `0x${string}`,
+    to,
+    data,
     value: response.value,
     gas: response.gas,
     gasPrice: response.gasPrice,

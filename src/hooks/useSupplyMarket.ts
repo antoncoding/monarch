@@ -3,7 +3,6 @@ import { type Address, encodeFunctionData, erc20Abi } from 'viem';
 import { useConnection, useBalance, useReadContract } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
-import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -110,11 +109,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     amount: supplyAmount,
   });
 
-  const { isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep({
-    chainId: market.morphoBlue.chain.id,
-    bundlerAddress: bundlerAddress as Address,
-  });
-
   // Handle ERC20 approval
   const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
@@ -138,7 +132,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     pendingDescription: `Supplying to market ${market.uniqueKey.slice(2, 8)}...`,
     successDescription: `Successfully supplied to market ${market.uniqueKey.slice(2, 8)}`,
     onSuccess: () => {
-      void refetchIsBundlerAuthorized();
       if (onSuccess) onSuccess();
     },
   });
@@ -175,18 +168,8 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
 
       let gas: bigint | undefined = undefined;
 
-      if (useEth || usePermit2Setting) {
-        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
-        if (authorizationTxData) {
-          txs.push(authorizationTxData);
-        }
-      } else {
-        const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
-        if (!authorized) {
-          throw new Error('Failed to authorize Bundler via transaction.');
-        }
-      }
-
+      // Supply flow does not need Morpho/Bundler authorization.
+      // We only compose transfer funding steps and then call morphoSupply in the same multicall.
       if (useEth) {
         txs.push(
           encodeFunctionData({
@@ -290,7 +273,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     sendTransactionAsync,
     useEth,
     signForBundlers,
-    ensureBundlerAuthorization,
     usePermit2Setting,
     toast,
     batchAddUserMarkets,
@@ -462,7 +444,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     // Transaction state
     isApproved,
     permit2Authorized,
-    isLoadingPermit2: isLoadingPermit2 || isAuthorizingBundler,
+    isLoadingPermit2,
     supplyPending,
 
     // Actions

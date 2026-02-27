@@ -12,7 +12,6 @@ import { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
-import { useBundlerAuthorizationStep } from './useBundlerAuthorizationStep';
 import { useStyledToast } from './useStyledToast';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 
@@ -61,11 +60,6 @@ export function useMultiMarketSupply(
     tokenSymbol: loanAsset?.symbol ?? '',
   });
 
-  const { isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep({
-    chainId: chainId ?? SupportedNetworks.Mainnet,
-    bundlerAddress: bundlerAddress as Address,
-  });
-
   const { isConfirming: supplyPending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'multi-supply',
     pendingText: `Supplying ${formatBalance(totalAmount, loanAsset?.decimals ?? 18)} ${tokenSymbol}`,
@@ -75,7 +69,6 @@ export function useMultiMarketSupply(
     pendingDescription: `Supplying to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
     successDescription: `Successfully supplied to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
     onSuccess: () => {
-      void refetchIsBundlerAuthorized();
       if (onSuccess) onSuccess();
     },
   });
@@ -89,18 +82,8 @@ export function useMultiMarketSupply(
     let gas: bigint | undefined = undefined;
 
     try {
-      if (useEth || usePermit2Setting) {
-        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
-        if (authorizationTxData) {
-          txs.push(authorizationTxData);
-        }
-      } else {
-        const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
-        if (!authorized) {
-          throw new Error('Failed to authorize Bundler via transaction.');
-        }
-      }
-
+      // Supply flows do not require Morpho/Bundler authorization.
+      // We only need funding/transfer steps (ETH wrap, Permit2, or ERC20 transferFrom) plus morphoSupply calls.
       // Handle ETH wrapping if needed
       if (useEth) {
         txs.push(
@@ -215,7 +198,6 @@ export function useMultiMarketSupply(
     sendTransactionAsync,
     useEth,
     signForBundlers,
-    ensureBundlerAuthorization,
     usePermit2Setting,
     chainId,
     bundlerAddress,
@@ -324,6 +306,6 @@ export function useMultiMarketSupply(
     dismiss: tracking.dismiss,
     currentStep: tracking.currentStep,
     supplyPending,
-    isLoadingPermit2: isLoadingPermit2 || isAuthorizingBundler,
+    isLoadingPermit2,
   };
 }

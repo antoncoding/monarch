@@ -191,7 +191,8 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
       const parsed = parseUnits(parseableInput, sourceToken.decimals);
       setAmount(parsed);
     } catch {
-      // Invalid input, keep previous parsed amount
+      // Clear parsed amount to avoid submitting a stale previous value.
+      setAmount(BigInt(0));
     }
   };
 
