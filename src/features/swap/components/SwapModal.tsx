@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDownIcon, ChevronDownIcon } from '@radix-ui/react-icons';
 import { IoIosSwap } from 'react-icons/io';
-import { formatUnits, parseUnits, zeroAddress } from 'viem';
+import { formatUnits, isAddress, parseUnits, zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
@@ -14,6 +14,7 @@ import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAllowance } from '@/hooks/useAllowance';
 import { formatBalance } from '@/utils/balance';
 import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
+import { formatCompactTokenAmount, formatTokenAmountPreview } from '@/utils/token-amount-format';
 import { useVeloraSwap } from '../hooks/useVeloraSwap';
 import { TokenNetworkDropdown } from './TokenNetworkDropdown';
 import { SwapTokenAmountField } from './SwapTokenAmountField';
@@ -28,6 +29,8 @@ type SwapModalProps = {
 
 const MIN_SLIPPAGE_PERCENT = 0.1;
 const MAX_SLIPPAGE_PERCENT = 5;
+const DEFAULT_CHAIN_ID = 1;
+const RATE_PREVIEW_DECIMALS = 8;
 
 const formatSlippagePercent = (value: number): string => {
   return value.toFixed(2).replace(/\.?0+$/, '');
@@ -37,11 +40,19 @@ const clampSlippagePercent = (value: number): number => {
   return Math.min(MAX_SLIPPAGE_PERCENT, Math.max(MIN_SLIPPAGE_PERCENT, value));
 };
 
-const formatRateValue = (value: number): string => {
-  if (!Number.isFinite(value) || value <= 0) return '0';
-  if (value >= 1000) return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  if (value >= 1) return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
-  return value.toLocaleString(undefined, { maximumFractionDigits: 8 });
+const computeUnitRatePreviewAmount = (
+  baseAmount: bigint,
+  baseTokenDecimals: number,
+  quoteAmount: bigint,
+  quoteTokenDecimals: number,
+): bigint | null => {
+  if (baseAmount <= 0n || quoteAmount <= 0n) return null;
+
+  const scaledNumerator = quoteAmount * 10n ** BigInt(baseTokenDecimals + RATE_PREVIEW_DECIMALS);
+  const scaledDenominator = baseAmount * 10n ** BigInt(quoteTokenDecimals);
+  if (scaledDenominator <= 0n) return null;
+
+  return scaledNumerator / scaledDenominator;
 };
 
 export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProps) {
@@ -166,11 +177,14 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   });
 
   // Check if approval is needed
-  const spenderForAllowance = approvalTarget ?? (zeroAddress as `0x${string}`);
+  const sourceTokenAddress =
+    sourceToken?.address && isAddress(sourceToken.address) ? (sourceToken.address as `0x${string}`) : (zeroAddress as `0x${string}`);
+  const spenderForAllowance =
+    approvalTarget && isAddress(approvalTarget) ? (approvalTarget as `0x${string}`) : (zeroAddress as `0x${string}`);
 
   // Handle approval for source token
   const { allowance, approveInfinite, approvePending } = useAllowance({
-    token: (sourceToken?.address ?? zeroAddress) as `0x${string}`,
+    token: sourceTokenAddress,
     chainId: sourceToken?.chainId,
     user: account,
     spender: spenderForAllowance,
@@ -309,24 +323,34 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
         </span>
       );
     }
-    if (quote) return <span className="text-lg">{Number(formatUnits(quote.buyAmount, targetToken.decimals)).toFixed(6)}</span>;
+    if (quote) return <span className="text-lg">{formatCompactTokenAmount(quote.buyAmount, targetToken.decimals)}</span>;
     return '0';
   };
 
   const ratePreviewText = useMemo(() => {
     if (!quote || !sourceToken || !targetToken || error || !chainsMatch) return null;
 
-    const sell = Number(formatUnits(quote.sellAmount, sourceToken.decimals));
-    const buy = Number(formatUnits(quote.buyAmount, targetToken.decimals));
-    if (!Number.isFinite(sell) || !Number.isFinite(buy) || sell <= 0 || buy <= 0) return null;
-
     if (isRateInverted) {
-      const inverseRate = sell / buy;
-      return `1 ${targetToken.symbol} ≈ ${formatRateValue(inverseRate)} ${sourceToken.symbol}`;
+      const inverseRate = computeUnitRatePreviewAmount(
+        quote.buyAmount,
+        targetToken.decimals,
+        quote.sellAmount,
+        sourceToken.decimals,
+      );
+      if (!inverseRate) return null;
+      const inverseRatePreview = formatTokenAmountPreview(inverseRate, RATE_PREVIEW_DECIMALS).compact;
+      return `1 ${targetToken.symbol} ≈ ${inverseRatePreview} ${sourceToken.symbol}`;
     }
 
-    const forwardRate = buy / sell;
-    return `1 ${sourceToken.symbol} ≈ ${formatRateValue(forwardRate)} ${targetToken.symbol}`;
+    const forwardRate = computeUnitRatePreviewAmount(
+      quote.sellAmount,
+      sourceToken.decimals,
+      quote.buyAmount,
+      targetToken.decimals,
+    );
+    if (!forwardRate) return null;
+    const forwardRatePreview = formatTokenAmountPreview(forwardRate, RATE_PREVIEW_DECIMALS).compact;
+    return `1 ${sourceToken.symbol} ≈ ${forwardRatePreview} ${targetToken.symbol}`;
   }, [quote, sourceToken, targetToken, error, chainsMatch, isRateInverted]);
 
   return (
@@ -496,7 +520,7 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
           Cancel
         </Button>
         <ExecuteTransactionButton
-          targetChainId={sourceToken?.chainId ?? 1}
+          targetChainId={sourceToken?.chainId ?? DEFAULT_CHAIN_ID}
           skipChainCheck={!sourceToken || !targetToken || amount === BigInt(0) || !approvalTarget}
           onClick={() => void handleSwap()}
           isLoading={isLoading}

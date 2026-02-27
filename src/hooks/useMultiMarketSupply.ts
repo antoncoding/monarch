@@ -8,7 +8,6 @@ import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import type { NetworkToken } from '@/types/token';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
@@ -34,11 +33,11 @@ export function useMultiMarketSupply(
   const chainId = loanAsset?.network;
   const tokenSymbol = loanAsset?.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
-  const bundlerAddress = getBundlerV2(chainId ?? SupportedNetworks.Mainnet);
-  const isBundlerAddressValid = Boolean(bundlerAddress) && bundlerAddress !== zeroAddress;
+  const bundlerAddress = chainId ? getBundlerV2(chainId) : zeroAddress;
+  const isBundlerAddressValid = chainId !== undefined && bundlerAddress !== zeroAddress;
   const bundlerAddressErrorMessage = chainId
     ? `No bundler configured for chain ${chainId}.`
-    : 'No bundler configured for the selected network.';
+    : 'No chain selected for multi-market supply.';
 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 

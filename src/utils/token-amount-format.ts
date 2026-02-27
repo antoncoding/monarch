@@ -1,1 +1,1 @@
-export { formatCompactTokenAmount, formatFullTokenAmount } from '@/hooks/leverage/math';
+export { formatCompactTokenAmount, formatFullTokenAmount, formatTokenAmountPreview } from '@/hooks/leverage/math';
