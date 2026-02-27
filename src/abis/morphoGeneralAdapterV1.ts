@@ -67,6 +67,31 @@ export const morphoGeneralAdapterV1Abi = [
   {
     type: 'function',
     stateMutability: 'nonpayable',
+    name: 'morphoRepay',
+    inputs: [
+      marketParamsTuple,
+      { internalType: 'uint256', name: 'assets', type: 'uint256' },
+      { internalType: 'uint256', name: 'shares', type: 'uint256' },
+      { internalType: 'uint256', name: 'maxSharePriceE27', type: 'uint256' },
+      { internalType: 'address', name: 'onBehalf', type: 'address' },
+      { internalType: 'bytes', name: 'data', type: 'bytes' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    stateMutability: 'nonpayable',
+    name: 'morphoWithdrawCollateral',
+    inputs: [
+      marketParamsTuple,
+      { internalType: 'uint256', name: 'assets', type: 'uint256' },
+      { internalType: 'address', name: 'receiver', type: 'address' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    stateMutability: 'nonpayable',
     name: 'morphoFlashLoan',
     inputs: [
       { internalType: 'address', name: 'token', type: 'address' },

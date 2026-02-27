@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useConnection } from 'wagmi';
 import Input from '@/components/Input/Input';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -9,13 +10,13 @@ import { useDeleverageQuote } from '@/hooks/useDeleverageQuote';
 import { useDeleverageTransaction } from '@/hooks/useDeleverageTransaction';
 import { formatBalance } from '@/utils/balance';
 import type { Market, MarketPosition } from '@/utils/types';
-import type { LeverageSupport } from '@/hooks/leverage/types';
+import type { LeverageRoute } from '@/hooks/leverage/types';
 import { computeLtv, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 
 type RemoveCollateralAndDeleverageProps = {
   market: Market;
-  support: LeverageSupport;
+  route: LeverageRoute | null;
   currentPosition: MarketPosition | null;
   oraclePrice: bigint;
   onSuccess?: () => void;
@@ -24,13 +25,14 @@ type RemoveCollateralAndDeleverageProps = {
 
 export function RemoveCollateralAndDeleverage({
   market,
-  support,
+  route,
   currentPosition,
   oraclePrice,
   onSuccess,
   isRefreshing = false,
 }: RemoveCollateralAndDeleverageProps): JSX.Element {
-  const route = support.route?.kind === 'erc4626' ? support.route : null;
+  const { address: account } = useConnection();
+  const isSwapRoute = route?.kind === 'swap';
   const [withdrawCollateralAmount, setWithdrawCollateralAmount] = useState<bigint>(0n);
   const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
 
@@ -44,6 +46,11 @@ export function RemoveCollateralAndDeleverage({
     route,
     withdrawCollateralAmount,
     currentBorrowAssets,
+    loanTokenAddress: market.loanAsset.address,
+    loanTokenDecimals: market.loanAsset.decimals,
+    collateralTokenAddress: market.collateralAsset.address,
+    collateralTokenDecimals: market.collateralAsset.decimals,
+    userAddress: account as `0x${string}` | undefined,
   });
 
   const projection = useMemo(
@@ -102,6 +109,7 @@ export function RemoveCollateralAndDeleverage({
     flashLoanAmount: projection.flashLoanAmountForTx,
     repayBySharesAmount: projection.repayBySharesAmount,
     autoWithdrawCollateralAmount: projection.autoWithdrawCollateralAmount,
+    swapPriceRoute: quote.swapPriceRoute,
     onSuccess: handleTransactionSuccess,
   });
 
@@ -204,6 +212,12 @@ export function RemoveCollateralAndDeleverage({
                   <span className="text-secondary">Projected LTV</span>
                   <span className={`tabular-nums ${getLTVColor(projectedLTV, lltv)}`}>{formatLtvPercent(projectedLTV)}%</span>
                 </div>
+                {isSwapRoute && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-secondary">Route</span>
+                    <span className="tabular-nums">Bundler3 + Velora</span>
+                  </div>
+                )}
               </div>
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
             </div>
@@ -216,7 +230,6 @@ export function RemoveCollateralAndDeleverage({
                 onClick={handleDeleverage}
                 isLoading={deleveragePending || quote.isLoading}
                 disabled={
-                  !support.supportsDeleverage ||
                   route == null ||
                   withdrawInputError !== null ||
                   quote.error !== null ||

@@ -1,11 +1,13 @@
-import { useCallback, useState } from 'react';
-import { erc20Abi } from 'viem';
-import { useConnection, useReadContract } from 'wagmi';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getChainAddresses } from '@morpho-org/blue-sdk';
+import { type Address, erc20Abi, isAddressEqual, zeroAddress } from 'viem';
+import { useConnection, useReadContract, useReadContracts } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
-import { useLeverageSupport } from '@/hooks/useLeverageSupport';
+import { erc4626Abi } from '@/abis/erc4626';
+import type { LeverageRoute, SwapLeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
 import { AddCollateralAndLeverage } from './components/add-collateral-and-leverage';
 import { RemoveCollateralAndDeleverage } from './components/remove-collateral-and-deleverage';
@@ -32,10 +34,84 @@ export function LeverageModal({
   toggleLeverageDeleverage = true,
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
+  const [routeMode, setRouteMode] = useState<'swap' | 'erc4626'>('swap');
   const { address: account } = useConnection();
-  const support = useLeverageSupport({ market });
-  const isErc4626Route = support.route?.kind === 'erc4626';
-  const isSwapRoute = support.route?.kind === 'swap';
+
+  const swapRoute = useMemo<SwapLeverageRoute | null>(() => {
+    try {
+      const chainAddresses = getChainAddresses(market.morphoBlue.chain.id);
+      const bundler3Addresses = chainAddresses?.bundler3;
+      if (!bundler3Addresses?.bundler3 || !bundler3Addresses.generalAdapter1 || !bundler3Addresses.paraswapAdapter) {
+        return null;
+      }
+
+      return {
+        kind: 'swap',
+        bundler3Address: bundler3Addresses.bundler3 as Address,
+        generalAdapterAddress: bundler3Addresses.generalAdapter1 as Address,
+        paraswapAdapterAddress: bundler3Addresses.paraswapAdapter as Address,
+      };
+    } catch {
+      return null;
+    }
+  }, [market.morphoBlue.chain.id]);
+
+  const {
+    data: erc4626ProbeData,
+    isLoading: isErc4626ProbeLoading,
+    isRefetching: isErc4626ProbeRefetching,
+  } = useReadContracts({
+    contracts: [
+      {
+        address: market.collateralAsset.address as Address,
+        abi: erc4626Abi,
+        functionName: 'asset',
+        args: [],
+        chainId: market.morphoBlue.chain.id,
+      },
+    ],
+    allowFailure: true,
+    query: {
+      enabled: !!market.collateralAsset.address && market.collateralAsset.address !== zeroAddress,
+    },
+  });
+
+  const isErc4626ModeAvailable = useMemo(() => {
+    const erc4626Asset = erc4626ProbeData?.[0]?.result as Address | undefined;
+    return !!erc4626Asset && erc4626Asset !== zeroAddress && isAddressEqual(erc4626Asset, market.loanAsset.address as Address);
+  }, [erc4626ProbeData, market.loanAsset.address]);
+
+  const availableRouteModes = useMemo<Array<'swap' | 'erc4626'>>(() => {
+    const modes: Array<'swap' | 'erc4626'> = [];
+    if (swapRoute) modes.push('swap');
+    if (isErc4626ModeAvailable) modes.push('erc4626');
+    return modes;
+  }, [swapRoute, isErc4626ModeAvailable]);
+
+  useEffect(() => {
+    if (availableRouteModes.length === 0) return;
+    if (!availableRouteModes.includes(routeMode)) {
+      setRouteMode(availableRouteModes[0]);
+    }
+  }, [availableRouteModes, routeMode]);
+
+  const route = useMemo<LeverageRoute | null>(() => {
+    if (routeMode === 'erc4626' && isErc4626ModeAvailable) {
+      return {
+        kind: 'erc4626',
+        collateralVault: market.collateralAsset.address as Address,
+        underlyingLoanToken: market.loanAsset.address as Address,
+      };
+    }
+
+    return swapRoute;
+  }, [routeMode, isErc4626ModeAvailable, market.collateralAsset.address, market.loanAsset.address, swapRoute]);
+  const isErc4626Route = route?.kind === 'erc4626';
+  const isSwapRoute = route?.kind === 'swap';
+  const routeModeOptions: { value: string; label: string }[] = availableRouteModes.map((value) => ({
+    value,
+    label: value === 'swap' ? 'Swap' : 'ERC4626',
+  }));
 
   const effectiveMode = mode;
   const modeOptions: { value: string; label: string }[] = toggleLeverageDeleverage
@@ -129,6 +205,14 @@ export function LeverageModal({
                 #SWAP
               </Badge>
             )}
+            {routeModeOptions.length > 1 && (
+              <ModalIntentSwitcher
+                value={routeMode}
+                options={routeModeOptions}
+                onValueChange={(nextRouteMode) => setRouteMode(nextRouteMode as 'swap' | 'erc4626')}
+                className="text-xs text-secondary"
+              />
+            )}
           </div>
         }
         description={
@@ -141,41 +225,37 @@ export function LeverageModal({
             : isErc4626Route
               ? `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`
               : isSwapRoute
-                ? `Deleverage is not yet available for the swap route on this market.`
+                ? `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} back into ${market.loanAsset.symbol} via Bundler3 + Velora.`
                 : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
         }
       />
       <ModalBody>
-        {support.isSupported ? (
+        {route ? (
           effectiveMode === 'leverage' ? (
             <AddCollateralAndLeverage
               market={market}
-              support={support}
+              route={route}
               currentPosition={position}
               collateralTokenBalance={collateralTokenBalance}
               oraclePrice={oraclePrice}
               onSuccess={handleRefreshAll}
               isRefreshing={isRefreshingAnyData}
             />
-          ) : support.supportsDeleverage ? (
+          ) : (
             <RemoveCollateralAndDeleverage
               market={market}
-              support={support}
+              route={route}
               currentPosition={position}
               oraclePrice={oraclePrice}
               onSuccess={handleRefreshAll}
               isRefreshing={isRefreshingAnyData}
             />
-          ) : (
-            <div className="rounded border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-              {support.reason ?? 'Deleverage is not available for this route.'}
-            </div>
           )
-        ) : support.isLoading ? (
-          <div className="rounded border border-white/10 bg-hovered p-4 text-sm text-secondary">Checking leverage route support...</div>
+        ) : isErc4626ProbeLoading || isErc4626ProbeRefetching ? (
+          <div className="rounded border border-white/10 bg-hovered p-4 text-sm text-secondary">Checking available leverage routes...</div>
         ) : (
           <div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-            {support.reason ?? 'This market is not supported by the V2 leverage routes.'}
+            Swap route configuration is unavailable for this network.
           </div>
         )}
       </ModalBody>

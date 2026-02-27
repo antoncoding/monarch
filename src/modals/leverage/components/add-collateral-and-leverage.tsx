@@ -24,12 +24,12 @@ import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
 import { convertApyToApr } from '@/utils/rateMath';
-import type { LeverageSupport } from '@/hooks/leverage/types';
+import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
 
 type AddCollateralAndLeverageProps = {
   market: Market;
-  support: LeverageSupport;
+  route: LeverageRoute | null;
   currentPosition: MarketPosition | null;
   collateralTokenBalance: bigint | undefined;
   oraclePrice: bigint;
@@ -41,14 +41,13 @@ const MULTIPLIER_INPUT_REGEX = /^\d*\.?\d*$/;
 
 export function AddCollateralAndLeverage({
   market,
-  support,
+  route,
   currentPosition,
   collateralTokenBalance,
   oraclePrice,
   onSuccess,
   isRefreshing = false,
 }: AddCollateralAndLeverageProps): JSX.Element {
-  const route = support.route;
   const { address: account } = useConnection();
   const { usePermit2: usePermit2Setting, isAprDisplay } = useAppSettings();
 
@@ -177,8 +176,8 @@ export function AddCollateralAndLeverage({
     if (onSuccess) onSuccess();
   }, [onSuccess]);
 
-  const { transaction, isLoadingPermit2, permit2Authorized, leveragePending, approveAndLeverage, signAndLeverage } =
-    useLeverageTransaction({
+  const { transaction, isLoadingPermit2, permit2Authorized, leveragePending, approveAndLeverage, signAndLeverage } = useLeverageTransaction(
+    {
       market,
       route,
       collateralAmount,
@@ -188,7 +187,8 @@ export function AddCollateralAndLeverage({
       swapPriceRoute: quote.swapPriceRoute,
       useLoanAssetAsInput: useLoanAssetInput,
       onSuccess: handleTransactionSuccess,
-    });
+    },
+  );
 
   const handleMultiplierInputChange = useCallback((value: string) => {
     const normalized = value.replace(',', '.');
@@ -425,7 +425,6 @@ export function AddCollateralAndLeverage({
                 onClick={handleLeverage}
                 isLoading={isLoadingPermit2 || leveragePending || quote.isLoading || isLoadingInputConversion}
                 disabled={
-                  !support.supportsLeverage ||
                   route == null ||
                   collateralInputError !== null ||
                   conversionErrorMessage !== null ||
