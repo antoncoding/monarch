@@ -87,7 +87,7 @@ The skill injects detailed patterns and conventions into the conversation contex
 
 ---
 
-## First-Principles Self-Review (Before Proposing Fixes)
+## Self-Review (Before Proposing Fixes)
 
 Before proposing a solution, add a short self-review:
 
@@ -117,7 +117,9 @@ Plan format:
 
 ## MANDATORY: Validate After Every Implementation Step
 
-**STOP after each implementation step and validate before moving on.** This is NOT optional. Do NOT batch all validation to the end.
+> **CRITICAL GATE**
+> STOP after each implementation step and validate before moving on.
+> This is NOT optional. Do NOT batch all validation to the end.
 
 After each step, ask out loud:
 1. Are all changes necessary? Could this be done more simply?
@@ -126,6 +128,31 @@ After each step, ask out loud:
 4. Did I zoom out to check the change in context of surrounding code?
 
 Running `tsc` and lint is NOT validation — those are mechanical checks. Validation means **thinking from first principles** about whether the code is correct, simple, and necessary.
+
+### REQUIRED: High-Impact Flow Validation
+
+When touching transaction and position flows, validation MUST include all relevant checks below (not just the changed line):
+
+1. **Canonical identity matching**: use canonical IDs/addresses (see `src/types/token.ts`), never symbol/name for logic or route matching.
+2. **Shared math/conversion helpers only**: reuse `src/hooks/leverage/math.ts`, `src/utils/repay-estimation.ts`, `src/hooks/useRepayTransaction.ts`, and `src/modals/borrow/components/helpers.ts` (`computeLtv`) instead of ad hoc formulas.
+3. **Computation-backed previews**: previews must be built from real oracle/quote/conversion paths and match tx-builder inputs.
+4. **Stepper/state-machine correctness**: first step must match runtime auth/signature state, and step order must never go backwards.
+5. **Post-transaction state hygiene**: on success reset draft inputs and trigger required refetches without loops/unbounded re-renders.
+6. **Display formatting discipline**: use shared formatting utilities from `src/hooks/leverage/math.ts` (`formatCompactTokenAmount`, `formatFullTokenAmount`, `formatTokenAmountPreview`) and existing readable-amount helpers consistently (`src/utils/token-amount-format.ts` is a re-export layer).
+7. **UI clarity and duplication checks**: remove duplicate/redundant/low-signal data and keep only decision-critical information.
+8. **Null/data-corruption resilience**: guard null/undefined/stale API/contract fields so malformed data fails gracefully.
+9. **Runtime guards on optional config/routes**: avoid unsafe non-null assertions in tx-critical paths; unsupported routes/config must degrade gracefully.
+
+### REQUIRED: Regression Rule Capture
+
+After fixing any user-reported bug in a high-impact flow:
+
+1. Add or update at least one validation bullet in this document if the bug exposed a new failure pattern.
+2. State explicitly in the final response:
+   - root cause category,
+   - why prior validation missed it,
+   - which new validation rule now prevents recurrence.
+3. Prefer chokepoint validations that protect all related components, not just the touched file.
 
 ---
 
@@ -178,8 +205,6 @@ Running `tsc` and lint is NOT validation — those are mechanical checks. Valida
 - Avoid spread syntax in accumulators within loops
 - Use top-level regex literals instead of creating them in loops
 - Prefer specific imports over namespace imports
-- Avoid barrel files (index files that re-export everything)
-- Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
 
 ### Framework-Specific Guidance
 

@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LuArrowRightLeft } from 'react-icons/lu';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
+import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
-import { Button } from '@/components/ui/button';
 import { SupplyModalContent } from './supply-modal-content';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { WithdrawModalContent } from './withdraw-modal-content';
@@ -44,17 +43,34 @@ export function SupplyModalV2({
   const activeMarket = freshMarkets?.[0] ?? market;
 
   const hasPosition = position && BigInt(position.state.supplyAssets) > 0n;
+  const effectiveMode = mode === 'withdraw' && !hasPosition ? 'supply' : mode;
+  const modeOptions = useMemo(
+    () =>
+      hasPosition
+        ? [
+            { value: 'supply', label: `Supply ${activeMarket.loanAsset.symbol}` },
+            { value: 'withdraw', label: `Withdraw ${activeMarket.loanAsset.symbol}` },
+          ]
+        : [{ value: 'supply', label: `Supply ${activeMarket.loanAsset.symbol}` }],
+    [activeMarket.loanAsset.symbol, hasPosition],
+  );
+
+  useEffect(() => {
+    if (mode === 'withdraw' && !hasPosition) {
+      setMode('supply');
+    }
+  }, [mode, hasPosition]);
 
   // Calculate supply delta for preview based on current mode and amounts
   // Only use positive values to prevent incorrect APY direction
   const supplyDelta = useMemo(() => {
-    if (mode === 'supply') {
+    if (effectiveMode === 'supply') {
       // Supply mode: positive delta if amount is valid
       return supplyPreviewAmount && supplyPreviewAmount > 0n ? supplyPreviewAmount : undefined;
     }
     // Withdraw mode: negative delta (withdrawal) if amount is valid
     return withdrawPreviewAmount && withdrawPreviewAmount > 0n ? -withdrawPreviewAmount : undefined;
-  }, [mode, supplyPreviewAmount, withdrawPreviewAmount]);
+  }, [effectiveMode, supplyPreviewAmount, withdrawPreviewAmount]);
 
   return (
     <Modal
@@ -65,8 +81,22 @@ export function SupplyModalV2({
       className="w-full max-w-lg"
     >
       <ModalHeader
-        title={`${mode === 'supply' ? 'Supply' : 'Withdraw'} ${activeMarket.loanAsset.symbol}`}
-        description={mode === 'supply' ? 'Supply to earn interest' : 'Withdraw your supplied assets'}
+        title={
+          <ModalIntentSwitcher
+            value={effectiveMode}
+            options={modeOptions}
+            onValueChange={(nextMode) => {
+              setMode(nextMode as 'supply' | 'withdraw');
+              setSupplyPreviewAmount(undefined);
+              setWithdrawPreviewAmount(undefined);
+            }}
+          />
+        }
+        description={
+          effectiveMode === 'supply'
+            ? `Supply ${activeMarket.loanAsset.symbol} to earn interest in this market.`
+            : `Withdraw your supplied ${activeMarket.loanAsset.symbol} from this market.`
+        }
         mainIcon={
           <TokenIcon
             address={activeMarket.loanAsset.address}
@@ -77,25 +107,6 @@ export function SupplyModalV2({
           />
         }
         onClose={() => onOpenChange(false)}
-        actions={
-          hasPosition ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const newMode = mode === 'supply' ? 'withdraw' : 'supply';
-                setMode(newMode);
-                // Reset preview amounts when switching modes to prevent stale state
-                setSupplyPreviewAmount(undefined);
-                setWithdrawPreviewAmount(undefined);
-              }}
-              className="flex items-center gap-1.5"
-            >
-              <LuArrowRightLeft className="h-3 w-3 rotate-90" />
-              {mode === 'supply' ? 'Withdraw' : 'Supply'}
-            </Button>
-          ) : undefined
-        }
       />
       <ModalBody className="gap-6">
         <MarketDetailsBlock
@@ -105,10 +116,10 @@ export function SupplyModalV2({
           mode="supply"
           showRewards
           supplyDelta={supplyDelta}
-          extraLiquidity={mode === 'withdraw' ? liquiditySourcing?.totalAvailableExtraLiquidity : undefined}
+          extraLiquidity={effectiveMode === 'withdraw' ? liquiditySourcing?.totalAvailableExtraLiquidity : undefined}
         />
 
-        {mode === 'supply' ? (
+        {effectiveMode === 'supply' ? (
           <SupplyModalContent
             market={activeMarket}
             onClose={() => onOpenChange(false)}

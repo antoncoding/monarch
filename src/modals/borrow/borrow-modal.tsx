@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
-import { LuArrowRightLeft } from 'react-icons/lu';
+import { TbTrendingDown, TbTrendingUp } from 'react-icons/tb';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
 import { erc20Abi } from 'viem';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
+import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { AddCollateralAndBorrow } from './components/add-collateral-and-borrow';
 import { WithdrawCollateralAndRepay } from './components/withdraw-collateral-and-repay';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { useModal } from '@/hooks/useModal';
+import { useLeverageSupport } from '@/hooks/useLeverageSupport';
 
 type BorrowModalProps = {
   market: Market;
@@ -35,10 +39,31 @@ export function BorrowModal({
 }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>(() => defaultMode);
   const { address: account } = useConnection();
+  const { open: openModal } = useModal();
+  const leverageSupport = useLeverageSupport({ market });
 
   useEffect(() => {
     setMode(defaultMode);
   }, [defaultMode]);
+
+  const leverageModalMode = mode === 'repay' ? 'deleverage' : 'leverage';
+  const canOpenLeverageModal =
+    !leverageSupport.isLoading && (mode === 'borrow' ? leverageSupport.supportsLeverage : leverageSupport.supportsDeleverage);
+  const modeOptions: { value: string; label: string }[] = toggleBorrowRepay
+    ? [
+        { value: 'borrow', label: `Borrow ${market.loanAsset.symbol}` },
+        { value: 'repay', label: `Repay ${market.loanAsset.symbol}` },
+      ]
+    : [{ value: mode, label: mode === 'borrow' ? `Borrow ${market.loanAsset.symbol}` : `Repay ${market.loanAsset.symbol}` }];
+
+  const handleOpenLeverage = useCallback(() => {
+    openModal('leverage', {
+      market,
+      refetch,
+      defaultMode: leverageModalMode,
+    });
+    onOpenChange(false);
+  }, [openModal, market, refetch, leverageModalMode, onOpenChange]);
 
   // Get token balances
   const {
@@ -131,22 +156,34 @@ export function BorrowModal({
         mainIcon={mainIcon}
         onClose={() => onOpenChange(false)}
         title={
-          <div className="flex items-center gap-2">
-            <span>{market.loanAsset.symbol}</span>
-            <span className="text-xs opacity-50">/ {market.collateralAsset.symbol}</span>
-          </div>
+          <ModalIntentSwitcher
+            value={mode}
+            options={modeOptions}
+            onValueChange={(nextMode) => setMode(nextMode as 'borrow' | 'repay')}
+          />
         }
-        description={mode === 'borrow' ? 'Borrow against collateral' : 'Repay borrowed assets'}
+        description={
+          mode === 'borrow'
+            ? `Use ${market.collateralAsset.symbol} as collateral to borrow ${market.loanAsset.symbol}.`
+            : `Repay ${market.loanAsset.symbol} debt to reduce risk and unlock ${market.collateralAsset.symbol} collateral.`
+        }
         actions={
-          toggleBorrowRepay ? (
+          canOpenLeverageModal ? (
             <Button
-              variant="ghost"
+              variant="default"
               size="sm"
-              onClick={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
-              className="flex items-center gap-1.5"
+              onClick={handleOpenLeverage}
+              className="flex items-center gap-1.5 hover:scale-100"
             >
-              <LuArrowRightLeft className="h-3 w-3 rotate-90" />
-              {mode === 'borrow' ? 'Repay' : 'Borrow'}
+              {mode === 'borrow' ? <TbTrendingUp className="h-2.5 w-2.5" /> : <TbTrendingDown className="h-2.5 w-2.5" />}
+              {mode === 'borrow' ? 'Leverage' : 'Deleverage'}
+              <Badge
+                variant="success"
+                size="sm"
+                className="ml-0.5 uppercase tracking-[0.08em]"
+              >
+                New
+              </Badge>
             </Button>
           ) : undefined
         }

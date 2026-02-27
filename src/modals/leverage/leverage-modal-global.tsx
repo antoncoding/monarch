@@ -2,33 +2,30 @@
 
 import { useCallback } from 'react';
 import { useConnection } from 'wagmi';
-import type { Market } from '@/utils/types';
-import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import useUserPosition from '@/hooks/useUserPosition';
-import { BorrowModal } from './borrow-modal';
+import type { Market } from '@/utils/types';
+import { LeverageModal } from './leverage-modal';
 
-type BorrowModalGlobalProps = {
+type LeverageModalGlobalProps = {
   market: Market;
-  defaultMode?: 'borrow' | 'repay';
-  toggleBorrowRepay?: boolean;
+  defaultMode?: 'leverage' | 'deleverage';
+  toggleLeverageDeleverage?: boolean;
   refetch?: () => void;
-  liquiditySourcing?: LiquiditySourcingResult;
   onOpenChange: (open: boolean) => void;
 };
 
 /**
- * Global BorrowModal wrapper that fetches oracle price and user position automatically.
- * Used by the ModalRenderer via the modal registry.
+ * Global wrapper that mirrors BorrowModalGlobal behavior:
+ * it resolves oracle price + user position before rendering the leverage modal.
  */
-export function BorrowModalGlobal({
+export function LeverageModalGlobal({
   market,
   defaultMode,
-  toggleBorrowRepay,
+  toggleLeverageDeleverage,
   refetch: externalRefetch,
-  liquiditySourcing,
   onOpenChange,
-}: BorrowModalGlobalProps): JSX.Element {
+}: LeverageModalGlobalProps): JSX.Element {
   const { address } = useConnection();
   const chainId = market.morphoBlue.chain.id;
 
@@ -45,15 +42,14 @@ export function BorrowModalGlobal({
   }, [refetchPosition, externalRefetch]);
 
   return (
-    <BorrowModal
+    <LeverageModal
       market={market}
       onOpenChange={onOpenChange}
       oraclePrice={oraclePrice}
       refetch={handleRefetch}
       position={position}
       defaultMode={defaultMode}
-      toggleBorrowRepay={toggleBorrowRepay}
-      liquiditySourcing={liquiditySourcing}
+      toggleLeverageDeleverage={toggleLeverageDeleverage}
     />
   );
 }

@@ -250,7 +250,6 @@ export function WithdrawCollateralAndRepay({
           lltv={lltv}
           onRefresh={onSuccess ? handleRefresh : undefined}
           isRefreshing={isRefreshing}
-          borrowLabel="Outstanding Debt"
           hasChanges={hasChanges}
         />
 

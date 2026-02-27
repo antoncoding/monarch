@@ -25,6 +25,14 @@ export type ModalProps = {
     liquiditySourcing?: LiquiditySourcingResult;
   };
 
+  // Leverage & Deleverage
+  leverage: {
+    market: Market;
+    defaultMode?: 'leverage' | 'deleverage';
+    toggleLeverageDeleverage?: boolean;
+    refetch?: () => void;
+  };
+
   // Supply & Withdraw
   supply: {
     market: Market;

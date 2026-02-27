@@ -70,7 +70,7 @@ function MarketContent() {
 
   // 5. Oracle price hook - safely handle undefined market
   const { price: oraclePrice } = useOraclePrice({
-    oracle: market?.oracleAddress as `0x${string}`,
+    oracle: market?.oracleAddress,
     chainId: market?.morphoBlue.chain.id,
   });
 
