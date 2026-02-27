@@ -174,8 +174,29 @@ const parseVeloraHexDataField = (value: unknown, fieldName: string): `0x${string
   return value as `0x${string}`;
 };
 
+const REQUIRED_PRICE_ROUTE_STRING_FIELDS = ['srcToken', 'destToken', 'srcAmount', 'destAmount'] as const;
 const PRICE_ROUTE_SOURCE_TOKEN_FIELDS = ['fromTokenAddress', 'inputToken', 'srcToken', 'srcTokenAddress'] as const;
 const PRICE_ROUTE_DESTINATION_TOKEN_FIELDS = ['toTokenAddress', 'outputToken', 'destToken', 'destTokenAddress'] as const;
+
+const validateVeloraPriceRouteShape = (priceRoute: unknown, responsePayload: unknown): VeloraPriceRoute => {
+  if (!priceRoute || typeof priceRoute !== 'object') {
+    throw new VeloraApiError(getVeloraApiErrorMessage(responsePayload, 'Invalid price route returned by Velora'), 400, responsePayload);
+  }
+
+  const routePayload = priceRoute as Record<string, unknown>;
+  for (const field of REQUIRED_PRICE_ROUTE_STRING_FIELDS) {
+    const value = routePayload[field];
+    if (typeof value !== 'string' || value.length === 0) {
+      throw new VeloraApiError(
+        getVeloraApiErrorMessage(responsePayload, `Invalid price route returned by Velora: ${field} is missing or invalid`),
+        400,
+        responsePayload,
+      );
+    }
+  }
+
+  return routePayload as VeloraPriceRoute;
+};
 
 const resolveCanonicalRouteTokenAddress = (priceRoute: VeloraPriceRoute, fields: readonly string[]): Address | null => {
   const routePayload = priceRoute as Record<string, unknown>;
@@ -250,7 +271,9 @@ export const fetchVeloraPriceRoute = async ({
     throw new VeloraApiError(getVeloraApiErrorMessage(response, 'No price route returned by Velora'), 400, response);
   }
 
-  const routeSourceTokenAddress = resolveCanonicalRouteTokenAddress(response.priceRoute, PRICE_ROUTE_SOURCE_TOKEN_FIELDS);
+  const validatedPriceRoute = validateVeloraPriceRouteShape(response.priceRoute, response);
+
+  const routeSourceTokenAddress = resolveCanonicalRouteTokenAddress(validatedPriceRoute, PRICE_ROUTE_SOURCE_TOKEN_FIELDS);
   if (routeSourceTokenAddress && routeSourceTokenAddress !== requestedSourceTokenAddress) {
     throw new VeloraApiError('Velora route source token does not match the requested source token', 400, {
       requestedSourceTokenAddress,
@@ -259,10 +282,7 @@ export const fetchVeloraPriceRoute = async ({
     });
   }
 
-  const routeDestinationTokenAddress = resolveCanonicalRouteTokenAddress(
-    response.priceRoute,
-    PRICE_ROUTE_DESTINATION_TOKEN_FIELDS,
-  );
+  const routeDestinationTokenAddress = resolveCanonicalRouteTokenAddress(validatedPriceRoute, PRICE_ROUTE_DESTINATION_TOKEN_FIELDS);
   if (routeDestinationTokenAddress && routeDestinationTokenAddress !== requestedDestinationTokenAddress) {
     throw new VeloraApiError('Velora route destination token does not match the requested destination token', 400, {
       requestedDestinationTokenAddress,
@@ -271,7 +291,7 @@ export const fetchVeloraPriceRoute = async ({
     });
   }
 
-  return response.priceRoute;
+  return validatedPriceRoute;
 };
 
 export const buildVeloraTransactionPayload = async ({
