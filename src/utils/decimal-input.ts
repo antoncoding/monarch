@@ -1,7 +1,9 @@
 const DECIMAL_INPUT_REGEX = /^\d*\.?\d*$/;
 
 export const sanitizeDecimalInput = (value: string): string => {
-  const normalized = value.replace(/,/g, '.').replace(/[^\d.]/g, '');
+  // Normalize decimal separators only; do not strip unsupported characters.
+  // This keeps invalid formats invalid instead of mutating them into another number.
+  const normalized = value.trim().replace(/,/g, '.');
   const [wholePart, ...fractionParts] = normalized.split('.');
   if (fractionParts.length === 0) {
     return wholePart;

@@ -124,6 +124,11 @@ const extractVeloraErrorMessage = (payload: unknown): string => {
   return 'Unknown Velora API error';
 };
 
+const getVeloraApiErrorMessage = (payload: unknown, fallbackMessage: string): string => {
+  const message = extractVeloraErrorMessage(payload);
+  return message === 'Unknown Velora API error' ? fallbackMessage : message;
+};
+
 const fetchVeloraJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(url, init);
   const raw = await response.text();
@@ -194,16 +199,12 @@ export const fetchVeloraPriceRoute = async ({
     version: VELORA_PRICES_API_VERSION,
   });
 
-  const response = await fetchVeloraJson<VeloraPriceResponse>(`${VELORA_API_BASE_URL}/prices?${query.toString()}`, {
+  const response = await fetchVeloraJson<VeloraPriceResponse | null>(`${VELORA_API_BASE_URL}/prices?${query.toString()}`, {
     method: 'GET',
   });
 
-  if (!response.priceRoute) {
-    throw new VeloraApiError(
-      response.description ?? response.error ?? response.message ?? 'No price route returned by Velora',
-      400,
-      response,
-    );
+  if (!response || typeof response !== 'object' || !response.priceRoute) {
+    throw new VeloraApiError(getVeloraApiErrorMessage(response, 'No price route returned by Velora'), 400, response);
   }
 
   return response.priceRoute;
@@ -233,7 +234,7 @@ export const buildVeloraTransactionPayload = async ({
       ? `${VELORA_API_BASE_URL}/transactions/${network}?${query.toString()}`
       : `${VELORA_API_BASE_URL}/transactions/${network}`;
 
-  const response = await fetchVeloraJson<VeloraBuildTransactionResponse>(transactionUrl, {
+  const response = await fetchVeloraJson<VeloraBuildTransactionResponse | null>(transactionUrl, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -252,12 +253,8 @@ export const buildVeloraTransactionPayload = async ({
     }),
   });
 
-  if (!response.to || !response.data) {
-    throw new VeloraApiError(
-      response.description ?? response.error ?? response.message ?? 'Invalid transaction payload from Velora',
-      400,
-      response,
-    );
+  if (!response || typeof response !== 'object' || !response.to || !response.data) {
+    throw new VeloraApiError(getVeloraApiErrorMessage(response, 'Invalid transaction payload from Velora'), 400, response);
   }
 
   const to = parseVeloraAddressField(response.to, 'to');

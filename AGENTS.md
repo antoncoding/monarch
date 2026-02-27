@@ -146,6 +146,7 @@ When touching transaction and position flows, validation MUST include all releva
 11. **Locale-safe decimal inputs**: transaction-critical amount/slippage inputs must accept both `,` and `.`, preserve transient edit states (e.g. `''`, `.`) during typing, and only normalize/clamp on commit (`blur`/submit) so delete-and-retype flows never lock users into stale values.
 12. **Aggregator API schema separation**: quote-only request params must never be forwarded to transaction-build endpoints (e.g. Velora `version` on `/prices` but not `/transactions/:network`); enforce endpoint-specific payload/query builders and surface typed API errors.
 13. **User-rejection error normalization**: transaction hooks must map wallet rejection payloads (EIP-1193 `4001`, `ACTION_REJECTED`, viem request-argument dumps) to a short canonical UI message (`User rejected transaction.`) and never render raw payload text in inline UI/error boxes.
+14. **Input/state integrity in tx-critical UIs**: never strip unsupported numeric syntax into a different value (e.g. `1e-6` must be rejected, not rewritten), and after any balance refetch re-derive selected token objects from refreshed data before allowing `Max`/submit.
 
 ### REQUIRED: Regression Rule Capture
 

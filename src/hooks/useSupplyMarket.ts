@@ -1,5 +1,5 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
-import { type Address, encodeFunctionData, erc20Abi } from 'viem';
+import { type Address, encodeFunctionData, erc20Abi, zeroAddress } from 'viem';
 import { useConnection, useBalance, useReadContract } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
@@ -66,6 +66,8 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const { batchAddUserMarkets } = useUserMarketsCache(account);
   const toast = useStyledToast();
   const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
+  const isBundlerAddressValid = bundlerAddress !== zeroAddress;
+  const bundlerAddressErrorMessage = `No bundler configured for chain ${market.morphoBlue.chain.id}.`;
 
   // Get token balance
   const {
@@ -101,7 +103,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     signForBundlers,
   } = usePermit2({
     user: account as `0x${string}`,
-    spender: bundlerAddress,
+    spender: isBundlerAddressValid ? bundlerAddress : undefined,
     token: market.loanAsset.address as `0x${string}`,
     refetchInterval: 10_000,
     chainId: market.morphoBlue.chain.id,
@@ -164,6 +166,10 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   // Execute supply transaction
   const executeSupplyTransaction = useCallback(async () => {
     try {
+      if (!isBundlerAddressValid) {
+        throw new Error(bundlerAddressErrorMessage);
+      }
+
       const txs: `0x${string}`[] = [];
 
       let gas: bigint | undefined = undefined;
@@ -261,9 +267,13 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
 
       complete();
       return true;
-    } catch (_error: unknown) {
+    } catch (error: unknown) {
       fail();
-      toast.error('Supply Failed', 'Supply to market failed or cancelled');
+      if (error instanceof Error) {
+        toast.error('Supply Failed', error.message);
+      } else {
+        toast.error('Supply Failed', 'Supply to market failed or cancelled');
+      }
       return false;
     }
   }, [
@@ -280,12 +290,18 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     complete,
     fail,
     bundlerAddress,
+    bundlerAddressErrorMessage,
+    isBundlerAddressValid,
   ]);
 
   // Approve and supply handler
   const approveAndSupply = useCallback(async () => {
     if (!account) {
       toast.info('No account connected', 'Please connect your wallet to continue.');
+      return;
+    }
+    if (!isBundlerAddressValid) {
+      toast.error('Unsupported network', bundlerAddressErrorMessage);
       return;
     }
 
@@ -379,12 +395,18 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     getStepsForFlow,
     market,
     supplyAmount,
+    bundlerAddressErrorMessage,
+    isBundlerAddressValid,
   ]);
 
   // Sign and supply handler
   const signAndSupply = useCallback(async () => {
     if (!account) {
       toast.info('No account connected', 'Please connect your wallet to continue.');
+      return;
+    }
+    if (!isBundlerAddressValid) {
+      toast.error('Unsupported network', bundlerAddressErrorMessage);
       return;
     }
 
@@ -415,7 +437,20 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeSupplyTransaction, toast, start, fail, getStepsForFlow, useEth, usePermit2Setting, market, supplyAmount]);
+  }, [
+    account,
+    executeSupplyTransaction,
+    toast,
+    start,
+    fail,
+    getStepsForFlow,
+    useEth,
+    usePermit2Setting,
+    market,
+    supplyAmount,
+    bundlerAddressErrorMessage,
+    isBundlerAddressValid,
+  ]);
 
   return {
     // State

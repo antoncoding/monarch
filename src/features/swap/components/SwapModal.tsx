@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDownIcon, ChevronDownIcon } from '@radix-ui/react-icons';
 import { IoIosSwap } from 'react-icons/io';
 import { formatUnits, parseUnits, zeroAddress } from 'viem';
@@ -89,6 +89,28 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
         return bValue - aValue;
       });
   }, [balances]);
+
+  useEffect(() => {
+    if (balancesLoading) return;
+    if (!sourceToken) return;
+
+    const refreshedSourceToken = sourceTokens.find(
+      (token) => token.chainId === sourceToken.chainId && token.address.toLowerCase() === sourceToken.address.toLowerCase(),
+    );
+
+    if (!refreshedSourceToken) {
+      setSourceToken(null);
+      return;
+    }
+
+    if (
+      refreshedSourceToken.balance !== sourceToken.balance ||
+      refreshedSourceToken.decimals !== sourceToken.decimals ||
+      refreshedSourceToken.symbol !== sourceToken.symbol
+    ) {
+      setSourceToken(refreshedSourceToken);
+    }
+  }, [balancesLoading, sourceToken, sourceTokens]);
 
   // Target tokens: all tokens with Morpho markets on Velora-supported chains
   const targetTokens = useMemo<SwapToken[]>(() => {

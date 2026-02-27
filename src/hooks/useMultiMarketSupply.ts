@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { type Address, encodeFunctionData } from 'viem';
+import { type Address, encodeFunctionData, zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { usePermit2 } from '@/hooks/usePermit2';
@@ -35,6 +35,10 @@ export function useMultiMarketSupply(
   const tokenSymbol = loanAsset?.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
   const bundlerAddress = getBundlerV2(chainId ?? SupportedNetworks.Mainnet);
+  const isBundlerAddressValid = Boolean(bundlerAddress) && bundlerAddress !== zeroAddress;
+  const bundlerAddressErrorMessage = chainId
+    ? `No bundler configured for chain ${chainId}.`
+    : 'No bundler configured for the selected network.';
 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
@@ -45,7 +49,7 @@ export function useMultiMarketSupply(
     signForBundlers,
   } = usePermit2({
     user: account as `0x${string}`,
-    spender: bundlerAddress,
+    spender: isBundlerAddressValid ? bundlerAddress : undefined,
     token: loanAsset?.address as `0x${string}`,
     refetchInterval: 10_000,
     chainId,
@@ -76,6 +80,7 @@ export function useMultiMarketSupply(
   const executeSupplyTransaction = useCallback(async () => {
     if (!account) throw new Error('No account connected');
     if (!loanAsset || !chainId) throw new Error('Invalid loan asset or chain');
+    if (!isBundlerAddressValid) throw new Error(bundlerAddressErrorMessage);
 
     const txs: `0x${string}`[] = [];
 
@@ -201,6 +206,8 @@ export function useMultiMarketSupply(
     usePermit2Setting,
     chainId,
     bundlerAddress,
+    bundlerAddressErrorMessage,
+    isBundlerAddressValid,
     loanAsset,
     toast,
     tracking,
@@ -209,6 +216,10 @@ export function useMultiMarketSupply(
   const approveAndSupply = useCallback(async () => {
     if (!account) {
       toast.error('No account connected', 'Please connect your wallet to continue.');
+      return false;
+    }
+    if (!isBundlerAddressValid) {
+      toast.error('Unsupported network', bundlerAddressErrorMessage);
       return false;
     }
 
@@ -298,6 +309,8 @@ export function useMultiMarketSupply(
     tracking,
     tokenSymbol,
     supplies,
+    bundlerAddressErrorMessage,
+    isBundlerAddressValid,
   ]);
 
   return {
