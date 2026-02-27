@@ -331,23 +331,13 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
     if (!quote || !sourceToken || !targetToken || error || !chainsMatch) return null;
 
     if (isRateInverted) {
-      const inverseRate = computeUnitRatePreviewAmount(
-        quote.buyAmount,
-        targetToken.decimals,
-        quote.sellAmount,
-        sourceToken.decimals,
-      );
+      const inverseRate = computeUnitRatePreviewAmount(quote.buyAmount, targetToken.decimals, quote.sellAmount, sourceToken.decimals);
       if (!inverseRate) return null;
       const inverseRatePreview = formatTokenAmountPreview(inverseRate, RATE_PREVIEW_DECIMALS).compact;
       return `1 ${targetToken.symbol} ≈ ${inverseRatePreview} ${sourceToken.symbol}`;
     }
 
-    const forwardRate = computeUnitRatePreviewAmount(
-      quote.sellAmount,
-      sourceToken.decimals,
-      quote.buyAmount,
-      targetToken.decimals,
-    );
+    const forwardRate = computeUnitRatePreviewAmount(quote.sellAmount, sourceToken.decimals, quote.buyAmount, targetToken.decimals);
     if (!forwardRate) return null;
     const forwardRatePreview = formatTokenAmountPreview(forwardRate, RATE_PREVIEW_DECIMALS).compact;
     return `1 ${sourceToken.symbol} ≈ ${forwardRatePreview} ${targetToken.symbol}`;

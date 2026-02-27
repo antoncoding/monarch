@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeAbiParameters, encodeFunctionData, keccak256, maxUint256, zeroHash } from 'viem';
+import { type Address, encodeAbiParameters, encodeFunctionData, isAddress, isAddressEqual, keccak256, maxUint256, zeroHash } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { bundlerV3Abi } from '@/abis/bundlerV3';
@@ -19,6 +19,7 @@ import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
+import { type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets, readCalldataUint256 } from './leverage/bundler3';
 import { computeBorrowSharesWithBuffer, withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
 
@@ -43,58 +44,9 @@ type UseLeverageTransactionProps = {
 };
 
 const LEVERAGE_SWAP_SLIPPAGE_BPS = Math.round(DEFAULT_SLIPPAGE_PERCENT * 100);
-const PARASWAP_SWAP_EXACT_AMOUNT_IN_SELECTOR = '0xe3ead59e';
-const PARASWAP_SELL_EXACT_AMOUNT_OFFSET = 100n;
-const PARASWAP_SELL_MIN_DEST_AMOUNT_OFFSET = 132n;
-const PARASWAP_SELL_QUOTED_DEST_AMOUNT_OFFSET = 164n;
-
-type Bundler3Call = {
-  to: Address;
-  data: `0x${string}`;
-  value: bigint;
-  skipRevert: boolean;
-  callbackHash: `0x${string}`;
-};
-
-const BUNDLER3_CALLS_ABI_PARAMS = [
-  {
-    type: 'tuple[]',
-    components: [
-      { type: 'address', name: 'to' },
-      { type: 'bytes', name: 'data' },
-      { type: 'uint256', name: 'value' },
-      { type: 'bool', name: 'skipRevert' },
-      { type: 'bytes32', name: 'callbackHash' },
-    ],
-  },
-] as const;
-
-const encodeBundler3Calls = (bundle: Bundler3Call[]): `0x${string}` => {
-  return encodeAbiParameters(BUNDLER3_CALLS_ABI_PARAMS, [bundle]);
-};
-
-const getParaswapSellOffsets = (augustusCallData: `0x${string}`) => {
-  const selector = augustusCallData.slice(0, 10).toLowerCase();
-  if (selector !== PARASWAP_SWAP_EXACT_AMOUNT_IN_SELECTOR) {
-    throw new Error('Unsupported Velora swap method for Paraswap adapter route.');
-  }
-
-  return {
-    exactAmount: PARASWAP_SELL_EXACT_AMOUNT_OFFSET,
-    limitAmount: PARASWAP_SELL_MIN_DEST_AMOUNT_OFFSET,
-    quotedAmount: PARASWAP_SELL_QUOTED_DEST_AMOUNT_OFFSET,
-  } as const;
-};
-
-const readCalldataUint256 = (callData: `0x${string}`, offset: bigint): bigint => {
-  const byteOffset = Number(offset);
-  const start = 2 + byteOffset * 2;
-  const end = start + 64;
-  if (callData.length < end) {
-    throw new Error('Invalid Paraswap calldata for swap-backed leverage.');
-  }
-
-  return BigInt(`0x${callData.slice(start, end)}`);
+const isVeloraAllowanceCheckError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+  return message.includes('allowance given to tokentransferproxy') || (message.includes('not enough') && message.includes('allowance'));
 };
 
 /**
@@ -119,7 +71,7 @@ export function useLeverageTransaction({
   const toast = useStyledToast();
   const isSwapRoute = route?.kind === 'swap';
   const usePermit2ForRoute = usePermit2Setting && !isSwapRoute;
-  
+
   const bundlerAddress = useMemo<Address>(() => {
     if (route?.kind === 'swap') {
       return route.bundler3Address;
@@ -132,7 +84,7 @@ export function useLeverageTransaction({
     }
     return bundlerAddress;
   }, [route, bundlerAddress]);
-  
+
   const { batchAddUserMarkets } = useUserMarketsCache(account);
   const isLoanAssetInput = !isSwapRoute && useLoanAssetAsInput;
   const inputTokenAddress = isLoanAssetInput ? (market.loanAsset.address as Address) : (market.collateralAsset.address as Address);
@@ -326,8 +278,8 @@ export function useLeverageTransaction({
 
         const activePriceRoute = swapPriceRoute;
         const swapTxPayload = await (async () => {
-          try {
-            return await buildVeloraTransactionPayload({
+          const buildPayload = async (ignoreChecks: boolean) =>
+            buildVeloraTransactionPayload({
               srcToken: market.loanAsset.address,
               srcDecimals: market.loanAsset.decimals,
               destToken: market.collateralAsset.address,
@@ -338,14 +290,36 @@ export function useLeverageTransaction({
               priceRoute: activePriceRoute,
               slippageBps: LEVERAGE_SWAP_SLIPPAGE_BPS,
               side: 'SELL',
+              ignoreChecks,
             });
+
+          try {
+            return await buildPayload(false);
           } catch (buildError: unknown) {
             if (isVeloraRateChangedError(buildError)) {
               throw new Error('Leverage quote changed. Please review the updated preview and try again.');
             }
-            throw buildError;
+            if (!isVeloraAllowanceCheckError(buildError)) {
+              throw buildError;
+            }
+
+            try {
+              return await buildPayload(true);
+            } catch (fallbackBuildError: unknown) {
+              if (isVeloraRateChangedError(fallbackBuildError)) {
+                throw new Error('Leverage quote changed. Please review the updated preview and try again.');
+              }
+              throw fallbackBuildError;
+            }
           }
         })();
+
+        const trustedVeloraTargets = [activePriceRoute.contractAddress, activePriceRoute.tokenTransferProxy].filter(
+          (candidate): candidate is Address => typeof candidate === 'string' && isAddress(candidate),
+        );
+        if (trustedVeloraTargets.length === 0 || !trustedVeloraTargets.some((target) => isAddressEqual(swapTxPayload.to, target))) {
+          throw new Error('Leverage quote changed. Please review the updated preview and try again.');
+        }
 
         const minCollateralOut = withSlippageFloor(BigInt(activePriceRoute.destAmount));
         if (minCollateralOut <= 0n) {
@@ -356,7 +330,11 @@ export function useLeverageTransaction({
         const quotedBorrowAssets = BigInt(activePriceRoute.srcAmount);
         const calldataSellAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
         const calldataMinCollateralOut = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
-        if (quotedBorrowAssets !== flashLoanAmount || calldataSellAmount !== flashLoanAmount || calldataMinCollateralOut !== minCollateralOut) {
+        if (
+          quotedBorrowAssets !== flashLoanAmount ||
+          calldataSellAmount !== flashLoanAmount ||
+          calldataMinCollateralOut !== minCollateralOut
+        ) {
           throw new Error('Leverage quote changed. Please review the updated preview and try again.');
         }
 
@@ -619,7 +597,18 @@ export function useLeverageTransaction({
         toast.error('Error', userFacingMessage);
       }
     }
-  }, [account, usePermit2ForRoute, tracking, getStepsForFlow, isSwapRoute, market, inputTokenSymbol, collateralAmount, executeLeverage, toast]);
+  }, [
+    account,
+    usePermit2ForRoute,
+    tracking,
+    getStepsForFlow,
+    isSwapRoute,
+    market,
+    inputTokenSymbol,
+    collateralAmount,
+    executeLeverage,
+    toast,
+  ]);
 
   const signAndLeverage = useCallback(async () => {
     if (!usePermit2ForRoute) {

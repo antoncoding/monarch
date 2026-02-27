@@ -12,7 +12,6 @@ import { AddCollateralAndBorrow } from './components/add-collateral-and-borrow';
 import { WithdrawCollateralAndRepay } from './components/withdraw-collateral-and-repay';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useModal } from '@/hooks/useModal';
-import { useLeverageSupport } from '@/hooks/useLeverageSupport';
 
 type BorrowModalProps = {
   market: Market;
@@ -40,15 +39,13 @@ export function BorrowModal({
   const [mode, setMode] = useState<'borrow' | 'repay'>(() => defaultMode);
   const { address: account } = useConnection();
   const { open: openModal } = useModal();
-  const leverageSupport = useLeverageSupport({ market });
 
   useEffect(() => {
     setMode(defaultMode);
   }, [defaultMode]);
 
   const leverageModalMode = mode === 'repay' ? 'deleverage' : 'leverage';
-  const canOpenLeverageModal =
-    !leverageSupport.isLoading && (mode === 'borrow' ? leverageSupport.supportsLeverage : leverageSupport.supportsDeleverage);
+  const canOpenLeverageModal = true;
   const modeOptions: { value: string; label: string }[] = toggleBorrowRepay
     ? [
         { value: 'borrow', label: `Borrow ${market.loanAsset.symbol}` },
