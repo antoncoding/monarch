@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getChainAddresses } from '@morpho-org/blue-sdk';
-import { type Address, erc20Abi, isAddressEqual, zeroAddress } from 'viem';
-import { useConnection, useReadContract, useReadContracts } from 'wagmi';
+import { type Address, erc20Abi } from 'viem';
+import { useConnection, useReadContract } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
-import { erc4626Abi } from '@/abis/erc4626';
-import type { LeverageRoute, SwapLeverageRoute } from '@/hooks/leverage/types';
+import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
+import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
 import { AddCollateralAndLeverage } from './components/add-collateral-and-leverage';
 import { RemoveCollateralAndDeleverage } from './components/remove-collateral-and-deleverage';
@@ -34,78 +33,50 @@ export function LeverageModal({
   toggleLeverageDeleverage = true,
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
-  const [routeMode, setRouteMode] = useState<'swap' | 'erc4626'>('swap');
+  const [routeMode, setRouteMode] = useState<'swap' | 'erc4626'>('erc4626');
   const { address: account } = useConnection();
 
-  const swapRoute = useMemo<SwapLeverageRoute | null>(() => {
-    try {
-      const chainAddresses = getChainAddresses(market.morphoBlue.chain.id);
-      const bundler3Addresses = chainAddresses?.bundler3;
-      if (!bundler3Addresses?.bundler3 || !bundler3Addresses.generalAdapter1 || !bundler3Addresses.paraswapAdapter) {
-        return null;
-      }
-
-      return {
-        kind: 'swap',
-        bundler3Address: bundler3Addresses.bundler3 as Address,
-        generalAdapterAddress: bundler3Addresses.generalAdapter1 as Address,
-        paraswapAdapterAddress: bundler3Addresses.paraswapAdapter as Address,
-      };
-    } catch {
-      return null;
-    }
-  }, [market.morphoBlue.chain.id]);
-
-  const {
-    data: erc4626ProbeData,
-    isLoading: isErc4626ProbeLoading,
-    isRefetching: isErc4626ProbeRefetching,
-  } = useReadContracts({
-    contracts: [
-      {
-        address: market.collateralAsset.address as Address,
-        abi: erc4626Abi,
-        functionName: 'asset',
-        args: [],
-        chainId: market.morphoBlue.chain.id,
-      },
-    ],
-    allowFailure: true,
-    query: {
-      enabled: !!market.collateralAsset.address && market.collateralAsset.address !== zeroAddress,
-    },
-  });
-
-  const isErc4626ModeAvailable = useMemo(() => {
-    const erc4626Asset = erc4626ProbeData?.[0]?.result as Address | undefined;
-    return !!erc4626Asset && erc4626Asset !== zeroAddress && isAddressEqual(erc4626Asset, market.loanAsset.address as Address);
-  }, [erc4626ProbeData, market.loanAsset.address]);
-
-  const availableRouteModes = useMemo<Array<'swap' | 'erc4626'>>(() => {
-    const modes: Array<'swap' | 'erc4626'> = [];
-    if (swapRoute) modes.push('swap');
-    if (isErc4626ModeAvailable) modes.push('erc4626');
-    return modes;
-  }, [swapRoute, isErc4626ModeAvailable]);
+  const { swapRoute, isErc4626ModeAvailable, availableRouteModes, isErc4626ProbeLoading, isErc4626ProbeRefetching } =
+    useLeverageRouteAvailability({
+      chainId: market.morphoBlue.chain.id,
+      collateralTokenAddress: market.collateralAsset.address,
+      loanTokenAddress: market.loanAsset.address,
+    });
 
   useEffect(() => {
     if (availableRouteModes.length === 0) return;
-    if (!availableRouteModes.includes(routeMode)) {
-      setRouteMode(availableRouteModes[0]);
-    }
-  }, [availableRouteModes, routeMode]);
+    if (availableRouteModes.includes(routeMode)) return;
+
+    const waitingForErc4626Availability =
+      routeMode === 'erc4626' && !isErc4626ModeAvailable && (isErc4626ProbeLoading || isErc4626ProbeRefetching);
+    if (waitingForErc4626Availability) return;
+
+    setRouteMode(availableRouteModes[0]);
+  }, [availableRouteModes, routeMode, isErc4626ModeAvailable, isErc4626ProbeLoading, isErc4626ProbeRefetching]);
 
   const route = useMemo<LeverageRoute | null>(() => {
-    if (routeMode === 'erc4626' && isErc4626ModeAvailable) {
-      return {
-        kind: 'erc4626',
-        collateralVault: market.collateralAsset.address as Address,
-        underlyingLoanToken: market.loanAsset.address as Address,
-      };
+    if (routeMode === 'erc4626') {
+      if (isErc4626ModeAvailable) {
+        return {
+          kind: 'erc4626',
+          collateralVault: market.collateralAsset.address as Address,
+          underlyingLoanToken: market.loanAsset.address as Address,
+        };
+      }
+      if (isErc4626ProbeLoading || isErc4626ProbeRefetching) return null;
+      return swapRoute;
     }
 
     return swapRoute;
-  }, [routeMode, isErc4626ModeAvailable, market.collateralAsset.address, market.loanAsset.address, swapRoute]);
+  }, [
+    routeMode,
+    isErc4626ModeAvailable,
+    isErc4626ProbeLoading,
+    isErc4626ProbeRefetching,
+    market.collateralAsset.address,
+    market.loanAsset.address,
+    swapRoute,
+  ]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
   const routeModeOptions: { value: string; label: string }[] = availableRouteModes.map((value) => ({

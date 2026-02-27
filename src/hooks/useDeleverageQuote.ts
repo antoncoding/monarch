@@ -182,7 +182,7 @@ export function useDeleverageQuote({
       }
       const routeError =
         (withdrawCollateralAmount > 0n ? swapRepayQuoteQuery.error : null) ??
-        (withdrawCollateralAmount > 0n ? swapMaxCollateralForDebtQuery.error : null);
+        (bufferedBorrowAssets > 0n ? swapMaxCollateralForDebtQuery.error : null);
       if (!routeError) return null;
       return routeError instanceof Error ? routeError.message : 'Failed to quote Velora swap route for deleverage.';
     }
@@ -193,6 +193,7 @@ export function useDeleverageQuote({
     route,
     userAddress,
     withdrawCollateralAmount,
+    bufferedBorrowAssets,
     swapRepayQuoteQuery.error,
     swapMaxCollateralForDebtQuery.error,
     redeemError,
