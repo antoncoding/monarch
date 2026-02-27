@@ -10,15 +10,16 @@ import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
 import { withSlippageFloor } from './leverage/math';
-import type { LeverageRoute } from './leverage/types';
+import type { Erc4626LeverageRoute } from './leverage/types';
 
 export type DeleverageStepType = 'authorize_bundler_sig' | 'authorize_bundler_tx' | 'execute';
 
 type UseDeleverageTransactionProps = {
   market: Market;
-  route: LeverageRoute | null;
+  route: Erc4626LeverageRoute | null;
   withdrawCollateralAmount: bigint;
   flashLoanAmount: bigint;
   repayBySharesAmount: bigint;
@@ -244,8 +245,9 @@ export function useDeleverageTransaction({
     } catch (error: unknown) {
       tracking.fail();
       console.error('Error during deleverage execution:', error);
-      if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
-        toast.error('Deleverage Failed', 'An unexpected error occurred during deleverage.');
+      const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'An unexpected error occurred during deleverage.');
+      if (userFacingMessage !== 'User rejected transaction.') {
+        toast.error('Deleverage Failed', userFacingMessage);
       }
     }
   }, [
@@ -289,14 +291,9 @@ export function useDeleverageTransaction({
     } catch (error: unknown) {
       console.error('Error in authorizeAndDeleverage:', error);
       tracking.fail();
-      if (error instanceof Error) {
-        if (error.message.includes('User rejected')) {
-          toast.error('Transaction rejected', 'Transaction rejected by user');
-        } else {
-          toast.error('Error', 'Failed to process deleverage transaction');
-        }
-      } else {
-        toast.error('Error', 'An unexpected error occurred');
+      const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to process deleverage transaction');
+      if (userFacingMessage !== 'User rejected transaction.') {
+        toast.error('Error', userFacingMessage);
       }
     }
   }, [account, usePermit2Setting, tracking, getStepsForFlow, market, withdrawCollateralAmount, executeDeleverage, toast]);

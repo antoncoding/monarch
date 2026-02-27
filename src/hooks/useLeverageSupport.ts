@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
+import { getChainAddresses } from '@morpho-org/blue-sdk';
 import { type Address, isAddressEqual, zeroAddress } from 'viem';
 import { useReadContracts } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import type { Market } from '@/utils/types';
-import type { Erc4626LeverageRoute, LeverageSupport } from './leverage/types';
+import type { Erc4626LeverageRoute, LeverageSupport, SwapLeverageRoute } from './leverage/types';
 
 type UseLeverageSupportParams = {
   market: Market;
@@ -57,13 +58,42 @@ export function useLeverageSupport({ market }: UseLeverageSupportParams): Levera
       };
     }
 
+    if (!isLoading && !isRefetching) {
+      try {
+        // Bundler3 adapter addresses are sourced from the canonical blue-sdk chain registry.
+        // They are not hardcoded in this repository.
+        const chainAddresses = getChainAddresses(chainId);
+        const bundler3Addresses = chainAddresses?.bundler3;
+
+        if (bundler3Addresses?.bundler3 && bundler3Addresses.generalAdapter1 && bundler3Addresses.paraswapAdapter) {
+          const route: SwapLeverageRoute = {
+            kind: 'swap',
+            bundler3Address: bundler3Addresses.bundler3 as Address,
+            generalAdapterAddress: bundler3Addresses.generalAdapter1 as Address,
+            paraswapAdapterAddress: bundler3Addresses.paraswapAdapter as Address,
+          };
+
+          return {
+            isSupported: true,
+            supportsLeverage: true,
+            supportsDeleverage: false,
+            isLoading: false,
+            route,
+            reason: 'Deleverage is not yet available for swap-backed leverage routes.',
+          };
+        }
+      } catch {
+        // Unsupported chain in the blue-sdk addresses registry.
+      }
+    }
+
     return {
       isSupported: false,
       supportsLeverage: false,
       supportsDeleverage: false,
       isLoading: isLoading || isRefetching,
       route: null,
-      reason: 'Leverage is currently available only for ERC4626-underlying routes on Bundler V2.',
+      reason: 'Leverage is currently available for ERC4626 routes on Bundler V2, or swap routes where Bundler3 + Paraswap adapter are deployed.',
     };
-  }, [collateralToken, loanToken, data, isLoading, isRefetching]);
+  }, [chainId, collateralToken, loanToken, data, isLoading, isRefetching]);
 }

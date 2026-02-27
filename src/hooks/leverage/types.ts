@@ -6,7 +6,14 @@ export type Erc4626LeverageRoute = {
   underlyingLoanToken: Address;
 };
 
-export type LeverageRoute = Erc4626LeverageRoute;
+export type SwapLeverageRoute = {
+  kind: 'swap';
+  bundler3Address: Address;
+  generalAdapterAddress: Address;
+  paraswapAdapterAddress: Address;
+};
+
+export type LeverageRoute = Erc4626LeverageRoute | SwapLeverageRoute;
 
 export type LeverageSupport = {
   isSupported: boolean;

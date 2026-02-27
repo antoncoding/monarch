@@ -59,6 +59,9 @@
         // Object shorthand - disable for gentle migration
         "useConsistentObjectDefinitions": "off",
 
+        // Catch mutable declarations that can be const
+        "useConst": "error",
+
         // ENABLED - Safe, auto-fixable style improvements
         "useImportType": {
           "level": "warn",

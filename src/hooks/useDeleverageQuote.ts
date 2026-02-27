@@ -2,11 +2,11 @@ import { useMemo } from 'react';
 import { useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { withSlippageCeil } from './leverage/math';
-import type { LeverageRoute } from './leverage/types';
+import type { Erc4626LeverageRoute } from './leverage/types';
 
 type UseDeleverageQuoteParams = {
   chainId: number;
-  route: LeverageRoute | null;
+  route: Erc4626LeverageRoute | null;
   withdrawCollateralAmount: bigint;
   currentBorrowAssets: bigint;
 };

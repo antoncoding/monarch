@@ -147,6 +147,7 @@ When touching transaction and position flows, validation MUST include all releva
 12. **Aggregator API contract integrity**: quote-only request params must never be forwarded to transaction-build endpoints (e.g. Velora `version` on `/prices` but not `/transactions/:network`); enforce endpoint-specific payload/query builders, normalize fetch/network failures into typed API errors, and verify returned route token addresses match requested canonical token addresses before using previews/tx payloads.
 13. **User-rejection error normalization**: transaction hooks must map wallet rejection payloads (EIP-1193 `4001`, `ACTION_REJECTED`, viem request-argument dumps) to a short canonical UI message (`User rejected transaction.`) and never render raw payload text in inline UI/error boxes.
 14. **Input/state integrity in tx-critical UIs**: never strip unsupported numeric syntax into a different value (e.g. `1e-6` must be rejected, not rewritten), and after any balance refetch re-derive selected token objects from refreshed data before allowing `Max`/submit.
+15. **Swap leverage flashloan callback integrity**: Bundler3 swap leverage must use adapter flashloan callbacks (not pre-swap borrow gating), with `callbackHash`/`reenter` wiring and adapter token flows matching on-chain contracts; before submit, verify Velora quote/tx parity (route src amount + Paraswap calldata exact/min offsets) so previewed borrow/collateral amounts cannot drift from executed inputs.
 
 ### REQUIRED: Regression Rule Capture
 
