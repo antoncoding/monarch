@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
-import { computeFlashCollateralAmount, withSlippageFloor } from './leverage/math';
+import { computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
 
 type UseLeverageQuoteParams = {
   chainId: number;
   route: LeverageRoute | null;
-  userCollateralAmount: bigint;
+  userInputAmount: bigint;
+  inputMode: 'collateral' | 'loan';
   multiplierBps: bigint;
   loanTokenAddress: string;
   loanTokenDecimals: number;
@@ -19,6 +20,7 @@ type UseLeverageQuoteParams = {
 };
 
 export type LeverageQuote = {
+  initialCollateralAmount: bigint;
   flashCollateralAmount: bigint;
   flashLoanAmount: bigint;
   totalAddedCollateral: bigint;
@@ -36,7 +38,8 @@ export type LeverageQuote = {
 export function useLeverageQuote({
   chainId,
   route,
-  userCollateralAmount,
+  userInputAmount,
+  inputMode,
   multiplierBps,
   loanTokenAddress,
   loanTokenDecimals,
@@ -44,15 +47,41 @@ export function useLeverageQuote({
   collateralTokenDecimals,
   userAddress,
 }: UseLeverageQuoteParams): LeverageQuote {
+  const isLoanAssetInput = inputMode === 'loan';
+  const isSwapLoanAssetInput = route?.kind === 'swap' && isLoanAssetInput;
+
+  const {
+    data: erc4626PreviewDeposit,
+    isLoading: isLoadingErc4626Deposit,
+    error: erc4626DepositError,
+  } = useReadContract({
+    address: route?.kind === 'erc4626' ? route.collateralVault : undefined,
+    abi: erc4626Abi,
+    functionName: 'previewDeposit',
+    args: [userInputAmount],
+    chainId,
+    query: {
+      enabled: route?.kind === 'erc4626' && isLoanAssetInput && userInputAmount > 0n,
+    },
+  });
+
+  const initialCollateralAmount = useMemo(() => {
+    if (!route) return 0n;
+    if (isSwapLoanAssetInput) return 0n;
+    if (!isLoanAssetInput) return userInputAmount;
+    if (route.kind === 'erc4626') return (erc4626PreviewDeposit as bigint | undefined) ?? 0n;
+    return 0n;
+  }, [route, isSwapLoanAssetInput, isLoanAssetInput, userInputAmount, erc4626PreviewDeposit]);
+
   const targetFlashCollateralAmount = useMemo(
-    () => computeFlashCollateralAmount(userCollateralAmount, multiplierBps),
-    [userCollateralAmount, multiplierBps],
+    () => (isSwapLoanAssetInput ? 0n : computeFlashCollateralAmount(initialCollateralAmount, multiplierBps)),
+    [isSwapLoanAssetInput, initialCollateralAmount, multiplierBps],
   );
 
   const {
     data: erc4626PreviewMint,
-    isLoading: isLoadingErc4626,
-    error: erc4626Error,
+    isLoading: isLoadingErc4626Mint,
+    error: erc4626MintError,
   } = useReadContract({
     address: route?.kind === 'erc4626' ? route.collateralVault : undefined,
     abi: erc4626Abi,
@@ -64,9 +93,9 @@ export function useLeverageQuote({
     },
   });
 
-  const swapQuoteQuery = useQuery({
+  const swapCollateralInputQuoteQuery = useQuery({
     queryKey: [
-      'leverage-swap-quote',
+      'leverage-swap-collateral-input-quote',
       chainId,
       route?.kind === 'swap' ? route.paraswapAdapterAddress : null,
       route?.kind === 'swap' ? route.generalAdapterAddress : null,
@@ -77,7 +106,7 @@ export function useLeverageQuote({
       targetFlashCollateralAmount.toString(),
       userAddress ?? null,
     ],
-    enabled: route?.kind === 'swap' && targetFlashCollateralAmount > 0n && !!userAddress,
+    enabled: route?.kind === 'swap' && !isLoanAssetInput && targetFlashCollateralAmount > 0n && !!userAddress,
     queryFn: async () => {
       const buyRoute = await fetchVeloraPriceRoute({
         srcToken: loanTokenAddress,
@@ -109,6 +138,9 @@ export function useLeverageQuote({
         userAddress: userAddress as `0x${string}`,
         side: 'SELL',
       });
+      if (BigInt(sellRoute.srcAmount) !== borrowAssets) {
+        throw new Error('Failed to quote stable Velora swap route for leverage.');
+      }
 
       return {
         flashLoanAmount: borrowAssets,
@@ -118,57 +150,139 @@ export function useLeverageQuote({
     },
   });
 
-  const swapQuote = useMemo(() => {
-    if (route?.kind !== 'swap') {
-      return {
-        flashLoanAmount: 0n,
-        flashCollateralAmount: 0n,
-        priceRoute: null,
-      };
-    }
-
-    return (
-      swapQuoteQuery.data ?? {
-        flashLoanAmount: 0n,
-        flashCollateralAmount: 0n,
-        priceRoute: null,
+  const swapLoanInputCombinedQuoteQuery = useQuery({
+    queryKey: [
+      'leverage-swap-loan-input-combined-quote',
+      chainId,
+      route?.kind === 'swap' ? route.paraswapAdapterAddress : null,
+      route?.kind === 'swap' ? route.generalAdapterAddress : null,
+      loanTokenAddress,
+      loanTokenDecimals,
+      collateralTokenAddress,
+      collateralTokenDecimals,
+      userInputAmount.toString(),
+      multiplierBps.toString(),
+      userAddress ?? null,
+    ],
+    enabled: route?.kind === 'swap' && isLoanAssetInput && userInputAmount > 0n && !!userAddress,
+    queryFn: async () => {
+      const flashLoanAmount = computeLeveragedExtraAmount(userInputAmount, multiplierBps);
+      if (flashLoanAmount <= 0n) {
+        return {
+          flashLoanAmount: 0n,
+          flashCollateralAmount: 0n,
+          totalAddedCollateral: 0n,
+          priceRoute: null,
+        };
       }
-    );
-  }, [route, swapQuoteQuery.data]);
+
+      const totalLoanSellAmount = userInputAmount + flashLoanAmount;
+      const sellRoute = await fetchVeloraPriceRoute({
+        srcToken: loanTokenAddress,
+        srcDecimals: loanTokenDecimals,
+        destToken: collateralTokenAddress,
+        destDecimals: collateralTokenDecimals,
+        amount: totalLoanSellAmount,
+        network: chainId,
+        userAddress: userAddress as `0x${string}`,
+        side: 'SELL',
+      });
+      if (BigInt(sellRoute.srcAmount) !== totalLoanSellAmount) {
+        throw new Error('Failed to quote stable Velora swap route for leverage.');
+      }
+
+      const totalAddedCollateral = withSlippageFloor(BigInt(sellRoute.destAmount));
+
+      return {
+        flashLoanAmount,
+        flashCollateralAmount: 0n,
+        totalAddedCollateral,
+        priceRoute: sellRoute,
+      };
+    },
+  });
 
   const flashCollateralAmount = useMemo(() => {
     if (!route) return 0n;
-    if (route.kind === 'swap') return swapQuote.flashCollateralAmount;
+    if (route.kind === 'swap') {
+      if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.flashCollateralAmount ?? 0n;
+      return swapCollateralInputQuoteQuery.data?.flashCollateralAmount ?? 0n;
+    }
     return targetFlashCollateralAmount;
-  }, [route, targetFlashCollateralAmount, swapQuote.flashCollateralAmount]);
+  }, [
+    route,
+    isLoanAssetInput,
+    targetFlashCollateralAmount,
+    swapLoanInputCombinedQuoteQuery.data?.flashCollateralAmount,
+    swapCollateralInputQuoteQuery.data?.flashCollateralAmount,
+  ]);
 
   const flashLoanAmount = useMemo(() => {
     if (!route) return 0n;
-    if (route.kind === 'swap') return swapQuote.flashLoanAmount;
+    if (route.kind === 'swap') {
+      if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.flashLoanAmount ?? 0n;
+      return swapCollateralInputQuoteQuery.data?.flashLoanAmount ?? 0n;
+    }
     return (erc4626PreviewMint as bigint | undefined) ?? 0n;
-  }, [route, swapQuote.flashLoanAmount, erc4626PreviewMint]);
+  }, [
+    route,
+    isLoanAssetInput,
+    swapLoanInputCombinedQuoteQuery.data?.flashLoanAmount,
+    swapCollateralInputQuoteQuery.data?.flashLoanAmount,
+    erc4626PreviewMint,
+  ]);
+
+  const totalAddedCollateral = useMemo(() => {
+    if (!route) return 0n;
+    if (route.kind === 'swap') {
+      if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.totalAddedCollateral ?? 0n;
+      return initialCollateralAmount + flashCollateralAmount;
+    }
+    return initialCollateralAmount + flashCollateralAmount;
+  }, [route, isLoanAssetInput, initialCollateralAmount, flashCollateralAmount, swapLoanInputCombinedQuoteQuery.data?.totalAddedCollateral]);
+
+  const swapPriceRoute = useMemo(() => {
+    if (route?.kind !== 'swap') return null;
+    if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.priceRoute ?? null;
+    return swapCollateralInputQuoteQuery.data?.priceRoute ?? null;
+  }, [route, isLoanAssetInput, swapLoanInputCombinedQuoteQuery.data?.priceRoute, swapCollateralInputQuoteQuery.data?.priceRoute]);
 
   const error = useMemo(() => {
     if (!route) return null;
     if (route.kind === 'swap') {
-      if (!userAddress && targetFlashCollateralAmount > 0n) return 'Connect wallet to fetch swap-backed leverage route.';
-      const routeError = swapQuoteQuery.error;
+      if (!userAddress && userInputAmount > 0n) return 'Connect wallet to fetch swap-backed leverage route.';
+      const routeError = isLoanAssetInput ? swapLoanInputCombinedQuoteQuery.error : swapCollateralInputQuoteQuery.error;
       if (!routeError) return null;
       return routeError instanceof Error ? routeError.message : 'Failed to quote Velora swap route for leverage.';
     }
-    const erc4626RouteError = erc4626Error;
+    const erc4626RouteError = erc4626DepositError ?? erc4626MintError;
     if (!erc4626RouteError) return null;
     return erc4626RouteError instanceof Error ? erc4626RouteError.message : 'Failed to quote leverage route';
-  }, [route, userAddress, targetFlashCollateralAmount, swapQuoteQuery.error, erc4626Error]);
+  }, [
+    route,
+    userAddress,
+    userInputAmount,
+    isLoanAssetInput,
+    swapLoanInputCombinedQuoteQuery.error,
+    swapCollateralInputQuoteQuery.error,
+    erc4626DepositError,
+    erc4626MintError,
+  ]);
 
-  const isLoading = !!route && (route.kind === 'swap' ? swapQuoteQuery.isLoading || swapQuoteQuery.isFetching : isLoadingErc4626);
+  const isLoading =
+    !!route &&
+    (route.kind === 'swap'
+      ? (isLoanAssetInput && (swapLoanInputCombinedQuoteQuery.isLoading || swapLoanInputCombinedQuoteQuery.isFetching)) ||
+        (!isLoanAssetInput && (swapCollateralInputQuoteQuery.isLoading || swapCollateralInputQuoteQuery.isFetching))
+      : isLoadingErc4626Deposit || isLoadingErc4626Mint);
 
   return {
+    initialCollateralAmount,
     flashCollateralAmount,
     flashLoanAmount,
-    totalAddedCollateral: userCollateralAmount + flashCollateralAmount,
+    totalAddedCollateral,
     isLoading,
     error,
-    swapPriceRoute: route?.kind === 'swap' ? swapQuote.priceRoute : null,
+    swapPriceRoute,
   };
 }

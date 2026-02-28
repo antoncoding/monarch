@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { type Address, erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
 import type { LeverageRoute } from '@/hooks/leverage/types';
+import { cn } from '@/utils/components';
 import type { Market, MarketPosition } from '@/utils/types';
 import { AddCollateralAndLeverage } from './components/add-collateral-and-leverage';
 import { RemoveCollateralAndDeleverage } from './components/remove-collateral-and-deleverage';
@@ -22,6 +25,70 @@ type LeverageModalProps = {
   toggleLeverageDeleverage?: boolean;
 };
 
+const ROUTE_MODE_LABELS = {
+  erc4626: 'ERC4626',
+  swap: 'SWAP',
+} as const;
+
+const ROUTE_MODE_BADGE_VARIANTS = {
+  erc4626: 'success',
+  swap: 'warning',
+} as const;
+
+type RouteMode = keyof typeof ROUTE_MODE_LABELS;
+
+type RouteModeBadgeProps = {
+  value: RouteMode;
+  availableModes: RouteMode[];
+  onValueChange: (value: RouteMode) => void;
+};
+
+function RouteModeBadge({ value, availableModes, onValueChange }: RouteModeBadgeProps): JSX.Element {
+  const canSwitch = availableModes.length > 1;
+  const label = ROUTE_MODE_LABELS[value];
+  const badge = (
+    <Badge
+      variant={ROUTE_MODE_BADGE_VARIANTS[value]}
+      size="sm"
+      className={cn('uppercase tracking-[0.08em]', canSwitch && 'gap-1')}
+    >
+      <span>#{label}</span>
+      {canSwitch && <ChevronDownIcon className="h-3.5 w-3.5" />}
+    </Badge>
+  );
+
+  if (!canSwitch) {
+    return badge;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
+        >
+          {badge}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="z-[3600] min-w-[10rem] p-1"
+      >
+        {availableModes.map((mode) => (
+          <DropdownMenuItem
+            key={mode}
+            onClick={() => onValueChange(mode)}
+            className={cn(mode === value && 'bg-hovered')}
+          >
+            {ROUTE_MODE_LABELS[mode]}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function LeverageModal({
   market,
   onOpenChange,
@@ -33,7 +100,7 @@ export function LeverageModal({
   toggleLeverageDeleverage = true,
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
-  const [routeMode, setRouteMode] = useState<'swap' | 'erc4626'>('erc4626');
+  const [routeMode, setRouteMode] = useState<RouteMode>('erc4626');
   const { address: account } = useConnection();
 
   const { swapRoute, isErc4626ModeAvailable, availableRouteModes, isErc4626ProbeLoading, isErc4626ProbeRefetching } =
@@ -79,10 +146,12 @@ export function LeverageModal({
   ]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
-  const routeModeOptions: { value: string; label: string }[] = availableRouteModes.map((value) => ({
-    value,
-    label: value === 'swap' ? 'Swap' : 'ERC4626',
-  }));
+  const displayedRouteMode = useMemo<RouteMode>(() => {
+    if (route?.kind) return route.kind;
+    if (availableRouteModes.length === 1) return availableRouteModes[0];
+    if (availableRouteModes.includes(routeMode)) return routeMode;
+    return availableRouteModes[0] ?? routeMode;
+  }, [route, availableRouteModes, routeMode]);
 
   const effectiveMode = mode;
   const modeOptions: { value: string; label: string }[] = toggleLeverageDeleverage
@@ -158,30 +227,11 @@ export function LeverageModal({
               options={modeOptions}
               onValueChange={(nextMode) => setMode(nextMode as 'leverage' | 'deleverage')}
             />
-            {isErc4626Route && (
-              <Badge
-                variant="success"
-                size="sm"
-                className="uppercase tracking-[0.08em]"
-              >
-                #ERC4626
-              </Badge>
-            )}
-            {isSwapRoute && (
-              <Badge
-                variant="warning"
-                size="sm"
-                className="uppercase tracking-[0.08em]"
-              >
-                #SWAP
-              </Badge>
-            )}
-            {routeModeOptions.length > 1 && (
-              <ModalIntentSwitcher
-                value={routeMode}
-                options={routeModeOptions}
-                onValueChange={(nextRouteMode) => setRouteMode(nextRouteMode as 'swap' | 'erc4626')}
-                className="text-xs text-secondary"
+            {(route || availableRouteModes.length > 0) && (
+              <RouteModeBadge
+                value={displayedRouteMode}
+                availableModes={availableRouteModes}
+                onValueChange={setRouteMode}
               />
             )}
           </div>

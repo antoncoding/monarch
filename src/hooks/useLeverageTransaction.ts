@@ -38,6 +38,7 @@ type UseLeverageTransactionProps = {
   collateralAmountInCollateralToken: bigint;
   flashCollateralAmount: bigint;
   flashLoanAmount: bigint;
+  totalAddedCollateral: bigint;
   swapPriceRoute: VeloraPriceRoute | null;
   useLoanAssetAsInput: boolean;
   onSuccess?: () => void;
@@ -61,6 +62,7 @@ export function useLeverageTransaction({
   collateralAmountInCollateralToken,
   flashCollateralAmount,
   flashLoanAmount,
+  totalAddedCollateral,
   swapPriceRoute,
   useLoanAssetAsInput,
   onSuccess,
@@ -86,7 +88,7 @@ export function useLeverageTransaction({
   }, [route, bundlerAddress]);
 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
-  const isLoanAssetInput = !isSwapRoute && useLoanAssetAsInput;
+  const isLoanAssetInput = useLoanAssetAsInput;
   const inputTokenAddress = isLoanAssetInput ? (market.loanAsset.address as Address) : (market.collateralAsset.address as Address);
   const inputTokenSymbol = isLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
   const inputTokenDecimals = isLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
@@ -216,7 +218,8 @@ export function useLeverageTransaction({
       return;
     }
 
-    if (collateralAmount <= 0n || flashLoanAmount <= 0n || flashCollateralAmount <= 0n) {
+    const hasCollateralOutput = route.kind === 'swap' && isLoanAssetInput ? totalAddedCollateral > 0n : flashCollateralAmount > 0n;
+    if (collateralAmount <= 0n || flashLoanAmount <= 0n || !hasCollateralOutput) {
       toast.info('Invalid leverage inputs', 'Set collateral and multiplier above 1x before submitting.');
       return;
     }
@@ -275,6 +278,12 @@ export function useLeverageTransaction({
         if (!swapPriceRoute) {
           throw new Error('Missing Velora swap quote for leverage.');
         }
+        // WHY: when starting from loan on a swap route, we combine the user's loan input
+        // with the flash-loaned loan and sell them together before supplying collateral.
+        const totalLoanSellAmount = isLoanAssetInput ? inputTokenAmountForTransfer + flashLoanAmount : flashLoanAmount;
+        if (totalLoanSellAmount <= 0n) {
+          throw new Error('Invalid total sell amount for swap-backed leverage.');
+        }
 
         const activePriceRoute = swapPriceRoute;
         const swapTxPayload = await (async () => {
@@ -284,7 +293,7 @@ export function useLeverageTransaction({
               srcDecimals: market.loanAsset.decimals,
               destToken: market.collateralAsset.address,
               destDecimals: market.collateralAsset.decimals,
-              srcAmount: flashLoanAmount,
+              srcAmount: totalLoanSellAmount,
               network: market.morphoBlue.chain.id,
               userAddress: account as Address,
               priceRoute: activePriceRoute,
@@ -321,19 +330,19 @@ export function useLeverageTransaction({
           throw new Error('Leverage quote changed. Please review the updated preview and try again.');
         }
 
-        const minCollateralOut = withSlippageFloor(BigInt(activePriceRoute.destAmount));
-        if (minCollateralOut <= 0n) {
+        const expectedCollateralOut = isLoanAssetInput ? totalAddedCollateral : flashCollateralAmount;
+        if (expectedCollateralOut <= 0n) {
           throw new Error('Velora returned zero collateral output for leverage swap.');
         }
 
         const sellOffsets = getParaswapSellOffsets(swapTxPayload.data);
-        const quotedBorrowAssets = BigInt(activePriceRoute.srcAmount);
+        const quotedSellAmount = BigInt(activePriceRoute.srcAmount);
         const calldataSellAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
         const calldataMinCollateralOut = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
         if (
-          quotedBorrowAssets !== flashLoanAmount ||
-          calldataSellAmount !== flashLoanAmount ||
-          calldataMinCollateralOut !== minCollateralOut
+          quotedSellAmount !== totalLoanSellAmount ||
+          calldataSellAmount !== totalLoanSellAmount ||
+          calldataMinCollateralOut !== expectedCollateralOut
         ) {
           throw new Error('Leverage quote changed. Please review the updated preview and try again.');
         }
@@ -344,7 +353,7 @@ export function useLeverageTransaction({
             data: encodeFunctionData({
               abi: morphoGeneralAdapterV1Abi,
               functionName: 'erc20Transfer',
-              args: [market.loanAsset.address as Address, route.paraswapAdapterAddress, flashLoanAmount],
+              args: [market.loanAsset.address as Address, route.paraswapAdapterAddress, totalLoanSellAmount],
             }),
             value: 0n,
             skipRevert: false,
@@ -408,17 +417,19 @@ export function useLeverageTransaction({
             skipRevert: false,
             callbackHash: zeroHash,
           });
-          bundleCalls.push({
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'morphoSupplyCollateral',
-              args: [marketParams, inputTokenAmountForTransfer, account as Address, '0x'],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          });
+          if (!isLoanAssetInput) {
+            bundleCalls.push({
+              to: route.generalAdapterAddress,
+              data: encodeFunctionData({
+                abi: morphoGeneralAdapterV1Abi,
+                functionName: 'morphoSupplyCollateral',
+                args: [marketParams, inputTokenAmountForTransfer, account as Address, '0x'],
+              }),
+              value: 0n,
+              skipRevert: false,
+              callbackHash: zeroHash,
+            });
+          }
         }
 
         bundleCalls.push({
@@ -552,6 +563,7 @@ export function useLeverageTransaction({
     isLoanAssetInput,
     flashCollateralAmount,
     flashLoanAmount,
+    totalAddedCollateral,
     swapPriceRoute,
     usePermit2ForRoute,
     permit2Authorized,

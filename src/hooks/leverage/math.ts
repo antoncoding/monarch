@@ -40,11 +40,15 @@ export const formatMultiplierBps = (value: bigint): string => {
  * Converts user collateral and desired multiplier into extra collateral required
  * via flash liquidity.
  */
-export const computeFlashCollateralAmount = (userCollateralAmount: bigint, multiplierBps: bigint): bigint => {
-  if (userCollateralAmount <= 0n) return 0n;
+export const computeLeveragedExtraAmount = (baseAmount: bigint, multiplierBps: bigint): bigint => {
+  if (baseAmount <= 0n) return 0n;
   const safeMultiplier = clampMultiplierBps(multiplierBps);
-  const leveragedCollateral = (userCollateralAmount * safeMultiplier) / LEVERAGE_MULTIPLIER_SCALE_BPS;
-  return leveragedCollateral > userCollateralAmount ? leveragedCollateral - userCollateralAmount : 0n;
+  const leveragedAmount = (baseAmount * safeMultiplier) / LEVERAGE_MULTIPLIER_SCALE_BPS;
+  return leveragedAmount > baseAmount ? leveragedAmount - baseAmount : 0n;
+};
+
+export const computeFlashCollateralAmount = (userCollateralAmount: bigint, multiplierBps: bigint): bigint => {
+  return computeLeveragedExtraAmount(userCollateralAmount, multiplierBps);
 };
 
 export const computeLeverageProjectedPosition = ({

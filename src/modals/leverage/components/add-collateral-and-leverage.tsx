@@ -9,7 +9,6 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Tooltip } from '@/components/ui/tooltip';
-import { erc4626Abi } from '@/abis/erc4626';
 import {
   clampMultiplierBps,
   computeLeverageProjectedPosition,
@@ -22,6 +21,8 @@ import { use4626VaultAPR } from '@/hooks/use4626VaultAPR';
 import { useLeverageQuote } from '@/hooks/useLeverageQuote';
 import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { DEFAULT_SLIPPAGE_PERCENT } from '@/features/swap/constants';
+import { formatSlippagePercent, formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
 import { formatBalance } from '@/utils/balance';
 import { convertApyToApr } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
@@ -59,15 +60,16 @@ export function AddCollateralAndLeverage({
   const multiplierBps = useMemo(() => clampMultiplierBps(parseMultiplierToBps(multiplierInput)), [multiplierInput]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
 
-  const { data: loanTokenBalance } = useReadContract({
+  const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
     address: market.loanAsset.address as `0x${string}`,
     args: [account as `0x${string}`],
     functionName: 'balanceOf',
     abi: erc20Abi,
     chainId: market.morphoBlue.chain.id,
     query: {
-      enabled: !!account && isErc4626Route,
+      enabled: !!account && useLoanAssetInput,
     },
   });
 
@@ -78,43 +80,15 @@ export function AddCollateralAndLeverage({
   }, [useLoanAssetInput]);
 
   useEffect(() => {
-    if (isErc4626Route) return;
+    if (canUseLoanAssetInput) return;
     setUseLoanAssetInput(false);
-  }, [isErc4626Route]);
-
-  const {
-    data: previewCollateralSharesFromUnderlying,
-    isLoading: isLoadingUnderlyingToCollateralConversion,
-    error: underlyingToCollateralConversionError,
-  } = useReadContract({
-    // WHY: for ERC4626 "start with loan asset" mode, user input is underlying assets.
-    // We convert to collateral shares first so multiplier/flash math stays in collateral units.
-    address: route?.kind === 'erc4626' ? route.collateralVault : undefined,
-    abi: erc4626Abi,
-    functionName: 'previewDeposit',
-    args: [collateralAmount],
-    chainId: market.morphoBlue.chain.id,
-    query: {
-      enabled: isErc4626Route && useLoanAssetInput && collateralAmount > 0n,
-    },
-  });
-
-  const collateralAmountForLeverageQuote = useMemo(() => {
-    if (useLoanAssetInput) return (previewCollateralSharesFromUnderlying as bigint | undefined) ?? 0n;
-    return collateralAmount;
-  }, [useLoanAssetInput, previewCollateralSharesFromUnderlying, collateralAmount]);
-
-  const conversionErrorMessage = useMemo(() => {
-    if (!useLoanAssetInput || !underlyingToCollateralConversionError) return null;
-    return underlyingToCollateralConversionError instanceof Error
-      ? underlyingToCollateralConversionError.message
-      : 'Failed to quote loan asset to collateral conversion.';
-  }, [useLoanAssetInput, underlyingToCollateralConversionError]);
+  }, [canUseLoanAssetInput]);
 
   const quote = useLeverageQuote({
     chainId: market.morphoBlue.chain.id,
     route,
-    userCollateralAmount: collateralAmountForLeverageQuote,
+    userInputAmount: collateralAmount,
+    inputMode: useLoanAssetInput ? 'loan' : 'collateral',
     multiplierBps,
     loanTokenAddress: market.loanAsset.address,
     loanTokenDecimals: market.loanAsset.decimals,
@@ -173,17 +147,21 @@ export function AddCollateralAndLeverage({
     setCollateralAmount(0n);
     setCollateralInputError(null);
     setMultiplierInput(formatMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS));
+    if (useLoanAssetInput) {
+      void refetchLoanTokenBalance();
+    }
     if (onSuccess) onSuccess();
-  }, [onSuccess]);
+  }, [onSuccess, refetchLoanTokenBalance, useLoanAssetInput]);
 
   const { transaction, isLoadingPermit2, permit2Authorized, leveragePending, approveAndLeverage, signAndLeverage } = useLeverageTransaction(
     {
       market,
       route,
       collateralAmount,
-      collateralAmountInCollateralToken: collateralAmountForLeverageQuote,
+      collateralAmountInCollateralToken: quote.initialCollateralAmount,
       flashCollateralAmount: quote.flashCollateralAmount,
       flashLoanAmount: quote.flashLoanAmount,
+      totalAddedCollateral: quote.totalAddedCollateral,
       swapPriceRoute: quote.swapPriceRoute,
       useLoanAssetAsInput: useLoanAssetInput,
       onSuccess: handleTransactionSuccess,
@@ -213,12 +191,11 @@ export function AddCollateralAndLeverage({
 
   const projectedOverLimit = projectedLTV >= lltv;
   const insufficientLiquidity = quote.flashLoanAmount > marketLiquidity;
-  const hasChanges = collateralAmountForLeverageQuote > 0n && quote.flashLoanAmount > 0n;
+  const hasChanges = quote.totalAddedCollateral > 0n && quote.flashLoanAmount > 0n;
   const inputAssetSymbol = useLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
   const inputAssetDecimals = useLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
   const inputAssetBalance = useLoanAssetInput ? (loanTokenBalance as bigint | undefined) : collateralTokenBalance;
   const inputTokenIconAddress = useLoanAssetInput ? market.loanAsset.address : market.collateralAsset.address;
-  const isLoadingInputConversion = useLoanAssetInput && isLoadingUnderlyingToCollateralConversion;
   const flashBorrowPreview = useMemo(
     () => formatTokenAmountPreview(quote.flashLoanAmount, market.loanAsset.decimals),
     [quote.flashLoanAmount, market.loanAsset.decimals],
@@ -231,7 +208,53 @@ export function AddCollateralAndLeverage({
     () => formatTokenAmountPreview(quote.flashCollateralAmount, market.collateralAsset.decimals),
     [quote.flashCollateralAmount, market.collateralAsset.decimals],
   );
-  const collateralPreviewForDisplay = isSwapRoute ? swapCollateralOutPreview : totalCollateralAddedPreview;
+  const initialCollateralPreview = useMemo(
+    () => formatTokenAmountPreview(quote.initialCollateralAmount, market.collateralAsset.decimals),
+    [quote.initialCollateralAmount, market.collateralAsset.decimals],
+  );
+  const collateralPreviewForDisplay = isSwapRoute && !useLoanAssetInput ? swapCollateralOutPreview : totalCollateralAddedPreview;
+  const collateralPreviewLabel = isSwapRoute
+    ? useLoanAssetInput
+      ? 'Total Collateral Added (Min.)'
+      : 'Collateral From Swap (Min.)'
+    : 'Total Collateral Added';
+  const hasExecutableInputConversion = useMemo(() => {
+    if (!useLoanAssetInput) return true;
+    if (isSwapRoute) return quote.totalAddedCollateral > 0n;
+    if (isErc4626Route) return quote.initialCollateralAmount > 0n;
+    return false;
+  }, [useLoanAssetInput, isSwapRoute, isErc4626Route, quote.totalAddedCollateral, quote.initialCollateralAmount]);
+  const swapRatePreviewText = useMemo(() => {
+    if (!isSwapRoute || !quote.swapPriceRoute) return null;
+
+    let quotedLoanAmount: bigint;
+    let quotedCollateralAmount: bigint;
+    try {
+      quotedLoanAmount = BigInt(quote.swapPriceRoute.srcAmount);
+      quotedCollateralAmount = BigInt(quote.swapPriceRoute.destAmount);
+    } catch {
+      return null;
+    }
+
+    return formatSwapRatePreview({
+      baseAmount: quotedLoanAmount,
+      baseTokenDecimals: market.loanAsset.decimals,
+      baseTokenSymbol: market.loanAsset.symbol,
+      quoteAmount: quotedCollateralAmount,
+      quoteTokenDecimals: market.collateralAsset.decimals,
+      quoteTokenSymbol: market.collateralAsset.symbol,
+    });
+  }, [
+    isSwapRoute,
+    quote.swapPriceRoute,
+    market.loanAsset.decimals,
+    market.loanAsset.symbol,
+    market.collateralAsset.decimals,
+    market.collateralAsset.symbol,
+  ]);
+  const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapPriceRoute != null && swapRatePreviewText != null;
+  const shouldShowInputConversionPreview = isErc4626Route && useLoanAssetInput && quote.initialCollateralAmount > 0n;
+  const swapSlippagePreviewText = `${formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT)}%`;
   const renderRateValue = useCallback(
     (apy: number | null): JSX.Element => {
       if (apy == null || !Number.isFinite(apy)) return <span className="font-monospace">-</span>;
@@ -286,7 +309,7 @@ export function AddCollateralAndLeverage({
                 <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
                   {useLoanAssetInput ? `Start with ${market.loanAsset.symbol}` : `Add Collateral ${market.collateralAsset.symbol}`}
                 </p>
-                {isErc4626Route && (
+                {canUseLoanAssetInput && (
                   <div className="flex items-center gap-2">
                     <div className="text-xs text-secondary">Use {market.loanAsset.symbol}</div>
                     <IconSwitch
@@ -362,7 +385,7 @@ export function AddCollateralAndLeverage({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-secondary">{isSwapRoute ? 'Collateral From Swap (Est.)' : 'Total Collateral Added'}</span>
+                  <span className="text-secondary">{collateralPreviewLabel}</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
                     <Tooltip content={<span className="font-monospace text-xs">{collateralPreviewForDisplay.full}</span>}>
                       <span className="cursor-help border-b border-dotted border-white/40">{collateralPreviewForDisplay.compact}</span>
@@ -376,6 +399,35 @@ export function AddCollateralAndLeverage({
                     />
                   </span>
                 </div>
+                {shouldShowInputConversionPreview && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-secondary">Collateral Shares From Input</span>
+                    <span className="tabular-nums inline-flex items-center gap-1.5">
+                      <Tooltip content={<span className="font-monospace text-xs">{initialCollateralPreview.full}</span>}>
+                        <span className="cursor-help border-b border-dotted border-white/40">{initialCollateralPreview.compact}</span>
+                      </Tooltip>
+                      <TokenIcon
+                        address={market.collateralAsset.address}
+                        chainId={market.morphoBlue.chain.id}
+                        symbol={market.collateralAsset.symbol}
+                        width={14}
+                        height={14}
+                      />
+                    </span>
+                  </div>
+                )}
+                {shouldShowSwapPreviewDetails && (
+                  <>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-secondary">Swap Quote</span>
+                      <span className="text-right">{swapRatePreviewText}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-secondary">Max Slippage</span>
+                      <span>{swapSlippagePreviewText}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">Borrow {rateLabel}</span>
                   <span className="tabular-nums">{renderRateValue(previewBorrowApy)}</span>
@@ -397,14 +449,7 @@ export function AddCollateralAndLeverage({
                     </div>
                   </>
                 )}
-                {isSwapRoute && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-secondary">Route</span>
-                    <span className="tabular-nums">Bundler3 + Velora</span>
-                  </div>
-                )}
               </div>
-              {conversionErrorMessage && <p className="mt-2 text-xs text-red-500">{conversionErrorMessage}</p>}
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
               {isErc4626Route && vaultRateInsight.error && (
                 <p className="mt-2 text-xs text-red-500">Failed to fetch 3-day vault/borrow rates: {vaultRateInsight.error}</p>
@@ -423,14 +468,13 @@ export function AddCollateralAndLeverage({
               <ExecuteTransactionButton
                 targetChainId={market.morphoBlue.chain.id}
                 onClick={handleLeverage}
-                isLoading={isLoadingPermit2 || leveragePending || quote.isLoading || isLoadingInputConversion}
+                isLoading={isLoadingPermit2 || leveragePending || quote.isLoading}
                 disabled={
                   route == null ||
                   collateralInputError !== null ||
-                  conversionErrorMessage !== null ||
                   quote.error !== null ||
                   collateralAmount <= 0n ||
-                  (useLoanAssetInput && collateralAmountForLeverageQuote <= 0n) ||
+                  !hasExecutableInputConversion ||
                   quote.flashLoanAmount <= 0n ||
                   projectedOverLimit ||
                   insufficientLiquidity

@@ -5,6 +5,8 @@ import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButt
 import { Tooltip } from '@/components/ui/tooltip';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { DEFAULT_SLIPPAGE_PERCENT } from '@/features/swap/constants';
+import { formatSlippagePercent, formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
 import { computeDeleverageProjectedPosition, formatTokenAmountPreview } from '@/hooks/leverage/math';
 import { useDeleverageQuote } from '@/hooks/useDeleverageQuote';
 import { useDeleverageTransaction } from '@/hooks/useDeleverageTransaction';
@@ -128,6 +130,28 @@ export function RemoveCollateralAndDeleverage({
     () => formatTokenAmountPreview(projection.previewDebtRepaid, market.loanAsset.decimals),
     [projection.previewDebtRepaid, market.loanAsset.decimals],
   );
+  const swapRatePreviewText = useMemo(() => {
+    if (!isSwapRoute) return null;
+
+    return formatSwapRatePreview({
+      baseAmount: withdrawCollateralAmount,
+      baseTokenDecimals: market.collateralAsset.decimals,
+      baseTokenSymbol: market.collateralAsset.symbol,
+      quoteAmount: quote.rawRouteRepayAmount,
+      quoteTokenDecimals: market.loanAsset.decimals,
+      quoteTokenSymbol: market.loanAsset.symbol,
+    });
+  }, [
+    isSwapRoute,
+    withdrawCollateralAmount,
+    quote.rawRouteRepayAmount,
+    market.collateralAsset.decimals,
+    market.collateralAsset.symbol,
+    market.loanAsset.decimals,
+    market.loanAsset.symbol,
+  ]);
+  const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapPriceRoute != null && swapRatePreviewText != null;
+  const swapSlippagePreviewText = `${formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT)}%`;
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -208,16 +232,22 @@ export function RemoveCollateralAndDeleverage({
                     />
                   </span>
                 </div>
+                {shouldShowSwapPreviewDetails && (
+                  <>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-secondary">Swap Quote</span>
+                      <span className="text-right">{swapRatePreviewText}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-secondary">Max Slippage</span>
+                      <span>{swapSlippagePreviewText}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">Projected LTV</span>
                   <span className={`tabular-nums ${getLTVColor(projectedLTV, lltv)}`}>{formatLtvPercent(projectedLTV)}%</span>
                 </div>
-                {isSwapRoute && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-secondary">Route</span>
-                    <span className="tabular-nums">Bundler3 + Velora</span>
-                  </div>
-                )}
               </div>
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
             </div>
