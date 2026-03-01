@@ -7,6 +7,17 @@ export const paraswapAdapterAbi = [
   {
     type: 'function',
     stateMutability: 'nonpayable',
+    name: 'erc20Transfer',
+    inputs: [
+      { internalType: 'address', name: 'token', type: 'address' },
+      { internalType: 'address', name: 'receiver', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    stateMutability: 'nonpayable',
     name: 'sell',
     inputs: [
       { internalType: 'address', name: 'augustus', type: 'address' },

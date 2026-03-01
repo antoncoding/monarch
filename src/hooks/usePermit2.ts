@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import type { Address } from 'abitype';
-import moment from 'moment';
 import type { Chain } from 'viem/chains';
 import { useReadContract, useSignTypedData } from 'wagmi';
 
@@ -54,7 +53,8 @@ export function usePermit2({ user, chainId = 1, token, spender, refetchInterval 
     async (amountOverride?: bigint) => {
       if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
 
-      const deadline = moment.now() + 600;
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      const deadline = nowInSeconds + 600;
       const permitAmount = amountOverride ?? amount;
 
       const nonce = packedAllowance ? ((packedAllowance as number[])[2] as number) : 0;

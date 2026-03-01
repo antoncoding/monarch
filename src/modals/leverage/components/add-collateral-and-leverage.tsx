@@ -60,6 +60,7 @@ export function AddCollateralAndLeverage({
   const multiplierBps = useMemo(() => clampMultiplierBps(parseMultiplierToBps(multiplierInput)), [multiplierInput]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const routeLabel = isSwapRoute ? 'Route: Swap (Bundler3 + Velora)' : isErc4626Route ? 'Route: Vault (ERC4626)' : 'Route: Unsupported';
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
 
   const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
@@ -294,6 +295,7 @@ export function AddCollateralAndLeverage({
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">Leverage Preview</p>
+          <p className="mb-2 text-xs text-secondary">{routeLabel}</p>
           <BorrowPositionRiskCard
             market={market}
             currentCollateral={currentCollateralAssets}
@@ -350,7 +352,9 @@ export function AddCollateralAndLeverage({
                 }
               />
               <div className="mt-1 flex items-center justify-between gap-3 text-xs">
-                <span className="min-h-4 text-left text-red-500">{collateralInputError ?? ''}</span>
+                <span className={`min-h-4 text-left ${collateralInputError ? 'text-red-500' : 'text-secondary'}`}>
+                  {collateralInputError ?? 'Max uses your wallet balance.'}
+                </span>
                 <span className="text-right text-secondary">
                   Balance: {formatBalance(inputAssetBalance ?? 0n, inputAssetDecimals)} {inputAssetSymbol}
                 </span>

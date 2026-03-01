@@ -54,6 +54,8 @@ export function RemoveCollateralAndDeleverage({
 }: RemoveCollateralAndDeleverageProps): JSX.Element {
   const { address: account } = useConnection();
   const isSwapRoute = route?.kind === 'swap';
+  const isErc4626Route = route?.kind === 'erc4626';
+  const routeLabel = isSwapRoute ? 'Route: Swap (Bundler3 + Velora)' : isErc4626Route ? 'Route: Vault (ERC4626)' : 'Route: Unsupported';
   const [withdrawCollateralAmount, setWithdrawCollateralAmount] = useState<bigint>(0n);
   const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
 
@@ -221,12 +223,25 @@ export function RemoveCollateralAndDeleverage({
   ]);
   const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapSellPriceRoute != null && swapRatePreviewText != null;
   const swapSlippagePreviewText = `${formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT)}%`;
+  const maxWithdrawGuidance = useMemo(() => {
+    if (!route) return 'Max is unavailable until route data loads.';
+    if (isSwapRoute) return 'Max uses your full currently supplied collateral.';
+    if (quote.maxCollateralForDebtRepay > 0n && quote.maxCollateralForDebtRepay < currentCollateralAssets) {
+      return 'Max is capped by collateral required to fully close debt.';
+    }
+    return 'Max uses your full currently supplied collateral.';
+  }, [route, isSwapRoute, quote.maxCollateralForDebtRepay, currentCollateralAssets]);
+  const fullCloseThresholdText = useMemo(() => {
+    if (quote.maxCollateralForDebtRepay <= 0n || currentBorrowAssets <= 0n) return null;
+    return `${formatBalance(quote.maxCollateralForDebtRepay, market.collateralAsset.decimals)} ${market.collateralAsset.symbol}`;
+  }, [quote.maxCollateralForDebtRepay, currentBorrowAssets, market.collateralAsset.decimals, market.collateralAsset.symbol]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">Deleverage Preview</p>
+          <p className="mb-2 text-xs text-secondary">{routeLabel}</p>
           <BorrowPositionRiskCard
             market={market}
             currentCollateral={currentCollateralAssets}
@@ -263,8 +278,13 @@ export function RemoveCollateralAndDeleverage({
                 }
               />
               <p className="mt-1 text-right text-xs text-secondary">
-                Max: {formatBalance(projection.maxWithdrawCollateral, market.collateralAsset.decimals)} {market.collateralAsset.symbol}
+                Max deleverage now (Max button): {formatBalance(projection.maxWithdrawCollateral, market.collateralAsset.decimals)}{' '}
+                {market.collateralAsset.symbol}
               </p>
+              <p className="mt-1 text-right text-[11px] text-secondary">{maxWithdrawGuidance}</p>
+              {fullCloseThresholdText && (
+                <p className="mt-1 text-right text-[11px] text-secondary">Full-close threshold: {fullCloseThresholdText}</p>
+              )}
               {withdrawInputError && <p className="mt-1 text-right text-xs text-red-500">{withdrawInputError}</p>}
               {!withdrawInputError && exceedsMaxWithdraw && (
                 <p className="mt-1 text-right text-xs text-red-500">Exceeds deleverageable collateral</p>

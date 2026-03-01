@@ -496,6 +496,17 @@ export function useLeverageTransaction({
             callbackHash: zeroHash,
           },
           {
+            to: route.paraswapAdapterAddress,
+            data: encodeFunctionData({
+              abi: paraswapAdapterAbi,
+              functionName: 'erc20Transfer',
+              args: [market.loanAsset.address as Address, account as Address, maxUint256],
+            }),
+            value: 0n,
+            skipRevert: false,
+            callbackHash: zeroHash,
+          },
+          {
             to: route.generalAdapterAddress,
             data: encodeFunctionData({
               abi: morphoGeneralAdapterV1Abi,
