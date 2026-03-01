@@ -352,9 +352,6 @@ export function AddCollateralAndLeverage({
                 }
               />
               <div className="mt-1 flex items-center justify-between gap-3 text-xs">
-                <span className={`min-h-4 text-left ${collateralInputError ? 'text-red-500' : 'text-secondary'}`}>
-                  {collateralInputError ?? 'Max uses your wallet balance.'}
-                </span>
                 <span className="text-right text-secondary">
                   Balance: {formatBalance(inputAssetBalance ?? 0n, inputAssetDecimals)} {inputAssetSymbol}
                 </span>
