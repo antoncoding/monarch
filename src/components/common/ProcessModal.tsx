@@ -2,7 +2,7 @@ import type React from 'react';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import { Modal, ModalBody } from '@/components/common/Modal';
 import { ProcessStepList } from '@/components/common/ProcessStepList';
-import type { ActiveTransaction } from '@/stores/useTransactionProcessStore';
+import type { ActiveTransaction, TransactionSummaryItem } from '@/stores/useTransactionProcessStore';
 
 type ProcessModalProps = {
   /**
@@ -50,6 +50,34 @@ type ProcessModalProps = {
  * );
  * ```
  */
+function SummaryBlock({ items }: { items: TransactionSummaryItem[] }) {
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg bg-surface p-3">
+      {items.map((item) => (
+        <div key={item.label} className="flex items-center justify-between text-sm">
+          <span className="text-secondary">{item.label}</span>
+          <span className="flex items-center gap-1.5 font-medium">
+            <span>{item.value}</span>
+            {item.detail && (
+              <span
+                className={
+                  item.detailColor === 'positive'
+                    ? 'text-green-600'
+                    : item.detailColor === 'negative'
+                      ? 'text-red-500'
+                      : 'text-secondary'
+                }
+              >
+                {item.detail}
+              </span>
+            )}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ProcessModal({ transaction, onDismiss, title, description, children }: ProcessModalProps) {
   // Don't render if no transaction or modal is hidden
   if (!transaction?.isModalVisible) return null;
@@ -79,6 +107,9 @@ export function ProcessModal({ transaction, onDismiss, title, description, child
         </button>
       </div>
       <ModalBody className="gap-5">
+        {transaction.metadata.summaryItems && transaction.metadata.summaryItems.length > 0 && (
+          <SummaryBlock items={transaction.metadata.summaryItems} />
+        )}
         {children}
         <ProcessStepList
           steps={transaction.steps}
