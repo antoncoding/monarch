@@ -26,7 +26,7 @@ import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import type { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { getNetworkImg } from '@/utils/networks';
+import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
@@ -347,13 +347,17 @@ export function SuppliedMorphoBlueGroupedTable({
                               toast.error('No authorization', 'You can only rebalance your own positions');
                               return;
                             }
-                            const result = calculateSmartRebalance(groupedPosition);
-                            if (!result) {
-                              toast.info('Nothing to rebalance', 'No rebalanceable positions found');
-                              return;
-                            }
-                            logSmartRebalanceResults(result);
-                            toast.info('Smart Rebalance calculated', 'Check browser console for details');
+                            void calculateSmartRebalance(groupedPosition, groupedPosition.chainId as SupportedNetworks).then((result) => {
+                              if (!result) {
+                                toast.info('Nothing to rebalance', 'No rebalanceable positions found');
+                                return;
+                              }
+                              logSmartRebalanceResults(result);
+                              toast.info('Smart Rebalance calculated', 'Check browser console for details');
+                            }).catch((err) => {
+                              console.error('[smart-rebalance] Error:', err);
+                              toast.error('Smart Rebalance failed', 'Check browser console for details');
+                            });
                           }}
                         />
                         <Tooltip

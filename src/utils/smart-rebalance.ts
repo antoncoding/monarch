@@ -1,239 +1,340 @@
-import { formatUnits } from 'viem';
-import type { GroupedPosition, Market, MarketPositionWithEarnings } from './types';
-import { previewMarketState } from './morpho';
+import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
+import morphoABI from '@/abis/morpho';
+import { getMorphoAddress } from '@/utils/morpho';
+import { getClient } from '@/utils/rpc';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { GroupedPosition, Market } from './types';
 import { formatBalance, formatReadable } from './balance';
 
-const ALLOCATION_ROUNDS = 20;
+// --- Config ---
 
-type MarketDelta = {
+const MAX_ROUNDS = 10_000;
+const LOG_TAG = '[smart-rebalance]';
+
+// --- Types ---
+
+type MarketEntry = {
+  uniqueKey: string;
+  originalMarket: Market;
+  collateralSymbol: string;
+  /** Live on-chain BlueMarket snapshot (immutable baseline) */
+  baselineMarket: BlueMarket;
+  /** Current user supply in this market (live, immutable) */
+  currentSupply: bigint;
+  /** Max we can withdraw (min of user supply and market liquidity) */
+  maxWithdrawable: bigint;
+};
+
+export type MarketDelta = {
   market: Market;
   currentAmount: bigint;
   targetAmount: bigint;
   delta: bigint;
-  lockedAmount: bigint;
   currentApy: number;
   projectedApy: number;
+  currentUtilization: number;
+  projectedUtilization: number;
   collateralSymbol: string;
 };
 
-type SmartRebalanceResult = {
+export type SmartRebalanceResult = {
   deltas: MarketDelta[];
-  totalRebalanceable: bigint;
-  totalAssets: bigint;
+  totalPool: bigint;
   currentWeightedApy: number;
   projectedWeightedApy: number;
   loanAssetSymbol: string;
   loanAssetDecimals: number;
 };
 
-type ClonedMarketState = {
-  supplyAssets: string;
-  borrowAssets: string;
-  supplyShares: string;
-  borrowShares: string;
-  liquidityAssets: string;
-  supplyApy: number;
-  borrowApy: number;
-  utilization: number;
-  fee: number;
-  timestamp: number;
-  rateAtTarget: string;
-  supplyAssetsUsd: number;
-  borrowAssetsUsd: number;
-  liquidityAssetsUsd: number;
-  collateralAssets: string;
-  collateralAssetsUsd: number | null;
-  apyAtTarget: number;
-  dailySupplyApy: number | null;
-  dailyBorrowApy: number | null;
-  weeklySupplyApy: number | null;
-  weeklyBorrowApy: number | null;
-  monthlySupplyApy: number | null;
-  monthlyBorrowApy: number | null;
-};
+// --- Helpers ---
 
-function deepCloneMarket(market: Market): Market {
-  return {
-    ...market,
-    state: { ...market.state },
-  };
+function apyToApr(apy: number): number {
+  if (apy <= 0) return 0;
+  return Math.log(1 + apy);
 }
 
-function applyPreviewToMarket(
-  market: Market,
-  preview: { supplyApy: number; borrowApy: number; utilization: number; totalSupplyAssets: bigint; totalBorrowAssets: bigint; liquidityAssets: bigint },
-): void {
-  market.state.supplyApy = preview.supplyApy;
-  market.state.borrowApy = preview.borrowApy;
-  market.state.utilization = preview.utilization;
-  market.state.supplyAssets = preview.totalSupplyAssets.toString();
-  market.state.borrowAssets = preview.totalBorrowAssets.toString();
-  market.state.liquidityAssets = preview.liquidityAssets.toString();
+function utilizationOf(market: BlueMarket): number {
+  return Number(market.utilization) / 1e18;
 }
 
-export function calculateSmartRebalance(
+/**
+ * Compute weighted APY across all markets given allocations and simulated market states.
+ * Uses raw bigint amounts as weights so we don't lose precision.
+ */
+function weightedApy(entries: MarketEntry[], allocations: Map<string, bigint>, markets: BlueMarket[]): number {
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (let i = 0; i < entries.length; i++) {
+    const amount = Number(allocations.get(entries[i].uniqueKey) ?? 0n);
+    weightedSum += amount * markets[i].supplyApy;
+    totalWeight += amount;
+  }
+  return totalWeight > 0 ? weightedSum / totalWeight : 0;
+}
+
+// --- Main ---
+
+export async function calculateSmartRebalance(
   groupedPosition: GroupedPosition,
+  chainId: SupportedNetworks,
   excludedMarketIds?: Set<string>,
-): SmartRebalanceResult | null {
-  const decimals = groupedPosition.loanAssetDecimals;
-
-  // 1. Filter markets: keep positions with supply > 0, remove excluded
-  const eligiblePositions = groupedPosition.markets.filter((pos) => {
+): Promise<SmartRebalanceResult | null> {
+  // 1. Filter to positions with supply, excluding any blacklisted markets
+  const positions = groupedPosition.markets.filter((pos) => {
     if (BigInt(pos.state.supplyAssets) <= 0n) return false;
     if (excludedMarketIds?.has(pos.market.uniqueKey)) return false;
     return true;
   });
 
-  if (eligiblePositions.length === 0) return null;
+  if (positions.length === 0) return null;
 
-  // 2. Determine locked amounts and withdrawable portions
-  const positionData = eligiblePositions.map((pos) => {
-    const userSupply = BigInt(pos.state.supplyAssets);
-    const marketLiquidity = BigInt(pos.market.state.liquidityAssets);
-    const locked = userSupply > marketLiquidity ? userSupply - marketLiquidity : 0n;
-    const withdrawable = userSupply - locked;
-    return { position: pos, userSupply, locked, withdrawable };
+  // 2. Fetch fresh on-chain market state via multicall
+  const client = getClient(chainId);
+  const morphoAddress = getMorphoAddress(chainId);
+
+  const results = await client.multicall({
+    contracts: positions.map((pos) => ({
+      address: morphoAddress as `0x${string}`,
+      abi: morphoABI,
+      functionName: 'market' as const,
+      args: [pos.market.uniqueKey as `0x${string}`],
+    })),
+    allowFailure: true,
   });
 
-  const totalAssets = positionData.reduce((sum, d) => sum + d.userSupply, 0n);
-  const totalRebalanceable = positionData.reduce((sum, d) => sum + d.withdrawable, 0n);
+  // 3. Build MarketEntry objects from live on-chain data
+  const entries: MarketEntry[] = [];
 
-  if (totalRebalanceable === 0n) return null;
+  for (let i = 0; i < positions.length; i++) {
+    const pos = positions[i];
+    const result = results[i];
 
-  // 3. Clone markets and simulate withdrawing our capital to get baseline state
-  const clonedMarkets = new Map<string, Market>();
-  for (const { position, withdrawable } of positionData) {
-    const clone = deepCloneMarket(position.market);
-    if (withdrawable > 0n) {
-      const preview = previewMarketState(clone, -withdrawable);
-      if (preview) {
-        applyPreviewToMarket(clone, preview);
-      }
+    if (result.status !== 'success' || !result.result) {
+      console.warn(`${LOG_TAG} Failed to fetch on-chain state for ${pos.market.uniqueKey}, skipping`);
+      continue;
     }
-    clonedMarkets.set(clone.uniqueKey, clone);
+
+    const data = result.result as readonly bigint[];
+    const [totalSupplyAssets, totalSupplyShares, totalBorrowAssets, totalBorrowShares, lastUpdate, fee] = data;
+
+    const params = new BlueMarketParams({
+      loanToken: pos.market.loanAsset.address as `0x${string}`,
+      collateralToken: pos.market.collateralAsset.address as `0x${string}`,
+      oracle: pos.market.oracleAddress as `0x${string}`,
+      irm: pos.market.irmAddress as `0x${string}`,
+      lltv: BigInt(pos.market.lltv),
+    });
+
+    const baselineMarket = new BlueMarket({
+      params,
+      totalSupplyAssets,
+      totalBorrowAssets,
+      totalSupplyShares,
+      totalBorrowShares,
+      lastUpdate,
+      fee,
+      rateAtTarget: BigInt(pos.market.state.rateAtTarget),
+    });
+
+    const userSupply = BigInt(pos.state.supplyAssets);
+    const liquidity = baselineMarket.liquidity;
+    const maxWithdrawable = userSupply < liquidity ? userSupply : liquidity;
+
+    entries.push({
+      uniqueKey: pos.market.uniqueKey,
+      originalMarket: pos.market,
+      collateralSymbol: pos.market.collateralAsset?.symbol ?? 'N/A',
+      baselineMarket,
+      currentSupply: userSupply,
+      maxWithdrawable,
+    });
   }
 
-  // 4. Greedy allocation loop
-  // Start with locked amounts pre-seeded
-  const allocations = new Map<string, bigint>();
-  for (const { position, locked } of positionData) {
-    allocations.set(position.market.uniqueKey, locked);
-  }
+  if (entries.length === 0) return null;
 
-  const chunk = totalRebalanceable / BigInt(ALLOCATION_ROUNDS);
+  // 4. Compute total moveable capital
+  let totalMoveable = 0n;
+  for (const e of entries) totalMoveable += e.maxWithdrawable;
+  if (totalMoveable === 0n) return null;
+
+  // 5. Determine chunk size: 1% of portfolio, capped at $10 worth
+  const dollarCap = 10n * 10n ** BigInt(groupedPosition.loanAssetDecimals);
+  const onePercent = totalMoveable / 100n;
+  const chunk = onePercent < dollarCap ? onePercent : dollarCap;
   if (chunk === 0n) return null;
 
-  for (let round = 0; round < ALLOCATION_ROUNDS; round++) {
-    const isLastRound = round === ALLOCATION_ROUNDS - 1;
-    // On last round, allocate remaining to avoid rounding dust
-    const allocated = chunk * BigInt(round);
-    const roundAmount = isLastRound ? totalRebalanceable - allocated : chunk;
+  // 6. Initialize working state
+  //    - `allocations` tracks the target amount per market (starts as current)
+  //    - `simMarkets` tracks the simulated BlueMarket state reflecting moves
+  const allocations = new Map<string, bigint>();
+  const simMarkets: BlueMarket[] = [];
 
-    let bestMarketKey: string | null = null;
-    let bestApy = -Infinity;
+  for (const entry of entries) {
+    allocations.set(entry.uniqueKey, entry.currentSupply);
+    simMarkets.push(entry.baselineMarket);
+  }
 
-    for (const [key, clone] of clonedMarkets) {
-      const preview = previewMarketState(clone, roundAmount);
-      if (!preview) continue;
-      if (preview.supplyApy > bestApy) {
-        bestApy = preview.supplyApy;
-        bestMarketKey = key;
+  // Log initial state
+  console.log(`${LOG_TAG} chunk=${chunk}, totalMoveable=${totalMoveable}, maxRounds=${MAX_ROUNDS}, markets=${entries.length}`);
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    console.log(`  ${e.collateralSymbol}: supply=${e.currentSupply}, withdrawable=${e.maxWithdrawable}, apy=${(simMarkets[i].supplyApy * 100).toFixed(4)}%`);
+  }
+
+  // 7. Greedy hill-climb: try every (src→dst) move of `chunk`, keep the best one per round
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    const currentApy = weightedApy(entries, allocations, simMarkets);
+
+    let bestSrc = -1;
+    let bestDst = -1;
+    let bestApy = currentApy;
+    let bestSrcMarket: BlueMarket | null = null;
+    let bestDstMarket: BlueMarket | null = null;
+
+    for (let src = 0; src < entries.length; src++) {
+      const srcKey = entries[src].uniqueKey;
+      const srcAlloc = allocations.get(srcKey)!;
+
+      // Can't withdraw more than allocated
+      if (srcAlloc < chunk) continue;
+
+      // Can't withdraw more than what's actually withdrawable from the original position
+      const alreadyWithdrawn = entries[src].currentSupply - srcAlloc;
+      if (alreadyWithdrawn + chunk > entries[src].maxWithdrawable) continue;
+
+      // Simulate withdrawal from source
+      const srcAfter = simMarkets[src].withdraw(chunk, 0n).market;
+
+      for (let dst = 0; dst < entries.length; dst++) {
+        if (dst === src) continue;
+
+        // Simulate supply to destination
+        const dstAfter = simMarkets[dst].supply(chunk, 0n).market;
+
+        // Temporarily apply to compute weighted APY
+        const prevSrcMarket = simMarkets[src];
+        const prevDstMarket = simMarkets[dst];
+        simMarkets[src] = srcAfter;
+        simMarkets[dst] = dstAfter;
+
+        const prevSrcAlloc = allocations.get(srcKey)!;
+        const dstKey = entries[dst].uniqueKey;
+        const prevDstAlloc = allocations.get(dstKey)!;
+        allocations.set(srcKey, prevSrcAlloc - chunk);
+        allocations.set(dstKey, prevDstAlloc + chunk);
+
+        const candidateApy = weightedApy(entries, allocations, simMarkets);
+
+        // Revert
+        simMarkets[src] = prevSrcMarket;
+        simMarkets[dst] = prevDstMarket;
+        allocations.set(srcKey, prevSrcAlloc);
+        allocations.set(dstKey, prevDstAlloc);
+
+        if (candidateApy > bestApy) {
+          bestApy = candidateApy;
+          bestSrc = src;
+          bestDst = dst;
+          bestSrcMarket = srcAfter;
+          bestDstMarket = dstAfter;
+        }
       }
     }
 
-    if (!bestMarketKey) break;
+    // No move improves weighted APY — we're done
+    if (bestSrc === -1 || !bestSrcMarket || !bestDstMarket) {
+      console.log(`${LOG_TAG} round ${round}: converged. weighted APY=${(currentApy * 100).toFixed(6)}%`);
+      break;
+    }
 
-    // Allocate to best market
-    allocations.set(bestMarketKey, (allocations.get(bestMarketKey) ?? 0n) + roundAmount);
+    // Apply the best move
+    const srcKey = entries[bestSrc].uniqueKey;
+    const dstKey = entries[bestDst].uniqueKey;
 
-    // Update the cloned market state
-    const clone = clonedMarkets.get(bestMarketKey)!;
-    const preview = previewMarketState(clone, roundAmount);
-    if (preview) {
-      applyPreviewToMarket(clone, preview);
+    simMarkets[bestSrc] = bestSrcMarket;
+    simMarkets[bestDst] = bestDstMarket;
+    allocations.set(srcKey, allocations.get(srcKey)! - chunk);
+    allocations.set(dstKey, allocations.get(dstKey)! + chunk);
+
+    if (round < 5 || round % 500 === 0) {
+      console.log(
+        `${LOG_TAG} round ${round}: ${entries[bestSrc].collateralSymbol}→${entries[bestDst].collateralSymbol} ` +
+        `| weighted APY: ${(currentApy * 100).toFixed(6)}%→${(bestApy * 100).toFixed(6)}%`,
+      );
     }
   }
 
-  // 5. Build deltas
-  const deltas: MarketDelta[] = positionData.map(({ position, userSupply, locked }) => {
-    const targetAmount = allocations.get(position.market.uniqueKey) ?? 0n;
-    const delta = targetAmount - userSupply;
-
-    // Get projected APY by simulating the target supply on a fresh clone
-    const freshClone = deepCloneMarket(position.market);
-    // Withdraw our current supply first
-    const withdrawPreview = previewMarketState(freshClone, -userSupply);
-    let projectedApy = position.market.state.supplyApy;
-    if (withdrawPreview && targetAmount > 0n) {
-      applyPreviewToMarket(freshClone, withdrawPreview);
-      const supplyPreview = previewMarketState(freshClone, targetAmount);
-      if (supplyPreview) {
-        projectedApy = supplyPreview.supplyApy;
-      }
-    }
+  // 8. Build result deltas
+  const deltas: MarketDelta[] = entries.map((entry, i) => {
+    const current = entry.currentSupply;
+    const target = allocations.get(entry.uniqueKey)!;
 
     return {
-      market: position.market,
-      currentAmount: userSupply,
-      targetAmount,
-      delta,
-      lockedAmount: locked,
-      currentApy: position.market.state.supplyApy,
-      projectedApy,
-      collateralSymbol: position.market.collateralAsset?.symbol ?? 'N/A',
+      market: entry.originalMarket,
+      currentAmount: current,
+      targetAmount: target,
+      delta: target - current,
+      currentApy: entry.baselineMarket.supplyApy,
+      projectedApy: simMarkets[i].supplyApy,
+      currentUtilization: utilizationOf(entry.baselineMarket),
+      projectedUtilization: utilizationOf(simMarkets[i]),
+      collateralSymbol: entry.collateralSymbol,
     };
   });
 
-  // Calculate weighted APYs
+  const totalPool = deltas.reduce((sum, d) => sum + d.currentAmount, 0n);
+
   const currentWeightedApy =
-    totalAssets > 0n
-      ? deltas.reduce((sum, d) => sum + Number(d.currentAmount) * d.currentApy, 0) / Number(totalAssets)
+    totalPool > 0n
+      ? deltas.reduce((sum, d) => sum + Number(d.currentAmount) * d.currentApy, 0) / Number(totalPool)
       : 0;
 
   const projectedWeightedApy =
-    totalAssets > 0n
-      ? deltas.reduce((sum, d) => sum + Number(d.targetAmount) * d.projectedApy, 0) / Number(totalAssets)
+    totalPool > 0n
+      ? deltas.reduce((sum, d) => sum + Number(d.targetAmount) * d.projectedApy, 0) / Number(totalPool)
       : 0;
 
   return {
     deltas: deltas.sort((a, b) => Number(b.delta - a.delta)),
-    totalRebalanceable,
-    totalAssets,
+    totalPool,
     currentWeightedApy,
     projectedWeightedApy,
     loanAssetSymbol: groupedPosition.loanAssetSymbol,
-    loanAssetDecimals: decimals,
+    loanAssetDecimals: groupedPosition.loanAssetDecimals,
   };
 }
 
+// --- Logging ---
+
 export function logSmartRebalanceResults(result: SmartRebalanceResult): void {
-  const { deltas, totalAssets, totalRebalanceable, currentWeightedApy, projectedWeightedApy, loanAssetSymbol, loanAssetDecimals } = result;
+  const { deltas, totalPool, currentWeightedApy, projectedWeightedApy, loanAssetSymbol, loanAssetDecimals } = result;
 
-  const fmtAmount = (val: bigint) => formatReadable(formatBalance(val, loanAssetDecimals));
-  const fmtApy = (val: number) => `${(val * 100).toFixed(2)}%`;
+  const fmt = (val: bigint) => formatReadable(formatBalance(val, loanAssetDecimals));
+  const fmtApr = (apy: number) => `${(apyToApr(apy) * 100).toFixed(2)}%`;
+  const fmtUtil = (u: number) => `${(u * 100).toFixed(1)}%`;
 
-  console.log('\n=== Smart Rebalance Results ===');
-  console.log(`Asset: ${loanAssetSymbol}`);
-  console.log(`Total Assets: ${fmtAmount(totalAssets)} ${loanAssetSymbol}`);
-  console.log(`Rebalanceable: ${fmtAmount(totalRebalanceable)} ${loanAssetSymbol}`);
+  console.log('\n=== Smart Rebalance Results (fresh on-chain data) ===');
+  console.log(`Asset: ${loanAssetSymbol}  |  Total: ${fmt(totalPool)} ${loanAssetSymbol}`);
   console.log('');
 
   console.table(
     deltas.map((d) => ({
       Collateral: d.collateralSymbol,
-      'Current': `${fmtAmount(d.currentAmount)} ${loanAssetSymbol}`,
-      'Target': `${fmtAmount(d.targetAmount)} ${loanAssetSymbol}`,
-      'Delta': `${Number(d.delta) >= 0 ? '+' : ''}${fmtAmount(d.delta)} ${loanAssetSymbol}`,
-      'Locked': d.lockedAmount > 0n ? `${fmtAmount(d.lockedAmount)} ${loanAssetSymbol}` : '-',
-      'APY Now': fmtApy(d.currentApy),
-      'APY Projected': fmtApy(d.projectedApy),
+      Current: `${fmt(d.currentAmount)} ${loanAssetSymbol}`,
+      Target: `${fmt(d.targetAmount)} ${loanAssetSymbol}`,
+      Delta: `${Number(d.delta) >= 0 ? '+' : ''}${fmt(d.delta)} ${loanAssetSymbol}`,
+      'Util Now': fmtUtil(d.currentUtilization),
+      'Util After': fmtUtil(d.projectedUtilization),
+      'APR Now': fmtApr(d.currentApy),
+      'APR After': fmtApr(d.projectedApy),
       'Market ID': `${d.market.uniqueKey.slice(0, 10)}...`,
     })),
   );
 
   console.log('');
-  console.log(`Weighted APY: ${fmtApy(currentWeightedApy)} → ${fmtApy(projectedWeightedApy)}`);
-  const apyDiff = projectedWeightedApy - currentWeightedApy;
-  console.log(`APY Change: ${apyDiff >= 0 ? '+' : ''}${(apyDiff * 100).toFixed(4)}%`);
+  const currentApr = apyToApr(currentWeightedApy);
+  const projectedApr = apyToApr(projectedWeightedApy);
+  const aprDiff = projectedApr - currentApr;
+  console.log(`Weighted APR: ${fmtApr(currentWeightedApy)} → ${fmtApr(projectedWeightedApy)}  (${aprDiff >= 0 ? '+' : ''}${(aprDiff * 100).toFixed(4)}%)`);
   console.log('================================\n');
 }
