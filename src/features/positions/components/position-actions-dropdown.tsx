@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { TbArrowsRightLeft } from 'react-icons/tb';
+import { TbArrowsRightLeft, TbTargetArrow } from 'react-icons/tb';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -9,9 +9,10 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 type PositionActionsDropdownProps = {
   isOwner: boolean;
   onRebalanceClick: () => void;
+  onSmartRebalanceClick: () => void;
 };
 
-export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionActionsDropdownProps) {
+export function PositionActionsDropdown({ isOwner, onRebalanceClick, onSmartRebalanceClick }: PositionActionsDropdownProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -46,6 +47,14 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionA
             className={isOwner ? '' : 'opacity-50 cursor-not-allowed'}
           >
             Rebalance
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onSmartRebalanceClick}
+            startContent={<TbTargetArrow className="h-4 w-4" />}
+            disabled={!isOwner}
+            className={isOwner ? '' : 'opacity-50 cursor-not-allowed'}
+          >
+            Smart Rebalance
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -31,6 +31,7 @@ import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } fro
 import { convertApyToApr } from '@/utils/rateMath';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
+import { calculateSmartRebalance, logSmartRebalanceResults } from '@/utils/smart-rebalance';
 import { PositionActionsDropdown } from './position-actions-dropdown';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
@@ -340,6 +341,19 @@ export function SuppliedMorphoBlueGroupedTable({
                               refetch,
                               isRefetching,
                             });
+                          }}
+                          onSmartRebalanceClick={() => {
+                            if (!isOwner) {
+                              toast.error('No authorization', 'You can only rebalance your own positions');
+                              return;
+                            }
+                            const result = calculateSmartRebalance(groupedPosition);
+                            if (!result) {
+                              toast.info('Nothing to rebalance', 'No rebalanceable positions found');
+                              return;
+                            }
+                            logSmartRebalanceResults(result);
+                            toast.info('Smart Rebalance calculated', 'Check browser console for details');
                           }}
                         />
                         <Tooltip
