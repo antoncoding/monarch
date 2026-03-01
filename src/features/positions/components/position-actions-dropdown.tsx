@@ -3,22 +3,23 @@
 import type React from 'react';
 import { TbArrowsRightLeft, TbTargetArrow } from 'react-icons/tb';
 import { IoEllipsisVertical } from 'react-icons/io5';
+import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type PositionActionsDropdownProps = {
-  isOwner: boolean;
+  isOwner?: boolean;
   onRebalanceClick: () => void;
   onSmartRebalanceClick: () => void;
+  onSmartRebalanceConfigClick: () => void;
 };
 
-export function PositionActionsDropdown({ isOwner, onRebalanceClick, onSmartRebalanceClick }: PositionActionsDropdownProps) {
+export function PositionActionsDropdown({ onRebalanceClick, onSmartRebalanceClick, onSmartRebalanceConfigClick }: PositionActionsDropdownProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Stop propagation on keyboard events too
     e.stopPropagation();
   };
 
@@ -43,19 +44,24 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick, onSmartReba
           <DropdownMenuItem
             onClick={onRebalanceClick}
             startContent={<TbArrowsRightLeft className="h-4 w-4" />}
-            disabled={!isOwner}
-            className={isOwner ? '' : 'opacity-50 cursor-not-allowed'}
           >
             Rebalance
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={onSmartRebalanceClick}
-            startContent={<TbTargetArrow className="h-4 w-4" />}
-            disabled={!isOwner}
-            className={isOwner ? '' : 'opacity-50 cursor-not-allowed'}
-          >
-            Smart Rebalance
-          </DropdownMenuItem>
+          <div className="flex items-stretch">
+            <DropdownMenuItem
+              onClick={onSmartRebalanceClick}
+              startContent={<TbTargetArrow className="h-4 w-4" />}
+              className="flex-1 rounded-r-none"
+            >
+              Smart Rebalance
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onSmartRebalanceConfigClick}
+              className="rounded-l-none border-l border-border/30 px-2.5"
+            >
+              <GearIcon className="h-3.5 w-3.5 opacity-60" />
+            </DropdownMenuItem>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
