@@ -57,6 +57,12 @@ export type ModalProps = {
     onSelect: (markets: Market[]) => void;
   };
 
+  smartRebalance: {
+    groupedPosition: GroupedPosition;
+    chainId: SupportedNetworks;
+    quickMode?: boolean;
+  };
+
   // Settings & Configuration
   marketSettings: {
     zIndex?: 'settings' | 'top'; // Override z-index when opened from nested modals

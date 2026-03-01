@@ -8,8 +8,9 @@ import { formatBalance, formatReadable } from './balance';
 
 // --- Config ---
 
-const MAX_ROUNDS = 10_000;
+const MAX_ROUNDS = 50;
 const LOG_TAG = '[smart-rebalance]';
+const DUST_AMOUNT = 1000n; // Leave dust in markets to not remove them from future rebalances
 
 // --- Types ---
 
@@ -138,7 +139,9 @@ export async function calculateSmartRebalance(
 
     const userSupply = BigInt(pos.state.supplyAssets);
     const liquidity = baselineMarket.liquidity;
-    const maxWithdrawable = userSupply < liquidity ? userSupply : liquidity;
+    // Leave DUST_AMOUNT in each market so the position persists for future rebalances
+    const maxFromUser = userSupply > DUST_AMOUNT ? userSupply - DUST_AMOUNT : 0n;
+    const maxWithdrawable = maxFromUser < liquidity ? maxFromUser : liquidity;
 
     entries.push({
       uniqueKey: pos.market.uniqueKey,
@@ -157,13 +160,7 @@ export async function calculateSmartRebalance(
   for (const e of entries) totalMoveable += e.maxWithdrawable;
   if (totalMoveable === 0n) return null;
 
-  // 5. Determine chunk size: 1% of portfolio, capped at $10 worth
-  const dollarCap = 10n * 10n ** BigInt(groupedPosition.loanAssetDecimals);
-  const onePercent = totalMoveable / 100n;
-  const chunk = onePercent < dollarCap ? onePercent : dollarCap;
-  if (chunk === 0n) return null;
-
-  // 6. Initialize working state
+  // 5. Initialize working state
   //    - `allocations` tracks the target amount per market (starts as current)
   //    - `simMarkets` tracks the simulated BlueMarket state reflecting moves
   const allocations = new Map<string, bigint>();
@@ -175,18 +172,63 @@ export async function calculateSmartRebalance(
   }
 
   // Log initial state
-  console.log(`${LOG_TAG} chunk=${chunk}, totalMoveable=${totalMoveable}, maxRounds=${MAX_ROUNDS}, markets=${entries.length}`);
+  console.log(`${LOG_TAG} totalMoveable=${totalMoveable}, maxRounds=${MAX_ROUNDS}, markets=${entries.length}`);
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
     console.log(`  ${e.collateralSymbol}: supply=${e.currentSupply}, withdrawable=${e.maxWithdrawable}, apy=${(simMarkets[i].supplyApy * 100).toFixed(4)}%`);
   }
 
-  // 7. Greedy hill-climb: try every (src→dst) move of `chunk`, keep the best one per round
+  // 6. Multi-scale optimizer: for each (src→dst) pair, evaluate multiple transfer
+  //    sizes to capture non-linear APY spikes (e.g. utilization approaching 100%).
+  //    The old chunk-by-chunk greedy approach missed large beneficial moves because
+  //    each small step looked worse individually.
+
+  /**
+   * Simulate moving `amount` from simMarkets[src] to simMarkets[dst] and return
+   * the resulting weighted APY without mutating state.
+   */
+  function evaluateMove(
+    src: number,
+    dst: number,
+    amount: bigint,
+  ): { apy: number; srcMarket: BlueMarket; dstMarket: BlueMarket } {
+    // Simulate cumulative withdrawal/supply from current sim state
+    const srcAfter = simMarkets[src].withdraw(amount, 0n).market;
+    const dstAfter = simMarkets[dst].supply(amount, 0n).market;
+
+    // Temporarily apply
+    const prevSrc = simMarkets[src];
+    const prevDst = simMarkets[dst];
+    simMarkets[src] = srcAfter;
+    simMarkets[dst] = dstAfter;
+
+    const srcKey = entries[src].uniqueKey;
+    const dstKey = entries[dst].uniqueKey;
+    const prevSrcAlloc = allocations.get(srcKey)!;
+    const prevDstAlloc = allocations.get(dstKey)!;
+    allocations.set(srcKey, prevSrcAlloc - amount);
+    allocations.set(dstKey, prevDstAlloc + amount);
+
+    const apy = weightedApy(entries, allocations, simMarkets);
+
+    // Revert
+    simMarkets[src] = prevSrc;
+    simMarkets[dst] = prevDst;
+    allocations.set(srcKey, prevSrcAlloc);
+    allocations.set(dstKey, prevDstAlloc);
+
+    return { apy, srcMarket: srcAfter, dstMarket: dstAfter };
+  }
+
+  // Transfer size fractions to evaluate
+  const FRACTIONS = [0.02, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.0];
+
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const currentApy = weightedApy(entries, allocations, simMarkets);
 
     let bestSrc = -1;
     let bestDst = -1;
+    let bestAmount = 0n;
     let bestApy = currentApy;
     let bestSrcMarket: BlueMarket | null = null;
     let bestDstMarket: BlueMarket | null = null;
@@ -195,53 +237,51 @@ export async function calculateSmartRebalance(
       const srcKey = entries[src].uniqueKey;
       const srcAlloc = allocations.get(srcKey)!;
 
-      // Can't withdraw more than allocated
-      if (srcAlloc < chunk) continue;
-
-      // Can't withdraw more than what's actually withdrawable from the original position
+      // How much can we still withdraw from this source?
       const alreadyWithdrawn = entries[src].currentSupply - srcAlloc;
-      if (alreadyWithdrawn + chunk > entries[src].maxWithdrawable) continue;
+      const remainingWithdrawable = entries[src].maxWithdrawable - alreadyWithdrawn;
+      if (remainingWithdrawable <= 0n) continue;
 
-      // Simulate withdrawal from source
-      const srcAfter = simMarkets[src].withdraw(chunk, 0n).market;
+      // Also can't withdraw more than current allocation (minus dust)
+      const maxFromAlloc = srcAlloc > DUST_AMOUNT ? srcAlloc - DUST_AMOUNT : 0n;
+      const maxMove = remainingWithdrawable < maxFromAlloc ? remainingWithdrawable : maxFromAlloc;
+      if (maxMove <= 0n) continue;
 
       for (let dst = 0; dst < entries.length; dst++) {
         if (dst === src) continue;
 
-        // Simulate supply to destination
-        const dstAfter = simMarkets[dst].supply(chunk, 0n).market;
+        // Evaluate multiple transfer sizes for this pair
+        for (const frac of FRACTIONS) {
+          let amount = BigInt(Math.floor(Number(maxMove) * frac));
+          if (amount <= 0n) continue;
+          // Clamp to maxMove
+          if (amount > maxMove) amount = maxMove;
 
-        // Temporarily apply to compute weighted APY
-        const prevSrcMarket = simMarkets[src];
-        const prevDstMarket = simMarkets[dst];
-        simMarkets[src] = srcAfter;
-        simMarkets[dst] = dstAfter;
+          const result = evaluateMove(src, dst, amount);
+          if (result.apy > bestApy) {
+            bestApy = result.apy;
+            bestSrc = src;
+            bestDst = dst;
+            bestAmount = amount;
+            bestSrcMarket = result.srcMarket;
+            bestDstMarket = result.dstMarket;
+          }
+        }
 
-        const prevSrcAlloc = allocations.get(srcKey)!;
-        const dstKey = entries[dst].uniqueKey;
-        const prevDstAlloc = allocations.get(dstKey)!;
-        allocations.set(srcKey, prevSrcAlloc - chunk);
-        allocations.set(dstKey, prevDstAlloc + chunk);
-
-        const candidateApy = weightedApy(entries, allocations, simMarkets);
-
-        // Revert
-        simMarkets[src] = prevSrcMarket;
-        simMarkets[dst] = prevDstMarket;
-        allocations.set(srcKey, prevSrcAlloc);
-        allocations.set(dstKey, prevDstAlloc);
-
-        if (candidateApy > bestApy) {
-          bestApy = candidateApy;
+        // Always also try the exact max
+        const resultMax = evaluateMove(src, dst, maxMove);
+        if (resultMax.apy > bestApy) {
+          bestApy = resultMax.apy;
           bestSrc = src;
           bestDst = dst;
-          bestSrcMarket = srcAfter;
-          bestDstMarket = dstAfter;
+          bestAmount = maxMove;
+          bestSrcMarket = resultMax.srcMarket;
+          bestDstMarket = resultMax.dstMarket;
         }
       }
     }
 
-    // No move improves weighted APY — we're done
+    // No move improves weighted APY — converged
     if (bestSrc === -1 || !bestSrcMarket || !bestDstMarket) {
       console.log(`${LOG_TAG} round ${round}: converged. weighted APY=${(currentApy * 100).toFixed(6)}%`);
       break;
@@ -253,15 +293,13 @@ export async function calculateSmartRebalance(
 
     simMarkets[bestSrc] = bestSrcMarket;
     simMarkets[bestDst] = bestDstMarket;
-    allocations.set(srcKey, allocations.get(srcKey)! - chunk);
-    allocations.set(dstKey, allocations.get(dstKey)! + chunk);
+    allocations.set(srcKey, allocations.get(srcKey)! - bestAmount);
+    allocations.set(dstKey, allocations.get(dstKey)! + bestAmount);
 
-    if (round < 5 || round % 500 === 0) {
-      console.log(
-        `${LOG_TAG} round ${round}: ${entries[bestSrc].collateralSymbol}→${entries[bestDst].collateralSymbol} ` +
-        `| weighted APY: ${(currentApy * 100).toFixed(6)}%→${(bestApy * 100).toFixed(6)}%`,
-      );
-    }
+    console.log(
+      `${LOG_TAG} round ${round}: ${entries[bestSrc].collateralSymbol}→${entries[bestDst].collateralSymbol} ` +
+      `amount=${bestAmount} | weighted APY: ${(currentApy * 100).toFixed(6)}%→${(bestApy * 100).toFixed(6)}%`,
+    );
   }
 
   // 8. Build result deltas
