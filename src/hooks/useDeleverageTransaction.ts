@@ -29,8 +29,10 @@ type UseDeleverageTransactionProps = {
   withdrawCollateralAmount: bigint;
   flashLoanAmount: bigint;
   repayBySharesAmount: bigint;
+  useCloseRoute: boolean;
   autoWithdrawCollateralAmount: bigint;
-  swapPriceRoute: VeloraPriceRoute | null;
+  maxCollateralForDebtRepay: bigint;
+  swapSellPriceRoute: VeloraPriceRoute | null;
   onSuccess?: () => void;
 };
 
@@ -51,8 +53,10 @@ export function useDeleverageTransaction({
   withdrawCollateralAmount,
   flashLoanAmount,
   repayBySharesAmount,
+  useCloseRoute,
   autoWithdrawCollateralAmount,
-  swapPriceRoute,
+  maxCollateralForDebtRepay,
+  swapSellPriceRoute,
   onSuccess,
 }: UseDeleverageTransactionProps) {
   const { usePermit2: usePermit2Setting } = useAppSettings();
@@ -181,17 +185,30 @@ export function useDeleverageTransaction({
         lltv: BigInt(market.lltv),
       };
 
-      const isRepayByShares = repayBySharesAmount > 0n;
+      const isRepayByShares = useCloseRoute;
+      if (isRepayByShares && repayBySharesAmount <= 0n) {
+        throw new Error('Debt shares are unavailable for a full close. Refresh your position data and try again.');
+      }
       // WHY: when repaying by assets, Morpho expects a *minimum* shares bound.
       // Using an upper-bound style estimate causes false "slippage exceeded" reverts.
       const minRepayShares = 1n;
 
       if (route.kind === 'swap') {
-        if (!swapPriceRoute) {
+        if (useCloseRoute) {
+          if (maxCollateralForDebtRepay <= 0n) {
+            throw new Error('The exact close bound is unavailable. Refresh the quote and try again.');
+          }
+          if (withdrawCollateralAmount < maxCollateralForDebtRepay) {
+            throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
+          }
+        }
+
+        const isCloseSwap = isRepayByShares;
+        const activePriceRoute = swapSellPriceRoute;
+        if (!activePriceRoute) {
           throw new Error('Missing Velora swap quote for deleverage.');
         }
 
-        const activePriceRoute = swapPriceRoute;
         const swapTxPayload = await (async () => {
           const buildPayload = async (ignoreChecks: boolean) =>
             buildVeloraTransactionPayload({
@@ -204,7 +221,6 @@ export function useDeleverageTransaction({
               userAddress: account as Address,
               priceRoute: activePriceRoute,
               slippageBps: DELEVERAGE_SWAP_SLIPPAGE_BPS,
-              side: 'SELL',
               ignoreChecks,
             });
 
@@ -236,20 +252,31 @@ export function useDeleverageTransaction({
           throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
         }
 
-        const minLoanOut = withSlippageFloor(BigInt(activePriceRoute.destAmount));
-        if (minLoanOut <= 0n) {
-          throw new Error('Velora returned zero loan output for deleverage swap.');
-        }
-
         const sellOffsets = getParaswapSellOffsets(swapTxPayload.data);
         const quotedSellCollateral = BigInt(activePriceRoute.srcAmount);
+        const quotedLoanOut = BigInt(activePriceRoute.destAmount);
         const calldataSellAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
-        const calldataMinLoanOut = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
+        const calldataQuotedLoanOut = readCalldataUint256(swapTxPayload.data, sellOffsets.quotedAmount);
         if (
           quotedSellCollateral !== withdrawCollateralAmount ||
           calldataSellAmount !== withdrawCollateralAmount ||
-          calldataMinLoanOut !== minLoanOut
+          calldataQuotedLoanOut !== quotedLoanOut
         ) {
+          throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
+        }
+
+        const swapCallData = swapTxPayload.data;
+        const minLoanOut = withSlippageFloor(quotedLoanOut);
+        if (isCloseSwap) {
+          if (minLoanOut < flashLoanAmount) {
+            throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
+          }
+        } else if (minLoanOut <= 0n) {
+          throw new Error('Velora returned zero loan output for deleverage swap.');
+        }
+
+        const calldataMinLoanOut = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
+        if (calldataMinLoanOut !== minLoanOut) {
           throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
         }
 
@@ -263,7 +290,7 @@ export function useDeleverageTransaction({
                 marketParams,
                 isRepayByShares ? 0n : flashLoanAmount,
                 isRepayByShares ? repayBySharesAmount : 0n,
-                maxUint256,
+                isRepayByShares ? flashLoanAmount : minRepayShares,
                 account as Address,
                 '0x',
               ],
@@ -290,7 +317,7 @@ export function useDeleverageTransaction({
               functionName: 'sell',
               args: [
                 swapTxPayload.to,
-                swapTxPayload.data,
+                swapCallData,
                 market.collateralAsset.address as Address,
                 market.loanAsset.address as Address,
                 false,
@@ -446,8 +473,10 @@ export function useDeleverageTransaction({
     withdrawCollateralAmount,
     flashLoanAmount,
     repayBySharesAmount,
+    useCloseRoute,
     autoWithdrawCollateralAmount,
-    swapPriceRoute,
+    maxCollateralForDebtRepay,
+    swapSellPriceRoute,
     useSignatureAuthorization,
     ensureBundlerAuthorization,
     bundlerAddress,

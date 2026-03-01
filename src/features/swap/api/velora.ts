@@ -65,7 +65,6 @@ export type BuildVeloraTransactionPayloadParams = {
   userAddress: Address;
   priceRoute: VeloraPriceRoute;
   slippageBps: number;
-  side?: VeloraSwapSide;
   partner?: string;
   ignoreChecks?: boolean;
 };
@@ -304,10 +303,16 @@ export const buildVeloraTransactionPayload = async ({
   userAddress,
   priceRoute,
   slippageBps,
-  side = 'SELL',
   partner = SWAP_PARTNER,
   ignoreChecks = false,
 }: BuildVeloraTransactionPayloadParams): Promise<VeloraTransactionPayload> => {
+  if (srcAmount <= 0n) {
+    throw new VeloraApiError('SELL transaction payload requires a source amount greater than zero', 400, { srcAmount });
+  }
+  if (slippageBps <= 0) {
+    throw new VeloraApiError('SELL transaction payload requires positive slippage', 400, { slippageBps });
+  }
+
   const query = new URLSearchParams();
   if (ignoreChecks) {
     query.set('ignoreChecks', 'true');
@@ -317,24 +322,25 @@ export const buildVeloraTransactionPayload = async ({
     query.size > 0
       ? `${VELORA_API_BASE_URL}/transactions/${network}?${query.toString()}`
       : `${VELORA_API_BASE_URL}/transactions/${network}`;
+  const requestBody = {
+    srcToken,
+    srcDecimals,
+    destToken,
+    destDecimals,
+    srcAmount: srcAmount.toString(),
+    side: 'SELL' as const,
+    slippage: slippageBps,
+    priceRoute,
+    userAddress,
+    partner,
+  };
 
   const response = await fetchVeloraJson<VeloraBuildTransactionResponse | null>(transactionUrl, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
     },
-    body: JSON.stringify({
-      srcToken,
-      srcDecimals,
-      destToken,
-      destDecimals,
-      srcAmount: srcAmount.toString(),
-      side,
-      slippage: slippageBps,
-      priceRoute,
-      userAddress,
-      partner,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response || typeof response !== 'object' || !response.to || !response.data) {
@@ -390,7 +396,6 @@ export const prepareVeloraSwapPayload = async ({
     userAddress,
     priceRoute,
     slippageBps,
-    side,
     partner,
     ignoreChecks,
   });

@@ -11,6 +11,7 @@ type UseDeleverageQuoteParams = {
   route: LeverageRoute | null;
   withdrawCollateralAmount: bigint;
   currentBorrowAssets: bigint;
+  currentBorrowShares: bigint;
   loanTokenAddress: string;
   loanTokenDecimals: number;
   collateralTokenAddress: string;
@@ -22,9 +23,12 @@ export type DeleverageQuote = {
   repayAmount: bigint;
   rawRouteRepayAmount: bigint;
   maxCollateralForDebtRepay: bigint;
+  canCurrentSellCloseDebt: boolean;
+  closeRouteAvailable: boolean;
+  closeRouteRequiresResolution: boolean;
   isLoading: boolean;
   error: string | null;
-  swapPriceRoute: VeloraPriceRoute | null;
+  swapSellPriceRoute: VeloraPriceRoute | null;
 };
 
 /**
@@ -39,6 +43,7 @@ export function useDeleverageQuote({
   route,
   withdrawCollateralAmount,
   currentBorrowAssets,
+  currentBorrowShares,
   loanTokenAddress,
   loanTokenDecimals,
   collateralTokenAddress,
@@ -102,6 +107,11 @@ export function useDeleverageQuote({
         side: 'SELL',
       });
 
+      const quotedSellCollateral = BigInt(sellRoute.srcAmount);
+      if (quotedSellCollateral !== withdrawCollateralAmount) {
+        throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
+      }
+
       return {
         rawRouteRepayAmount: withSlippageFloor(BigInt(sellRoute.destAmount)),
         priceRoute: sellRoute,
@@ -134,7 +144,10 @@ export function useDeleverageQuote({
         side: 'BUY',
       });
 
-      return BigInt(buyRoute.srcAmount);
+      return {
+        maxCollateralForDebtRepay: BigInt(buyRoute.srcAmount),
+        priceRoute: buyRoute,
+      };
     },
   });
 
@@ -165,14 +178,80 @@ export function useDeleverageQuote({
     return rawRouteRepayAmount > currentBorrowAssets ? currentBorrowAssets : rawRouteRepayAmount;
   }, [rawRouteRepayAmount, currentBorrowAssets]);
 
+  const canCurrentSellCloseDebt = useMemo(() => {
+    if (route?.kind !== 'swap' || withdrawCollateralAmount <= 0n || currentBorrowAssets <= 0n) return false;
+    return rawRouteRepayAmount >= bufferedBorrowAssets;
+  }, [route, withdrawCollateralAmount, currentBorrowAssets, rawRouteRepayAmount, bufferedBorrowAssets]);
+
   const maxCollateralForDebtRepay = useMemo(() => {
     if (!route || currentBorrowAssets <= 0n) return 0n;
     if (route.kind === 'swap') {
-      if (!userAddress) return 0n;
-      return swapMaxCollateralForDebtQuery.data ?? 0n;
+      if (!userAddress || swapMaxCollateralForDebtQuery.error) return 0n;
+      return swapMaxCollateralForDebtQuery.data?.maxCollateralForDebtRepay ?? 0n;
     }
     return (erc4626PreviewWithdrawForDebt as bigint | undefined) ?? 0n;
-  }, [route, currentBorrowAssets, swapMaxCollateralForDebtQuery.data, userAddress, erc4626PreviewWithdrawForDebt]);
+  }, [
+    route,
+    currentBorrowAssets,
+    swapMaxCollateralForDebtQuery.data,
+    swapMaxCollateralForDebtQuery.error,
+    userAddress,
+    erc4626PreviewWithdrawForDebt,
+  ]);
+
+  const closeRouteRequiresResolution = useMemo(() => {
+    if (route?.kind !== 'swap') return false;
+    if (!canCurrentSellCloseDebt) return false;
+    if (currentBorrowShares <= 0n) return false;
+    if (!userAddress) return false;
+    if (swapMaxCollateralForDebtQuery.error) return false;
+    return maxCollateralForDebtRepay <= 0n && (swapMaxCollateralForDebtQuery.isLoading || swapMaxCollateralForDebtQuery.isFetching);
+  }, [
+    route,
+    canCurrentSellCloseDebt,
+    currentBorrowShares,
+    userAddress,
+    swapMaxCollateralForDebtQuery.error,
+    swapMaxCollateralForDebtQuery.isLoading,
+    swapMaxCollateralForDebtQuery.isFetching,
+    maxCollateralForDebtRepay,
+  ]);
+
+  const closeRouteAvailable = useMemo(() => {
+    if (!route || currentBorrowAssets <= 0n) return false;
+
+    if (route.kind === 'swap') {
+      if (!userAddress || swapMaxCollateralForDebtQuery.error) return false;
+      return canCurrentSellCloseDebt && currentBorrowShares > 0n && maxCollateralForDebtRepay > 0n;
+    }
+
+    return maxCollateralForDebtRepay > 0n;
+  }, [
+    route,
+    currentBorrowAssets,
+    userAddress,
+    swapMaxCollateralForDebtQuery.error,
+    canCurrentSellCloseDebt,
+    currentBorrowShares,
+    maxCollateralForDebtRepay,
+  ]);
+
+  const closeRouteResolutionFailed = useMemo(() => {
+    if (route?.kind !== 'swap') return false;
+    if (!canCurrentSellCloseDebt) return false;
+    if (currentBorrowShares <= 0n) return false;
+    if (!userAddress) return false;
+    if (swapMaxCollateralForDebtQuery.error || closeRouteRequiresResolution) return false;
+    return maxCollateralForDebtRepay <= 0n;
+  }, [
+    route,
+    canCurrentSellCloseDebt,
+    currentBorrowShares,
+    userAddress,
+    swapMaxCollateralForDebtQuery.error,
+    closeRouteRequiresResolution,
+    maxCollateralForDebtRepay,
+  ]);
 
   const error = useMemo(() => {
     if (!route) return null;
@@ -180,9 +259,13 @@ export function useDeleverageQuote({
       if (!userAddress && withdrawCollateralAmount > 0n) {
         return 'Connect wallet to fetch swap-backed deleverage route.';
       }
-      const routeError =
-        (withdrawCollateralAmount > 0n ? swapRepayQuoteQuery.error : null) ??
-        (bufferedBorrowAssets > 0n ? swapMaxCollateralForDebtQuery.error : null);
+      if (closeRouteResolutionFailed) {
+        return 'Failed to resolve the exact full-close collateral bound. Refresh the quote and try again.';
+      }
+      if (canCurrentSellCloseDebt && currentBorrowShares > 0n && swapMaxCollateralForDebtQuery.error) {
+        return 'Failed to resolve the exact full-close collateral bound. Refresh the quote and try again.';
+      }
+      const routeError = withdrawCollateralAmount > 0n ? swapRepayQuoteQuery.error : null;
       if (!routeError) return null;
       return routeError instanceof Error ? routeError.message : 'Failed to quote Velora swap route for deleverage.';
     }
@@ -193,9 +276,11 @@ export function useDeleverageQuote({
     route,
     userAddress,
     withdrawCollateralAmount,
-    bufferedBorrowAssets,
-    swapRepayQuoteQuery.error,
+    closeRouteResolutionFailed,
+    canCurrentSellCloseDebt,
+    currentBorrowShares,
     swapMaxCollateralForDebtQuery.error,
+    swapRepayQuoteQuery.error,
     redeemError,
     withdrawError,
   ]);
@@ -203,18 +288,18 @@ export function useDeleverageQuote({
   const isLoading =
     !!route &&
     (route.kind === 'swap'
-      ? swapRepayQuoteQuery.isLoading ||
-        swapRepayQuoteQuery.isFetching ||
-        swapMaxCollateralForDebtQuery.isLoading ||
-        swapMaxCollateralForDebtQuery.isFetching
+      ? swapRepayQuoteQuery.isLoading || swapRepayQuoteQuery.isFetching || closeRouteRequiresResolution
       : isLoadingRedeem || isLoadingWithdraw);
 
   return {
     repayAmount,
     rawRouteRepayAmount,
     maxCollateralForDebtRepay,
+    canCurrentSellCloseDebt,
+    closeRouteAvailable,
+    closeRouteRequiresResolution,
     isLoading,
     error,
-    swapPriceRoute: route?.kind === 'swap' ? swapRepayQuote.priceRoute : null,
+    swapSellPriceRoute: route?.kind === 'swap' ? swapRepayQuote.priceRoute : null,
   };
 }

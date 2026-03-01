@@ -42,6 +42,17 @@ export const morphoGeneralAdapterV1Abi = [
   {
     type: 'function',
     stateMutability: 'nonpayable',
+    name: 'permit2TransferFrom',
+    inputs: [
+      { internalType: 'address', name: 'token', type: 'address' },
+      { internalType: 'address', name: 'receiver', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    stateMutability: 'nonpayable',
     name: 'morphoSupplyCollateral',
     inputs: [
       marketParamsTuple,

@@ -153,20 +153,26 @@ export function AddCollateralAndLeverage({
     if (onSuccess) onSuccess();
   }, [onSuccess, refetchLoanTokenBalance, useLoanAssetInput]);
 
-  const { transaction, isLoadingPermit2, permit2Authorized, leveragePending, approveAndLeverage, signAndLeverage } = useLeverageTransaction(
-    {
-      market,
-      route,
-      collateralAmount,
-      collateralAmountInCollateralToken: quote.initialCollateralAmount,
-      flashCollateralAmount: quote.flashCollateralAmount,
-      flashLoanAmount: quote.flashLoanAmount,
-      totalAddedCollateral: quote.totalAddedCollateral,
-      swapPriceRoute: quote.swapPriceRoute,
-      useLoanAssetAsInput: useLoanAssetInput,
-      onSuccess: handleTransactionSuccess,
-    },
-  );
+  const {
+    transaction,
+    isLoadingPermit2,
+    permit2Authorized,
+    leveragePending,
+    isBundlerAuthorizationReady,
+    approveAndLeverage,
+    signAndLeverage,
+  } = useLeverageTransaction({
+    market,
+    route,
+    collateralAmount,
+    collateralAmountInCollateralToken: quote.initialCollateralAmount,
+    flashCollateralAmount: quote.flashCollateralAmount,
+    flashLoanAmount: quote.flashLoanAmount,
+    totalAddedCollateral: quote.totalAddedCollateral,
+    swapPriceRoute: quote.swapPriceRoute,
+    useLoanAssetAsInput: useLoanAssetInput,
+    onSuccess: handleTransactionSuccess,
+  });
 
   const handleMultiplierInputChange = useCallback((value: string) => {
     const normalized = value.replace(',', '.');
@@ -179,7 +185,7 @@ export function AddCollateralAndLeverage({
   }, [multiplierInput]);
 
   const handleLeverage = useCallback(() => {
-    const usePermit2Flow = usePermit2Setting && isErc4626Route;
+    const usePermit2Flow = usePermit2Setting;
 
     if (usePermit2Flow && permit2Authorized) {
       void signAndLeverage();
@@ -187,7 +193,7 @@ export function AddCollateralAndLeverage({
     }
 
     void approveAndLeverage();
-  }, [usePermit2Setting, isErc4626Route, permit2Authorized, signAndLeverage, approveAndLeverage]);
+  }, [usePermit2Setting, permit2Authorized, signAndLeverage, approveAndLeverage]);
 
   const projectedOverLimit = projectedLTV >= lltv;
   const insufficientLiquidity = quote.flashLoanAmount > marketLiquidity;
@@ -474,6 +480,7 @@ export function AddCollateralAndLeverage({
                   collateralInputError !== null ||
                   quote.error !== null ||
                   collateralAmount <= 0n ||
+                  !isBundlerAuthorizationReady ||
                   !hasExecutableInputConversion ||
                   quote.flashLoanAmount <= 0n ||
                   projectedOverLimit ||

@@ -19,11 +19,18 @@ type EnsureBundlerAuthorizationResult = {
 };
 
 export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBundlerAuthorizationStepParams) => {
-  const { isBundlerAuthorized, isAuthorizingBundler, authorizeBundlerWithSignature, authorizeWithTransaction, refetchIsBundlerAuthorized } =
-    useMorphoAuthorization({
-      chainId,
-      authorized: bundlerAddress,
-    });
+  const {
+    isBundlerAuthorized,
+    isBundlerAuthorizationStatusReady,
+    isBundlerAuthorizationReady,
+    isAuthorizingBundler,
+    authorizeBundlerWithSignature,
+    authorizeWithTransaction,
+    refetchIsBundlerAuthorized,
+  } = useMorphoAuthorization({
+    chainId,
+    authorized: bundlerAddress,
+  });
 
   const ensureBundlerAuthorization = useCallback(
     async ({ mode }: EnsureBundlerAuthorizationParams): Promise<EnsureBundlerAuthorizationResult> => {
@@ -35,6 +42,9 @@ export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBund
       }
 
       if (mode === 'signature') {
+        if (!isBundlerAuthorizationReady) {
+          throw new Error('Morpho authorization is still loading. Please wait a moment and try again.');
+        }
         const authorizationTxData = await authorizeBundlerWithSignature();
         if (authorizationTxData) {
           return {
@@ -50,17 +60,30 @@ export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBund
         };
       }
 
+      if (!isBundlerAuthorizationStatusReady) {
+        throw new Error('Morpho authorization is still loading. Please wait a moment and try again.');
+      }
+
       const authorized = await authorizeWithTransaction();
       return {
         authorized,
         authorizationTxData: null,
       };
     },
-    [isBundlerAuthorized, authorizeBundlerWithSignature, authorizeWithTransaction, refetchIsBundlerAuthorized],
+    [
+      isBundlerAuthorized,
+      isBundlerAuthorizationReady,
+      isBundlerAuthorizationStatusReady,
+      authorizeBundlerWithSignature,
+      authorizeWithTransaction,
+      refetchIsBundlerAuthorized,
+    ],
   );
 
   return {
     isBundlerAuthorized,
+    isBundlerAuthorizationStatusReady,
+    isBundlerAuthorizationReady,
     isAuthorizingBundler,
     ensureBundlerAuthorization,
     refetchIsBundlerAuthorized,

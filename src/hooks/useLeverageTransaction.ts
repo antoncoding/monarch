@@ -1,10 +1,22 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeAbiParameters, encodeFunctionData, isAddress, isAddressEqual, keccak256, maxUint256, zeroHash } from 'viem';
+import {
+  decodeFunctionData,
+  type Address,
+  encodeAbiParameters,
+  encodeFunctionData,
+  isAddress,
+  isAddressEqual,
+  keccak256,
+  maxUint256,
+  zeroHash,
+} from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { bundlerV3Abi } from '@/abis/bundlerV3';
+import morphoAbi from '@/abis/morpho';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
+import permit2Abi from '@/abis/permit2';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { DEFAULT_SLIPPAGE_PERCENT } from '@/features/swap/constants';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
@@ -16,7 +28,8 @@ import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
-import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { getBundlerV2, getMorphoAddress, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { PERMIT2_ADDRESS } from '@/utils/permit2';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
 import { type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets, readCalldataUint256 } from './leverage/bundler3';
@@ -72,7 +85,7 @@ export function useLeverageTransaction({
   const { address: account, chainId } = useConnection();
   const toast = useStyledToast();
   const isSwapRoute = route?.kind === 'swap';
-  const usePermit2ForRoute = usePermit2Setting && !isSwapRoute;
+  const usePermit2ForRoute = usePermit2Setting;
 
   const bundlerAddress = useMemo<Address>(() => {
     if (route?.kind === 'swap') {
@@ -95,12 +108,17 @@ export function useLeverageTransaction({
   const inputTokenAmountForTransfer = isLoanAssetInput ? collateralAmount : collateralAmountInCollateralToken;
   const approvalSpender = route?.kind === 'swap' ? route.generalAdapterAddress : bundlerAddress;
 
-  const { isBundlerAuthorized, isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep(
-    {
-      chainId: market.morphoBlue.chain.id,
-      bundlerAddress: authorizationTarget,
-    },
-  );
+  const {
+    isBundlerAuthorized,
+    isBundlerAuthorizationStatusReady,
+    isBundlerAuthorizationReady,
+    isAuthorizingBundler,
+    ensureBundlerAuthorization,
+    refetchIsBundlerAuthorized,
+  } = useBundlerAuthorizationStep({
+    chainId: market.morphoBlue.chain.id,
+    bundlerAddress: authorizationTarget,
+  });
 
   const {
     authorizePermit2,
@@ -116,6 +134,7 @@ export function useLeverageTransaction({
     tokenSymbol: inputTokenSymbol,
     amount: usePermit2ForRoute ? inputTokenAmountForTransfer : 0n,
   });
+  const isAuthorizationReadyForRoute = usePermit2ForRoute ? isBundlerAuthorizationReady : isBundlerAuthorizationStatusReady;
 
   const { isApproved, approve, isApproving } = useERC20Approval({
     token: inputTokenAddress,
@@ -141,6 +160,31 @@ export function useLeverageTransaction({
 
   const getStepsForFlow = useCallback(
     (isPermit2: boolean, isSwap: boolean) => {
+      if (isSwap && isPermit2) {
+        return [
+          {
+            id: 'approve_permit2',
+            title: 'Authorize Permit2',
+            description: "One-time approval so future leverage transactions don't need token approvals.",
+          },
+          {
+            id: 'authorize_bundler_sig',
+            title: 'Authorize Morpho Adapter',
+            description: 'Sign a message authorizing the Morpho general adapter for this leverage flow.',
+          },
+          {
+            id: 'sign_permit',
+            title: 'Sign Token Permit',
+            description: 'Sign Permit2 transfer authorization for the general adapter.',
+          },
+          {
+            id: 'execute',
+            title: 'Confirm Leverage',
+            description: 'Confirm the Bundler3 leverage transaction in your wallet.',
+          },
+        ];
+      }
+
       if (isSwap) {
         return [
           {
@@ -226,6 +270,8 @@ export function useLeverageTransaction({
 
     try {
       const txs: `0x${string}`[] = [];
+      let swapRouteAuthorizationCall: Bundler3Call | null = null;
+      let swapRoutePermit2Call: Bundler3Call | null = null;
 
       if (usePermit2ForRoute) {
         if (!permit2Authorized) {
@@ -239,28 +285,67 @@ export function useLeverageTransaction({
         }
         const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
         if (authorizationTxData) {
-          txs.push(authorizationTxData);
+          if (route.kind === 'swap') {
+            const decodedAuthorization = decodeFunctionData({
+              abi: morphoBundlerAbi,
+              data: authorizationTxData,
+            });
+            if (decodedAuthorization.functionName !== 'morphoSetAuthorizationWithSig') {
+              throw new Error('Unexpected Morpho authorization payload for swap-backed leverage.');
+            }
+
+            const [authorization, signature] = decodedAuthorization.args;
+            swapRouteAuthorizationCall = {
+              to: getMorphoAddress(market.morphoBlue.chain.id) as Address,
+              data: encodeFunctionData({
+                abi: morphoAbi,
+                functionName: 'setAuthorizationWithSig',
+                args: [authorization, signature],
+              }),
+              value: 0n,
+              skipRevert: false,
+              callbackHash: zeroHash,
+            };
+          } else {
+            txs.push(authorizationTxData);
+          }
           await new Promise((resolve) => setTimeout(resolve, 800));
         }
 
         tracking.update('sign_permit');
         const { sigs, permitSingle } = await signForBundlers();
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'approve2',
-            args: [permitSingle, sigs, false],
-          }),
-        );
+        if (route.kind === 'swap') {
+          swapRoutePermit2Call = {
+            to: PERMIT2_ADDRESS,
+            data: encodeFunctionData({
+              abi: permit2Abi,
+              functionName: 'permit',
+              args: [account as Address, permitSingle, sigs],
+            }),
+            value: 0n,
+            skipRevert: false,
+            callbackHash: zeroHash,
+          };
+        } else {
+          txs.push(
+            encodeFunctionData({
+              abi: morphoBundlerAbi,
+              functionName: 'approve2',
+              args: [permitSingle, sigs, false],
+            }),
+          );
+        }
       } else {
-        tracking.update('authorize_bundler_tx');
-        const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
-        if (!authorized) {
-          throw new Error('Failed to authorize Bundler via transaction.');
+        if (!isBundlerAuthorized) {
+          tracking.update('authorize_bundler_tx');
+          const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
+          if (!authorized) {
+            throw new Error('Failed to authorize Bundler via transaction.');
+          }
         }
 
-        tracking.update('approve_token');
         if (!isApproved) {
+          tracking.update('approve_token');
           await approve();
           await new Promise((resolve) => setTimeout(resolve, 900));
         }
@@ -298,7 +383,6 @@ export function useLeverageTransaction({
               userAddress: account as Address,
               priceRoute: activePriceRoute,
               slippageBps: LEVERAGE_SWAP_SLIPPAGE_BPS,
-              side: 'SELL',
               ignoreChecks,
             });
 
@@ -404,13 +488,19 @@ export function useLeverageTransaction({
         const callbackBundleData = encodeBundler3Calls(callbackBundle);
 
         const bundleCalls: Bundler3Call[] = [];
+        if (swapRouteAuthorizationCall) {
+          bundleCalls.push(swapRouteAuthorizationCall);
+        }
+        if (swapRoutePermit2Call) {
+          bundleCalls.push(swapRoutePermit2Call);
+        }
 
         if (inputTokenAmountForTransfer > 0n) {
           bundleCalls.push({
             to: route.generalAdapterAddress,
             data: encodeFunctionData({
               abi: morphoGeneralAdapterV1Abi,
-              functionName: 'erc20TransferFrom',
+              functionName: usePermit2ForRoute ? 'permit2TransferFrom' : 'erc20TransferFrom',
               args: [inputTokenAddress, route.generalAdapterAddress, inputTokenAmountForTransfer],
             }),
             value: 0n,
@@ -587,7 +677,17 @@ export function useLeverageTransaction({
     }
 
     try {
-      const initialStep = usePermit2ForRoute ? 'approve_permit2' : 'authorize_bundler_tx';
+      const initialStep: LeverageStepType = usePermit2ForRoute
+        ? permit2Authorized
+          ? isBundlerAuthorized
+            ? 'sign_permit'
+            : 'authorize_bundler_sig'
+          : 'approve_permit2'
+        : isBundlerAuthorized
+          ? isApproved
+            ? 'execute'
+            : 'approve_token'
+          : 'authorize_bundler_tx';
       tracking.start(
         getStepsForFlow(usePermit2ForRoute, isSwapRoute),
         {
@@ -612,6 +712,9 @@ export function useLeverageTransaction({
   }, [
     account,
     usePermit2ForRoute,
+    permit2Authorized,
+    isBundlerAuthorized,
+    isApproved,
     tracking,
     getStepsForFlow,
     isSwapRoute,
@@ -641,7 +744,7 @@ export function useLeverageTransaction({
         : 'approve_permit2';
 
       tracking.start(
-        getStepsForFlow(true, false),
+        getStepsForFlow(true, isSwapRoute),
         {
           title: 'Leverage',
           description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
@@ -676,7 +779,8 @@ export function useLeverageTransaction({
     toast,
   ]);
 
-  const isLoading = leveragePending || (usePermit2ForRoute && isLoadingPermit2) || isApproving || isAuthorizingBundler;
+  const isLoading =
+    leveragePending || (usePermit2ForRoute && isLoadingPermit2) || !isAuthorizationReadyForRoute || isApproving || isAuthorizingBundler;
 
   return {
     transaction: tracking.transaction,
@@ -688,6 +792,7 @@ export function useLeverageTransaction({
     leveragePending,
     isLoading,
     isBundlerAuthorized,
+    isBundlerAuthorizationReady: isAuthorizationReadyForRoute,
     approveAndLeverage,
     signAndLeverage,
   };

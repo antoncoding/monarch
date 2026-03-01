@@ -48,12 +48,17 @@ export function RemoveCollateralAndDeleverage({
     route,
     withdrawCollateralAmount,
     currentBorrowAssets,
+    currentBorrowShares,
     loanTokenAddress: market.loanAsset.address,
     loanTokenDecimals: market.loanAsset.decimals,
     collateralTokenAddress: market.collateralAsset.address,
     collateralTokenDecimals: market.collateralAsset.decimals,
     userAddress: account as `0x${string}` | undefined,
   });
+
+  const closeRoutePendingResolution = route?.kind === 'swap' && quote.closeRouteRequiresResolution && quote.canCurrentSellCloseDebt;
+  const closeRouteAvailableForPreview = quote.closeRouteAvailable || closeRoutePendingResolution;
+  const closeBoundForPreview = closeRoutePendingResolution ? withdrawCollateralAmount : quote.maxCollateralForDebtRepay;
 
   const projection = useMemo(
     () =>
@@ -62,18 +67,20 @@ export function RemoveCollateralAndDeleverage({
         currentBorrowAssets,
         currentBorrowShares,
         withdrawCollateralAmount,
-        rawRouteRepayAmount: quote.rawRouteRepayAmount,
         repayAmount: quote.repayAmount,
-        maxCollateralForDebtRepay: quote.maxCollateralForDebtRepay,
+        maxCollateralForDebtRepay: closeBoundForPreview,
+        closeRouteAvailable: closeRouteAvailableForPreview,
+        closeBoundIsInputCap: route?.kind !== 'swap',
       }),
     [
       currentCollateralAssets,
       currentBorrowAssets,
       currentBorrowShares,
       withdrawCollateralAmount,
-      quote.rawRouteRepayAmount,
       quote.repayAmount,
-      quote.maxCollateralForDebtRepay,
+      closeBoundForPreview,
+      closeRouteAvailableForPreview,
+      route,
     ],
   );
 
@@ -110,14 +117,17 @@ export function RemoveCollateralAndDeleverage({
     withdrawCollateralAmount,
     flashLoanAmount: projection.flashLoanAmountForTx,
     repayBySharesAmount: projection.repayBySharesAmount,
+    useCloseRoute: projection.usesCloseRoute,
     autoWithdrawCollateralAmount: projection.autoWithdrawCollateralAmount,
-    swapPriceRoute: quote.swapPriceRoute,
+    maxCollateralForDebtRepay: quote.maxCollateralForDebtRepay,
+    swapSellPriceRoute: quote.swapSellPriceRoute,
     onSuccess: handleTransactionSuccess,
   });
 
   const handleDeleverage = useCallback(() => {
+    if (withdrawInputError || quote.closeRouteRequiresResolution) return;
     void authorizeAndDeleverage();
-  }, [authorizeAndDeleverage]);
+  }, [withdrawInputError, quote.closeRouteRequiresResolution, authorizeAndDeleverage]);
 
   // Treat user input as an intent change immediately so the preview card updates as soon as the amount changes.
   const hasChanges = withdrawCollateralAmount > 0n;
@@ -131,26 +141,34 @@ export function RemoveCollateralAndDeleverage({
     [projection.previewDebtRepaid, market.loanAsset.decimals],
   );
   const swapRatePreviewText = useMemo(() => {
-    if (!isSwapRoute) return null;
+    if (!isSwapRoute || !quote.swapSellPriceRoute) return null;
+
+    let quotedCollateralIn: bigint;
+    let quotedLoanOut: bigint;
+    try {
+      quotedCollateralIn = BigInt(quote.swapSellPriceRoute.srcAmount);
+      quotedLoanOut = BigInt(quote.swapSellPriceRoute.destAmount);
+    } catch {
+      return null;
+    }
 
     return formatSwapRatePreview({
-      baseAmount: withdrawCollateralAmount,
+      baseAmount: quotedCollateralIn,
       baseTokenDecimals: market.collateralAsset.decimals,
       baseTokenSymbol: market.collateralAsset.symbol,
-      quoteAmount: quote.rawRouteRepayAmount,
+      quoteAmount: quotedLoanOut,
       quoteTokenDecimals: market.loanAsset.decimals,
       quoteTokenSymbol: market.loanAsset.symbol,
     });
   }, [
     isSwapRoute,
-    withdrawCollateralAmount,
-    quote.rawRouteRepayAmount,
+    quote.swapSellPriceRoute,
     market.collateralAsset.decimals,
     market.collateralAsset.symbol,
     market.loanAsset.decimals,
     market.loanAsset.symbol,
   ]);
-  const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapPriceRoute != null && swapRatePreviewText != null;
+  const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapSellPriceRoute != null && swapRatePreviewText != null;
   const swapSlippagePreviewText = `${formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT)}%`;
 
   return (
@@ -263,6 +281,7 @@ export function RemoveCollateralAndDeleverage({
                   route == null ||
                   withdrawInputError !== null ||
                   quote.error !== null ||
+                  quote.closeRouteRequiresResolution ||
                   withdrawCollateralAmount <= 0n ||
                   projection.flashLoanAmountForTx <= 0n ||
                   projectedOverLimit
