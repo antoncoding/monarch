@@ -6,16 +6,14 @@ export type Erc4626LeverageRoute = {
   underlyingLoanToken: Address;
 };
 
-export type LeverageRoute = Erc4626LeverageRoute;
-
-export type LeverageSupport = {
-  isSupported: boolean;
-  supportsLeverage: boolean;
-  supportsDeleverage: boolean;
-  isLoading: boolean;
-  route: LeverageRoute | null;
-  reason: string | null;
+export type SwapLeverageRoute = {
+  kind: 'swap';
+  bundler3Address: Address;
+  generalAdapterAddress: Address;
+  paraswapAdapterAddress: Address;
 };
+
+export type LeverageRoute = Erc4626LeverageRoute | SwapLeverageRoute;
 
 export const LEVERAGE_MULTIPLIER_SCALE_BPS = 10_000n;
 export const LEVERAGE_MIN_MULTIPLIER_BPS = 10_000n; // 1.00x

@@ -14,12 +14,13 @@ import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAllowance } from '@/hooks/useAllowance';
 import { formatBalance } from '@/utils/balance';
 import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
-import { formatCompactTokenAmount, formatTokenAmountPreview } from '@/utils/token-amount-format';
+import { formatCompactTokenAmount } from '@/utils/token-amount-format';
 import { useVeloraSwap } from '../hooks/useVeloraSwap';
 import { TokenNetworkDropdown } from './TokenNetworkDropdown';
 import { SwapTokenAmountField } from './SwapTokenAmountField';
 import { VELORA_SWAP_CHAINS, type SwapToken } from '../types';
 import { DEFAULT_SLIPPAGE_PERCENT } from '../constants';
+import { formatSlippagePercent, formatSwapRatePreview } from '../utils/quote-preview';
 
 type SwapModalProps = {
   isOpen: boolean;
@@ -30,29 +31,8 @@ type SwapModalProps = {
 const MIN_SLIPPAGE_PERCENT = 0.1;
 const MAX_SLIPPAGE_PERCENT = 5;
 const DEFAULT_CHAIN_ID = 1;
-const RATE_PREVIEW_DECIMALS = 8;
-
-const formatSlippagePercent = (value: number): string => {
-  return value.toFixed(2).replace(/\.?0+$/, '');
-};
-
 const clampSlippagePercent = (value: number): number => {
   return Math.min(MAX_SLIPPAGE_PERCENT, Math.max(MIN_SLIPPAGE_PERCENT, value));
-};
-
-const computeUnitRatePreviewAmount = (
-  baseAmount: bigint,
-  baseTokenDecimals: number,
-  quoteAmount: bigint,
-  quoteTokenDecimals: number,
-): bigint | null => {
-  if (baseAmount <= 0n || quoteAmount <= 0n) return null;
-
-  const scaledNumerator = quoteAmount * 10n ** BigInt(baseTokenDecimals + RATE_PREVIEW_DECIMALS);
-  const scaledDenominator = baseAmount * 10n ** BigInt(quoteTokenDecimals);
-  if (scaledDenominator <= 0n) return null;
-
-  return scaledNumerator / scaledDenominator;
 };
 
 export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProps) {
@@ -331,26 +311,24 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
     if (!quote || !sourceToken || !targetToken || error || !chainsMatch) return null;
 
     if (isRateInverted) {
-      const inverseRate = computeUnitRatePreviewAmount(
-        quote.buyAmount,
-        targetToken.decimals,
-        quote.sellAmount,
-        sourceToken.decimals,
-      );
-      if (!inverseRate) return null;
-      const inverseRatePreview = formatTokenAmountPreview(inverseRate, RATE_PREVIEW_DECIMALS).compact;
-      return `1 ${targetToken.symbol} ≈ ${inverseRatePreview} ${sourceToken.symbol}`;
+      return formatSwapRatePreview({
+        baseAmount: quote.buyAmount,
+        baseTokenDecimals: targetToken.decimals,
+        baseTokenSymbol: targetToken.symbol,
+        quoteAmount: quote.sellAmount,
+        quoteTokenDecimals: sourceToken.decimals,
+        quoteTokenSymbol: sourceToken.symbol,
+      });
     }
 
-    const forwardRate = computeUnitRatePreviewAmount(
-      quote.sellAmount,
-      sourceToken.decimals,
-      quote.buyAmount,
-      targetToken.decimals,
-    );
-    if (!forwardRate) return null;
-    const forwardRatePreview = formatTokenAmountPreview(forwardRate, RATE_PREVIEW_DECIMALS).compact;
-    return `1 ${sourceToken.symbol} ≈ ${forwardRatePreview} ${targetToken.symbol}`;
+    return formatSwapRatePreview({
+      baseAmount: quote.sellAmount,
+      baseTokenDecimals: sourceToken.decimals,
+      baseTokenSymbol: sourceToken.symbol,
+      quoteAmount: quote.buyAmount,
+      quoteTokenDecimals: targetToken.decimals,
+      quoteTokenSymbol: targetToken.symbol,
+    });
   }, [quote, sourceToken, targetToken, error, chainsMatch, isRateInverted]);
 
   return (

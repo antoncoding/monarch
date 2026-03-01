@@ -11,8 +11,9 @@ import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing
 import { AddCollateralAndBorrow } from './components/add-collateral-and-borrow';
 import { WithdrawCollateralAndRepay } from './components/withdraw-collateral-and-repay';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
 import { useModal } from '@/hooks/useModal';
-import { useLeverageSupport } from '@/hooks/useLeverageSupport';
+import { useAppSettings } from '@/stores/useAppSettings';
 
 type BorrowModalProps = {
   market: Market;
@@ -40,15 +41,19 @@ export function BorrowModal({
   const [mode, setMode] = useState<'borrow' | 'repay'>(() => defaultMode);
   const { address: account } = useConnection();
   const { open: openModal } = useModal();
-  const leverageSupport = useLeverageSupport({ market });
+  const { enableExperimentalLeverage } = useAppSettings();
+  const { hasAnyRoute } = useLeverageRouteAvailability({
+    chainId: market.morphoBlue.chain.id,
+    collateralTokenAddress: market.collateralAsset.address,
+    loanTokenAddress: market.loanAsset.address,
+  });
 
   useEffect(() => {
     setMode(defaultMode);
   }, [defaultMode]);
 
   const leverageModalMode = mode === 'repay' ? 'deleverage' : 'leverage';
-  const canOpenLeverageModal =
-    !leverageSupport.isLoading && (mode === 'borrow' ? leverageSupport.supportsLeverage : leverageSupport.supportsDeleverage);
+  const canOpenLeverageModal = enableExperimentalLeverage && hasAnyRoute;
   const modeOptions: { value: string; label: string }[] = toggleBorrowRepay
     ? [
         { value: 'borrow', label: `Borrow ${market.loanAsset.symbol}` },

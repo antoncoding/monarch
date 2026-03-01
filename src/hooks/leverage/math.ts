@@ -40,11 +40,15 @@ export const formatMultiplierBps = (value: bigint): string => {
  * Converts user collateral and desired multiplier into extra collateral required
  * via flash liquidity.
  */
-export const computeFlashCollateralAmount = (userCollateralAmount: bigint, multiplierBps: bigint): bigint => {
-  if (userCollateralAmount <= 0n) return 0n;
+export const computeLeveragedExtraAmount = (baseAmount: bigint, multiplierBps: bigint): bigint => {
+  if (baseAmount <= 0n) return 0n;
   const safeMultiplier = clampMultiplierBps(multiplierBps);
-  const leveragedCollateral = (userCollateralAmount * safeMultiplier) / LEVERAGE_MULTIPLIER_SCALE_BPS;
-  return leveragedCollateral > userCollateralAmount ? leveragedCollateral - userCollateralAmount : 0n;
+  const leveragedAmount = (baseAmount * safeMultiplier) / LEVERAGE_MULTIPLIER_SCALE_BPS;
+  return leveragedAmount > baseAmount ? leveragedAmount - baseAmount : 0n;
+};
+
+export const computeFlashCollateralAmount = (userCollateralAmount: bigint, multiplierBps: bigint): bigint => {
+  return computeLeveragedExtraAmount(userCollateralAmount, multiplierBps);
 };
 
 export const computeLeverageProjectedPosition = ({
@@ -63,7 +67,7 @@ export const computeLeverageProjectedPosition = ({
 });
 
 export type DeleverageProjectedPosition = {
-  closesDebt: boolean;
+  usesCloseRoute: boolean;
   repayBySharesAmount: bigint;
   flashLoanAmountForTx: bigint;
   autoWithdrawCollateralAmount: bigint;
@@ -78,31 +82,49 @@ export const computeDeleverageProjectedPosition = ({
   currentBorrowAssets,
   currentBorrowShares,
   withdrawCollateralAmount,
-  rawRouteRepayAmount,
   repayAmount,
   maxCollateralForDebtRepay,
+  closeRouteAvailable,
+  closeBoundIsInputCap,
 }: {
   currentCollateralAssets: bigint;
   currentBorrowAssets: bigint;
   currentBorrowShares: bigint;
   withdrawCollateralAmount: bigint;
-  rawRouteRepayAmount: bigint;
   repayAmount: bigint;
   maxCollateralForDebtRepay: bigint;
+  closeRouteAvailable: boolean;
+  closeBoundIsInputCap: boolean;
 }): DeleverageProjectedPosition => {
-  const maxWithdrawCollateral = minBigInt(maxCollateralForDebtRepay, currentCollateralAssets);
+  const maxWithdrawCollateral =
+    closeRouteAvailable && closeBoundIsInputCap ? minBigInt(maxCollateralForDebtRepay, currentCollateralAssets) : currentCollateralAssets;
   const boundedWithdrawCollateral = minBigInt(withdrawCollateralAmount, currentCollateralAssets);
   const projectedCollateralAfterInput = floorSub(currentCollateralAssets, boundedWithdrawCollateral);
-  const closesDebt = currentBorrowAssets > 0n && repayAmount >= currentBorrowAssets;
-  const repayBySharesAmount = closesDebt ? currentBorrowShares : 0n;
-  const flashLoanAmountForTx = closesDebt ? rawRouteRepayAmount : repayAmount;
-  const autoWithdrawCollateralAmount = closesDebt ? projectedCollateralAfterInput : 0n;
-  const projectedCollateralAssets = closesDebt ? 0n : projectedCollateralAfterInput;
-  const projectedBorrowAssets = floorSub(currentBorrowAssets, repayAmount);
-  const previewDebtRepaid = closesDebt ? currentBorrowAssets : repayAmount;
+  const bufferedBorrowAssets = withSlippageCeil(currentBorrowAssets);
+  // WHY: full-close execution depends on the dedicated close bound, not the optimistic/pessimistic
+  // characteristics of the preview repay leg. This keeps repay-by-shares aligned with the real
+  // executable close path and avoids leaving debt dust on swap-backed unwinds.
+  const usesCloseRoute =
+    closeRouteAvailable &&
+    currentBorrowAssets > 0n &&
+    currentBorrowShares > 0n &&
+    maxCollateralForDebtRepay > 0n &&
+    boundedWithdrawCollateral >= maxCollateralForDebtRepay;
+  const projectedBorrowAssetsIfPartial = floorSub(currentBorrowAssets, repayAmount);
+  const preservesDebtDustPreview = !usesCloseRoute && currentBorrowAssets > 0n && projectedBorrowAssetsIfPartial === 0n && repayAmount > 0n;
+  const dustPreservingRepayAmount = preservesDebtDustPreview ? floorSub(currentBorrowAssets, 1n) : repayAmount;
+  // WHY: for a 1-unit debt, subtracting one unit would produce a zero flash amount and dead-end the flow.
+  // In that edge case we keep the original repay amount so users still have an executable fallback.
+  const partialRepayAmountForTx = dustPreservingRepayAmount > 0n ? dustPreservingRepayAmount : repayAmount;
+  const repayBySharesAmount = usesCloseRoute ? currentBorrowShares : 0n;
+  const flashLoanAmountForTx = usesCloseRoute ? bufferedBorrowAssets : partialRepayAmountForTx;
+  const autoWithdrawCollateralAmount = usesCloseRoute ? projectedCollateralAfterInput : 0n;
+  const projectedCollateralAssets = usesCloseRoute ? 0n : projectedCollateralAfterInput;
+  const projectedBorrowAssets = usesCloseRoute ? 0n : floorSub(currentBorrowAssets, partialRepayAmountForTx);
+  const previewDebtRepaid = usesCloseRoute ? currentBorrowAssets : partialRepayAmountForTx;
 
   return {
-    closesDebt,
+    usesCloseRoute,
     repayBySharesAmount,
     flashLoanAmountForTx,
     autoWithdrawCollateralAmount,

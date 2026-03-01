@@ -1,24 +1,43 @@
 import { useCallback, useState } from 'react';
 import { type Address, encodeFunctionData, parseSignature } from 'viem';
-import { useConnection, useReadContract, useSignTypedData } from 'wagmi';
+import { useConnection, usePublicClient, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getMorphoAddress } from '@/utils/morpho';
-import { useStyledToast } from './useStyledToast';
 
 type UseMorphoAuthorizationProps = {
   chainId: number;
   authorized: Address;
 };
 
+export type MorphoAuthorizationSignatureData = {
+  authorizationTxData: `0x${string}`;
+  authorization: {
+    authorizer: Address;
+    authorized: Address;
+    isAuthorized: boolean;
+    nonce: bigint;
+    deadline: bigint;
+  };
+  signature: {
+    v: number;
+    r: `0x${string}`;
+    s: `0x${string}`;
+  };
+};
+
 export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthorizationProps) => {
   const { address: account } = useConnection();
+  const publicClient = usePublicClient({ chainId });
   const { signTypedDataAsync } = useSignTypedData();
-  const toast = useStyledToast();
   const [isAuthorizing, setIsAuthorizing] = useState(false);
 
-  const { data: isBundlerAuthorized, refetch: refetchIsBundlerAuthorized } = useReadContract({
+  const {
+    data: isBundlerAuthorized,
+    refetch: refetchIsBundlerAuthorized,
+    isLoading: isLoadingBundlerAuthorization,
+  } = useReadContract({
     address: getMorphoAddress(chainId),
     abi: morphoAbi,
     functionName: 'isAuthorized',
@@ -40,6 +59,10 @@ export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthori
     },
   });
 
+  const isBundlerAuthorizationStatusReady = !!account && !isLoadingBundlerAuthorization && isBundlerAuthorized !== undefined;
+  const isBundlerAuthorizationReady =
+    !!account && isBundlerAuthorizationStatusReady && (isBundlerAuthorized === true || nonce !== undefined);
+
   const { sendTransactionAsync: sendBundlerAuthorizationTx, isConfirming: isConfirmingBundlerTx } = useTransactionWithToast({
     toastId: 'morpho-authorize',
     pendingText: 'Authorizing Bundler on Morpho',
@@ -52,14 +75,22 @@ export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthori
     },
   });
 
-  const authorizeBundlerWithSignature = useCallback(async () => {
-    if (!account || isBundlerAuthorized === true || nonce === undefined) {
-      console.log('Skipping authorizeBundlerWithSignature:', {
-        account,
-        isBundlerAuthorized,
-        nonce,
-      });
-      return null; // Already authorized or missing data
+  const authorizeBundlerWithSignature = useCallback(async (): Promise<MorphoAuthorizationSignatureData | null> => {
+    if (!account) {
+      throw new Error('No account connected.');
+    }
+
+    if (!isBundlerAuthorizationReady) {
+      throw new Error('Morpho authorization is still loading. Please wait a moment and try again.');
+    }
+
+    if (isBundlerAuthorized === true) {
+      return null; // Already authorized
+    }
+
+    const authorizationNonce = nonce;
+    if (authorizationNonce === undefined) {
+      throw new Error('Morpho authorization nonce is unavailable. Please wait a moment and try again.');
     }
 
     setIsAuthorizing(true);
@@ -85,7 +116,7 @@ export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthori
         authorizer: account,
         authorized: authorized,
         isAuthorized: true,
-        nonce: nonce,
+        nonce: authorizationNonce,
         deadline: BigInt(deadline),
       };
 
@@ -98,63 +129,73 @@ export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthori
 
       const signature = parseSignature(signatureRaw);
 
+      const authorization = {
+        authorizer: account as Address,
+        authorized: authorized,
+        isAuthorized: true,
+        nonce: BigInt(authorizationNonce),
+        deadline: BigInt(deadline),
+      };
+      const parsedSignature = {
+        v: Number(signature.v),
+        r: signature.r,
+        s: signature.s,
+      };
+
       const authorizationTxData = encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'morphoSetAuthorizationWithSig',
         args: [
-          {
-            authorizer: account as Address,
-            authorized: authorized,
-            isAuthorized: true,
-            nonce: BigInt(nonce),
-            deadline: BigInt(deadline),
-          },
-          {
-            v: Number(signature.v),
-            r: signature.r,
-            s: signature.s,
-          },
+          authorization,
+          parsedSignature,
           false, // useEOA = false, since we want the bundler to submit
         ],
       });
       await refetchIsBundlerAuthorized();
       await refetchNonce();
-      return authorizationTxData;
-    } catch (error) {
-      console.error('Error during signature authorization:', error);
-      if (error instanceof Error && error.message.includes('User rejected')) {
-        toast.error('Signature Rejected', 'Authorization signature rejected by user');
-      } else {
-        toast.error('Authorization Failed', 'Could not authorize bundler via signature');
-      }
-      throw error; // Re-throw to be caught by the calling function
+      return {
+        authorizationTxData,
+        authorization,
+        signature: parsedSignature,
+      };
     } finally {
       setIsAuthorizing(false);
     }
-  }, [account, isBundlerAuthorized, nonce, chainId, authorized, signTypedDataAsync, refetchIsBundlerAuthorized, refetchNonce, toast]);
+  }, [
+    account,
+    isBundlerAuthorized,
+    isBundlerAuthorizationReady,
+    nonce,
+    chainId,
+    authorized,
+    signTypedDataAsync,
+    refetchIsBundlerAuthorized,
+    refetchNonce,
+  ]);
 
   const authorizeWithTransaction = useCallback(
     async (shouldAuthorize?: boolean) => {
       const authorize = shouldAuthorize ?? true;
       if (!account) {
-        console.log('Skipping authorizeWithTransaction: no account');
-        return true; // No account
+        throw new Error('No account connected.');
+      }
+
+      if (!isBundlerAuthorizationStatusReady) {
+        throw new Error('Morpho authorization is still loading. Please wait a moment and try again.');
       }
 
       // Skip if trying to authorize when already authorized, or revoke when not authorized
       if (authorize && isBundlerAuthorized === true) {
-        console.log('Already authorized, skipping');
         return true;
       }
       if (!authorize && isBundlerAuthorized === false) {
-        console.log('Already not authorized, skipping');
         return true;
       }
 
       setIsAuthorizing(true);
       try {
         // Simple Morpho setAuthorization transaction
-        await sendBundlerAuthorizationTx({
+        const authorizationTxHash = await sendBundlerAuthorizationTx({
           account: account,
           to: getMorphoAddress(chainId),
           data: encodeFunctionData({
@@ -164,24 +205,43 @@ export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthori
           }),
           chainId: chainId,
         });
-        return true;
-      } catch (error) {
-        console.error('Error during transaction authorization:', error);
-        // Toast is handled by useTransactionWithToast
-        if (error instanceof Error && error.message.includes('User rejected')) {
-          // Handle specific user rejection if not caught by useTransactionWithToast
-          toast.error('Transaction Rejected', 'Authorization transaction rejected by user');
+
+        if (!publicClient) {
+          throw new Error('Missing public client for authorization confirmation.');
         }
-        return false; // Indicate failure
+
+        await publicClient.waitForTransactionReceipt({
+          hash: authorizationTxHash,
+          confirmations: 1,
+        });
+
+        const refreshedAuthorization = await refetchIsBundlerAuthorized();
+        const isAuthorizedAfterConfirmation = refreshedAuthorization.data === authorize;
+        if (!isAuthorizedAfterConfirmation) {
+          throw new Error('Morpho authorization was not confirmed on-chain.');
+        }
+
+        return true;
       } finally {
         setIsAuthorizing(false);
       }
     },
-    [account, isBundlerAuthorized, authorized, sendBundlerAuthorizationTx, chainId, toast],
+    [
+      account,
+      publicClient,
+      isBundlerAuthorizationStatusReady,
+      isBundlerAuthorized,
+      authorized,
+      sendBundlerAuthorizationTx,
+      chainId,
+      refetchIsBundlerAuthorized,
+    ],
   );
 
   return {
     isBundlerAuthorized,
+    isBundlerAuthorizationStatusReady,
+    isBundlerAuthorizationReady,
     isAuthorizingBundler: isAuthorizing || isConfirmingBundlerTx,
     authorizeBundlerWithSignature,
     authorizeWithTransaction,

@@ -35,9 +35,7 @@ export function useMultiMarketSupply(
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
   const bundlerAddress = chainId ? getBundlerV2(chainId) : zeroAddress;
   const isBundlerAddressValid = chainId !== undefined && bundlerAddress !== zeroAddress;
-  const bundlerAddressErrorMessage = chainId
-    ? `No bundler configured for chain ${chainId}.`
-    : 'No chain selected for multi-market supply.';
+  const bundlerAddressErrorMessage = chainId ? `No bundler configured for chain ${chainId}.` : 'No chain selected for multi-market supply.';
 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
