@@ -11,6 +11,22 @@ type UseMorphoAuthorizationProps = {
   authorized: Address;
 };
 
+export type MorphoAuthorizationSignatureData = {
+  authorizationTxData: `0x${string}`;
+  authorization: {
+    authorizer: Address;
+    authorized: Address;
+    isAuthorized: boolean;
+    nonce: bigint;
+    deadline: bigint;
+  };
+  signature: {
+    v: number;
+    r: `0x${string}`;
+    s: `0x${string}`;
+  };
+};
+
 export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthorizationProps) => {
   const { address: account } = useConnection();
   const publicClient = usePublicClient({ chainId });
@@ -59,7 +75,7 @@ export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthori
     },
   });
 
-  const authorizeBundlerWithSignature = useCallback(async () => {
+  const authorizeBundlerWithSignature = useCallback(async (): Promise<MorphoAuthorizationSignatureData | null> => {
     if (!account) {
       throw new Error('No account connected.');
     }
@@ -113,28 +129,35 @@ export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthori
 
       const signature = parseSignature(signatureRaw);
 
+      const authorization = {
+        authorizer: account as Address,
+        authorized: authorized,
+        isAuthorized: true,
+        nonce: BigInt(authorizationNonce),
+        deadline: BigInt(deadline),
+      };
+      const parsedSignature = {
+        v: Number(signature.v),
+        r: signature.r,
+        s: signature.s,
+      };
+
       const authorizationTxData = encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'morphoSetAuthorizationWithSig',
         args: [
-          {
-            authorizer: account as Address,
-            authorized: authorized,
-            isAuthorized: true,
-            nonce: BigInt(authorizationNonce),
-            deadline: BigInt(deadline),
-          },
-          {
-            v: Number(signature.v),
-            r: signature.r,
-            s: signature.s,
-          },
+          authorization,
+          parsedSignature,
           false, // useEOA = false, since we want the bundler to submit
         ],
       });
       await refetchIsBundlerAuthorized();
       await refetchNonce();
-      return authorizationTxData;
+      return {
+        authorizationTxData,
+        authorization,
+        signature: parsedSignature,
+      };
     } finally {
       setIsAuthorizing(false);
     }

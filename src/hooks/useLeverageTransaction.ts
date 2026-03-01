@@ -1,15 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import {
-  decodeFunctionData,
-  type Address,
-  encodeAbiParameters,
-  encodeFunctionData,
-  isAddress,
-  isAddressEqual,
-  keccak256,
-  maxUint256,
-  zeroHash,
-} from 'viem';
+import { type Address, encodeAbiParameters, encodeFunctionData, isAddress, isAddressEqual, keccak256, maxUint256, zeroHash } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { bundlerV3Abi } from '@/abis/bundlerV3';
@@ -280,7 +270,7 @@ export function useLeverageTransaction({
         if (!isBundlerAuthorized) {
           tracking.update('authorize_bundler_sig');
         }
-        const { authorized, authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+        const { authorized, authorizationTxData, authorizationSignatureData } = await ensureBundlerAuthorization({ mode: 'signature' });
         if (!authorized) {
           throw new Error('Failed to authorize Bundler via signature.');
         }
@@ -289,21 +279,15 @@ export function useLeverageTransaction({
         }
         if (authorizationTxData) {
           if (route.kind === 'swap') {
-            const decodedAuthorization = decodeFunctionData({
-              abi: morphoBundlerAbi,
-              data: authorizationTxData,
-            });
-            if (decodedAuthorization.functionName !== 'morphoSetAuthorizationWithSig') {
-              throw new Error('Unexpected Morpho authorization payload for swap-backed leverage.');
+            if (!authorizationSignatureData) {
+              throw new Error('Missing Morpho authorization signature payload for swap-backed leverage.');
             }
-
-            const [authorization, signature] = decodedAuthorization.args;
             swapRouteAuthorizationCall = {
               to: getMorphoAddress(market.morphoBlue.chain.id) as Address,
               data: encodeFunctionData({
                 abi: morphoAbi,
                 functionName: 'setAuthorizationWithSig',
-                args: [authorization, signature],
+                args: [authorizationSignatureData.authorization, authorizationSignatureData.signature],
               }),
               value: 0n,
               skipRevert: false,

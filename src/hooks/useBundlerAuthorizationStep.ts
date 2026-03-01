@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import type { Address } from 'viem';
-import { useMorphoAuthorization } from './useMorphoAuthorization';
+import { type MorphoAuthorizationSignatureData, useMorphoAuthorization } from './useMorphoAuthorization';
 
 type AuthorizationMode = 'signature' | 'transaction';
 
@@ -16,6 +16,7 @@ type UseBundlerAuthorizationStepParams = {
 type EnsureBundlerAuthorizationResult = {
   authorized: boolean;
   authorizationTxData: `0x${string}` | null;
+  authorizationSignatureData: MorphoAuthorizationSignatureData | null;
 };
 
 export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBundlerAuthorizationStepParams) => {
@@ -38,6 +39,7 @@ export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBund
         return {
           authorized: true,
           authorizationTxData: null,
+          authorizationSignatureData: null,
         };
       }
 
@@ -45,11 +47,12 @@ export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBund
         if (!isBundlerAuthorizationReady) {
           throw new Error('Morpho authorization is still loading. Please wait a moment and try again.');
         }
-        const authorizationTxData = await authorizeBundlerWithSignature();
-        if (authorizationTxData) {
+        const authorizationSignatureData = await authorizeBundlerWithSignature();
+        if (authorizationSignatureData) {
           return {
             authorized: true,
-            authorizationTxData: authorizationTxData as `0x${string}`,
+            authorizationTxData: authorizationSignatureData.authorizationTxData,
+            authorizationSignatureData,
           };
         }
 
@@ -57,6 +60,7 @@ export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBund
         return {
           authorized: refreshedAuthorization.data === true,
           authorizationTxData: null,
+          authorizationSignatureData: null,
         };
       }
 
@@ -68,6 +72,7 @@ export const useBundlerAuthorizationStep = ({ chainId, bundlerAddress }: UseBund
       return {
         authorized,
         authorizationTxData: null,
+        authorizationSignatureData: null,
       };
     },
     [
