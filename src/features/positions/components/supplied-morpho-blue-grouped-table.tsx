@@ -26,7 +26,7 @@ import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import type { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
@@ -340,14 +340,12 @@ export function SuppliedMorphoBlueGroupedTable({
                           onSmartRebalanceClick={() => {
                             openModal('smartRebalance', {
                               groupedPosition,
-                              chainId: groupedPosition.chainId as SupportedNetworks,
                               quickMode: true,
                             });
                           }}
                           onSmartRebalanceConfigClick={() => {
                             openModal('smartRebalance', {
                               groupedPosition,
-                              chainId: groupedPosition.chainId as SupportedNetworks,
                             });
                           }}
                         />

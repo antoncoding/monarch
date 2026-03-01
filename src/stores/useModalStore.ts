@@ -59,7 +59,6 @@ export type ModalProps = {
 
   smartRebalance: {
     groupedPosition: GroupedPosition;
-    chainId: SupportedNetworks;
     quickMode?: boolean;
   };
 

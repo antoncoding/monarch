@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, maxUint256 } from 'viem';
+import { type Address, encodeFunctionData, maxUint256, zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -37,6 +37,7 @@ export const useSmartRebalance = (
 
   const { address: account } = useConnection();
   const bundlerAddress = getBundlerV2(groupedPosition.chainId);
+  const hasBundler = bundlerAddress !== zeroAddress;
   const toast = useStyledToast();
   const { usePermit2: usePermit2Setting } = useAppSettings();
 
@@ -68,7 +69,7 @@ export const useSmartRebalance = (
     signForBundlers,
     isLoading: isLoadingPermit2,
   } = usePermit2({
-    user: account as Address,
+    user: account,
     spender: bundlerAddress,
     token: groupedPosition.loanAssetAddress as Address,
     refetchInterval: 10_000,
@@ -207,10 +208,21 @@ export const useSmartRebalance = (
       return;
     }
 
+    if (!hasBundler) {
+      toast.error('Unsupported chain', 'Smart rebalance is not available on this chain.');
+      return;
+    }
+
     setIsProcessing(true);
     const transactions: `0x${string}`[] = [];
 
-    const initialStep = usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
+    const initialStep = usePermit2Setting
+      ? (permit2Authorized
+        ? (isBundlerAuthorized ? 'sign_permit' : 'authorize_bundler_sig')
+        : 'approve_permit2')
+      : (isBundlerAuthorized
+        ? (isTokenApproved ? 'execute' : 'approve_token')
+        : 'authorize_bundler_tx');
     tracking.start(
       getStepsForFlow(usePermit2Setting),
       {
@@ -322,11 +334,27 @@ export const useSmartRebalance = (
 
       tracking.complete();
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error during smart rebalance:', error);
       tracking.fail();
 
-      if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
+      const isUserRejection = (() => {
+        if (error && typeof error === 'object') {
+          const err = error as Record<string, unknown>;
+          if (err.code === 4001 || err.code === 'ACTION_REJECTED') return true;
+          const msg = typeof err.message === 'string' ? err.message : '';
+          if (/user rejected|user denied|request has been rejected/i.test(msg)) return true;
+          const nested = (err.data as Record<string, unknown>)?.originalError as Record<string, unknown> | undefined;
+          if (nested?.code === 4001) return true;
+          const cause = err.cause as Record<string, unknown> | undefined;
+          if (cause?.code === 4001 || cause?.code === 'ACTION_REJECTED') return true;
+        }
+        return false;
+      })();
+
+      if (isUserRejection) {
+        toast.error('Transaction Rejected', 'User rejected transaction.');
+      } else {
         toast.error('Smart Rebalance Failed', 'An unexpected error occurred during smart rebalance.');
       }
     } finally {
@@ -336,8 +364,10 @@ export const useSmartRebalance = (
     account,
     result,
     totalMoved,
+    hasBundler,
     usePermit2Setting,
     permit2Authorized,
+    isBundlerAuthorized,
     authorizePermit2,
     ensureBundlerAuthorization,
     signForBundlers,
