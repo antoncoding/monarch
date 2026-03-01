@@ -35,6 +35,7 @@ import type { Market } from '@/utils/types';
 import { type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets, readCalldataUint256 } from './leverage/bundler3';
 import { computeBorrowSharesWithBuffer, withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
+import { isVeloraBypassablePrecheckError } from './leverage/velora-precheck';
 
 export type LeverageStepType =
   | 'approve_permit2'
@@ -58,36 +59,6 @@ type UseLeverageTransactionProps = {
 };
 
 const LEVERAGE_SWAP_SLIPPAGE_BPS = Math.round(DEFAULT_SLIPPAGE_PERCENT * 100);
-const SOURCE_TOKEN_LABEL_REGEX = /\b(src token|source token)\b/;
-const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const hasWholeWord = (message: string, value: string): boolean => {
-  if (!value) return false;
-  const pattern = new RegExp(`\\b${escapeRegExp(value)}\\b`);
-  return pattern.test(message);
-};
-const isVeloraBypassablePrecheckError = ({
-  error,
-  sourceTokenAddress,
-  sourceTokenSymbol,
-}: {
-  error: unknown;
-  sourceTokenAddress: string;
-  sourceTokenSymbol: string;
-}): boolean => {
-  const message = error instanceof Error ? error.message.toLowerCase() : '';
-  const isAllowancePrecheckError = message.includes('allowance given to tokentransferproxy');
-  if (isAllowancePrecheckError) return true;
-
-  if (!message.includes('not enough')) return false;
-  if (!message.includes('balance') && !message.includes('insufficient')) return false;
-
-  const normalizedSourceAddress = sourceTokenAddress.toLowerCase();
-  const normalizedSourceSymbol = sourceTokenSymbol.trim().toLowerCase();
-  const referencesSourceToken =
-    message.includes(normalizedSourceAddress) || SOURCE_TOKEN_LABEL_REGEX.test(message) || hasWholeWord(message, normalizedSourceSymbol);
-
-  return referencesSourceToken;
-};
 
 /**
  * Executes leverage transactions for:
@@ -309,7 +280,13 @@ export function useLeverageTransaction({
         if (!isBundlerAuthorized) {
           tracking.update('authorize_bundler_sig');
         }
-        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+        const { authorized, authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+        if (!authorized) {
+          throw new Error('Failed to authorize Bundler via signature.');
+        }
+        if (isBundlerAuthorized && authorizationTxData) {
+          throw new Error('Authorization state changed. Please retry leverage.');
+        }
         if (authorizationTxData) {
           if (route.kind === 'swap') {
             const decodedAuthorization = decodeFunctionData({

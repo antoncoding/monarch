@@ -37,8 +37,8 @@ const parseUnsignedBigInt = (value: unknown): bigint | null => {
     }
   }
   if (typeof value === 'number') {
-    if (!Number.isFinite(value) || value < 0) return null;
-    return BigInt(Math.trunc(value));
+    if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0) return null;
+    return BigInt(value);
   }
   return null;
 };
@@ -222,7 +222,7 @@ export function RemoveCollateralAndDeleverage({
   ]);
   const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapSellPriceRoute != null && swapRatePreviewText != null;
   const swapSlippagePreviewText = `${formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT)}%`;
-  
+
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (

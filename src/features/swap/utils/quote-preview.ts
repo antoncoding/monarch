@@ -37,7 +37,7 @@ export const formatSwapRatePreview = ({
   quoteTokenSymbol: string;
 }): string | null => {
   const ratePreviewAmount = computeUnitRatePreviewAmount(baseAmount, baseTokenDecimals, quoteAmount, quoteTokenDecimals);
-  if (!ratePreviewAmount) return null;
+  if (ratePreviewAmount == null) return null;
 
   const formattedRatePreview = formatTokenAmountPreview(ratePreviewAmount, RATE_PREVIEW_DECIMALS).compact;
   return `1 ${baseTokenSymbol} ≈ ${formattedRatePreview} ${quoteTokenSymbol}`;

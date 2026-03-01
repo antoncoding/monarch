@@ -13,6 +13,7 @@ import { WithdrawCollateralAndRepay } from './components/withdraw-collateral-and
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
 import { useModal } from '@/hooks/useModal';
+import { useAppSettings } from '@/stores/useAppSettings';
 
 type BorrowModalProps = {
   market: Market;
@@ -40,6 +41,7 @@ export function BorrowModal({
   const [mode, setMode] = useState<'borrow' | 'repay'>(() => defaultMode);
   const { address: account } = useConnection();
   const { open: openModal } = useModal();
+  const { enableExperimentalLeverage } = useAppSettings();
   const { hasAnyRoute } = useLeverageRouteAvailability({
     chainId: market.morphoBlue.chain.id,
     collateralTokenAddress: market.collateralAsset.address,
@@ -51,7 +53,7 @@ export function BorrowModal({
   }, [defaultMode]);
 
   const leverageModalMode = mode === 'repay' ? 'deleverage' : 'leverage';
-  const canOpenLeverageModal = hasAnyRoute;
+  const canOpenLeverageModal = enableExperimentalLeverage && hasAnyRoute;
   const modeOptions: { value: string; label: string }[] = toggleBorrowRepay
     ? [
         { value: 'borrow', label: `Borrow ${market.loanAsset.symbol}` },

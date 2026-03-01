@@ -7,6 +7,8 @@ import permit2Abi from '@/abis/permit2';
 import { PERMIT2_ADDRESS } from '@/utils/permit2';
 import { useAllowance } from './useAllowance';
 
+const PERMIT2_TTL_SECONDS = 600;
+
 type Props = {
   token: Address;
   chainId?: Chain['id'];
@@ -54,7 +56,7 @@ export function usePermit2({ user, chainId = 1, token, spender, refetchInterval 
       if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
 
       const nowInSeconds = Math.floor(Date.now() / 1000);
-      const deadline = nowInSeconds + 600;
+      const deadline = nowInSeconds + PERMIT2_TTL_SECONDS;
       const permitAmount = amountOverride ?? amount;
 
       const nonce = packedAllowance ? ((packedAllowance as number[])[2] as number) : 0;

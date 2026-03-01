@@ -173,6 +173,30 @@ const parseVeloraHexDataField = (value: unknown, fieldName: string): `0x${string
   return value as `0x${string}`;
 };
 
+const parseVeloraBigIntField = (value: unknown, fieldName: string, responsePayload: unknown): bigint => {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new VeloraApiError(
+      getVeloraApiErrorMessage(responsePayload, `Invalid ${fieldName} amount returned by Velora`),
+      400,
+      responsePayload,
+    );
+  }
+
+  try {
+    const parsed = BigInt(value);
+    if (parsed < 0n) {
+      throw new Error('negative');
+    }
+    return parsed;
+  } catch {
+    throw new VeloraApiError(
+      getVeloraApiErrorMessage(responsePayload, `Invalid ${fieldName} amount returned by Velora`),
+      400,
+      responsePayload,
+    );
+  }
+};
+
 const REQUIRED_PRICE_ROUTE_STRING_FIELDS = ['srcToken', 'destToken', 'srcAmount', 'destAmount'] as const;
 const PRICE_ROUTE_SOURCE_TOKEN_FIELDS = ['fromTokenAddress', 'inputToken', 'srcToken', 'srcTokenAddress'] as const;
 const PRICE_ROUTE_DESTINATION_TOKEN_FIELDS = ['toTokenAddress', 'outputToken', 'destToken', 'destTokenAddress'] as const;
@@ -313,6 +337,43 @@ export const buildVeloraTransactionPayload = async ({
     throw new VeloraApiError('SELL transaction payload requires positive slippage', 400, { slippageBps });
   }
 
+  const requestedSourceTokenAddress = toCanonicalTokenAddress(srcToken);
+  const requestedDestinationTokenAddress = toCanonicalTokenAddress(destToken);
+  if (!requestedSourceTokenAddress || !requestedDestinationTokenAddress) {
+    throw new VeloraApiError('Invalid source or destination token address provided for Velora transaction request', 400, {
+      srcToken,
+      destToken,
+      network,
+    });
+  }
+
+  const routeSourceTokenAddress = resolveCanonicalRouteTokenAddress(priceRoute, PRICE_ROUTE_SOURCE_TOKEN_FIELDS);
+  if (routeSourceTokenAddress && routeSourceTokenAddress !== requestedSourceTokenAddress) {
+    throw new VeloraApiError('Velora route source token does not match the requested source token', 400, {
+      requestedSourceTokenAddress,
+      routeSourceTokenAddress,
+      priceRoute,
+    });
+  }
+
+  const routeDestinationTokenAddress = resolveCanonicalRouteTokenAddress(priceRoute, PRICE_ROUTE_DESTINATION_TOKEN_FIELDS);
+  if (routeDestinationTokenAddress && routeDestinationTokenAddress !== requestedDestinationTokenAddress) {
+    throw new VeloraApiError('Velora route destination token does not match the requested destination token', 400, {
+      requestedDestinationTokenAddress,
+      routeDestinationTokenAddress,
+      priceRoute,
+    });
+  }
+
+  const quotedSourceAmount = parseVeloraBigIntField(priceRoute.srcAmount, 'priceRoute.srcAmount', priceRoute);
+  if (quotedSourceAmount !== srcAmount) {
+    throw new VeloraApiError('Velora route source amount does not match the requested transaction source amount', 400, {
+      requestedSourceAmount: srcAmount.toString(),
+      quotedSourceAmount: quotedSourceAmount.toString(),
+      priceRoute,
+    });
+  }
+
   const query = new URLSearchParams();
   if (ignoreChecks) {
     query.set('ignoreChecks', 'true');
@@ -374,6 +435,10 @@ export const prepareVeloraSwapPayload = async ({
   partner = SWAP_PARTNER,
   ignoreChecks = false,
 }: PrepareVeloraSwapPayloadParams): Promise<{ priceRoute: VeloraPriceRoute; txPayload: VeloraTransactionPayload }> => {
+  if (side !== 'SELL') {
+    throw new VeloraApiError('Velora transaction payload preparation only supports SELL quotes', 400, { side });
+  }
+
   const priceRoute = await fetchVeloraPriceRoute({
     srcToken,
     srcDecimals,
@@ -382,7 +447,7 @@ export const prepareVeloraSwapPayload = async ({
     amount,
     network,
     userAddress,
-    side,
+    side: 'SELL',
     partner,
   });
 
