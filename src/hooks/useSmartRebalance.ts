@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { type Address, encodeFunctionData, maxUint256, zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -77,6 +77,12 @@ export const useSmartRebalance = (
     tokenSymbol: groupedPosition.loanAsset,
     amount: totalMoved,
   });
+
+  // Refs to access latest permit2 state inside async callbacks
+  const permit2AuthorizedRef = useRef(permit2Authorized);
+  const isLoadingPermit2Ref = useRef(isLoadingPermit2);
+  useEffect(() => { permit2AuthorizedRef.current = permit2Authorized; }, [permit2Authorized]);
+  useEffect(() => { isLoadingPermit2Ref.current = isLoadingPermit2; }, [isLoadingPermit2]);
 
   // Hook for standard ERC20 approval
   const {
@@ -214,6 +220,12 @@ export const useSmartRebalance = (
     }
 
     setIsProcessing(true);
+
+    // Wait for permit2 allowance query to resolve before checking authorization
+    while (isLoadingPermit2Ref.current) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     const transactions: `0x${string}`[] = [];
 
     const initialStep = usePermit2Setting
@@ -249,7 +261,7 @@ export const useSmartRebalance = (
       if (usePermit2Setting) {
         // --- Permit2 Flow ---
         tracking.update('approve_permit2');
-        if (!permit2Authorized) {
+        if (!permit2AuthorizedRef.current) {
           await authorizePermit2();
           await new Promise((resolve) => setTimeout(resolve, 800));
         }
@@ -366,7 +378,6 @@ export const useSmartRebalance = (
     totalMoved,
     hasBundler,
     usePermit2Setting,
-    permit2Authorized,
     isBundlerAuthorized,
     authorizePermit2,
     ensureBundlerAuthorization,
