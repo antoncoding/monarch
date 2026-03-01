@@ -14,7 +14,7 @@ type PositionActionsDropdownProps = {
   onSmartRebalanceConfigClick: () => void;
 };
 
-export function PositionActionsDropdown({ onRebalanceClick, onSmartRebalanceClick, onSmartRebalanceConfigClick }: PositionActionsDropdownProps) {
+export function PositionActionsDropdown({ isOwner, onRebalanceClick, onSmartRebalanceClick, onSmartRebalanceConfigClick }: PositionActionsDropdownProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -44,6 +44,8 @@ export function PositionActionsDropdown({ onRebalanceClick, onSmartRebalanceClic
           <DropdownMenuItem
             onClick={onRebalanceClick}
             startContent={<TbArrowsRightLeft className="h-4 w-4" />}
+            disabled={!isOwner}
+            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
           >
             Rebalance
           </DropdownMenuItem>
@@ -51,13 +53,15 @@ export function PositionActionsDropdown({ onRebalanceClick, onSmartRebalanceClic
             <DropdownMenuItem
               onClick={onSmartRebalanceClick}
               startContent={<TbTargetArrow className="h-4 w-4" />}
-              className="flex-1 rounded-r-none"
+              className={`flex-1 rounded-r-none ${isOwner ? '' : 'cursor-not-allowed opacity-50'}`}
+              disabled={!isOwner}
             >
               Smart Rebalance
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onSmartRebalanceConfigClick}
-              className="rounded-l-none border-l border-border/30 px-2.5"
+              className={`rounded-l-none border-l border-border/30 px-2.5 ${isOwner ? '' : 'cursor-not-allowed opacity-50'}`}
+              disabled={!isOwner}
               aria-label="Open configuration"
             >
               <GearIcon className="h-3.5 w-3.5 opacity-60" />
