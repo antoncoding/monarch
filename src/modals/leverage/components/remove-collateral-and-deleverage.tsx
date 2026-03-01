@@ -25,6 +25,25 @@ type RemoveCollateralAndDeleverageProps = {
   isRefreshing?: boolean;
 };
 
+const UNSIGNED_DIGITS_REGEX = /^\d+$/;
+const parseUnsignedBigInt = (value: unknown): bigint | null => {
+  if (typeof value === 'bigint') return value >= 0n ? value : null;
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    if (!UNSIGNED_DIGITS_REGEX.test(normalized)) return null;
+    try {
+      return BigInt(normalized);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || value < 0) return null;
+    return BigInt(Math.trunc(value));
+  }
+  return null;
+};
+
 export function RemoveCollateralAndDeleverage({
   market,
   route,
@@ -38,15 +57,22 @@ export function RemoveCollateralAndDeleverage({
   const [withdrawCollateralAmount, setWithdrawCollateralAmount] = useState<bigint>(0n);
   const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
 
-  const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
-  const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
-  const currentBorrowShares = BigInt(currentPosition?.state.borrowShares ?? 0);
-  const lltv = BigInt(market.lltv);
+  const currentCollateralAssetsRaw = parseUnsignedBigInt(currentPosition?.state.collateral);
+  const currentBorrowAssetsRaw = parseUnsignedBigInt(currentPosition?.state.borrowAssets);
+  const currentBorrowSharesRaw = parseUnsignedBigInt(currentPosition?.state.borrowShares);
+  const lltvRaw = parseUnsignedBigInt(market.lltv);
+  const hasInvalidPositionData =
+    currentCollateralAssetsRaw == null || currentBorrowAssetsRaw == null || currentBorrowSharesRaw == null || lltvRaw == null;
+  const currentCollateralAssets = currentCollateralAssetsRaw ?? 0n;
+  const currentBorrowAssets = currentBorrowAssetsRaw ?? 0n;
+  const currentBorrowShares = currentBorrowSharesRaw ?? 0n;
+  const lltv = lltvRaw ?? 0n;
+  const quoteWithdrawCollateralAmount = hasInvalidPositionData ? 0n : withdrawCollateralAmount;
 
   const quote = useDeleverageQuote({
     chainId: market.morphoBlue.chain.id,
     route,
-    withdrawCollateralAmount,
+    withdrawCollateralAmount: quoteWithdrawCollateralAmount,
     currentBorrowAssets,
     currentBorrowShares,
     loanTokenAddress: market.loanAsset.address,
@@ -111,10 +137,15 @@ export function RemoveCollateralAndDeleverage({
     if (onSuccess) onSuccess();
   }, [onSuccess]);
 
-  const { transaction, deleveragePending, authorizeAndDeleverage } = useDeleverageTransaction({
+  const {
+    transaction,
+    isLoading: deleverageFlowLoading,
+    authorizeAndDeleverage,
+  } = useDeleverageTransaction({
     market,
     route,
     withdrawCollateralAmount,
+    maxWithdrawCollateralAmount: projection.maxWithdrawCollateral,
     flashLoanAmount: projection.flashLoanAmountForTx,
     repayBySharesAmount: projection.repayBySharesAmount,
     useCloseRoute: projection.usesCloseRoute,
@@ -125,12 +156,27 @@ export function RemoveCollateralAndDeleverage({
   });
 
   const handleDeleverage = useCallback(() => {
-    if (withdrawInputError || quote.closeRouteRequiresResolution) return;
+    if (
+      hasInvalidPositionData ||
+      withdrawInputError ||
+      quote.closeRouteRequiresResolution ||
+      withdrawCollateralAmount > projection.maxWithdrawCollateral
+    ) {
+      return;
+    }
     void authorizeAndDeleverage();
-  }, [withdrawInputError, quote.closeRouteRequiresResolution, authorizeAndDeleverage]);
+  }, [
+    hasInvalidPositionData,
+    withdrawInputError,
+    quote.closeRouteRequiresResolution,
+    withdrawCollateralAmount,
+    projection.maxWithdrawCollateral,
+    authorizeAndDeleverage,
+  ]);
 
   // Treat user input as an intent change immediately so the preview card updates as soon as the amount changes.
   const hasChanges = withdrawCollateralAmount > 0n;
+  const exceedsMaxWithdraw = withdrawCollateralAmount > projection.maxWithdrawCollateral;
   const projectedOverLimit = projectedLTV >= lltv;
   const flashBorrowPreview = useMemo(
     () => formatTokenAmountPreview(projection.flashLoanAmountForTx, market.loanAsset.decimals),
@@ -140,6 +186,11 @@ export function RemoveCollateralAndDeleverage({
     () => formatTokenAmountPreview(projection.previewDebtRepaid, market.loanAsset.decimals),
     [projection.previewDebtRepaid, market.loanAsset.decimals],
   );
+  const unwindCollateralPreview = useMemo(
+    () => formatTokenAmountPreview(withdrawCollateralAmount, market.collateralAsset.decimals),
+    [withdrawCollateralAmount, market.collateralAsset.decimals],
+  );
+  const collateralFlowLabel = isSwapRoute ? 'Collateral Sold' : 'Collateral Unwound';
   const swapRatePreviewText = useMemo(() => {
     if (!isSwapRoute || !quote.swapSellPriceRoute) return null;
 
@@ -215,11 +266,29 @@ export function RemoveCollateralAndDeleverage({
                 Max: {formatBalance(projection.maxWithdrawCollateral, market.collateralAsset.decimals)} {market.collateralAsset.symbol}
               </p>
               {withdrawInputError && <p className="mt-1 text-right text-xs text-red-500">{withdrawInputError}</p>}
+              {!withdrawInputError && exceedsMaxWithdraw && (
+                <p className="mt-1 text-right text-xs text-red-500">Exceeds deleverageable collateral</p>
+              )}
             </div>
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
               <p className="mb-2 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Transaction Preview</p>
               <div className="space-y-1 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-secondary">{collateralFlowLabel}</span>
+                  <span className="tabular-nums inline-flex items-center gap-1.5">
+                    <Tooltip content={<span className="font-monospace text-xs">{unwindCollateralPreview.full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">{unwindCollateralPreview.compact}</span>
+                    </Tooltip>
+                    <TokenIcon
+                      address={market.collateralAsset.address}
+                      chainId={market.morphoBlue.chain.id}
+                      symbol={market.collateralAsset.symbol}
+                      width={14}
+                      height={14}
+                    />
+                  </span>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">Flash Borrow</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
@@ -256,6 +325,10 @@ export function RemoveCollateralAndDeleverage({
                       <span className="text-secondary">Swap Quote</span>
                       <span className="text-right">{swapRatePreviewText}</span>
                     </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-secondary">Swap Source</span>
+                      <span className="text-right text-secondary">From withdrawn collateral</span>
+                    </div>
                     <div className="flex items-center justify-between">
                       <span className="text-secondary">Max Slippage</span>
                       <span>{swapSlippagePreviewText}</span>
@@ -268,6 +341,14 @@ export function RemoveCollateralAndDeleverage({
                 </div>
               </div>
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
+              {hasInvalidPositionData && (
+                <p className="mt-2 text-xs text-red-500">Unable to read valid position data. Refresh balances and try again.</p>
+              )}
+              {quote.closeRouteRequiresResolution && (
+                <p className="mt-2 text-xs text-secondary">
+                  Resolving exact full-close bound... preview values may adjust before execution.
+                </p>
+              )}
             </div>
           </div>
 
@@ -276,12 +357,14 @@ export function RemoveCollateralAndDeleverage({
               <ExecuteTransactionButton
                 targetChainId={market.morphoBlue.chain.id}
                 onClick={handleDeleverage}
-                isLoading={deleveragePending || quote.isLoading}
+                isLoading={deleverageFlowLoading || quote.isLoading}
                 disabled={
                   route == null ||
+                  hasInvalidPositionData ||
                   withdrawInputError !== null ||
                   quote.error !== null ||
                   quote.closeRouteRequiresResolution ||
+                  exceedsMaxWithdraw ||
                   withdrawCollateralAmount <= 0n ||
                   projection.flashLoanAmountForTx <= 0n ||
                   projectedOverLimit

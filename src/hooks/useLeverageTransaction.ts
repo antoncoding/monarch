@@ -58,9 +58,35 @@ type UseLeverageTransactionProps = {
 };
 
 const LEVERAGE_SWAP_SLIPPAGE_BPS = Math.round(DEFAULT_SLIPPAGE_PERCENT * 100);
-const isVeloraAllowanceCheckError = (error: unknown): boolean => {
+const SOURCE_TOKEN_LABEL_REGEX = /\b(src token|source token)\b/;
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const hasWholeWord = (message: string, value: string): boolean => {
+  if (!value) return false;
+  const pattern = new RegExp(`\\b${escapeRegExp(value)}\\b`);
+  return pattern.test(message);
+};
+const isVeloraBypassablePrecheckError = ({
+  error,
+  sourceTokenAddress,
+  sourceTokenSymbol,
+}: {
+  error: unknown;
+  sourceTokenAddress: string;
+  sourceTokenSymbol: string;
+}): boolean => {
   const message = error instanceof Error ? error.message.toLowerCase() : '';
-  return message.includes('allowance given to tokentransferproxy') || (message.includes('not enough') && message.includes('allowance'));
+  const isAllowancePrecheckError = message.includes('allowance given to tokentransferproxy');
+  if (isAllowancePrecheckError) return true;
+
+  if (!message.includes('not enough')) return false;
+  if (!message.includes('balance') && !message.includes('insufficient')) return false;
+
+  const normalizedSourceAddress = sourceTokenAddress.toLowerCase();
+  const normalizedSourceSymbol = sourceTokenSymbol.trim().toLowerCase();
+  const referencesSourceToken =
+    message.includes(normalizedSourceAddress) || SOURCE_TOKEN_LABEL_REGEX.test(message) || hasWholeWord(message, normalizedSourceSymbol);
+
+  return referencesSourceToken;
 };
 
 /**
@@ -363,6 +389,7 @@ export function useLeverageTransaction({
         if (!swapPriceRoute) {
           throw new Error('Missing Velora swap quote for leverage.');
         }
+        const swapExecutionAddress = route.paraswapAdapterAddress;
         // WHY: when starting from loan on a swap route, we combine the user's loan input
         // with the flash-loaned loan and sell them together before supplying collateral.
         const totalLoanSellAmount = isLoanAssetInput ? inputTokenAmountForTransfer + flashLoanAmount : flashLoanAmount;
@@ -380,7 +407,7 @@ export function useLeverageTransaction({
               destDecimals: market.collateralAsset.decimals,
               srcAmount: totalLoanSellAmount,
               network: market.morphoBlue.chain.id,
-              userAddress: account as Address,
+              userAddress: swapExecutionAddress,
               priceRoute: activePriceRoute,
               slippageBps: LEVERAGE_SWAP_SLIPPAGE_BPS,
               ignoreChecks,
@@ -392,7 +419,13 @@ export function useLeverageTransaction({
             if (isVeloraRateChangedError(buildError)) {
               throw new Error('Leverage quote changed. Please review the updated preview and try again.');
             }
-            if (!isVeloraAllowanceCheckError(buildError)) {
+            if (
+              !isVeloraBypassablePrecheckError({
+                error: buildError,
+                sourceTokenAddress: market.loanAsset.address,
+                sourceTokenSymbol: market.loanAsset.symbol,
+              })
+            ) {
               throw buildError;
             }
 

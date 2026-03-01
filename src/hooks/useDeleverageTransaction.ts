@@ -27,6 +27,7 @@ type UseDeleverageTransactionProps = {
   market: Market;
   route: LeverageRoute | null;
   withdrawCollateralAmount: bigint;
+  maxWithdrawCollateralAmount: bigint;
   flashLoanAmount: bigint;
   repayBySharesAmount: bigint;
   useCloseRoute: boolean;
@@ -37,9 +38,40 @@ type UseDeleverageTransactionProps = {
 };
 
 const DELEVERAGE_SWAP_SLIPPAGE_BPS = Math.round(DEFAULT_SLIPPAGE_PERCENT * 100);
-const isVeloraAllowanceCheckError = (error: unknown): boolean => {
+const SHARE_PRICE_SCALE_E27 = 10n ** 27n;
+const SOURCE_TOKEN_LABEL_REGEX = /\b(src token|source token)\b/;
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const hasWholeWord = (message: string, value: string): boolean => {
+  if (!value) return false;
+  const pattern = new RegExp(`\\b${escapeRegExp(value)}\\b`);
+  return pattern.test(message);
+};
+const computeMaxSharePriceE27 = (maxAssets: bigint, shares: bigint): bigint => {
+  if (maxAssets <= 0n || shares <= 0n) return 0n;
+  return (maxAssets * SHARE_PRICE_SCALE_E27 + shares - 1n) / shares;
+};
+const isVeloraBypassablePrecheckError = ({
+  error,
+  sourceTokenAddress,
+  sourceTokenSymbol,
+}: {
+  error: unknown;
+  sourceTokenAddress: string;
+  sourceTokenSymbol: string;
+}): boolean => {
   const message = error instanceof Error ? error.message.toLowerCase() : '';
-  return message.includes('allowance given to tokentransferproxy') || (message.includes('not enough') && message.includes('allowance'));
+  const isAllowancePrecheckError = message.includes('allowance given to tokentransferproxy');
+  if (isAllowancePrecheckError) return true;
+
+  if (!message.includes('not enough')) return false;
+  if (!message.includes('balance') && !message.includes('insufficient')) return false;
+
+  const normalizedSourceAddress = sourceTokenAddress.toLowerCase();
+  const normalizedSourceSymbol = sourceTokenSymbol.trim().toLowerCase();
+  const referencesSourceToken =
+    message.includes(normalizedSourceAddress) || SOURCE_TOKEN_LABEL_REGEX.test(message) || hasWholeWord(message, normalizedSourceSymbol);
+
+  return referencesSourceToken;
 };
 
 /**
@@ -51,6 +83,7 @@ export function useDeleverageTransaction({
   market,
   route,
   withdrawCollateralAmount,
+  maxWithdrawCollateralAmount,
   flashLoanAmount,
   repayBySharesAmount,
   useCloseRoute,
@@ -75,12 +108,17 @@ export function useDeleverageTransaction({
   }, [route, bundlerAddress]);
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
-  const { isBundlerAuthorized, isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep(
-    {
-      chainId: market.morphoBlue.chain.id,
-      bundlerAddress: authorizationTarget,
-    },
-  );
+  const {
+    isBundlerAuthorized,
+    isBundlerAuthorizationReady,
+    isBundlerAuthorizationStatusReady,
+    isAuthorizingBundler,
+    ensureBundlerAuthorization,
+    refetchIsBundlerAuthorized,
+  } = useBundlerAuthorizationStep({
+    chainId: market.morphoBlue.chain.id,
+    bundlerAddress: authorizationTarget,
+  });
 
   const { isConfirming: deleveragePending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'deleverage',
@@ -100,11 +138,9 @@ export function useDeleverageTransaction({
     if (isSwap) {
       return [
         {
-          id: isPermit2 ? 'authorize_bundler_sig' : 'authorize_bundler_tx',
+          id: 'authorize_bundler_tx',
           title: 'Authorize Morpho Adapter',
-          description: isPermit2
-            ? 'Sign a message to authorize adapter actions on your position.'
-            : 'Submit one transaction authorizing adapter actions on your position.',
+          description: 'Submit one transaction authorizing adapter actions on your position.',
         },
         {
           id: 'execute',
@@ -145,32 +181,42 @@ export function useDeleverageTransaction({
 
   const executeDeleverage = useCallback(async () => {
     if (!account) {
-      toast.info('No account connected', 'Please connect your wallet.');
-      return;
+      throw new Error('No account connected. Please connect your wallet.');
     }
 
     if (!route) {
-      toast.info('Unsupported route', 'This market is not supported for deleverage.');
-      return;
+      throw new Error('This market is not supported for deleverage.');
     }
 
     if (withdrawCollateralAmount <= 0n || flashLoanAmount <= 0n) {
-      toast.info('Invalid deleverage inputs', 'Set a collateral unwind amount above zero.');
-      return;
+      throw new Error('Invalid deleverage inputs. Set a collateral unwind amount above zero.');
+    }
+    if (withdrawCollateralAmount > maxWithdrawCollateralAmount) {
+      throw new Error('Stale deleverage input. The maximum unwind amount changed. Please review and try again.');
     }
 
     try {
       const txs: `0x${string}`[] = [];
 
       if (useSignatureAuthorization) {
-        tracking.update('authorize_bundler_sig');
-        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+        if (!isBundlerAuthorized) {
+          tracking.update('authorize_bundler_sig');
+        }
+        const { authorized, authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+        if (!authorized) {
+          throw new Error('Failed to authorize Bundler via signature.');
+        }
+        if (isBundlerAuthorized && authorizationTxData) {
+          throw new Error('Authorization state changed. Please retry deleverage.');
+        }
         if (authorizationTxData) {
           txs.push(authorizationTxData);
           await new Promise((resolve) => setTimeout(resolve, 700));
         }
       } else {
-        tracking.update('authorize_bundler_tx');
+        if (!isBundlerAuthorized) {
+          tracking.update('authorize_bundler_tx');
+        }
         const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
         if (!authorized) {
           throw new Error('Failed to authorize Bundler via transaction.');
@@ -192,8 +238,16 @@ export function useDeleverageTransaction({
       // WHY: when repaying by assets, Morpho expects a *minimum* shares bound.
       // Using an upper-bound style estimate causes false "slippage exceeded" reverts.
       const minRepayShares = 1n;
+      const bundlerV2RepaySlippageAmount = isRepayByShares ? flashLoanAmount : minRepayShares;
+      const generalAdapterMaxSharePriceE27 = isRepayByShares
+        ? computeMaxSharePriceE27(flashLoanAmount, repayBySharesAmount)
+        : computeMaxSharePriceE27(flashLoanAmount, minRepayShares);
+      if (generalAdapterMaxSharePriceE27 <= 0n) {
+        throw new Error('Invalid deleverage bounds for repay-by-shares. Refresh the quote and try again.');
+      }
 
       if (route.kind === 'swap') {
+        const swapExecutionAddress = route.paraswapAdapterAddress;
         if (useCloseRoute) {
           if (maxCollateralForDebtRepay <= 0n) {
             throw new Error('The exact close bound is unavailable. Refresh the quote and try again.');
@@ -218,7 +272,7 @@ export function useDeleverageTransaction({
               destDecimals: market.loanAsset.decimals,
               srcAmount: withdrawCollateralAmount,
               network: market.morphoBlue.chain.id,
-              userAddress: account as Address,
+              userAddress: swapExecutionAddress,
               priceRoute: activePriceRoute,
               slippageBps: DELEVERAGE_SWAP_SLIPPAGE_BPS,
               ignoreChecks,
@@ -230,7 +284,13 @@ export function useDeleverageTransaction({
             if (isVeloraRateChangedError(buildError)) {
               throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
             }
-            if (!isVeloraAllowanceCheckError(buildError)) {
+            if (
+              !isVeloraBypassablePrecheckError({
+                error: buildError,
+                sourceTokenAddress: market.collateralAsset.address,
+                sourceTokenSymbol: market.collateralAsset.symbol,
+              })
+            ) {
               throw buildError;
             }
 
@@ -290,7 +350,7 @@ export function useDeleverageTransaction({
                 marketParams,
                 isRepayByShares ? 0n : flashLoanAmount,
                 isRepayByShares ? repayBySharesAmount : 0n,
-                isRepayByShares ? flashLoanAmount : minRepayShares,
+                generalAdapterMaxSharePriceE27,
                 account as Address,
                 '0x',
               ],
@@ -393,7 +453,7 @@ export function useDeleverageTransaction({
               marketParams,
               isRepayByShares ? 0n : flashLoanAmount,
               isRepayByShares ? repayBySharesAmount : 0n,
-              isRepayByShares ? flashLoanAmount : minRepayShares,
+              bundlerV2RepaySlippageAmount,
               account as Address,
               '0x',
             ],
@@ -471,6 +531,7 @@ export function useDeleverageTransaction({
     market,
     route,
     withdrawCollateralAmount,
+    maxWithdrawCollateralAmount,
     flashLoanAmount,
     repayBySharesAmount,
     useCloseRoute,
@@ -478,6 +539,7 @@ export function useDeleverageTransaction({
     maxCollateralForDebtRepay,
     swapSellPriceRoute,
     useSignatureAuthorization,
+    isBundlerAuthorized,
     ensureBundlerAuthorization,
     bundlerAddress,
     sendTransactionAsync,
@@ -491,9 +553,17 @@ export function useDeleverageTransaction({
       toast.info('No account connected', 'Please connect your wallet.');
       return;
     }
+    if ((useSignatureAuthorization && !isBundlerAuthorizationReady) || (!useSignatureAuthorization && !isBundlerAuthorizationStatusReady)) {
+      toast.info('Authorization status loading', 'Please wait a moment and try again.');
+      return;
+    }
 
     try {
-      const initialStep = useSignatureAuthorization ? 'authorize_bundler_sig' : 'authorize_bundler_tx';
+      const initialStep: DeleverageStepType = isBundlerAuthorized
+        ? 'execute'
+        : useSignatureAuthorization
+          ? 'authorize_bundler_sig'
+          : 'authorize_bundler_tx';
       tracking.start(
         getStepsForFlow(useSignatureAuthorization, isSwapRoute),
         {
@@ -517,6 +587,9 @@ export function useDeleverageTransaction({
     }
   }, [
     account,
+    isBundlerAuthorized,
+    isBundlerAuthorizationReady,
+    isBundlerAuthorizationStatusReady,
     useSignatureAuthorization,
     tracking,
     getStepsForFlow,
@@ -527,7 +600,9 @@ export function useDeleverageTransaction({
     toast,
   ]);
 
-  const isLoading = deleveragePending || isAuthorizingBundler;
+  const isAuthorizationStatusLoading =
+    (useSignatureAuthorization && !isBundlerAuthorizationReady) || (!useSignatureAuthorization && !isBundlerAuthorizationStatusReady);
+  const isLoading = deleveragePending || isAuthorizingBundler || isAuthorizationStatusLoading;
 
   return {
     transaction: tracking.transaction,

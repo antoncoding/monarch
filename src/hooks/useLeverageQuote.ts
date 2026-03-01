@@ -49,6 +49,7 @@ export function useLeverageQuote({
 }: UseLeverageQuoteParams): LeverageQuote {
   const isLoanAssetInput = inputMode === 'loan';
   const isSwapLoanAssetInput = route?.kind === 'swap' && isLoanAssetInput;
+  const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
 
   const {
     data: erc4626PreviewDeposit,
@@ -103,6 +104,7 @@ export function useLeverageQuote({
       loanTokenDecimals,
       collateralTokenAddress,
       collateralTokenDecimals,
+      swapExecutionAddress,
       targetFlashCollateralAmount.toString(),
       userAddress ?? null,
     ],
@@ -115,7 +117,7 @@ export function useLeverageQuote({
         destDecimals: collateralTokenDecimals,
         amount: targetFlashCollateralAmount,
         network: chainId,
-        userAddress: userAddress as `0x${string}`,
+        userAddress: swapExecutionAddress as `0x${string}`,
         side: 'BUY',
       });
 
@@ -135,7 +137,7 @@ export function useLeverageQuote({
         destDecimals: collateralTokenDecimals,
         amount: borrowAssets,
         network: chainId,
-        userAddress: userAddress as `0x${string}`,
+        userAddress: swapExecutionAddress as `0x${string}`,
         side: 'SELL',
       });
       if (BigInt(sellRoute.srcAmount) !== borrowAssets) {
@@ -160,6 +162,7 @@ export function useLeverageQuote({
       loanTokenDecimals,
       collateralTokenAddress,
       collateralTokenDecimals,
+      swapExecutionAddress,
       userInputAmount.toString(),
       multiplierBps.toString(),
       userAddress ?? null,
@@ -184,7 +187,7 @@ export function useLeverageQuote({
         destDecimals: collateralTokenDecimals,
         amount: totalLoanSellAmount,
         network: chainId,
-        userAddress: userAddress as `0x${string}`,
+        userAddress: swapExecutionAddress as `0x${string}`,
         side: 'SELL',
       });
       if (BigInt(sellRoute.srcAmount) !== totalLoanSellAmount) {
@@ -260,6 +263,7 @@ export function useLeverageQuote({
     return erc4626RouteError instanceof Error ? erc4626RouteError.message : 'Failed to quote leverage route';
   }, [
     route,
+    swapExecutionAddress,
     userAddress,
     userInputAmount,
     isLoanAssetInput,

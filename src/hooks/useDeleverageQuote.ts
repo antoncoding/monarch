@@ -51,6 +51,7 @@ export function useDeleverageQuote({
   userAddress,
 }: UseDeleverageQuoteParams): DeleverageQuote {
   const bufferedBorrowAssets = withSlippageCeil(currentBorrowAssets);
+  const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
 
   const {
     data: erc4626PreviewRedeem,
@@ -91,6 +92,7 @@ export function useDeleverageQuote({
       collateralTokenDecimals,
       loanTokenAddress,
       loanTokenDecimals,
+      swapExecutionAddress,
       withdrawCollateralAmount.toString(),
       userAddress ?? null,
     ],
@@ -103,7 +105,7 @@ export function useDeleverageQuote({
         destDecimals: loanTokenDecimals,
         amount: withdrawCollateralAmount,
         network: chainId,
-        userAddress: userAddress as `0x${string}`,
+        userAddress: swapExecutionAddress as `0x${string}`,
         side: 'SELL',
       });
 
@@ -128,6 +130,7 @@ export function useDeleverageQuote({
       collateralTokenDecimals,
       loanTokenAddress,
       loanTokenDecimals,
+      swapExecutionAddress,
       bufferedBorrowAssets.toString(),
       userAddress ?? null,
     ],
@@ -140,7 +143,7 @@ export function useDeleverageQuote({
         destDecimals: loanTokenDecimals,
         amount: bufferedBorrowAssets,
         network: chainId,
-        userAddress: userAddress as `0x${string}`,
+        userAddress: swapExecutionAddress as `0x${string}`,
         side: 'BUY',
       });
 
