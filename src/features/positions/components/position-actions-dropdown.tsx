@@ -58,6 +58,7 @@ export function PositionActionsDropdown({ onRebalanceClick, onSmartRebalanceClic
             <DropdownMenuItem
               onClick={onSmartRebalanceConfigClick}
               className="rounded-l-none border-l border-border/30 px-2.5"
+              aria-label="Open configuration"
             >
               <GearIcon className="h-3.5 w-3.5 opacity-60" />
             </DropdownMenuItem>

@@ -11,26 +11,20 @@ import { calculateSmartRebalance } from '@/utils/smart-rebalance';
 import type { SmartRebalanceResult } from '@/utils/smart-rebalance';
 import type { TransactionSummaryItem } from '@/stores/useTransactionProcessStore';
 import type { GroupedPosition } from '@/utils/types';
-import type { SupportedNetworks } from '@/utils/networks';
+import { convertApyToApr } from '@/utils/rateMath';
 
 type SmartRebalanceModalProps = {
   groupedPosition: GroupedPosition;
-  chainId: SupportedNetworks;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   quickMode?: boolean;
 };
 
-function apyToApr(apy: number): number {
-  if (apy <= 0) return 0;
-  return Math.log(1 + apy);
-}
-
 function fmtApr(apy: number): string {
-  return `${(apyToApr(apy) * 100).toFixed(2)}%`;
+  return `${(convertApyToApr(apy) * 100).toFixed(2)}%`;
 }
 
-export function SmartRebalanceModal({ groupedPosition, chainId, isOpen, onOpenChange, quickMode }: SmartRebalanceModalProps) {
+export function SmartRebalanceModal({ groupedPosition, isOpen, onOpenChange, quickMode }: SmartRebalanceModalProps) {
   // Markets with supply > 0
   const marketsWithSupply = useMemo(
     () =>
@@ -72,7 +66,7 @@ export function SmartRebalanceModal({ groupedPosition, chainId, isOpen, onOpenCh
     const id = ++calcIdRef.current;
     setIsCalculating(true);
 
-    void calculateSmartRebalance(groupedPosition, chainId, excludedIds.size > 0 ? excludedIds : undefined)
+    void calculateSmartRebalance(groupedPosition, groupedPosition.chainId, excludedIds.size > 0 ? excludedIds : undefined)
       .then((res) => {
         if (id !== calcIdRef.current) return;
         setResult(res);
@@ -86,8 +80,7 @@ export function SmartRebalanceModal({ groupedPosition, chainId, isOpen, onOpenCh
         if (id !== calcIdRef.current) return;
         setIsCalculating(false);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, excludedKey, chainId]);
+  }, [isOpen, excludedKey, groupedPosition]);
 
   const toggleMarket = useCallback((uniqueKey: string) => {
     setExcludedIds((prev) => {
@@ -111,8 +104,8 @@ export function SmartRebalanceModal({ groupedPosition, chainId, isOpen, onOpenCh
     }, 200);
   }, [onOpenChange]);
 
-  const currentApr = result ? apyToApr(result.currentWeightedApy) : 0;
-  const projectedApr = result ? apyToApr(result.projectedWeightedApy) : 0;
+  const currentApr = result ? convertApyToApr(result.currentWeightedApy) : 0;
+  const projectedApr = result ? convertApyToApr(result.projectedWeightedApy) : 0;
   const aprDiff = projectedApr - currentApr;
 
   const buildSummaryItems = useCallback((): TransactionSummaryItem[] => {

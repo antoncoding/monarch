@@ -2,6 +2,7 @@ import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-
 import morphoABI from '@/abis/morpho';
 import { getMorphoAddress } from '@/utils/morpho';
 import { getClient } from '@/utils/rpc';
+import { convertApyToApr } from '@/utils/rateMath';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { GroupedPosition, Market } from './types';
 import { formatBalance, formatReadable } from './balance';
@@ -11,6 +12,11 @@ import { formatBalance, formatReadable } from './balance';
 const MAX_ROUNDS = 50;
 const LOG_TAG = '[smart-rebalance]';
 const DUST_AMOUNT = 1000n; // Leave dust in markets to not remove them from future rebalances
+const DEBUG = process.env.NODE_ENV === 'development';
+
+function debugLog(...args: unknown[]) {
+  if (DEBUG) console.log(...args);
+}
 
 // --- Types ---
 
@@ -49,11 +55,6 @@ export type SmartRebalanceResult = {
 
 // --- Helpers ---
 
-function apyToApr(apy: number): number {
-  if (apy <= 0) return 0;
-  return Math.log(1 + apy);
-}
-
 function utilizationOf(market: BlueMarket): number {
   return Number(market.utilization) / 1e18;
 }
@@ -62,12 +63,15 @@ function utilizationOf(market: BlueMarket): number {
  * Compute weighted APY across all markets given allocations and simulated market states.
  * Uses raw bigint amounts as weights so we don't lose precision.
  */
-function weightedApy(entries: MarketEntry[], allocations: Map<string, bigint>, markets: BlueMarket[]): number {
+function weightedApy(entries: MarketEntry[], allocations: Map<string, bigint>, marketMap: Map<string, BlueMarket>): number {
   let weightedSum = 0;
   let totalWeight = 0;
-  for (let i = 0; i < entries.length; i++) {
-    const amount = Number(allocations.get(entries[i].uniqueKey) ?? 0n);
-    weightedSum += amount * markets[i].supplyApy;
+  for (const entry of entries) {
+    const amount = Number(allocations.get(entry.uniqueKey) ?? 0n);
+    if (amount <= 0) continue;
+    const market = marketMap.get(entry.uniqueKey);
+    if (!market) continue;
+    weightedSum += amount * market.supplyApy;
     totalWeight += amount;
   }
   return totalWeight > 0 ? weightedSum / totalWeight : 0;
@@ -162,20 +166,20 @@ export async function calculateSmartRebalance(
 
   // 5. Initialize working state
   //    - `allocations` tracks the target amount per market (starts as current)
-  //    - `simMarkets` tracks the simulated BlueMarket state reflecting moves
+  //    - `simMarketMap` tracks the simulated BlueMarket state reflecting moves
   const allocations = new Map<string, bigint>();
-  const simMarkets: BlueMarket[] = [];
+  const simMarketMap = new Map<string, BlueMarket>();
 
   for (const entry of entries) {
     allocations.set(entry.uniqueKey, entry.currentSupply);
-    simMarkets.push(entry.baselineMarket);
+    simMarketMap.set(entry.uniqueKey, entry.baselineMarket);
   }
 
   // Log initial state
-  console.log(`${LOG_TAG} totalMoveable=${totalMoveable}, maxRounds=${MAX_ROUNDS}, markets=${entries.length}`);
-  for (let i = 0; i < entries.length; i++) {
-    const e = entries[i];
-    console.log(`  ${e.collateralSymbol}: supply=${e.currentSupply}, withdrawable=${e.maxWithdrawable}, apy=${(simMarkets[i].supplyApy * 100).toFixed(4)}%`);
+  debugLog(`${LOG_TAG} totalMoveable=${totalMoveable}, maxRounds=${MAX_ROUNDS}, markets=${entries.length}`);
+  for (const e of entries) {
+    const sim = simMarketMap.get(e.uniqueKey);
+    debugLog(`  ${e.collateralSymbol}: supply=${e.currentSupply}, withdrawable=${e.maxWithdrawable}, apy=${sim ? (sim.supplyApy * 100).toFixed(4) : '?'}%`);
   }
 
   // 6. Multi-scale optimizer: for each (src→dst) pair, evaluate multiple transfer
@@ -184,7 +188,7 @@ export async function calculateSmartRebalance(
   //    each small step looked worse individually.
 
   /**
-   * Simulate moving `amount` from simMarkets[src] to simMarkets[dst] and return
+   * Simulate moving `amount` from src to dst and return
    * the resulting weighted APY without mutating state.
    */
   function evaluateMove(
@@ -192,39 +196,44 @@ export async function calculateSmartRebalance(
     dst: number,
     amount: bigint,
   ): { apy: number; srcMarket: BlueMarket; dstMarket: BlueMarket } {
-    // Simulate cumulative withdrawal/supply from current sim state
-    const srcAfter = simMarkets[src].withdraw(amount, 0n).market;
-    const dstAfter = simMarkets[dst].supply(amount, 0n).market;
-
-    // Temporarily apply
-    const prevSrc = simMarkets[src];
-    const prevDst = simMarkets[dst];
-    simMarkets[src] = srcAfter;
-    simMarkets[dst] = dstAfter;
-
     const srcKey = entries[src].uniqueKey;
     const dstKey = entries[dst].uniqueKey;
-    const prevSrcAlloc = allocations.get(srcKey)!;
-    const prevDstAlloc = allocations.get(dstKey)!;
+    const srcSim = simMarketMap.get(srcKey)!;
+    const dstSim = simMarketMap.get(dstKey)!;
+
+    // Simulate cumulative withdrawal/supply from current sim state
+    const srcAfter = srcSim.withdraw(amount, 0n).market;
+    const dstAfter = dstSim.supply(amount, 0n).market;
+
+    // Temporarily apply
+    simMarketMap.set(srcKey, srcAfter);
+    simMarketMap.set(dstKey, dstAfter);
+
+    const prevSrcAlloc = allocations.get(srcKey) ?? 0n;
+    const prevDstAlloc = allocations.get(dstKey) ?? 0n;
     allocations.set(srcKey, prevSrcAlloc - amount);
     allocations.set(dstKey, prevDstAlloc + amount);
 
-    const apy = weightedApy(entries, allocations, simMarkets);
+    const apy = weightedApy(entries, allocations, simMarketMap);
 
     // Revert
-    simMarkets[src] = prevSrc;
-    simMarkets[dst] = prevDst;
+    simMarketMap.set(srcKey, srcSim);
+    simMarketMap.set(dstKey, dstSim);
     allocations.set(srcKey, prevSrcAlloc);
     allocations.set(dstKey, prevDstAlloc);
 
     return { apy, srcMarket: srcAfter, dstMarket: dstAfter };
   }
 
-  // Transfer size fractions to evaluate
-  const FRACTIONS = [0.02, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.0];
+  // Transfer size fractions as rational pairs [numerator, denominator] for BigInt precision
+  const FRACTION_RATIONALS: [bigint, bigint][] = [
+    [2n, 100n], [5n, 100n], [10n, 100n], [15n, 100n], [20n, 100n],
+    [30n, 100n], [40n, 100n], [50n, 100n], [60n, 100n], [70n, 100n],
+    [80n, 100n], [90n, 100n], [1n, 1n],
+  ];
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
-    const currentApy = weightedApy(entries, allocations, simMarkets);
+    const currentApy = weightedApy(entries, allocations, simMarketMap);
 
     let bestSrc = -1;
     let bestDst = -1;
@@ -235,7 +244,7 @@ export async function calculateSmartRebalance(
 
     for (let src = 0; src < entries.length; src++) {
       const srcKey = entries[src].uniqueKey;
-      const srcAlloc = allocations.get(srcKey)!;
+      const srcAlloc = allocations.get(srcKey) ?? 0n;
 
       // How much can we still withdraw from this source?
       const alreadyWithdrawn = entries[src].currentSupply - srcAlloc;
@@ -251,10 +260,9 @@ export async function calculateSmartRebalance(
         if (dst === src) continue;
 
         // Evaluate multiple transfer sizes for this pair
-        for (const frac of FRACTIONS) {
-          let amount = BigInt(Math.floor(Number(maxMove) * frac));
+        for (const [num, den] of FRACTION_RATIONALS) {
+          let amount = (maxMove * num) / den;
           if (amount <= 0n) continue;
-          // Clamp to maxMove
           if (amount > maxMove) amount = maxMove;
 
           const result = evaluateMove(src, dst, amount);
@@ -267,23 +275,12 @@ export async function calculateSmartRebalance(
             bestDstMarket = result.dstMarket;
           }
         }
-
-        // Always also try the exact max
-        const resultMax = evaluateMove(src, dst, maxMove);
-        if (resultMax.apy > bestApy) {
-          bestApy = resultMax.apy;
-          bestSrc = src;
-          bestDst = dst;
-          bestAmount = maxMove;
-          bestSrcMarket = resultMax.srcMarket;
-          bestDstMarket = resultMax.dstMarket;
-        }
       }
     }
 
     // No move improves weighted APY — converged
     if (bestSrc === -1 || !bestSrcMarket || !bestDstMarket) {
-      console.log(`${LOG_TAG} round ${round}: converged. weighted APY=${(currentApy * 100).toFixed(6)}%`);
+      debugLog(`${LOG_TAG} round ${round}: converged. weighted APY=${(currentApy * 100).toFixed(6)}%`);
       break;
     }
 
@@ -291,21 +288,22 @@ export async function calculateSmartRebalance(
     const srcKey = entries[bestSrc].uniqueKey;
     const dstKey = entries[bestDst].uniqueKey;
 
-    simMarkets[bestSrc] = bestSrcMarket;
-    simMarkets[bestDst] = bestDstMarket;
-    allocations.set(srcKey, allocations.get(srcKey)! - bestAmount);
-    allocations.set(dstKey, allocations.get(dstKey)! + bestAmount);
+    simMarketMap.set(srcKey, bestSrcMarket);
+    simMarketMap.set(dstKey, bestDstMarket);
+    allocations.set(srcKey, (allocations.get(srcKey) ?? 0n) - bestAmount);
+    allocations.set(dstKey, (allocations.get(dstKey) ?? 0n) + bestAmount);
 
-    console.log(
+    debugLog(
       `${LOG_TAG} round ${round}: ${entries[bestSrc].collateralSymbol}→${entries[bestDst].collateralSymbol} ` +
       `amount=${bestAmount} | weighted APY: ${(currentApy * 100).toFixed(6)}%→${(bestApy * 100).toFixed(6)}%`,
     );
   }
 
   // 8. Build result deltas
-  const deltas: MarketDelta[] = entries.map((entry, i) => {
+  const deltas: MarketDelta[] = entries.map((entry) => {
     const current = entry.currentSupply;
-    const target = allocations.get(entry.uniqueKey)!;
+    const target = allocations.get(entry.uniqueKey) ?? 0n;
+    const simMarket = simMarketMap.get(entry.uniqueKey);
 
     return {
       market: entry.originalMarket,
@@ -313,9 +311,9 @@ export async function calculateSmartRebalance(
       targetAmount: target,
       delta: target - current,
       currentApy: entry.baselineMarket.supplyApy,
-      projectedApy: simMarkets[i].supplyApy,
+      projectedApy: simMarket?.supplyApy ?? entry.baselineMarket.supplyApy,
       currentUtilization: utilizationOf(entry.baselineMarket),
-      projectedUtilization: utilizationOf(simMarkets[i]),
+      projectedUtilization: simMarket ? utilizationOf(simMarket) : utilizationOf(entry.baselineMarket),
       collateralSymbol: entry.collateralSymbol,
     };
   });
@@ -333,7 +331,7 @@ export async function calculateSmartRebalance(
       : 0;
 
   return {
-    deltas: deltas.sort((a, b) => Number(b.delta - a.delta)),
+    deltas: deltas.sort((a, b) => (b.delta > a.delta ? 1 : b.delta < a.delta ? -1 : 0)),
     totalPool,
     currentWeightedApy,
     projectedWeightedApy,
@@ -345,34 +343,38 @@ export async function calculateSmartRebalance(
 // --- Logging ---
 
 export function logSmartRebalanceResults(result: SmartRebalanceResult): void {
+  if (!DEBUG) return;
+
   const { deltas, totalPool, currentWeightedApy, projectedWeightedApy, loanAssetSymbol, loanAssetDecimals } = result;
 
   const fmt = (val: bigint) => formatReadable(formatBalance(val, loanAssetDecimals));
-  const fmtApr = (apy: number) => `${(apyToApr(apy) * 100).toFixed(2)}%`;
+  const fmtApr = (apy: number) => `${(convertApyToApr(apy) * 100).toFixed(2)}%`;
   const fmtUtil = (u: number) => `${(u * 100).toFixed(1)}%`;
 
-  console.log('\n=== Smart Rebalance Results (fresh on-chain data) ===');
-  console.log(`Asset: ${loanAssetSymbol}  |  Total: ${fmt(totalPool)} ${loanAssetSymbol}`);
-  console.log('');
+  debugLog('\n=== Smart Rebalance Results (fresh on-chain data) ===');
+  debugLog(`Asset: ${loanAssetSymbol}  |  Total: ${fmt(totalPool)} ${loanAssetSymbol}`);
+  debugLog('');
 
-  console.table(
-    deltas.map((d) => ({
-      Collateral: d.collateralSymbol,
-      Current: `${fmt(d.currentAmount)} ${loanAssetSymbol}`,
-      Target: `${fmt(d.targetAmount)} ${loanAssetSymbol}`,
-      Delta: `${Number(d.delta) >= 0 ? '+' : ''}${fmt(d.delta)} ${loanAssetSymbol}`,
-      'Util Now': fmtUtil(d.currentUtilization),
-      'Util After': fmtUtil(d.projectedUtilization),
-      'APR Now': fmtApr(d.currentApy),
-      'APR After': fmtApr(d.projectedApy),
-      'Market ID': `${d.market.uniqueKey.slice(0, 10)}...`,
-    })),
-  );
+  if (DEBUG) {
+    console.table(
+      deltas.map((d) => ({
+        Collateral: d.collateralSymbol,
+        Current: `${fmt(d.currentAmount)} ${loanAssetSymbol}`,
+        Target: `${fmt(d.targetAmount)} ${loanAssetSymbol}`,
+        Delta: `${Number(d.delta) >= 0 ? '+' : ''}${fmt(d.delta)} ${loanAssetSymbol}`,
+        'Util Now': fmtUtil(d.currentUtilization),
+        'Util After': fmtUtil(d.projectedUtilization),
+        'APR Now': fmtApr(d.currentApy),
+        'APR After': fmtApr(d.projectedApy),
+        'Market ID': `${d.market.uniqueKey.slice(0, 10)}...`,
+      })),
+    );
+  }
 
-  console.log('');
-  const currentApr = apyToApr(currentWeightedApy);
-  const projectedApr = apyToApr(projectedWeightedApy);
+  debugLog('');
+  const currentApr = convertApyToApr(currentWeightedApy);
+  const projectedApr = convertApyToApr(projectedWeightedApy);
   const aprDiff = projectedApr - currentApr;
-  console.log(`Weighted APR: ${fmtApr(currentWeightedApy)} → ${fmtApr(projectedWeightedApy)}  (${aprDiff >= 0 ? '+' : ''}${(aprDiff * 100).toFixed(4)}%)`);
-  console.log('================================\n');
+  debugLog(`Weighted APR: ${fmtApr(currentWeightedApy)} → ${fmtApr(projectedWeightedApy)}  (${aprDiff >= 0 ? '+' : ''}${(aprDiff * 100).toFixed(4)}%)`);
+  debugLog('================================\n');
 }
