@@ -4,6 +4,7 @@ import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { isUserRejectedTransactionError, toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
 import { useBundlerAuthorizationStep } from './useBundlerAuthorizationStep';
@@ -317,8 +318,10 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     } catch (error: unknown) {
       tracking.fail();
       console.error('Error during borrow execution:', error);
-      if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
-        toast.error('Borrow Failed', 'An unexpected error occurred during borrow.');
+      const isUserRejected = isUserRejectedTransactionError(error);
+      if (!isUserRejected) {
+        const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'An unexpected error occurred during borrow.');
+        toast.error('Borrow Failed', userFacingMessage);
       }
     }
   }, [
@@ -332,6 +335,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     permit2Authorized,
     authorizePermit2,
     ensureBundlerAuthorization,
+    isBundlerAuthorized,
     signForBundlers,
     isApproved,
     approve,
@@ -368,14 +372,10 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     } catch (error: unknown) {
       console.error('Error in approveAndBorrow:', error);
       tracking.fail();
-      if (error instanceof Error) {
-        if (error.message.includes('User rejected')) {
-          toast.error('Transaction rejected', 'Transaction rejected by user');
-        } else {
-          toast.error('Error', 'Failed to process transaction');
-        }
-      } else {
-        toast.error('Error', 'An unexpected error occurred');
+      const isUserRejected = isUserRejectedTransactionError(error);
+      if (!isUserRejected) {
+        const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to process transaction');
+        toast.error('Error', userFacingMessage);
       }
     }
   }, [
@@ -416,14 +416,10 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     } catch (error: unknown) {
       console.error('Error in signAndBorrow:', error);
       tracking.fail();
-      if (error instanceof Error) {
-        if (error.message.includes('User rejected')) {
-          toast.error('Transaction rejected', 'Transaction rejected by user');
-        } else {
-          toast.error('Transaction Error', 'Failed to process transaction');
-        }
-      } else {
-        toast.error('Transaction Error', 'An unexpected error occurred');
+      const isUserRejected = isUserRejectedTransactionError(error);
+      if (!isUserRejected) {
+        const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to process transaction');
+        toast.error('Transaction Error', userFacingMessage);
       }
     }
   }, [

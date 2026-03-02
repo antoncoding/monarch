@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowDownIcon, ChevronDownIcon } from '@radix-ui/react-icons';
+import { ArrowDownIcon } from '@radix-ui/react-icons';
 import { IoIosSwap } from 'react-icons/io';
 import { formatUnits, isAddress, parseUnits, zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
@@ -16,11 +16,12 @@ import { formatBalance } from '@/utils/balance';
 import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
 import { formatCompactTokenAmount } from '@/utils/token-amount-format';
 import { useVeloraSwap } from '../hooks/useVeloraSwap';
+import { SlippageInlineEditor } from './SlippageInlineEditor';
 import { TokenNetworkDropdown } from './TokenNetworkDropdown';
 import { SwapTokenAmountField } from './SwapTokenAmountField';
 import { VELORA_SWAP_CHAINS, type SwapToken } from '../types';
-import { DEFAULT_SLIPPAGE_PERCENT } from '../constants';
-import { formatSlippagePercent, formatSwapRatePreview } from '../utils/quote-preview';
+import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '../constants';
+import { formatSwapRatePreview } from '../utils/quote-preview';
 
 type SwapModalProps = {
   isOpen: boolean;
@@ -28,12 +29,7 @@ type SwapModalProps = {
   defaultTargetToken?: SwapToken;
 };
 
-const MIN_SLIPPAGE_PERCENT = 0.1;
-const MAX_SLIPPAGE_PERCENT = 5;
 const DEFAULT_CHAIN_ID = 1;
-const clampSlippagePercent = (value: number): number => {
-  return Math.min(MAX_SLIPPAGE_PERCENT, Math.max(MIN_SLIPPAGE_PERCENT, value));
-};
 
 export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProps) {
   const { address: account } = useConnection();
@@ -42,8 +38,6 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));
   const [slippage, setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
-  const [slippageInput, setSlippageInput] = useState<string>(formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT));
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRateInverted, setIsRateInverted] = useState(false);
   const amountInputClassName =
     'h-10 w-full rounded bg-hovered px-3 pr-44 text-lg font-medium tabular-nums focus:border-primary focus:outline-none';
@@ -152,7 +146,7 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
     sourceToken,
     targetToken,
     amount,
-    slippageBps: Math.round(slippage * 100),
+    slippageBps: slippagePercentToBps(slippage),
     onSwapConfirmed: handleSwapConfirmed,
   });
 
@@ -210,44 +204,6 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
       // Clear parsed amount to avoid submitting a stale previous value.
       setAmount(BigInt(0));
     }
-  };
-
-  const handleSlippageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const normalizedInput = sanitizeDecimalInput(e.target.value);
-    if (!isValidDecimalInput(normalizedInput)) {
-      return;
-    }
-    setSlippageInput(normalizedInput);
-
-    const parseableInput = toParseableDecimalInput(normalizedInput);
-    if (!parseableInput) {
-      return;
-    }
-
-    const parsed = Number(parseableInput);
-    if (Number.isNaN(parsed)) {
-      return;
-    }
-
-    setSlippage(clampSlippagePercent(parsed));
-  };
-
-  const handleSlippageBlur = () => {
-    const parseableInput = toParseableDecimalInput(slippageInput);
-    if (!parseableInput) {
-      setSlippageInput(formatSlippagePercent(slippage));
-      return;
-    }
-
-    const parsed = Number(parseableInput);
-    if (Number.isNaN(parsed)) {
-      setSlippageInput(formatSlippagePercent(slippage));
-      return;
-    }
-
-    const normalized = clampSlippagePercent(parsed);
-    setSlippage(normalized);
-    setSlippageInput(formatSlippagePercent(normalized));
   };
 
   const handleMaxClick = () => {
@@ -424,47 +380,14 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
 
           {/* Slippage */}
           <div className="pt-2">
-            <div className="overflow-hidden rounded bg-hovered">
-              <button
-                type="button"
-                onClick={() => setIsSettingsOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between px-3 py-2 text-xs text-secondary transition-colors hover:text-primary"
-              >
-                <span>Settings</span>
-                <span className="inline-flex items-center gap-1">
-                  Slippage {formatSlippagePercent(slippage)}%
-                  <ChevronDownIcon className={`h-4 w-4 transition-transform ${isSettingsOpen ? 'rotate-180' : ''}`} />
-                </span>
-              </button>
-              <AnimatePresence initial={false}>
-                {isSettingsOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="overflow-hidden"
-                  >
-                    <div className="border-t border-white/10 px-3 py-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-secondary">Max slippage</span>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            lang="en-US"
-                            value={slippageInput}
-                            onChange={handleSlippageChange}
-                            onBlur={handleSlippageBlur}
-                            className="h-7 w-16 rounded-sm bg-surface px-2 text-right text-xs focus:border-primary focus:outline-none"
-                          />
-                          <span className="text-xs text-secondary">%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div className="rounded bg-hovered px-3 py-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-secondary">Max slippage</span>
+                <SlippageInlineEditor
+                  value={slippage}
+                  onChange={setSlippage}
+                />
+              </div>
             </div>
           </div>
 

@@ -1,6 +1,5 @@
 import { type Address, encodeAbiParameters } from 'viem';
 
-const PARASWAP_SWAP_EXACT_AMOUNT_IN_SELECTOR = '0xe3ead59e';
 const PARASWAP_SELL_EXACT_AMOUNT_OFFSET = 100n;
 const PARASWAP_SELL_MIN_DEST_AMOUNT_OFFSET = 132n;
 const PARASWAP_SELL_QUOTED_DEST_AMOUNT_OFFSET = 164n;
@@ -31,9 +30,10 @@ export const encodeBundler3Calls = (bundle: Bundler3Call[]): `0x${string}` => {
 };
 
 export const getParaswapSellOffsets = (augustusCallData: `0x${string}`) => {
-  const selector = augustusCallData.slice(0, 10).toLowerCase();
-  if (selector !== PARASWAP_SWAP_EXACT_AMOUNT_IN_SELECTOR) {
-    throw new Error('Unsupported Velora swap method for Paraswap adapter route.');
+  // Guard only for malformed calldata; supported Velora/Paraswap sell methods can vary by selector
+  // while retaining the same amount fields layout required by the adapter offsets below.
+  if (augustusCallData.length < 10) {
+    throw new Error('Invalid Paraswap calldata for swap-backed route.');
   }
 
   return {

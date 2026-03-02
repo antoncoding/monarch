@@ -1,7 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 
-import { parseUnits } from 'viem';
-import { formatBalance } from '@/utils/balance';
+import { formatUnits, parseUnits } from 'viem';
 import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +18,13 @@ type InputProps = {
   inputClassName?: string;
 };
 
+const formatInputAmount = (value: bigint, decimals: number): string => {
+  const formatted = formatUnits(value, decimals);
+  if (!formatted.includes('.')) return formatted;
+  const trimmed = formatted.replace(/\.?0+$/, '');
+  return trimmed.length > 0 ? trimmed : '0';
+};
+
 export default function Input({
   decimals,
   max,
@@ -33,16 +39,18 @@ export default function Input({
   inputClassName,
 }: InputProps): JSX.Element {
   // State for the input text
-  const [inputAmount, setInputAmount] = useState<string>(value ? formatBalance(value, decimals).toString() : '0');
+  const [inputAmount, setInputAmount] = useState<string>(value ? formatInputAmount(value, decimals) : '0');
+  const [isFocused, setIsFocused] = useState(false);
   // Track if max check is bypassed
   const [bypassMax, setBypassMax] = useState<boolean>(false);
 
   // Update input text when value prop changes
   useEffect(() => {
+    if (isFocused) return;
     if (value !== undefined) {
-      setInputAmount(formatBalance(value, decimals).toString());
+      setInputAmount(formatInputAmount(value, decimals));
     }
-  }, [value, decimals]);
+  }, [value, decimals, isFocused]);
 
   const onInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,10 +112,17 @@ export default function Input({
     if (max) {
       setValue(max);
       // set readable input
-      setInputAmount(formatBalance(max, decimals).toString());
+      setInputAmount(formatInputAmount(max, decimals));
     }
     if (onMaxClick) onMaxClick();
   }, [max, decimals, setInputAmount, setValue, onMaxClick]);
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+    if (value !== undefined) {
+      setInputAmount(formatInputAmount(value, decimals));
+    }
+  }, [value, decimals]);
 
   return (
     <div className="flex-grow">
@@ -117,6 +132,8 @@ export default function Input({
           inputMode="decimal"
           lang="en-US"
           value={inputAmount}
+          onFocus={() => setIsFocused(true)}
+          onBlur={handleBlur}
           onChange={onInputChange}
           className={`bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none ${
             endAdornment != null && max !== undefined && max !== BigInt(0)

@@ -7,6 +7,7 @@ import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { computeAnnualizedApyFromGrowth, computeExpectedNetCarryApy } from '@/hooks/leverage/math';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import { getMorphoAddress } from '@/utils/morpho';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import type { Market } from '@/utils/types';
 
@@ -62,7 +63,7 @@ export function use4626VaultAPR({
 }: Use4626VaultAPRParams): Use4626VaultAPRResult {
   const { customRpcUrls } = useCustomRpcContext();
   const chainId = market.morphoBlue.chain.id;
-  const customRpcUrl = customRpcUrls[chainId];
+  const customRpcUrl = customRpcUrls[chainId as SupportedNetworks];
   const oneShareUnit = useMemo(() => 10n ** BigInt(market.collateralAsset.decimals), [market.collateralAsset.decimals]);
 
   const query = useQuery<QueryResult>({

@@ -11,6 +11,7 @@ type UseLeverageQuoteParams = {
   route: LeverageRoute | null;
   userInputAmount: bigint;
   inputMode: 'collateral' | 'loan';
+  slippageBps: number;
   multiplierBps: bigint;
   loanTokenAddress: string;
   loanTokenDecimals: number;
@@ -40,6 +41,7 @@ export function useLeverageQuote({
   route,
   userInputAmount,
   inputMode,
+  slippageBps,
   multiplierBps,
   loanTokenAddress,
   loanTokenDecimals,
@@ -106,6 +108,7 @@ export function useLeverageQuote({
       collateralTokenDecimals,
       swapExecutionAddress,
       targetFlashCollateralAmount.toString(),
+      slippageBps,
       userAddress ?? null,
     ],
     enabled: route?.kind === 'swap' && !isLoanAssetInput && targetFlashCollateralAmount > 0n && !!userAddress,
@@ -146,7 +149,7 @@ export function useLeverageQuote({
 
       return {
         flashLoanAmount: borrowAssets,
-        flashCollateralAmount: withSlippageFloor(BigInt(sellRoute.destAmount)),
+        flashCollateralAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
         priceRoute: sellRoute,
       };
     },
@@ -165,6 +168,7 @@ export function useLeverageQuote({
       swapExecutionAddress,
       userInputAmount.toString(),
       multiplierBps.toString(),
+      slippageBps,
       userAddress ?? null,
     ],
     enabled: route?.kind === 'swap' && isLoanAssetInput && userInputAmount > 0n && !!userAddress,
@@ -194,7 +198,7 @@ export function useLeverageQuote({
         throw new Error('Failed to quote stable Velora swap route for leverage.');
       }
 
-      const totalAddedCollateral = withSlippageFloor(BigInt(sellRoute.destAmount));
+      const totalAddedCollateral = withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps);
 
       return {
         flashLoanAmount,

@@ -12,6 +12,7 @@ type UseDeleverageQuoteParams = {
   withdrawCollateralAmount: bigint;
   currentBorrowAssets: bigint;
   currentBorrowShares: bigint;
+  slippageBps: number;
   loanTokenAddress: string;
   loanTokenDecimals: number;
   collateralTokenAddress: string;
@@ -44,13 +45,14 @@ export function useDeleverageQuote({
   withdrawCollateralAmount,
   currentBorrowAssets,
   currentBorrowShares,
+  slippageBps,
   loanTokenAddress,
   loanTokenDecimals,
   collateralTokenAddress,
   collateralTokenDecimals,
   userAddress,
 }: UseDeleverageQuoteParams): DeleverageQuote {
-  const bufferedBorrowAssets = withSlippageCeil(currentBorrowAssets);
+  const bufferedBorrowAssets = withSlippageCeil(currentBorrowAssets, slippageBps);
   const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
 
   const {
@@ -94,6 +96,7 @@ export function useDeleverageQuote({
       loanTokenDecimals,
       swapExecutionAddress,
       withdrawCollateralAmount.toString(),
+      slippageBps,
       userAddress ?? null,
     ],
     enabled: route?.kind === 'swap' && withdrawCollateralAmount > 0n && !!userAddress,
@@ -115,7 +118,7 @@ export function useDeleverageQuote({
       }
 
       return {
-        rawRouteRepayAmount: withSlippageFloor(BigInt(sellRoute.destAmount)),
+        rawRouteRepayAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
         priceRoute: sellRoute,
       };
     },
@@ -132,6 +135,7 @@ export function useDeleverageQuote({
       loanTokenDecimals,
       swapExecutionAddress,
       bufferedBorrowAssets.toString(),
+      slippageBps,
       userAddress ?? null,
     ],
     enabled: route?.kind === 'swap' && bufferedBorrowAssets > 0n && !!userAddress,
