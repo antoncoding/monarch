@@ -306,10 +306,13 @@ export function RemoveCollateralAndDeleverage({
   const ltvInputClassName =
     'h-10 w-full rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums focus:border-primary focus:outline-none';
 
-  const handleWithdrawAmountChange = useCallback((nextWithdrawAmount: bigint) => {
-    clearExecutionError();
-    setWithdrawCollateralAmount(nextWithdrawAmount);
-  }, [clearExecutionError]);
+  const handleWithdrawAmountChange = useCallback(
+    (nextWithdrawAmount: bigint) => {
+      clearExecutionError();
+      setWithdrawCollateralAmount(nextWithdrawAmount);
+    },
+    [clearExecutionError],
+  );
 
   const handleSwapSlippageChange = useCallback(
     (nextSlippagePercent: number) => {
@@ -382,11 +385,14 @@ export function RemoveCollateralAndDeleverage({
     setTargetLtvInput(formatEditableLtvPercent(ltvWadToPercent(clampedTargetLtv), maxTargetLtvPercent));
   }, [targetLtvInput, displayProjectedLTV, maxTargetLtvPercent, lltv]);
 
-  const handleInputModeChange = useCallback((nextUseTargetLtvInput: boolean) => {
-    clearExecutionError();
-    setUseTargetLtvInput(nextUseTargetLtvInput);
-    setWithdrawInputError(null);
-  }, [clearExecutionError]);
+  const handleInputModeChange = useCallback(
+    (nextUseTargetLtvInput: boolean) => {
+      clearExecutionError();
+      setUseTargetLtvInput(nextUseTargetLtvInput);
+      setWithdrawInputError(null);
+    },
+    [clearExecutionError],
+  );
 
   useEffect(() => {
     if (isEditingTargetLtvInput) return;
@@ -479,7 +485,6 @@ export function RemoveCollateralAndDeleverage({
                   <Input
                     decimals={market.collateralAsset.decimals}
                     max={projection.maxWithdrawCollateral}
-                    allowExceedMax={true}
                     setValue={handleWithdrawAmountChange}
                     setError={setWithdrawInputError}
                     exceedMaxErrMessage="Exceeds deleverageable collateral"
