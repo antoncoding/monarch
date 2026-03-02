@@ -29,10 +29,6 @@ const RebalanceMarketSelectionModal = lazy(() =>
   import('@/features/markets/components/market-selection-modal').then((m) => ({ default: m.MarketSelectionModal })),
 );
 
-const SmartRebalanceModal = lazy(() =>
-  import('@/features/positions/components/rebalance/smart-rebalance-modal').then((m) => ({ default: m.SmartRebalanceModal })),
-);
-
 // Settings & Configuration
 const MarketSettingsModal = lazy(() => import('@/features/markets/components/market-settings-modal'));
 
@@ -59,7 +55,6 @@ export const MODAL_REGISTRY: {
   supply: SupplyModalV2,
   rebalance: RebalanceModal,
   rebalanceMarketSelection: RebalanceMarketSelectionModal,
-  smartRebalance: SmartRebalanceModal,
   marketSettings: MarketSettingsModal,
   monarchSettings: MonarchSettingsModal,
   vaultDeposit: VaultDepositModal,

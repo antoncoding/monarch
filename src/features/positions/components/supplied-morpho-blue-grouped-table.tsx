@@ -337,17 +337,6 @@ export function SuppliedMorphoBlueGroupedTable({
                               isRefetching,
                             });
                           }}
-                          onSmartRebalanceClick={() => {
-                            openModal('smartRebalance', {
-                              groupedPosition,
-                              quickMode: true,
-                            });
-                          }}
-                          onSmartRebalanceConfigClick={() => {
-                            openModal('smartRebalance', {
-                              groupedPosition,
-                            });
-                          }}
                         />
                         <Tooltip
                           content={
