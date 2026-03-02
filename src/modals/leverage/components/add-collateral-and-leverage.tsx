@@ -25,6 +25,7 @@ import {
   multiplierBpsFromTargetLtv,
   parsePercentToBps,
   parseMultiplierToBps,
+  parseUnsignedBigInt,
   targetLtvBpsFromMultiplier,
 } from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
@@ -64,7 +65,7 @@ export function AddCollateralAndLeverage({
 }: AddCollateralAndLeverageProps): JSX.Element {
   const { address: account } = useConnection();
   const { usePermit2: usePermit2Setting, isAprDisplay } = useAppSettings();
-  const lltv = BigInt(market.lltv);
+  const lltv = useMemo(() => parseUnsignedBigInt(market.lltv) ?? 0n, [market.lltv]);
   const lltvBps = useMemo(() => ltvWadToBps(lltv), [lltv]);
   const maxTargetLtvBps = useMemo(() => (lltvBps > LEVERAGE_SAFE_LTV_BUFFER_BPS ? lltvBps - LEVERAGE_SAFE_LTV_BUFFER_BPS : 0n), [lltvBps]);
   const maxMultiplierBps = useMemo(() => computeMaxMultiplierBpsForTargetLtv(maxTargetLtvBps), [maxTargetLtvBps]);

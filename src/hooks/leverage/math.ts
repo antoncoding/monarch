@@ -10,6 +10,7 @@ const COMPACT_AMOUNT_LOCALE = 'en-US';
 const COMPACT_AMOUNT_MIN_THRESHOLD = 0.000001;
 const APY_RATIO_SCALE = 1_000_000_000n;
 const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+const UNSIGNED_INTEGER_REGEX = /^\d+$/;
 
 const minBigInt = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 const floorSub = (value: bigint, subtract: bigint): bigint => (value > subtract ? value - subtract : 0n);
@@ -47,6 +48,24 @@ export const clampTargetLtvBps = (value: bigint, maxTargetLtvBps?: bigint): bigi
   const boundedMax =
     maxTargetLtvBps === undefined ? MAX_TARGET_LTV_BPS : minBigInt(maxTargetLtvBps > 0n ? maxTargetLtvBps : 0n, MAX_TARGET_LTV_BPS);
   return value > boundedMax ? boundedMax : value;
+};
+
+export const parseUnsignedBigInt = (value: unknown): bigint | null => {
+  if (typeof value === 'bigint') return value >= 0n ? value : null;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0) return null;
+    return BigInt(value);
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    if (!UNSIGNED_INTEGER_REGEX.test(normalized)) return null;
+    try {
+      return BigInt(normalized);
+    } catch {
+      return null;
+    }
+  }
+  return null;
 };
 
 export const clampPercentBps = (value: bigint, maxPercentBps?: bigint): bigint => {

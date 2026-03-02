@@ -9,7 +9,7 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineEditor';
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
-import { computeDeleverageProjectedPosition, formatTokenAmountPreview } from '@/hooks/leverage/math';
+import { computeDeleverageProjectedPosition, formatTokenAmountPreview, parseUnsignedBigInt } from '@/hooks/leverage/math';
 import { useDeleverageQuote } from '@/hooks/useDeleverageQuote';
 import { useDeleverageTransaction } from '@/hooks/useDeleverageTransaction';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -37,7 +37,6 @@ type RemoveCollateralAndDeleverageProps = {
   isRefreshing?: boolean;
 };
 
-const UNSIGNED_DIGITS_REGEX = /^\d+$/;
 const TARGET_LTV_SEARCH_STEPS = 40n;
 
 const absDiffBigInt = (a: bigint, b: bigint): bigint => (a >= b ? a - b : b - a);
@@ -134,24 +133,6 @@ const estimateWithdrawAmountForTargetLtv = ({
   }
 
   return bestCandidate;
-};
-
-const parseUnsignedBigInt = (value: unknown): bigint | null => {
-  if (typeof value === 'bigint') return value >= 0n ? value : null;
-  if (typeof value === 'string') {
-    const normalized = value.trim();
-    if (!UNSIGNED_DIGITS_REGEX.test(normalized)) return null;
-    try {
-      return BigInt(normalized);
-    } catch {
-      return null;
-    }
-  }
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value) || !Number.isInteger(value) || value < 0) return null;
-    return BigInt(value);
-  }
-  return null;
 };
 
 export function RemoveCollateralAndDeleverage({
