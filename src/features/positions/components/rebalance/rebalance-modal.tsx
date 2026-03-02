@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { CheckIcon } from '@radix-ui/react-icons';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,9 @@ const modeOptions: { value: RebalanceMode; label: string }[] = [
   { value: 'manual', label: 'Manual Rebalance' },
 ];
 const SMART_REBALANCE_RECALC_DEBOUNCE_MS = 300;
+const MAX_ALLOCATION_PERCENT_MIN = 0;
+const MAX_ALLOCATION_PERCENT_MAX = 100;
+const MAX_ALLOCATION_PERCENT_STEP = 0.5;
 
 function formatPercent(value: number, digits = 2): string {
   return `${value.toFixed(digits)}%`;
@@ -56,6 +60,21 @@ function formatRate(apy: number, isAprDisplay: boolean): string {
   const displayRate = isAprDisplay ? convertApyToApr(apy) : apy;
   if (!Number.isFinite(displayRate)) return '-';
   return formatPercent(displayRate * 100, 2);
+}
+
+function formatMaxAllocationInput(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function parseMaxAllocationInput(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (trimmed === '' || trimmed === '.' || trimmed === ',') return null;
+  if (!/^(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(trimmed)) return null;
+
+  const parsed = Number(trimmed.replace(',', '.'));
+  if (!Number.isFinite(parsed)) return null;
+
+  return parsed;
 }
 
 type PreviewRow = {
@@ -92,12 +111,17 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
   const [smartSelectedMarketKeys, setSmartSelectedMarketKeys] = useState<Set<string>>(new Set());
   const [smartMaxAllocationBps, setSmartMaxAllocationBps] = useState<Record<string, number>>({});
+  const [smartMaxAllocationInputValues, setSmartMaxAllocationInputValues] = useState<Record<string, string>>({});
   const [debouncedSmartMaxAllocationBps, setDebouncedSmartMaxAllocationBps] = useState<Record<string, number>>({});
   const [smartPlan, setSmartPlan] = useState<SmartRebalancePlan | null>(null);
   const [isSmartCalculating, setIsSmartCalculating] = useState(false);
   const [smartCalculationError, setSmartCalculationError] = useState<string | null>(null);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [isRefreshSynced, setIsRefreshSynced] = useState(false);
 
   const calcIdRef = useRef(0);
+  const wasOpenRef = useRef(false);
+  const syncIndicatorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toast = useStyledToast();
   const { isAprDisplay } = useAppSettings();
@@ -139,21 +163,31 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
   const marketByKey = useMemo(() => new Map(eligibleMarkets.map((market) => [market.uniqueKey, market])), [eligibleMarkets]);
 
-  const defaultSmartMarketKeys = useMemo(
-    () =>
-      groupedPosition.markets.filter((position) => BigInt(position.state.supplyAssets) > 0n).map((position) => position.market.uniqueKey),
-    [groupedPosition.markets],
-  );
-
   useEffect(() => {
-    if (!isOpen) return;
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = isOpen;
+
+    if (!isOpen || wasOpen) return;
+    const nextDefaultSmartMarketKeys = groupedPosition.markets
+      .filter((position) => BigInt(position.state.supplyAssets) > 0n)
+      .map((position) => position.market.uniqueKey);
+
     setMode('smart');
-    setSmartSelectedMarketKeys(new Set(defaultSmartMarketKeys));
+    setSmartSelectedMarketKeys(new Set(nextDefaultSmartMarketKeys));
     setSmartMaxAllocationBps({});
+    setSmartMaxAllocationInputValues({});
     setDebouncedSmartMaxAllocationBps({});
     setSmartPlan(null);
     setSmartCalculationError(null);
-  }, [defaultSmartMarketKeys, isOpen]);
+  }, [groupedPosition.markets, isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (syncIndicatorTimeoutRef.current) {
+        clearTimeout(syncIndicatorTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen || mode !== 'smart') return;
@@ -231,6 +265,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
     const items: TransactionSummaryItem[] = [
       {
+        id: 'weighted-rate',
         label: `Weighted ${rateLabel}`,
         value: `${formatPercent(smartCurrentWeightedRate * 100)} → ${formatPercent(smartProjectedWeightedRate * 100)}`,
         detail: `(${smartWeightedRateDiff >= 0 ? '+' : ''}${formatPercent(smartWeightedRateDiff * 100)})`,
@@ -240,10 +275,12 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
     if (smartTotalMoved > 0n) {
       items.push({
+        id: 'capital-moved',
         label: 'Capital moved',
         value: fmtAmount(smartTotalMoved),
       });
       items.push({
+        id: 'fee',
         label: 'Fee (0.01%)',
         value: fmtAmount(smartFeeAmount),
       });
@@ -333,15 +370,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     const sourceEntries = Object.entries(smartMaxAllocationBps).sort(([left], [right]) => left.localeCompare(right));
     const debouncedEntries = Object.entries(debouncedSmartMaxAllocationBps).sort(([left], [right]) => left.localeCompare(right));
 
-    if (sourceEntries.length !== debouncedEntries.length) return true;
-
-    for (let index = 0; index < sourceEntries.length; index++) {
-      if (sourceEntries[index][0] !== debouncedEntries[index][0] || sourceEntries[index][1] !== debouncedEntries[index][1]) {
-        return true;
-      }
-    }
-
-    return false;
+    return JSON.stringify(sourceEntries) !== JSON.stringify(debouncedEntries);
   }, [debouncedSmartMaxAllocationBps, smartMaxAllocationBps]);
 
   const smartCanExecute = !isSmartCalculating && !isSmartConstraintsPending && !!smartPlan && smartTotalMoved > 0n;
@@ -355,6 +384,10 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
           ...prev,
           [uniqueKey]: 0,
         }));
+        setSmartMaxAllocationInputValues((prev) => ({
+          ...prev,
+          [uniqueKey]: formatMaxAllocationInput(0),
+        }));
         return;
       }
 
@@ -366,25 +399,64 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
       setSmartMaxAllocationBps((prev) => {
         if (!(uniqueKey in prev)) return prev;
-        const { [uniqueKey]: _removed, ...rest } = prev;
+        const rest = { ...prev };
+        delete rest[uniqueKey];
+        return rest;
+      });
+
+      setSmartMaxAllocationInputValues((prev) => {
+        if (!(uniqueKey in prev)) return prev;
+        const rest = { ...prev };
+        delete rest[uniqueKey];
         return rest;
       });
     },
     [currentSupplyByMarket],
   );
 
-  const updateMaxAllocation = useCallback((uniqueKey: string, rawValue: string) => {
-    const numeric = Number(rawValue);
-    if (!Number.isFinite(numeric)) return;
-
-    const clamped = Math.max(0, Math.min(100, numeric));
-    const nextBps = Math.round(clamped * 100);
+  const updateMaxAllocation = useCallback((uniqueKey: string, value: number) => {
+    const clamped = Math.max(MAX_ALLOCATION_PERCENT_MIN, Math.min(MAX_ALLOCATION_PERCENT_MAX, value));
+    const snapped = Math.round(clamped / MAX_ALLOCATION_PERCENT_STEP) * MAX_ALLOCATION_PERCENT_STEP;
+    const nextBps = Math.round(snapped * 100);
 
     setSmartMaxAllocationBps((prev) => ({
       ...prev,
       [uniqueKey]: nextBps,
     }));
+
+    setSmartMaxAllocationInputValues((prev) => ({
+      ...prev,
+      [uniqueKey]: formatMaxAllocationInput(snapped),
+    }));
   }, []);
+
+  const handleMaxAllocationInputChange = useCallback((uniqueKey: string, value: string) => {
+    setSmartMaxAllocationInputValues((prev) => ({
+      ...prev,
+      [uniqueKey]: value,
+    }));
+  }, []);
+
+  const handleMaxAllocationInputBlur = useCallback(
+    (uniqueKey: string) => {
+      const fallbackValue = (smartMaxAllocationBps[uniqueKey] ?? 10_000) / 100;
+      const rawInput = smartMaxAllocationInputValues[uniqueKey] ?? formatMaxAllocationInput(fallbackValue);
+      const parsed = parseMaxAllocationInput(rawInput);
+
+      if (parsed === null) {
+        setSmartMaxAllocationInputValues((prev) => ({
+          ...prev,
+          [uniqueKey]: formatMaxAllocationInput(fallbackValue),
+        }));
+        return;
+      }
+
+      const bounded = Math.max(MAX_ALLOCATION_PERCENT_MIN, Math.min(MAX_ALLOCATION_PERCENT_MAX, parsed));
+      const normalized = Math.round(bounded / MAX_ALLOCATION_PERCENT_STEP) * MAX_ALLOCATION_PERCENT_STEP;
+      updateMaxAllocation(uniqueKey, normalized);
+    },
+    [smartMaxAllocationBps, smartMaxAllocationInputValues, updateMaxAllocation],
+  );
 
   const handleAddSmartMarkets = useCallback(() => {
     openModal('rebalanceMarketSelection', {
@@ -550,13 +622,33 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     void executeSmartRebalance(smartSummaryItems);
   }, [executeSmartRebalance, smartSummaryItems]);
 
-  const handleManualRefresh = () => {
-    refetch(() => {
-      toast.info('Data refreshed', 'Position data updated', {
-        icon: <span>🚀</span>,
-      });
+  const refreshActionLoading = isManualRefreshing || isRefetching;
+
+  const handleManualRefresh = useCallback(() => {
+    if (refreshActionLoading) return;
+
+    setIsRefreshSynced(false);
+    setIsManualRefreshing(true);
+
+    void Promise.resolve(
+      refetch(() => {
+        if (syncIndicatorTimeoutRef.current) {
+          clearTimeout(syncIndicatorTimeoutRef.current);
+        }
+
+        setIsRefreshSynced(true);
+        syncIndicatorTimeoutRef.current = setTimeout(() => {
+          setIsRefreshSynced(false);
+        }, 1500);
+
+        toast.info('Synced', 'Position data updated', {
+          icon: <span>✓</span>,
+        });
+      }),
+    ).finally(() => {
+      setIsManualRefreshing(false);
     });
-  };
+  }, [refetch, refreshActionLoading, toast]);
 
   const smartPreviewRows = useMemo<PreviewRow[]>(
     () => [
@@ -628,9 +720,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         }
         onClose={() => onOpenChange(false)}
         auxiliaryAction={{
-          icon: <RefetchIcon isLoading={isRefetching} />,
+          icon: isRefreshSynced ? <CheckIcon className="h-3 w-3 text-green-500" /> : <RefetchIcon isLoading={refreshActionLoading} />,
           onClick: () => {
-            if (!isRefetching) {
+            if (!refreshActionLoading) {
               handleManualRefresh();
             }
           },
@@ -719,7 +811,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
                 </thead>
                 <tbody>
                   {smartRows.map((row) => {
-                    const maxAllocationValue = (smartMaxAllocationBps[row.market.uniqueKey] ?? 10_000) / 100;
+                    const committedMaxAllocationValue = (smartMaxAllocationBps[row.market.uniqueKey] ?? 10_000) / 100;
+                    const maxAllocationValue =
+                      smartMaxAllocationInputValues[row.market.uniqueKey] ?? formatMaxAllocationInput(committedMaxAllocationValue);
 
                     return (
                       <tr
@@ -785,12 +879,11 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
                         <td className="px-2 py-2 text-right">
                           <div className="ml-auto flex w-fit items-center gap-1">
                             <input
-                              type="number"
-                              min={0}
-                              max={100}
-                              step={0.5}
+                              type="text"
+                              inputMode="decimal"
                               value={maxAllocationValue}
-                              onChange={(event) => updateMaxAllocation(row.market.uniqueKey, event.target.value)}
+                              onChange={(event) => handleMaxAllocationInputChange(row.market.uniqueKey, event.target.value)}
+                              onBlur={() => handleMaxAllocationInputBlur(row.market.uniqueKey)}
                               className="h-7 w-16 rounded-sm border border-border bg-background px-1.5 text-right text-xs"
                             />
                             <button
@@ -823,7 +916,10 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
                     <td className="px-2 py-2 text-right">
                       <button
                         type="button"
-                        onClick={() => setSmartMaxAllocationBps({})}
+                        onClick={() => {
+                          setSmartMaxAllocationBps({});
+                          setSmartMaxAllocationInputValues({});
+                        }}
                         className="text-xs text-secondary transition hover:text-foreground"
                       >
                         Reset limits
@@ -837,7 +933,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
             {smartCalculationError && <div className="text-sm text-red-500">{smartCalculationError}</div>}
             {!isSmartCalculating && constraintViolations.length > 0 && (
               <div className="rounded border border-yellow-500/30 bg-yellow-500/10 px-2 py-1.5 text-xs text-yellow-300">
-                Some max-allocation limits could not be fully satisfied due current market liquidity/capacity.
+                Some max-allocation limits could not be fully satisfied due to current market liquidity/capacity.
               </div>
             )}
 

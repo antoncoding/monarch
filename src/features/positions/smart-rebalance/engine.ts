@@ -31,6 +31,38 @@ function clampBps(value: number | undefined): number | undefined {
   return Math.floor(value);
 }
 
+function sanitizeMaxRounds(rawMaxRounds: number | undefined): number {
+  if (rawMaxRounds === undefined || !Number.isFinite(rawMaxRounds)) {
+    return DEFAULT_MAX_ROUNDS;
+  }
+
+  const rounded = Math.floor(rawMaxRounds);
+  if (rounded < 1) return 1;
+  if (rounded > DEFAULT_MAX_ROUNDS) return DEFAULT_MAX_ROUNDS;
+  return rounded;
+}
+
+function sanitizeFractions(rawFractions: [bigint, bigint][] | undefined): [bigint, bigint][] {
+  if (!rawFractions || rawFractions.length === 0) {
+    return DEFAULT_FRACTIONS;
+  }
+
+  const deduped: [bigint, bigint][] = [];
+  const seen = new Set<string>();
+
+  for (const [num, den] of rawFractions) {
+    if (den <= 0n || num <= 0n || num > den) continue;
+
+    const key = `${num}/${den}`;
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    deduped.push([num, den]);
+  }
+
+  return deduped.length > 0 ? deduped : DEFAULT_FRACTIONS;
+}
+
 function toApyScaled(apy: number): bigint {
   if (!Number.isFinite(apy)) return 0n;
   return BigInt(Math.round(apy * Number(APY_SCALE)));
@@ -87,8 +119,8 @@ function resolveMaxAllocation(
  */
 export function optimizeSmartRebalance(input: SmartRebalanceEngineInput): SmartRebalanceEngineOutput | null {
   const { entries, constraints } = input;
-  const maxRounds = input.maxRounds ?? DEFAULT_MAX_ROUNDS;
-  const fractions = input.fractionRationals ?? DEFAULT_FRACTIONS;
+  const maxRounds = sanitizeMaxRounds(input.maxRounds);
+  const fractions = sanitizeFractions(input.fractionRationals);
 
   if (entries.length === 0) return null;
 

@@ -121,7 +121,8 @@ export async function calculateSmartRebalancePlan({
     const currentSupply = userSupplyByMarket.get(market.uniqueKey) ?? 0n;
     const normalizedMaxBps = normalizeMaxBps(constraints?.[market.uniqueKey]?.maxAllocationBps);
     const allowFullWithdraw = normalizedMaxBps === 0;
-    const maxFromUser = allowFullWithdraw ? currentSupply : currentSupply > DUST_AMOUNT ? currentSupply - DUST_AMOUNT : 0n;
+    const safeSupply = currentSupply > DUST_AMOUNT ? currentSupply - DUST_AMOUNT : 0n;
+    const maxFromUser = allowFullWithdraw ? currentSupply : safeSupply;
     const maxWithdrawable = maxFromUser < baselineMarket.liquidity ? maxFromUser : baselineMarket.liquidity;
 
     return [
@@ -138,6 +139,7 @@ export async function calculateSmartRebalancePlan({
   if (entries.length === 0) return null;
 
   const suppliedEntries = entries.filter((entry) => entry.currentSupply > 0n);
+  const totalPool = entries.reduce((sum, entry) => sum + entry.currentSupply, 0n);
   const withdrawAllRequested =
     suppliedEntries.length > 0 &&
     suppliedEntries.every((entry) => {
@@ -145,8 +147,16 @@ export async function calculateSmartRebalancePlan({
       return normalized === 0;
     });
 
-  if (withdrawAllRequested) {
-    const totalPool = entries.reduce((sum, entry) => sum + entry.currentSupply, 0n);
+  const hasDestinationCapacity = entries.some((entry) => {
+    const normalized = normalizeMaxBps(constraints?.[entry.uniqueKey]?.maxAllocationBps);
+    if (normalized === 0) return false;
+    if (normalized === undefined || normalized >= 10_000) return true;
+
+    const maxAllowed = (totalPool * BigInt(normalized)) / 10_000n;
+    return entry.currentSupply < maxAllowed;
+  });
+
+  if (withdrawAllRequested && !hasDestinationCapacity) {
     const currentObjective = entries.reduce((sum, entry) => sum + entry.currentSupply * toApyScaled(entry.baselineMarket.supplyApy), 0n);
 
     const deltas = entries.map((entry) => {

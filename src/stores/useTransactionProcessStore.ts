@@ -7,6 +7,7 @@ export type TransactionStep = {
 };
 
 export type TransactionSummaryItem = {
+  id: string;
   label: string;
   value: string;
   /** Secondary value shown smaller, e.g. the diff like "(+0.07%)" */

@@ -55,7 +55,7 @@ function SummaryBlock({ items }: { items: TransactionSummaryItem[] }) {
     <div className="flex flex-col gap-1.5 rounded-lg bg-surface p-3">
       {items.map((item) => (
         <div
-          key={item.label}
+          key={item.id}
           className="flex items-center justify-between text-sm"
         >
           <span className="text-secondary">{item.label}</span>

@@ -6,26 +6,31 @@ import { SMART_REBALANCE_FEE_RECIPIENT } from '@/config/smart-rebalance';
 import type { GroupedPosition } from '@/utils/types';
 import type { TransactionSummaryItem } from '@/stores/useTransactionProcessStore';
 import type { SmartRebalancePlan } from '@/features/positions/smart-rebalance/planner';
+import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useRebalanceExecution, type RebalanceExecutionStepType } from './useRebalanceExecution';
 import { useConnection } from 'wagmi';
 
 const SMART_REBALANCE_FEE_BPS = 10n; // measured in tenths of a BPS.
 const FEE_BPS_DENOMINATOR = 100_000n;
 
+function computeFeeForDelta(delta: bigint): bigint {
+  if (delta <= 0n) return 0n;
+  return (delta * SMART_REBALANCE_FEE_BPS) / FEE_BPS_DENOMINATOR;
+}
+
 export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartRebalancePlan | null, onSuccess?: () => void) => {
   const { address: account } = useConnection();
+  const { batchAddUserMarkets } = useUserMarketsCache(account);
 
   const totalMoved = useMemo(() => {
     if (!plan) return 0n;
     return plan.totalMoved;
   }, [plan]);
 
-  const hasPositiveSupplyDeltas = useMemo(() => plan?.deltas.some((delta) => delta.delta > 0n) ?? false, [plan]);
-
-  const feeAmount = useMemo(
-    () => (hasPositiveSupplyDeltas ? (totalMoved * SMART_REBALANCE_FEE_BPS) / FEE_BPS_DENOMINATOR : 0n),
-    [hasPositiveSupplyDeltas, totalMoved],
-  );
+  const feeAmount = useMemo(() => {
+    if (!plan) return 0n;
+    return plan.deltas.reduce((sum, delta) => sum + computeFeeForDelta(delta.delta), 0n);
+  }, [plan]);
 
   const execution = useRebalanceExecution({
     chainId: groupedPosition.chainId,
@@ -47,12 +52,14 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
 
     const withdrawTxs: `0x${string}`[] = [];
     const supplyTxs: `0x${string}`[] = [];
+    const touchedMarketKeys = new Set<string>();
 
     for (const delta of plan.deltas) {
       if (delta.delta >= 0n) continue;
 
       const withdrawAmount = -delta.delta;
       const market = delta.market;
+      touchedMarketKeys.add(market.uniqueKey);
       const supplyShares = BigInt(
         groupedPosition.markets.find((position) => position.market.uniqueKey === market.uniqueKey)?.state.supplyShares ?? '0',
       );
@@ -95,6 +102,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
       if (delta.delta <= 0n) continue;
 
       const market = delta.market;
+      touchedMarketKeys.add(market.uniqueKey);
 
       if (
         !market.loanAsset?.address ||
@@ -114,7 +122,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
         lltv: BigInt(market.lltv),
       };
 
-      const reducedAmount = delta.delta - (delta.delta * SMART_REBALANCE_FEE_BPS) / FEE_BPS_DENOMINATOR;
+      const reducedAmount = delta.delta - computeFeeForDelta(delta.delta);
       if (reducedAmount <= 0n) continue;
 
       supplyTxs.push(
@@ -126,7 +134,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
       );
     }
 
-    return { withdrawTxs, supplyTxs };
+    return { withdrawTxs, supplyTxs, allMarketKeys: [...touchedMarketKeys] };
   }, [account, groupedPosition.markets, plan]);
 
   const executeSmartRebalance = useCallback(
@@ -135,7 +143,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
         return false;
       }
 
-      const { withdrawTxs, supplyTxs } = generateSmartRebalanceTxData();
+      const { withdrawTxs, supplyTxs, allMarketKeys } = generateSmartRebalanceTxData();
       const isWithdrawOnly = supplyTxs.length === 0;
 
       let gasEstimate = GAS_COSTS.BUNDLER_REBALANCE;
@@ -169,9 +177,27 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
         gasEstimate,
         transferAmount: isWithdrawOnly ? 0n : totalMoved,
         requiresAssetTransfer: !isWithdrawOnly,
+        onSubmitted: () => {
+          batchAddUserMarkets(
+            allMarketKeys.map((marketUniqueKey) => ({
+              marketUniqueKey,
+              chainId: groupedPosition.chainId,
+            })),
+          );
+        },
       });
     },
-    [account, execution, generateSmartRebalanceTxData, groupedPosition.loanAsset, groupedPosition.loanAssetAddress, plan, totalMoved],
+    [
+      account,
+      batchAddUserMarkets,
+      execution,
+      generateSmartRebalanceTxData,
+      groupedPosition.chainId,
+      groupedPosition.loanAsset,
+      groupedPosition.loanAssetAddress,
+      plan,
+      totalMoved,
+    ],
   );
 
   return {

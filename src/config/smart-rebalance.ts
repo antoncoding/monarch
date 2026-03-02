@@ -9,9 +9,10 @@ import { type Address, isAddress } from 'viem';
 const DEFAULT_FEE_RECIPIENT = '0xdb24a3611e7dd442c0fa80b32325ce92655e4eaf';
 
 const configuredRecipient = process.env.NEXT_PUBLIC_SMART_REBALANCE_FEE_RECIPIENT?.trim();
+const resolvedRecipient = configuredRecipient ?? DEFAULT_FEE_RECIPIENT;
 
-if (configuredRecipient && !isAddress(configuredRecipient)) {
+if (!isAddress(resolvedRecipient)) {
   throw new Error('NEXT_PUBLIC_SMART_REBALANCE_FEE_RECIPIENT must be a valid EVM address.');
 }
 
-export const SMART_REBALANCE_FEE_RECIPIENT = (configuredRecipient ?? DEFAULT_FEE_RECIPIENT) as Address;
+export const SMART_REBALANCE_FEE_RECIPIENT: Address = resolvedRecipient;

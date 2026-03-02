@@ -264,8 +264,10 @@ export function useRebalanceExecution({
               ? 'execute'
               : 'authorize_bundler_tx';
 
+        const flowSteps = getStepsForFlow(usePermit2Setting, loanAssetSymbol, shouldTransfer);
+
         tracking.start(
-          getStepsForFlow(usePermit2Setting, loanAssetSymbol, shouldTransfer),
+          flowSteps,
           {
             title: metadata.title,
             description: metadata.description,
@@ -275,24 +277,36 @@ export function useRebalanceExecution({
           initialStep,
         );
 
+        const stepOrder = new Map(flowSteps.map((step, index) => [step.id, index]));
+        let runtimeStep: RebalanceExecutionStepType = initialStep;
+        const updateStepIfAdvancing = (nextStep: RebalanceExecutionStepType) => {
+          const currentIndex = stepOrder.get(runtimeStep);
+          const nextIndex = stepOrder.get(nextStep);
+          if (nextIndex === undefined) return;
+          if (currentIndex !== undefined && nextIndex <= currentIndex) return;
+
+          tracking.update(nextStep);
+          runtimeStep = nextStep;
+        };
+
         const transactions: `0x${string}`[] = [];
 
         if (usePermit2Setting) {
           if (shouldTransfer) {
-            tracking.update('approve_permit2');
+            updateStepIfAdvancing('approve_permit2');
             if (!permit2AuthorizedRef.current) {
               await authorizePermit2();
               await sleep(800);
             }
 
-            tracking.update('authorize_bundler_sig');
+            updateStepIfAdvancing('authorize_bundler_sig');
             const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
             if (authorizationTxData) {
               transactions.push(authorizationTxData);
               await sleep(800);
             }
 
-            tracking.update('sign_permit');
+            updateStepIfAdvancing('sign_permit');
             const { sigs, permitSingle } = await signForBundlers(amount);
 
             const permitTx = encodeFunctionData({
@@ -312,7 +326,7 @@ export function useRebalanceExecution({
             transactions.push(transferFromTx);
             transactions.push(...supplyTxs);
           } else {
-            tracking.update('authorize_bundler_sig');
+            updateStepIfAdvancing('authorize_bundler_sig');
             const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
             if (authorizationTxData) {
               transactions.push(authorizationTxData);
@@ -323,14 +337,14 @@ export function useRebalanceExecution({
             transactions.push(...supplyTxs);
           }
         } else {
-          tracking.update('authorize_bundler_tx');
+          updateStepIfAdvancing('authorize_bundler_tx');
           const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
           if (!authorized) {
             throw new Error('Failed to authorize Bundler via transaction.');
           }
 
           if (shouldTransfer) {
-            tracking.update('approve_token');
+            updateStepIfAdvancing('approve_token');
             if (!isTokenApproved) {
               await approveToken();
               await sleep(1000);
@@ -355,7 +369,7 @@ export function useRebalanceExecution({
           transactions.push(...trailingTxs);
         }
 
-        tracking.update('execute');
+        updateStepIfAdvancing('execute');
 
         const multicallTx = (encodeFunctionData({
           abi: morphoBundlerAbi,

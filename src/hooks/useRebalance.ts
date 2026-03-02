@@ -44,7 +44,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   }, []);
 
   const generateRebalanceTxData = useCallback(() => {
-    if (!account) throw new Error('Wallet not connected');
+    if (!account) return null;
 
     const withdrawTxs: `0x${string}`[] = [];
     const supplyTxs: `0x${string}`[] = [];
@@ -75,12 +75,12 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         : undefined;
 
       if (isWithdrawMax && shares === undefined) {
-        throw new Error(`No shares found for max withdraw from market ${actions[0].fromMarket.uniqueKey}`);
+        return null;
       }
 
       const market = actions[0].fromMarket;
       if (!market.loanToken || !market.collateralToken || !market.oracle || !market.irm || market.lltv === undefined) {
-        throw new Error(`Market data incomplete for withdraw from ${market.uniqueKey}`);
+        return null;
       }
 
       const withdrawTx = encodeFunctionData({
@@ -108,7 +108,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       const market = actions[0].toMarket;
 
       if (!market.loanToken || !market.collateralToken || !market.oracle || !market.irm || market.lltv === undefined) {
-        throw new Error(`Market data incomplete for supply to ${market.uniqueKey}`);
+        return null;
       }
 
       const supplyTx = encodeFunctionData({
@@ -141,7 +141,13 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       return false;
     }
 
-    const { withdrawTxs, supplyTxs, allMarketKeys } = generateRebalanceTxData();
+    const txData = generateRebalanceTxData();
+    if (!txData) {
+      toast.error('Unable to execute', 'Missing wallet or market data for rebalance.');
+      return false;
+    }
+
+    const { withdrawTxs, supplyTxs, allMarketKeys } = txData;
 
     let gasEstimate = GAS_COSTS.BUNDLER_REBALANCE;
     if (supplyTxs.length > 1) {
