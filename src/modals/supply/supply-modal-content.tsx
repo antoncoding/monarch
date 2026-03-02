@@ -130,7 +130,6 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                     setInputError(null);
                   }
                 }}
-                allowExceedMax={true}
                 exceedMaxErrMessage={
                   supplyAmount && supplyAmount > (useEth ? (ethBalance ?? 0n) : (tokenBalance ?? 0n)) ? 'Insufficient Balance' : undefined
                 }

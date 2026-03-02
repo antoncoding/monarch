@@ -2,11 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
-import {
-  clampEditablePercent,
-  computeLtv,
-  formatEditableLtvPercent,
-} from '@/modals/borrow/components/helpers';
+import { clampEditablePercent, computeLtv, formatEditableLtvPercent } from '@/modals/borrow/components/helpers';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -226,25 +222,19 @@ export function AddCollateralAndLeverage({
     onSuccess: handleTransactionSuccess,
   });
 
-  const handleMultiplierInputChange = useCallback(
-    (value: string) => {
-      if (!EDITABLE_DECIMAL_INPUT_REGEX.test(value)) return;
-      setMultiplierInput(value);
-    },
-    [],
-  );
+  const handleMultiplierInputChange = useCallback((value: string) => {
+    if (!EDITABLE_DECIMAL_INPUT_REGEX.test(value)) return;
+    setMultiplierInput(value);
+  }, []);
 
   const handleMultiplierInputBlur = useCallback(() => {
     syncInputFieldsFromMultiplier(parseMultiplierToBps(multiplierInput, maxMultiplierBps));
   }, [multiplierInput, maxMultiplierBps, syncInputFieldsFromMultiplier]);
 
-  const handleTargetLtvInputChange = useCallback(
-    (value: string) => {
-      if (!EDITABLE_DECIMAL_INPUT_REGEX.test(value)) return;
-      setTargetLtvInput(value);
-    },
-    [],
-  );
+  const handleTargetLtvInputChange = useCallback((value: string) => {
+    if (!EDITABLE_DECIMAL_INPUT_REGEX.test(value)) return;
+    setTargetLtvInput(value);
+  }, []);
 
   const handleTargetLtvInputBlur = useCallback(() => {
     const parsedPercent = Number.parseFloat(targetLtvInput.replace(',', '.'));
@@ -429,8 +419,9 @@ export function AddCollateralAndLeverage({
                   />
                 }
               />
-              <div className="mt-1 flex items-center justify-between gap-3 text-xs">
-                <span className="text-right text-secondary">
+              <div className="mt-1 flex items-start gap-3 text-xs">
+                {collateralInputError && <p className="text-red-500">{collateralInputError}</p>}
+                <span className="ml-auto text-right text-secondary">
                   Balance: {formatBalance(inputAssetBalance ?? 0n, inputAssetDecimals)} {inputAssetSymbol}
                 </span>
               </div>

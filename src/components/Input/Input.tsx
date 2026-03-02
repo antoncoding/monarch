@@ -2,7 +2,6 @@ import { useCallback, useState, useEffect } from 'react';
 
 import { formatUnits, parseUnits } from 'viem';
 import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
-import { Button } from '@/components/ui/button';
 
 type InputProps = {
   decimals: number;
@@ -10,10 +9,10 @@ type InputProps = {
   max?: bigint;
   setError?: ((error: string | null) => void) | React.Dispatch<React.SetStateAction<string | null>>;
   exceedMaxErrMessage?: string;
-  allowExceedMax?: boolean; // whether to still "setValue" when the input exceeds max
+  allowExceedMax?: boolean; // set false to block setValue when the input exceeds max
   onMaxClick?: () => void;
   value?: bigint;
-  error?: string | null; // current error state to show dismiss button
+  error?: string | null; // optional error message to render below the input
   endAdornment?: React.ReactNode;
   inputClassName?: string;
 };
@@ -31,7 +30,7 @@ export default function Input({
   setValue,
   setError,
   exceedMaxErrMessage,
-  allowExceedMax = false,
+  allowExceedMax = true,
   onMaxClick,
   value,
   error,
@@ -41,8 +40,6 @@ export default function Input({
   // State for the input text
   const [inputAmount, setInputAmount] = useState<string>(value ? formatInputAmount(value, decimals) : '0');
   const [isFocused, setIsFocused] = useState(false);
-  // Track if max check is bypassed
-  const [bypassMax, setBypassMax] = useState<boolean>(false);
 
   // Update input text when value prop changes
   useEffect(() => {
@@ -71,7 +68,7 @@ export default function Input({
       try {
         const inputBigInt = parseUnits(parseableInput, decimals);
 
-        if (max !== undefined && inputBigInt > max && !bypassMax) {
+        if (max !== undefined && inputBigInt > max) {
           if (setError) setError(exceedMaxErrMessage ?? 'Input exceeds max');
           if (allowExceedMax) {
             setValue(inputBigInt);
@@ -85,27 +82,8 @@ export default function Input({
         if (setError) setError('Invalid input');
       }
     },
-    [decimals, setError, setInputAmount, setValue, max, exceedMaxErrMessage, allowExceedMax, bypassMax],
+    [decimals, setError, setInputAmount, setValue, max, exceedMaxErrMessage, allowExceedMax],
   );
-
-  // Dismiss error and bypass max check, re-trigger setValue with current input
-  const handleDismissError = useCallback(() => {
-    setBypassMax(true);
-    if (setError) setError(null);
-
-    const parseableInput = toParseableDecimalInput(inputAmount);
-    if (!parseableInput) {
-      setValue(BigInt(0));
-      return;
-    }
-
-    try {
-      const inputBigInt = parseUnits(parseableInput, decimals);
-      setValue(inputBigInt);
-    } catch {
-      // Invalid input, ignore
-    }
-  }, [inputAmount, decimals, setValue, setError]);
 
   // if max is clicked, set the input to the max value
   const handleMax = useCallback(() => {
@@ -158,16 +136,9 @@ export default function Input({
           <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-secondary">{endAdornment}</span>
         )}
       </div>
-      {error && !bypassMax && (
+      {error && (
         <div className="mt-1 flex items-center gap-2">
           <span className="text-sm text-red-500">{error}</span>
-          <Button
-            size="xs"
-            onClick={handleDismissError}
-            variant="default"
-          >
-            Ignore
-          </Button>
         </div>
       )}
     </div>

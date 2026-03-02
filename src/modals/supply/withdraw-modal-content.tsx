@@ -309,7 +309,6 @@ export function WithdrawModalContent({
             setValue={handleWithdrawAmountChange}
             setError={setInputError}
             exceedMaxErrMessage={extraLiquidity > 0n ? 'Exceeds available liquidity (incl. PA)' : 'Insufficient Liquidity'}
-            allowExceedMax={true}
             error={inputError}
             value={withdrawAmount}
             inputClassName={amountInputClassName}

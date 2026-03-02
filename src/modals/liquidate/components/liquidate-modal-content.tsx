@@ -101,7 +101,7 @@ export function LiquidateModalContent({
     }
   }, [onRefresh]);
 
-  const isValid = (seizedCollateralAmount > 0n || useMaxShares) && (useMaxShares || oraclePrice > 0n);
+  const isValid = inputError === null && (seizedCollateralAmount > 0n || useMaxShares) && (useMaxShares || oraclePrice > 0n);
   const hasBorrowPosition = borrowerBorrowShares > 0n;
 
   return (

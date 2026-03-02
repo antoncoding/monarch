@@ -318,12 +318,17 @@ export function AddCollateralAndBorrow({
                   />
                 }
               />
-              <p className="mt-1 text-right text-xs text-secondary">
-                Balance:{' '}
-                {formatBalance(useEth ? (ethBalance ?? 0n) : (collateralTokenBalance ?? 0n), useEth ? 18 : market.collateralAsset.decimals)}{' '}
-                {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.collateralAsset.symbol}
-              </p>
-              {collateralInputError && <p className="mt-1 text-right text-xs text-red-500">{collateralInputError}</p>}
+              <div className="mt-1 flex items-start gap-3 text-xs">
+                {collateralInputError && <p className="text-red-500">{collateralInputError}</p>}
+                <p className="ml-auto text-right text-secondary">
+                  Balance:{' '}
+                  {formatBalance(
+                    useEth ? (ethBalance ?? 0n) : (collateralTokenBalance ?? 0n),
+                    useEth ? 18 : market.collateralAsset.decimals,
+                  )}{' '}
+                  {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.collateralAsset.symbol}
+                </p>
+              </div>
             </div>
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
