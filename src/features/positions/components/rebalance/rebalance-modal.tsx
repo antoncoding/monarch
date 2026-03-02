@@ -50,6 +50,7 @@ const SMART_REBALANCE_RECALC_DEBOUNCE_MS = 300;
 const MAX_ALLOCATION_PERCENT_MIN = 0;
 const MAX_ALLOCATION_PERCENT_MAX = 100;
 const MAX_ALLOCATION_PERCENT_STEP = 0.5;
+const SMART_REBALANCE_FEE_LABEL = 'Fee (0.004%)';
 
 function formatPercent(value: number, digits = 2): string {
   return `${value.toFixed(digits)}%`;
@@ -281,7 +282,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       });
       items.push({
         id: 'fee',
-        label: 'Fee (0.01%)',
+        label: SMART_REBALANCE_FEE_LABEL,
         value: fmtAmount(smartFeeAmount),
       });
     }
@@ -669,7 +670,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         value: fmtAmount(smartTotalMoved),
       },
       {
-        label: 'Fee (0.01%)',
+        label: SMART_REBALANCE_FEE_LABEL,
         value: fmtAmount(smartFeeAmount),
       },
     ],

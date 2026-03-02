@@ -6,7 +6,7 @@ import { type Address, isAddress } from 'viem';
  * Set `NEXT_PUBLIC_SMART_REBALANCE_FEE_RECIPIENT` in your env to override.
  * Fallback keeps current production behavior until explicitly changed.
  */
-const DEFAULT_FEE_RECIPIENT = '0xdb24a3611e7dd442c0fa80b32325ce92655e4eaf';
+const DEFAULT_FEE_RECIPIENT = '0xc8440DF82b5Eb7Ff1dc1DcB4d756bd35B9340B7C';
 
 const configuredRecipient = process.env.NEXT_PUBLIC_SMART_REBALANCE_FEE_RECIPIENT?.trim();
 const resolvedRecipient = configuredRecipient ?? DEFAULT_FEE_RECIPIENT;

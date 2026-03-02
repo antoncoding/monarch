@@ -1,8 +1,10 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, maxUint256 } from 'viem';
+import { type Address, encodeFunctionData, formatUnits, maxUint256, parseUnits } from 'viem';
 import morphoBundlerAbi from '@/abis/bundlerV2';
+import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { GAS_COSTS } from '@/features/markets/components/constants';
 import { SMART_REBALANCE_FEE_RECIPIENT } from '@/config/smart-rebalance';
+import { useTokenPrices } from '@/hooks/useTokenPrices';
 import type { GroupedPosition } from '@/utils/types';
 import type { TransactionSummaryItem } from '@/stores/useTransactionProcessStore';
 import type { SmartRebalancePlan } from '@/features/positions/smart-rebalance/planner';
@@ -10,27 +12,124 @@ import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useRebalanceExecution, type RebalanceExecutionStepType } from './useRebalanceExecution';
 import { useConnection } from 'wagmi';
 
-const SMART_REBALANCE_FEE_BPS = 10n; // measured in tenths of a BPS.
+const SMART_REBALANCE_FEE_BPS = 4n; // measured in tenths of a BPS (0.4 bps = 0.004%).
 const FEE_BPS_DENOMINATOR = 100_000n;
+const SMART_REBALANCE_MAX_FEE_USD = 4;
 
-function computeFeeForDelta(delta: bigint): bigint {
+type SmartRebalanceFeeBreakdown = {
+  totalFee: bigint;
+  feeByMarket: Map<string, bigint>;
+};
+
+function computeBaseFeeForDelta(delta: bigint): bigint {
   if (delta <= 0n) return 0n;
   return (delta * SMART_REBALANCE_FEE_BPS) / FEE_BPS_DENOMINATOR;
+}
+
+function deriveLoanAssetPriceUsdFromPlan(plan: SmartRebalancePlan, loanAssetDecimals: number): number | null {
+  for (const delta of plan.deltas) {
+    const market = delta.market;
+    if (!market.hasUSDPrice) continue;
+
+    const totalSupplyAssets = BigInt(market.state.supplyAssets);
+    const totalSupplyAssetsUsd = market.state.supplyAssetsUsd;
+    if (totalSupplyAssets <= 0n || !Number.isFinite(totalSupplyAssetsUsd) || totalSupplyAssetsUsd <= 0) continue;
+
+    const totalSupplyToken = Number(formatUnits(totalSupplyAssets, loanAssetDecimals));
+    if (!Number.isFinite(totalSupplyToken) || totalSupplyToken <= 0) continue;
+
+    const priceUsd = totalSupplyAssetsUsd / totalSupplyToken;
+    if (Number.isFinite(priceUsd) && priceUsd > 0) return priceUsd;
+  }
+
+  return null;
+}
+
+function computeFeeCapInLoanAssetUnits(loanAssetPriceUsd: number, loanAssetDecimals: number): bigint {
+  if (!Number.isFinite(loanAssetPriceUsd) || loanAssetPriceUsd <= 0) return 0n;
+
+  const cappedAmountInLoanAsset = SMART_REBALANCE_MAX_FEE_USD / loanAssetPriceUsd;
+  if (!Number.isFinite(cappedAmountInLoanAsset) || cappedAmountInLoanAsset <= 0) return 0n;
+
+  const precision = Math.min(loanAssetDecimals, 18);
+  const cappedAmountString = cappedAmountInLoanAsset.toFixed(precision);
+  return parseUnits(cappedAmountString, loanAssetDecimals);
+}
+
+function computeFeeBreakdown(
+  plan: SmartRebalancePlan | null,
+  loanAssetDecimals: number,
+  pricedLoanAssetUsd: number | null,
+): SmartRebalanceFeeBreakdown {
+  if (!plan) {
+    return { totalFee: 0n, feeByMarket: new Map<string, bigint>() };
+  }
+
+  const feeByMarket = new Map<string, bigint>();
+  const baseFees = plan.deltas
+    .filter((delta) => delta.delta > 0n)
+    .map((delta) => ({
+      uniqueKey: delta.market.uniqueKey,
+      fee: computeBaseFeeForDelta(delta.delta),
+    }))
+    .filter((entry) => entry.fee > 0n);
+
+  const uncappedTotal = baseFees.reduce((sum, entry) => sum + entry.fee, 0n);
+  if (uncappedTotal === 0n) {
+    return { totalFee: 0n, feeByMarket };
+  }
+
+  const fallbackPriceUsd = deriveLoanAssetPriceUsdFromPlan(plan, loanAssetDecimals);
+  const effectiveLoanAssetPriceUsd = pricedLoanAssetUsd ?? fallbackPriceUsd;
+  const feeCap =
+    effectiveLoanAssetPriceUsd !== null ? computeFeeCapInLoanAssetUnits(effectiveLoanAssetPriceUsd, loanAssetDecimals) : uncappedTotal;
+
+  let remainingFee = feeCap < uncappedTotal ? feeCap : uncappedTotal;
+  for (const entry of baseFees) {
+    if (remainingFee <= 0n) {
+      feeByMarket.set(entry.uniqueKey, 0n);
+      continue;
+    }
+
+    const allocatedFee = entry.fee < remainingFee ? entry.fee : remainingFee;
+    feeByMarket.set(entry.uniqueKey, allocatedFee);
+    remainingFee -= allocatedFee;
+  }
+
+  return {
+    totalFee: feeCap < uncappedTotal ? feeCap : uncappedTotal,
+    feeByMarket,
+  };
 }
 
 export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartRebalancePlan | null, onSuccess?: () => void) => {
   const { address: account } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);
+  const { prices: tokenPrices } = useTokenPrices([
+    {
+      address: groupedPosition.loanAssetAddress,
+      chainId: groupedPosition.chainId,
+    },
+  ]);
 
   const totalMoved = useMemo(() => {
     if (!plan) return 0n;
     return plan.totalMoved;
   }, [plan]);
 
+  const pricedLoanAssetUsd = useMemo(
+    () => tokenPrices.get(getTokenPriceKey(groupedPosition.loanAssetAddress, groupedPosition.chainId)) ?? null,
+    [groupedPosition.chainId, groupedPosition.loanAssetAddress, tokenPrices],
+  );
+
+  const feeBreakdown = useMemo(
+    () => computeFeeBreakdown(plan, groupedPosition.loanAssetDecimals, pricedLoanAssetUsd),
+    [groupedPosition.loanAssetDecimals, plan, pricedLoanAssetUsd],
+  );
+
   const feeAmount = useMemo(() => {
-    if (!plan) return 0n;
-    return plan.deltas.reduce((sum, delta) => sum + computeFeeForDelta(delta.delta), 0n);
-  }, [plan]);
+    return feeBreakdown.totalFee;
+  }, [feeBreakdown.totalFee]);
 
   const execution = useRebalanceExecution({
     chainId: groupedPosition.chainId,
@@ -122,7 +221,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
         lltv: BigInt(market.lltv),
       };
 
-      const reducedAmount = delta.delta - computeFeeForDelta(delta.delta);
+      const reducedAmount = delta.delta - (feeBreakdown.feeByMarket.get(market.uniqueKey) ?? 0n);
       if (reducedAmount <= 0n) continue;
 
       supplyTxs.push(
@@ -135,7 +234,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
     }
 
     return { withdrawTxs, supplyTxs, allMarketKeys: [...touchedMarketKeys] };
-  }, [account, groupedPosition.markets, plan]);
+  }, [account, feeBreakdown.feeByMarket, groupedPosition.markets, plan]);
 
   const executeSmartRebalance = useCallback(
     async (summaryItems?: TransactionSummaryItem[]) => {
