@@ -241,12 +241,12 @@ export function LeverageModal({
             ? isErc4626Route
               ? `Leverage ERC4626 vault exposure by looping ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
               : isSwapRoute
-                ? `Leverage ${market.collateralAsset.symbol} exposure through Bundler3 + Velora swap routing.`
+                ? `Leverage ${market.collateralAsset.symbol} exposure by swapping borrowed ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
                 : `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
             : isErc4626Route
               ? `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`
               : isSwapRoute
-                ? `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} back into ${market.loanAsset.symbol} via Bundler3 + Velora.`
+                ? `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`
                 : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
         }
       />

@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
-import { computeLtv } from '@/modals/borrow/components/helpers';
+import {
+  clampEditablePercent,
+  computeLtv,
+  formatEditableLtvPercent,
+  normalizeEditablePercentInput,
+} from '@/modals/borrow/components/helpers';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -28,8 +33,9 @@ import { use4626VaultAPR } from '@/hooks/use4626VaultAPR';
 import { useLeverageQuote } from '@/hooks/useLeverageQuote';
 import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
-import { DEFAULT_SLIPPAGE_PERCENT } from '@/features/swap/constants';
-import { formatSlippagePercent, formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
+import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineEditor';
+import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
+import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
 import { formatBalance } from '@/utils/balance';
 import { convertApyToApr } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
@@ -46,7 +52,6 @@ type AddCollateralAndLeverageProps = {
 };
 
 const MULTIPLIER_INPUT_REGEX = /^\d*\.?\d*$/;
-const LTV_INPUT_REGEX = /^\d*\.?\d*$/;
 const LEVERAGE_SAFE_LTV_BUFFER_BPS = 100n; // keep a 1% buffer below liquidation LTV
 
 export function AddCollateralAndLeverage({
@@ -72,18 +77,20 @@ export function AddCollateralAndLeverage({
   const [targetLtvInput, setTargetLtvInput] = useState<string>(
     formatPercentFromBps(clampTargetLtvBps(targetLtvBpsFromMultiplier(LEVERAGE_DEFAULT_MULTIPLIER_BPS), maxTargetLtvBps)),
   );
-  const [useTargetLtvInput, setUseTargetLtvInput] = useState(false);
+  const [useTargetLtvInput, setUseTargetLtvInput] = useState(true);
   const [useLoanAssetInput, setUseLoanAssetInput] = useState(false);
   const [targetMultiplierBps, setTargetMultiplierBps] = useState<bigint>(defaultMultiplierBps);
+  const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
 
   const multiplierBps = useMemo(() => clampMultiplierBps(targetMultiplierBps, maxMultiplierBps), [targetMultiplierBps, maxMultiplierBps]);
   const targetLtvBps = useMemo(
     () => clampTargetLtvBps(targetLtvBpsFromMultiplier(multiplierBps), maxTargetLtvBps),
     [multiplierBps, maxTargetLtvBps],
   );
+  const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
+  const maxTargetLtvPercent = useMemo(() => Number(maxTargetLtvBps) / 100, [maxTargetLtvBps]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
-  const routeLabel = isSwapRoute ? 'Route: Swap (Bundler3 + Velora)' : isErc4626Route ? 'Route: Vault (ERC4626)' : 'Route: Unsupported';
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
 
   const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
@@ -127,6 +134,7 @@ export function AddCollateralAndLeverage({
     collateralTokenAddress: market.collateralAsset.address,
     collateralTokenDecimals: market.collateralAsset.decimals,
     userAddress: account as `0x${string}` | undefined,
+    slippageBps: swapSlippageBps,
   });
 
   const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
@@ -214,6 +222,7 @@ export function AddCollateralAndLeverage({
     totalAddedCollateral: quote.totalAddedCollateral,
     swapPriceRoute: quote.swapPriceRoute,
     useLoanAssetAsInput: useLoanAssetInput,
+    slippageBps: swapSlippageBps,
     onSuccess: handleTransactionSuccess,
   });
 
@@ -233,21 +242,30 @@ export function AddCollateralAndLeverage({
 
   const handleTargetLtvInputChange = useCallback(
     (value: string) => {
-      const normalized = value.replace(',', '.');
-      if (!LTV_INPUT_REGEX.test(normalized)) return;
-      setTargetLtvInput(normalized);
+      const normalizedInput = normalizeEditablePercentInput(value);
+      if (normalizedInput == null) return;
+      setTargetLtvInput(normalizedInput);
+      if (normalizedInput === '') return;
+      const parsedPercent = Number.parseFloat(normalizedInput);
+      if (!Number.isFinite(parsedPercent)) return;
+      const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
       setTargetMultiplierBps(
-        multiplierBpsFromTargetLtv(clampTargetLtvBps(parsePercentToBps(normalized), maxTargetLtvBps), maxMultiplierBps),
+        multiplierBpsFromTargetLtv(clampTargetLtvBps(parsePercentToBps(clampedPercent.toString()), maxTargetLtvBps), maxMultiplierBps),
       );
     },
-    [maxMultiplierBps, maxTargetLtvBps],
+    [maxMultiplierBps, maxTargetLtvBps, maxTargetLtvPercent],
   );
 
   const handleTargetLtvInputBlur = useCallback(() => {
-    syncInputFieldsFromMultiplier(
-      multiplierBpsFromTargetLtv(clampTargetLtvBps(parsePercentToBps(targetLtvInput), maxTargetLtvBps), maxMultiplierBps),
-    );
-  }, [targetLtvInput, maxMultiplierBps, maxTargetLtvBps, syncInputFieldsFromMultiplier]);
+    const parsedPercent = Number.parseFloat(targetLtvInput.replace(',', '.'));
+    if (!Number.isFinite(parsedPercent)) {
+      setTargetLtvInput(formatEditableLtvPercent(Number(targetLtvBps) / 100, maxTargetLtvPercent));
+      return;
+    }
+    const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
+    const clampedTargetLtvBps = clampTargetLtvBps(parsePercentToBps(clampedPercent.toString()), maxTargetLtvBps);
+    syncInputFieldsFromMultiplier(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
+  }, [targetLtvInput, targetLtvBps, maxMultiplierBps, maxTargetLtvBps, maxTargetLtvPercent, syncInputFieldsFromMultiplier]);
 
   const handleTargetInputModeChange = useCallback(
     (nextUseTargetLtvInput: boolean) => {
@@ -333,7 +351,6 @@ export function AddCollateralAndLeverage({
   ]);
   const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapPriceRoute != null && swapRatePreviewText != null;
   const shouldShowInputConversionPreview = isErc4626Route && useLoanAssetInput && quote.initialCollateralAmount > 0n;
-  const swapSlippagePreviewText = `${formatSlippagePercent(DEFAULT_SLIPPAGE_PERCENT)}%`;
   const renderRateValue = useCallback(
     (apy: number | null): JSX.Element => {
       if (apy == null || !Number.isFinite(apy)) return <span className="font-monospace">-</span>;
@@ -361,21 +378,12 @@ export function AddCollateralAndLeverage({
     if (isErc4626Route && vaultRateInsight.borrowApy3d != null) return vaultRateInsight.borrowApy3d;
     return market.state.borrowApy;
   }, [isErc4626Route, vaultRateInsight.borrowApy3d, market.state.borrowApy]);
-  const maxMultiplierLabel = useMemo(() => formatMultiplierBps(maxMultiplierBps, maxMultiplierBps), [maxMultiplierBps]);
-  const maxTargetLtvLabel = useMemo(() => formatPercentFromBps(maxTargetLtvBps), [maxTargetLtvBps]);
-  const safeBufferLabel = useMemo(() => formatPercentFromBps(LEVERAGE_SAFE_LTV_BUFFER_BPS), []);
-  const currentTargetMultiplierLabel = useMemo(
-    () => formatMultiplierBps(multiplierBps, maxMultiplierBps),
-    [multiplierBps, maxMultiplierBps],
-  );
-  const currentTargetLtvLabel = useMemo(() => formatPercentFromBps(targetLtvBps), [targetLtvBps]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">Leverage Preview</p>
-          <p className="mb-2 text-xs text-secondary">{routeLabel}</p>
           <BorrowPositionRiskCard
             market={market}
             currentCollateral={currentCollateralAssets}
@@ -463,6 +471,9 @@ export function AddCollateralAndLeverage({
                     <input
                       type="text"
                       inputMode="decimal"
+                      min={0}
+                      max={maxTargetLtvPercent}
+                      step={0.01}
                       value={targetLtvInput}
                       onChange={(event) => handleTargetLtvInputChange(event.target.value)}
                       onBlur={handleTargetLtvInputBlur}
@@ -484,17 +495,6 @@ export function AddCollateralAndLeverage({
                   </>
                 )}
               </div>
-              <div className="mt-1 flex items-center justify-between gap-3 text-xs">
-                <span className="text-secondary">
-                  {useTargetLtvInput
-                    ? `Equivalent Multiplier: ${currentTargetMultiplierLabel}x`
-                    : `Equivalent LTV: ${currentTargetLtvLabel}%`}
-                </span>
-                <span className="text-right text-secondary">
-                  {useTargetLtvInput ? `Safe Max: ${maxTargetLtvLabel}%` : `Safe Max: ${maxMultiplierLabel}x`}
-                </span>
-              </div>
-              <p className="mt-1 text-right text-[11px] text-secondary/80">Uses LLTV minus {safeBufferLabel}% safety buffer</p>
             </div>
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
@@ -555,7 +555,10 @@ export function AddCollateralAndLeverage({
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-secondary">Max Slippage</span>
-                      <span>{swapSlippagePreviewText}</span>
+                      <SlippageInlineEditor
+                        value={swapSlippagePercent}
+                        onChange={setSwapSlippagePercent}
+                      />
                     </div>
                   </>
                 )}

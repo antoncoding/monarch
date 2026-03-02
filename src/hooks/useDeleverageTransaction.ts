@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { type Address, encodeAbiParameters, encodeFunctionData, isAddress, isAddressEqual, keccak256, maxUint256, zeroHash } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -6,7 +6,6 @@ import { bundlerV3Abi } from '@/abis/bundlerV3';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
-import { DEFAULT_SLIPPAGE_PERCENT } from '@/features/swap/constants';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -35,10 +34,9 @@ type UseDeleverageTransactionProps = {
   autoWithdrawCollateralAmount: bigint;
   maxCollateralForDebtRepay: bigint;
   swapSellPriceRoute: VeloraPriceRoute | null;
+  slippageBps: number;
   onSuccess?: () => void;
 };
-
-const DELEVERAGE_SWAP_SLIPPAGE_BPS = Math.round(DEFAULT_SLIPPAGE_PERCENT * 100);
 
 /**
  * Executes deleverage transactions for:
@@ -56,12 +54,14 @@ export function useDeleverageTransaction({
   autoWithdrawCollateralAmount,
   maxCollateralForDebtRepay,
   swapSellPriceRoute,
+  slippageBps,
   onSuccess,
 }: UseDeleverageTransactionProps) {
   const { usePermit2: usePermit2Setting } = useAppSettings();
   const tracking = useTransactionTracking('deleverage');
   const { address: account, chainId } = useConnection();
   const toast = useStyledToast();
+  const [executionError, setExecutionError] = useState<string | null>(null);
   const isSwapRoute = route?.kind === 'swap';
   const useSignatureAuthorization = usePermit2Setting && !isSwapRoute;
   const bundlerAddress = useMemo<Address>(() => {
@@ -95,6 +95,7 @@ export function useDeleverageTransaction({
     pendingDescription: `Executing deleverage on market ${market.uniqueKey.slice(2, 8)}...`,
     successDescription: 'Position delevered successfully',
     onSuccess: () => {
+      setExecutionError(null);
       void refetchIsBundlerAuthorized();
       if (onSuccess) void onSuccess();
     },
@@ -111,7 +112,7 @@ export function useDeleverageTransaction({
         {
           id: 'execute',
           title: 'Confirm Deleverage',
-          description: 'Confirm the Bundler3 deleverage transaction in your wallet.',
+          description: 'Confirm the deleverage transaction in your wallet.',
         },
       ];
     }
@@ -213,6 +214,9 @@ export function useDeleverageTransaction({
       }
 
       if (route.kind === 'swap') {
+        if (!Number.isFinite(slippageBps) || slippageBps <= 0) {
+          throw new Error('Invalid slippage tolerance. Please set a positive slippage value.');
+        }
         const swapExecutionAddress = route.paraswapAdapterAddress;
         if (useCloseRoute) {
           if (maxCollateralForDebtRepay <= 0n) {
@@ -240,7 +244,7 @@ export function useDeleverageTransaction({
               network: market.morphoBlue.chain.id,
               userAddress: swapExecutionAddress,
               priceRoute: activePriceRoute,
-              slippageBps: DELEVERAGE_SWAP_SLIPPAGE_BPS,
+              slippageBps,
               ignoreChecks,
             });
 
@@ -292,7 +296,7 @@ export function useDeleverageTransaction({
         }
 
         const swapCallData = swapTxPayload.data;
-        const minLoanOut = withSlippageFloor(quotedLoanOut);
+        const minLoanOut = withSlippageFloor(quotedLoanOut, slippageBps);
         if (isCloseSwap) {
           if (minLoanOut < flashLoanAmount) {
             throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
@@ -499,6 +503,7 @@ export function useDeleverageTransaction({
       tracking.fail();
       console.error('Error during deleverage execution:', error);
       const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'An unexpected error occurred during deleverage.');
+      setExecutionError(userFacingMessage === 'User rejected transaction.' ? null : userFacingMessage);
       if (userFacingMessage !== 'User rejected transaction.') {
         toast.error('Deleverage Failed', userFacingMessage);
       }
@@ -515,6 +520,7 @@ export function useDeleverageTransaction({
     autoWithdrawCollateralAmount,
     maxCollateralForDebtRepay,
     swapSellPriceRoute,
+    slippageBps,
     useSignatureAuthorization,
     isBundlerAuthorized,
     ensureBundlerAuthorization,
@@ -523,7 +529,12 @@ export function useDeleverageTransaction({
     batchAddUserMarkets,
     tracking,
     toast,
+    setExecutionError,
   ]);
+
+  const clearExecutionError = useCallback(() => {
+    setExecutionError(null);
+  }, []);
 
   const authorizeAndDeleverage = useCallback(async () => {
     if (!account) {
@@ -536,6 +547,7 @@ export function useDeleverageTransaction({
     }
 
     try {
+      setExecutionError(null);
       const initialStep: DeleverageStepType = isBundlerAuthorized
         ? 'execute'
         : useSignatureAuthorization
@@ -558,6 +570,7 @@ export function useDeleverageTransaction({
       console.error('Error in authorizeAndDeleverage:', error);
       tracking.fail();
       const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to process deleverage transaction');
+      setExecutionError(userFacingMessage === 'User rejected transaction.' ? null : userFacingMessage);
       if (userFacingMessage !== 'User rejected transaction.') {
         toast.error('Error', userFacingMessage);
       }
@@ -575,6 +588,7 @@ export function useDeleverageTransaction({
     withdrawCollateralAmount,
     executeDeleverage,
     toast,
+    setExecutionError,
   ]);
 
   const isAuthorizationStatusLoading =
@@ -588,6 +602,8 @@ export function useDeleverageTransaction({
     deleveragePending,
     isLoading,
     isBundlerAuthorized,
+    executionError,
+    clearExecutionError,
     authorizeAndDeleverage,
   };
 }

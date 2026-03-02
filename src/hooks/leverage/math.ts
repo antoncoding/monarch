@@ -4,6 +4,7 @@ import { LEVERAGE_MIN_MULTIPLIER_BPS, LEVERAGE_MULTIPLIER_SCALE_BPS } from './ty
 export const LEVERAGE_SLIPPAGE_BUFFER_BPS = 9_950n; // 0.50% tolerance
 export const BPS_SCALE = 10_000n;
 export const WAD_TO_BPS_SCALE = 100_000_000_000_000n;
+const DEFAULT_SLIPPAGE_TOLERANCE_BPS = BPS_SCALE - LEVERAGE_SLIPPAGE_BUFFER_BPS;
 const MAX_TARGET_LTV_BPS = BPS_SCALE - 1n;
 const COMPACT_AMOUNT_LOCALE = 'en-US';
 const COMPACT_AMOUNT_MIN_THRESHOLD = 0.000001;
@@ -12,6 +13,20 @@ const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 
 const minBigInt = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 const floorSub = (value: bigint, subtract: bigint): bigint => (value > subtract ? value - subtract : 0n);
+const getSlippageToleranceBps = (slippageBps?: number): bigint => {
+  if (slippageBps == null || !Number.isFinite(slippageBps)) return DEFAULT_SLIPPAGE_TOLERANCE_BPS;
+  const rounded = BigInt(Math.round(slippageBps));
+  if (rounded <= 0n) return 0n;
+  if (rounded >= BPS_SCALE) return BPS_SCALE - 1n;
+  return rounded;
+};
+
+const getSlippageFloorBps = (slippageBps?: number): bigint => {
+  const toleranceBps = getSlippageToleranceBps(slippageBps);
+  const floorBps = BPS_SCALE - toleranceBps;
+  return floorBps > 0n ? floorBps : 1n;
+};
+
 const toScaledRatio = (numerator: bigint, denominator: bigint): number | null => {
   if (denominator <= 0n) return null;
   const scaledRatio = (numerator * APY_RATIO_SCALE) / denominator;
@@ -134,6 +149,7 @@ export const computeDeleverageProjectedPosition = ({
   maxCollateralForDebtRepay,
   closeRouteAvailable,
   closeBoundIsInputCap,
+  slippageBps,
 }: {
   currentCollateralAssets: bigint;
   currentBorrowAssets: bigint;
@@ -143,12 +159,13 @@ export const computeDeleverageProjectedPosition = ({
   maxCollateralForDebtRepay: bigint;
   closeRouteAvailable: boolean;
   closeBoundIsInputCap: boolean;
+  slippageBps?: number;
 }): DeleverageProjectedPosition => {
   const maxWithdrawCollateral =
     closeRouteAvailable && closeBoundIsInputCap ? minBigInt(maxCollateralForDebtRepay, currentCollateralAssets) : currentCollateralAssets;
   const boundedWithdrawCollateral = minBigInt(withdrawCollateralAmount, currentCollateralAssets);
   const projectedCollateralAfterInput = floorSub(currentCollateralAssets, boundedWithdrawCollateral);
-  const bufferedBorrowAssets = withSlippageCeil(currentBorrowAssets);
+  const bufferedBorrowAssets = withSlippageCeil(currentBorrowAssets, slippageBps);
   // WHY: full-close execution depends on the dedicated close bound, not the optimistic/pessimistic
   // characteristics of the preview repay leg. This keeps repay-by-shares aligned with the real
   // executable close path and avoids leaving debt dust on swap-backed unwinds.
@@ -295,15 +312,16 @@ export const formatTokenAmountPreview = (value: bigint, decimals: number): { com
   full: formatFullTokenAmount(value, decimals),
 });
 
-export const withSlippageFloor = (value: bigint): bigint => {
+export const withSlippageFloor = (value: bigint, slippageBps?: number): bigint => {
   if (value <= 0n) return 0n;
-  const floored = (value * LEVERAGE_SLIPPAGE_BUFFER_BPS) / LEVERAGE_MULTIPLIER_SCALE_BPS;
+  const floorBps = getSlippageFloorBps(slippageBps);
+  const floored = (value * floorBps) / LEVERAGE_MULTIPLIER_SCALE_BPS;
   return floored > 0n ? floored : 1n;
 };
 
-export const withSlippageCeil = (value: bigint): bigint => {
+export const withSlippageCeil = (value: bigint, slippageBps?: number): bigint => {
   if (value <= 0n) return 0n;
-  const ceilBps = LEVERAGE_MULTIPLIER_SCALE_BPS + (LEVERAGE_MULTIPLIER_SCALE_BPS - LEVERAGE_SLIPPAGE_BUFFER_BPS);
+  const ceilBps = LEVERAGE_MULTIPLIER_SCALE_BPS + getSlippageToleranceBps(slippageBps);
   return (value * ceilBps + LEVERAGE_MULTIPLIER_SCALE_BPS - 1n) / LEVERAGE_MULTIPLIER_SCALE_BPS;
 };
 

@@ -8,7 +8,6 @@ import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
 import permit2Abi from '@/abis/permit2';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
-import { DEFAULT_SLIPPAGE_PERCENT } from '@/features/swap/constants';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { usePermit2 } from '@/hooks/usePermit2';
@@ -44,11 +43,10 @@ type UseLeverageTransactionProps = {
   flashLoanAmount: bigint;
   totalAddedCollateral: bigint;
   swapPriceRoute: VeloraPriceRoute | null;
+  slippageBps: number;
   useLoanAssetAsInput: boolean;
   onSuccess?: () => void;
 };
-
-const LEVERAGE_SWAP_SLIPPAGE_BPS = Math.round(DEFAULT_SLIPPAGE_PERCENT * 100);
 
 /**
  * Executes leverage transactions for:
@@ -64,6 +62,7 @@ export function useLeverageTransaction({
   flashLoanAmount,
   totalAddedCollateral,
   swapPriceRoute,
+  slippageBps,
   useLoanAssetAsInput,
   onSuccess,
 }: UseLeverageTransactionProps) {
@@ -167,7 +166,7 @@ export function useLeverageTransaction({
           {
             id: 'execute',
             title: 'Confirm Leverage',
-            description: 'Confirm the Bundler3 leverage transaction in your wallet.',
+            description: 'Confirm the leverage transaction in your wallet.',
           },
         ];
       }
@@ -187,7 +186,7 @@ export function useLeverageTransaction({
           {
             id: 'execute',
             title: 'Confirm Leverage',
-            description: 'Confirm the Bundler3 leverage transaction in your wallet.',
+            description: 'Confirm the leverage transaction in your wallet.',
           },
         ];
       }
@@ -347,6 +346,9 @@ export function useLeverageTransaction({
       };
 
       if (route.kind === 'swap') {
+        if (!Number.isFinite(slippageBps) || slippageBps <= 0) {
+          throw new Error('Invalid slippage tolerance. Please set a positive slippage value.');
+        }
         if (!swapPriceRoute) {
           throw new Error('Missing Velora swap quote for leverage.');
         }
@@ -370,7 +372,7 @@ export function useLeverageTransaction({
               network: market.morphoBlue.chain.id,
               userAddress: swapExecutionAddress,
               priceRoute: activePriceRoute,
-              slippageBps: LEVERAGE_SWAP_SLIPPAGE_BPS,
+              slippageBps,
               ignoreChecks,
             });
 
@@ -660,6 +662,7 @@ export function useLeverageTransaction({
     flashLoanAmount,
     totalAddedCollateral,
     swapPriceRoute,
+    slippageBps,
     usePermit2ForRoute,
     permit2Authorized,
     isBundlerAuthorized,
