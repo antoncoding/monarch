@@ -10,11 +10,18 @@ import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButt
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import {
+  clampTargetLtvBps,
   clampMultiplierBps,
+  computeMaxMultiplierBpsForTargetLtv,
   computeLeverageProjectedPosition,
+  formatPercentFromBps,
   formatMultiplierBps,
   formatTokenAmountPreview,
+  ltvWadToBps,
+  multiplierBpsFromTargetLtv,
+  parsePercentToBps,
   parseMultiplierToBps,
+  targetLtvBpsFromMultiplier,
 } from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
 import { use4626VaultAPR } from '@/hooks/use4626VaultAPR';
@@ -39,6 +46,8 @@ type AddCollateralAndLeverageProps = {
 };
 
 const MULTIPLIER_INPUT_REGEX = /^\d*\.?\d*$/;
+const LTV_INPUT_REGEX = /^\d*\.?\d*$/;
+const LEVERAGE_SAFE_LTV_BUFFER_BPS = 200n; // keep a 2% buffer below liquidation LTV
 
 export function AddCollateralAndLeverage({
   market,
@@ -51,13 +60,27 @@ export function AddCollateralAndLeverage({
 }: AddCollateralAndLeverageProps): JSX.Element {
   const { address: account } = useConnection();
   const { usePermit2: usePermit2Setting, isAprDisplay } = useAppSettings();
+  const lltv = BigInt(market.lltv);
+  const lltvBps = useMemo(() => ltvWadToBps(lltv), [lltv]);
+  const maxTargetLtvBps = useMemo(() => (lltvBps > LEVERAGE_SAFE_LTV_BUFFER_BPS ? lltvBps - LEVERAGE_SAFE_LTV_BUFFER_BPS : 0n), [lltvBps]);
+  const maxMultiplierBps = useMemo(() => computeMaxMultiplierBpsForTargetLtv(maxTargetLtvBps), [maxTargetLtvBps]);
+  const defaultMultiplierBps = useMemo(() => clampMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS, maxMultiplierBps), [maxMultiplierBps]);
 
   const [collateralAmount, setCollateralAmount] = useState<bigint>(0n);
   const [collateralInputError, setCollateralInputError] = useState<string | null>(null);
-  const [multiplierInput, setMultiplierInput] = useState<string>(formatMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS));
+  const [multiplierInput, setMultiplierInput] = useState<string>(formatMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS, maxMultiplierBps));
+  const [targetLtvInput, setTargetLtvInput] = useState<string>(
+    formatPercentFromBps(clampTargetLtvBps(targetLtvBpsFromMultiplier(LEVERAGE_DEFAULT_MULTIPLIER_BPS), maxTargetLtvBps)),
+  );
+  const [useTargetLtvInput, setUseTargetLtvInput] = useState(false);
   const [useLoanAssetInput, setUseLoanAssetInput] = useState(false);
+  const [targetMultiplierBps, setTargetMultiplierBps] = useState<bigint>(defaultMultiplierBps);
 
-  const multiplierBps = useMemo(() => clampMultiplierBps(parseMultiplierToBps(multiplierInput)), [multiplierInput]);
+  const multiplierBps = useMemo(() => clampMultiplierBps(targetMultiplierBps, maxMultiplierBps), [targetMultiplierBps, maxMultiplierBps]);
+  const targetLtvBps = useMemo(
+    () => clampTargetLtvBps(targetLtvBpsFromMultiplier(multiplierBps), maxTargetLtvBps),
+    [multiplierBps, maxTargetLtvBps],
+  );
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
   const routeLabel = isSwapRoute ? 'Route: Swap (Bundler3 + Velora)' : isErc4626Route ? 'Route: Vault (ERC4626)' : 'Route: Unsupported';
@@ -85,6 +108,14 @@ export function AddCollateralAndLeverage({
     setUseLoanAssetInput(false);
   }, [canUseLoanAssetInput]);
 
+  useEffect(() => {
+    const clampedMultiplier = clampMultiplierBps(targetMultiplierBps, maxMultiplierBps);
+    if (clampedMultiplier === targetMultiplierBps) return;
+    setTargetMultiplierBps(clampedMultiplier);
+    setMultiplierInput(formatMultiplierBps(clampedMultiplier, maxMultiplierBps));
+    setTargetLtvInput(formatPercentFromBps(clampTargetLtvBps(targetLtvBpsFromMultiplier(clampedMultiplier), maxTargetLtvBps)));
+  }, [targetMultiplierBps, maxMultiplierBps, maxTargetLtvBps]);
+
   const quote = useLeverageQuote({
     chainId: market.morphoBlue.chain.id,
     route,
@@ -110,7 +141,6 @@ export function AddCollateralAndLeverage({
       }),
     [currentCollateralAssets, currentBorrowAssets, quote.totalAddedCollateral, quote.flashLoanAmount],
   );
-  const lltv = BigInt(market.lltv);
   const marketLiquidity = BigInt(market.state.liquidityAssets);
   const rateLabel = isAprDisplay ? 'APR' : 'APY';
 
@@ -143,16 +173,28 @@ export function AddCollateralAndLeverage({
     [currentBorrowAssets, currentCollateralAssets, oraclePrice],
   );
 
+  const syncInputFieldsFromMultiplier = useCallback(
+    (nextMultiplierBps: bigint) => {
+      const clampedMultiplier = clampMultiplierBps(nextMultiplierBps, maxMultiplierBps);
+      const derivedTargetLtvBps = clampTargetLtvBps(targetLtvBpsFromMultiplier(clampedMultiplier), maxTargetLtvBps);
+
+      setTargetMultiplierBps(clampedMultiplier);
+      setMultiplierInput(formatMultiplierBps(clampedMultiplier, maxMultiplierBps));
+      setTargetLtvInput(formatPercentFromBps(derivedTargetLtvBps));
+    },
+    [maxMultiplierBps, maxTargetLtvBps],
+  );
+
   const handleTransactionSuccess = useCallback(() => {
     // WHY: after a confirmed leverage tx, reset drafts so the panel reflects refreshed onchain position state.
     setCollateralAmount(0n);
     setCollateralInputError(null);
-    setMultiplierInput(formatMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS));
+    syncInputFieldsFromMultiplier(defaultMultiplierBps);
     if (useLoanAssetInput) {
       void refetchLoanTokenBalance();
     }
     if (onSuccess) onSuccess();
-  }, [onSuccess, refetchLoanTokenBalance, useLoanAssetInput]);
+  }, [defaultMultiplierBps, onSuccess, refetchLoanTokenBalance, syncInputFieldsFromMultiplier, useLoanAssetInput]);
 
   const {
     transaction,
@@ -175,15 +217,45 @@ export function AddCollateralAndLeverage({
     onSuccess: handleTransactionSuccess,
   });
 
-  const handleMultiplierInputChange = useCallback((value: string) => {
-    const normalized = value.replace(',', '.');
-    if (!MULTIPLIER_INPUT_REGEX.test(normalized)) return;
-    setMultiplierInput(normalized);
-  }, []);
+  const handleMultiplierInputChange = useCallback(
+    (value: string) => {
+      const normalized = value.replace(',', '.');
+      if (!MULTIPLIER_INPUT_REGEX.test(normalized)) return;
+      setMultiplierInput(normalized);
+      setTargetMultiplierBps(parseMultiplierToBps(normalized, maxMultiplierBps));
+    },
+    [maxMultiplierBps],
+  );
 
   const handleMultiplierInputBlur = useCallback(() => {
-    setMultiplierInput(formatMultiplierBps(clampMultiplierBps(parseMultiplierToBps(multiplierInput))));
-  }, [multiplierInput]);
+    syncInputFieldsFromMultiplier(parseMultiplierToBps(multiplierInput, maxMultiplierBps));
+  }, [multiplierInput, maxMultiplierBps, syncInputFieldsFromMultiplier]);
+
+  const handleTargetLtvInputChange = useCallback(
+    (value: string) => {
+      const normalized = value.replace(',', '.');
+      if (!LTV_INPUT_REGEX.test(normalized)) return;
+      setTargetLtvInput(normalized);
+      setTargetMultiplierBps(
+        multiplierBpsFromTargetLtv(clampTargetLtvBps(parsePercentToBps(normalized), maxTargetLtvBps), maxMultiplierBps),
+      );
+    },
+    [maxMultiplierBps, maxTargetLtvBps],
+  );
+
+  const handleTargetLtvInputBlur = useCallback(() => {
+    syncInputFieldsFromMultiplier(
+      multiplierBpsFromTargetLtv(clampTargetLtvBps(parsePercentToBps(targetLtvInput), maxTargetLtvBps), maxMultiplierBps),
+    );
+  }, [targetLtvInput, maxMultiplierBps, maxTargetLtvBps, syncInputFieldsFromMultiplier]);
+
+  const handleTargetInputModeChange = useCallback(
+    (nextUseTargetLtvInput: boolean) => {
+      setUseTargetLtvInput(nextUseTargetLtvInput);
+      syncInputFieldsFromMultiplier(targetMultiplierBps);
+    },
+    [syncInputFieldsFromMultiplier, targetMultiplierBps],
+  );
 
   const handleLeverage = useCallback(() => {
     const usePermit2Flow = usePermit2Setting;
@@ -289,6 +361,14 @@ export function AddCollateralAndLeverage({
     if (isErc4626Route && vaultRateInsight.borrowApy3d != null) return vaultRateInsight.borrowApy3d;
     return market.state.borrowApy;
   }, [isErc4626Route, vaultRateInsight.borrowApy3d, market.state.borrowApy]);
+  const maxMultiplierLabel = useMemo(() => formatMultiplierBps(maxMultiplierBps, maxMultiplierBps), [maxMultiplierBps]);
+  const maxTargetLtvLabel = useMemo(() => formatPercentFromBps(maxTargetLtvBps), [maxTargetLtvBps]);
+  const safeBufferLabel = useMemo(() => formatPercentFromBps(LEVERAGE_SAFE_LTV_BUFFER_BPS), []);
+  const currentTargetMultiplierLabel = useMemo(
+    () => formatMultiplierBps(multiplierBps, maxMultiplierBps),
+    [multiplierBps, maxMultiplierBps],
+  );
+  const currentTargetLtvLabel = useMemo(() => formatPercentFromBps(targetLtvBps), [targetLtvBps]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -359,18 +439,62 @@ export function AddCollateralAndLeverage({
             </div>
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
-              <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Target Multiplier</p>
-              <div className="relative min-w-0">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={multiplierInput}
-                  onChange={(event) => handleMultiplierInputChange(event.target.value)}
-                  onBlur={handleMultiplierInputBlur}
-                  className="h-10 w-full rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums focus:border-primary focus:outline-none"
-                />
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-secondary">x</span>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
+                  {useTargetLtvInput ? 'Target LTV' : 'Target Multiplier'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-secondary">Use LTV</div>
+                  <IconSwitch
+                    size="sm"
+                    selected={useTargetLtvInput}
+                    onChange={handleTargetInputModeChange}
+                    thumbIcon={null}
+                    classNames={{
+                      wrapper: 'mr-0 h-4 w-9',
+                      thumb: 'h-3 w-3',
+                    }}
+                  />
+                </div>
               </div>
+              <div className="relative min-w-0">
+                {useTargetLtvInput ? (
+                  <>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={targetLtvInput}
+                      onChange={(event) => handleTargetLtvInputChange(event.target.value)}
+                      onBlur={handleTargetLtvInputBlur}
+                      className="h-10 w-full rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums focus:border-primary focus:outline-none"
+                    />
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-secondary">%</span>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={multiplierInput}
+                      onChange={(event) => handleMultiplierInputChange(event.target.value)}
+                      onBlur={handleMultiplierInputBlur}
+                      className="h-10 w-full rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums focus:border-primary focus:outline-none"
+                    />
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-secondary">x</span>
+                  </>
+                )}
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-3 text-xs">
+                <span className="text-secondary">
+                  {useTargetLtvInput
+                    ? `Equivalent Multiplier: ${currentTargetMultiplierLabel}x`
+                    : `Equivalent LTV: ${currentTargetLtvLabel}%`}
+                </span>
+                <span className="text-right text-secondary">
+                  {useTargetLtvInput ? `Safe Max: ${maxTargetLtvLabel}%` : `Safe Max: ${maxMultiplierLabel}x`}
+                </span>
+              </div>
+              <p className="mt-1 text-right text-[11px] text-secondary/80">Uses LLTV minus {safeBufferLabel}% safety buffer</p>
             </div>
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">

@@ -1,7 +1,11 @@
 import { formatUnits } from 'viem';
-import { LEVERAGE_MAX_MULTIPLIER_BPS, LEVERAGE_MIN_MULTIPLIER_BPS, LEVERAGE_MULTIPLIER_SCALE_BPS } from './types';
+import { LEVERAGE_MIN_MULTIPLIER_BPS, LEVERAGE_MULTIPLIER_SCALE_BPS } from './types';
 
 export const LEVERAGE_SLIPPAGE_BUFFER_BPS = 9_950n; // 0.50% tolerance
+export const WAD_SCALE = 1_000_000_000_000_000_000n;
+export const BPS_SCALE = 10_000n;
+export const WAD_TO_BPS_SCALE = 100_000_000_000_000n;
+const MAX_TARGET_LTV_BPS = BPS_SCALE - 1n;
 const COMPACT_AMOUNT_LOCALE = 'en-US';
 const COMPACT_AMOUNT_MIN_THRESHOLD = 0.000001;
 const APY_RATIO_SCALE = 1_000_000_000n;
@@ -16,39 +20,83 @@ const toScaledRatio = (numerator: bigint, denominator: bigint): number | null =>
   return Number.isFinite(ratio) ? ratio : null;
 };
 
-export const clampMultiplierBps = (value: bigint): bigint => {
+export const clampMultiplierBps = (value: bigint, maxMultiplierBps?: bigint): bigint => {
   if (value < LEVERAGE_MIN_MULTIPLIER_BPS) return LEVERAGE_MIN_MULTIPLIER_BPS;
-  if (value > LEVERAGE_MAX_MULTIPLIER_BPS) return LEVERAGE_MAX_MULTIPLIER_BPS;
+  if (maxMultiplierBps && maxMultiplierBps >= LEVERAGE_MIN_MULTIPLIER_BPS && value > maxMultiplierBps) {
+    return maxMultiplierBps;
+  }
   return value;
 };
 
-export const parseMultiplierToBps = (value: string): bigint => {
+export const clampTargetLtvBps = (value: bigint, maxTargetLtvBps?: bigint): bigint => {
+  if (value <= 0n) return 0n;
+  const boundedMax = maxTargetLtvBps && maxTargetLtvBps > 0n ? minBigInt(maxTargetLtvBps, MAX_TARGET_LTV_BPS) : MAX_TARGET_LTV_BPS;
+  return value > boundedMax ? boundedMax : value;
+};
+
+export const parseMultiplierToBps = (value: string, maxMultiplierBps?: bigint): bigint => {
   const normalized = value.trim().replace(',', '.');
   if (normalized.length === 0) return LEVERAGE_MIN_MULTIPLIER_BPS;
 
   const parsed = Number.parseFloat(normalized);
   if (!Number.isFinite(parsed) || parsed <= 1) return LEVERAGE_MIN_MULTIPLIER_BPS;
-  return clampMultiplierBps(BigInt(Math.round(parsed * 10_000)));
+  return clampMultiplierBps(BigInt(Math.round(parsed * Number(BPS_SCALE))), maxMultiplierBps);
 };
 
-export const formatMultiplierBps = (value: bigint): string => {
-  const safe = clampMultiplierBps(value);
-  return (Number(safe) / 10_000).toFixed(2);
+export const formatMultiplierBps = (value: bigint, maxMultiplierBps?: bigint): string => {
+  const safe = clampMultiplierBps(value, maxMultiplierBps);
+  return (Number(safe) / Number(BPS_SCALE)).toFixed(2);
 };
+
+export const parsePercentToBps = (value: string): bigint => {
+  const normalized = value.trim().replace(',', '.');
+  if (normalized.length === 0) return 0n;
+
+  const parsed = Number.parseFloat(normalized);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0n;
+  return BigInt(Math.round(parsed * 100));
+};
+
+export const formatPercentFromBps = (value: bigint): string => {
+  const safe = value > 0n ? value : 0n;
+  return (Number(safe) / 100).toFixed(2);
+};
+
+export const targetLtvBpsFromMultiplier = (multiplierBps: bigint): bigint => {
+  const safeMultiplier = clampMultiplierBps(multiplierBps);
+  if (safeMultiplier <= BPS_SCALE) return 0n;
+  return clampTargetLtvBps(((safeMultiplier - BPS_SCALE) * BPS_SCALE) / safeMultiplier);
+};
+
+export const multiplierBpsFromTargetLtv = (targetLtvBps: bigint, maxMultiplierBps?: bigint): bigint => {
+  const safeTargetLtvBps = clampTargetLtvBps(targetLtvBps);
+  if (safeTargetLtvBps <= 0n) return LEVERAGE_MIN_MULTIPLIER_BPS;
+  const denominator = BPS_SCALE - safeTargetLtvBps;
+  if (denominator <= 0n) return clampMultiplierBps(maxMultiplierBps ?? LEVERAGE_MIN_MULTIPLIER_BPS, maxMultiplierBps);
+  const derived = (BPS_SCALE * BPS_SCALE) / denominator;
+  return clampMultiplierBps(derived, maxMultiplierBps);
+};
+
+export const ltvWadToBps = (ltvWad: bigint): bigint => {
+  if (ltvWad <= 0n) return 0n;
+  return clampTargetLtvBps(ltvWad / WAD_TO_BPS_SCALE);
+};
+
+export const computeMaxMultiplierBpsForTargetLtv = (targetLtvBps: bigint): bigint => multiplierBpsFromTargetLtv(targetLtvBps);
 
 /**
  * Converts user collateral and desired multiplier into extra collateral required
  * via flash liquidity.
  */
-export const computeLeveragedExtraAmount = (baseAmount: bigint, multiplierBps: bigint): bigint => {
+export const computeLeveragedExtraAmount = (baseAmount: bigint, multiplierBps: bigint, maxMultiplierBps?: bigint): bigint => {
   if (baseAmount <= 0n) return 0n;
-  const safeMultiplier = clampMultiplierBps(multiplierBps);
+  const safeMultiplier = clampMultiplierBps(multiplierBps, maxMultiplierBps);
   const leveragedAmount = (baseAmount * safeMultiplier) / LEVERAGE_MULTIPLIER_SCALE_BPS;
   return leveragedAmount > baseAmount ? leveragedAmount - baseAmount : 0n;
 };
 
-export const computeFlashCollateralAmount = (userCollateralAmount: bigint, multiplierBps: bigint): bigint => {
-  return computeLeveragedExtraAmount(userCollateralAmount, multiplierBps);
+export const computeFlashCollateralAmount = (userCollateralAmount: bigint, multiplierBps: bigint, maxMultiplierBps?: bigint): bigint => {
+  return computeLeveragedExtraAmount(userCollateralAmount, multiplierBps, maxMultiplierBps);
 };
 
 export const computeLeverageProjectedPosition = ({

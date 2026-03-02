@@ -30,7 +30,7 @@ export function LeverageModalGlobal({
   const chainId = market.morphoBlue.chain.id;
 
   const { price: oraclePrice } = useOraclePrice({
-    oracle: market.oracleAddress,
+    oracle: market.oracleAddress as `0x${string}`,
     chainId,
   });
 
