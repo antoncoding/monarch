@@ -4,6 +4,7 @@ import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { StyledToast, TransactionToast } from '@/components/ui/styled-toast';
 import { reportHandledError } from '@/utils/sentry';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
+import { cacheUserTransactionHistoryFromReceipt } from '@/utils/user-transaction-history-cache';
 import { getExplorerTxURL } from '../utils/external';
 import type { SupportedNetworks } from '../utils/networks';
 
@@ -39,15 +40,17 @@ export function useTransactionWithToast({
 }: UseTransactionWithToastProps) {
   const { data: hash, mutate: sendTransaction, error: txError, mutateAsync: sendTransactionAsync } = useSendTransaction();
   const reportedErrorKeyRef = useRef<string | null>(null);
+  const handledConfirmationHashRef = useRef<string | null>(null);
 
   const {
+    data: receipt,
     isLoading: isConfirming,
     isSuccess: isConfirmed,
     isError,
     error: receiptError,
   } = useWaitForTransactionReceipt({
     hash,
-    chainId: chainId,
+    chainId,
     confirmations: 0,
   });
 
@@ -86,7 +89,12 @@ export function useTransactionWithToast({
   }, [isConfirming, pendingText, pendingDescription, toastId, onClick, hash]);
 
   useEffect(() => {
-    if (isConfirmed) {
+    if (isConfirmed && hash) {
+      if (handledConfirmationHashRef.current === hash) {
+        return;
+      }
+      handledConfirmationHashRef.current = hash;
+
       toast.update(toastId, {
         render: (
           <TransactionToast
@@ -101,6 +109,15 @@ export function useTransactionWithToast({
         onClick,
         closeButton: true,
       });
+
+      if (receipt && hash && chainId) {
+        cacheUserTransactionHistoryFromReceipt({
+          receipt,
+          txHash: hash,
+          chainId,
+        });
+      }
+
       if (onSuccessRef.current) {
         onSuccessRef.current();
       }
@@ -152,6 +169,7 @@ export function useTransactionWithToast({
     isError,
     txError,
     receiptError,
+    receipt,
     successText,
     successDescription,
     errorText,

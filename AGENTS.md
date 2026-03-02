@@ -155,6 +155,7 @@ When touching transaction and position flows, validation MUST include all releva
 20. **Share-based full-exit withdrawals**: when a rebalance target leaves only dust in a source market, tx builders must switch to share-based `morphoWithdraw` (full shares burn with expected-assets guard) instead of asset-amount withdraws, so "empty market" intent cannot strand residual dust due rounding.
 21. **Preview stability during quote refresh**: transaction-critical risk previews (LTV text, warning banners, risk bars, submit gating hints) must not be driven by transient placeholder/intermediate quote values while quote/route resolution is loading or refetching; display the last settled preview state (or a neutral loading state) until fresh executable quote data is available.
 22. **Bigint-safe input echo formatting**: transaction-critical amount inputs must never round-trip through JavaScript `Number` when syncing bigint state back to text fields; use exact bigint/string unit formatters so typed values (for example `100000`) never mutate into precision-drifted decimals.
+23. **Indexer-lag transaction history bridging**: when earnings/APY depends on recent supply/withdraw history, confirmed on-chain receipts must be parsed into a short-lived local transaction cache (scoped by canonical user address + chain, deduped by tx hash + log index, TTL-bounded), merged into reads while indexers lag, and automatically removed as soon as the API returns the same tx hash to prevent double counting.
 
 ### REQUIRED: Regression Rule Capture
 
