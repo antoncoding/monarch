@@ -6,6 +6,16 @@ export type TransactionStep = {
   description: string;
 };
 
+export type TransactionSummaryItem = {
+  id: string;
+  label: string;
+  value: string;
+  /** Secondary value shown smaller, e.g. the diff like "(+0.07%)" */
+  detail?: string;
+  /** Color the detail text */
+  detailColor?: 'positive' | 'negative';
+};
+
 export type TransactionMetadata = {
   title: string;
   description?: string;
@@ -13,6 +23,8 @@ export type TransactionMetadata = {
   amount?: bigint;
   marketId?: string;
   vaultName?: string;
+  /** Key-value summary shown in the process modal above the step list */
+  summaryItems?: TransactionSummaryItem[];
 };
 
 export type ActiveTransaction = {

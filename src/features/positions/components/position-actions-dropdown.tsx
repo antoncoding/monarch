@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type PositionActionsDropdownProps = {
-  isOwner: boolean;
+  isOwner?: boolean;
   onRebalanceClick: () => void;
 };
 
@@ -17,7 +17,6 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionA
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Stop propagation on keyboard events too
     e.stopPropagation();
   };
 
@@ -43,7 +42,7 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionA
             onClick={onRebalanceClick}
             startContent={<TbArrowsRightLeft className="h-4 w-4" />}
             disabled={!isOwner}
-            className={isOwner ? '' : 'opacity-50 cursor-not-allowed'}
+            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
           >
             Rebalance
           </DropdownMenuItem>

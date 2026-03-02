@@ -331,10 +331,6 @@ export function SuppliedMorphoBlueGroupedTable({
                         <PositionActionsDropdown
                           isOwner={isOwner}
                           onRebalanceClick={() => {
-                            if (!isOwner) {
-                              toast.error('No authorization', 'You can only rebalance your own positions');
-                              return;
-                            }
                             openModal('rebalance', {
                               groupedPosition,
                               refetch,
