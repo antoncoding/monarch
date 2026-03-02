@@ -15,6 +15,7 @@ import { useConnection } from 'wagmi';
 const SMART_REBALANCE_FEE_BPS = 4n; // measured in tenths of a BPS (0.4 bps = 0.004%).
 const FEE_BPS_DENOMINATOR = 100_000n;
 const SMART_REBALANCE_MAX_FEE_USD = 4;
+const SMART_REBALANCE_SHARE_WITHDRAW_DUST_BUFFER = 1000n;
 
 type SmartRebalanceFeeBreakdown = {
   totalFee: bigint;
@@ -162,7 +163,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
       const supplyShares = BigInt(
         groupedPosition.markets.find((position) => position.market.uniqueKey === market.uniqueKey)?.state.supplyShares ?? '0',
       );
-      const isFullWithdraw = delta.targetAmount === 0n && supplyShares > 0n;
+      const shouldWithdrawByShares = supplyShares > 0n && delta.targetAmount <= SMART_REBALANCE_SHARE_WITHDRAW_DUST_BUFFER;
 
       if (
         !market.loanAsset?.address ||
@@ -188,9 +189,9 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
           functionName: 'morphoWithdraw',
           args: [
             marketParams,
-            isFullWithdraw ? 0n : withdrawAmount,
-            isFullWithdraw ? supplyShares : 0n,
-            isFullWithdraw ? withdrawAmount : maxUint256,
+            shouldWithdrawByShares ? 0n : withdrawAmount,
+            shouldWithdrawByShares ? supplyShares : 0n,
+            shouldWithdrawByShares ? withdrawAmount : maxUint256,
             account,
           ],
         }),

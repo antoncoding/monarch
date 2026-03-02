@@ -152,6 +152,7 @@ When touching transaction and position flows, validation MUST include all releva
 17. **Permit2 time-units and adapter balance hygiene**: Permit2 `expiration`/`sigDeadline` values must always be unix seconds (never milliseconds), and every adapter-executed swap leg must sweep leftover source tokens from the adapter before bundle exit so shared-adapter balances cannot accumulate between transactions.
 18. **Smart-rebalance constraint integrity**: treat user max-allocation limits (especially `0%`) as hard constraints in planner output and previews, not soft objective hints; when liquidity/capacity permits, planner targets must not leave avoidable residual allocation above cap, and full-exit targets must use tx-construction-compatible withdrawal semantics so previewed and executed allocations stay aligned.
 19. **Monotonic transaction-step updates**: never call `tracking.update(...)` unconditionally in tx hooks; compute step order for the active flow and only advance when the target step is strictly later than the current runtime step, so auth/permit pre-satisfied states cannot regress the stepper backwards.
+20. **Share-based full-exit withdrawals**: when a rebalance target leaves only dust in a source market, tx builders must switch to share-based `morphoWithdraw` (full shares burn with expected-assets guard) instead of asset-amount withdraws, so "empty market" intent cannot strand residual dust due rounding.
 
 ### REQUIRED: Regression Rule Capture
 
