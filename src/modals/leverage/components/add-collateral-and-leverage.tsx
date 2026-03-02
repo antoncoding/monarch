@@ -6,7 +6,6 @@ import {
   clampEditablePercent,
   computeLtv,
   formatEditableLtvPercent,
-  normalizeEditablePercentInput,
 } from '@/modals/borrow/components/helpers';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
@@ -51,7 +50,7 @@ type AddCollateralAndLeverageProps = {
   isRefreshing?: boolean;
 };
 
-const MULTIPLIER_INPUT_REGEX = /^\d*\.?\d*$/;
+const EDITABLE_DECIMAL_INPUT_REGEX = /^\d*[.,]?\d*$/;
 const LEVERAGE_SAFE_LTV_BUFFER_BPS = 100n; // keep a 1% buffer below liquidation LTV
 
 export function AddCollateralAndLeverage({
@@ -228,12 +227,10 @@ export function AddCollateralAndLeverage({
 
   const handleMultiplierInputChange = useCallback(
     (value: string) => {
-      const normalized = value.replace(',', '.');
-      if (!MULTIPLIER_INPUT_REGEX.test(normalized)) return;
-      setMultiplierInput(normalized);
-      setTargetMultiplierBps(parseMultiplierToBps(normalized, maxMultiplierBps));
+      if (!EDITABLE_DECIMAL_INPUT_REGEX.test(value)) return;
+      setMultiplierInput(value);
     },
-    [maxMultiplierBps],
+    [],
   );
 
   const handleMultiplierInputBlur = useCallback(() => {
@@ -242,18 +239,10 @@ export function AddCollateralAndLeverage({
 
   const handleTargetLtvInputChange = useCallback(
     (value: string) => {
-      const normalizedInput = normalizeEditablePercentInput(value);
-      if (normalizedInput == null) return;
-      setTargetLtvInput(normalizedInput);
-      if (normalizedInput === '') return;
-      const parsedPercent = Number.parseFloat(normalizedInput);
-      if (!Number.isFinite(parsedPercent)) return;
-      const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
-      setTargetMultiplierBps(
-        multiplierBpsFromTargetLtv(clampTargetLtvBps(parsePercentToBps(clampedPercent.toString()), maxTargetLtvBps), maxMultiplierBps),
-      );
+      if (!EDITABLE_DECIMAL_INPUT_REGEX.test(value)) return;
+      setTargetLtvInput(value);
     },
-    [maxMultiplierBps, maxTargetLtvBps, maxTargetLtvPercent],
+    [],
   );
 
   const handleTargetLtvInputBlur = useCallback(() => {
@@ -263,7 +252,7 @@ export function AddCollateralAndLeverage({
       return;
     }
     const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
-    const clampedTargetLtvBps = clampTargetLtvBps(parsePercentToBps(clampedPercent.toString()), maxTargetLtvBps);
+    const clampedTargetLtvBps = clampTargetLtvBps(parsePercentToBps(clampedPercent.toString(), maxTargetLtvBps), maxTargetLtvBps);
     syncInputFieldsFromMultiplier(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
   }, [targetLtvInput, targetLtvBps, maxMultiplierBps, maxTargetLtvBps, maxTargetLtvPercent, syncInputFieldsFromMultiplier]);
 

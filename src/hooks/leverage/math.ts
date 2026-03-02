@@ -49,13 +49,27 @@ export const clampTargetLtvBps = (value: bigint, maxTargetLtvBps?: bigint): bigi
   return value > boundedMax ? boundedMax : value;
 };
 
+export const clampPercentBps = (value: bigint, maxPercentBps?: bigint): bigint => {
+  if (value <= 0n) return 0n;
+  if (maxPercentBps !== undefined && maxPercentBps >= 0n && value > maxPercentBps) {
+    return maxPercentBps;
+  }
+  return value;
+};
+
 export const parseMultiplierToBps = (value: string, maxMultiplierBps?: bigint): bigint => {
   const normalized = value.trim().replace(',', '.');
   if (normalized.length === 0) return LEVERAGE_MIN_MULTIPLIER_BPS;
 
   const parsed = Number.parseFloat(normalized);
   if (!Number.isFinite(parsed) || parsed <= 1) return LEVERAGE_MIN_MULTIPLIER_BPS;
-  return clampMultiplierBps(BigInt(Math.round(parsed * Number(BPS_SCALE))), maxMultiplierBps);
+  const scaled = parsed * Number(BPS_SCALE);
+  const rounded = Math.round(scaled);
+  if (!Number.isFinite(scaled) || !Number.isSafeInteger(rounded)) {
+    return clampMultiplierBps(maxMultiplierBps ?? LEVERAGE_MIN_MULTIPLIER_BPS, maxMultiplierBps);
+  }
+
+  return clampMultiplierBps(BigInt(rounded), maxMultiplierBps);
 };
 
 export const formatMultiplierBps = (value: bigint, maxMultiplierBps?: bigint): string => {
@@ -63,13 +77,19 @@ export const formatMultiplierBps = (value: bigint, maxMultiplierBps?: bigint): s
   return (Number(safe) / Number(BPS_SCALE)).toFixed(2);
 };
 
-export const parsePercentToBps = (value: string): bigint => {
+export const parsePercentToBps = (value: string, maxPercentBps?: bigint): bigint => {
   const normalized = value.trim().replace(',', '.');
   if (normalized.length === 0) return 0n;
 
   const parsed = Number.parseFloat(normalized);
   if (!Number.isFinite(parsed) || parsed <= 0) return 0n;
-  return BigInt(Math.round(parsed * 100));
+  const scaled = parsed * 100;
+  const rounded = Math.round(scaled);
+  if (!Number.isFinite(scaled) || !Number.isSafeInteger(rounded)) {
+    return clampPercentBps(maxPercentBps ?? 0n, maxPercentBps);
+  }
+
+  return clampPercentBps(BigInt(rounded), maxPercentBps);
 };
 
 export const formatPercentFromBps = (value: bigint): string => {
