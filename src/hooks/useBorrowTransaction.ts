@@ -6,7 +6,7 @@ import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
-import { useMorphoAuthorization } from './useMorphoAuthorization';
+import { useBundlerAuthorizationStep } from './useBundlerAuthorizationStep';
 import { usePermit2 } from './usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
@@ -45,11 +45,10 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
   const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
 
   // Hook for Morpho bundler authorization (both sig and tx)
-  const { isBundlerAuthorized, isAuthorizingBundler, authorizeBundlerWithSignature, authorizeWithTransaction, refetchIsBundlerAuthorized } =
-    useMorphoAuthorization({
-      chainId: market.morphoBlue.chain.id,
-      authorized: bundlerAddress,
-    });
+  const { isBundlerAuthorized, isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep({
+    chainId: market.morphoBlue.chain.id,
+    bundlerAddress: bundlerAddress as Address,
+  });
 
   // Get approval for collateral token
   const {
@@ -165,11 +164,9 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         tracking.update('execute');
 
         // Bundler authorization may still be needed for the borrow operation
-        if (!isBundlerAuthorized) {
-          const bundlerAuthSignature = await authorizeBundlerWithSignature();
-          if (bundlerAuthSignature) {
-            transactions.push(bundlerAuthSignature.authorizationTxData);
-          }
+        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
+        if (authorizationTxData) {
+          transactions.push(authorizationTxData);
         }
       } else if (usePermit2Setting) {
         // --- Permit2 Flow ---
@@ -180,9 +177,9 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
         }
 
         tracking.update('authorize_bundler_sig');
-        const bundlerAuthSignature = await authorizeBundlerWithSignature(); // Get signature for Bundler auth if needed
-        if (bundlerAuthSignature) {
-          transactions.push(bundlerAuthSignature.authorizationTxData);
+        const { authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' }); // Get signature for Bundler auth if needed
+        if (authorizationTxData) {
+          transactions.push(authorizationTxData);
           await new Promise((resolve) => setTimeout(resolve, 800)); // UI delay
         }
 
@@ -212,8 +209,8 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
       } else {
         // --- Standard ERC20 Flow ---
         tracking.update('authorize_bundler_tx');
-        const bundlerTxAuthorized = await authorizeWithTransaction(); // Authorize Bundler via TX if needed
-        if (!bundlerTxAuthorized) {
+        const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' }); // Authorize Bundler via TX if needed
+        if (!authorized) {
           throw new Error('Failed to authorize Bundler via transaction.'); // Stop if auth tx fails/is rejected
         }
         // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeWithTransaction
@@ -332,10 +329,9 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     usePermit2Setting,
     permit2Authorized,
     authorizePermit2,
-    authorizeBundlerWithSignature,
+    ensureBundlerAuthorization,
     isBundlerAuthorized,
     signForBundlers,
-    authorizeWithTransaction,
     isApproved,
     approve,
     batchAddUserMarkets,

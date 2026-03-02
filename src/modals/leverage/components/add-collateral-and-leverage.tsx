@@ -47,7 +47,7 @@ type AddCollateralAndLeverageProps = {
 
 const MULTIPLIER_INPUT_REGEX = /^\d*\.?\d*$/;
 const LTV_INPUT_REGEX = /^\d*\.?\d*$/;
-const LEVERAGE_SAFE_LTV_BUFFER_BPS = 200n; // keep a 2% buffer below liquidation LTV
+const LEVERAGE_SAFE_LTV_BUFFER_BPS = 100n; // keep a 1% buffer below liquidation LTV
 
 export function AddCollateralAndLeverage({
   market,

@@ -13,7 +13,6 @@ export const VELORA_API_BASE_URL = 'https://api.paraswap.io';
  */
 export const VELORA_PRICES_API_VERSION = '6.2';
 
-
 /**
  * Default slippage tolerance as a percentage (0.5 = 0.5%)
  */

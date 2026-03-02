@@ -2,7 +2,6 @@ import { formatUnits } from 'viem';
 import { LEVERAGE_MIN_MULTIPLIER_BPS, LEVERAGE_MULTIPLIER_SCALE_BPS } from './types';
 
 export const LEVERAGE_SLIPPAGE_BUFFER_BPS = 9_950n; // 0.50% tolerance
-export const WAD_SCALE = 1_000_000_000_000_000_000n;
 export const BPS_SCALE = 10_000n;
 export const WAD_TO_BPS_SCALE = 100_000_000_000_000n;
 const MAX_TARGET_LTV_BPS = BPS_SCALE - 1n;
@@ -30,7 +29,8 @@ export const clampMultiplierBps = (value: bigint, maxMultiplierBps?: bigint): bi
 
 export const clampTargetLtvBps = (value: bigint, maxTargetLtvBps?: bigint): bigint => {
   if (value <= 0n) return 0n;
-  const boundedMax = maxTargetLtvBps && maxTargetLtvBps > 0n ? minBigInt(maxTargetLtvBps, MAX_TARGET_LTV_BPS) : MAX_TARGET_LTV_BPS;
+  const boundedMax =
+    maxTargetLtvBps === undefined ? MAX_TARGET_LTV_BPS : minBigInt(maxTargetLtvBps > 0n ? maxTargetLtvBps : 0n, MAX_TARGET_LTV_BPS);
   return value > boundedMax ? boundedMax : value;
 };
 
