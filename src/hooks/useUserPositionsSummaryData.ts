@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -8,7 +8,7 @@ import { useBlockTimestamps } from './queries/useBlockTimestamps';
 import { usePositionSnapshots } from './queries/usePositionSnapshots';
 import { useUserTransactionsQuery } from './queries/useUserTransactionsQuery';
 import { usePositionsWithEarnings, getPeriodTimestamp } from './usePositionsWithEarnings';
-import { mergeUserTransactionsWithRecentCache } from '@/utils/user-transaction-history-cache';
+import { mergeUserTransactionsWithRecentCache, reconcileUserTransactionHistoryCache } from '@/utils/user-transaction-history-cache';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
 export type { EarningsPeriod } from '@/stores/usePositionsFilters';
@@ -72,6 +72,14 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
       }),
     [user, uniqueChainIds, txData?.items],
   );
+
+  useEffect(() => {
+    reconcileUserTransactionHistoryCache({
+      userAddress: user,
+      chainIds: uniqueChainIds,
+      apiTransactions: txData?.items ?? [],
+    });
+  }, [user, uniqueChainIds, txData?.items]);
 
   const {
     data: allSnapshots,

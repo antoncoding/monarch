@@ -30,15 +30,6 @@ type CachedUserTransactionEntry = {
 
 const normalizeAddress = (address: string): Address => address.toLowerCase() as Address;
 
-const logInfo = (message: string, meta?: Record<string, unknown>): void => {
-  if (!IS_DEV) return;
-  if (meta) {
-    console.info(LOG_PREFIX, message, meta);
-    return;
-  }
-  console.info(LOG_PREFIX, message);
-};
-
 const getTransactionDedupKey = (transaction: UserTransaction): string => {
   const marketKey = transaction.data?.market?.uniqueKey?.toLowerCase() ?? '';
   const assets = transaction.data?.assets ?? '0';
@@ -96,6 +87,11 @@ const writeCacheEntries = (entries: CachedUserTransactionEntry[]): void => {
   }
 };
 
+const getActiveCacheEntries = (): CachedUserTransactionEntry[] => {
+  const now = Date.now();
+  return readCacheEntries().filter((entry) => entry.expiresAt > now);
+};
+
 const readAndPruneCacheEntries = (): CachedUserTransactionEntry[] => {
   const entries = readCacheEntries();
   if (entries.length === 0) return entries;
@@ -132,8 +128,7 @@ export function cacheUserTransactionHistoryFromReceipt({
   const expiresAt = Date.now() + CACHE_TTL_MS;
   const parsedEntries: CachedUserTransactionEntry[] = [];
 
-  for (let index = 0; index < receipt.logs.length; index += 1) {
-    const log = receipt.logs[index];
+  for (const [index, log] of receipt.logs.entries()) {
     if (log.address.toLowerCase() !== morphoAddress) continue;
     if (log.topics.length === 0) continue;
 
@@ -186,36 +181,21 @@ export function cacheUserTransactionHistoryFromReceipt({
   const activeEntries = readAndPruneCacheEntries();
   const existingKeys = new Set(activeEntries.map(getCacheEntryDedupKey));
   const nextEntries = [...activeEntries];
+  let addedCount = 0;
 
   for (const entry of parsedEntries) {
     const key = getCacheEntryDedupKey(entry);
-    if (existingKeys.has(key)) {
-      logInfo('Skipped duplicate bridge event', {
-        txHash: entry.tx.hash,
-        chainId: entry.chainId,
-        logIndex: entry.logIndex,
-        type: entry.tx.type,
-        marketUniqueKey: entry.tx.data.market.uniqueKey,
-        userAddress: entry.userAddress,
-      });
-      continue;
-    }
+    if (existingKeys.has(key)) continue;
     existingKeys.add(key);
     nextEntries.push(entry);
-    logInfo('Added receipt event to temporary history', {
-      txHash: entry.tx.hash,
-      chainId: entry.chainId,
-      logIndex: entry.logIndex,
-      type: entry.tx.type,
-      marketUniqueKey: entry.tx.data.market.uniqueKey,
-      assets: entry.tx.data.assets,
-      shares: entry.tx.data.shares,
-      userAddress: entry.userAddress,
-      expiresAt: entry.expiresAt,
-    });
+    addedCount += 1;
   }
 
   writeCacheEntries(nextEntries);
+
+  if (IS_DEV && addedCount > 0) {
+    console.log(LOG_PREFIX, `combining ${addedCount} events from tx ${txHash}`);
+  }
 }
 
 export function mergeUserTransactionsWithRecentCache({
@@ -235,45 +215,23 @@ export function mergeUserTransactionsWithRecentCache({
   const chainIdSet = new Set(chainIds);
   const apiHashes = new Set(apiTransactions.map((tx) => tx.hash.toLowerCase()));
 
-  const activeEntries = readAndPruneCacheEntries();
+  const activeEntries = getActiveCacheEntries();
   if (activeEntries.length === 0) {
     return apiTransactions;
   }
 
-  const removedForApiCatchup: CachedUserTransactionEntry[] = [];
-  const cleanedEntries = activeEntries.filter((entry) => {
-    const isRelevantEntry = entry.userAddress === normalizedUser && chainIdSet.has(entry.chainId);
-    if (!isRelevantEntry) return true;
-    const shouldKeep = !apiHashes.has(entry.tx.hash.toLowerCase());
-    if (!shouldKeep) {
-      removedForApiCatchup.push(entry);
-    }
-    return shouldKeep;
-  });
-
-  if (cleanedEntries.length !== activeEntries.length) {
-    writeCacheEntries(cleanedEntries);
-    logInfo('Removed temporary history entries now present in API history', {
-      userAddress: normalizedUser,
-      removedCount: removedForApiCatchup.length,
-      removedTxHashes: [...new Set(removedForApiCatchup.map((entry) => entry.tx.hash.toLowerCase()))],
-    });
-  }
-
-  const cachedTransactions = cleanedEntries
-    .filter((entry) => entry.userAddress === normalizedUser && chainIdSet.has(entry.chainId))
+  const cachedTransactions = activeEntries
+    .filter((entry) => {
+      if (entry.userAddress !== normalizedUser || !chainIdSet.has(entry.chainId)) {
+        return false;
+      }
+      return !apiHashes.has(entry.tx.hash.toLowerCase());
+    })
     .map((entry) => entry.tx);
 
   if (cachedTransactions.length === 0) {
     return apiTransactions;
   }
-
-  logInfo('Merged temporary history entries into user transaction stream', {
-    userAddress: normalizedUser,
-    chainIds: [...chainIdSet],
-    apiCount: apiTransactions.length,
-    cachedCount: cachedTransactions.length,
-  });
 
   const deduped: UserTransaction[] = [];
   const seen = new Set<string>();
@@ -287,4 +245,37 @@ export function mergeUserTransactionsWithRecentCache({
 
   deduped.sort((a, b) => b.timestamp - a.timestamp);
   return deduped;
+}
+
+export function reconcileUserTransactionHistoryCache({
+  userAddress,
+  chainIds,
+  apiTransactions,
+}: {
+  userAddress: string | undefined;
+  chainIds: number[];
+  apiTransactions: UserTransaction[];
+}): void {
+  if (typeof window === 'undefined' || !userAddress || chainIds.length === 0) {
+    return;
+  }
+
+  const normalizedUser = normalizeAddress(userAddress);
+  const chainIdSet = new Set(chainIds);
+  const apiHashes = new Set(apiTransactions.map((tx) => tx.hash.toLowerCase()));
+
+  const activeEntries = readAndPruneCacheEntries();
+  if (activeEntries.length === 0) return;
+
+  const cleanedEntries = activeEntries.filter((entry) => {
+    const isRelevantEntry = entry.userAddress === normalizedUser && chainIdSet.has(entry.chainId);
+    if (!isRelevantEntry) return true;
+
+    const shouldKeep = !apiHashes.has(entry.tx.hash.toLowerCase());
+    return shouldKeep;
+  });
+
+  if (cleanedEntries.length === activeEntries.length) return;
+
+  writeCacheEntries(cleanedEntries);
 }

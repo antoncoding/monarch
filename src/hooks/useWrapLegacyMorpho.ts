@@ -36,6 +36,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
     pendingText: 'Wrapping MORPHO...',
     successText: 'Successfully wrapped MORPHO tokens!',
     errorText: 'Failed to wrap MORPHO tokens',
+    chainId: SupportedNetworks.Mainnet,
     onSuccess: () => {
       tracking.complete();
       onSuccess?.();
