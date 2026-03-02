@@ -841,7 +841,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
               </div>
             )}
 
-            {!isSmartCalculating && smartPlan && (
+            {smartPlan && (
               <PreviewSection
                 title="Transaction Preview"
                 rows={smartPreviewRows}
