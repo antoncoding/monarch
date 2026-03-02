@@ -87,7 +87,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
 
   const containerClassName = [
     'flex flex-col gap-2 pb-4',
-    className ?? 'w-full',
+    loading ? 'w-full' : (className ?? 'w-full'),
     loading || isEmpty || markets.length === 0 ? 'items-center' : '',
   ]
     .filter((value): value is string => Boolean(value))
@@ -134,7 +134,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
         {loading ? (
           <LoadingScreen
             message="Loading Morpho Blue Markets..."
-            className="min-h-[300px] container px-[4%]"
+            className="min-h-[300px] w-full px-4"
           />
         ) : isEmpty ? (
           <div className="flex justify-center min-h-[200px] items-center">

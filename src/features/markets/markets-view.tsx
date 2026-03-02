@@ -46,6 +46,8 @@ export default function Markets() {
 
   // Effective table view mode - always compact on mobile
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
+  const isLoadingTableState = loading;
+  const shouldUseFullWidthTableLayout = isLoadingTableState || effectiveTableViewMode === 'compact';
 
   // Compute unique collaterals and loan assets for filter dropdowns
   useEffect(() => {
@@ -179,14 +181,14 @@ export default function Markets() {
         </div>
       </div>
 
-      {/* Table Section - centered when expanded, full width when compact */}
-      <div className={effectiveTableViewMode === 'expanded' ? 'mt-2 ' : 'container mt-2'}>
-        <div className={effectiveTableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
+      {/* Table Section - force full width while loading, preserve expanded/compact behavior after load */}
+      <div className={shouldUseFullWidthTableLayout ? 'container mt-2' : 'mt-2'}>
+        <div className={shouldUseFullWidthTableLayout ? 'w-full' : 'flex justify-center'}>
           <MarketsTable
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
-            className={effectiveTableViewMode === 'compact' ? 'w-full' : 'w-fit'}
-            tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : 'w-fit'}
+            className={shouldUseFullWidthTableLayout ? 'w-full' : 'w-fit'}
+            tableClassName={shouldUseFullWidthTableLayout ? 'w-full min-w-full' : 'w-fit'}
             onRefresh={handleRefresh}
             isMobile={isMobile}
           />
