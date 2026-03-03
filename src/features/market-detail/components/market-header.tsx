@@ -10,11 +10,13 @@ import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
 import { MdError } from 'react-icons/md';
 import { BsArrowUpCircle, BsArrowDownLeftCircle, BsFillLightningFill } from 'react-icons/bs';
 import { GoStarFill, GoStar } from 'react-icons/go';
+import { TbTrendingUp } from 'react-icons/tb';
 import { AiOutlineStop } from 'react-icons/ai';
 import { FiExternalLink } from 'react-icons/fi';
 import { LuCopy, LuArrowDownToLine, LuRefreshCw } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { SplitActionButton } from '@/components/ui/split-action-button';
+import { useModal } from '@/hooks/useModal';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { BlacklistConfirmationModal } from '@/features/markets/components/blacklist-confirmation-modal';
@@ -122,19 +124,23 @@ function RiskIcon({ level }: { level: RiskLevel }): React.ReactNode {
 type ActionButtonsProps = {
   market: Market;
   userPosition: MarketPosition | null;
+  enableExperimentalLeverage: boolean;
   onSupplyClick: () => void;
   onWithdrawClick: () => void;
   onBorrowClick: () => void;
   onRepayClick: () => void;
+  onLeverageClick: () => void;
 };
 
 function ActionButtons({
   market,
   userPosition,
+  enableExperimentalLeverage,
   onSupplyClick,
   onWithdrawClick,
   onBorrowClick,
   onRepayClick,
+  onLeverageClick,
 }: ActionButtonsProps): React.ReactNode {
   // Compute position states once
   const hasSupply = userPosition !== null && BigInt(userPosition.state.supplyShares) > 0n;
@@ -204,6 +210,24 @@ function ActionButtons({
       </div>
     ) : undefined;
 
+  const borrowDropdownItems = [
+    {
+      label: 'Repay',
+      icon: <LuRefreshCw className="h-4 w-4" />,
+      onClick: onRepayClick,
+      disabled: !hasBorrow,
+    },
+  ];
+
+  if (enableExperimentalLeverage) {
+    borrowDropdownItems.push({
+      label: 'Leverage',
+      icon: <TbTrendingUp className="h-4 w-4" />,
+      onClick: onLeverageClick,
+      disabled: false,
+    });
+  }
+
   return (
     <>
       <SplitActionButton
@@ -226,14 +250,7 @@ function ActionButtons({
         icon={<BsArrowDownLeftCircle className="h-4 w-4" />}
         onClick={onBorrowClick}
         indicator={{ show: hasBorrowPosition, tooltip: borrowTooltip }}
-        dropdownItems={[
-          {
-            label: 'Repay',
-            icon: <LuRefreshCw className="h-4 w-4" />,
-            onClick: onRepayClick,
-            disabled: !hasBorrow,
-          },
-        ]}
+        dropdownItems={borrowDropdownItems}
       />
     </>
   );
@@ -349,8 +366,9 @@ export function MarketHeader({
 }: MarketHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isBlacklistModalOpen, setIsBlacklistModalOpen] = useState(false);
+  const { open: openModal } = useModal();
   const { short: rateLabel } = useRateLabel();
-  const { isAprDisplay, showDeveloperOptions } = useAppSettings();
+  const { isAprDisplay, showDeveloperOptions, enableExperimentalLeverage } = useAppSettings();
   const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const toast = useStyledToast();
@@ -382,6 +400,13 @@ export function MarketHeader({
 
   const handleConfirmBlacklist = () => {
     addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id);
+  };
+
+  const handleOpenLeverage = () => {
+    openModal('leverage', {
+      market,
+      defaultMode: 'leverage',
+    });
   };
 
   const handleCopyMarketId = async () => {
@@ -569,10 +594,12 @@ export function MarketHeader({
               <ActionButtons
                 market={market}
                 userPosition={userPosition}
+                enableExperimentalLeverage={enableExperimentalLeverage}
                 onSupplyClick={onSupplyClick}
                 onWithdrawClick={onWithdrawClick}
                 onBorrowClick={onBorrowClick}
                 onRepayClick={onRepayClick}
+                onLeverageClick={handleOpenLeverage}
               />
 
               {/* Advanced Options Dropdown */}

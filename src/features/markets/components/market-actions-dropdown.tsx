@@ -7,6 +7,7 @@ import { AiOutlineStop } from 'react-icons/ai';
 import { GoStarFill, GoStar, GoGraph } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { BsArrowUpCircle, BsArrowDownLeftCircle } from 'react-icons/bs';
+import { TbTrendingUp } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { Market } from '@/utils/types';
@@ -15,6 +16,7 @@ import { useModal } from '@/hooks/useModal';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 
 type MarketActionsDropdownProps = {
   market: Market;
@@ -23,6 +25,7 @@ type MarketActionsDropdownProps = {
 export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const { open: openModal } = useModal();
+  const { enableExperimentalLeverage } = useAppSettings();
   const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const { success: toastSuccess } = useStyledToast();
@@ -52,6 +55,13 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
   const onMarketClick = () => {
     const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
     router.push(marketPath);
+  };
+
+  const handleOpenLeverage = () => {
+    openModal('leverage', {
+      market,
+      defaultMode: 'leverage',
+    });
   };
 
   return (
@@ -89,6 +99,15 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
           >
             Borrow
           </DropdownMenuItem>
+
+          {enableExperimentalLeverage && (
+            <DropdownMenuItem
+              onClick={handleOpenLeverage}
+              startContent={<TbTrendingUp className="h-4 w-4" />}
+            >
+              Leverage
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem
             onClick={() => {
