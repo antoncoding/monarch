@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { erc20Abi, formatUnits } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
-import { clampEditablePercent, computeLtv, formatEditableLtvPercent } from '@/modals/borrow/components/helpers';
+import { LTV_WAD, clampEditablePercent, computeLtv, formatEditableLtvPercent } from '@/modals/borrow/components/helpers';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -13,7 +13,7 @@ import {
   clampTargetLtvBps,
   clampMultiplierBps,
   computeMaxMultiplierBpsForTargetLtv,
-  computeExpectedNetCarryApy,
+  convertVaultSharesToUnderlyingAssets,
   computeLeverageProjectedPosition,
   formatPercentFromBps,
   formatMultiplierBps,
@@ -26,6 +26,7 @@ import {
   targetLtvBpsFromMultiplier,
 } from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
+import { useMerklHoldIncentivesQuery } from '@/hooks/queries/useMerklHoldIncentivesQuery';
 import { use4626VaultAPR } from '@/hooks/use4626VaultAPR';
 import { useLeverageQuote } from '@/hooks/useLeverageQuote';
 import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
@@ -36,7 +37,7 @@ import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
 import { getLeverageFee } from '@/config/fees';
 import { formatBalance } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
-import { convertApyToApr } from '@/utils/rateMath';
+import { convertAprToApy, convertApyToApr } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
 
@@ -66,6 +67,7 @@ export function AddCollateralAndLeverage({
   const {
     usePermit2: usePermit2Setting,
     isAprDisplay,
+    showFullRewardAPY,
     leverageUseTargetLtvInput: useTargetLtvInput,
     setLeverageUseTargetLtvInput,
   } = useAppSettings();
@@ -179,15 +181,17 @@ export function AddCollateralAndLeverage({
     if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
     return null;
   }, [hasQuoteChanges, collateralAssetPriceUsd, leverageTransferFee, netAddedCollateral]);
+  const addedCollateralAssets = useMemo(() => (isLeverageFeeReady && netAddedCollateral != null ? netAddedCollateral : 0n), [isLeverageFeeReady, netAddedCollateral]);
+  const addedBorrowAssets = useMemo(() => (isLeverageFeeReady ? quote.flashLoanAmount : 0n), [isLeverageFeeReady, quote.flashLoanAmount]);
   const { projectedCollateralAssets, projectedBorrowAssets } = useMemo(
     () =>
       computeLeverageProjectedPosition({
         currentCollateralAssets,
         currentBorrowAssets,
-        addedCollateralAssets: isLeverageFeeReady && netAddedCollateral != null ? netAddedCollateral : 0n,
-        addedBorrowAssets: isLeverageFeeReady ? quote.flashLoanAmount : 0n,
+        addedCollateralAssets,
+        addedBorrowAssets,
       }),
-    [currentCollateralAssets, currentBorrowAssets, isLeverageFeeReady, netAddedCollateral, quote.flashLoanAmount],
+    [currentCollateralAssets, currentBorrowAssets, addedCollateralAssets, addedBorrowAssets],
   );
   const marketLiquidity = BigInt(market.state.liquidityAssets);
   const hasChanges = isLeverageFeeReady;
@@ -200,6 +204,10 @@ export function AddCollateralAndLeverage({
     projectedBorrowAssets,
     enabled: isErc4626Route,
     lookbackDays: 3,
+  });
+  const merklHoldIncentives = useMerklHoldIncentivesQuery({
+    chainId: market.morphoBlue.chain.id,
+    collateralTokenAddress: market.collateralAsset.address,
   });
 
   const projectedLTV = useMemo(
@@ -335,10 +343,6 @@ export function AddCollateralAndLeverage({
     () => formatTokenAmountPreview(quote.flashCollateralAmount, market.collateralAsset.decimals),
     [quote.flashCollateralAmount, market.collateralAsset.decimals],
   );
-  const initialCollateralPreview = useMemo(
-    () => formatTokenAmountPreview(quote.initialCollateralAmount, market.collateralAsset.decimals),
-    [quote.initialCollateralAmount, market.collateralAsset.decimals],
-  );
   const collateralPreviewForDisplay = isSwapRoute && !useLoanAssetInput ? swapCollateralOutPreview : totalCollateralAddedPreview;
   const collateralPreviewLabel = isSwapRoute
     ? useLoanAssetInput
@@ -380,7 +384,6 @@ export function AddCollateralAndLeverage({
     market.collateralAsset.symbol,
   ]);
   const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapPriceRoute != null && swapRatePreviewText != null;
-  const shouldShowInputConversionPreview = isErc4626Route && useLoanAssetInput && quote.initialCollateralAmount > 0n;
   const renderRateValue = useCallback(
     (apy: number | null): JSX.Element => {
       if (apy == null || !Number.isFinite(apy)) return <span className="font-monospace">-</span>;
@@ -410,34 +413,192 @@ export function AddCollateralAndLeverage({
   }, [hasChanges, market, quote.flashLoanAmount]);
   const previewBorrowApy = projectedBorrowApy ?? fallbackBorrowApy;
   const borrowRatePreviewLabel = projectedBorrowApy != null ? `Borrow ${rateLabel} (Est.)` : `Borrow ${rateLabel}`;
-  const previewExpectedNetApy = useMemo(() => {
-    if (!isErc4626Route || vaultRateInsight.sharePriceNow == null || vaultRateInsight.vaultApy3d == null) {
-      return vaultRateInsight.expectedNetApy;
+  const vaultTokenApy = isErc4626Route ? vaultRateInsight.vaultApy3d : 0;
+  const projectedLtvRatio = useMemo(() => {
+    if (projectedBorrowAssets <= 0n) return 0;
+
+    if (isErc4626Route) {
+      if (vaultRateInsight.sharePriceNow == null) return null;
+
+      const oneShareUnit = 10n ** BigInt(market.collateralAsset.decimals);
+      const collateralUnderlyingAssets = convertVaultSharesToUnderlyingAssets({
+        shares: projectedCollateralAssets,
+        sharePriceInUnderlying: vaultRateInsight.sharePriceNow,
+        oneShareUnit,
+      });
+      if (collateralUnderlyingAssets <= 0n) return null;
+
+      const ratio = Number(projectedBorrowAssets) / Number(collateralUnderlyingAssets);
+      if (!Number.isFinite(ratio) || ratio < 0) return null;
+      return ratio;
     }
 
-    const oneShareUnit = 10n ** BigInt(market.collateralAsset.decimals);
-    return computeExpectedNetCarryApy({
-      collateralShares: projectedCollateralAssets,
-      borrowAssets: projectedBorrowAssets,
-      sharePriceInUnderlying: vaultRateInsight.sharePriceNow,
-      oneShareUnit,
-      vaultApy: vaultRateInsight.vaultApy3d,
-      borrowApy: previewBorrowApy,
-    });
+    if (projectedCollateralAssets <= 0n) return null;
+
+    const ratio = Number(projectedLTV) / Number(LTV_WAD);
+    if (!Number.isFinite(ratio) || ratio < 0) return null;
+    return ratio;
   }, [
     isErc4626Route,
     market.collateralAsset.decimals,
-    previewBorrowApy,
     projectedBorrowAssets,
     projectedCollateralAssets,
-    vaultRateInsight.expectedNetApy,
+    projectedLTV,
     vaultRateInsight.sharePriceNow,
-    vaultRateInsight.vaultApy3d,
   ]);
+  const addedDebtToCollateralRatio = useMemo(() => {
+    if (addedBorrowAssets <= 0n) return 0;
+
+    if (isErc4626Route) {
+      if (vaultRateInsight.sharePriceNow == null) return null;
+
+      const oneShareUnit = 10n ** BigInt(market.collateralAsset.decimals);
+      const addedCollateralUnderlyingAssets = convertVaultSharesToUnderlyingAssets({
+        shares: addedCollateralAssets,
+        sharePriceInUnderlying: vaultRateInsight.sharePriceNow,
+        oneShareUnit,
+      });
+      if (addedCollateralUnderlyingAssets <= 0n) return null;
+
+      const ratio = Number(addedBorrowAssets) / Number(addedCollateralUnderlyingAssets);
+      if (!Number.isFinite(ratio) || ratio < 0) return null;
+      return ratio;
+    }
+
+    if (addedCollateralAssets <= 0n) return null;
+
+    const addedLtv = computeLtv({
+      borrowAssets: addedBorrowAssets,
+      collateralAssets: addedCollateralAssets,
+      oraclePrice,
+    });
+    const ratio = Number(addedLtv) / Number(LTV_WAD);
+    if (!Number.isFinite(ratio) || ratio < 0) return null;
+    return ratio;
+  }, [
+    addedBorrowAssets,
+    addedCollateralAssets,
+    isErc4626Route,
+    market.collateralAsset.decimals,
+    oraclePrice,
+    vaultRateInsight.sharePriceNow,
+  ]);
+  const contributedCapitalAssets = useMemo(() => {
+    if (addedCollateralAssets <= 0n) return null;
+
+    if (isSwapRoute && useLoanAssetInput) {
+      const totalLoanInput = collateralAmount + addedBorrowAssets;
+      if (totalLoanInput <= 0n) return null;
+
+      const contributedFromLoanInput = (addedCollateralAssets * collateralAmount) / totalLoanInput;
+      return contributedFromLoanInput > 0n ? contributedFromLoanInput : null;
+    }
+
+    if (quote.totalAddedCollateral <= 0n || quote.initialCollateralAmount <= 0n) return null;
+
+    const contributedFromInitialCollateral = (addedCollateralAssets * quote.initialCollateralAmount) / quote.totalAddedCollateral;
+    return contributedFromInitialCollateral > 0n ? contributedFromInitialCollateral : null;
+  }, [
+    addedBorrowAssets,
+    addedCollateralAssets,
+    collateralAmount,
+    isSwapRoute,
+    quote.initialCollateralAmount,
+    quote.totalAddedCollateral,
+    useLoanAssetInput,
+  ]);
+  const holdRewardsApy = useMemo(() => {
+    const holdRewardAprDecimal = merklHoldIncentives.holdRewardAprDecimal;
+    if (holdRewardAprDecimal == null || !Number.isFinite(holdRewardAprDecimal)) return null;
+    const holdRewardApy = convertAprToApy(holdRewardAprDecimal);
+    return Number.isFinite(holdRewardApy) ? holdRewardApy : null;
+  }, [merklHoldIncentives.holdRewardAprDecimal]);
+  const holdRewardsApyForNet = useMemo(() => {
+    if (!showFullRewardAPY) return 0;
+    return holdRewardsApy ?? 0;
+  }, [showFullRewardAPY, holdRewardsApy]);
+  const collateralYieldApy = useMemo(() => {
+    if (vaultTokenApy == null) return null;
+    return vaultTokenApy + holdRewardsApyForNet;
+  }, [vaultTokenApy, holdRewardsApyForNet]);
+  const hasConfiguredHoldRewards = merklHoldIncentives.incentiveLabel != null;
+  const shouldShowHoldRewardsRow = hasConfiguredHoldRewards;
+  const shouldShowNetRate = isErc4626Route || (showFullRewardAPY && shouldShowHoldRewardsRow);
+  const isNetRateLoading =
+    (isErc4626Route && (vaultRateInsight.isLoading || vaultRateInsight.vaultApy3d == null || projectedLtvRatio == null)) ||
+    (showFullRewardAPY && shouldShowHoldRewardsRow && merklHoldIncentives.loading);
+  const holdRewardsLabel = useMemo(
+    () => `${merklHoldIncentives.incentiveLabel ?? market.collateralAsset.symbol} Hold Reward (Merkl) ${rateLabel}`,
+    [merklHoldIncentives.incentiveLabel, market.collateralAsset.symbol, rateLabel],
+  );
+  const netCarryLabel = `Net Carry ${rateLabel}`;
+  const netCarryTooltipContent = useMemo(
+    () => (
+      <div className="bg-surface flex max-w-[280px] flex-col rounded-sm p-3">
+        <div className="font-monospace text-xs uppercase tracking-[0.12em] text-primary">{netCarryLabel}</div>
+        <div className="mt-2 space-y-1 text-xs text-secondary">
+          <div>Formula: Collateral Yield - (Debt / Collateral) x Borrow {rateLabel}</div>
+          <div>Collateral Yield = Vault Token {rateLabel} + Hold Rewards</div>
+          <div>Hold rewards are added only when "Include rewards" is enabled.</div>
+          <div>Normalized to the final leveraged position (not initial deposit).</div>
+        </div>
+      </div>
+    ),
+    [netCarryLabel, rateLabel],
+  );
+  const leveredCarryLabel = `Levered Carry ${rateLabel}`;
+  const leveredCarryTooltipContent = useMemo(
+    () => (
+      <div className="bg-surface flex max-w-[280px] flex-col rounded-sm p-3">
+        <div className="font-monospace text-xs uppercase tracking-[0.12em] text-primary">{leveredCarryLabel}</div>
+        <div className="mt-2 space-y-1 text-xs text-secondary">
+          <div>Formula: (Collateral Yield x Added Collateral - Borrow {rateLabel} x Added Debt) / Your Added Capital</div>
+          <div>Normalized to your initial capital for this action (your input, converted to collateral units).</div>
+          <div>Added capital uses post-fee collateral contribution.</div>
+        </div>
+      </div>
+    ),
+    [leveredCarryLabel, rateLabel],
+  );
+  const previewExpectedNetApy = useMemo(() => {
+    if (collateralYieldApy == null || projectedLtvRatio == null) return null;
+    const netApy = collateralYieldApy - projectedLtvRatio * previewBorrowApy;
+    return Number.isFinite(netApy) ? netApy : null;
+  }, [
+    collateralYieldApy,
+    previewBorrowApy,
+    projectedLtvRatio,
+  ]);
+  const previewLeveredCarryOnCapitalApy = useMemo(() => {
+    if (collateralYieldApy == null || addedDebtToCollateralRatio == null || contributedCapitalAssets == null || addedCollateralAssets <= 0n) return null;
+
+    const incrementalNetCarryApy = collateralYieldApy - addedDebtToCollateralRatio * previewBorrowApy;
+    if (!Number.isFinite(incrementalNetCarryApy)) return null;
+
+    const leverageFactor = Number(addedCollateralAssets) / Number(contributedCapitalAssets);
+    if (!Number.isFinite(leverageFactor) || leverageFactor <= 0) return null;
+
+    const leveredCarryApy = incrementalNetCarryApy * leverageFactor;
+    return Number.isFinite(leveredCarryApy) ? leveredCarryApy : null;
+  }, [
+    addedCollateralAssets,
+    addedDebtToCollateralRatio,
+    collateralYieldApy,
+    contributedCapitalAssets,
+    previewBorrowApy,
+  ]);
+  const isLeveredCarryLoading =
+    isLeverageFeeReady &&
+    ((isErc4626Route && (vaultRateInsight.isLoading || vaultRateInsight.vaultApy3d == null || vaultRateInsight.sharePriceNow == null)) ||
+      (showFullRewardAPY && shouldShowHoldRewardsRow && merklHoldIncentives.loading));
   const expectedNetRateClass = useMemo(() => {
     if (previewExpectedNetApy == null) return 'text-secondary';
     return previewExpectedNetApy >= 0 ? 'text-emerald-500' : 'text-red-500';
   }, [previewExpectedNetApy]);
+  const leveredCarryRateClass = useMemo(() => {
+    if (previewLeveredCarryOnCapitalApy == null) return 'text-secondary';
+    return previewLeveredCarryOnCapitalApy >= 0 ? 'text-emerald-500' : 'text-red-500';
+  }, [previewLeveredCarryOnCapitalApy]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -591,23 +752,6 @@ export function AddCollateralAndLeverage({
                     />
                   </span>
                 </div>
-                {shouldShowInputConversionPreview && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-secondary">Collateral Shares From Input</span>
-                    <span className="tabular-nums inline-flex items-center gap-1.5">
-                      <Tooltip content={<span className="font-monospace text-xs">{initialCollateralPreview.full}</span>}>
-                        <span className="cursor-help border-b border-dotted border-white/40">{initialCollateralPreview.compact}</span>
-                      </Tooltip>
-                      <TokenIcon
-                        address={market.collateralAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.collateralAsset.symbol}
-                        width={14}
-                        height={14}
-                      />
-                    </span>
-                  </div>
-                )}
                 {leverageFeePreview != null && (
                   <div className="flex items-center justify-between">
                     <span className="text-secondary">Leverage Fee (Est.)</span>
@@ -644,21 +788,46 @@ export function AddCollateralAndLeverage({
                   <span className="text-secondary">{borrowRatePreviewLabel}</span>
                   <span className="tabular-nums">{renderRateValue(previewBorrowApy)}</span>
                 </div>
-                {isErc4626Route && (
+                {(isErc4626Route || shouldShowHoldRewardsRow || shouldShowNetRate) && (
                   <>
                     <div className="my-1 border-t border-white/10" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-secondary">Vault Token {rateLabel}</span>
-                      <span className="tabular-nums">
-                        {vaultRateInsight.isLoading ? '...' : renderRateValue(vaultRateInsight.vaultApy3d)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-secondary">Net {rateLabel}</span>
-                      <span className={`tabular-nums ${expectedNetRateClass}`}>
-                        {vaultRateInsight.isLoading ? '...' : renderRateValue(previewExpectedNetApy)}
-                      </span>
-                    </div>
+                    {isErc4626Route && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-secondary">Vault Token {rateLabel}</span>
+                        <span className="tabular-nums">
+                          {vaultRateInsight.isLoading ? '...' : renderRateValue(vaultRateInsight.vaultApy3d)}
+                        </span>
+                      </div>
+                    )}
+                    {shouldShowHoldRewardsRow && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-secondary">{holdRewardsLabel}</span>
+                        <span className="tabular-nums">
+                          {merklHoldIncentives.loading ? '...' : renderRateValue(holdRewardsApy)}
+                        </span>
+                      </div>
+                    )}
+                    {shouldShowNetRate && (
+                      <>
+                        <div className="my-1 border-t border-white/10" />
+                        <div className="flex items-center justify-between">
+                          <Tooltip content={netCarryTooltipContent}>
+                            <span className="cursor-help border-b border-dotted border-white/40 text-secondary">{netCarryLabel}</span>
+                          </Tooltip>
+                          <span className={`tabular-nums ${expectedNetRateClass}`}>
+                            {isNetRateLoading ? '...' : renderRateValue(previewExpectedNetApy)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Tooltip content={leveredCarryTooltipContent}>
+                            <span className="cursor-help border-b border-dotted border-white/40 text-secondary">{leveredCarryLabel}</span>
+                          </Tooltip>
+                          <span className={`tabular-nums ${leveredCarryRateClass}`}>
+                            {isLeveredCarryLoading ? '...' : renderRateValue(previewLeveredCarryOnCapitalApy)}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -666,6 +835,9 @@ export function AddCollateralAndLeverage({
               {!quote.error && leverageFeeReadinessError && <p className="mt-2 text-xs text-red-500">{leverageFeeReadinessError}</p>}
               {isErc4626Route && vaultRateInsight.error && (
                 <p className="mt-2 text-xs text-red-500">Failed to fetch 3-day vault/borrow rates: {vaultRateInsight.error}</p>
+              )}
+              {merklHoldIncentives.error && (
+                <p className="mt-2 text-xs text-red-500">Failed to fetch Merkl hold rewards: {merklHoldIncentives.error}</p>
               )}
               {insufficientLiquidity && (
                 <p className="mt-2 text-xs text-red-500">

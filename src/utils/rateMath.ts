@@ -29,6 +29,18 @@ export function convertApyToApr(apy: number): number {
 }
 
 /**
+ * Converts APR (continuous-compounding style) back to APY.
+ * Inverse of `convertApyToApr`: APY = e^(APR) - 1
+ *
+ * @param apr - The APR value as a decimal (e.g., 0.04879 for 4.879%)
+ * @returns The APY value as a decimal
+ */
+export function convertAprToApy(apr: number): number {
+  if (!Number.isFinite(apr)) return 0;
+  return Math.exp(apr) - 1;
+}
+
+/**
  * Formats a rate value as a percentage string
  *
  * @param rate - The rate value as a decimal (e.g., 0.05 for 5%)

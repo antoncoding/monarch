@@ -85,11 +85,18 @@ export type MerklCampaignParams = {
 };
 
 export type MerklOpportunity = {
+  id?: string;
   identifier: string;
   name: string;
   chainId: number;
   type: string;
+  status?: string;
   action?: string;
+  apr?: number;
+  maxApr?: number;
+  liveCampaigns?: number;
+  tokens?: MerklToken[];
+  campaigns?: MerklCampaign[];
 };
 
 export type MerklCampaign = {
@@ -129,6 +136,13 @@ export type MerklApiParams = {
   page?: number;
   startTimestamp?: number;
   endTimestamp?: number;
+};
+
+export type MerklOpportunityLookupParams = {
+  chainId: number;
+  type: string;
+  identifier: string;
+  campaigns?: boolean;
 };
 
 export type SimplifiedCampaign = {
