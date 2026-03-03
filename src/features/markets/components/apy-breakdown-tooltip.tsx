@@ -7,7 +7,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import type { SimplifiedCampaign } from '@/utils/merklTypes';
-import { convertApyToApr } from '@/utils/rateMath';
+import { convertAprToApy, convertApyToApr } from '@/utils/rateMath';
 import type { Market } from '@/utils/types';
 
 type RateMode = 'supply' | 'borrow';
@@ -59,6 +59,11 @@ const getRewardRatePrefix = (mode: RateMode): string => {
   return mode === 'borrow' ? '-' : '+';
 };
 
+const getDisplayRewardRate = (rewardAprPercent: number, isAprDisplay: boolean): number => {
+  if (isAprDisplay) return rewardAprPercent;
+  return convertAprToApy(rewardAprPercent / 100) * 100;
+};
+
 export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode = 'supply' }: APYBreakdownTooltipProps) {
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
@@ -68,8 +73,9 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode =
   // Note: baseAPY is already a percentage (not decimal), so we need to convert it
   const baseRateValue = isAprDisplay ? convertApyToApr(baseAPY / 100) * 100 : baseAPY;
 
-  // Rewards are APR values from Merkl; base rate is converted when needed above.
-  const rewardTotal = activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0);
+  const rewardTotal = activeCampaigns.reduce((sum, campaign) => {
+    return sum + getDisplayRewardRate(campaign.apr, isAprDisplay);
+  }, 0);
   const totalRate = getFullRate(baseRateValue, rewardTotal, mode);
   const rewardPrefix = getRewardRatePrefix(mode);
 
@@ -83,27 +89,30 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode =
           <span>Base {modeLabel} {rateLabel}</span>
           <span className="ml-6">{baseRateValue.toFixed(2)}%</span>
         </div>
-        {activeCampaigns.map((campaign, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between text-xs"
-          >
-            <div className="flex items-center gap-2">
-              <span>{campaign.rewardToken.symbol}</span>
-              <TokenIcon
-                address={campaign.rewardToken.address}
-                chainId={campaign.chainId}
-                symbol={campaign.rewardToken.symbol}
-                width={14}
-                height={14}
-              />
+        {activeCampaigns.map((campaign, index) => {
+          const rewardRateValue = getDisplayRewardRate(campaign.apr, isAprDisplay);
+          return (
+            <div
+              key={index}
+              className="flex items-center justify-between text-xs"
+            >
+              <div className="flex items-center gap-2">
+                <span>{campaign.rewardToken.symbol}</span>
+                <TokenIcon
+                  address={campaign.rewardToken.address}
+                  chainId={campaign.chainId}
+                  symbol={campaign.rewardToken.symbol}
+                  width={14}
+                  height={14}
+                />
+              </div>
+              <span className="ml-6">
+                {rewardPrefix}
+                {rewardRateValue.toFixed(2)}%
+              </span>
             </div>
-            <span className="ml-6">
-              {rewardPrefix}
-              {campaign.apr.toFixed(2)}%
-            </span>
-          </div>
-        ))}
+          );
+        })}
         <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-600">
           <div className="flex items-center justify-between text-xs">
             <span>Net {modeLabel} {rateLabel}</span>
@@ -130,7 +139,11 @@ export function APYCell({ market, mode = 'supply' }: APYCellProps) {
   const baseAPY = baseApyDecimal * 100;
   const relevantCampaigns = filterCampaignsByMode(activeCampaigns, mode);
   const hasModeRewards = relevantCampaigns.length > 0;
-  const extraRewards = hasModeRewards ? relevantCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0) : 0;
+  const extraRewards = hasModeRewards
+    ? relevantCampaigns.reduce((sum, campaign) => {
+      return sum + getDisplayRewardRate(campaign.apr, isAprDisplay);
+    }, 0)
+    : 0;
 
   // Convert base rate if APR display is enabled
   const baseRate = isAprDisplay ? convertApyToApr(baseApyDecimal) * 100 : baseAPY;
