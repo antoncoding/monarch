@@ -7,6 +7,7 @@ import morphoAbi from '@/abis/morpho';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
 import permit2Abi from '@/abis/permit2';
+import { LEVERAGE_FEE_RECIPIENT, computeLeverageTransferFee } from '@/config/leverage';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
@@ -253,6 +254,7 @@ export function useLeverageTransaction({
       toast.info('Invalid leverage inputs', 'Set collateral and multiplier above 1x before submitting.');
       return;
     }
+    const leverageFeeAmount = computeLeverageTransferFee(totalAddedCollateral);
 
     try {
       const txs: `0x${string}`[] = [];
@@ -352,6 +354,14 @@ export function useLeverageTransaction({
         if (!swapPriceRoute) {
           throw new Error('Missing Velora swap quote for leverage.');
         }
+        const preFlashCollateralFee =
+          !isLoanAssetInput && inputTokenAmountForTransfer > 0n
+            ? leverageFeeAmount < inputTokenAmountForTransfer
+              ? leverageFeeAmount
+              : inputTokenAmountForTransfer
+            : 0n;
+        const callbackCollateralFee = leverageFeeAmount - preFlashCollateralFee;
+        const preFlashCollateralSupplyAmount = inputTokenAmountForTransfer - preFlashCollateralFee;
         const swapExecutionAddress = route.paraswapAdapterAddress;
         // WHY: when starting from loan on a swap route, we combine the user's loan input
         // with the flash-loaned loan and sell them together before supplying collateral.
@@ -469,6 +479,23 @@ export function useLeverageTransaction({
             skipRevert: false,
             callbackHash: zeroHash,
           },
+        ];
+
+        if (callbackCollateralFee > 0n) {
+          callbackBundle.push({
+            to: route.generalAdapterAddress,
+            data: encodeFunctionData({
+              abi: morphoGeneralAdapterV1Abi,
+              functionName: 'erc20Transfer',
+              args: [market.collateralAsset.address as Address, LEVERAGE_FEE_RECIPIENT, callbackCollateralFee],
+            }),
+            value: 0n,
+            skipRevert: false,
+            callbackHash: zeroHash,
+          });
+        }
+
+        callbackBundle.push(
           {
             to: route.generalAdapterAddress,
             data: encodeFunctionData({
@@ -491,7 +518,7 @@ export function useLeverageTransaction({
             skipRevert: false,
             callbackHash: zeroHash,
           },
-        ];
+        );
         const callbackBundleData = encodeBundler3Calls(callbackBundle);
 
         const bundleCalls: Bundler3Call[] = [];
@@ -515,17 +542,32 @@ export function useLeverageTransaction({
             callbackHash: zeroHash,
           });
           if (!isLoanAssetInput) {
-            bundleCalls.push({
-              to: route.generalAdapterAddress,
-              data: encodeFunctionData({
-                abi: morphoGeneralAdapterV1Abi,
-                functionName: 'morphoSupplyCollateral',
-                args: [marketParams, inputTokenAmountForTransfer, account as Address, '0x'],
-              }),
-              value: 0n,
-              skipRevert: false,
-              callbackHash: zeroHash,
-            });
+            if (preFlashCollateralFee > 0n) {
+              bundleCalls.push({
+                to: route.generalAdapterAddress,
+                data: encodeFunctionData({
+                  abi: morphoGeneralAdapterV1Abi,
+                  functionName: 'erc20Transfer',
+                  args: [market.collateralAsset.address as Address, LEVERAGE_FEE_RECIPIENT, preFlashCollateralFee],
+                }),
+                value: 0n,
+                skipRevert: false,
+                callbackHash: zeroHash,
+              });
+            }
+            if (preFlashCollateralSupplyAmount > 0n) {
+              bundleCalls.push({
+                to: route.generalAdapterAddress,
+                data: encodeFunctionData({
+                  abi: morphoGeneralAdapterV1Abi,
+                  functionName: 'morphoSupplyCollateral',
+                  args: [marketParams, preFlashCollateralSupplyAmount, account as Address, '0x'],
+                }),
+                value: 0n,
+                skipRevert: false,
+                callbackHash: zeroHash,
+              });
+            }
           }
         }
 
@@ -594,12 +636,25 @@ export function useLeverageTransaction({
             functionName: 'erc4626Deposit',
             args: [route.collateralVault, flashLoanAmount, withSlippageFloor(flashCollateralAmount), bundlerAddress as Address],
           }),
+        ];
+
+        if (leverageFeeAmount > 0n) {
+          callbackTxs.push(
+            encodeFunctionData({
+              abi: morphoBundlerAbi,
+              functionName: 'erc20Transfer',
+              args: [market.collateralAsset.address as Address, LEVERAGE_FEE_RECIPIENT, leverageFeeAmount],
+            }),
+          );
+        }
+
+        callbackTxs.push(
           encodeFunctionData({
             abi: morphoBundlerAbi,
             functionName: 'morphoSupplyCollateral',
             args: [marketParams, maxUint256, account as Address, '0x'],
           }),
-        ];
+        );
 
         callbackTxs.push(
           encodeFunctionData({
