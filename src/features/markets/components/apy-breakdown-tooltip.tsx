@@ -80,8 +80,8 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode =
   const rewardPrefix = getRewardRatePrefix(mode);
 
   const content = (
-    <div className="bg-surface flex flex-col rounded-sm p-4 lg:min-w-[200px]">
-      <div className="mb-2 px-1 font-bold text-primary">
+    <div className="bg-surface flex flex-col rounded-sm p-2 lg:min-w-[200px]">
+      <div className="mb-2 px-1">
         {modeLabel} {rateLabel} Breakdown
       </div>
       <div className="space-y-3 p-1">
@@ -123,7 +123,14 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode =
     </div>
   );
 
-  return <Tooltip content={content}>{children}</Tooltip>;
+  return (
+    <Tooltip
+      content={content}
+      className="z-[3600]"
+    >
+      {children}
+    </Tooltip>
+  );
 }
 
 export function APYCell({ market, mode = 'supply' }: APYCellProps) {
@@ -166,13 +173,20 @@ export function APYCell({ market, mode = 'supply' }: APYCellProps) {
   );
 
   if (hasModeRewards) {
+    const modeLabel = mode === 'borrow' ? 'borrow' : 'supply';
     return (
       <APYBreakdownTooltip
         baseAPY={baseAPY}
         activeCampaigns={relevantCampaigns}
         mode={mode}
       >
-        <span className="cursor-help">{rateDisplay}</span>
+        <button
+          type="button"
+          className="inline-flex cursor-help items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+          aria-label={`Show ${modeLabel} rate breakdown`}
+        >
+          {rateDisplay}
+        </button>
       </APYBreakdownTooltip>
     );
   }

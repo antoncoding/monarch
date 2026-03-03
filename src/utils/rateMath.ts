@@ -41,6 +41,30 @@ export function convertAprToApy(apr: number): number {
 }
 
 /**
+ * Normalizes an APY decimal to the currently selected display mode.
+ *
+ * @param apy - The APY value as a decimal
+ * @param isAprDisplay - Whether APR mode is enabled
+ * @returns Rate as decimal in the selected mode
+ */
+export function toDisplayRateFromApy(apy: number, isAprDisplay: boolean): number {
+  if (!Number.isFinite(apy)) return Number.NaN;
+  return isAprDisplay ? convertApyToApr(apy) : apy;
+}
+
+/**
+ * Converts a display-mode rate decimal back to APY decimal.
+ *
+ * @param rate - Rate as decimal in selected display mode
+ * @param isAprDisplay - Whether APR mode is enabled
+ * @returns Equivalent APY decimal
+ */
+export function toApyFromDisplayRate(rate: number, isAprDisplay: boolean): number {
+  if (!Number.isFinite(rate)) return Number.NaN;
+  return isAprDisplay ? convertAprToApy(rate) : rate;
+}
+
+/**
  * Formats a rate value as a percentage string
  *
  * @param rate - The rate value as a decimal (e.g., 0.05 for 5%)

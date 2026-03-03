@@ -6,14 +6,11 @@ import { LuUser } from 'react-icons/lu';
 import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
-import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getTruncatedAssetName } from '@/utils/oracle';
-import { convertApyToApr } from '@/utils/rateMath';
 import type { Market, MarketPosition } from '@/utils/types';
-import { APYBreakdownTooltip } from '@/features/markets/components/apy-breakdown-tooltip';
+import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
 
 type PositionStatsProps = {
   market: Market;
@@ -36,15 +33,8 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
   // Default to user view if they have a position, otherwise global
   const [viewMode, setViewMode] = useState<'global' | 'user'>(userPosition && hasPosition(userPosition) ? 'user' : 'global');
 
-  const { showFullRewardAPY, isAprDisplay } = useAppSettings();
   const { label: rateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
-  const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
-    marketId: market.uniqueKey,
-    loanTokenAddress: market.loanAsset.address,
-    chainId: market.morphoBlue.chain.id,
-    whitelisted: market.whitelisted,
-  });
 
   const toggleView = () => {
     setViewMode((prev) => (prev === 'global' ? 'user' : 'global'));
@@ -118,18 +108,6 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
       );
     }
 
-    // Global stats - calculate rates
-    const baseSupplyAPY = market.state.supplyApy * 100;
-    const baseBorrowAPY = market.state.borrowApy * 100;
-
-    // Convert to APR if display mode is enabled
-    const baseSupplyRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) * 100 : baseSupplyAPY;
-    const baseBorrowRate = isAprDisplay ? convertApyToApr(market.state.borrowApy) * 100 : baseBorrowAPY;
-
-    const extraRewards = hasActiveRewards ? activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0) : 0;
-    const fullSupplyRate = baseSupplyRate + extraRewards;
-    const displaySupplyRate = showFullRewardAPY && hasActiveRewards ? fullSupplyRate : baseSupplyRate;
-
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -167,24 +145,27 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
         <div className="flex items-center justify-between">
           <span>{rateLabel}:</span>
           <div className="flex items-center gap-2">
-            {hasActiveRewards ? (
-              <APYBreakdownTooltip
-                baseAPY={baseSupplyAPY}
-                activeCampaigns={activeCampaigns}
-              >
-                <span className="cursor-help">
-                  {baseSupplyRate.toFixed(2)}%<span className="text-green-600 dark:text-green-400"> (+{extraRewards.toFixed(2)}%)</span>
-                </span>
-              </APYBreakdownTooltip>
+            {market.state.supplyApy != null ? (
+              <APYCell
+                market={market}
+                mode="supply"
+              />
             ) : (
-              <span>{displaySupplyRate.toFixed(2)}%</span>
+              <span>—</span>
             )}
           </div>
         </div>
         <div className="flex items-center justify-between">
           <span>{borrowRateLabel}:</span>
           <div className="flex items-center gap-2">
-            <span>{baseBorrowRate.toFixed(2)}%</span>
+            {market.state.borrowApy != null ? (
+              <APYCell
+                market={market}
+                mode="borrow"
+              />
+            ) : (
+              <span>—</span>
+            )}
           </div>
         </div>
       </div>

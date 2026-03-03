@@ -3,6 +3,9 @@ import { erc20Abi, formatUnits } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 import { LTV_WAD, clampEditablePercent, computeLtv, formatEditableLtvPercent } from '@/modals/borrow/components/helpers';
+import { HelpTooltipIcon } from '@/components/shared/help-tooltip-icon';
+import { RateFormatted } from '@/components/shared/rate-formatted';
+import { TooltipContent as SharedTooltipContent } from '@/components/shared/tooltip-content';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -37,7 +40,7 @@ import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
 import { getLeverageFee } from '@/config/fees';
 import { formatBalance } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
-import { convertAprToApy, convertApyToApr } from '@/utils/rateMath';
+import { convertAprToApy, toApyFromDisplayRate, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
 
@@ -384,21 +387,24 @@ export function AddCollateralAndLeverage({
     market.collateralAsset.symbol,
   ]);
   const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapPriceRoute != null && swapRatePreviewText != null;
-  const renderRateValue = useCallback(
-    (apy: number | null): JSX.Element => {
-      if (apy == null || !Number.isFinite(apy)) return <span className="font-monospace">-</span>;
-      const displayRate = isAprDisplay ? convertApyToApr(apy) : apy;
-      if (!Number.isFinite(displayRate)) return <span className="font-monospace">-</span>;
-
-      const isNegative = displayRate < 0;
-      const absolutePercent = Math.abs(displayRate * 100).toFixed(2);
-
-      return (
-        <>
-          {isNegative && <span className="font-monospace">-</span>}
-          {absolutePercent}%
-        </>
-      );
+  const toDisplayRate = useCallback(
+    (apy: number | null): number | null => {
+      if (apy == null || !Number.isFinite(apy)) return null;
+      const displayRate = toDisplayRateFromApy(apy, isAprDisplay);
+      return Number.isFinite(displayRate) ? displayRate : null;
+    },
+    [isAprDisplay],
+  );
+  const renderRateFromApy = useCallback((apy: number | null): JSX.Element => {
+    if (apy == null || !Number.isFinite(apy)) return <span>-</span>;
+    return <RateFormatted value={apy} />;
+  }, []);
+  const renderRateFromDisplayMode = useCallback(
+    (displayRate: number | null): JSX.Element => {
+      if (displayRate == null || !Number.isFinite(displayRate)) return <span>-</span>;
+      const apyEquivalent = toApyFromDisplayRate(displayRate, isAprDisplay);
+      if (!Number.isFinite(apyEquivalent)) return <span>-</span>;
+      return <RateFormatted value={apyEquivalent} />;
     },
     [isAprDisplay],
   );
@@ -517,10 +523,13 @@ export function AddCollateralAndLeverage({
     if (!showFullRewardAPY) return 0;
     return holdRewardsApy ?? 0;
   }, [showFullRewardAPY, holdRewardsApy]);
-  const collateralYieldApy = useMemo(() => {
-    if (vaultTokenApy == null) return null;
-    return vaultTokenApy + holdRewardsApyForNet;
-  }, [vaultTokenApy, holdRewardsApyForNet]);
+  const borrowRateForCarry = useMemo(() => toDisplayRate(previewBorrowApy), [previewBorrowApy, toDisplayRate]);
+  const vaultTokenRateForCarry = useMemo(() => toDisplayRate(vaultTokenApy), [vaultTokenApy, toDisplayRate]);
+  const holdRewardsRateForCarry = useMemo(() => toDisplayRate(holdRewardsApyForNet), [holdRewardsApyForNet, toDisplayRate]);
+  const collateralYieldRate = useMemo(() => {
+    if (vaultTokenRateForCarry == null) return null;
+    return vaultTokenRateForCarry + (holdRewardsRateForCarry ?? 0);
+  }, [vaultTokenRateForCarry, holdRewardsRateForCarry]);
   const hasConfiguredHoldRewards = merklHoldIncentives.incentiveLabel != null;
   const shouldShowHoldRewardsRow = hasConfiguredHoldRewards;
   const shouldShowNetRate = isErc4626Route || (showFullRewardAPY && shouldShowHoldRewardsRow);
@@ -531,80 +540,65 @@ export function AddCollateralAndLeverage({
     () => `${merklHoldIncentives.incentiveLabel ?? market.collateralAsset.symbol} Hold Reward (Merkl) ${rateLabel}`,
     [merklHoldIncentives.incentiveLabel, market.collateralAsset.symbol, rateLabel],
   );
+  const projectedPositionPreview = useMemo(
+    () => formatTokenAmountPreview(projectedCollateralAssets, market.collateralAsset.decimals),
+    [projectedCollateralAssets, market.collateralAsset.decimals],
+  );
+  const addedCapitalPreview = useMemo(() => {
+    if (contributedCapitalAssets == null) return null;
+    return formatTokenAmountPreview(contributedCapitalAssets, market.collateralAsset.decimals);
+  }, [contributedCapitalAssets, market.collateralAsset.decimals]);
   const netCarryLabel = `Net Carry ${rateLabel}`;
-  const netCarryTooltipContent = useMemo(
-    () => (
-      <div className="bg-surface flex max-w-[280px] flex-col rounded-sm p-3">
-        <div className="font-monospace text-xs uppercase tracking-[0.12em] text-primary">{netCarryLabel}</div>
-        <div className="mt-2 space-y-1 text-xs text-secondary">
-          <div>Formula: Collateral Yield - (Debt / Collateral) x Borrow {rateLabel}</div>
-          <div>Collateral Yield = Vault Token {rateLabel} + Hold Rewards</div>
-          <div>Hold rewards are added only when "Include rewards" is enabled.</div>
-          <div>Normalized to the final leveraged position (not initial deposit).</div>
-        </div>
-      </div>
-    ),
-    [netCarryLabel, rateLabel],
-  );
   const leveredCarryLabel = `Levered Carry ${rateLabel}`;
-  const leveredCarryTooltipContent = useMemo(
-    () => (
-      <div className="bg-surface flex max-w-[280px] flex-col rounded-sm p-3">
-        <div className="font-monospace text-xs uppercase tracking-[0.12em] text-primary">{leveredCarryLabel}</div>
-        <div className="mt-2 space-y-1 text-xs text-secondary">
-          <div>Formula: (Collateral Yield x Added Collateral - Borrow {rateLabel} x Added Debt) / Your Added Capital</div>
-          <div>Normalized to your initial capital for this action (your input, converted to collateral units).</div>
-          <div>Added capital uses post-fee collateral contribution.</div>
-        </div>
-      </div>
-    ),
-    [leveredCarryLabel, rateLabel],
-  );
-  const previewExpectedNetApy = useMemo(() => {
-    if (collateralYieldApy == null || projectedLtvRatio == null) return null;
-    const netApy = collateralYieldApy - projectedLtvRatio * previewBorrowApy;
-    return Number.isFinite(netApy) ? netApy : null;
+  const netCarryDetail = `Expected yearly yield on your full leveraged ${market.collateralAsset.symbol} position.`;
+  const netCarrySecondaryDetail = `Projected position size: ${projectedPositionPreview.compact} ${market.collateralAsset.symbol}.`;
+  const leveredCarryDetail = `Expected yearly yield on your own added ${market.collateralAsset.symbol} capital.`;
+  const leveredCarrySecondaryDetail = `Added capital for this action: ${addedCapitalPreview?.compact ?? '-'} ${market.collateralAsset.symbol}.`;
+  const previewExpectedNetRate = useMemo(() => {
+    if (collateralYieldRate == null || borrowRateForCarry == null || projectedLtvRatio == null) return null;
+    const netRate = collateralYieldRate - projectedLtvRatio * borrowRateForCarry;
+    return Number.isFinite(netRate) ? netRate : null;
   }, [
-    collateralYieldApy,
-    previewBorrowApy,
+    collateralYieldRate,
+    borrowRateForCarry,
     projectedLtvRatio,
   ]);
-  const previewLeveredCarryOnCapitalApy = useMemo(() => {
-    if (collateralYieldApy == null || addedDebtToCollateralRatio == null || contributedCapitalAssets == null || addedCollateralAssets <= 0n) return null;
+  const previewLeveredCarryOnCapitalRate = useMemo(() => {
+    if (collateralYieldRate == null || borrowRateForCarry == null || addedDebtToCollateralRatio == null || contributedCapitalAssets == null || addedCollateralAssets <= 0n) return null;
 
-    const incrementalNetCarryApy = collateralYieldApy - addedDebtToCollateralRatio * previewBorrowApy;
-    if (!Number.isFinite(incrementalNetCarryApy)) return null;
+    const incrementalNetCarryRate = collateralYieldRate - addedDebtToCollateralRatio * borrowRateForCarry;
+    if (!Number.isFinite(incrementalNetCarryRate)) return null;
 
     const leverageFactor = Number(addedCollateralAssets) / Number(contributedCapitalAssets);
     if (!Number.isFinite(leverageFactor) || leverageFactor <= 0) return null;
 
-    const leveredCarryApy = incrementalNetCarryApy * leverageFactor;
-    return Number.isFinite(leveredCarryApy) ? leveredCarryApy : null;
+    const leveredCarryRate = incrementalNetCarryRate * leverageFactor;
+    return Number.isFinite(leveredCarryRate) ? leveredCarryRate : null;
   }, [
     addedCollateralAssets,
     addedDebtToCollateralRatio,
-    collateralYieldApy,
+    collateralYieldRate,
+    borrowRateForCarry,
     contributedCapitalAssets,
-    previewBorrowApy,
   ]);
   const isLeveredCarryLoading =
     isLeverageFeeReady &&
     ((isErc4626Route && (vaultRateInsight.isLoading || vaultRateInsight.vaultApy3d == null || vaultRateInsight.sharePriceNow == null)) ||
       (showFullRewardAPY && shouldShowHoldRewardsRow && merklHoldIncentives.loading));
   const expectedNetRateClass = useMemo(() => {
-    if (previewExpectedNetApy == null) return 'text-secondary';
-    return previewExpectedNetApy >= 0 ? 'text-emerald-500' : 'text-red-500';
-  }, [previewExpectedNetApy]);
+    if (previewExpectedNetRate == null) return 'text-secondary';
+    return previewExpectedNetRate >= 0 ? 'text-emerald-500' : 'text-red-500';
+  }, [previewExpectedNetRate]);
   const leveredCarryRateClass = useMemo(() => {
-    if (previewLeveredCarryOnCapitalApy == null) return 'text-secondary';
-    return previewLeveredCarryOnCapitalApy >= 0 ? 'text-emerald-500' : 'text-red-500';
-  }, [previewLeveredCarryOnCapitalApy]);
+    if (previewLeveredCarryOnCapitalRate == null) return 'text-secondary';
+    return previewLeveredCarryOnCapitalRate >= 0 ? 'text-emerald-500' : 'text-red-500';
+  }, [previewLeveredCarryOnCapitalRate]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
-          <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">Leverage Preview</p>
+          <p className="mb-2 text-xs uppercase tracking-[0.14em] text-secondary">Leverage Preview</p>
           <BorrowPositionRiskCard
             market={market}
             currentCollateral={currentCollateralAssets}
@@ -623,7 +617,7 @@ export function AddCollateralAndLeverage({
           <div className="mt-2 space-y-3">
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">
                   {useLoanAssetInput ? `Start with ${market.loanAsset.symbol}` : `Add Collateral ${market.collateralAsset.symbol}`}
                 </p>
                 {canUseLoanAssetInput && (
@@ -670,7 +664,7 @@ export function AddCollateralAndLeverage({
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">
                   {useTargetLtvInput ? 'Target LTV' : 'Target Multiplier'}
                 </p>
                 <div className="flex items-center gap-2">
@@ -720,12 +714,12 @@ export function AddCollateralAndLeverage({
             </div>
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
-              <p className="mb-2 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Transaction Preview</p>
+              <p className="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary">Transaction Preview</p>
               <div className="space-y-1 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">{isSwapRoute ? 'Flash Borrow Required' : 'Flash Borrow'}</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <Tooltip content={<span className="font-monospace text-xs">{flashBorrowPreview.full}</span>}>
+                    <Tooltip content={<span className="text-xs">{flashBorrowPreview.full}</span>}>
                       <span className="cursor-help border-b border-dotted border-white/40">{flashBorrowPreview.compact}</span>
                     </Tooltip>
                     <TokenIcon
@@ -740,7 +734,7 @@ export function AddCollateralAndLeverage({
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">{collateralPreviewLabel}</span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <Tooltip content={<span className="font-monospace text-xs">{collateralPreviewForDisplay.full}</span>}>
+                    <Tooltip content={<span className="text-xs">{collateralPreviewForDisplay.full}</span>}>
                       <span className="cursor-help border-b border-dotted border-white/40">{collateralPreviewForDisplay.compact}</span>
                     </Tooltip>
                     <TokenIcon
@@ -754,9 +748,9 @@ export function AddCollateralAndLeverage({
                 </div>
                 {leverageFeePreview != null && (
                   <div className="flex items-center justify-between">
-                    <span className="text-secondary">Leverage Fee (Est.)</span>
+                    <span className="text-secondary">Fee </span>
                     <span className="tabular-nums inline-flex items-center gap-1.5">
-                      <Tooltip content={<span className="font-monospace text-xs">{leverageFeePreview.full}</span>}>
+                      <Tooltip content={<span className="text-xs">{leverageFeePreview.full}</span>}>
                         <span className="cursor-help border-b border-dotted border-white/40">{leverageFeePreview.compact}</span>
                       </Tooltip>
                       <TokenIcon
@@ -786,7 +780,7 @@ export function AddCollateralAndLeverage({
                 )}
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">{borrowRatePreviewLabel}</span>
-                  <span className="tabular-nums">{renderRateValue(previewBorrowApy)}</span>
+                  <span className="tabular-nums">{renderRateFromApy(previewBorrowApy)}</span>
                 </div>
                 {(isErc4626Route || shouldShowHoldRewardsRow || shouldShowNetRate) && (
                   <>
@@ -795,7 +789,7 @@ export function AddCollateralAndLeverage({
                       <div className="flex items-center justify-between">
                         <span className="text-secondary">Vault Token {rateLabel}</span>
                         <span className="tabular-nums">
-                          {vaultRateInsight.isLoading ? '...' : renderRateValue(vaultRateInsight.vaultApy3d)}
+                          {vaultRateInsight.isLoading ? '...' : renderRateFromApy(vaultRateInsight.vaultApy3d)}
                         </span>
                       </div>
                     )}
@@ -803,7 +797,7 @@ export function AddCollateralAndLeverage({
                       <div className="flex items-center justify-between">
                         <span className="text-secondary">{holdRewardsLabel}</span>
                         <span className="tabular-nums">
-                          {merklHoldIncentives.loading ? '...' : renderRateValue(holdRewardsApy)}
+                          {merklHoldIncentives.loading ? '...' : renderRateFromApy(holdRewardsApy)}
                         </span>
                       </div>
                     )}
@@ -811,19 +805,41 @@ export function AddCollateralAndLeverage({
                       <>
                         <div className="my-1 border-t border-white/10" />
                         <div className="flex items-center justify-between">
-                          <Tooltip content={netCarryTooltipContent}>
-                            <span className="cursor-help border-b border-dotted border-white/40 text-secondary">{netCarryLabel}</span>
-                          </Tooltip>
+                          <div className="flex items-center gap-0.5">
+                            <span className="text-secondary">{netCarryLabel}</span>
+                            <HelpTooltipIcon
+                              content={
+                                <SharedTooltipContent
+                                  title={netCarryLabel}
+                                  detail={netCarryDetail}
+                                  secondaryDetail={netCarrySecondaryDetail}
+                                />
+                              }
+                              ariaLabel={`Explain ${netCarryLabel}`}
+                              className="h-auto w-auto"
+                            />
+                          </div>
                           <span className={`tabular-nums ${expectedNetRateClass}`}>
-                            {isNetRateLoading ? '...' : renderRateValue(previewExpectedNetApy)}
+                            {isNetRateLoading ? '...' : renderRateFromDisplayMode(previewExpectedNetRate)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <Tooltip content={leveredCarryTooltipContent}>
-                            <span className="cursor-help border-b border-dotted border-white/40 text-secondary">{leveredCarryLabel}</span>
-                          </Tooltip>
+                          <div className="flex items-center gap-0.5">
+                            <span className="text-secondary">{leveredCarryLabel}</span>
+                            <HelpTooltipIcon
+                              content={
+                                <SharedTooltipContent
+                                  title={leveredCarryLabel}
+                                  detail={leveredCarryDetail}
+                                  secondaryDetail={leveredCarrySecondaryDetail}
+                                />
+                              }
+                              ariaLabel={`Explain ${leveredCarryLabel}`}
+                              className="h-auto w-auto"
+                            />
+                          </div>
                           <span className={`tabular-nums ${leveredCarryRateClass}`}>
-                            {isLeveredCarryLoading ? '...' : renderRateValue(previewLeveredCarryOnCapitalApy)}
+                            {isLeveredCarryLoading ? '...' : renderRateFromDisplayMode(previewLeveredCarryOnCapitalRate)}
                           </span>
                         </div>
                       </>
