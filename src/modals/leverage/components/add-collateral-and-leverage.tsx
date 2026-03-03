@@ -13,6 +13,7 @@ import {
   clampTargetLtvBps,
   clampMultiplierBps,
   computeMaxMultiplierBpsForTargetLtv,
+  computeExpectedNetCarryApy,
   computeLeverageProjectedPosition,
   formatPercentFromBps,
   formatMultiplierBps,
@@ -33,6 +34,7 @@ import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineE
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
 import { formatBalance } from '@/utils/balance';
+import { previewMarketState } from '@/utils/morpho';
 import { convertApyToApr } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -146,6 +148,7 @@ export function AddCollateralAndLeverage({
     [currentCollateralAssets, currentBorrowAssets, quote.totalAddedCollateral, quote.flashLoanAmount],
   );
   const marketLiquidity = BigInt(market.state.liquidityAssets);
+  const hasChanges = quote.totalAddedCollateral > 0n && quote.flashLoanAmount > 0n;
   const rateLabel = isAprDisplay ? 'APR' : 'APY';
 
   const vaultRateInsight = use4626VaultAPR({
@@ -268,7 +271,6 @@ export function AddCollateralAndLeverage({
 
   const projectedOverLimit = projectedLTV >= lltv;
   const insufficientLiquidity = quote.flashLoanAmount > marketLiquidity;
-  const hasChanges = quote.totalAddedCollateral > 0n && quote.flashLoanAmount > 0n;
   const inputAssetSymbol = useLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
   const inputAssetDecimals = useLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
   const inputAssetBalance = useLoanAssetInput ? (loanTokenBalance as bigint | undefined) : collateralTokenBalance;
@@ -349,15 +351,45 @@ export function AddCollateralAndLeverage({
     },
     [isAprDisplay],
   );
-  const expectedNetRateClass = useMemo(() => {
-    if (vaultRateInsight.expectedNetApy == null) return 'text-secondary';
-    return vaultRateInsight.expectedNetApy >= 0 ? 'text-emerald-500' : 'text-red-500';
-  }, [vaultRateInsight.expectedNetApy]);
-  const previewBorrowApy = useMemo(() => {
-    // Prefer route-specific observed borrow carry for ERC4626 when available, fallback to market live borrow APY.
+  const fallbackBorrowApy = useMemo(() => {
     if (isErc4626Route && vaultRateInsight.borrowApy3d != null) return vaultRateInsight.borrowApy3d;
     return market.state.borrowApy;
   }, [isErc4626Route, vaultRateInsight.borrowApy3d, market.state.borrowApy]);
+  const projectedBorrowApy = useMemo(() => {
+    if (!hasChanges) return null;
+    const preview = previewMarketState(market, undefined, quote.flashLoanAmount);
+    return preview?.borrowApy ?? null;
+  }, [hasChanges, market, quote.flashLoanAmount]);
+  const previewBorrowApy = projectedBorrowApy ?? fallbackBorrowApy;
+  const borrowRatePreviewLabel = projectedBorrowApy != null ? `Borrow ${rateLabel} (Est.)` : `Borrow ${rateLabel}`;
+  const previewExpectedNetApy = useMemo(() => {
+    if (!isErc4626Route || vaultRateInsight.sharePriceNow == null || vaultRateInsight.vaultApy3d == null) {
+      return vaultRateInsight.expectedNetApy;
+    }
+
+    const oneShareUnit = 10n ** BigInt(market.collateralAsset.decimals);
+    return computeExpectedNetCarryApy({
+      collateralShares: projectedCollateralAssets,
+      borrowAssets: projectedBorrowAssets,
+      sharePriceInUnderlying: vaultRateInsight.sharePriceNow,
+      oneShareUnit,
+      vaultApy: vaultRateInsight.vaultApy3d,
+      borrowApy: previewBorrowApy,
+    });
+  }, [
+    isErc4626Route,
+    market.collateralAsset.decimals,
+    previewBorrowApy,
+    projectedBorrowAssets,
+    projectedCollateralAssets,
+    vaultRateInsight.expectedNetApy,
+    vaultRateInsight.sharePriceNow,
+    vaultRateInsight.vaultApy3d,
+  ]);
+  const expectedNetRateClass = useMemo(() => {
+    if (previewExpectedNetApy == null) return 'text-secondary';
+    return previewExpectedNetApy >= 0 ? 'text-emerald-500' : 'text-red-500';
+  }, [previewExpectedNetApy]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -544,7 +576,7 @@ export function AddCollateralAndLeverage({
                   </>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className="text-secondary">Borrow {rateLabel}</span>
+                  <span className="text-secondary">{borrowRatePreviewLabel}</span>
                   <span className="tabular-nums">{renderRateValue(previewBorrowApy)}</span>
                 </div>
                 {isErc4626Route && (
@@ -559,7 +591,7 @@ export function AddCollateralAndLeverage({
                     <div className="flex items-center justify-between">
                       <span className="text-secondary">Net {rateLabel}</span>
                       <span className={`tabular-nums ${expectedNetRateClass}`}>
-                        {vaultRateInsight.isLoading ? '...' : renderRateValue(vaultRateInsight.expectedNetApy)}
+                        {vaultRateInsight.isLoading ? '...' : renderRateValue(previewExpectedNetApy)}
                       </span>
                     </div>
                   </>

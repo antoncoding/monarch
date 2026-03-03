@@ -157,6 +157,7 @@ When touching transaction and position flows, validation MUST include all releva
 22. **Bigint-safe input echo formatting**: transaction-critical amount inputs must never round-trip through JavaScript `Number` when syncing bigint state back to text fields; use exact bigint/string unit formatters so typed values (for example `100000`) never mutate into precision-drifted decimals.
 23. **Max-bound input preview continuity**: transaction-critical amount inputs with `max` constraints must continue propagating parseable user-entered values into preview/risk state even when over max; max violations should surface as validation errors and block execution, but must not freeze preview updates or require bypass actions to keep previews in sync.
 24. **Indexer-lag transaction history bridging**: when earnings/APY depends on recent supply/withdraw history, confirmed on-chain receipts must be parsed into a short-lived local transaction cache (scoped by canonical user address + chain, deduped by tx hash + log index, TTL-bounded), merged into reads while indexers lag, and automatically removed as soon as the API returns the same tx hash to prevent double counting.
+25. **Leverage preview rate realism**: leverage preview Borrow/Net APR-APY values must be derived from projected post-transaction market state (using IRM `borrowRateView` + projected borrow assets/shares), not static pre-transaction market borrow rates, whenever the user has non-zero leverage input.
 
 ### REQUIRED: Regression Rule Capture
 
