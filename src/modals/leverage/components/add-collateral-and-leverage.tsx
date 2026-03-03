@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { erc20Abi } from 'viem';
+import { erc20Abi, formatUnits } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 import { clampEditablePercent, computeLtv, formatEditableLtvPercent } from '@/modals/borrow/components/helpers';
@@ -33,6 +33,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineEditor';
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
+import { getLeverageFee } from '@/config/fees';
 import { formatBalance } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
 import { convertApyToApr } from '@/utils/rateMath';
@@ -137,15 +138,38 @@ export function AddCollateralAndLeverage({
 
   const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
   const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
+  const collateralAssetPriceUsd = useMemo(() => {
+    const totalCollateralAssets = BigInt(market.state.collateralAssets);
+    const totalCollateralAssetsUsd = market.state.collateralAssetsUsd;
+    if (totalCollateralAssets <= 0n || totalCollateralAssetsUsd == null || !Number.isFinite(totalCollateralAssetsUsd) || totalCollateralAssetsUsd <= 0) {
+      return null;
+    }
+
+    const totalCollateralToken = Number(formatUnits(totalCollateralAssets, market.collateralAsset.decimals));
+    if (!Number.isFinite(totalCollateralToken) || totalCollateralToken <= 0) return null;
+
+    const priceUsd = totalCollateralAssetsUsd / totalCollateralToken;
+    return Number.isFinite(priceUsd) && priceUsd > 0 ? priceUsd : null;
+  }, [market.state.collateralAssets, market.state.collateralAssetsUsd, market.collateralAsset.decimals]);
+  const leverageTransferFee = useMemo(
+    () =>
+      getLeverageFee({
+        amount: quote.totalAddedCollateral,
+        assetPriceUsd: collateralAssetPriceUsd,
+        assetDecimals: market.collateralAsset.decimals,
+      }),
+    [quote.totalAddedCollateral, collateralAssetPriceUsd, market.collateralAsset.decimals],
+  );
+  const netAddedCollateral = useMemo(() => quote.totalAddedCollateral - leverageTransferFee, [quote.totalAddedCollateral, leverageTransferFee]);
   const { projectedCollateralAssets, projectedBorrowAssets } = useMemo(
     () =>
       computeLeverageProjectedPosition({
         currentCollateralAssets,
         currentBorrowAssets,
-        addedCollateralAssets: quote.totalAddedCollateral,
+        addedCollateralAssets: netAddedCollateral,
         addedBorrowAssets: quote.flashLoanAmount,
       }),
-    [currentCollateralAssets, currentBorrowAssets, quote.totalAddedCollateral, quote.flashLoanAmount],
+    [currentCollateralAssets, currentBorrowAssets, netAddedCollateral, quote.flashLoanAmount],
   );
   const marketLiquidity = BigInt(market.state.liquidityAssets);
   const hasChanges = quote.totalAddedCollateral > 0n && quote.flashLoanAmount > 0n;
@@ -219,6 +243,7 @@ export function AddCollateralAndLeverage({
     flashCollateralAmount: quote.flashCollateralAmount,
     flashLoanAmount: quote.flashLoanAmount,
     totalAddedCollateral: quote.totalAddedCollateral,
+    collateralAssetPriceUsd,
     swapPriceRoute: quote.swapPriceRoute,
     useLoanAssetAsInput: useLoanAssetInput,
     slippageBps: swapSlippageBps,
@@ -283,6 +308,14 @@ export function AddCollateralAndLeverage({
     () => formatTokenAmountPreview(quote.totalAddedCollateral, market.collateralAsset.decimals),
     [quote.totalAddedCollateral, market.collateralAsset.decimals],
   );
+  const leverageFeePreview = useMemo(
+    () => formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals),
+    [leverageTransferFee, market.collateralAsset.decimals],
+  );
+  const netCollateralAddedPreview = useMemo(
+    () => formatTokenAmountPreview(netAddedCollateral, market.collateralAsset.decimals),
+    [netAddedCollateral, market.collateralAsset.decimals],
+  );
   const swapCollateralOutPreview = useMemo(
     () => formatTokenAmountPreview(quote.flashCollateralAmount, market.collateralAsset.decimals),
     [quote.flashCollateralAmount, market.collateralAsset.decimals],
@@ -297,6 +330,7 @@ export function AddCollateralAndLeverage({
       ? 'Total Collateral Added (Min.)'
       : 'Collateral From Swap (Min.)'
     : 'Total Collateral Added';
+  const netCollateralPreviewLabel = isSwapRoute ? 'Net Collateral Supplied (Min.)' : 'Net Collateral Supplied';
   const hasExecutableInputConversion = useMemo(() => {
     if (!useLoanAssetInput) return true;
     if (isSwapRoute) return quote.totalAddedCollateral > 0n;
@@ -396,6 +430,21 @@ export function AddCollateralAndLeverage({
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">Leverage Preview</p>
+          <div className="mb-2 flex items-center justify-between rounded border border-white/10 bg-hovered px-3 py-2 text-xs">
+            <span className="text-secondary">Estimated Leverage Fee</span>
+            <span className="tabular-nums inline-flex items-center gap-1.5">
+              <Tooltip content={<span className="font-monospace text-xs">{leverageFeePreview.full}</span>}>
+                <span className="cursor-help border-b border-dotted border-white/40">{leverageFeePreview.compact}</span>
+              </Tooltip>
+              <TokenIcon
+                address={market.collateralAsset.address}
+                chainId={market.morphoBlue.chain.id}
+                symbol={market.collateralAsset.symbol}
+                width={14}
+                height={14}
+              />
+            </span>
+          </div>
           <BorrowPositionRiskCard
             market={market}
             currentCollateral={currentCollateralAssets}
@@ -560,6 +609,21 @@ export function AddCollateralAndLeverage({
                     </span>
                   </div>
                 )}
+                <div className="flex items-center justify-between">
+                  <span className="text-secondary">{netCollateralPreviewLabel}</span>
+                  <span className="tabular-nums inline-flex items-center gap-1.5">
+                    <Tooltip content={<span className="font-monospace text-xs">{netCollateralAddedPreview.full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">{netCollateralAddedPreview.compact}</span>
+                    </Tooltip>
+                    <TokenIcon
+                      address={market.collateralAsset.address}
+                      chainId={market.morphoBlue.chain.id}
+                      symbol={market.collateralAsset.symbol}
+                      width={14}
+                      height={14}
+                    />
+                  </span>
+                </div>
                 {shouldShowSwapPreviewDetails && (
                   <>
                     <div className="flex items-center justify-between gap-3">

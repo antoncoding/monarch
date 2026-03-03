@@ -158,7 +158,7 @@ When touching transaction and position flows, validation MUST include all releva
 23. **Max-bound input preview continuity**: transaction-critical amount inputs with `max` constraints must continue propagating parseable user-entered values into preview/risk state even when over max; max violations should surface as validation errors and block execution, but must not freeze preview updates or require bypass actions to keep previews in sync.
 24. **Indexer-lag transaction history bridging**: when earnings/APY depends on recent supply/withdraw history, confirmed on-chain receipts must be parsed into a short-lived local transaction cache (scoped by canonical user address + chain, deduped by tx hash + log index, TTL-bounded), merged into reads while indexers lag, and automatically removed as soon as the API returns the same tx hash to prevent double counting.
 25. **Leverage preview rate realism**: leverage preview Borrow/Net APR-APY values must be derived from projected post-transaction market state (using IRM `borrowRateView` + projected borrow assets/shares), not static pre-transaction market borrow rates, whenever the user has non-zero leverage input.
-
+26. **Leverage fee config and preview parity**: optional fee-recipient env values must treat empty/whitespace strings as unset and fall back to defaults before address validation, and leverage previews must compute/display the same transfer-fee deduction used by tx builders (including fee-adjusted net collateral in projected risk/LTV) so UI expectations cannot diverge from execution.
 ### REQUIRED: Regression Rule Capture
 
 After fixing any user-reported bug in a high-impact flow:

@@ -7,7 +7,8 @@ import morphoAbi from '@/abis/morpho';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
 import permit2Abi from '@/abis/permit2';
-import { LEVERAGE_FEE_RECIPIENT, computeLeverageTransferFee } from '@/config/leverage';
+import { getLeverageFee } from '@/config/fees';
+import { LEVERAGE_FEE_RECIPIENT } from '@/config/leverage';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
@@ -43,6 +44,7 @@ type UseLeverageTransactionProps = {
   flashCollateralAmount: bigint;
   flashLoanAmount: bigint;
   totalAddedCollateral: bigint;
+  collateralAssetPriceUsd: number | null;
   swapPriceRoute: VeloraPriceRoute | null;
   slippageBps: number;
   useLoanAssetAsInput: boolean;
@@ -62,6 +64,7 @@ export function useLeverageTransaction({
   flashCollateralAmount,
   flashLoanAmount,
   totalAddedCollateral,
+  collateralAssetPriceUsd,
   swapPriceRoute,
   slippageBps,
   useLoanAssetAsInput,
@@ -254,7 +257,11 @@ export function useLeverageTransaction({
       toast.info('Invalid leverage inputs', 'Set collateral and multiplier above 1x before submitting.');
       return;
     }
-    const leverageFeeAmount = computeLeverageTransferFee(totalAddedCollateral);
+    const leverageFeeAmount = getLeverageFee({
+      amount: totalAddedCollateral,
+      assetPriceUsd: collateralAssetPriceUsd,
+      assetDecimals: market.collateralAsset.decimals,
+    });
 
     try {
       const txs: `0x${string}`[] = [];
@@ -716,6 +723,7 @@ export function useLeverageTransaction({
     flashCollateralAmount,
     flashLoanAmount,
     totalAddedCollateral,
+    collateralAssetPriceUsd,
     swapPriceRoute,
     slippageBps,
     usePermit2ForRoute,

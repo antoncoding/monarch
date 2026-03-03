@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, formatUnits, maxUint256, parseUnits } from 'viem';
+import { type Address, encodeFunctionData, formatUnits, maxUint256 } from 'viem';
 import morphoBundlerAbi from '@/abis/bundlerV2';
+import { getFee, getRebalanceFee, REBALANCE_FEE_CEILING_USD } from '@/config/fees';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { GAS_COSTS } from '@/features/markets/components/constants';
 import { SMART_REBALANCE_FEE_RECIPIENT } from '@/config/smart-rebalance';
@@ -12,20 +13,13 @@ import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useRebalanceExecution, type RebalanceExecutionStepType } from './useRebalanceExecution';
 import { useConnection } from 'wagmi';
 
-const SMART_REBALANCE_FEE_BPS = 4n; // measured in tenths of a BPS (0.4 bps = 0.004%).
-const FEE_BPS_DENOMINATOR = 100_000n;
-const SMART_REBALANCE_MAX_FEE_USD = 4;
+const FULL_RATE_PPM = 1_000_000n;
 const SMART_REBALANCE_SHARE_WITHDRAW_DUST_BUFFER = 1000n;
 
 type SmartRebalanceFeeBreakdown = {
   totalFee: bigint;
   feeByMarket: Map<string, bigint>;
 };
-
-function computeBaseFeeForDelta(delta: bigint): bigint {
-  if (delta <= 0n) return 0n;
-  return (delta * SMART_REBALANCE_FEE_BPS) / FEE_BPS_DENOMINATOR;
-}
 
 function deriveLoanAssetPriceUsdFromPlan(plan: SmartRebalancePlan, loanAssetDecimals: number): number | null {
   for (const delta of plan.deltas) {
@@ -46,17 +40,6 @@ function deriveLoanAssetPriceUsdFromPlan(plan: SmartRebalancePlan, loanAssetDeci
   return null;
 }
 
-function computeFeeCapInLoanAssetUnits(loanAssetPriceUsd: number, loanAssetDecimals: number): bigint {
-  if (!Number.isFinite(loanAssetPriceUsd) || loanAssetPriceUsd <= 0) return 0n;
-
-  const cappedAmountInLoanAsset = SMART_REBALANCE_MAX_FEE_USD / loanAssetPriceUsd;
-  if (!Number.isFinite(cappedAmountInLoanAsset) || cappedAmountInLoanAsset <= 0) return 0n;
-
-  const precision = Math.min(loanAssetDecimals, 18);
-  const cappedAmountString = cappedAmountInLoanAsset.toFixed(precision);
-  return parseUnits(cappedAmountString, loanAssetDecimals);
-}
-
 function computeFeeBreakdown(
   plan: SmartRebalancePlan | null,
   loanAssetDecimals: number,
@@ -67,25 +50,35 @@ function computeFeeBreakdown(
   }
 
   const feeByMarket = new Map<string, bigint>();
-  const baseFees = plan.deltas
-    .filter((delta) => delta.delta > 0n)
-    .map((delta) => ({
-      uniqueKey: delta.market.uniqueKey,
-      fee: computeBaseFeeForDelta(delta.delta),
-    }))
-    .filter((entry) => entry.fee > 0n);
+  const baseFees: Array<{ uniqueKey: string; fee: bigint }> = [];
+  let uncappedTotal = 0n;
 
-  const uncappedTotal = baseFees.reduce((sum, entry) => sum + entry.fee, 0n);
+  for (const delta of plan.deltas) {
+    if (delta.delta <= 0n) continue;
+    const fee = getRebalanceFee({
+      amount: delta.delta,
+      applyCeiling: false,
+    });
+    if (fee <= 0n) continue;
+    baseFees.push({ uniqueKey: delta.market.uniqueKey, fee });
+    uncappedTotal += fee;
+  }
+
   if (uncappedTotal === 0n) {
     return { totalFee: 0n, feeByMarket };
   }
 
   const fallbackPriceUsd = deriveLoanAssetPriceUsdFromPlan(plan, loanAssetDecimals);
   const effectiveLoanAssetPriceUsd = pricedLoanAssetUsd ?? fallbackPriceUsd;
-  const feeCap =
-    effectiveLoanAssetPriceUsd !== null ? computeFeeCapInLoanAssetUnits(effectiveLoanAssetPriceUsd, loanAssetDecimals) : uncappedTotal;
+  const cappedTotal = getFee({
+    amount: uncappedTotal,
+    ratePpm: FULL_RATE_PPM,
+    ceilingUsd: REBALANCE_FEE_CEILING_USD,
+    assetPriceUsd: effectiveLoanAssetPriceUsd,
+    assetDecimals: loanAssetDecimals,
+  });
 
-  let remainingFee = feeCap < uncappedTotal ? feeCap : uncappedTotal;
+  let remainingFee = cappedTotal;
   for (const entry of baseFees) {
     if (remainingFee <= 0n) {
       feeByMarket.set(entry.uniqueKey, 0n);
@@ -98,7 +91,7 @@ function computeFeeBreakdown(
   }
 
   return {
-    totalFee: feeCap < uncappedTotal ? feeCap : uncappedTotal,
+    totalFee: cappedTotal,
     feeByMarket,
   };
 }
