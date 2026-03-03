@@ -47,8 +47,6 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     isFetching: isFetchingBlockTimestamps,
   } = useBlockTimestamps(snapshotBlocks);
 
-  const endTimestamp = useMemo(() => Math.floor(Date.now() / 1000), []);
-
   const {
     data: txData,
     isLoading: isLoadingTransactions,
@@ -91,13 +89,7 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     snapshotBlocks,
   });
 
-  const positionsWithEarnings = usePositionsWithEarnings(
-    positions ?? [],
-    mergedTransactions,
-    allSnapshots ?? {},
-    actualBlockData ?? {},
-    endTimestamp,
-  );
+  const positionsWithEarnings = usePositionsWithEarnings(positions ?? [], mergedTransactions, allSnapshots ?? {}, actualBlockData ?? {});
 
   const refetch = async (onSuccess?: () => void) => {
     try {
