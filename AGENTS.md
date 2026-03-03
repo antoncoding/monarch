@@ -139,16 +139,17 @@ When touching transaction and position flows, validation MUST include all releva
 4. **Post-action rate preview parity**: transaction modals that change position yield/rates must show current -> projected post-action APY/APR, and preview mode (APR vs APY) must match the global setting used by execution summaries.
 5. **Bigint unit discipline**: keep on-chain amounts as `bigint` for all calculations; only convert at boundaries with `parseUnits` (input) and `formatUnits` or shared token-amount formatters (display/serialization).
 6. **Computation-backed previews**: risk, rate, and amount previews must come from executable quote/oracle/conversion inputs and match tx-builder inputs.
-7. **Transaction tracking progress integrity**: use `useTransactionTracking` as the progress-bar/stepper chokepoint, define explicit ordered steps per flow, and call `tracking.update(...)` only when advancing to a strictly later step (never backwards or out of order).
-8. **Post-transaction state hygiene**: on success, reset transient draft state and trigger required refetches with bounded/reactive dependencies (no loops or stale closures).
-9. **Input integrity**: support locale-safe decimal entry, preserve transient typing states, reject unsupported numeric syntax explicitly, and normalize only at commit boundaries.
-10. **API contract integrity**: keep endpoint-specific request builders strict, normalize remote errors into typed app errors, and verify response token/route identities before using previews or tx payloads.
-11. **Authorization/allowance chokepoints**: route spender/permit/authorization logic through shared chokepoints; fail closed when readiness or config is missing.
-12. **Null/stale-data resilience**: guard null/undefined/stale API and contract fields in all tx-critical paths so malformed data degrades safely.
-13. **Preview stability under refresh**: while quotes/routes refetch, keep last settled preview state (or neutral loading state), not transient placeholder values.
-14. **Transaction-history consistency**: dedupe and merge confirmed local/on-chain history consistently (canonical user+chain scope, stable dedup key, bounded TTL) to avoid double counting during indexer lag.
-15. **Share-based full-exit withdrawals**: when an existing supplied position is intended to be fully exited (or the target leaves only dust), prefer share-based `morphoWithdraw` over asset-amount withdrawal so residual dust is not stranded by rounding.
-16. **UI signal quality**: remove duplicate or low-signal metrics and keep transaction-critical UI focused on decision-relevant data.
+7. **Historical rate weighting integrity**: grouped/portfolio realized APY/APR must be weighted by capital-time exposure (for example average capital × exposure time), never by simple averages or balance-only weights that ignore holding duration.
+8. **Transaction tracking progress integrity**: use `useTransactionTracking` as the progress-bar/stepper chokepoint, define explicit ordered steps per flow, and call `tracking.update(...)` only when advancing to a strictly later step (never backwards or out of order).
+9. **Post-transaction state hygiene**: on success, reset transient draft state and trigger required refetches with bounded/reactive dependencies (no loops or stale closures).
+10. **Input integrity**: support locale-safe decimal entry, preserve transient typing states, reject unsupported numeric syntax explicitly, and normalize only at commit boundaries.
+11. **API contract integrity**: keep endpoint-specific request builders strict, normalize remote errors into typed app errors, and verify response token/route identities before using previews or tx payloads.
+12. **Authorization/allowance chokepoints**: route spender/permit/authorization logic through shared chokepoints; fail closed when readiness or config is missing.
+13. **Null/stale-data resilience**: guard null/undefined/stale API and contract fields in all tx-critical paths so malformed data degrades safely.
+14. **Preview stability under refresh**: while quotes/routes refetch, keep last settled preview state (or neutral loading state), not transient placeholder values.
+15. **Transaction-history consistency**: dedupe and merge confirmed local/on-chain history consistently (canonical user+chain scope, stable dedup key, bounded TTL) to avoid double counting during indexer lag.
+16. **Share-based full-exit withdrawals**: when an existing supplied position is intended to be fully exited (or the target leaves only dust), prefer share-based `morphoWithdraw` over asset-amount withdrawal so residual dust is not stranded by rounding.
+17. **UI signal quality**: remove duplicate or low-signal metrics and keep transaction-critical UI focused on decision-relevant data.
 ### REQUIRED: Regression Rule Capture
 
 After fixing any user-reported bug in a high-impact flow:
