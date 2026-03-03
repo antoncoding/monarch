@@ -404,24 +404,34 @@ export function getGroupedEarnings(groupedPosition: GroupedPosition): bigint {
 
 /**
  * Get weighted actual APY for a group of positions
- * Weighted by time-weighted average capital (avgCapital) from each position
+ * Weighted by capital-time contribution from each position (avgCapital * effectiveTime)
  *
  * @param groupedPosition - The grouped position
  * @returns The weighted actual APY as a number
  */
 export function getGroupedActualApy(groupedPosition: GroupedPosition): number {
   let totalWeightedApy = 0;
-  let totalAvgCapital = 0n;
+  let totalCapitalTime = 0n;
 
   for (const position of groupedPosition.markets) {
     const avgCapital = BigInt(position.avgCapital ?? '0');
-    if (avgCapital > 0n) {
-      totalWeightedApy += Number(avgCapital) * position.actualApy;
-      totalAvgCapital += avgCapital;
-    }
+    const effectiveTime = BigInt(Math.max(0, position.effectiveTime ?? 0));
+    if (avgCapital <= 0n || effectiveTime <= 0n) continue;
+    if (!Number.isFinite(position.actualApy)) continue;
+
+    const capitalTime = avgCapital * effectiveTime;
+    const capitalTimeAsNumber = Number(capitalTime);
+    if (!Number.isFinite(capitalTimeAsNumber) || capitalTimeAsNumber <= 0) continue;
+
+    totalWeightedApy += capitalTimeAsNumber * position.actualApy;
+    totalCapitalTime += capitalTime;
   }
 
-  return totalAvgCapital > 0n ? totalWeightedApy / Number(totalAvgCapital) : 0;
+  if (totalCapitalTime <= 0n) return 0;
+  const totalCapitalTimeAsNumber = Number(totalCapitalTime);
+  if (!Number.isFinite(totalCapitalTimeAsNumber) || totalCapitalTimeAsNumber <= 0) return 0;
+
+  return totalWeightedApy / totalCapitalTimeAsNumber;
 }
 
 /**

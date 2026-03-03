@@ -28,7 +28,6 @@ export const usePositionsWithEarnings = (
   transactions: UserTransaction[],
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>,
   chainBlockData: Record<number, { block: number; timestamp: number }>,
-  endTimestamp: number,
 ): MarketPositionWithEarnings[] => {
   return useMemo(() => {
     if (!transactions || transactions.length === 0) {
@@ -43,6 +42,8 @@ export const usePositionsWithEarnings = (
       }));
     }
 
+    const endTimestamp = Math.floor(Date.now() / 1000);
+
     return positions.map((position) => {
       const chainId = position.market.morphoBlue.chain.id;
       const chainData = chainBlockData[chainId];
@@ -56,11 +57,9 @@ export const usePositionsWithEarnings = (
       const pastSnapshot = chainSnapshots?.get(marketIdLower);
       const pastBalance = pastSnapshot ? BigInt(pastSnapshot.supplyAssets) : 0n;
 
-      // Filter transactions for this market AND this chain's time range
-      const marketTxs = transactions.filter(
-        (tx) =>
-          tx.data?.market?.uniqueKey?.toLowerCase() === marketIdLower && tx.timestamp >= startTimestamp && tx.timestamp <= endTimestamp,
-      );
+      // Filter transactions for this market only.
+      // Time-window filtering is centralized in calculateEarningsFromSnapshot.
+      const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey?.toLowerCase() === marketIdLower);
 
       const earnings = calculateEarningsFromSnapshot(currentBalance, pastBalance, marketTxs, startTimestamp, endTimestamp);
 
@@ -74,5 +73,5 @@ export const usePositionsWithEarnings = (
         totalWithdraws: earnings.totalWithdraws.toString(),
       };
     });
-  }, [positions, transactions, snapshotsByChain, chainBlockData, endTimestamp]);
+  }, [positions, transactions, snapshotsByChain, chainBlockData]);
 };
