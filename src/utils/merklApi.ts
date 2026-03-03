@@ -89,6 +89,7 @@ function getBaseCampaignFields(
   | 'isActive'
   | 'name'
   | 'opportunityIdentifier'
+  | 'opportunityAction'
 > {
   return {
     chainId: campaign.computeChainId,
@@ -105,6 +106,7 @@ function getBaseCampaignFields(
     isActive: isCampaignActive(campaign),
     name: campaign.Opportunity?.name,
     opportunityIdentifier: campaign.Opportunity?.identifier,
+    opportunityAction: campaign.Opportunity?.action,
   };
 }
 

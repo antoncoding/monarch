@@ -61,7 +61,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       usePermit2: true,
       useEth: false,
       showUnwhitelistedMarkets: false,
-      showFullRewardAPY: false,
+      showFullRewardAPY: true,
       isAprDisplay: false,
       trustedVaultsWarningDismissed: false,
       showDeveloperOptions: false,

@@ -89,6 +89,7 @@ export type MerklOpportunity = {
   name: string;
   chainId: number;
   type: string;
+  action?: string;
 };
 
 export type MerklCampaign = {
@@ -156,4 +157,5 @@ export type SimplifiedCampaign = {
   isActive: boolean;
   name?: string;
   opportunityIdentifier?: string;
+  opportunityAction?: string;
 };
