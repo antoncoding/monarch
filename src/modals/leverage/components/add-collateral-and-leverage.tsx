@@ -26,6 +26,7 @@ import {
   parsePercentToBps,
   parseMultiplierToBps,
   parseUnsignedBigInt,
+  toScaledRatio,
   targetLtvBpsFromMultiplier,
 } from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
@@ -434,15 +435,15 @@ export function AddCollateralAndLeverage({
       });
       if (collateralUnderlyingAssets <= 0n) return null;
 
-      const ratio = Number(projectedBorrowAssets) / Number(collateralUnderlyingAssets);
-      if (!Number.isFinite(ratio) || ratio < 0) return null;
+      const ratio = toScaledRatio(projectedBorrowAssets, collateralUnderlyingAssets);
+      if (ratio == null || !Number.isFinite(ratio) || ratio < 0) return null;
       return ratio;
     }
 
     if (projectedCollateralAssets <= 0n) return null;
 
-    const ratio = Number(projectedLTV) / Number(LTV_WAD);
-    if (!Number.isFinite(ratio) || ratio < 0) return null;
+    const ratio = toScaledRatio(projectedLTV, LTV_WAD);
+    if (ratio == null || !Number.isFinite(ratio) || ratio < 0) return null;
     return ratio;
   }, [
     isErc4626Route,

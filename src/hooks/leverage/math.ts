@@ -28,7 +28,7 @@ const getSlippageFloorBps = (slippageBps?: number): bigint => {
   return floorBps > 0n ? floorBps : 1n;
 };
 
-const toScaledRatio = (numerator: bigint, denominator: bigint): number | null => {
+export const toScaledRatio = (numerator: bigint, denominator: bigint): number | null => {
   if (denominator <= 0n) return null;
   const scaledRatio = (numerator * APY_RATIO_SCALE) / denominator;
   const ratio = Number(scaledRatio) / Number(APY_RATIO_SCALE);

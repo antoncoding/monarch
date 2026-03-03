@@ -60,8 +60,10 @@ const getRewardRatePrefix = (mode: RateMode): string => {
 };
 
 const getDisplayRewardRate = (rewardAprPercent: number, isAprDisplay: boolean): number => {
+  if (!Number.isFinite(rewardAprPercent)) return 0;
   if (isAprDisplay) return rewardAprPercent;
-  return convertAprToApy(rewardAprPercent / 100) * 100;
+  const rewardApyPercent = convertAprToApy(rewardAprPercent / 100) * 100;
+  return Number.isFinite(rewardApyPercent) ? rewardApyPercent : 0;
 };
 
 export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode = 'supply' }: APYBreakdownTooltipProps) {
@@ -89,11 +91,11 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode =
           <span>Base {modeLabel} {rateLabel}</span>
           <span className="ml-6">{baseRateValue.toFixed(2)}%</span>
         </div>
-        {activeCampaigns.map((campaign, index) => {
+        {activeCampaigns.map((campaign) => {
           const rewardRateValue = getDisplayRewardRate(campaign.apr, isAprDisplay);
           return (
             <div
-              key={index}
+              key={campaign.campaignId}
               className="flex items-center justify-between text-xs"
             >
               <div className="flex items-center gap-2">
