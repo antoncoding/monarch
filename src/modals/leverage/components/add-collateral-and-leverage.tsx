@@ -142,6 +142,7 @@ export function AddCollateralAndLeverage({
 
   const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
   const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
+  const hasQuoteChanges = quote.totalAddedCollateral > 0n && quote.flashLoanAmount > 0n;
   const collateralAssetPriceUsd = useMemo(() => {
     const totalCollateralAssets = BigInt(market.state.collateralAssets);
     const totalCollateralAssetsUsd = market.state.collateralAssetsUsd;
@@ -155,28 +156,41 @@ export function AddCollateralAndLeverage({
     const priceUsd = totalCollateralAssetsUsd / totalCollateralToken;
     return Number.isFinite(priceUsd) && priceUsd > 0 ? priceUsd : null;
   }, [market.state.collateralAssets, market.state.collateralAssetsUsd, market.collateralAsset.decimals]);
-  const leverageTransferFee = useMemo(
-    () =>
-      getLeverageFee({
-        amount: quote.totalAddedCollateral,
-        assetPriceUsd: collateralAssetPriceUsd,
-        assetDecimals: market.collateralAsset.decimals,
-      }),
-    [quote.totalAddedCollateral, collateralAssetPriceUsd, market.collateralAsset.decimals],
+  const leverageTransferFee = useMemo<bigint | null>(() => {
+    if (collateralAssetPriceUsd == null) return null;
+    return getLeverageFee({
+      amount: quote.totalAddedCollateral,
+      assetPriceUsd: collateralAssetPriceUsd,
+      assetDecimals: market.collateralAsset.decimals,
+    });
+  }, [quote.totalAddedCollateral, collateralAssetPriceUsd, market.collateralAsset.decimals]);
+  const netAddedCollateral = useMemo<bigint | null>(() => {
+    if (leverageTransferFee == null) return null;
+    return quote.totalAddedCollateral - leverageTransferFee;
+  }, [quote.totalAddedCollateral, leverageTransferFee]);
+  const isLeverageFeeReady = useMemo(
+    () => hasQuoteChanges && leverageTransferFee != null && netAddedCollateral != null && netAddedCollateral > 0n,
+    [hasQuoteChanges, leverageTransferFee, netAddedCollateral],
   );
-  const netAddedCollateral = useMemo(() => quote.totalAddedCollateral - leverageTransferFee, [quote.totalAddedCollateral, leverageTransferFee]);
+  const leverageFeeReadinessError = useMemo(() => {
+    if (!hasQuoteChanges) return null;
+    if (collateralAssetPriceUsd == null) return 'Collateral price unavailable. Leverage preview and submit are disabled.';
+    if (leverageTransferFee == null || netAddedCollateral == null) return 'Leverage fee unavailable. Please retry.';
+    if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
+    return null;
+  }, [hasQuoteChanges, collateralAssetPriceUsd, leverageTransferFee, netAddedCollateral]);
   const { projectedCollateralAssets, projectedBorrowAssets } = useMemo(
     () =>
       computeLeverageProjectedPosition({
         currentCollateralAssets,
         currentBorrowAssets,
-        addedCollateralAssets: netAddedCollateral,
-        addedBorrowAssets: quote.flashLoanAmount,
+        addedCollateralAssets: isLeverageFeeReady && netAddedCollateral != null ? netAddedCollateral : 0n,
+        addedBorrowAssets: isLeverageFeeReady ? quote.flashLoanAmount : 0n,
       }),
-    [currentCollateralAssets, currentBorrowAssets, netAddedCollateral, quote.flashLoanAmount],
+    [currentCollateralAssets, currentBorrowAssets, isLeverageFeeReady, netAddedCollateral, quote.flashLoanAmount],
   );
   const marketLiquidity = BigInt(market.state.liquidityAssets);
-  const hasChanges = quote.totalAddedCollateral > 0n && quote.flashLoanAmount > 0n;
+  const hasChanges = isLeverageFeeReady;
   const rateLabel = isAprDisplay ? 'APR' : 'APY';
 
   const vaultRateInsight = use4626VaultAPR({
@@ -288,6 +302,7 @@ export function AddCollateralAndLeverage({
   );
 
   const handleLeverage = useCallback(() => {
+    if (!isLeverageFeeReady) return;
     const usePermit2Flow = usePermit2Setting;
 
     if (usePermit2Flow && permit2Authorized) {
@@ -296,7 +311,7 @@ export function AddCollateralAndLeverage({
     }
 
     void approveAndLeverage();
-  }, [usePermit2Setting, permit2Authorized, signAndLeverage, approveAndLeverage]);
+  }, [isLeverageFeeReady, usePermit2Setting, permit2Authorized, signAndLeverage, approveAndLeverage]);
 
   const projectedOverLimit = projectedLTV >= lltv;
   const insufficientLiquidity = quote.flashLoanAmount > marketLiquidity;
@@ -312,10 +327,10 @@ export function AddCollateralAndLeverage({
     () => formatTokenAmountPreview(quote.totalAddedCollateral, market.collateralAsset.decimals),
     [quote.totalAddedCollateral, market.collateralAsset.decimals],
   );
-  const leverageFeePreview = useMemo(
-    () => formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals),
-    [leverageTransferFee, market.collateralAsset.decimals],
-  );
+  const leverageFeePreview = useMemo(() => {
+    if (!isLeverageFeeReady || leverageTransferFee == null) return null;
+    return formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals);
+  }, [isLeverageFeeReady, leverageTransferFee, market.collateralAsset.decimals]);
   const swapCollateralOutPreview = useMemo(
     () => formatTokenAmountPreview(quote.flashCollateralAmount, market.collateralAsset.decimals),
     [quote.flashCollateralAmount, market.collateralAsset.decimals],
@@ -593,21 +608,23 @@ export function AddCollateralAndLeverage({
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between">
-                  <span className="text-secondary">Leverage Fee (Est.)</span>
-                  <span className="tabular-nums inline-flex items-center gap-1.5">
-                    <Tooltip content={<span className="font-monospace text-xs">{leverageFeePreview.full}</span>}>
-                      <span className="cursor-help border-b border-dotted border-white/40">{leverageFeePreview.compact}</span>
-                    </Tooltip>
-                    <TokenIcon
-                      address={market.collateralAsset.address}
-                      chainId={market.morphoBlue.chain.id}
-                      symbol={market.collateralAsset.symbol}
-                      width={14}
-                      height={14}
-                    />
-                  </span>
-                </div>
+                {leverageFeePreview != null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-secondary">Leverage Fee (Est.)</span>
+                    <span className="tabular-nums inline-flex items-center gap-1.5">
+                      <Tooltip content={<span className="font-monospace text-xs">{leverageFeePreview.full}</span>}>
+                        <span className="cursor-help border-b border-dotted border-white/40">{leverageFeePreview.compact}</span>
+                      </Tooltip>
+                      <TokenIcon
+                        address={market.collateralAsset.address}
+                        chainId={market.morphoBlue.chain.id}
+                        symbol={market.collateralAsset.symbol}
+                        width={14}
+                        height={14}
+                      />
+                    </span>
+                  </div>
+                )}
                 {shouldShowSwapPreviewDetails && (
                   <>
                     <div className="flex items-center justify-between gap-3">
@@ -646,6 +663,7 @@ export function AddCollateralAndLeverage({
                 )}
               </div>
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
+              {!quote.error && leverageFeeReadinessError && <p className="mt-2 text-xs text-red-500">{leverageFeeReadinessError}</p>}
               {isErc4626Route && vaultRateInsight.error && (
                 <p className="mt-2 text-xs text-red-500">Failed to fetch 3-day vault/borrow rates: {vaultRateInsight.error}</p>
               )}
@@ -671,6 +689,7 @@ export function AddCollateralAndLeverage({
                   collateralAmount <= 0n ||
                   !isBundlerAuthorizationReady ||
                   !hasExecutableInputConversion ||
+                  !isLeverageFeeReady ||
                   quote.flashLoanAmount <= 0n ||
                   projectedOverLimit ||
                   insufficientLiquidity

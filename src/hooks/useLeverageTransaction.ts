@@ -257,11 +257,19 @@ export function useLeverageTransaction({
       toast.info('Invalid leverage inputs', 'Set collateral and multiplier above 1x before submitting.');
       return;
     }
+    if (collateralAssetPriceUsd == null || !Number.isFinite(collateralAssetPriceUsd) || collateralAssetPriceUsd <= 0) {
+      toast.info('Leverage unavailable', 'Collateral price unavailable for fee calculation.');
+      return;
+    }
     const leverageFeeAmount = getLeverageFee({
       amount: totalAddedCollateral,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
     });
+    if (totalAddedCollateral - leverageFeeAmount <= 0n) {
+      toast.info('Leverage unavailable', 'Net collateral after fee must be positive.');
+      return;
+    }
 
     try {
       const txs: `0x${string}`[] = [];
