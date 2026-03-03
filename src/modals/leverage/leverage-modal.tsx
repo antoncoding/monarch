@@ -6,8 +6,10 @@ import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
+import { useModal } from '@/hooks/useModal';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { cn } from '@/utils/components';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -102,6 +104,7 @@ export function LeverageModal({
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
   const [routeMode, setRouteMode] = useState<RouteMode>('erc4626');
   const { address: account } = useConnection();
+  const { open: openModal } = useModal();
 
   const { swapRoute, isErc4626ModeAvailable, availableRouteModes, isErc4626ProbeLoading, isErc4626ProbeRefetching } =
     useLeverageRouteAvailability({
@@ -154,6 +157,7 @@ export function LeverageModal({
   }, [route, availableRouteModes, routeMode]);
 
   const effectiveMode = mode;
+  const borrowModalMode = effectiveMode === 'leverage' ? 'borrow' : 'repay';
   const modeOptions: { value: string; label: string }[] = toggleLeverageDeleverage
     ? [
         { value: 'leverage', label: `Leverage ${market.collateralAsset.symbol}` },
@@ -187,6 +191,15 @@ export function LeverageModal({
     if (account) tasks.push(refetchCollateralTokenBalance());
     if (tasks.length > 0) void Promise.allSettled(tasks);
   }, [refetch, account, refetchCollateralTokenBalance]);
+  const handleOpenBorrow = useCallback(() => {
+    openModal('borrow', {
+      market,
+      defaultMode: borrowModalMode,
+      toggleBorrowRepay: false,
+      refetch: handleRefreshAll,
+    });
+    onOpenChange(false);
+  }, [openModal, market, borrowModalMode, handleRefreshAll, onOpenChange]);
 
   const isRefreshingAnyData = isRefreshing || isFetchingCollateralTokenBalance;
 
@@ -248,6 +261,16 @@ export function LeverageModal({
               : isSwapRoute
                 ? `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`
                 : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
+        }
+        actions={
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenBorrow}
+            className="h-auto px-1 py-0 text-xs font-medium text-secondary hover:bg-transparent hover:text-primary"
+          >
+            {effectiveMode === 'leverage' ? 'Use Borrow' : 'Use Repay'}
+          </Button>
         }
       />
       <ModalBody>

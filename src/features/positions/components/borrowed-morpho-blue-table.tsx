@@ -199,6 +199,16 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                             },
                           })
                         }
+                        onDeleverageClick={() =>
+                          open('leverage', {
+                            market: row.market,
+                            defaultMode: 'deleverage',
+                            toggleLeverageDeleverage: false,
+                            refetch: () => {
+                              void onRefetch();
+                            },
+                          })
+                        }
                       />
                     </div>
                   </TableCell>
