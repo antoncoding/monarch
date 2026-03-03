@@ -2,9 +2,9 @@ import { useCallback, useMemo } from 'react';
 import { type Address, encodeFunctionData, formatUnits, maxUint256 } from 'viem';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { getFee, getRebalanceFee, REBALANCE_FEE_CEILING_USD } from '@/config/fees';
+import { MONARCH_FEE_RECIPIENT } from '@/config/smart-rebalance';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { GAS_COSTS } from '@/features/markets/components/constants';
-import { SMART_REBALANCE_FEE_RECIPIENT } from '@/config/smart-rebalance';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import type { GroupedPosition } from '@/utils/types';
 import type { TransactionSummaryItem } from '@/stores/useTransactionProcessStore';
@@ -253,7 +253,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
             encodeFunctionData({
               abi: morphoBundlerAbi,
               functionName: 'erc20Transfer',
-              args: [groupedPosition.loanAssetAddress as Address, SMART_REBALANCE_FEE_RECIPIENT, maxUint256],
+              args: [groupedPosition.loanAssetAddress as Address, MONARCH_FEE_RECIPIENT, maxUint256],
             }),
           ];
 
