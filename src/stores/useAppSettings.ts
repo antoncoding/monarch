@@ -22,6 +22,9 @@ type AppSettingsState = {
 
   // Experimental feature gates
   enableExperimentalLeverage: boolean;
+
+  // Leverage modal preferences
+  leverageUseTargetLtvInput: boolean;
 };
 
 type AppSettingsActions = {
@@ -34,6 +37,7 @@ type AppSettingsActions = {
   setShowDeveloperOptions: (show: boolean) => void;
   setUsePublicAllocator: (show: boolean) => void;
   setEnableExperimentalLeverage: (show: boolean) => void;
+  setLeverageUseTargetLtvInput: (useTargetLtvInput: boolean) => void;
 
   // Bulk update for migration
   setAll: (state: Partial<AppSettingsState>) => void;
@@ -63,6 +67,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       showDeveloperOptions: false,
       usePublicAllocator: true,
       enableExperimentalLeverage: false,
+      leverageUseTargetLtvInput: true,
 
       // Actions
       setUsePermit2: (use) => set({ usePermit2: use }),
@@ -74,6 +79,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       setShowDeveloperOptions: (show) => set({ showDeveloperOptions: show }),
       setUsePublicAllocator: (show) => set({ usePublicAllocator: show }),
       setEnableExperimentalLeverage: (show) => set({ enableExperimentalLeverage: show }),
+      setLeverageUseTargetLtvInput: (useTargetLtvInput) => set({ leverageUseTargetLtvInput: useTargetLtvInput }),
       setAll: (state) => set(state),
     }),
     {
