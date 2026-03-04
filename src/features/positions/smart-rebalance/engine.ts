@@ -1,22 +1,7 @@
 import type { Market as BlueMarket } from '@morpho-org/blue-sdk';
 import type { SmartRebalanceConstraintMap, SmartRebalanceDelta, SmartRebalanceEngineInput, SmartRebalanceEngineOutput } from './types';
 
-const DEFAULT_MAX_ROUNDS = 50;
-const DEFAULT_FRACTIONS: [bigint, bigint][] = [
-  [2n, 100n],
-  [5n, 100n],
-  [10n, 100n],
-  [15n, 100n],
-  [20n, 100n],
-  [30n, 100n],
-  [40n, 100n],
-  [50n, 100n],
-  [60n, 100n],
-  [70n, 100n],
-  [80n, 100n],
-  [90n, 100n],
-  [1n, 1n],
-];
+const MAX_CHUNKS = 100n;
 const APY_SCALE = 1_000_000_000_000n;
 
 function utilizationOf(market: BlueMarket): number {
@@ -29,38 +14,6 @@ function clampBps(value: number | undefined): number | undefined {
   if (value <= 0) return 0;
   if (value >= 10_000) return 10_000;
   return Math.floor(value);
-}
-
-function sanitizeMaxRounds(rawMaxRounds: number | undefined): number {
-  if (rawMaxRounds === undefined || !Number.isFinite(rawMaxRounds)) {
-    return DEFAULT_MAX_ROUNDS;
-  }
-
-  const rounded = Math.floor(rawMaxRounds);
-  if (rounded < 1) return 1;
-  if (rounded > DEFAULT_MAX_ROUNDS) return DEFAULT_MAX_ROUNDS;
-  return rounded;
-}
-
-function sanitizeFractions(rawFractions: [bigint, bigint][] | undefined): [bigint, bigint][] {
-  if (!rawFractions || rawFractions.length === 0) {
-    return DEFAULT_FRACTIONS;
-  }
-
-  const deduped: [bigint, bigint][] = [];
-  const seen = new Set<string>();
-
-  for (const [num, den] of rawFractions) {
-    if (den <= 0n || num <= 0n || num > den) continue;
-
-    const key = `${num}/${den}`;
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    deduped.push([num, den]);
-  }
-
-  return deduped.length > 0 ? deduped : DEFAULT_FRACTIONS;
 }
 
 function toApyScaled(apy: number): bigint {
@@ -94,6 +47,21 @@ function minBigInt(a: bigint, b: bigint): bigint {
   return a < b ? a : b;
 }
 
+function simulateWithdrawAtCap(market: BlueMarket, capAmount: bigint): { amount: bigint; marketAfter: BlueMarket } {
+  if (capAmount <= 0n) {
+    return { amount: 0n, marketAfter: market };
+  }
+
+  try {
+    return {
+      amount: capAmount,
+      marketAfter: market.withdraw(capAmount, 0n).market,
+    };
+  } catch {
+    return { amount: 0n, marketAfter: market };
+  }
+}
+
 function resolveMaxAllocation(
   uniqueKey: string,
   totalPool: bigint,
@@ -103,6 +71,181 @@ function resolveMaxAllocation(
   const maxBps = clampBps(raw);
   if (maxBps === undefined || maxBps >= 10_000) return undefined;
   return (totalPool * BigInt(maxBps)) / 10_000n;
+}
+
+type CleanStateResult = {
+  principal: bigint;
+  movableKeys: string[];
+  maxAllocationMap: Map<string, bigint | undefined>;
+  allocations: Map<string, bigint>;
+  marketMap: Map<string, BlueMarket>;
+};
+
+type ChunkAllocationState = {
+  allocations: Map<string, bigint>;
+  marketMap: Map<string, BlueMarket>;
+};
+
+function cleanStates(
+  entries: SmartRebalanceEngineInput['entries'],
+  constraints: SmartRebalanceConstraintMap | undefined,
+  totalPool: bigint,
+): CleanStateResult {
+  const principal = 0n;
+  const movableKeys: string[] = [];
+  const maxAllocationMap = new Map<string, bigint | undefined>();
+  const allocations = new Map<string, bigint>();
+  const marketMap = new Map<string, BlueMarket>();
+
+  let runningPrincipal = principal;
+
+  for (const entry of entries) {
+    maxAllocationMap.set(entry.uniqueKey, resolveMaxAllocation(entry.uniqueKey, totalPool, constraints));
+
+    const cappedWithdraw = minBigInt(entry.currentSupply, entry.maxWithdrawable);
+    const { amount: withdrawnAmount, marketAfter } = simulateWithdrawAtCap(entry.baselineMarket, cappedWithdraw);
+    const lockedAmount = entry.currentSupply - withdrawnAmount;
+
+    movableKeys.push(entry.uniqueKey);
+    allocations.set(entry.uniqueKey, lockedAmount);
+    marketMap.set(entry.uniqueKey, marketAfter);
+    runningPrincipal += withdrawnAmount;
+  }
+
+  return {
+    principal: runningPrincipal,
+    movableKeys,
+    maxAllocationMap,
+    allocations,
+    marketMap,
+  };
+}
+
+function buildChunks(principal: bigint): bigint[] {
+  if (principal <= 0n) return [];
+
+  const chunkCount = principal < MAX_CHUNKS ? principal : MAX_CHUNKS;
+  const baseChunk = principal / chunkCount;
+  const remainder = principal % chunkCount;
+
+  const chunks = Array.from({ length: Number(chunkCount) }, () => baseChunk);
+  if (chunks.length > 0 && remainder > 0n) {
+    chunks[chunks.length - 1] += remainder;
+  }
+
+  return chunks;
+}
+
+function findBestSupplyTarget(
+  amount: bigint,
+  movableKeys: string[],
+  uniqueKeys: string[],
+  allocations: Map<string, bigint>,
+  marketMap: Map<string, BlueMarket>,
+  maxAllocationMap: Map<string, bigint | undefined>,
+): { uniqueKey: string; amount: bigint; marketAfter: BlueMarket; objective: bigint } | null {
+  let bestKey: string | null = null;
+  let bestAmount = 0n;
+  let bestObjective: bigint | null = null;
+  let bestMarketAfter: BlueMarket | null = null;
+
+  for (const uniqueKey of movableKeys) {
+    const market = marketMap.get(uniqueKey);
+    if (!market) continue;
+
+    const currentAllocation = allocations.get(uniqueKey) ?? 0n;
+    const maxAllocation = maxAllocationMap.get(uniqueKey);
+    const room = maxAllocation === undefined ? amount : maxAllocation - currentAllocation;
+    if (room <= 0n) continue;
+
+    const supplyAmount = minBigInt(amount, room);
+    if (supplyAmount <= 0n) continue;
+
+    let marketAfter: BlueMarket;
+    try {
+      marketAfter = market.supply(supplyAmount, 0n).market;
+    } catch {
+      continue;
+    }
+
+    allocations.set(uniqueKey, currentAllocation + supplyAmount);
+    marketMap.set(uniqueKey, marketAfter);
+    const objective = computeObjective(uniqueKeys, allocations, marketMap);
+    allocations.set(uniqueKey, currentAllocation);
+    marketMap.set(uniqueKey, market);
+
+    if (bestObjective === null || objective > bestObjective) {
+      bestObjective = objective;
+      bestKey = uniqueKey;
+      bestAmount = supplyAmount;
+      bestMarketAfter = marketAfter;
+    }
+  }
+
+  if (!bestKey || !bestMarketAfter || bestAmount <= 0n || bestObjective === null) {
+    return null;
+  }
+
+  return { uniqueKey: bestKey, amount: bestAmount, marketAfter: bestMarketAfter, objective: bestObjective };
+}
+
+function calculateAllocation(
+  chunks: bigint[],
+  movableKeys: string[],
+  uniqueKeys: string[],
+  allocations: Map<string, bigint>,
+  marketMap: Map<string, BlueMarket>,
+  maxAllocationMap: Map<string, bigint | undefined>,
+): ChunkAllocationState {
+  for (const chunk of chunks) {
+    let remainingChunk = chunk;
+    if (remainingChunk <= 0n) continue;
+
+    while (remainingChunk > 0n) {
+      const best = findBestSupplyTarget(remainingChunk, movableKeys, uniqueKeys, allocations, marketMap, maxAllocationMap);
+      if (!best) break;
+
+      allocations.set(best.uniqueKey, (allocations.get(best.uniqueKey) ?? 0n) + best.amount);
+      marketMap.set(best.uniqueKey, best.marketAfter);
+      remainingChunk -= best.amount;
+    }
+  }
+
+  return {
+    allocations,
+    marketMap,
+  };
+}
+
+function buildDeltas(
+  entries: SmartRebalanceEngineInput['entries'],
+  allocations: Map<string, bigint>,
+  projectedMarketMap: Map<string, BlueMarket>,
+): SmartRebalanceDelta[] {
+  return entries.map((entry) => {
+    const currentAmount = entry.currentSupply;
+    const targetAmount = allocations.get(entry.uniqueKey) ?? currentAmount;
+    const projectedMarket = projectedMarketMap.get(entry.uniqueKey) ?? entry.baselineMarket;
+
+    return {
+      market: entry.market,
+      currentAmount,
+      targetAmount,
+      delta: targetAmount - currentAmount,
+      currentApy: entry.baselineMarket.supplyApy,
+      projectedApy: projectedMarket.supplyApy,
+      currentUtilization: utilizationOf(entry.baselineMarket),
+      projectedUtilization: utilizationOf(projectedMarket),
+      collateralSymbol: entry.market.collateralAsset?.symbol ?? 'N/A',
+    };
+  });
+}
+
+function sumTotalMoved(deltas: SmartRebalanceDelta[]): bigint {
+  return deltas.reduce((sum, delta) => {
+    if (delta.delta < 0n) return sum + -delta.delta;
+    return sum;
+  }, 0n);
 }
 
 /**
@@ -117,10 +260,8 @@ function resolveMaxAllocation(
  * - Final target allocation and per-market deltas
  * - Weighted APY before/after optimization
  */
-export function optimizeSmartRebalance(input: SmartRebalanceEngineInput): SmartRebalanceEngineOutput | null {
+export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceEngineOutput | null {
   const { entries, constraints } = input;
-  const maxRounds = sanitizeMaxRounds(input.maxRounds);
-  const fractions = sanitizeFractions(input.fractionRationals);
 
   if (entries.length === 0) return null;
 
@@ -128,221 +269,76 @@ export function optimizeSmartRebalance(input: SmartRebalanceEngineInput): SmartR
   if (totalPool <= 0n) return null;
 
   const uniqueKeys = entries.map((entry) => entry.uniqueKey);
-  const allocations = new Map(entries.map((entry) => [entry.uniqueKey, entry.currentSupply]));
-  const simMarketMap = new Map(entries.map((entry) => [entry.uniqueKey, entry.baselineMarket]));
 
-  const maxWithdrawableMap = new Map(entries.map((entry) => [entry.uniqueKey, entry.maxWithdrawable]));
-  const maxAllocationMap = new Map(
-    entries.map((entry) => [entry.uniqueKey, resolveMaxAllocation(entry.uniqueKey, totalPool, constraints)]),
-  );
-
-  // First enforce hard allocation limits before objective-driven optimization.
-  // This guarantees constraints like 0% are respected whenever capacity/liquidity allows.
-  for (const srcEntry of entries) {
-    const srcKey = srcEntry.uniqueKey;
-    const srcCap = maxAllocationMap.get(srcKey);
-
-    if (srcCap === undefined) continue;
-
-    while (true) {
-      const srcAlloc = allocations.get(srcKey) ?? 0n;
-      if (srcAlloc <= srcCap) break;
-
-      const alreadyWithdrawn = srcEntry.currentSupply - srcAlloc;
-      const remainingWithdrawable = (maxWithdrawableMap.get(srcKey) ?? 0n) - alreadyWithdrawn;
-      if (remainingWithdrawable <= 0n) break;
-
-      const requiredOut = srcAlloc - srcCap;
-      const maxAmount = minBigInt(requiredOut, remainingWithdrawable);
-      if (maxAmount <= 0n) break;
-
-      const srcSim = simMarketMap.get(srcKey);
-      if (!srcSim) break;
-
-      let bestDstKey: string | null = null;
-      let bestAmount = 0n;
-      let bestObjective: bigint | null = null;
-      let bestSrcMarket: BlueMarket | null = null;
-      let bestDstMarket: BlueMarket | null = null;
-
-      for (const dstEntry of entries) {
-        const dstKey = dstEntry.uniqueKey;
-        if (dstKey === srcKey) continue;
-
-        const dstSim = simMarketMap.get(dstKey);
-        if (!dstSim) continue;
-
-        const dstAlloc = allocations.get(dstKey) ?? 0n;
-        const dstCap = maxAllocationMap.get(dstKey);
-        const room = dstCap === undefined ? maxAmount : dstCap - dstAlloc;
-        if (room <= 0n) continue;
-
-        const amount = minBigInt(maxAmount, room);
-        if (amount <= 0n) continue;
-
-        let srcAfter: BlueMarket;
-        let dstAfter: BlueMarket;
-
-        try {
-          srcAfter = srcSim.withdraw(amount, 0n).market;
-          dstAfter = dstSim.supply(amount, 0n).market;
-        } catch {
-          continue;
-        }
-
-        simMarketMap.set(srcKey, srcAfter);
-        simMarketMap.set(dstKey, dstAfter);
-        allocations.set(srcKey, srcAlloc - amount);
-        allocations.set(dstKey, dstAlloc + amount);
-
-        const objective = computeObjective(uniqueKeys, allocations, simMarketMap);
-
-        simMarketMap.set(srcKey, srcSim);
-        simMarketMap.set(dstKey, dstSim);
-        allocations.set(srcKey, srcAlloc);
-        allocations.set(dstKey, dstAlloc);
-
-        if (bestObjective === null || objective > bestObjective) {
-          bestObjective = objective;
-          bestDstKey = dstKey;
-          bestAmount = amount;
-          bestSrcMarket = srcAfter;
-          bestDstMarket = dstAfter;
-        }
-      }
-
-      if (!bestDstKey || !bestSrcMarket || !bestDstMarket || bestAmount <= 0n) {
-        break;
-      }
-
-      const dstAlloc = allocations.get(bestDstKey) ?? 0n;
-      allocations.set(srcKey, srcAlloc - bestAmount);
-      allocations.set(bestDstKey, dstAlloc + bestAmount);
-      simMarketMap.set(srcKey, bestSrcMarket);
-      simMarketMap.set(bestDstKey, bestDstMarket);
-    }
-  }
-
-  for (let round = 0; round < maxRounds; round++) {
-    const currentObjective = computeObjective(uniqueKeys, allocations, simMarketMap);
-
-    let bestSrcKey: string | null = null;
-    let bestDstKey: string | null = null;
-    let bestAmount = 0n;
-    let bestObjective = currentObjective;
-    let bestSrcMarket: BlueMarket | null = null;
-    let bestDstMarket: BlueMarket | null = null;
-
-    for (const srcEntry of entries) {
-      const srcKey = srcEntry.uniqueKey;
-      const srcAlloc = allocations.get(srcKey) ?? 0n;
-      const alreadyWithdrawn = srcEntry.currentSupply - srcAlloc;
-      const remainingWithdrawable = (maxWithdrawableMap.get(srcKey) ?? 0n) - alreadyWithdrawn;
-      if (remainingWithdrawable <= 0n) continue;
-
-      const maxMove = remainingWithdrawable < srcAlloc ? remainingWithdrawable : srcAlloc;
-      if (maxMove <= 0n) continue;
-
-      const srcSim = simMarketMap.get(srcKey);
-      if (!srcSim) continue;
-
-      for (const dstEntry of entries) {
-        const dstKey = dstEntry.uniqueKey;
-        if (dstKey === srcKey) continue;
-
-        const dstSim = simMarketMap.get(dstKey);
-        if (!dstSim) continue;
-
-        const dstAlloc = allocations.get(dstKey) ?? 0n;
-        const dstCap = maxAllocationMap.get(dstKey);
-
-        if (dstCap !== undefined && dstAlloc >= dstCap) continue;
-
-        for (const [num, den] of fractions) {
-          let amount = (maxMove * num) / den;
-          if (amount <= 0n) continue;
-          if (amount > maxMove) amount = maxMove;
-
-          if (dstCap !== undefined) {
-            const room = dstCap - dstAlloc;
-            if (room <= 0n) continue;
-            if (amount > room) amount = room;
-            if (amount <= 0n) continue;
-          }
-
-          let srcAfter: BlueMarket;
-          let dstAfter: BlueMarket;
-
-          try {
-            srcAfter = srcSim.withdraw(amount, 0n).market;
-            dstAfter = dstSim.supply(amount, 0n).market;
-          } catch {
-            continue;
-          }
-
-          simMarketMap.set(srcKey, srcAfter);
-          simMarketMap.set(dstKey, dstAfter);
-          allocations.set(srcKey, srcAlloc - amount);
-          allocations.set(dstKey, dstAlloc + amount);
-
-          const objective = computeObjective(uniqueKeys, allocations, simMarketMap);
-
-          simMarketMap.set(srcKey, srcSim);
-          simMarketMap.set(dstKey, dstSim);
-          allocations.set(srcKey, srcAlloc);
-          allocations.set(dstKey, dstAlloc);
-
-          if (objective > bestObjective) {
-            bestObjective = objective;
-            bestSrcKey = srcKey;
-            bestDstKey = dstKey;
-            bestAmount = amount;
-            bestSrcMarket = srcAfter;
-            bestDstMarket = dstAfter;
-          }
-        }
-      }
-    }
-
-    if (!bestSrcKey || !bestDstKey || !bestSrcMarket || !bestDstMarket || bestAmount <= 0n) {
-      break;
-    }
-
-    simMarketMap.set(bestSrcKey, bestSrcMarket);
-    simMarketMap.set(bestDstKey, bestDstMarket);
-    allocations.set(bestSrcKey, (allocations.get(bestSrcKey) ?? 0n) - bestAmount);
-    allocations.set(bestDstKey, (allocations.get(bestDstKey) ?? 0n) + bestAmount);
-  }
-
-  const deltas: SmartRebalanceDelta[] = entries.map((entry) => {
-    const currentAmount = entry.currentSupply;
-    const targetAmount = allocations.get(entry.uniqueKey) ?? 0n;
-    const projectedMarket = simMarketMap.get(entry.uniqueKey) ?? entry.baselineMarket;
+  // 1. Simulate extra liquidity and start state:
+  //    - attempt best-effort withdrawal from each selected market
+  //    - keep any non-withdrawable remainder locked in-place
+  const cleaned = cleanStates(entries, constraints, totalPool);
+  if (cleaned.principal <= 0n || cleaned.movableKeys.length === 0) {
+    const deltas = buildDeltas(entries, cleaned.allocations, cleaned.marketMap);
+    const currentObjective = computeObjective(
+      uniqueKeys,
+      new Map(entries.map((entry) => [entry.uniqueKey, entry.currentSupply])),
+      new Map(entries.map((entry) => [entry.uniqueKey, entry.baselineMarket])),
+    );
+    const projectedObjective = computeObjective(uniqueKeys, cleaned.allocations, cleaned.marketMap);
 
     return {
-      market: entry.market,
-      currentAmount,
-      targetAmount,
-      delta: targetAmount - currentAmount,
-      currentApy: entry.baselineMarket.supplyApy,
-      projectedApy: projectedMarket.supplyApy,
-      currentUtilization: utilizationOf(entry.baselineMarket),
-      projectedUtilization: utilizationOf(projectedMarket),
-      collateralSymbol: entry.market.collateralAsset?.symbol ?? 'N/A',
+      deltas: deltas.sort((a, b) => {
+        if (b.delta > a.delta) return 1;
+        if (b.delta < a.delta) return -1;
+        return 0;
+      }),
+      totalPool,
+      currentWeightedApy: objectiveToWeightedApy(currentObjective, totalPool),
+      projectedWeightedApy: objectiveToWeightedApy(projectedObjective, totalPool),
+      totalMoved: sumTotalMoved(deltas),
     };
-  });
+  }
+
+  // 2. Divide principal into up-to-100 chunks.
+  const chunks = buildChunks(cleaned.principal);
+
+  // 3. For each chunk, choose the destination that maximizes global weighted objective after that step.
+  const allocated = calculateAllocation(
+    chunks,
+    cleaned.movableKeys,
+    uniqueKeys,
+    cleaned.allocations,
+    cleaned.marketMap,
+    cleaned.maxAllocationMap,
+  );
+
+  // 4. Compute final delta plan (withdraw from current -> deposit to final targets).
+  const deltas = buildDeltas(entries, allocated.allocations, allocated.marketMap);
 
   const currentObjective = computeObjective(
     uniqueKeys,
     new Map(entries.map((entry) => [entry.uniqueKey, entry.currentSupply])),
     new Map(entries.map((entry) => [entry.uniqueKey, entry.baselineMarket])),
   );
-  const projectedObjective = computeObjective(uniqueKeys, allocations, simMarketMap);
+  const projectedObjective = computeObjective(uniqueKeys, allocated.allocations, allocated.marketMap);
 
-  const totalMoved = deltas.reduce((sum, delta) => {
-    if (delta.delta < 0n) return sum + -delta.delta;
-    return sum;
-  }, 0n);
+  // Reliability guard: never return a plan that is worse than the current weighted objective.
+  if (projectedObjective < currentObjective) {
+    const noOpAllocations = new Map(entries.map((entry) => [entry.uniqueKey, entry.currentSupply]));
+    const noOpMarkets = new Map(entries.map((entry) => [entry.uniqueKey, entry.baselineMarket]));
+    const noOpDeltas = buildDeltas(entries, noOpAllocations, noOpMarkets);
+
+    return {
+      deltas: noOpDeltas.sort((a, b) => {
+        if (b.delta > a.delta) return 1;
+        if (b.delta < a.delta) return -1;
+        return 0;
+      }),
+      totalPool,
+      currentWeightedApy: objectiveToWeightedApy(currentObjective, totalPool),
+      projectedWeightedApy: objectiveToWeightedApy(currentObjective, totalPool),
+      totalMoved: 0n,
+    };
+  }
+
+  const totalMoved = sumTotalMoved(deltas);
 
   return {
     deltas: deltas.sort((a, b) => {
@@ -356,3 +352,5 @@ export function optimizeSmartRebalance(input: SmartRebalanceEngineInput): SmartR
     totalMoved,
   };
 }
+
+export const optimizeSmartRebalance = planRebalance;

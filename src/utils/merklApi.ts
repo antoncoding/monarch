@@ -105,7 +105,14 @@ export const isLiveHoldOpportunity = (opportunity: MerklOpportunity | null | und
   const apr = opportunity.apr;
   const hasLiveCampaigns = opportunity.liveCampaigns == null || opportunity.liveCampaigns > 0;
 
-  return action === MERKL_HOLD_ACTION && status === MERKL_LIVE_STATUS && hasLiveCampaigns && typeof apr === 'number' && Number.isFinite(apr) && apr > 0;
+  return (
+    action === MERKL_HOLD_ACTION &&
+    status === MERKL_LIVE_STATUS &&
+    hasLiveCampaigns &&
+    typeof apr === 'number' &&
+    Number.isFinite(apr) &&
+    apr > 0
+  );
 };
 
 export const getMerklOpportunityAprDecimal = (opportunity: MerklOpportunity | null | undefined): number | null => {

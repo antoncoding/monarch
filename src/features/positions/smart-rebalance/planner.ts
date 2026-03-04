@@ -4,10 +4,8 @@ import { getMorphoAddress } from '@/utils/morpho';
 import { getClient } from '@/utils/rpc';
 import type { GroupedPosition, Market } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
-import { optimizeSmartRebalance } from './engine';
+import { planRebalance } from './engine';
 import type { SmartRebalanceConstraintMap, SmartRebalanceEngineOutput } from './types';
-
-const DUST_AMOUNT = 1000n;
 
 export type SmartRebalancePlan = SmartRebalanceEngineOutput & {
   loanAssetSymbol: string;
@@ -22,25 +20,35 @@ type BuildSmartRebalancePlanInput = {
   constraints?: SmartRebalanceConstraintMap;
 };
 
-const APY_SCALE = 1_000_000_000_000n;
-
-function toApyScaled(apy: number): bigint {
-  if (!Number.isFinite(apy)) return 0n;
-  return BigInt(Math.round(apy * Number(APY_SCALE)));
+function hasPlannerRequiredFields(market: Market): boolean {
+  return (
+    !!market.loanAsset?.address &&
+    !!market.collateralAsset?.address &&
+    !!market.oracleAddress &&
+    !!market.irmAddress &&
+    market.lltv !== undefined
+  );
 }
 
-function objectiveToWeightedApy(objective: bigint, totalPool: bigint): number {
-  if (totalPool <= 0n) return 0;
-  const scaled = objective / totalPool;
-  return Number(scaled) / Number(APY_SCALE);
-}
+function selectUniqueMarkets(candidateMarkets: Market[], includedMarketKeys: Set<string>): Market[] {
+  const byKey = new Map<string, Market>();
 
-function normalizeMaxBps(raw: number | undefined): number | undefined {
-  if (raw === undefined) return undefined;
-  if (!Number.isFinite(raw)) return undefined;
-  if (raw <= 0) return 0;
-  if (raw >= 10_000) return 10_000;
-  return Math.floor(raw);
+  for (const market of candidateMarkets) {
+    if (!includedMarketKeys.has(market.uniqueKey)) continue;
+
+    const existing = byKey.get(market.uniqueKey);
+    if (!existing) {
+      byKey.set(market.uniqueKey, market);
+      continue;
+    }
+
+    // Prefer a duplicate candidate that has complete planner-critical fields.
+    if (!hasPlannerRequiredFields(existing) && hasPlannerRequiredFields(market)) {
+      byKey.set(market.uniqueKey, market);
+    }
+  }
+
+  return [...byKey.values()];
 }
 
 /**
@@ -61,7 +69,7 @@ export async function calculateSmartRebalancePlan({
 }: BuildSmartRebalancePlanInput): Promise<SmartRebalancePlan | null> {
   if (includedMarketKeys.size === 0) return null;
 
-  const selectedMarkets = candidateMarkets.filter((market) => includedMarketKeys.has(market.uniqueKey));
+  const selectedMarkets = selectUniqueMarkets(candidateMarkets, includedMarketKeys);
   if (selectedMarkets.length === 0) return null;
 
   const client = getClient(chainId);
@@ -75,6 +83,7 @@ export async function calculateSmartRebalancePlan({
       args: [market.uniqueKey as `0x${string}`],
     })),
     allowFailure: true,
+    blockTag: 'latest',
   });
 
   const userSupplyByMarket = new Map(
@@ -119,11 +128,7 @@ export async function calculateSmartRebalancePlan({
     });
 
     const currentSupply = userSupplyByMarket.get(market.uniqueKey) ?? 0n;
-    const normalizedMaxBps = normalizeMaxBps(constraints?.[market.uniqueKey]?.maxAllocationBps);
-    const allowFullWithdraw = normalizedMaxBps === 0;
-    const safeSupply = currentSupply > DUST_AMOUNT ? currentSupply - DUST_AMOUNT : 0n;
-    const maxFromUser = allowFullWithdraw ? currentSupply : safeSupply;
-    const maxWithdrawable = maxFromUser < baselineMarket.liquidity ? maxFromUser : baselineMarket.liquidity;
+    const maxWithdrawable = currentSupply < baselineMarket.liquidity ? currentSupply : baselineMarket.liquidity;
 
     return [
       {
@@ -138,64 +143,7 @@ export async function calculateSmartRebalancePlan({
 
   if (entries.length === 0) return null;
 
-  const suppliedEntries = entries.filter((entry) => entry.currentSupply > 0n);
-  const totalPool = entries.reduce((sum, entry) => sum + entry.currentSupply, 0n);
-  const withdrawAllRequested =
-    suppliedEntries.length > 0 &&
-    suppliedEntries.every((entry) => {
-      const normalized = normalizeMaxBps(constraints?.[entry.uniqueKey]?.maxAllocationBps);
-      return normalized === 0;
-    });
-
-  const hasDestinationCapacity = entries.some((entry) => {
-    const normalized = normalizeMaxBps(constraints?.[entry.uniqueKey]?.maxAllocationBps);
-    if (normalized === 0) return false;
-    if (normalized === undefined || normalized >= 10_000) return true;
-
-    const maxAllowed = (totalPool * BigInt(normalized)) / 10_000n;
-    return entry.currentSupply < maxAllowed;
-  });
-
-  if (withdrawAllRequested && !hasDestinationCapacity) {
-    const currentObjective = entries.reduce((sum, entry) => sum + entry.currentSupply * toApyScaled(entry.baselineMarket.supplyApy), 0n);
-
-    const deltas = entries.map((entry) => {
-      const withdrawAmount = entry.maxWithdrawable < entry.currentSupply ? entry.maxWithdrawable : entry.currentSupply;
-      const targetAmount = entry.currentSupply - withdrawAmount;
-      const projectedMarket = withdrawAmount > 0n ? entry.baselineMarket.withdraw(withdrawAmount, 0n).market : entry.baselineMarket;
-
-      return {
-        market: entry.market,
-        currentAmount: entry.currentSupply,
-        targetAmount,
-        delta: targetAmount - entry.currentSupply,
-        currentApy: entry.baselineMarket.supplyApy,
-        projectedApy: projectedMarket.supplyApy,
-        currentUtilization: Number(entry.baselineMarket.utilization) / 1e18,
-        projectedUtilization: Number(projectedMarket.utilization) / 1e18,
-        collateralSymbol: entry.market.collateralAsset?.symbol ?? 'N/A',
-      };
-    });
-
-    const projectedObjective = deltas.reduce((sum, delta) => sum + delta.targetAmount * toApyScaled(delta.projectedApy), 0n);
-    const totalMoved = deltas.reduce((sum, delta) => (delta.delta < 0n ? sum + -delta.delta : sum), 0n);
-
-    return {
-      deltas: deltas.sort((a, b) => {
-        if (b.delta > a.delta) return 1;
-        if (b.delta < a.delta) return -1;
-        return 0;
-      }),
-      totalPool,
-      currentWeightedApy: objectiveToWeightedApy(currentObjective, totalPool),
-      projectedWeightedApy: objectiveToWeightedApy(projectedObjective, totalPool),
-      totalMoved,
-      loanAssetSymbol: groupedPosition.loanAssetSymbol,
-      loanAssetDecimals: groupedPosition.loanAssetDecimals,
-    };
-  }
-
-  const optimized = optimizeSmartRebalance({
+  const optimized = planRebalance({
     entries,
     constraints,
   });

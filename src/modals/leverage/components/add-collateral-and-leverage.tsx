@@ -152,7 +152,12 @@ export function AddCollateralAndLeverage({
   const collateralAssetPriceUsd = useMemo(() => {
     const totalCollateralAssets = BigInt(market.state.collateralAssets);
     const totalCollateralAssetsUsd = market.state.collateralAssetsUsd;
-    if (totalCollateralAssets <= 0n || totalCollateralAssetsUsd == null || !Number.isFinite(totalCollateralAssetsUsd) || totalCollateralAssetsUsd <= 0) {
+    if (
+      totalCollateralAssets <= 0n ||
+      totalCollateralAssetsUsd == null ||
+      !Number.isFinite(totalCollateralAssetsUsd) ||
+      totalCollateralAssetsUsd <= 0
+    ) {
       return null;
     }
 
@@ -185,7 +190,10 @@ export function AddCollateralAndLeverage({
     if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
     return null;
   }, [hasQuoteChanges, collateralAssetPriceUsd, leverageTransferFee, netAddedCollateral]);
-  const addedCollateralAssets = useMemo(() => (isLeverageFeeReady && netAddedCollateral != null ? netAddedCollateral : 0n), [isLeverageFeeReady, netAddedCollateral]);
+  const addedCollateralAssets = useMemo(
+    () => (isLeverageFeeReady && netAddedCollateral != null ? netAddedCollateral : 0n),
+    [isLeverageFeeReady, netAddedCollateral],
+  );
   const addedBorrowAssets = useMemo(() => (isLeverageFeeReady ? quote.flashLoanAmount : 0n), [isLeverageFeeReady, quote.flashLoanAmount]);
   const { projectedCollateralAssets, projectedBorrowAssets } = useMemo(
     () =>
@@ -559,13 +567,16 @@ export function AddCollateralAndLeverage({
     if (collateralYieldRate == null || borrowRateForCarry == null || projectedLtvRatio == null) return null;
     const netRate = collateralYieldRate - projectedLtvRatio * borrowRateForCarry;
     return Number.isFinite(netRate) ? netRate : null;
-  }, [
-    collateralYieldRate,
-    borrowRateForCarry,
-    projectedLtvRatio,
-  ]);
+  }, [collateralYieldRate, borrowRateForCarry, projectedLtvRatio]);
   const previewLeveredCarryOnCapitalRate = useMemo(() => {
-    if (collateralYieldRate == null || borrowRateForCarry == null || addedDebtToCollateralRatio == null || contributedCapitalAssets == null || addedCollateralAssets <= 0n) return null;
+    if (
+      collateralYieldRate == null ||
+      borrowRateForCarry == null ||
+      addedDebtToCollateralRatio == null ||
+      contributedCapitalAssets == null ||
+      addedCollateralAssets <= 0n
+    )
+      return null;
 
     const incrementalNetCarryRate = collateralYieldRate - addedDebtToCollateralRatio * borrowRateForCarry;
     if (!Number.isFinite(incrementalNetCarryRate)) return null;
@@ -575,13 +586,7 @@ export function AddCollateralAndLeverage({
 
     const leveredCarryRate = incrementalNetCarryRate * leverageFactor;
     return Number.isFinite(leveredCarryRate) ? leveredCarryRate : null;
-  }, [
-    addedCollateralAssets,
-    addedDebtToCollateralRatio,
-    collateralYieldRate,
-    borrowRateForCarry,
-    contributedCapitalAssets,
-  ]);
+  }, [addedCollateralAssets, addedDebtToCollateralRatio, collateralYieldRate, borrowRateForCarry, contributedCapitalAssets]);
   const isLeveredCarryLoading =
     isLeverageFeeReady &&
     ((isErc4626Route && (vaultRateInsight.isLoading || vaultRateInsight.vaultApy3d == null || vaultRateInsight.sharePriceNow == null)) ||
@@ -797,9 +802,7 @@ export function AddCollateralAndLeverage({
                     {shouldShowHoldRewardsRow && (
                       <div className="flex items-center justify-between">
                         <span className="text-secondary">{holdRewardsLabel}</span>
-                        <span className="tabular-nums">
-                          {merklHoldIncentives.loading ? '...' : renderRateFromApy(holdRewardsApy)}
-                        </span>
+                        <span className="tabular-nums">{merklHoldIncentives.loading ? '...' : renderRateFromApy(holdRewardsApy)}</span>
                       </div>
                     )}
                     {shouldShowNetRate && (

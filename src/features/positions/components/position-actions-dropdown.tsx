@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type PositionActionsDropdownProps = {
-  isOwner?: boolean;
+  isOwner: boolean;
   onRebalanceClick: () => void;
 };
 

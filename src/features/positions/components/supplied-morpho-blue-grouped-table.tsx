@@ -59,24 +59,19 @@ export function SuppliedMorphoBlueGroupedTable({
   transactions,
   snapshotsByChain,
 }: SuppliedMorphoBlueGroupedTableProps) {
+  const { address } = useConnection();
   const period = usePositionsFilters((s) => s.period);
   const setPeriod = usePositionsFilters((s) => s.setPeriod);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { showEarningsInUsd, setShowEarningsInUsd } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
-  const { address } = useConnection();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { open: openModal } = useModalStore();
   const router = useRouter();
 
   const toast = useStyledToast();
-
-  const isOwner = useMemo(() => {
-    if (!account) return false;
-    return account === address;
-  }, [account, address]);
 
   const periodLabels: Record<EarningsPeriod, string> = {
     day: '1D',
@@ -87,6 +82,7 @@ export function SuppliedMorphoBlueGroupedTable({
   };
 
   const groupedPositions = useMemo(() => groupPositionsByLoanAsset(positions), [positions]);
+  const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
 
   const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
 
@@ -331,6 +327,7 @@ export function SuppliedMorphoBlueGroupedTable({
                         <PositionActionsDropdown
                           isOwner={isOwner}
                           onRebalanceClick={() => {
+                            if (!isOwner) return;
                             openModal('rebalance', {
                               groupedPosition,
                               refetch,

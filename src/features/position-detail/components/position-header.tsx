@@ -51,15 +51,15 @@ export function PositionHeader({
   periodLabel,
 }: PositionHeaderProps) {
   const router = useRouter();
-  const { address } = useConnection();
+  const { address: connectedAddress } = useConnection();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { open: openModal } = useModalStore();
   const { togglePositionBookmark, isPositionBookmarked } = usePortfolioBookmarks();
-
-  const isOwner = address === userAddress;
-  const networkImg = getNetworkImg(chainId);
+  const isOwner = !!connectedAddress && connectedAddress.toLowerCase() === userAddress.toLowerCase();
   const showRebalance = isOwner;
+
+  const networkImg = getNetworkImg(chainId);
   const isPositionSaved = groupedPosition && isPositionBookmarked(userAddress, chainId, groupedPosition.loanAssetAddress);
 
   const displaySymbol = groupedPosition?.loanAssetSymbol ?? loanAssetSymbol ?? '';
@@ -69,7 +69,7 @@ export function PositionHeader({
   };
 
   const handleRebalanceClick = () => {
-    if (!groupedPosition) return;
+    if (!groupedPosition || !isOwner) return;
     openModal('rebalance', {
       groupedPosition,
       refetch: onRefetch,
