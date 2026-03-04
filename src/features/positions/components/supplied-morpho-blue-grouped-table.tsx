@@ -10,7 +10,6 @@ import Image from 'next/image';
 import moment from 'moment';
 import { PulseLoader } from 'react-spinners';
 import { useRouter } from 'next/navigation';
-import { useConnection } from 'wagmi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -65,18 +64,12 @@ export function SuppliedMorphoBlueGroupedTable({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { showEarningsInUsd, setShowEarningsInUsd } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
-  const { address } = useConnection();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { open: openModal } = useModalStore();
   const router = useRouter();
 
   const toast = useStyledToast();
-
-  const isOwner = useMemo(() => {
-    if (!account) return false;
-    return account === address;
-  }, [account, address]);
 
   const periodLabels: Record<EarningsPeriod, string> = {
     day: '1D',
@@ -329,7 +322,6 @@ export function SuppliedMorphoBlueGroupedTable({
                     >
                       <div className="flex items-center justify-center gap-2">
                         <PositionActionsDropdown
-                          isOwner={isOwner}
                           onRebalanceClick={() => {
                             openModal('rebalance', {
                               groupedPosition,

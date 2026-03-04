@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pencil1Icon } from '@radix-ui/react-icons';
-import {
-  MAX_SLIPPAGE_PERCENT,
-  MIN_SLIPPAGE_PERCENT,
-  clampSlippagePercent,
-} from '@/features/swap/constants';
-import {
-  isValidDecimalInput,
-  sanitizeDecimalInput,
-  toParseableDecimalInput,
-} from '@/utils/decimal-input';
+import { MAX_SLIPPAGE_PERCENT, MIN_SLIPPAGE_PERCENT, clampSlippagePercent } from '@/features/swap/constants';
+import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
 import { formatSlippagePercent } from '../utils/quote-preview';
 
 type SlippageInlineEditorProps = {

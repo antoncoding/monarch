@@ -88,7 +88,9 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode =
       </div>
       <div className="space-y-3 p-1">
         <div className="flex items-center justify-between text-xs">
-          <span>Base {modeLabel} {rateLabel}</span>
+          <span>
+            Base {modeLabel} {rateLabel}
+          </span>
           <span className="ml-6">{baseRateValue.toFixed(2)}%</span>
         </div>
         {activeCampaigns.map((campaign) => {
@@ -117,7 +119,9 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children, mode =
         })}
         <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-600">
           <div className="flex items-center justify-between text-xs">
-            <span>Net {modeLabel} {rateLabel}</span>
+            <span>
+              Net {modeLabel} {rateLabel}
+            </span>
             <span className="ml-6">{totalRate.toFixed(2)}%</span>
           </div>
         </div>
@@ -150,8 +154,8 @@ export function APYCell({ market, mode = 'supply' }: APYCellProps) {
   const hasModeRewards = relevantCampaigns.length > 0;
   const extraRewards = hasModeRewards
     ? relevantCampaigns.reduce((sum, campaign) => {
-      return sum + getDisplayRewardRate(campaign.apr, isAprDisplay);
-    }, 0)
+        return sum + getDisplayRewardRate(campaign.apr, isAprDisplay);
+      }, 0)
     : 0;
 
   // Convert base rate if APR display is enabled

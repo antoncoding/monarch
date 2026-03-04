@@ -215,7 +215,16 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">{item.state.borrowApy != null ? <APYCell market={item} mode="borrow" /> : '—'}</p>
+                  <p className="text-sm">
+                    {item.state.borrowApy != null ? (
+                      <APYCell
+                        market={item}
+                        mode="borrow"
+                      />
+                    ) : (
+                      '—'
+                    )}
+                  </p>
                 </TableCell>
               )}
               {columnVisibility.rateAtTarget && (

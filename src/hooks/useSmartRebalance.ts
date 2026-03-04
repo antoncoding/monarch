@@ -125,11 +125,28 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
     return feeBreakdown.totalFee;
   }, [feeBreakdown.totalFee]);
 
+  const transferAmountEstimate = useMemo(() => {
+    if (!plan) return 0n;
+
+    let total = 0n;
+    for (const delta of plan.deltas) {
+      if (delta.delta <= 0n) continue;
+
+      const feeForMarket = feeBreakdown.feeByMarket.get(delta.market.uniqueKey) ?? 0n;
+      const reducedAmount = delta.delta - feeForMarket;
+      if (reducedAmount <= 0n) continue;
+
+      total += reducedAmount + feeForMarket;
+    }
+
+    return total;
+  }, [feeBreakdown.feeByMarket, plan]);
+
   const execution = useRebalanceExecution({
     chainId: groupedPosition.chainId,
     loanAssetAddress: groupedPosition.loanAssetAddress as Address,
     loanAssetSymbol: groupedPosition.loanAsset,
-    requiredAmount: totalMoved,
+    requiredAmount: transferAmountEstimate,
     trackingType: 'smart-rebalance',
     toastId: 'smart-rebalance',
     pendingText: 'Smart rebalancing positions',
@@ -146,6 +163,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
     const withdrawTxs: `0x${string}`[] = [];
     const supplyTxs: `0x${string}`[] = [];
     const touchedMarketKeys = new Set<string>();
+    let transferAmount = 0n;
 
     for (const delta of plan.deltas) {
       if (delta.delta >= 0n) continue;
@@ -215,9 +233,11 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
         lltv: BigInt(market.lltv),
       };
 
-      const reducedAmount = delta.delta - (feeBreakdown.feeByMarket.get(market.uniqueKey) ?? 0n);
+      const feeForMarket = feeBreakdown.feeByMarket.get(market.uniqueKey) ?? 0n;
+      const reducedAmount = delta.delta - feeForMarket;
       if (reducedAmount <= 0n) continue;
 
+      transferAmount += reducedAmount + feeForMarket;
       supplyTxs.push(
         encodeFunctionData({
           abi: morphoBundlerAbi,
@@ -227,7 +247,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
       );
     }
 
-    return { withdrawTxs, supplyTxs, allMarketKeys: [...touchedMarketKeys] };
+    return { withdrawTxs, supplyTxs, allMarketKeys: [...touchedMarketKeys], transferAmount };
   }, [account, feeBreakdown.feeByMarket, groupedPosition.markets, plan]);
 
   const executeSmartRebalance = useCallback(
@@ -236,8 +256,8 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
         return false;
       }
 
-      const { withdrawTxs, supplyTxs, allMarketKeys } = generateSmartRebalanceTxData();
-      const isWithdrawOnly = supplyTxs.length === 0;
+      const { withdrawTxs, supplyTxs, allMarketKeys, transferAmount } = generateSmartRebalanceTxData();
+      const isWithdrawOnly = supplyTxs.length === 0 || transferAmount === 0n;
 
       let gasEstimate = GAS_COSTS.BUNDLER_REBALANCE;
       if (supplyTxs.length > 1) {
@@ -268,7 +288,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
         supplyTxs,
         trailingTxs,
         gasEstimate,
-        transferAmount: isWithdrawOnly ? 0n : totalMoved,
+        transferAmount: isWithdrawOnly ? 0n : transferAmount,
         requiresAssetTransfer: !isWithdrawOnly,
         onSubmitted: () => {
           batchAddUserMarkets(
