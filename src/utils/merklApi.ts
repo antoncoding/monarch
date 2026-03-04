@@ -1,10 +1,13 @@
 import { MerklApi } from '@merkl/api';
-import type { MerklCampaign, SimplifiedCampaign, MerklApiParams } from './merklTypes';
+import type { MerklCampaign, SimplifiedCampaign, MerklApiParams, MerklOpportunityLookupParams, MerklOpportunity } from './merklTypes';
 
 const MERKL_API_BASE_URL = 'https://api.merkl.xyz';
 
 // Initialize the Merkl SDK singleton
 export const merklClient = MerklApi(MERKL_API_BASE_URL);
+
+const MERKL_LIVE_STATUS = 'LIVE';
+const MERKL_HOLD_ACTION = 'HOLD';
 
 // Helper function to fetch campaigns using the SDK with Adapter pattern
 export async function fetchCampaigns(params: MerklApiParams = {}): Promise<MerklCampaign[]> {
@@ -68,6 +71,49 @@ export async function fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTi
   return allCampaigns;
 }
 
+export const buildMerklOpportunityId = (params: Omit<MerklOpportunityLookupParams, 'campaigns'>): string =>
+  `${params.chainId}-${params.type}-${params.identifier}`;
+
+export async function fetchMerklOpportunityById(params: MerklOpportunityLookupParams): Promise<MerklOpportunity | null> {
+  try {
+    const opportunityId = buildMerklOpportunityId(params);
+    const { data, error, status } = await merklClient.v4.opportunities({ id: opportunityId }).get({
+      query: {
+        campaigns: params.campaigns ?? false,
+      },
+    });
+
+    if (status === 404) {
+      return null;
+    }
+
+    if (error || status !== 200) {
+      throw new Error(`Merkl API opportunity error: ${status} ${error}`);
+    }
+
+    return (data as MerklOpportunity | null) ?? null;
+  } catch (err) {
+    console.error('Error fetching Merkl opportunity:', err);
+    throw err;
+  }
+}
+
+export const isLiveHoldOpportunity = (opportunity: MerklOpportunity | null | undefined): opportunity is MerklOpportunity => {
+  if (!opportunity) return false;
+  const action = opportunity.action?.toUpperCase();
+  const status = opportunity.status?.toUpperCase();
+  const apr = opportunity.apr;
+  const hasLiveCampaigns = opportunity.liveCampaigns == null || opportunity.liveCampaigns > 0;
+
+  return action === MERKL_HOLD_ACTION && status === MERKL_LIVE_STATUS && hasLiveCampaigns && typeof apr === 'number' && Number.isFinite(apr) && apr > 0;
+};
+
+export const getMerklOpportunityAprDecimal = (opportunity: MerklOpportunity | null | undefined): number | null => {
+  if (!isLiveHoldOpportunity(opportunity)) return null;
+  const aprPercent = opportunity.apr ?? 0;
+  return aprPercent / 100;
+};
+
 // Helper to check if a campaign is currently active
 function isCampaignActive(campaign: MerklCampaign): boolean {
   const now = Math.floor(Date.now() / 1000);
@@ -89,6 +135,7 @@ function getBaseCampaignFields(
   | 'isActive'
   | 'name'
   | 'opportunityIdentifier'
+  | 'opportunityAction'
 > {
   return {
     chainId: campaign.computeChainId,
@@ -105,6 +152,7 @@ function getBaseCampaignFields(
     isActive: isCampaignActive(campaign),
     name: campaign.Opportunity?.name,
     opportunityIdentifier: campaign.Opportunity?.identifier,
+    opportunityAction: campaign.Opportunity?.action,
   };
 }
 

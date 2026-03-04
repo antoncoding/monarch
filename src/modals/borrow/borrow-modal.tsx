@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { TbTrendingDown, TbTrendingUp } from 'react-icons/tb';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
 import { erc20Abi } from 'viem';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
 import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
@@ -175,20 +173,12 @@ export function BorrowModal({
         actions={
           canOpenLeverageModal ? (
             <Button
-              variant="default"
+              variant="ghost"
               size="sm"
               onClick={handleOpenLeverage}
-              className="flex items-center gap-1.5 hover:scale-100"
+              className="h-auto px-1 py-0 text-xs font-medium text-secondary hover:bg-transparent hover:text-primary"
             >
-              {mode === 'borrow' ? <TbTrendingUp className="h-2.5 w-2.5" /> : <TbTrendingDown className="h-2.5 w-2.5" />}
-              {mode === 'borrow' ? 'Leverage' : 'Deleverage'}
-              <Badge
-                variant="success"
-                size="sm"
-                className="ml-0.5 uppercase tracking-[0.08em]"
-              >
-                New
-              </Badge>
+              {mode === 'borrow' ? 'Use Leverage' : 'Use Deleverage'}
             </Button>
           ) : undefined
         }

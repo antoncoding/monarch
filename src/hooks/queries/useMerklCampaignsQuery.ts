@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchActiveCampaigns, simplifyMerklCampaign, expandMultiLendBorrowCampaign } from '@/utils/merklApi';
 import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
 
-const CAMPAIGN_TYPES_TO_FETCH: MerklCampaignType[] = ['MORPHOSUPPLY', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
+const CAMPAIGN_TYPES_TO_FETCH: MerklCampaignType[] = ['MORPHOSUPPLY', 'MORPHOBORROW', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
 
 export const useMerklCampaignsQuery = () => {
   const query = useQuery({
