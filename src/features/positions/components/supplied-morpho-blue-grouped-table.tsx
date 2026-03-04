@@ -10,6 +10,7 @@ import Image from 'next/image';
 import moment from 'moment';
 import { PulseLoader } from 'react-spinners';
 import { useRouter } from 'next/navigation';
+import { useConnection } from 'wagmi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -58,6 +59,7 @@ export function SuppliedMorphoBlueGroupedTable({
   transactions,
   snapshotsByChain,
 }: SuppliedMorphoBlueGroupedTableProps) {
+  const { address } = useConnection();
   const period = usePositionsFilters((s) => s.period);
   const setPeriod = usePositionsFilters((s) => s.setPeriod);
 
@@ -80,6 +82,7 @@ export function SuppliedMorphoBlueGroupedTable({
   };
 
   const groupedPositions = useMemo(() => groupPositionsByLoanAsset(positions), [positions]);
+  const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
 
   const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
 
@@ -322,7 +325,9 @@ export function SuppliedMorphoBlueGroupedTable({
                     >
                       <div className="flex items-center justify-center gap-2">
                         <PositionActionsDropdown
+                          isOwner={isOwner}
                           onRebalanceClick={() => {
+                            if (!isOwner) return;
                             openModal('rebalance', {
                               groupedPosition,
                               refetch,

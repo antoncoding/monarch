@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { TbArrowsRightLeft } from 'react-icons/tb';
 import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
+import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -50,10 +51,13 @@ export function PositionHeader({
   periodLabel,
 }: PositionHeaderProps) {
   const router = useRouter();
+  const { address: connectedAddress } = useConnection();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { open: openModal } = useModalStore();
   const { togglePositionBookmark, isPositionBookmarked } = usePortfolioBookmarks();
+  const isOwner = !!connectedAddress && connectedAddress.toLowerCase() === userAddress.toLowerCase();
+  const showRebalance = isOwner;
 
   const networkImg = getNetworkImg(chainId);
   const isPositionSaved = groupedPosition && isPositionBookmarked(userAddress, chainId, groupedPosition.loanAssetAddress);
@@ -65,7 +69,7 @@ export function PositionHeader({
   };
 
   const handleRebalanceClick = () => {
-    if (!groupedPosition) return;
+    if (!groupedPosition || !isOwner) return;
     openModal('rebalance', {
       groupedPosition,
       refetch: onRefetch,
@@ -191,7 +195,7 @@ export function PositionHeader({
           {/* RIGHT: Stats + Actions */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
             {/* Key Stats */}
-            <div className={cn('flex items-center gap-6 border-r border-border pr-6')}>
+            <div className={cn('flex items-center gap-6', showRebalance && 'border-r border-border pr-6')}>
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Total Supply</p>
                 <div className="flex items-center gap-2">
@@ -302,26 +306,28 @@ export function PositionHeader({
                 </span>
               </Tooltip>
 
-              <Tooltip
-                content={
-                  <TooltipContent
-                    title="Rebalance"
-                    detail="Rebalance your position across markets"
-                  />
-                }
-              >
-                <span>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={handleRebalanceClick}
-                    disabled={isLoading || !groupedPosition}
-                  >
-                    <TbArrowsRightLeft className="h-4 w-4" />
-                    Rebalance
-                  </Button>
-                </span>
-              </Tooltip>
+              {showRebalance && (
+                <Tooltip
+                  content={
+                    <TooltipContent
+                      title="Rebalance"
+                      detail="Rebalance your position across markets"
+                    />
+                  }
+                >
+                  <span>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={handleRebalanceClick}
+                      disabled={isLoading || !groupedPosition}
+                    >
+                      <TbArrowsRightLeft className="h-4 w-4" />
+                      Rebalance
+                    </Button>
+                  </span>
+                </Tooltip>
+              )}
             </div>
           </div>
         </div>
