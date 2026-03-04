@@ -17,8 +17,6 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
     setShowDeveloperOptions,
     usePublicAllocator,
     setUsePublicAllocator,
-    enableExperimentalLeverage,
-    setEnableExperimentalLeverage,
   } = useAppSettings();
 
   return (
@@ -67,18 +65,6 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
           selected={usePublicAllocator}
           onChange={setUsePublicAllocator}
           ariaLabel="Toggle public allocator"
-        />
-      </div>
-
-      {/* Leverage / Deleverage */}
-      <div className="flex flex-col gap-4 rounded bg-surface p-4">
-        <h3 className="text-xs uppercase text-secondary">Leverage</h3>
-        <SettingToggleItem
-          title="Enable Leverage/Deleverage"
-          description="Show Leverage and Deleverage actions in the Borrow modal. Turn this on, then open Borrow on a market to use this flow."
-          selected={enableExperimentalLeverage}
-          onChange={setEnableExperimentalLeverage}
-          ariaLabel="Toggle leverage and deleverage feature"
         />
       </div>
 

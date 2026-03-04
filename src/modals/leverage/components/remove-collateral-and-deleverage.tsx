@@ -12,6 +12,7 @@ import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
 import { computeDeleverageProjectedPosition, formatTokenAmountPreview, parseUnsignedBigInt } from '@/hooks/leverage/math';
 import { useDeleverageQuote } from '@/hooks/useDeleverageQuote';
 import { useDeleverageTransaction } from '@/hooks/useDeleverageTransaction';
+import { useAppSettings } from '@/stores/useAppSettings';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import {
@@ -144,9 +145,12 @@ export function RemoveCollateralAndDeleverage({
   isRefreshing = false,
 }: RemoveCollateralAndDeleverageProps): JSX.Element {
   const { address: account } = useConnection();
+  const {
+    deleverageUseTargetLtvInput: useTargetLtvInput,
+    setDeleverageUseTargetLtvInput,
+  } = useAppSettings();
   const isSwapRoute = route?.kind === 'swap';
   const [withdrawCollateralAmount, setWithdrawCollateralAmount] = useState<bigint>(0n);
-  const [useTargetLtvInput, setUseTargetLtvInput] = useState(true);
   const [targetLtvInput, setTargetLtvInput] = useState<string>('0');
   const [isEditingTargetLtvInput, setIsEditingTargetLtvInput] = useState(false);
   const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
@@ -388,10 +392,10 @@ export function RemoveCollateralAndDeleverage({
   const handleInputModeChange = useCallback(
     (nextUseTargetLtvInput: boolean) => {
       clearExecutionError();
-      setUseTargetLtvInput(nextUseTargetLtvInput);
+      setDeleverageUseTargetLtvInput(nextUseTargetLtvInput);
       setWithdrawInputError(null);
     },
-    [clearExecutionError],
+    [clearExecutionError, setDeleverageUseTargetLtvInput],
   );
 
   useEffect(() => {

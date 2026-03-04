@@ -153,6 +153,7 @@ When touching transaction and position flows, validation MUST include all releva
 18. **External incentive parity**: when external rewards (for example Merkl HOLD opportunities) materially change carry economics, include them in net preview calculations when global reward-inclusion is enabled, and resolve incentives using canonical chainId+address mappings rather than token symbols.
 19. **APR/APY unit homogeneity**: in any reward/carry/net-rate calculation, normalize every term (base rate, each reward component, aggregates, and displayed subtotals) to the same selected mode before combining, so displayed formulas remain numerically consistent in both APR and APY modes.
 20. **Rebalance objective integrity**: stepwise smart-rebalance planners must evaluate each candidate move by resulting **global weighted objective** (portfolio-level APY/APR), not by local/post-move market APR alone, and must fail safe (no-op) when projected objective is below current objective.
+21. **Modal UX integrity**: transaction-modal help/fee tooltips must render above modal layers via shared tooltip z-index chokepoints, and per-flow input mode toggles (for example target LTV vs amount) must persist through shared settings across modal reopen.
 ### REQUIRED: Regression Rule Capture
 
 After fixing any user-reported bug in a high-impact flow:

@@ -124,7 +124,6 @@ function RiskIcon({ level }: { level: RiskLevel }): React.ReactNode {
 type ActionButtonsProps = {
   market: Market;
   userPosition: MarketPosition | null;
-  enableExperimentalLeverage: boolean;
   onSupplyClick: () => void;
   onWithdrawClick: () => void;
   onBorrowClick: () => void;
@@ -135,7 +134,6 @@ type ActionButtonsProps = {
 function ActionButtons({
   market,
   userPosition,
-  enableExperimentalLeverage,
   onSupplyClick,
   onWithdrawClick,
   onBorrowClick,
@@ -217,16 +215,13 @@ function ActionButtons({
       onClick: onRepayClick,
       disabled: !hasBorrow,
     },
-  ];
-
-  if (enableExperimentalLeverage) {
-    borrowDropdownItems.push({
+    {
       label: 'Leverage',
       icon: <TbTrendingUp className="h-4 w-4" />,
       onClick: onLeverageClick,
       disabled: false,
-    });
-  }
+    },
+  ];
 
   return (
     <>
@@ -368,7 +363,7 @@ export function MarketHeader({
   const [isBlacklistModalOpen, setIsBlacklistModalOpen] = useState(false);
   const { open: openModal } = useModal();
   const { short: rateLabel } = useRateLabel();
-  const { isAprDisplay, showDeveloperOptions, enableExperimentalLeverage } = useAppSettings();
+  const { isAprDisplay, showDeveloperOptions } = useAppSettings();
   const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const toast = useStyledToast();
@@ -594,7 +589,6 @@ export function MarketHeader({
               <ActionButtons
                 market={market}
                 userPosition={userPosition}
-                enableExperimentalLeverage={enableExperimentalLeverage}
                 onSupplyClick={onSupplyClick}
                 onWithdrawClick={onWithdrawClick}
                 onBorrowClick={onBorrowClick}

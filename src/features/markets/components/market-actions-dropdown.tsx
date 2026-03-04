@@ -16,7 +16,6 @@ import { useModal } from '@/hooks/useModal';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
-import { useAppSettings } from '@/stores/useAppSettings';
 
 type MarketActionsDropdownProps = {
   market: Market;
@@ -25,7 +24,6 @@ type MarketActionsDropdownProps = {
 export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const { open: openModal } = useModal();
-  const { enableExperimentalLeverage } = useAppSettings();
   const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const { success: toastSuccess } = useStyledToast();
@@ -100,14 +98,12 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
             Borrow
           </DropdownMenuItem>
 
-          {enableExperimentalLeverage && (
-            <DropdownMenuItem
-              onClick={handleOpenLeverage}
-              startContent={<TbTrendingUp className="h-4 w-4" />}
-            >
-              Leverage
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem
+            onClick={handleOpenLeverage}
+            startContent={<TbTrendingUp className="h-4 w-4" />}
+          >
+            Leverage
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={() => {

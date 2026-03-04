@@ -754,7 +754,19 @@ export function AddCollateralAndLeverage({
                 </div>
                 {leverageFeePreview != null && (
                   <div className="flex items-center justify-between">
-                    <span className="text-secondary">Fee </span>
+                    <span className="flex items-center gap-0.5 text-secondary">
+                      Fee
+                      <HelpTooltipIcon
+                        content={
+                          <SharedTooltipContent
+                            title="Fee policy"
+                            detail="0.0075% of added collateral, capped at $5 per transaction."
+                          />
+                        }
+                        ariaLabel="Explain leverage fee policy"
+                        className="h-auto w-auto"
+                      />
+                    </span>
                     <span className="tabular-nums inline-flex items-center gap-1.5">
                       <Tooltip content={<span className="text-xs">{leverageFeePreview.full}</span>}>
                         <span className="cursor-help border-b border-dotted border-white/40">{leverageFeePreview.compact}</span>
