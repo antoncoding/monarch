@@ -420,6 +420,7 @@ export const buildVeloraTransactionPayload = async ({
     partner,
     partnerAddress,
     partnerFeeBps: effectivePartnerFeeBps,
+    isDirectFeeTransfer: true,
   };
 
   const response = await fetchVeloraJson<VeloraBuildTransactionResponse | null>(transactionUrl, {
