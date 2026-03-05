@@ -1,7 +1,22 @@
+import { MONARCH_FEE_RECIPIENT } from '@/config/smart-rebalance';
+
 /**
  * Application identifier for Velora integration
  */
 export const SWAP_PARTNER = 'monarchlend';
+
+/**
+ * Recipient for Velora partner fees.
+ * Reuses Monarch's existing fee recipient configuration.
+ */
+export const SWAP_PARTNER_ADDRESS = MONARCH_FEE_RECIPIENT;
+
+/**
+ * Desired Velora partner fee is 0.3 bps (0.003%), but the API only accepts integer bps.
+ * We use the nearest safe supported integer value (floor), which is 0 bps.
+ */
+export const SWAP_PARTNER_TARGET_FEE_BPS = 0.3;
+export const SWAP_PARTNER_FEE_BPS = Math.floor(SWAP_PARTNER_TARGET_FEE_BPS);
 
 /**
  * Velora API base URL
