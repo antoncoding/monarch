@@ -292,14 +292,14 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   }, [quote, sourceToken, targetToken, error, chainsMatch, isRateInverted]);
 
   const receivePreview = useMemo(() => {
-    if (!quote || !targetToken) return null;
+    if (!quote || !targetToken || error || !chainsMatch) return null;
     return formatTokenAmountPreview(quote.buyAmount, targetToken.decimals);
-  }, [quote, targetToken]);
+  }, [quote, targetToken, error, chainsMatch]);
 
   const minReceivePreview = useMemo(() => {
-    if (!quote || !targetToken) return null;
+    if (!quote || !targetToken || error || !chainsMatch) return null;
     return formatTokenAmountPreview(withSlippageFloor(quote.buyAmount, swapSlippageBps), targetToken.decimals);
-  }, [quote, targetToken, swapSlippageBps]);
+  }, [quote, targetToken, error, chainsMatch, swapSlippageBps]);
   const zeroReceivePreview = useMemo(() => {
     if (!targetToken) return null;
     return formatTokenAmountPreview(0n, targetToken.decimals);
