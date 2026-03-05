@@ -145,10 +145,7 @@ export function RemoveCollateralAndDeleverage({
   isRefreshing = false,
 }: RemoveCollateralAndDeleverageProps): JSX.Element {
   const { address: account } = useConnection();
-  const {
-    deleverageUseTargetLtvInput: useTargetLtvInput,
-    setDeleverageUseTargetLtvInput,
-  } = useAppSettings();
+  const { deleverageUseTargetLtvInput: useTargetLtvInput, setDeleverageUseTargetLtvInput } = useAppSettings();
   const isSwapRoute = route?.kind === 'swap';
   const [withdrawCollateralAmount, setWithdrawCollateralAmount] = useState<bigint>(0n);
   const [targetLtvInput, setTargetLtvInput] = useState<string>('0');

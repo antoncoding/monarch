@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { RiSparkling2Fill } from 'react-icons/ri';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { defaultTrustedVaults } from '@/constants/vaults/known_vaults';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
-import { SettingActionItem } from '../SettingItem';
+import { SettingActionItem, SettingToggleItem } from '../SettingItem';
 import type { DetailView } from '../constants';
 
 type PreferencesPanelProps = {
@@ -13,6 +15,7 @@ type PreferencesPanelProps = {
 
 export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) {
   const { vaults: userTrustedVaults } = useTrustedVaults();
+  const { rebalanceDefaultMode, setRebalanceDefaultMode } = useAppSettings();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -35,6 +38,18 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Rebalance</h3>
+        <SettingToggleItem
+          title="Default to Smart Rebalance"
+          description="When enabled, rebalance opens in smart mode. Turn off to default to manual mode."
+          selected={rebalanceDefaultMode === 'smart'}
+          onChange={(enabled) => setRebalanceDefaultMode(enabled ? 'smart' : 'manual')}
+          ariaLabel="Toggle smart rebalance as default mode"
+          thumbIconOn={RiSparkling2Fill}
+        />
+      </div>
+
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
         <h3 className="text-xs uppercase text-secondary">Trusted Vaults</h3>
         <SettingActionItem

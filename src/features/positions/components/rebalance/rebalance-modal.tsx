@@ -14,7 +14,7 @@ import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useRebalance } from '@/hooks/useRebalance';
 import { useSmartRebalance } from '@/hooks/useSmartRebalance';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { useAppSettings } from '@/stores/useAppSettings';
+import { useAppSettings, type RebalanceDefaultMode } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import type { Market } from '@/utils/types';
 import type { GroupedPosition, RebalanceAction } from '@/utils/types';
@@ -40,7 +40,7 @@ type RebalanceModalProps = {
   isRefetching: boolean;
 };
 
-type RebalanceMode = 'manual' | 'smart';
+type RebalanceMode = RebalanceDefaultMode;
 
 const modeOptions: { value: RebalanceMode; label: string }[] = [
   { value: 'smart', label: 'Smart Rebalance' },
@@ -125,7 +125,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   const syncIndicatorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toast = useStyledToast();
-  const { isAprDisplay } = useAppSettings();
+  const { isAprDisplay, rebalanceDefaultMode } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { open: openModal, close: closeModal } = useModalStore();
 
@@ -173,14 +173,14 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       .filter((position) => BigInt(position.state.supplyAssets) > 0n)
       .map((position) => position.market.uniqueKey);
 
-    setMode('smart');
+    setMode(rebalanceDefaultMode);
     setSmartSelectedMarketKeys(new Set(nextDefaultSmartMarketKeys));
     setSmartMaxAllocationBps({});
     setSmartMaxAllocationInputValues({});
     setDebouncedSmartMaxAllocationBps({});
     setSmartPlan(null);
     setSmartCalculationError(null);
-  }, [groupedPosition.markets, isOpen]);
+  }, [groupedPosition.markets, isOpen, rebalanceDefaultMode]);
 
   useEffect(() => {
     return () => {

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type RebalanceDefaultMode = 'manual' | 'smart';
+
 type AppSettingsState = {
   // Transaction settings
   usePermit2: boolean;
@@ -23,6 +25,9 @@ type AppSettingsState = {
   // Leverage modal preferences
   leverageUseTargetLtvInput: boolean;
   deleverageUseTargetLtvInput: boolean;
+
+  // Rebalance modal preferences
+  rebalanceDefaultMode: RebalanceDefaultMode;
 };
 
 type AppSettingsActions = {
@@ -36,6 +41,7 @@ type AppSettingsActions = {
   setUsePublicAllocator: (show: boolean) => void;
   setLeverageUseTargetLtvInput: (useTargetLtvInput: boolean) => void;
   setDeleverageUseTargetLtvInput: (useTargetLtvInput: boolean) => void;
+  setRebalanceDefaultMode: (mode: RebalanceDefaultMode) => void;
 
   // Bulk update for migration
   setAll: (state: Partial<AppSettingsState>) => void;
@@ -66,6 +72,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       usePublicAllocator: true,
       leverageUseTargetLtvInput: true,
       deleverageUseTargetLtvInput: true,
+      rebalanceDefaultMode: 'smart',
 
       // Actions
       setUsePermit2: (use) => set({ usePermit2: use }),
@@ -78,6 +85,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       setUsePublicAllocator: (show) => set({ usePublicAllocator: show }),
       setLeverageUseTargetLtvInput: (useTargetLtvInput) => set({ leverageUseTargetLtvInput: useTargetLtvInput }),
       setDeleverageUseTargetLtvInput: (useTargetLtvInput) => set({ deleverageUseTargetLtvInput: useTargetLtvInput }),
+      setRebalanceDefaultMode: (mode) => set({ rebalanceDefaultMode: mode }),
       setAll: (state) => set(state),
     }),
     {

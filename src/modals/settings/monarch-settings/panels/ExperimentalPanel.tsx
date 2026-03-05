@@ -12,12 +12,7 @@ type ExperimentalPanelProps = {
 
 export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps) {
   const { showOfficialTrending, setShowOfficialTrending, customTagConfig, setCustomTagEnabled } = useMarketPreferences();
-  const {
-    showDeveloperOptions,
-    setShowDeveloperOptions,
-    usePublicAllocator,
-    setUsePublicAllocator,
-  } = useAppSettings();
+  const { showDeveloperOptions, setShowDeveloperOptions, usePublicAllocator, setUsePublicAllocator } = useAppSettings();
 
   return (
     <div className="flex flex-col gap-4">
