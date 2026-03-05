@@ -446,7 +446,7 @@ export function useDeleverageTransaction({
           }),
         ];
 
-        const minAssetsOut = withSlippageFloor(flashLoanAmount);
+        const minAssetsOut = withSlippageFloor(flashLoanAmount, slippageBps);
         callbackTxs.push(
           encodeFunctionData({
             abi: morphoBundlerAbi,
@@ -473,6 +473,13 @@ export function useDeleverageTransaction({
             abi: morphoBundlerAbi,
             functionName: 'morphoFlashLoan',
             args: [market.loanAsset.address as Address, flashLoanAmount, flashLoanCallbackData],
+          }),
+        );
+        txs.push(
+          encodeFunctionData({
+            abi: morphoBundlerAbi,
+            functionName: 'erc20Transfer',
+            args: [market.loanAsset.address as Address, account as Address, maxUint256],
           }),
         );
 
