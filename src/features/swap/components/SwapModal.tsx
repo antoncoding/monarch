@@ -8,10 +8,13 @@ import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/
 import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Spinner } from '@/components/ui/spinner';
+import { TokenIcon } from '@/components/shared/token-icon';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useUserBalancesQuery } from '@/hooks/queries/useUserBalancesQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAllowance } from '@/hooks/useAllowance';
+import { formatTokenAmountPreview, withSlippageFloor } from '@/hooks/leverage/math';
 import { formatBalance } from '@/utils/balance';
 import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
 import { formatCompactTokenAmount } from '@/utils/token-amount-format';
@@ -39,6 +42,7 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
   const [amount, setAmount] = useState<bigint>(BigInt(0));
   const [slippage, setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
   const [isRateInverted, setIsRateInverted] = useState(false);
+  const swapSlippageBps = useMemo(() => slippagePercentToBps(slippage), [slippage]);
   const amountInputClassName =
     'h-10 w-full rounded bg-hovered px-3 pr-44 text-lg font-medium tabular-nums focus:border-primary focus:outline-none';
 
@@ -146,7 +150,7 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
     sourceToken,
     targetToken,
     amount,
-    slippageBps: slippagePercentToBps(slippage),
+    slippageBps: swapSlippageBps,
     onSwapConfirmed: handleSwapConfirmed,
   });
 
@@ -287,6 +291,20 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
     });
   }, [quote, sourceToken, targetToken, error, chainsMatch, isRateInverted]);
 
+  const receivePreview = useMemo(() => {
+    if (!quote || !targetToken) return null;
+    return formatTokenAmountPreview(quote.buyAmount, targetToken.decimals);
+  }, [quote, targetToken]);
+
+  const minReceivePreview = useMemo(() => {
+    if (!quote || !targetToken) return null;
+    return formatTokenAmountPreview(withSlippageFloor(quote.buyAmount, swapSlippageBps), targetToken.decimals);
+  }, [quote, targetToken, swapSlippageBps]);
+  const zeroReceivePreview = useMemo(() => {
+    if (!targetToken) return null;
+    return formatTokenAmountPreview(0n, targetToken.decimals);
+  }, [targetToken]);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -361,28 +379,80 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
                 triggerVariant="inline"
               />
             }
-            footer={
-              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-secondary">
-                {ratePreviewText && (
-                  <button
-                    type="button"
-                    onClick={() => setIsRateInverted((prev) => !prev)}
-                    className="inline-flex shrink-0 rounded p-0.5 transition hover:bg-surface hover:text-primary"
-                    aria-label="Swap price direction"
-                  >
-                    <IoIosSwap className="h-3.5 w-3.5" />
-                  </button>
-                )}
-                <span className="truncate">{ratePreviewText}</span>
-              </div>
-            }
+            footer={null}
           />
 
-          {/* Slippage */}
-          <div className="pt-2">
-            <div className="rounded bg-hovered px-3 py-2">
+          {/* Transaction Preview */}
+          <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
+            <p className="mb-2 text-xs uppercase tracking-[0.14em] text-secondary">TRANSACTION PREVIEW</p>
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-secondary">Est. Receive</span>
+                {!targetToken || !zeroReceivePreview ? (
+                  <span className="text-right">-</span>
+                ) : isQuoting ? (
+                  <span className="text-right">Quoting...</span>
+                ) : (
+                  <span className="tabular-nums inline-flex items-center gap-1.5">
+                    <Tooltip content={<span className="text-xs">{(receivePreview ?? zeroReceivePreview).full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">
+                        {(receivePreview ?? zeroReceivePreview).compact}
+                      </span>
+                    </Tooltip>
+                    <TokenIcon
+                      address={targetToken.address}
+                      chainId={targetToken.chainId}
+                      symbol={targetToken.symbol}
+                      width={14}
+                      height={14}
+                    />
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-secondary">Min Receive</span>
+                {!targetToken || !zeroReceivePreview ? (
+                  <span className="text-right">-</span>
+                ) : isQuoting ? (
+                  <span className="text-right">Quoting...</span>
+                ) : (
+                  <span className="tabular-nums inline-flex items-center gap-1.5">
+                    <Tooltip content={<span className="text-xs">{(minReceivePreview ?? zeroReceivePreview).full}</span>}>
+                      <span className="cursor-help border-b border-dotted border-white/40">
+                        {(minReceivePreview ?? zeroReceivePreview).compact}
+                      </span>
+                    </Tooltip>
+                    <TokenIcon
+                      address={targetToken.address}
+                      chainId={targetToken.chainId}
+                      symbol={targetToken.symbol}
+                      width={14}
+                      height={14}
+                    />
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-secondary">Swap Quote</span>
+                <span className="inline-flex items-center gap-1.5 text-right">
+                  {ratePreviewText && (
+                    <button
+                      type="button"
+                      onClick={() => setIsRateInverted((prev) => !prev)}
+                      className="inline-flex shrink-0 rounded p-0.5 transition hover:bg-surface hover:text-primary"
+                      aria-label="Swap price direction"
+                    >
+                      <IoIosSwap className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <span>{ratePreviewText ?? '-'}</span>
+                </span>
+              </div>
+
               <div className="flex items-center justify-between text-xs">
-                <span className="text-secondary">Max slippage</span>
+                <span className="text-secondary">Max Slippage</span>
                 <SlippageInlineEditor
                   value={slippage}
                   onChange={setSlippage}

@@ -27,6 +27,7 @@ type UseVeloraSwapReturn = {
 };
 
 const QUOTE_DEBOUNCE_MS = 800;
+const CHARGE_SWAP_FEE = true;
 
 const parseErrorMessage = (err: unknown): string => {
   return toUserFacingTransactionErrorMessage(err, 'An unknown error occurred');
@@ -103,6 +104,7 @@ export function useVeloraSwap({
         amount,
         network: sourceToken.chainId,
         userAddress: account,
+        chargeFee: CHARGE_SWAP_FEE,
       });
 
       const buyAmount = BigInt(nextPriceRoute.destAmount);
@@ -146,6 +148,7 @@ export function useVeloraSwap({
           userAddress: account,
           priceRoute: activePriceRoute,
           slippageBps,
+          chargeFee: CHARGE_SWAP_FEE,
         });
       } catch (buildError: unknown) {
         if (!isVeloraRateChangedError(buildError)) {
@@ -160,6 +163,7 @@ export function useVeloraSwap({
           amount,
           network: sourceToken.chainId,
           userAddress: account,
+          chargeFee: CHARGE_SWAP_FEE,
         });
         activePriceRoute = refreshedRoute;
         setPriceRoute(refreshedRoute);
@@ -184,6 +188,7 @@ export function useVeloraSwap({
           userAddress: account,
           priceRoute: activePriceRoute,
           slippageBps,
+          chargeFee: CHARGE_SWAP_FEE,
         });
       }
 

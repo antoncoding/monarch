@@ -28,6 +28,8 @@ import { computeBorrowSharesWithBuffer, withSlippageFloor } from './leverage/mat
 import type { LeverageRoute } from './leverage/types';
 import { isVeloraBypassablePrecheckError } from './leverage/velora-precheck';
 
+const CHARGE_SWAP_FEE = true;
+
 export type LeverageStepType =
   | 'approve_permit2'
   | 'authorize_bundler_sig'
@@ -398,6 +400,7 @@ export function useLeverageTransaction({
               userAddress: swapExecutionAddress,
               priceRoute: activePriceRoute,
               slippageBps,
+              chargeFee: CHARGE_SWAP_FEE,
               ignoreChecks,
             });
 

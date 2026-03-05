@@ -12,11 +12,9 @@ export const SWAP_PARTNER = 'monarchlend';
 export const SWAP_PARTNER_ADDRESS = MONARCH_FEE_RECIPIENT;
 
 /**
- * Desired Velora partner fee is 0.3 bps (0.003%), but the API only accepts integer bps.
- * We use the nearest safe supported integer value (floor), which is 0 bps.
+ * Velora partner fee in basis points. Velora enforces integer bps values.
  */
-export const SWAP_PARTNER_TARGET_FEE_BPS = 0.3;
-export const SWAP_PARTNER_FEE_BPS = Math.floor(SWAP_PARTNER_TARGET_FEE_BPS);
+export const SWAP_PARTNER_FEE_BPS = 1;
 
 /**
  * Velora API base URL
