@@ -1,4 +1,4 @@
-import type { Address } from 'viem';
+import { type Address, isAddressEqual, zeroAddress } from 'viem';
 import { getBundlerV2 } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { MONARCH_FEE_RECIPIENT } from './smart-rebalance';
@@ -39,6 +39,14 @@ export const isSpecialErc4626LeverageMarket = (chainId: SupportedNetworks, marke
 
 export const resolveErc4626RouteBundler = (chainId: SupportedNetworks, marketUniqueKey: string): Address => {
   const specialConfig = getSpecialErc4626LeverageConfig(chainId);
-  if (specialConfig && marketUniqueKey.toLowerCase() === specialConfig.marketUniqueKey) return specialConfig.bundler;
-  return getBundlerV2(chainId) as Address;
+  const resolvedBundler =
+    specialConfig && marketUniqueKey.toLowerCase() === specialConfig.marketUniqueKey
+      ? specialConfig.bundler
+      : (getBundlerV2(chainId) as Address);
+
+  if (isAddressEqual(resolvedBundler, zeroAddress)) {
+    throw new Error(`Bundler not configured for leverage route (chainId=${chainId}, market=${marketUniqueKey.toLowerCase()}).`);
+  }
+
+  return resolvedBundler;
 };
