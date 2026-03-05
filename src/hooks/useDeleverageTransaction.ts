@@ -5,7 +5,7 @@ import morphoBundlerAbi from '@/abis/bundlerV2';
 import { bundlerV3Abi } from '@/abis/bundlerV3';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
-import { SPECIAL_ERC4626_LEVERAGE_CONFIG, isSpecialErc4626LeverageMarket } from '@/config/leverage';
+import { resolveErc4626RouteBundler } from '@/config/leverage';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -14,7 +14,7 @@ import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
-import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
 import { type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets, readCalldataUint256 } from './leverage/bundler3';
@@ -67,10 +67,7 @@ export function useDeleverageTransaction({
   const useSignatureAuthorization = usePermit2Setting && !isSwapRoute;
   const bundlerAddress = useMemo<Address>(() => {
     if (route?.kind === 'swap') return route.bundler3Address;
-    if (route?.kind === 'erc4626' && isSpecialErc4626LeverageMarket(market.uniqueKey)) {
-      return SPECIAL_ERC4626_LEVERAGE_CONFIG.bundler;
-    }
-    return getBundlerV2(market.morphoBlue.chain.id) as Address;
+    return resolveErc4626RouteBundler(market.morphoBlue.chain.id, market.uniqueKey);
   }, [route, market.uniqueKey, market.morphoBlue.chain.id]);
   const authorizationTarget = useMemo<Address>(() => {
     if (route?.kind === 'swap') return route.generalAdapterAddress;

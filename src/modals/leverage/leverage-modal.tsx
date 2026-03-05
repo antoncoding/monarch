@@ -9,7 +9,7 @@ import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitch
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { SPECIAL_ERC4626_LEVERAGE_CONFIG, isSpecialErc4626LeverageMarket } from '@/config/leverage';
+import { getSpecialErc4626LeverageConfig, isSpecialErc4626LeverageMarket } from '@/config/leverage';
 import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { cn } from '@/utils/components';
@@ -104,9 +104,10 @@ export function LeverageModal({
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
   const [routeMode, setRouteMode] = useState<RouteMode>('erc4626');
-  const [hasAcknowledgedSpecialBundlerWarning, setHasAcknowledgedSpecialBundlerWarning] = useState<boolean | null>(null);
+  const [hasAcknowledgedSpecialBundlerWarning, setHasAcknowledgedSpecialBundlerWarning] = useState(false);
   const { address: account } = useConnection();
-  const isSpecialErc4626BundlerMarket = isSpecialErc4626LeverageMarket(market.uniqueKey);
+  const specialErc4626LeverageConfig = getSpecialErc4626LeverageConfig(market.morphoBlue.chain.id);
+  const isSpecialErc4626BundlerMarket = isSpecialErc4626LeverageMarket(market.morphoBlue.chain.id, market.uniqueKey);
 
   const { swapRoute, isErc4626ModeAvailable, availableRouteModes, isErc4626ProbeLoading, isErc4626ProbeRefetching } =
     useLeverageRouteAvailability({
@@ -151,30 +152,31 @@ export function LeverageModal({
   ]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
-  const shouldShowSpecialBundlerWarning = isSpecialErc4626BundlerMarket && isErc4626Route && hasAcknowledgedSpecialBundlerWarning === false;
+  const shouldShowSpecialBundlerWarning = isSpecialErc4626BundlerMarket && isErc4626Route && !hasAcknowledgedSpecialBundlerWarning;
 
   useEffect(() => {
-    if (!isSpecialErc4626BundlerMarket) {
+    if (!isSpecialErc4626BundlerMarket || !specialErc4626LeverageConfig) {
       setHasAcknowledgedSpecialBundlerWarning(true);
       return;
     }
 
     try {
-      const hasAcknowledged = window.localStorage.getItem(SPECIAL_ERC4626_LEVERAGE_CONFIG.warningStorageKey) === '1';
+      const hasAcknowledged = window.localStorage.getItem(specialErc4626LeverageConfig.warningStorageKey) === '1';
       setHasAcknowledgedSpecialBundlerWarning(hasAcknowledged);
     } catch {
       setHasAcknowledgedSpecialBundlerWarning(false);
     }
-  }, [isSpecialErc4626BundlerMarket]);
+  }, [isSpecialErc4626BundlerMarket, specialErc4626LeverageConfig]);
 
   const acknowledgeSpecialBundlerWarning = useCallback(() => {
+    if (!specialErc4626LeverageConfig) return;
     try {
-      window.localStorage.setItem(SPECIAL_ERC4626_LEVERAGE_CONFIG.warningStorageKey, '1');
+      window.localStorage.setItem(specialErc4626LeverageConfig.warningStorageKey, '1');
     } catch {
       // ignore storage write failures and still hide warning for this session
     }
     setHasAcknowledgedSpecialBundlerWarning(true);
-  }, []);
+  }, [specialErc4626LeverageConfig]);
 
   const displayedRouteMode = useMemo<RouteMode>(() => {
     if (route?.kind) return route.kind;
@@ -219,6 +221,35 @@ export function LeverageModal({
   }, [refetch, account, refetchCollateralTokenBalance]);
 
   const isRefreshingAnyData = isRefreshing || isFetchingCollateralTokenBalance;
+
+  const routeContent = useMemo((): JSX.Element | null => {
+    if (!route) return null;
+
+    if (effectiveMode === 'leverage') {
+      return (
+        <AddCollateralAndLeverage
+          market={market}
+          route={route}
+          currentPosition={position}
+          collateralTokenBalance={collateralTokenBalance}
+          oraclePrice={oraclePrice}
+          onSuccess={handleRefreshAll}
+          isRefreshing={isRefreshingAnyData}
+        />
+      );
+    }
+
+    return (
+      <RemoveCollateralAndDeleverage
+        market={market}
+        route={route}
+        currentPosition={position}
+        oraclePrice={oraclePrice}
+        onSuccess={handleRefreshAll}
+        isRefreshing={isRefreshingAnyData}
+      />
+    );
+  }, [route, effectiveMode, market, position, collateralTokenBalance, oraclePrice, handleRefreshAll, isRefreshingAnyData]);
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -288,27 +319,8 @@ export function LeverageModal({
         }
       />
       <ModalBody>
-        {route ? (
-          effectiveMode === 'leverage' ? (
-            <AddCollateralAndLeverage
-              market={market}
-              route={route}
-              currentPosition={position}
-              collateralTokenBalance={collateralTokenBalance}
-              oraclePrice={oraclePrice}
-              onSuccess={handleRefreshAll}
-              isRefreshing={isRefreshingAnyData}
-            />
-          ) : (
-            <RemoveCollateralAndDeleverage
-              market={market}
-              route={route}
-              currentPosition={position}
-              oraclePrice={oraclePrice}
-              onSuccess={handleRefreshAll}
-              isRefreshing={isRefreshingAnyData}
-            />
-          )
+        {routeContent ? (
+          routeContent
         ) : isErc4626ProbeLoading || isErc4626ProbeRefetching ? (
           <div className="rounded border border-white/10 bg-hovered p-4 text-sm text-secondary">Checking available leverage routes...</div>
         ) : (
@@ -321,7 +333,7 @@ export function LeverageModal({
             <div className="flex items-start gap-2">
               <IoWarningOutline className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-300" />
               <div className="space-y-2">
-                <p className="text-sm text-yellow-800 dark:text-yellow-300">{SPECIAL_ERC4626_LEVERAGE_CONFIG.warningMessage}</p>
+                <p className="text-sm text-yellow-800 dark:text-yellow-300">{specialErc4626LeverageConfig?.warningMessage}</p>
                 <button
                   type="button"
                   onClick={acknowledgeSpecialBundlerWarning}
