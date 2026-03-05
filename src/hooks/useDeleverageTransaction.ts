@@ -5,6 +5,7 @@ import morphoBundlerAbi from '@/abis/bundlerV2';
 import { bundlerV3Abi } from '@/abis/bundlerV3';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
+import { SPECIAL_ERC4626_LEVERAGE_CONFIG, isSpecialErc4626LeverageMarket } from '@/config/leverage';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -66,8 +67,11 @@ export function useDeleverageTransaction({
   const useSignatureAuthorization = usePermit2Setting && !isSwapRoute;
   const bundlerAddress = useMemo<Address>(() => {
     if (route?.kind === 'swap') return route.bundler3Address;
+    if (route?.kind === 'erc4626' && isSpecialErc4626LeverageMarket(market.uniqueKey)) {
+      return SPECIAL_ERC4626_LEVERAGE_CONFIG.bundler;
+    }
     return getBundlerV2(market.morphoBlue.chain.id) as Address;
-  }, [route, market.morphoBlue.chain.id]);
+  }, [route, market.uniqueKey, market.morphoBlue.chain.id]);
   const authorizationTarget = useMemo<Address>(() => {
     if (route?.kind === 'swap') return route.generalAdapterAddress;
     return bundlerAddress;

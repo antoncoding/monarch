@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { IoWarningOutline } from 'react-icons/io5';
 import { RiSparklingFill } from 'react-icons/ri';
 import { type Address, erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
@@ -8,6 +9,7 @@ import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitch
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { SPECIAL_ERC4626_LEVERAGE_CONFIG, isSpecialErc4626LeverageMarket } from '@/config/leverage';
 import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { cn } from '@/utils/components';
@@ -102,7 +104,9 @@ export function LeverageModal({
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
   const [routeMode, setRouteMode] = useState<RouteMode>('erc4626');
+  const [hasAcknowledgedSpecialBundlerWarning, setHasAcknowledgedSpecialBundlerWarning] = useState<boolean | null>(null);
   const { address: account } = useConnection();
+  const isSpecialErc4626BundlerMarket = isSpecialErc4626LeverageMarket(market.uniqueKey);
 
   const { swapRoute, isErc4626ModeAvailable, availableRouteModes, isErc4626ProbeLoading, isErc4626ProbeRefetching } =
     useLeverageRouteAvailability({
@@ -147,6 +151,31 @@ export function LeverageModal({
   ]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const shouldShowSpecialBundlerWarning = isSpecialErc4626BundlerMarket && isErc4626Route && hasAcknowledgedSpecialBundlerWarning === false;
+
+  useEffect(() => {
+    if (!isSpecialErc4626BundlerMarket) {
+      setHasAcknowledgedSpecialBundlerWarning(true);
+      return;
+    }
+
+    try {
+      const hasAcknowledged = window.localStorage.getItem(SPECIAL_ERC4626_LEVERAGE_CONFIG.warningStorageKey) === '1';
+      setHasAcknowledgedSpecialBundlerWarning(hasAcknowledged);
+    } catch {
+      setHasAcknowledgedSpecialBundlerWarning(false);
+    }
+  }, [isSpecialErc4626BundlerMarket]);
+
+  const acknowledgeSpecialBundlerWarning = useCallback(() => {
+    try {
+      window.localStorage.setItem(SPECIAL_ERC4626_LEVERAGE_CONFIG.warningStorageKey, '1');
+    } catch {
+      // ignore storage write failures and still hide warning for this session
+    }
+    setHasAcknowledgedSpecialBundlerWarning(true);
+  }, []);
+
   const displayedRouteMode = useMemo<RouteMode>(() => {
     if (route?.kind) return route.kind;
     if (availableRouteModes.length === 1) return availableRouteModes[0];
@@ -285,6 +314,23 @@ export function LeverageModal({
         ) : (
           <div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
             Swap route configuration is unavailable for this network.
+          </div>
+        )}
+        {shouldShowSpecialBundlerWarning && (
+          <div className="mt-3 rounded border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-400/20 dark:bg-yellow-400/10">
+            <div className="flex items-start gap-2">
+              <IoWarningOutline className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-300" />
+              <div className="space-y-2">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300">{SPECIAL_ERC4626_LEVERAGE_CONFIG.warningMessage}</p>
+                <button
+                  type="button"
+                  onClick={acknowledgeSpecialBundlerWarning}
+                  className="rounded border border-yellow-200 bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800 transition hover:bg-yellow-200 dark:border-yellow-400/20 dark:bg-yellow-400/10 dark:text-yellow-300 dark:hover:bg-yellow-400/20"
+                >
+                  I Understand
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </ModalBody>
