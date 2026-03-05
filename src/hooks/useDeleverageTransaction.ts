@@ -65,14 +65,12 @@ export function useDeleverageTransaction({
   const [executionError, setExecutionError] = useState<string | null>(null);
   const isSwapRoute = route?.kind === 'swap';
   const useSignatureAuthorization = usePermit2Setting && !isSwapRoute;
-  const bundlerAddress = useMemo<Address>(() => {
-    if (route?.kind === 'swap') return route.bundler3Address;
+  const bundlerAddress = useMemo<Address | undefined>(() => {
+    if (!route) return undefined;
+    if (route.kind === 'swap') return route.bundler3Address;
     return resolveErc4626RouteBundler(market.morphoBlue.chain.id, market.uniqueKey);
   }, [route, market.uniqueKey, market.morphoBlue.chain.id]);
-  const authorizationTarget = useMemo<Address>(() => {
-    if (route?.kind === 'swap') return route.generalAdapterAddress;
-    return bundlerAddress;
-  }, [route, bundlerAddress]);
+  const authorizationTarget = route?.kind === 'swap' ? route.generalAdapterAddress : bundlerAddress;
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
   const {
@@ -84,7 +82,7 @@ export function useDeleverageTransaction({
     refetchIsBundlerAuthorized,
   } = useBundlerAuthorizationStep({
     chainId: market.morphoBlue.chain.id,
-    bundlerAddress: authorizationTarget,
+    bundlerAddress: authorizationTarget as Address,
   });
 
   const { isConfirming: deleveragePending, sendTransactionAsync } = useTransactionWithToast({
@@ -154,6 +152,9 @@ export function useDeleverageTransaction({
 
     if (!route) {
       throw new Error('This market is not supported for deleverage.');
+    }
+    if (!bundlerAddress) {
+      throw new Error('Deleverage route data is unavailable. Please refresh and try again.');
     }
 
     if (withdrawCollateralAmount <= 0n || flashLoanAmount <= 0n) {
@@ -549,6 +550,10 @@ export function useDeleverageTransaction({
       toast.info('No account connected', 'Please connect your wallet.');
       return;
     }
+    if (!route || !bundlerAddress) {
+      toast.info('Quote unavailable', 'Deleverage route data is unavailable. Please refresh and try again.');
+      return;
+    }
     if ((useSignatureAuthorization && !isBundlerAuthorizationReady) || (!useSignatureAuthorization && !isBundlerAuthorizationStatusReady)) {
       toast.info('Authorization status loading', 'Please wait a moment and try again.');
       return;
@@ -585,6 +590,8 @@ export function useDeleverageTransaction({
     }
   }, [
     account,
+    route,
+    bundlerAddress,
     isBundlerAuthorized,
     isBundlerAuthorizationReady,
     isBundlerAuthorizationStatusReady,
