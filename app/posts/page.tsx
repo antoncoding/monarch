@@ -1,48 +1,10 @@
-import { promises as fs } from 'node:fs';
+import { promises as fs, type Dirent } from 'node:fs';
 import path from 'node:path';
 import Link from 'next/link';
 import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { generateMetadata } from '@/utils/generateMetadata';
-
-const POSTS_DIRECTORY = path.join(process.cwd(), 'src/content/posts');
-
-type PostListItem = {
-  slug: string;
-  title: string;
-  publishedDate: string | null;
-  excerpt: string;
-  sortTime: number;
-};
-
-const formatSlugTitle = (slug: string): string =>
-  slug
-    .replace(/^\d{4}-\d{2}-\d{2}-/, '')
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-
-const parseDateFromSlug = (slug: string): { label: string | null; time: number } => {
-  const match = slug.match(/^(\d{4})-(\d{2})-(\d{2})-/);
-  if (!match) {
-    return { label: null, time: 0 };
-  }
-
-  const [_, year, month, day] = match;
-  const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) {
-    return { label: null, time: 0 };
-  }
-
-  return {
-    label: date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'UTC',
-    }),
-    time: date.getTime(),
-  };
-};
+import { POSTS_DIRECTORY, POSTS_SITE_ORIGIN, formatSlugTitle, parseDateFromSlug, type PostListItem } from './helpers';
 
 const getPostPreview = (markdown: string, fallbackTitle: string): { title: string; excerpt: string } => {
   const lines = markdown.replaceAll('\r\n', '\n').split('\n');
@@ -78,45 +40,53 @@ const getPostPreview = (markdown: string, fallbackTitle: string): { title: strin
 };
 
 const getAllPosts = async (): Promise<PostListItem[]> => {
+  let entries: Dirent[];
   try {
-    const entries = await fs.readdir(POSTS_DIRECTORY, { withFileTypes: true });
-    const markdownFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith('.md'));
+    entries = await fs.readdir(POSTS_DIRECTORY, { withFileTypes: true });
+  } catch (error: unknown) {
+    const fsError = error as NodeJS.ErrnoException;
+    if (fsError.code === 'ENOENT') {
+      return [];
+    }
 
-    const posts = await Promise.all(
-      markdownFiles.map(async (entry) => {
-        const slug = entry.name.replace(/\.md$/, '');
-        const fallbackTitle = formatSlugTitle(slug);
-        const filePath = path.join(POSTS_DIRECTORY, entry.name);
-        const markdown = await fs.readFile(filePath, 'utf8');
-        const { title, excerpt } = getPostPreview(markdown, fallbackTitle);
-        const { label, time } = parseDateFromSlug(slug);
-
-        return {
-          slug,
-          title,
-          excerpt,
-          publishedDate: label,
-          sortTime: time,
-        };
-      }),
-    );
-
-    return posts.sort((first, second) => {
-      if (first.sortTime !== second.sortTime) {
-        return second.sortTime - first.sortTime;
-      }
-
-      return second.slug.localeCompare(first.slug);
-    });
-  } catch {
-    return [];
+    throw error;
   }
+
+  const markdownFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith('.md'));
+
+  const posts = await Promise.all(
+    markdownFiles.map(async (entry) => {
+      const slug = entry.name.replace(/\.md$/, '');
+      const fallbackTitle = formatSlugTitle(slug);
+      const filePath = path.join(POSTS_DIRECTORY, entry.name);
+      const markdown = await fs.readFile(filePath, 'utf8');
+      const { title, excerpt } = getPostPreview(markdown, fallbackTitle);
+      const { label, time } = parseDateFromSlug(slug);
+
+      return {
+        slug,
+        title,
+        excerpt,
+        publishedDate: label,
+        sortTime: time,
+      };
+    }),
+  );
+
+  return posts.sort((first, second) => {
+    if (first.sortTime !== second.sortTime) {
+      return second.sortTime - first.sortTime;
+    }
+
+    return second.slug.localeCompare(first.slug);
+  });
 };
 
 export const metadata = generateMetadata({
   title: 'Posts | Monarch',
   description: 'Monarch announcements and product updates',
   images: 'themes.png',
+  url: POSTS_SITE_ORIGIN,
   pathname: '/posts',
 });
 

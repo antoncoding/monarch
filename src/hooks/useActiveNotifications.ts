@@ -36,7 +36,6 @@ export type ActiveNotificationsResult = {
  */
 export const useActiveNotifications = (): ActiveNotificationsResult => {
   const dismissedIds = useNotificationStore((s) => s.dismissedIds);
-  const hasHydrated = useNotificationStore((s) => s._hasHydrated);
   const conditions = useNotificationConditions();
 
   const { activeNotifications, isLoading } = useMemo(() => {
@@ -49,9 +48,7 @@ export const useActiveNotifications = (): ActiveNotificationsResult => {
         return false;
       }
 
-      // Only enforce dismissed IDs once storage hydration completed.
-      // If hydration stalls, keep notifications visible instead of hiding all banners.
-      if (hasHydrated && dismissedIds.includes(notification.id)) {
+      if (dismissedIds.includes(notification.id)) {
         return false;
       }
 
@@ -83,7 +80,7 @@ export const useActiveNotifications = (): ActiveNotificationsResult => {
       activeNotifications: active,
       isLoading: hasLoadingCondition,
     };
-  }, [dismissedIds, conditions, hasHydrated]);
+  }, [dismissedIds, conditions]);
 
   const currentNotification = activeNotifications[0] ?? null;
   const totalCount = activeNotifications.length;

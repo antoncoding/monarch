@@ -8,8 +8,7 @@ import type { Metadata } from 'next';
 import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { generateMetadata as buildMetadata } from '@/utils/generateMetadata';
-
-const POSTS_DIRECTORY = path.join(process.cwd(), 'src/content/posts');
+import { POSTS_DIRECTORY, POSTS_SITE_ORIGIN, formatSlugTitle, parseDateFromSlug } from '../helpers';
 const VALID_SLUG_PATTERN = /^[a-z0-9-]+$/;
 const FALLBACK_IMAGE_WIDTH = 1600;
 const FALLBACK_IMAGE_HEIGHT = 900;
@@ -29,33 +28,6 @@ type MarkdownBlock =
   | { type: 'hr' };
 
 const isExternalUrl = (value: string): boolean => value.startsWith('https://') || value.startsWith('http://');
-
-const formatSlugTitle = (slug: string): string =>
-  slug
-    .replace(/^\d{4}-\d{2}-\d{2}-/, '')
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-
-const formatDateFromSlug = (slug: string): string | null => {
-  const match = slug.match(/^(\d{4})-(\d{2})-(\d{2})-/);
-  if (!match) {
-    return null;
-  }
-
-  const [_, year, month, day] = match;
-  const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-};
 
 const resolveImageSource = (source: string, slug: string): string => {
   if (source.startsWith('/')) {
@@ -322,7 +294,14 @@ const parseInlineMarkdown = (text: string, keyPrefix: string): ReactNode[] => {
     }
 
     if (nextToken.type === 'bold') {
-      nodes.push(<span key={`${keyPrefix}-bold-${keyIndex}`}>{nextToken.match[1]}</span>);
+      nodes.push(
+        <strong
+          key={`${keyPrefix}-bold-${keyIndex}`}
+          className="font-normal"
+        >
+          {nextToken.match[1]}
+        </strong>,
+      );
     }
 
     if (nextToken.type === 'code') {
@@ -539,6 +518,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     title: resolvedTitle,
     description: 'Monarch product update',
     images: 'themes.png',
+    url: POSTS_SITE_ORIGIN,
     pathname: `/posts/${slug}`,
   });
 
@@ -566,7 +546,7 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   const { title, contentBlocks } = getPostStructure(markdown, slug);
-  const publishedDate = formatDateFromSlug(slug);
+  const { label: publishedDate } = parseDateFromSlug(slug);
 
   return (
     <div className="bg-main min-h-screen font-zen">

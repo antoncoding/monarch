@@ -1,11 +1,33 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const NOTIFICATIONS_STORAGE_KEY = 'monarch_store_notifications';
+
+const isStringArray = (value: unknown): value is string[] => Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+const getInitialDismissedIds = (): string[] => {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  try {
+    const persistedValue = window.localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    if (!persistedValue) {
+      return [];
+    }
+
+    const parsed = JSON.parse(persistedValue) as { state?: { dismissedIds?: unknown } };
+    const dismissedIds = parsed.state?.dismissedIds;
+
+    return isStringArray(dismissedIds) ? dismissedIds : [];
+  } catch {
+    return [];
+  }
+};
+
 type NotificationState = {
   /** Set of dismissed notification IDs */
   dismissedIds: string[];
-  /** Whether the store has been hydrated from localStorage */
-  _hasHydrated: boolean;
 };
 
 type NotificationActions = {
@@ -15,8 +37,6 @@ type NotificationActions = {
   isDismissed: (id: string) => boolean;
   /** Bulk update for migration */
   setAll: (state: Partial<NotificationState>) => void;
-  /** Internal hydration state setter */
-  setHasHydrated: (hydrated: boolean) => void;
 };
 
 type NotificationStore = NotificationState & NotificationActions;
@@ -40,8 +60,7 @@ type NotificationStore = NotificationState & NotificationActions;
 export const useNotificationStore = create<NotificationStore>()(
   persist(
     (set, get) => ({
-      dismissedIds: [],
-      _hasHydrated: false,
+      dismissedIds: getInitialDismissedIds(),
 
       dismiss: (id) => {
         const { dismissedIds } = get();
@@ -55,22 +74,10 @@ export const useNotificationStore = create<NotificationStore>()(
       },
 
       setAll: (state) => set(state),
-      setHasHydrated: (hydrated) => set({ _hasHydrated: hydrated }),
     }),
     {
-      name: 'monarch_store_notifications',
+      name: NOTIFICATIONS_STORAGE_KEY,
       partialize: (state) => ({ dismissedIds: state.dismissedIds }),
-      onRehydrateStorage: (state) => {
-        state?.setHasHydrated(false);
-        return (nextState, error) => {
-          if (error) {
-            nextState?.setHasHydrated(true);
-            return;
-          }
-
-          nextState?.setHasHydrated(true);
-        };
-      },
     },
   ),
 );
