@@ -24,3 +24,14 @@ export const toParseableDecimalInput = (value: string): string | null => {
   const trimmedTrailingDot = withLeadingZero.endsWith('.') ? withLeadingZero.slice(0, -1) : withLeadingZero;
   return trimmedTrailingDot.length > 0 ? trimmedTrailingDot : null;
 };
+
+export const getFractionDigitsCount = (value: string): number => {
+  const dotIndex = value.indexOf('.');
+  if (dotIndex < 0) return 0;
+  return value.length - dotIndex - 1;
+};
+
+export const hasExcessFractionDigits = (value: string, maxFractionDigits: number): boolean => {
+  if (maxFractionDigits < 0) return false;
+  return getFractionDigitsCount(value) > maxFractionDigits;
+};

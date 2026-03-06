@@ -156,6 +156,7 @@ When touching transaction and position flows, validation MUST include all releva
 21. **Modal UX integrity**: transaction-modal help/fee tooltips must render above modal layers via shared tooltip z-index chokepoints, and per-flow input mode toggles (for example target LTV vs amount) must persist through shared settings across modal reopen.
 22. **Chain-scoped identity integrity**: all market/token/route identity checks must be chain-scoped and use canonical identifiers (`chainId + market.uniqueKey` or `chainId + address`), including matching, dedupe keys, routing, and trust/allowlist gates.
 23. **Bundler residual-asset integrity**: any flash-loan transaction path that routes assets through Bundler/adapter balances (especially ERC4626 unwind paths) must end with explicit trailing asset sweeps to the intended recipient and must keep execute-time slippage bounds consistent with quote-time slippage settings.
+24. **Input-mode invertibility integrity**: only expose alternate target-input modes (for example target LTV) when the mapping to executable tx inputs is deterministic or routed through a shared domain helper; if mapping is quote-path-dependent/non-invertible in practice, prefer a single amount input and treat target values as preview-only outputs.
 
 ### REQUIRED: Regression Rule Capture
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { erc20Abi, formatUnits } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
-import { LTV_WAD, clampEditablePercent, computeLtv, formatEditableLtvPercent } from '@/modals/borrow/components/helpers';
+import { LTV_WAD, computeLtv } from '@/modals/borrow/components/helpers';
 import { HelpTooltipIcon } from '@/components/shared/help-tooltip-icon';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { TooltipContent as SharedTooltipContent } from '@/components/shared/tooltip-content';
@@ -18,13 +18,9 @@ import {
   computeMaxMultiplierBpsForTargetLtv,
   convertVaultSharesToUnderlyingAssets,
   computeLeverageProjectedPosition,
-  formatPercentFromBps,
-  formatMultiplierBps,
   formatTokenAmountPreview,
   ltvWadToBps,
   multiplierBpsFromTargetLtv,
-  parsePercentToBps,
-  parseMultiplierToBps,
   parseUnsignedBigInt,
   toScaledRatio,
   targetLtvBpsFromMultiplier,
@@ -55,8 +51,8 @@ type AddCollateralAndLeverageProps = {
   isRefreshing?: boolean;
 };
 
-const EDITABLE_DECIMAL_INPUT_REGEX = /^\d*[.,]?\d*$/;
 const LEVERAGE_SAFE_LTV_BUFFER_BPS = 100n; // keep a 1% buffer below liquidation LTV
+const TARGET_INPUT_DEBOUNCE_MS = 300;
 
 export function AddCollateralAndLeverage({
   market,
@@ -80,15 +76,16 @@ export function AddCollateralAndLeverage({
   const maxTargetLtvBps = useMemo(() => (lltvBps > LEVERAGE_SAFE_LTV_BUFFER_BPS ? lltvBps - LEVERAGE_SAFE_LTV_BUFFER_BPS : 0n), [lltvBps]);
   const maxMultiplierBps = useMemo(() => computeMaxMultiplierBpsForTargetLtv(maxTargetLtvBps), [maxTargetLtvBps]);
   const defaultMultiplierBps = useMemo(() => clampMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS, maxMultiplierBps), [maxMultiplierBps]);
+  const defaultTargetLtvIntentBps = useMemo(
+    () => clampTargetLtvBps(targetLtvBpsFromMultiplier(defaultMultiplierBps), maxTargetLtvBps),
+    [defaultMultiplierBps, maxTargetLtvBps],
+  );
 
   const [collateralAmount, setCollateralAmount] = useState<bigint>(0n);
   const [collateralInputError, setCollateralInputError] = useState<string | null>(null);
-  const [multiplierInput, setMultiplierInput] = useState<string>(formatMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS, maxMultiplierBps));
-  const [targetLtvInput, setTargetLtvInput] = useState<string>(
-    formatPercentFromBps(clampTargetLtvBps(targetLtvBpsFromMultiplier(LEVERAGE_DEFAULT_MULTIPLIER_BPS), maxTargetLtvBps)),
-  );
   const [useLoanAssetInput, setUseLoanAssetInput] = useState(false);
   const [targetMultiplierBps, setTargetMultiplierBps] = useState<bigint>(defaultMultiplierBps);
+  const [targetLtvIntentBps, setTargetLtvIntentBps] = useState<bigint>(defaultTargetLtvIntentBps);
   const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
 
   const multiplierBps = useMemo(() => clampMultiplierBps(targetMultiplierBps, maxMultiplierBps), [targetMultiplierBps, maxMultiplierBps]);
@@ -97,7 +94,6 @@ export function AddCollateralAndLeverage({
     [multiplierBps, maxTargetLtvBps],
   );
   const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
-  const maxTargetLtvPercent = useMemo(() => Number(maxTargetLtvBps) / 100, [maxTargetLtvBps]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
@@ -126,11 +122,16 @@ export function AddCollateralAndLeverage({
 
   useEffect(() => {
     const clampedMultiplier = clampMultiplierBps(targetMultiplierBps, maxMultiplierBps);
-    if (clampedMultiplier === targetMultiplierBps) return;
-    setTargetMultiplierBps(clampedMultiplier);
-    setMultiplierInput(formatMultiplierBps(clampedMultiplier, maxMultiplierBps));
-    setTargetLtvInput(formatPercentFromBps(clampTargetLtvBps(targetLtvBpsFromMultiplier(clampedMultiplier), maxTargetLtvBps)));
-  }, [targetMultiplierBps, maxMultiplierBps, maxTargetLtvBps]);
+    if (clampedMultiplier !== targetMultiplierBps) {
+      setTargetMultiplierBps(clampedMultiplier);
+    }
+
+    if (useTargetLtvInput) return;
+    const derivedTargetLtvBps = clampTargetLtvBps(targetLtvBpsFromMultiplier(clampedMultiplier), maxTargetLtvBps);
+    if (derivedTargetLtvBps !== targetLtvIntentBps) {
+      setTargetLtvIntentBps(derivedTargetLtvBps);
+    }
+  }, [targetMultiplierBps, maxMultiplierBps, maxTargetLtvBps, useTargetLtvInput, targetLtvIntentBps]);
 
   const quote = useLeverageQuote({
     chainId: market.morphoBlue.chain.id,
@@ -246,10 +247,8 @@ export function AddCollateralAndLeverage({
     (nextMultiplierBps: bigint) => {
       const clampedMultiplier = clampMultiplierBps(nextMultiplierBps, maxMultiplierBps);
       const derivedTargetLtvBps = clampTargetLtvBps(targetLtvBpsFromMultiplier(clampedMultiplier), maxTargetLtvBps);
-
       setTargetMultiplierBps(clampedMultiplier);
-      setMultiplierInput(formatMultiplierBps(clampedMultiplier, maxMultiplierBps));
-      setTargetLtvInput(formatPercentFromBps(derivedTargetLtvBps));
+      setTargetLtvIntentBps(derivedTargetLtvBps);
     },
     [maxMultiplierBps, maxTargetLtvBps],
   );
@@ -288,37 +287,15 @@ export function AddCollateralAndLeverage({
     onSuccess: handleTransactionSuccess,
   });
 
-  const handleMultiplierInputChange = useCallback((value: string) => {
-    if (!EDITABLE_DECIMAL_INPUT_REGEX.test(value)) return;
-    setMultiplierInput(value);
-  }, []);
-
-  const handleMultiplierInputBlur = useCallback(() => {
-    syncInputFieldsFromMultiplier(parseMultiplierToBps(multiplierInput, maxMultiplierBps));
-  }, [multiplierInput, maxMultiplierBps, syncInputFieldsFromMultiplier]);
-
-  const handleTargetLtvInputChange = useCallback((value: string) => {
-    if (!EDITABLE_DECIMAL_INPUT_REGEX.test(value)) return;
-    setTargetLtvInput(value);
-  }, []);
-
-  const handleTargetLtvInputBlur = useCallback(() => {
-    const parsedPercent = Number.parseFloat(targetLtvInput.replace(',', '.'));
-    if (!Number.isFinite(parsedPercent)) {
-      setTargetLtvInput(formatEditableLtvPercent(Number(targetLtvBps) / 100, maxTargetLtvPercent));
-      return;
-    }
-    const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
-    const clampedTargetLtvBps = clampTargetLtvBps(parsePercentToBps(clampedPercent.toString(), maxTargetLtvBps), maxTargetLtvBps);
-    syncInputFieldsFromMultiplier(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
-  }, [targetLtvInput, targetLtvBps, maxMultiplierBps, maxTargetLtvBps, maxTargetLtvPercent, syncInputFieldsFromMultiplier]);
-
   const handleTargetInputModeChange = useCallback(
     (nextUseTargetLtvInput: boolean) => {
       setLeverageUseTargetLtvInput(nextUseTargetLtvInput);
+      if (nextUseTargetLtvInput) {
+        setTargetLtvIntentBps(targetLtvBps);
+      }
       syncInputFieldsFromMultiplier(targetMultiplierBps);
     },
-    [setLeverageUseTargetLtvInput, syncInputFieldsFromMultiplier, targetMultiplierBps],
+    [setLeverageUseTargetLtvInput, syncInputFieldsFromMultiplier, targetMultiplierBps, targetLtvBps],
   );
 
   const handleLeverage = useCallback(() => {
@@ -351,6 +328,22 @@ export function AddCollateralAndLeverage({
     if (!isLeverageFeeReady || leverageTransferFee == null) return null;
     return formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals);
   }, [isLeverageFeeReady, leverageTransferFee, market.collateralAsset.decimals]);
+  const leverageFeeUsdPreview = useMemo(() => {
+    if (!isLeverageFeeReady || leverageTransferFee == null || collateralAssetPriceUsd == null) return null;
+
+    const feeAmount = Number(formatUnits(leverageTransferFee, market.collateralAsset.decimals));
+    if (!Number.isFinite(feeAmount) || feeAmount < 0) return null;
+
+    const feeUsdValue = feeAmount * collateralAssetPriceUsd;
+    if (!Number.isFinite(feeUsdValue) || feeUsdValue < 0) return null;
+
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 3,
+    }).format(feeUsdValue);
+  }, [isLeverageFeeReady, leverageTransferFee, collateralAssetPriceUsd, market.collateralAsset.decimals]);
   const swapCollateralOutPreview = useMemo(
     () => formatTokenAmountPreview(quote.flashCollateralAmount, market.collateralAsset.decimals),
     [quote.flashCollateralAmount, market.collateralAsset.decimals],
@@ -690,30 +683,29 @@ export function AddCollateralAndLeverage({
               <div className="relative min-w-0">
                 {useTargetLtvInput ? (
                   <>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      min={0}
-                      max={maxTargetLtvPercent}
-                      step={0.01}
-                      value={targetLtvInput}
-                      onChange={(event) => handleTargetLtvInputChange(event.target.value)}
-                      onBlur={handleTargetLtvInputBlur}
-                      className="h-10 w-full rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums focus:border-primary focus:outline-none"
+                    <Input
+                      decimals={2}
+                      setValue={(nextTargetLtvBps) => {
+                        const clampedTargetLtvBps = clampTargetLtvBps(nextTargetLtvBps, maxTargetLtvBps);
+                        setTargetLtvIntentBps(clampedTargetLtvBps);
+                        setTargetMultiplierBps(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
+                      }}
+                      value={targetLtvIntentBps}
+                      inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
+                      endAdornment={<span className="text-xs text-secondary">%</span>}
+                      debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
                     />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-secondary">%</span>
                   </>
                 ) : (
                   <>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={multiplierInput}
-                      onChange={(event) => handleMultiplierInputChange(event.target.value)}
-                      onBlur={handleMultiplierInputBlur}
-                      className="h-10 w-full rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums focus:border-primary focus:outline-none"
+                    <Input
+                      decimals={4}
+                      setValue={syncInputFieldsFromMultiplier}
+                      value={multiplierBps}
+                      inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
+                      endAdornment={<span className="text-xs text-secondary">x</span>}
+                      debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
                     />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-secondary">x</span>
                   </>
                 )}
               </div>
@@ -771,6 +763,7 @@ export function AddCollateralAndLeverage({
                       <Tooltip content={<span className="text-xs">{leverageFeePreview.full}</span>}>
                         <span className="cursor-help border-b border-dotted border-white/40">{leverageFeePreview.compact}</span>
                       </Tooltip>
+                      {leverageFeeUsdPreview != null && <span className="text-secondary">({leverageFeeUsdPreview})</span>}
                       <TokenIcon
                         address={market.collateralAsset.address}
                         chainId={market.morphoBlue.chain.id}

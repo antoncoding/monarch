@@ -25,7 +25,6 @@ type AppSettingsState = {
 
   // Leverage modal preferences
   leverageUseTargetLtvInput: boolean;
-  deleverageUseTargetLtvInput: boolean;
 
   // Rebalance modal preferences
   rebalanceDefaultMode: RebalanceDefaultMode;
@@ -42,7 +41,6 @@ type AppSettingsActions = {
   setShowDeveloperOptions: (show: boolean) => void;
   setUsePublicAllocator: (show: boolean) => void;
   setLeverageUseTargetLtvInput: (useTargetLtvInput: boolean) => void;
-  setDeleverageUseTargetLtvInput: (useTargetLtvInput: boolean) => void;
   setRebalanceDefaultMode: (mode: RebalanceDefaultMode) => void;
 
   // Bulk update for migration
@@ -74,7 +72,6 @@ export const useAppSettings = create<AppSettingsStore>()(
       showDeveloperOptions: false,
       usePublicAllocator: true,
       leverageUseTargetLtvInput: true,
-      deleverageUseTargetLtvInput: true,
       rebalanceDefaultMode: 'smart',
 
       // Actions
@@ -94,7 +91,6 @@ export const useAppSettings = create<AppSettingsStore>()(
       setShowDeveloperOptions: (show) => set({ showDeveloperOptions: show }),
       setUsePublicAllocator: (show) => set({ usePublicAllocator: show }),
       setLeverageUseTargetLtvInput: (useTargetLtvInput) => set({ leverageUseTargetLtvInput: useTargetLtvInput }),
-      setDeleverageUseTargetLtvInput: (useTargetLtvInput) => set({ deleverageUseTargetLtvInput: useTargetLtvInput }),
       setRebalanceDefaultMode: (mode) => set({ rebalanceDefaultMode: mode }),
       setAll: (state) => set(state),
     }),

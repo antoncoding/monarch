@@ -21,11 +21,9 @@ import {
   clampTargetLtv,
   computeLtv,
   computeTargetCollateralAmount,
-  formatEditableLtvPercent,
   formatLtvPercent,
   getCollateralValueInLoan,
   ltvWadToPercent,
-  normalizeEditablePercentInput,
   percentToLtvWad,
 } from './helpers';
 
@@ -54,8 +52,6 @@ export function AddCollateralAndBorrow({
   const [borrowAmount, setBorrowAmount] = useState<bigint>(0n);
   const [showLtvInput, setShowLtvInput] = useState(false);
   const [lastEditedField, setLastEditedField] = useState<'collateral' | 'borrow'>('borrow');
-  const [ltvInput, setLtvInput] = useState<string>('0');
-  const [isEditingLtvInput, setIsEditingLtvInput] = useState(false);
   const [ltvBorrowHint, setLtvBorrowHint] = useState<string | null>(null);
   const [collateralInputError, setCollateralInputError] = useState<string | null>(null);
   const [borrowInputError, setBorrowInputError] = useState<string | null>(null);
@@ -113,11 +109,6 @@ export function AddCollateralAndBorrow({
   const maxTargetLtvPercent = useMemo(() => Math.min(100, ltvWadToPercent(clampTargetLtv(lltv, lltv))), [lltv]);
 
   useEffect(() => {
-    if (isEditingLtvInput) return;
-    setLtvInput(formatEditableLtvPercent(ltvWadToPercent(projectedLTV), maxTargetLtvPercent));
-  }, [projectedLTV, maxTargetLtvPercent, isEditingLtvInput]);
-
-  useEffect(() => {
     if (!showLtvInput) {
       setLtvBorrowHint(null);
       return;
@@ -156,19 +147,9 @@ export function AddCollateralAndBorrow({
     setBorrowAmount(value);
   }, []);
 
-  const handleLtvInputChange = useCallback(
-    (value: string) => {
-      const normalizedInput = normalizeEditablePercentInput(value);
-      if (normalizedInput == null) return;
-      setLtvInput(normalizedInput);
+  const applyTargetLtv = useCallback(
+    (clampedTargetLtv: bigint) => {
       setLtvBorrowHint(null);
-      if (normalizedInput === '') return;
-
-      const parsedPercent = Number.parseFloat(normalizedInput);
-      if (!Number.isFinite(parsedPercent)) return;
-      const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
-
-      const clampedTargetLtv = clampTargetLtv(percentToLtvWad(clampedPercent), lltv);
       if (clampedTargetLtv <= 0n) return;
 
       if (lastEditedField === 'borrow') {
@@ -197,13 +178,9 @@ export function AddCollateralAndBorrow({
         }
         setBorrowAmount(signedBorrowDelta);
         setBorrowInputError(signedBorrowDelta > effectiveAvailableLiquidity ? 'Exceeds available liquidity' : null);
-        return;
       }
-
-      setLtvBorrowHint(null);
     },
     [
-      lltv,
       lastEditedField,
       currentBorrowAssets,
       borrowAmount,
@@ -214,21 +191,8 @@ export function AddCollateralAndBorrow({
       collateralTokenBalance,
       projectedCollateralAssets,
       effectiveAvailableLiquidity,
-      maxTargetLtvPercent,
     ],
   );
-
-  const handleLtvInputBlur = useCallback(() => {
-    setIsEditingLtvInput(false);
-    const parsedPercent = Number.parseFloat(ltvInput.replace(',', '.'));
-    if (!Number.isFinite(parsedPercent)) {
-      setLtvInput(formatEditableLtvPercent(ltvWadToPercent(projectedLTV), maxTargetLtvPercent));
-      return;
-    }
-    const clampedPercent = clampEditablePercent(parsedPercent, maxTargetLtvPercent);
-    const clampedTargetLtv = clampTargetLtv(percentToLtvWad(clampedPercent), lltv);
-    setLtvInput(formatEditableLtvPercent(ltvWadToPercent(clampedTargetLtv), maxTargetLtvPercent));
-  }, [ltvInput, projectedLTV, lltv, maxTargetLtvPercent]);
   const amountInputClassName = 'h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums';
   const ltvInputClassName =
     'h-10 w-full rounded bg-hovered p-2 pr-8 text-base font-medium tabular-nums focus:border-primary focus:outline-none';
@@ -374,27 +338,23 @@ export function AddCollateralAndBorrow({
               <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
                 <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Target LTV</p>
                 <div className="relative min-w-0">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    min={0}
-                    max={maxTargetLtvPercent}
-                    step={0.01}
-                    value={ltvInput}
-                    onFocus={() => setIsEditingLtvInput(true)}
-                    onChange={(event) => handleLtvInputChange(event.target.value)}
-                    onBlur={handleLtvInputBlur}
-                    className={ltvInputClassName}
+                  <Input
+                    decimals={2}
+                    setValue={(nextTargetLtvBps) => {
+                      setLtvBorrowHint(null);
+                      const clampedPercent = clampEditablePercent(Number(nextTargetLtvBps) / 100, maxTargetLtvPercent);
+                      applyTargetLtv(clampTargetLtv(percentToLtvWad(clampedPercent), lltv));
+                    }}
+                    value={BigInt(Math.round(clampEditablePercent(ltvWadToPercent(projectedLTV), maxTargetLtvPercent) * 100))}
+                    inputClassName={ltvInputClassName}
+                    endAdornment={<span className="text-xs text-secondary">%</span>}
                   />
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-secondary">%</span>
                 </div>
                 {ltvBorrowHint && lastEditedField === 'collateral' && (
                   <button
                     type="button"
                     onClick={() =>
-                      handleLtvInputChange(
-                        formatEditableLtvPercent(Math.min(maxTargetLtvPercent, ltvWadToPercent(currentLTV) + 1), maxTargetLtvPercent),
-                      )
+                      applyTargetLtv(clampTargetLtv(percentToLtvWad(Math.min(maxTargetLtvPercent, ltvWadToPercent(currentLTV) + 1)), lltv))
                     }
                     className="mt-2 inline-flex text-left text-xs text-secondary hover:text-primary"
                   >
