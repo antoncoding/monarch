@@ -1,7 +1,7 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 
 import { formatUnits, parseUnits } from 'viem';
-import { isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
+import { hasExcessFractionDigits, isValidDecimalInput, sanitizeDecimalInput, toParseableDecimalInput } from '@/utils/decimal-input';
 
 type InputProps = {
   decimals: number;
@@ -15,6 +15,7 @@ type InputProps = {
   error?: string | null; // optional error message to render below the input
   endAdornment?: React.ReactNode;
   inputClassName?: string;
+  debounceSetValueMs?: number;
 };
 
 const formatInputAmount = (value: bigint, decimals: number): string => {
@@ -36,10 +37,45 @@ export default function Input({
   error,
   endAdornment,
   inputClassName,
+  debounceSetValueMs = 0,
 }: InputProps): JSX.Element {
   // State for the input text
   const [inputAmount, setInputAmount] = useState<string>(value ? formatInputAmount(value, decimals) : '0');
   const [isFocused, setIsFocused] = useState(false);
+  const setValueDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSetValueRef = useRef<bigint | null>(null);
+  const setValueRef = useRef(setValue);
+
+  const clearSetValueDebounce = useCallback(() => {
+    if (setValueDebounceTimerRef.current == null) return;
+    clearTimeout(setValueDebounceTimerRef.current);
+    setValueDebounceTimerRef.current = null;
+  }, []);
+
+  const flushPendingSetValue = useCallback(() => {
+    clearSetValueDebounce();
+    const pendingValue = pendingSetValueRef.current;
+    if (pendingValue == null) return;
+    pendingSetValueRef.current = null;
+    setValueRef.current(pendingValue);
+  }, [clearSetValueDebounce]);
+
+  const scheduleSetValue = useCallback(
+    (nextValue: bigint) => {
+      pendingSetValueRef.current = nextValue;
+      clearSetValueDebounce();
+
+      if (debounceSetValueMs <= 0) {
+        flushPendingSetValue();
+        return;
+      }
+
+      setValueDebounceTimerRef.current = setTimeout(() => {
+        flushPendingSetValue();
+      }, debounceSetValueMs);
+    },
+    [clearSetValueDebounce, debounceSetValueMs, flushPendingSetValue],
+  );
 
   // Update input text when value prop changes
   useEffect(() => {
@@ -49,6 +85,17 @@ export default function Input({
     }
   }, [value, decimals, isFocused]);
 
+  useEffect(() => {
+    setValueRef.current = setValue;
+  }, [setValue]);
+
+  useEffect(
+    () => () => {
+      clearSetValueDebounce();
+    },
+    [clearSetValueDebounce],
+  );
+
   const onInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       // update the shown input text regardless
@@ -56,11 +103,14 @@ export default function Input({
       if (!isValidDecimalInput(normalizedInput)) {
         return;
       }
+      if (hasExcessFractionDigits(normalizedInput, decimals)) {
+        return;
+      }
       setInputAmount(normalizedInput);
 
       const parseableInput = toParseableDecimalInput(normalizedInput);
       if (!parseableInput) {
-        setValue(BigInt(0));
+        scheduleSetValue(BigInt(0));
         if (setError) setError(null);
         return;
       }
@@ -71,36 +121,40 @@ export default function Input({
         if (max !== undefined && inputBigInt > max) {
           if (setError) setError(exceedMaxErrMessage ?? 'Input exceeds max');
           if (allowExceedMax) {
-            setValue(inputBigInt);
+            scheduleSetValue(inputBigInt);
           }
           return;
         }
 
-        setValue(inputBigInt);
+        scheduleSetValue(inputBigInt);
         if (setError) setError(null);
       } catch {
         if (setError) setError('Invalid input');
       }
     },
-    [decimals, setError, setInputAmount, setValue, max, exceedMaxErrMessage, allowExceedMax],
+    [decimals, setError, setInputAmount, max, exceedMaxErrMessage, allowExceedMax, scheduleSetValue],
   );
 
   // if max is clicked, set the input to the max value
   const handleMax = useCallback(() => {
+    clearSetValueDebounce();
+    pendingSetValueRef.current = null;
     if (max) {
       setValue(max);
       // set readable input
       setInputAmount(formatInputAmount(max, decimals));
+      if (setError) setError(null);
     }
     if (onMaxClick) onMaxClick();
-  }, [max, decimals, setInputAmount, setValue, onMaxClick]);
+  }, [clearSetValueDebounce, max, decimals, setInputAmount, setValue, setError, onMaxClick]);
 
   const handleBlur = useCallback(() => {
+    flushPendingSetValue();
     setIsFocused(false);
     if (value !== undefined) {
       setInputAmount(formatInputAmount(value, decimals));
     }
-  }, [value, decimals]);
+  }, [flushPendingSetValue, value, decimals]);
 
   return (
     <div className="flex-grow">

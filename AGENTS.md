@@ -157,6 +157,7 @@ When touching transaction and position flows, validation MUST include all releva
 22. **Chain-scoped identity integrity**: all market/token/route identity checks must be chain-scoped and use canonical identifiers (`chainId + market.uniqueKey` or `chainId + address`), including matching, dedupe keys, routing, and trust/allowlist gates.
 23. **Bundler residual-asset integrity**: any flash-loan transaction path that routes assets through Bundler/adapter balances (especially ERC4626 unwind paths) must end with explicit trailing asset sweeps to the intended recipient and must keep execute-time slippage bounds consistent with quote-time slippage settings.
 
+
 ### REQUIRED: Regression Rule Capture
 
 After fixing any user-reported bug in a high-impact flow:

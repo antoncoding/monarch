@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { type Address, formatUnits, parseUnits } from 'viem';
+import { type Address, formatUnits } from 'viem';
 import { BsArrowRepeat } from 'react-icons/bs';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
+import Input from '@/components/Input/Input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -41,7 +42,7 @@ type PullLiquidityModalProps = {
  */
 export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }: PullLiquidityModalProps) {
   const [selectedVaultAddress, setSelectedVaultAddress] = useState<string | null>(null);
-  const [pullAmount, setPullAmount] = useState('');
+  const [pullAmount, setPullAmount] = useState<bigint>(0n);
 
   const supplyingVaults = market.supplyingVaults ?? [];
   const supplyingVaultAddresses = useMemo(() => supplyingVaults.map((v) => v.address), [supplyingVaults]);
@@ -88,15 +89,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
 
   const maxPullable = liveMaxPullable ?? apiMaxPullable;
 
-  // Parse pull amount
-  const parsedAmount = useMemo(() => {
-    if (!pullAmount || pullAmount === '' || pullAmount === '0') return 0n;
-    try {
-      return parseUnits(pullAmount, decimals);
-    } catch {
-      return 0n;
-    }
-  }, [pullAmount, decimals]);
+  const parsedAmount = pullAmount;
 
   // Auto-compute withdrawals using live data when available
   const autoWithdrawals = useMemo(() => {
@@ -131,14 +124,8 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
 
   const handleVaultSelect = useCallback((address: string) => {
     setSelectedVaultAddress(address);
-    setPullAmount('');
+    setPullAmount(0n);
   }, []);
-
-  const handleSetMax = useCallback(() => {
-    if (maxPullable > 0n) {
-      setPullAmount(formatUnits(maxPullable, decimals));
-    }
-  }, [maxPullable, decimals]);
 
   const handlePullLiquidity = useCallback(async () => {
     if (!market.collateralAsset || !selectedVault || autoWithdrawals.length === 0) return;
@@ -260,7 +247,7 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                     <p className="mb-2 text-xs uppercase tracking-wider text-secondary">Pull Amount</p>
                     <button
                       type="button"
-                      onClick={handleSetMax}
+                      onClick={() => setPullAmount(maxPullable)}
                       className="cursor-pointer font-inter text-xs opacity-50 transition hover:opacity-100"
                     >
                       Liquidity: {Number(formatUnits(maxPullable, decimals)).toLocaleString(undefined, { maximumFractionDigits: 4 })}{' '}
@@ -273,27 +260,14 @@ export function PullLiquidityModal({ market, network, onOpenChange, onSuccess }:
                     </button>
                   </div>
                   <div className="relative">
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      placeholder="0.0"
+                    <Input
+                      decimals={decimals}
+                      max={maxPullable}
+                      setValue={setPullAmount}
+                      exceedMaxErrMessage="Exceeds available liquidity"
                       value={pullAmount}
-                      onChange={(e) => setPullAmount(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === '-' || e.key === 'e') e.preventDefault();
-                      }}
-                      className="bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none"
+                      inputClassName="h-10 rounded bg-hovered px-3 py-2 text-base font-medium tabular-nums"
                     />
-                    {maxPullable > 0n && (
-                      <button
-                        type="button"
-                        onClick={handleSetMax}
-                        className="bg-surface absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
-                      >
-                        Max
-                      </button>
-                    )}
                   </div>
                   {validationError && parsedAmount > 0n && <p className="mt-1 text-sm text-red-500">{validationError}</p>}
                 </div>
