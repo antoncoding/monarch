@@ -133,7 +133,7 @@ Running `tsc` and lint is NOT validation — those are mechanical checks. Valida
 
 When touching transaction and position flows, validation MUST include all relevant checks below (not just the changed line):
 
-1. **Canonical identity matching**: use canonical IDs/addresses for logic, routing, and comparisons; never use symbol/name as identity.
+1. **Canonical identity matching**: use canonical IDs/addresses **and chainId** for logic, routing, and comparisons (for example `chainId + market.uniqueKey` or `chainId + tokenAddress`); never use symbol/name as identity.
 2. **Shared domain helpers only**: use shared math, conversion, and transaction helpers; avoid ad hoc formulas duplicated inside UI/hooks.
 3. **Rate display consistency**: use shared APY/APR display primitives (for example `src/components/shared/rate-formatted.tsx`, `src/features/positions/components/preview/apy-preview.tsx`, and shared rate-label logic) instead of per-component conversion/label logic.
 4. **Post-action rate preview parity**: transaction modals that change position yield/rates must show current -> projected post-action APY/APR, and preview mode (APR vs APY) must match the global setting used by execution summaries.
@@ -154,9 +154,8 @@ When touching transaction and position flows, validation MUST include all releva
 19. **APR/APY unit homogeneity**: in any reward/carry/net-rate calculation, normalize every term (base rate, each reward component, aggregates, and displayed subtotals) to the same selected mode before combining, so displayed formulas remain numerically consistent in both APR and APY modes.
 20. **Rebalance objective integrity**: stepwise smart-rebalance planners must evaluate each candidate move by resulting **global weighted objective** (portfolio-level APY/APR), not by local/post-move market APR alone, and must fail safe (no-op) when projected objective is below current objective.
 21. **Modal UX integrity**: transaction-modal help/fee tooltips must render above modal layers via shared tooltip z-index chokepoints, and per-flow input mode toggles (for example target LTV vs amount) must persist through shared settings across modal reopen.
-22. **Chain-scoped special bundler integrity**: market-specific ERC4626 bundler overrides must be chain-scoped (`chainId` + canonical `market.uniqueKey`) and any third-party-bundler route requiring trust acknowledgement must fail closed until explicitly acknowledged.
-
-22. **Bundler residual-asset integrity**: any flash-loan transaction path that routes assets through Bundler/adapter balances (especially ERC4626 unwind paths) must end with explicit trailing asset sweeps to the intended recipient and must keep execute-time slippage bounds consistent with quote-time slippage settings.
+22. **Chain-scoped identity integrity**: all market/token/route identity checks must be chain-scoped and use canonical identifiers (`chainId + market.uniqueKey` or `chainId + address`), including matching, dedupe keys, routing, and trust/allowlist gates.
+23. **Bundler residual-asset integrity**: any flash-loan transaction path that routes assets through Bundler/adapter balances (especially ERC4626 unwind paths) must end with explicit trailing asset sweeps to the intended recipient and must keep execute-time slippage bounds consistent with quote-time slippage settings.
 
 ### REQUIRED: Regression Rule Capture
 
@@ -180,6 +179,11 @@ After fixing any user-reported bug in a high-impact flow:
 **Core Principles:**
 - Write code that is **accessible, performant, type-safe, and maintainable**
 - Focus on clarity and explicit intent over brevity
+
+### State Persistence
+- Do not use direct `window.localStorage` reads/writes in components or hooks for user preferences/dismissals.
+- Follow existing persisted Zustand patterns (`useAppSettings` or a dedicated persisted store) as the default chokepoint for preference/state persistence.
+- If direct storage access is unavoidable, isolate it in a single shared utility/store layer and document why.
 
 ### Type Safety & Explicitness
 - Use explicit types for function parameters and return values when they enhance clarity
