@@ -39,29 +39,29 @@ export default function RiskNotificationModal() {
       className="max-h-[90vh]"
     >
       <ModalHeader
-        title="Welcome to Monarch"
-        description="Important information before you begin"
+        title="Monarch Risk Notice"
+        description="Important information before you interact with markets"
         mainIcon={<PiButterflyDuotone className="h-6 w-6 text-primary" />}
         onClose={() => setIsOpen(false)}
       />
       <ModalBody className="overflow-auto">
         <p className="mb-4">
-          Monarch enables direct lending to Morpho Blue markets, giving you maximum flexibility and control over your lending positions.
+          Monarch helps you inspect and interact with up-to-date Morpho markets across lending and borrowing workflows.
         </p>
-        <p className="mb-2">With direct lending, you have the freedom to:</p>
+        <p className="mb-2">With direct market access, you can:</p>
         <ul className="mb-4 ml-6 list-disc">
-          <li>Choose exactly which markets to lend to based on your risk preferences</li>
-          <li>Rebalance positions between markets to optimize yields and liquidity</li>
-          <li>Customize your exposure to different collateral types and risk parameters</li>
+          <li>Compare market conditions and choose where to supply, borrow, or adjust positions</li>
+          <li>Manage exposure across collateral types, liquidity conditions, and rate environments</li>
+          <li>Rebalance or unwind positions as market conditions change</li>
         </ul>
 
         <p className="mb-4">
-          This flexibility comes with the responsibility to actively manage your positions, monitor market conditions, and make informed
-          decisions about rebalancing.
+          This flexibility comes with responsibility. Please do your own due diligence on each market (for example LLTV, oracle setup,
+          liquidity depth, and collateral behavior), and actively monitor your positions over time.
         </p>
         <Checkbox
           variant="highlighted"
-          label="I understand that direct lending requires active management"
+          label="I understand that using Monarch requires due diligence and active position management"
           checked={isChecked}
           onCheckedChange={(checked) => setIsChecked(checked === true)}
         />

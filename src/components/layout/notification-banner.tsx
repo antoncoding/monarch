@@ -22,25 +22,37 @@ export function NotificationBanner() {
   const action = currentNotification.action;
 
   return (
-    <div className="relative w-full bg-primary overflow-hidden">
-      {/* Grid background overlay */}
+    <div className="relative w-full overflow-hidden border-b border-dashed border-[var(--grid-cell-muted)] bg-main">
+      {/* Soft primary tint */}
+      <div
+        className="absolute inset-0 bg-primary"
+        style={{ opacity: 0.16 }}
+        aria-hidden="true"
+      />
+
+      {/* Grid background overlays */}
       <GridAccent
         position="top-strip"
         variant="dots"
-        className="opacity-40"
+        className="opacity-32"
+      />
+      <GridAccent
+        position="top-strip"
+        variant="lines"
+        className="opacity-18"
       />
 
       {/* Content container - same height as header */}
-      <div className="relative flex h-[48px] items-center md:h-[56px]">
+      <div className="relative z-10 flex h-[48px] items-center md:h-[56px]">
         <div className="container mx-auto flex items-center justify-center gap-4 px-4 sm:px-6 md:px-8">
           {/* Badge for multiple notifications */}
-          {totalCount > 1 && <span className="font-zen text-xs text-primary-foreground/80">1/{totalCount}</span>}
+          {totalCount > 1 && <span className="font-zen text-xs text-secondary">1/{totalCount}</span>}
 
           {/* Custom icon if provided */}
-          {currentNotification.icon && <span className="text-primary-foreground">{currentNotification.icon}</span>}
+          {currentNotification.icon && <span className="text-primary">{currentNotification.icon}</span>}
 
           {/* Message */}
-          <p className="font-zen text-sm text-primary-foreground">{currentNotification.message}</p>
+          <p className="font-zen text-sm text-primary">{currentNotification.message}</p>
 
           {/* Action button */}
           {action &&
@@ -48,7 +60,7 @@ export function NotificationBanner() {
               <Link
                 href={action.href}
                 onClick={handleDismiss}
-                className="font-zen text-xs text-primary-foreground underline-offset-2 transition-colors hover:underline"
+                className="font-zen text-xs text-primary underline-offset-2 transition-colors hover:underline"
               >
                 {action.label}
               </Link>
@@ -59,7 +71,7 @@ export function NotificationBanner() {
                   action.onClick?.();
                   handleDismiss();
                 }}
-                className="font-zen text-xs text-primary-foreground underline-offset-2 transition-colors hover:underline"
+                className="font-zen text-xs text-primary underline-offset-2 transition-colors hover:underline"
               >
                 {action.label}
               </button>
@@ -69,7 +81,7 @@ export function NotificationBanner() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="absolute right-4 z-10 p-1 text-primary-foreground/80 transition-colors hover:text-primary-foreground sm:right-6 md:right-8"
+            className="absolute right-4 z-10 p-1 text-secondary transition-colors hover:text-primary sm:right-6 md:right-8"
             aria-label="Dismiss notification"
           >
             <Cross2Icon className="h-5 w-5" />
