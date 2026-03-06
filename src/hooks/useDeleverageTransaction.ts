@@ -22,6 +22,8 @@ import { withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
 import { computeMaxSharePriceE27, isVeloraBypassablePrecheckError } from './leverage/velora-precheck';
 
+const CHARGE_SWAP_FEE = true;
+
 export type DeleverageStepType = 'authorize_bundler_sig' | 'authorize_bundler_tx' | 'execute';
 
 type UseDeleverageTransactionProps = {
@@ -252,6 +254,7 @@ export function useDeleverageTransaction({
               userAddress: swapExecutionAddress,
               priceRoute: activePriceRoute,
               slippageBps,
+              chargeFee: CHARGE_SWAP_FEE,
               ignoreChecks,
             });
 

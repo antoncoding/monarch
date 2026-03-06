@@ -1,6 +1,6 @@
 import { isAddress, isHex, type Address } from 'viem';
 import { toCanonicalTokenAddress } from '@/types/token';
-import { SWAP_PARTNER, VELORA_API_BASE_URL, VELORA_PRICES_API_VERSION } from '../constants';
+import { SWAP_PARTNER, SWAP_PARTNER_ADDRESS, SWAP_PARTNER_FEE_BPS, VELORA_API_BASE_URL, VELORA_PRICES_API_VERSION } from '../constants';
 
 export type VeloraSwapSide = 'SELL' | 'BUY';
 
@@ -52,6 +52,9 @@ export type FetchVeloraPriceRouteParams = {
   network: number;
   userAddress: Address;
   partner?: string;
+  partnerAddress?: Address;
+  partnerFeeBps?: number;
+  chargeFee?: boolean;
   side?: VeloraSwapSide;
 };
 
@@ -66,6 +69,9 @@ export type BuildVeloraTransactionPayloadParams = {
   priceRoute: VeloraPriceRoute;
   slippageBps: number;
   partner?: string;
+  partnerAddress?: Address;
+  partnerFeeBps?: number;
+  chargeFee?: boolean;
   ignoreChecks?: boolean;
 };
 
@@ -80,6 +86,9 @@ export type PrepareVeloraSwapPayloadParams = {
   slippageBps: number;
   side?: VeloraSwapSide;
   partner?: string;
+  partnerAddress?: Address;
+  partnerFeeBps?: number;
+  chargeFee?: boolean;
   ignoreChecks?: boolean;
 };
 
@@ -127,6 +136,14 @@ const extractVeloraErrorMessage = (payload: unknown): string => {
 const getVeloraApiErrorMessage = (payload: unknown, fallbackMessage: string): string => {
   const message = extractVeloraErrorMessage(payload);
   return message === 'Unknown Velora API error' ? fallbackMessage : message;
+};
+
+const normalizePartnerFeeBps = (partnerFeeBps: number): number => {
+  if (!Number.isInteger(partnerFeeBps) || partnerFeeBps < 0) {
+    throw new VeloraApiError('Velora partner fee bps must be a non-negative integer', 400, { partnerFeeBps });
+  }
+
+  return partnerFeeBps;
 };
 
 const fetchVeloraJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
@@ -261,6 +278,9 @@ export const fetchVeloraPriceRoute = async ({
   network,
   userAddress,
   partner = SWAP_PARTNER,
+  partnerAddress = SWAP_PARTNER_ADDRESS,
+  partnerFeeBps = SWAP_PARTNER_FEE_BPS,
+  chargeFee = true,
   side = 'SELL',
 }: FetchVeloraPriceRouteParams): Promise<VeloraPriceRoute> => {
   const requestedSourceTokenAddress = toCanonicalTokenAddress(srcToken);
@@ -282,9 +302,15 @@ export const fetchVeloraPriceRoute = async ({
     side,
     network: network.toString(),
     userAddress,
-    partner,
     version: VELORA_PRICES_API_VERSION,
   });
+
+  if (chargeFee) {
+    const effectivePartnerFeeBps = normalizePartnerFeeBps(partnerFeeBps);
+    query.set('partner', partner);
+    query.set('partnerAddress', partnerAddress);
+    query.set('partnerFeeBps', effectivePartnerFeeBps.toString());
+  }
 
   const response = await fetchVeloraJson<VeloraPriceResponse | null>(`${VELORA_API_BASE_URL}/prices?${query.toString()}`, {
     method: 'GET',
@@ -328,6 +354,9 @@ export const buildVeloraTransactionPayload = async ({
   priceRoute,
   slippageBps,
   partner = SWAP_PARTNER,
+  partnerAddress = SWAP_PARTNER_ADDRESS,
+  partnerFeeBps = SWAP_PARTNER_FEE_BPS,
+  chargeFee = true,
   ignoreChecks = false,
 }: BuildVeloraTransactionPayloadParams): Promise<VeloraTransactionPayload> => {
   if (srcAmount <= 0n) {
@@ -383,7 +412,7 @@ export const buildVeloraTransactionPayload = async ({
     query.size > 0
       ? `${VELORA_API_BASE_URL}/transactions/${network}?${query.toString()}`
       : `${VELORA_API_BASE_URL}/transactions/${network}`;
-  const requestBody = {
+  const requestBody: Record<string, unknown> = {
     srcToken,
     srcDecimals,
     destToken,
@@ -393,8 +422,16 @@ export const buildVeloraTransactionPayload = async ({
     slippage: slippageBps,
     priceRoute,
     userAddress,
-    partner,
   };
+
+  if (chargeFee) {
+    const effectivePartnerFeeBps = normalizePartnerFeeBps(partnerFeeBps);
+    requestBody.partner = partner;
+    requestBody.partnerAddress = partnerAddress;
+    requestBody.partnerFeeBps = effectivePartnerFeeBps;
+    requestBody.isDirectFeeTransfer = true;
+    requestBody.takeSurplus = true;
+  }
 
   const response = await fetchVeloraJson<VeloraBuildTransactionResponse | null>(transactionUrl, {
     method: 'POST',
@@ -433,6 +470,9 @@ export const prepareVeloraSwapPayload = async ({
   slippageBps,
   side = 'SELL',
   partner = SWAP_PARTNER,
+  partnerAddress = SWAP_PARTNER_ADDRESS,
+  partnerFeeBps = SWAP_PARTNER_FEE_BPS,
+  chargeFee = true,
   ignoreChecks = false,
 }: PrepareVeloraSwapPayloadParams): Promise<{ priceRoute: VeloraPriceRoute; txPayload: VeloraTransactionPayload }> => {
   if (side !== 'SELL') {
@@ -449,6 +489,9 @@ export const prepareVeloraSwapPayload = async ({
     userAddress,
     side: 'SELL',
     partner,
+    partnerAddress,
+    partnerFeeBps,
+    chargeFee,
   });
 
   const txPayload = await buildVeloraTransactionPayload({
@@ -462,6 +505,9 @@ export const prepareVeloraSwapPayload = async ({
     priceRoute,
     slippageBps,
     partner,
+    partnerAddress,
+    partnerFeeBps,
+    chargeFee,
     ignoreChecks,
   });
 

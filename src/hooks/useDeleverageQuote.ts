@@ -6,6 +6,8 @@ import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/ap
 import { withSlippageCeil, withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
 
+const CHARGE_SWAP_FEE = true;
+
 type UseDeleverageQuoteParams = {
   chainId: number;
   route: LeverageRoute | null;
@@ -109,6 +111,7 @@ export function useDeleverageQuote({
         amount: withdrawCollateralAmount,
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
+        chargeFee: CHARGE_SWAP_FEE,
         side: 'SELL',
       });
 
@@ -148,6 +151,7 @@ export function useDeleverageQuote({
         amount: bufferedBorrowAssets,
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
+        chargeFee: CHARGE_SWAP_FEE,
         side: 'BUY',
       });
       const quotedDebtCloseAmount = BigInt(buyRoute.destAmount);

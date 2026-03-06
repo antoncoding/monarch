@@ -6,6 +6,8 @@ import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/ap
 import { computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
 
+const CHARGE_SWAP_FEE = true;
+
 type UseLeverageQuoteParams = {
   chainId: number;
   route: LeverageRoute | null;
@@ -121,6 +123,7 @@ export function useLeverageQuote({
         amount: targetFlashCollateralAmount,
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
+        chargeFee: CHARGE_SWAP_FEE,
         side: 'BUY',
       });
 
@@ -141,6 +144,7 @@ export function useLeverageQuote({
         amount: borrowAssets,
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
+        chargeFee: CHARGE_SWAP_FEE,
         side: 'SELL',
       });
       if (BigInt(sellRoute.srcAmount) !== borrowAssets) {
@@ -192,6 +196,7 @@ export function useLeverageQuote({
         amount: totalLoanSellAmount,
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
+        chargeFee: CHARGE_SWAP_FEE,
         side: 'SELL',
       });
       if (BigInt(sellRoute.srcAmount) !== totalLoanSellAmount) {
