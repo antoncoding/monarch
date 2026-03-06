@@ -8,7 +8,7 @@ import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
 import permit2Abi from '@/abis/permit2';
 import { getLeverageFee } from '@/config/fees';
-import { LEVERAGE_FEE_RECIPIENT } from '@/config/leverage';
+import { LEVERAGE_FEE_RECIPIENT, resolveErc4626RouteBundler } from '@/config/leverage';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
@@ -19,7 +19,7 @@ import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
-import { getBundlerV2, getMorphoAddress, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { getMorphoAddress, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { PERMIT2_ADDRESS } from '@/utils/permit2';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
@@ -81,8 +81,8 @@ export function useLeverageTransaction({
     if (route?.kind === 'swap') {
       return route.bundler3Address;
     }
-    return getBundlerV2(market.morphoBlue.chain.id) as Address;
-  }, [route, market.morphoBlue.chain.id]);
+    return resolveErc4626RouteBundler(market.morphoBlue.chain.id, market.uniqueKey);
+  }, [route, market.uniqueKey, market.morphoBlue.chain.id]);
   const authorizationTarget = useMemo<Address>(() => {
     if (route?.kind === 'swap') {
       return route.generalAdapterAddress;

@@ -15,6 +15,7 @@ type AppSettingsState = {
 
   // UI dismissals
   trustedVaultsWarningDismissed: boolean;
+  specialBundlerWarningAcknowledgements: Record<string, boolean>;
 
   // Developer options
   showDeveloperOptions: boolean;
@@ -37,6 +38,7 @@ type AppSettingsActions = {
   setShowFullRewardAPY: (show: boolean) => void;
   setIsAprDisplay: (isApr: boolean) => void;
   setTrustedVaultsWarningDismissed: (dismissed: boolean) => void;
+  setSpecialBundlerWarningAcknowledged: (warningStorageKey: string, acknowledged: boolean) => void;
   setShowDeveloperOptions: (show: boolean) => void;
   setUsePublicAllocator: (show: boolean) => void;
   setLeverageUseTargetLtvInput: (useTargetLtvInput: boolean) => void;
@@ -68,6 +70,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       showFullRewardAPY: true,
       isAprDisplay: false,
       trustedVaultsWarningDismissed: false,
+      specialBundlerWarningAcknowledgements: {},
       showDeveloperOptions: false,
       usePublicAllocator: true,
       leverageUseTargetLtvInput: true,
@@ -81,6 +84,13 @@ export const useAppSettings = create<AppSettingsStore>()(
       setShowFullRewardAPY: (show) => set({ showFullRewardAPY: show }),
       setIsAprDisplay: (isApr) => set({ isAprDisplay: isApr }),
       setTrustedVaultsWarningDismissed: (dismissed) => set({ trustedVaultsWarningDismissed: dismissed }),
+      setSpecialBundlerWarningAcknowledged: (warningStorageKey, acknowledged) =>
+        set((state) => ({
+          specialBundlerWarningAcknowledgements: {
+            ...state.specialBundlerWarningAcknowledgements,
+            [warningStorageKey]: acknowledged,
+          },
+        })),
       setShowDeveloperOptions: (show) => set({ showDeveloperOptions: show }),
       setUsePublicAllocator: (show) => set({ usePublicAllocator: show }),
       setLeverageUseTargetLtvInput: (useTargetLtvInput) => set({ leverageUseTargetLtvInput: useTargetLtvInput }),

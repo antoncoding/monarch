@@ -5,6 +5,7 @@ import morphoBundlerAbi from '@/abis/bundlerV2';
 import { bundlerV3Abi } from '@/abis/bundlerV3';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
+import { resolveErc4626RouteBundler } from '@/config/leverage';
 import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -13,7 +14,7 @@ import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
-import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
 import { type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets, readCalldataUint256 } from './leverage/bundler3';
@@ -64,14 +65,17 @@ export function useDeleverageTransaction({
   const [executionError, setExecutionError] = useState<string | null>(null);
   const isSwapRoute = route?.kind === 'swap';
   const useSignatureAuthorization = usePermit2Setting && !isSwapRoute;
-  const bundlerAddress = useMemo<Address>(() => {
-    if (route?.kind === 'swap') return route.bundler3Address;
-    return getBundlerV2(market.morphoBlue.chain.id) as Address;
-  }, [route, market.morphoBlue.chain.id]);
-  const authorizationTarget = useMemo<Address>(() => {
-    if (route?.kind === 'swap') return route.generalAdapterAddress;
-    return bundlerAddress;
-  }, [route, bundlerAddress]);
+  const bundlerAddress = useMemo<Address | undefined>(() => {
+    if (!route) return undefined;
+    if (route.kind === 'swap') return route.bundler3Address;
+    try {
+      const resolvedBundler = resolveErc4626RouteBundler(market.morphoBlue.chain.id, market.uniqueKey);
+      return isAddress(resolvedBundler) ? resolvedBundler : undefined;
+    } catch {
+      return undefined;
+    }
+  }, [route, market.uniqueKey, market.morphoBlue.chain.id]);
+  const authorizationTarget = route?.kind === 'swap' ? route.generalAdapterAddress : bundlerAddress;
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
   const {
@@ -83,7 +87,7 @@ export function useDeleverageTransaction({
     refetchIsBundlerAuthorized,
   } = useBundlerAuthorizationStep({
     chainId: market.morphoBlue.chain.id,
-    bundlerAddress: authorizationTarget,
+    bundlerAddress: authorizationTarget as Address,
   });
 
   const { isConfirming: deleveragePending, sendTransactionAsync } = useTransactionWithToast({
@@ -153,6 +157,9 @@ export function useDeleverageTransaction({
 
     if (!route) {
       throw new Error('This market is not supported for deleverage.');
+    }
+    if (!bundlerAddress) {
+      throw new Error('Deleverage route data is unavailable. Please refresh and try again.');
     }
 
     if (withdrawCollateralAmount <= 0n || flashLoanAmount <= 0n) {
@@ -548,6 +555,10 @@ export function useDeleverageTransaction({
       toast.info('No account connected', 'Please connect your wallet.');
       return;
     }
+    if (!route || !bundlerAddress) {
+      toast.info('Quote unavailable', 'Deleverage route data is unavailable. Please refresh and try again.');
+      return;
+    }
     if ((useSignatureAuthorization && !isBundlerAuthorizationReady) || (!useSignatureAuthorization && !isBundlerAuthorizationStatusReady)) {
       toast.info('Authorization status loading', 'Please wait a moment and try again.');
       return;
@@ -584,6 +595,8 @@ export function useDeleverageTransaction({
     }
   }, [
     account,
+    route,
+    bundlerAddress,
     isBundlerAuthorized,
     isBundlerAuthorizationReady,
     isBundlerAuthorizationStatusReady,

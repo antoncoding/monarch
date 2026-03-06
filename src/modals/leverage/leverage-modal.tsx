@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { IoWarningOutline } from 'react-icons/io5';
 import { RiSparklingFill } from 'react-icons/ri';
 import { type Address, erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
@@ -8,7 +9,9 @@ import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitch
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { getSpecialErc4626LeverageConfig, isSpecialErc4626LeverageMarket } from '@/config/leverage';
 import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
+import { useAppSettings } from '@/stores/useAppSettings';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { cn } from '@/utils/components';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -102,7 +105,11 @@ export function LeverageModal({
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
   const [routeMode, setRouteMode] = useState<RouteMode>('erc4626');
+  const specialBundlerWarningAcknowledgements = useAppSettings((state) => state.specialBundlerWarningAcknowledgements);
+  const setSpecialBundlerWarningAcknowledged = useAppSettings((state) => state.setSpecialBundlerWarningAcknowledged);
   const { address: account } = useConnection();
+  const specialErc4626LeverageConfig = getSpecialErc4626LeverageConfig(market.morphoBlue.chain.id);
+  const isSpecialErc4626BundlerMarket = isSpecialErc4626LeverageMarket(market.morphoBlue.chain.id, market.uniqueKey);
 
   const { swapRoute, isErc4626ModeAvailable, availableRouteModes, isErc4626ProbeLoading, isErc4626ProbeRefetching } =
     useLeverageRouteAvailability({
@@ -147,6 +154,17 @@ export function LeverageModal({
   ]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const hasAcknowledgedSpecialBundlerWarning =
+    !isSpecialErc4626BundlerMarket || !specialErc4626LeverageConfig
+      ? true
+      : (specialBundlerWarningAcknowledgements[specialErc4626LeverageConfig.warningStorageKey] ?? false);
+  const shouldShowSpecialBundlerWarning = isSpecialErc4626BundlerMarket && isErc4626Route && !hasAcknowledgedSpecialBundlerWarning;
+
+  const acknowledgeSpecialBundlerWarning = useCallback(() => {
+    if (!specialErc4626LeverageConfig) return;
+    setSpecialBundlerWarningAcknowledged(specialErc4626LeverageConfig.warningStorageKey, true);
+  }, [specialErc4626LeverageConfig, setSpecialBundlerWarningAcknowledged]);
+
   const displayedRouteMode = useMemo<RouteMode>(() => {
     if (route?.kind) return route.kind;
     if (availableRouteModes.length === 1) return availableRouteModes[0];
@@ -190,6 +208,35 @@ export function LeverageModal({
   }, [refetch, account, refetchCollateralTokenBalance]);
 
   const isRefreshingAnyData = isRefreshing || isFetchingCollateralTokenBalance;
+
+  const routeContent = useMemo((): JSX.Element | null => {
+    if (!route) return null;
+
+    if (effectiveMode === 'leverage') {
+      return (
+        <AddCollateralAndLeverage
+          market={market}
+          route={route}
+          currentPosition={position}
+          collateralTokenBalance={collateralTokenBalance}
+          oraclePrice={oraclePrice}
+          onSuccess={handleRefreshAll}
+          isRefreshing={isRefreshingAnyData}
+        />
+      );
+    }
+
+    return (
+      <RemoveCollateralAndDeleverage
+        market={market}
+        route={route}
+        currentPosition={position}
+        oraclePrice={oraclePrice}
+        onSuccess={handleRefreshAll}
+        isRefreshing={isRefreshingAnyData}
+      />
+    );
+  }, [route, effectiveMode, market, position, collateralTokenBalance, oraclePrice, handleRefreshAll, isRefreshingAnyData]);
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -259,32 +306,30 @@ export function LeverageModal({
         }
       />
       <ModalBody>
-        {route ? (
-          effectiveMode === 'leverage' ? (
-            <AddCollateralAndLeverage
-              market={market}
-              route={route}
-              currentPosition={position}
-              collateralTokenBalance={collateralTokenBalance}
-              oraclePrice={oraclePrice}
-              onSuccess={handleRefreshAll}
-              isRefreshing={isRefreshingAnyData}
-            />
-          ) : (
-            <RemoveCollateralAndDeleverage
-              market={market}
-              route={route}
-              currentPosition={position}
-              oraclePrice={oraclePrice}
-              onSuccess={handleRefreshAll}
-              isRefreshing={isRefreshingAnyData}
-            />
-          )
+        {routeContent ? (
+          routeContent
         ) : isErc4626ProbeLoading || isErc4626ProbeRefetching ? (
           <div className="rounded border border-white/10 bg-hovered p-4 text-sm text-secondary">Checking available leverage routes...</div>
         ) : (
           <div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
             Swap route configuration is unavailable for this network.
+          </div>
+        )}
+        {shouldShowSpecialBundlerWarning && (
+          <div className="mt-3 rounded border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-400/20 dark:bg-yellow-400/10">
+            <div className="flex items-start gap-2">
+              <IoWarningOutline className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-300" />
+              <div className="space-y-2">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300">{specialErc4626LeverageConfig?.warningMessage}</p>
+                <button
+                  type="button"
+                  onClick={acknowledgeSpecialBundlerWarning}
+                  className="rounded border border-yellow-200 bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800 transition hover:bg-yellow-200 dark:border-yellow-400/20 dark:bg-yellow-400/10 dark:text-yellow-300 dark:hover:bg-yellow-400/20"
+                >
+                  I Understand
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </ModalBody>
