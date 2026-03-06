@@ -40,11 +40,6 @@ export const useActiveNotifications = (): ActiveNotificationsResult => {
   const conditions = useNotificationConditions();
 
   const { activeNotifications, isLoading } = useMemo(() => {
-    // Don't show any notifications until the store has hydrated from localStorage
-    // This prevents dismissed notifications from flashing briefly on page load
-    if (!hasHydrated) {
-      return { activeNotifications: [], isLoading: true };
-    }
     const now = new Date();
     let hasLoadingCondition = false;
 
@@ -54,8 +49,9 @@ export const useActiveNotifications = (): ActiveNotificationsResult => {
         return false;
       }
 
-      // Check if dismissed
-      if (dismissedIds.includes(notification.id)) {
+      // Only enforce dismissed IDs once storage hydration completed.
+      // If hydration stalls, keep notifications visible instead of hiding all banners.
+      if (hasHydrated && dismissedIds.includes(notification.id)) {
         return false;
       }
 

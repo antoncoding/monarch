@@ -15,6 +15,8 @@ type NotificationActions = {
   isDismissed: (id: string) => boolean;
   /** Bulk update for migration */
   setAll: (state: Partial<NotificationState>) => void;
+  /** Internal hydration state setter */
+  setHasHydrated: (hydrated: boolean) => void;
 };
 
 type NotificationStore = NotificationState & NotificationActions;
@@ -53,12 +55,21 @@ export const useNotificationStore = create<NotificationStore>()(
       },
 
       setAll: (state) => set(state),
+      setHasHydrated: (hydrated) => set({ _hasHydrated: hydrated }),
     }),
     {
       name: 'monarch_store_notifications',
       partialize: (state) => ({ dismissedIds: state.dismissedIds }),
-      onRehydrateStorage: () => () => {
-        useNotificationStore.setState({ _hasHydrated: true });
+      onRehydrateStorage: (state) => {
+        state?.setHasHydrated(false);
+        return (nextState, error) => {
+          if (error) {
+            nextState?.setHasHydrated(true);
+            return;
+          }
+
+          nextState?.setHasHydrated(true);
+        };
       },
     },
   ),
