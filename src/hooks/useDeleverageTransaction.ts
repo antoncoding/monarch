@@ -68,7 +68,12 @@ export function useDeleverageTransaction({
   const bundlerAddress = useMemo<Address | undefined>(() => {
     if (!route) return undefined;
     if (route.kind === 'swap') return route.bundler3Address;
-    return resolveErc4626RouteBundler(market.morphoBlue.chain.id, market.uniqueKey);
+    try {
+      const resolvedBundler = resolveErc4626RouteBundler(market.morphoBlue.chain.id, market.uniqueKey);
+      return isAddress(resolvedBundler) ? resolvedBundler : undefined;
+    } catch {
+      return undefined;
+    }
   }, [route, market.uniqueKey, market.morphoBlue.chain.id]);
   const authorizationTarget = route?.kind === 'swap' ? route.generalAdapterAddress : bundlerAddress;
   const { batchAddUserMarkets } = useUserMarketsCache(account);
