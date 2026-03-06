@@ -143,9 +143,10 @@ export default function Input({
       setValue(max);
       // set readable input
       setInputAmount(formatInputAmount(max, decimals));
+      if (setError) setError(null);
     }
     if (onMaxClick) onMaxClick();
-  }, [clearSetValueDebounce, max, decimals, setInputAmount, setValue, onMaxClick]);
+  }, [clearSetValueDebounce, max, decimals, setInputAmount, setValue, setError, onMaxClick]);
 
   const handleBlur = useCallback(() => {
     flushPendingSetValue();
