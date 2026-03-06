@@ -155,7 +155,7 @@ When touching transaction and position flows, validation MUST include all releva
 20. **Rebalance objective integrity**: stepwise smart-rebalance planners must evaluate each candidate move by resulting **global weighted objective** (portfolio-level APY/APR), not by local/post-move market APR alone, and must fail safe (no-op) when projected objective is below current objective.
 21. **Modal UX integrity**: transaction-modal help/fee tooltips must render above modal layers via shared tooltip z-index chokepoints, and per-flow input mode toggles (for example target LTV vs amount) must persist through shared settings across modal reopen.
 22. **Chain-scoped identity integrity**: all market/token/route identity checks must be chain-scoped and use canonical identifiers (`chainId + market.uniqueKey` or `chainId + address`), including matching, dedupe keys, routing, and trust/allowlist gates.
-23. **Bundler residual-asset integrity**: any flash-loan transaction path that routes assets through Bundler/adapter balances (especially ERC4626 unwind paths) must end with explicit trailing asset sweeps to the intended recipient and must keep execute-time slippage bounds consistent with quote-time slippage settings.
+23. **Bundler residual-asset integrity**: any flash-loan transaction path that routes assets through Bundler/adapter balances (Bundler V2, GeneralAdapter, ParaswapAdapter) must end with explicit trailing sweeps of both loan and collateral tokens to the intended recipient across leverage/deleverage and swap/ERC4626 paths, and must keep execute-time slippage bounds consistent with quote-time slippage settings.
 
 
 ### REQUIRED: Regression Rule Capture

@@ -366,17 +366,6 @@ export function useDeleverageTransaction({
             skipRevert: false,
             callbackHash: zeroHash,
           },
-          {
-            to: route.paraswapAdapterAddress,
-            data: encodeFunctionData({
-              abi: paraswapAdapterAbi,
-              functionName: 'erc20Transfer',
-              args: [market.collateralAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
         ];
 
         if (autoWithdrawCollateralAmount > 0n) {
@@ -406,12 +395,46 @@ export function useDeleverageTransaction({
             skipRevert: false,
             callbackHash: keccak256(callbackBundleData),
           },
+          // Safety net: sweep any residual loan/collateral balances from adapters to the user.
           {
             to: route.generalAdapterAddress,
             data: encodeFunctionData({
               abi: morphoGeneralAdapterV1Abi,
               functionName: 'erc20Transfer',
               args: [market.loanAsset.address as Address, account as Address, maxUint256],
+            }),
+            value: 0n,
+            skipRevert: false,
+            callbackHash: zeroHash,
+          },
+          {
+            to: route.generalAdapterAddress,
+            data: encodeFunctionData({
+              abi: morphoGeneralAdapterV1Abi,
+              functionName: 'erc20Transfer',
+              args: [market.collateralAsset.address as Address, account as Address, maxUint256],
+            }),
+            value: 0n,
+            skipRevert: false,
+            callbackHash: zeroHash,
+          },
+          {
+            to: route.paraswapAdapterAddress,
+            data: encodeFunctionData({
+              abi: paraswapAdapterAbi,
+              functionName: 'erc20Transfer',
+              args: [market.loanAsset.address as Address, account as Address, maxUint256],
+            }),
+            value: 0n,
+            skipRevert: false,
+            callbackHash: zeroHash,
+          },
+          {
+            to: route.paraswapAdapterAddress,
+            data: encodeFunctionData({
+              abi: paraswapAdapterAbi,
+              functionName: 'erc20Transfer',
+              args: [market.collateralAsset.address as Address, account as Address, maxUint256],
             }),
             value: 0n,
             skipRevert: false,
@@ -482,11 +505,19 @@ export function useDeleverageTransaction({
             args: [market.loanAsset.address as Address, flashLoanAmount, flashLoanCallbackData],
           }),
         );
+        // Safety net: sweep any residual loan/collateral balances from bundler to the user.
         txs.push(
           encodeFunctionData({
             abi: morphoBundlerAbi,
             functionName: 'erc20Transfer',
             args: [market.loanAsset.address as Address, account as Address, maxUint256],
+          }),
+        );
+        txs.push(
+          encodeFunctionData({
+            abi: morphoBundlerAbi,
+            functionName: 'erc20Transfer',
+            args: [market.collateralAsset.address as Address, account as Address, maxUint256],
           }),
         );
 
