@@ -3,8 +3,8 @@
 /**
  * Stats V2 Dashboard (Experimental)
  *
- * This page uses the shared Monarch API to provide cross-chain Monarch
- * transaction data across all chains with a single GraphQL endpoint.
+ * This page uses a new cross-chain indexer API that provides Monarch transaction
+ * data across all chains with a single API call.
  *
  * NOTE: This API is experimental and may be reverted due to cost concerns.
  * The old stats page at /admin/stats should be kept as a fallback.
@@ -25,9 +25,11 @@ import { PasswordGate } from '@/features/admin-v2/components/password-gate';
 import { StatsOverviewCards } from '@/features/admin-v2/components/stats-overview-cards';
 import { StatsVolumeChart } from '@/features/admin-v2/components/stats-volume-chart';
 import { ChainVolumeChart } from '@/features/admin-v2/components/chain-volume-chart';
+import { StatsAttributionOverview } from '@/features/admin-v2/components/stats-attribution-overview';
 import { StatsTransactionsTable } from '@/features/admin-v2/components/stats-transactions-table';
 import { StatsAssetTable } from '@/features/admin-v2/components/stats-asset-table';
 import { StatsMarketTable } from '@/features/admin-v2/components/stats-market-table';
+import { useAttributionScoreboard } from '@/hooks/useAttributionScoreboard';
 import { useMonarchTransactions, type TimeFrame } from '@/hooks/useMonarchTransactions';
 import { useAdminAuth } from '@/stores/useAdminAuth';
 
@@ -47,6 +49,7 @@ function StatsV2Content() {
     isLoading,
     error,
   } = useMonarchTransactions(timeframe);
+  const attribution = useAttributionScoreboard(timeframe);
 
   const timeframeOptions = [
     { key: '1D', label: '1D', value: '1D' },
@@ -119,6 +122,13 @@ function StatsV2Content() {
               supplyCount={supplies.length}
               withdrawCount={withdraws.length}
               chainStats={chainStats}
+            />
+
+            <StatsAttributionOverview
+              summary={attribution.summary}
+              breakdown={attribution.breakdown}
+              revenueBps={attribution.data?.revenueBps ?? 0}
+              isLoading={attribution.isLoading}
             />
 
             {/* Charts Grid */}
