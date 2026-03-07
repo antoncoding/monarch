@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useModal } from '@/hooks/useModal';
 import { EXTERNAL_LINKS } from '@/utils/external';
-import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
 
 export default function NavbarMobile() {
@@ -58,8 +57,9 @@ export default function NavbarMobile() {
           className="flex items-center"
         >
           <Image
-            src={logo}
+            src="/logo.png"
             alt="logo"
+            width={20}
             height={20}
           />
         </Link>
