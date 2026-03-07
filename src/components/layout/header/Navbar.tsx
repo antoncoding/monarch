@@ -15,7 +15,6 @@ import { useConnection } from 'wagmi';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useModal } from '@/hooks/useModal';
 import { EXTERNAL_LINKS } from '@/utils/external';
-import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
 import { TransactionIndicator } from './TransactionIndicator';
 
@@ -58,8 +57,9 @@ export function NavbarTitle() {
   return (
     <div className="flex h-8 items-center justify-start gap-3">
       <Image
-        src={logo}
+        src="/logo.png"
         alt="logo"
+        width={24}
         height={24}
       />
       <Link
