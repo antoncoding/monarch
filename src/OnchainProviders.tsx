@@ -7,6 +7,7 @@ import * as Sentry from '@sentry/nextjs';
 import { useConnection, WagmiProvider } from 'wagmi';
 import { wagmiAdapter } from '@/config/appkit';
 import { createWagmiConfig } from '@/store/createWagmiConfig';
+import { AttributionProvider } from './components/providers/AttributionProvider';
 import { ConnectRedirectProvider } from './components/providers/ConnectRedirectProvider';
 import { CustomRpcProvider, useCustomRpcContext } from './components/providers/CustomRpcProvider';
 
@@ -46,7 +47,9 @@ function WagmiConfigProvider({ children }: Props) {
       reconnectOnMount
     >
       <SentryWalletScopeSync />
-      <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
+      <ConnectRedirectProvider>
+        <AttributionProvider>{children}</AttributionProvider>
+      </ConnectRedirectProvider>
     </WagmiProvider>
   );
 }
