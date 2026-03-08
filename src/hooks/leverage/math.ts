@@ -4,6 +4,9 @@ import { LEVERAGE_MIN_MULTIPLIER_BPS, LEVERAGE_MULTIPLIER_SCALE_BPS } from './ty
 export const LEVERAGE_SLIPPAGE_BUFFER_BPS = 9_950n; // 0.50% tolerance
 export const BPS_SCALE = 10_000n;
 export const WAD_TO_BPS_SCALE = 100_000_000_000_000n;
+const ASSET_INPUT_SHARE_SLIPPAGE_BUFFER_BPS = 50n; // 0.50%
+const MORPHO_VIRTUAL_SHARES = 1_000_000n;
+const MORPHO_VIRTUAL_ASSETS = 1n;
 const DEFAULT_SLIPPAGE_TOLERANCE_BPS = BPS_SCALE - LEVERAGE_SLIPPAGE_BUFFER_BPS;
 const MAX_TARGET_LTV_BPS = BPS_SCALE - 1n;
 const COMPACT_AMOUNT_LOCALE = 'en-US';
@@ -364,7 +367,13 @@ export const withSlippageCeil = (value: bigint, slippageBps?: number): bigint =>
   return (value * ceilBps + LEVERAGE_MULTIPLIER_SCALE_BPS - 1n) / LEVERAGE_MULTIPLIER_SCALE_BPS;
 };
 
-export const computeBorrowSharesWithBuffer = ({
+/**
+ * Returns the slippage bound for asset-based `morphoBorrow` calls.
+ *
+ * This intentionally overestimates the borrow shares that may be minted for a fixed
+ * asset input. It is only for the bundler slippage parameter, not for previews.
+ */
+export const getBorrowSharesSlippageAmount = ({
   borrowAssets,
   totalBorrowAssets,
   totalBorrowShares,
@@ -375,16 +384,11 @@ export const computeBorrowSharesWithBuffer = ({
 }): bigint => {
   if (borrowAssets <= 0n) return 0n;
 
-  // Morpho virtual shares/assets from SharesMathLib to avoid edge-case division by zero.
-  const VIRTUAL_SHARES = 1_000_000n;
-  const VIRTUAL_ASSETS = 1n;
-
-  const denominator = totalBorrowAssets + VIRTUAL_ASSETS;
-  const numerator = borrowAssets * (totalBorrowShares + VIRTUAL_SHARES);
+  const denominator = totalBorrowAssets + MORPHO_VIRTUAL_ASSETS;
+  const numerator = borrowAssets * (totalBorrowShares + MORPHO_VIRTUAL_SHARES);
   const expectedShares = (numerator + denominator - 1n) / denominator; // round up
 
-  // Add 0.5% headroom to keep borrow slippage checks stable across minor state drift.
-  return expectedShares + expectedShares / 200n + 1n;
+  return expectedShares + (expectedShares * ASSET_INPUT_SHARE_SLIPPAGE_BUFFER_BPS) / BPS_SCALE + 1n;
 };
 
 export const computeRepaySharesWithBuffer = ({
@@ -400,5 +404,11 @@ export const computeRepaySharesWithBuffer = ({
 
   const numerator = repayAssets * totalBorrowShares;
   const expectedShares = (numerator + totalBorrowAssets - 1n) / totalBorrowAssets; // round up
-  return expectedShares + expectedShares / 200n + 1n;
+  return expectedShares + (expectedShares * ASSET_INPUT_SHARE_SLIPPAGE_BUFFER_BPS) / BPS_SCALE + 1n;
 };
+
+/**
+ * Asset-based supply/deposit flows use a minimum-share slippage floor instead of a
+ * share estimate. `1n` means "accept any positive share output".
+ */
+export const MIN_SHARES_SLIPPAGE_AMOUNT = 1n;

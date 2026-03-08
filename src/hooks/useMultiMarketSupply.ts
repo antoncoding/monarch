@@ -7,6 +7,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import type { NetworkToken } from '@/types/token';
 import { formatBalance } from '@/utils/balance';
+import { MIN_SHARES_SLIPPAGE_AMOUNT } from '@/hooks/leverage/math';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
@@ -135,6 +136,7 @@ export function useMultiMarketSupply(
 
       // Add supply transactions for each market
       for (const supply of supplies) {
+        // Asset-based supply keeps the asset amount exact and only needs a minimum-share floor.
         const morphoSupplyTx = encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'morphoSupply',
@@ -148,7 +150,7 @@ export function useMultiMarketSupply(
             },
             supply.amount,
             BigInt(0),
-            BigInt(1), // minShares
+            MIN_SHARES_SLIPPAGE_AMOUNT,
             account as `0x${string}`,
             '0x', // callback
           ],

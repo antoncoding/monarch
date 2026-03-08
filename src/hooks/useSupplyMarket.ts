@@ -10,6 +10,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { formatBalance } from '@/utils/balance';
+import { MIN_SHARES_SLIPPAGE_AMOUNT } from '@/hooks/leverage/math';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER_NUMERATOR, GAS_MULTIPLIER_DENOMINATOR } from '@/features/markets/components/constants';
@@ -219,7 +220,8 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
 
       update('supplying');
 
-      const minShares = BigInt(1);
+      // Asset-based supply keeps the asset amount exact and only needs a minimum-share floor.
+      const minSharesSlippageAmount = MIN_SHARES_SLIPPAGE_AMOUNT;
       const morphoSupplyTx = encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'morphoSupply',
@@ -233,7 +235,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
           },
           supplyAmount,
           BigInt(0),
-          minShares,
+          minSharesSlippageAmount,
           account as `0x${string}`,
           '0x', // callback
         ],

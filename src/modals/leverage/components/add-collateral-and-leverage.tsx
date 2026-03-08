@@ -81,8 +81,8 @@ export function AddCollateralAndLeverage({
     [defaultMultiplierBps, maxTargetLtvBps],
   );
 
-  const [collateralAmount, setCollateralAmount] = useState<bigint>(0n);
-  const [collateralInputError, setCollateralInputError] = useState<string | null>(null);
+  const [initialCapitalInputAmount, setInitialCapitalInputAmount] = useState<bigint>(0n);
+  const [initialCapitalInputError, setInitialCapitalInputError] = useState<string | null>(null);
   const [useLoanAssetInput, setUseLoanAssetInput] = useState(false);
   const [targetMultiplierBps, setTargetMultiplierBps] = useState<bigint>(defaultMultiplierBps);
   const [targetLtvIntentBps, setTargetLtvIntentBps] = useState<bigint>(defaultTargetLtvIntentBps);
@@ -110,9 +110,9 @@ export function AddCollateralAndLeverage({
   });
 
   useEffect(() => {
-    // Underlying and collateral shares use different units. Reset amount when switching input source.
-    setCollateralAmount(0n);
-    setCollateralInputError(null);
+    // The initial-capital field flips between loan-asset units and collateral-token units.
+    setInitialCapitalInputAmount(0n);
+    setInitialCapitalInputError(null);
   }, [useLoanAssetInput]);
 
   useEffect(() => {
@@ -136,7 +136,7 @@ export function AddCollateralAndLeverage({
   const quote = useLeverageQuote({
     chainId: market.morphoBlue.chain.id,
     route,
-    userInputAmount: collateralAmount,
+    initialCapitalInputAmount,
     inputMode: useLoanAssetInput ? 'loan' : 'collateral',
     multiplierBps,
     loanTokenAddress: market.loanAsset.address,
@@ -149,7 +149,7 @@ export function AddCollateralAndLeverage({
 
   const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
   const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
-  const hasQuoteChanges = quote.totalAddedCollateral > 0n && quote.flashLoanAmount > 0n;
+  const hasQuoteChanges = quote.totalCollateralTokenAmountAdded > 0n && quote.flashLoanAssetAmount > 0n;
   const collateralAssetPriceUsd = useMemo(() => {
     const totalCollateralAssets = BigInt(market.state.collateralAssets);
     const totalCollateralAssetsUsd = market.state.collateralAssetsUsd;
@@ -171,15 +171,15 @@ export function AddCollateralAndLeverage({
   const leverageTransferFee = useMemo<bigint | null>(() => {
     if (collateralAssetPriceUsd == null) return null;
     return getLeverageFee({
-      amount: quote.totalAddedCollateral,
+      amount: quote.totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
     });
-  }, [quote.totalAddedCollateral, collateralAssetPriceUsd, market.collateralAsset.decimals]);
+  }, [quote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals]);
   const netAddedCollateral = useMemo<bigint | null>(() => {
     if (leverageTransferFee == null) return null;
-    return quote.totalAddedCollateral - leverageTransferFee;
-  }, [quote.totalAddedCollateral, leverageTransferFee]);
+    return quote.totalCollateralTokenAmountAdded - leverageTransferFee;
+  }, [quote.totalCollateralTokenAmountAdded, leverageTransferFee]);
   const isLeverageFeeReady = useMemo(
     () => hasQuoteChanges && leverageTransferFee != null && netAddedCollateral != null && netAddedCollateral > 0n,
     [hasQuoteChanges, leverageTransferFee, netAddedCollateral],
@@ -195,7 +195,10 @@ export function AddCollateralAndLeverage({
     () => (isLeverageFeeReady && netAddedCollateral != null ? netAddedCollateral : 0n),
     [isLeverageFeeReady, netAddedCollateral],
   );
-  const addedBorrowAssets = useMemo(() => (isLeverageFeeReady ? quote.flashLoanAmount : 0n), [isLeverageFeeReady, quote.flashLoanAmount]);
+  const addedBorrowAssets = useMemo(
+    () => (isLeverageFeeReady ? quote.flashLoanAssetAmount : 0n),
+    [isLeverageFeeReady, quote.flashLoanAssetAmount],
+  );
   const { projectedCollateralAssets, projectedBorrowAssets } = useMemo(
     () =>
       computeLeverageProjectedPosition({
@@ -255,8 +258,8 @@ export function AddCollateralAndLeverage({
 
   const handleTransactionSuccess = useCallback(() => {
     // WHY: after a confirmed leverage tx, reset drafts so the panel reflects refreshed onchain position state.
-    setCollateralAmount(0n);
-    setCollateralInputError(null);
+    setInitialCapitalInputAmount(0n);
+    setInitialCapitalInputError(null);
     syncInputFieldsFromMultiplier(defaultMultiplierBps);
     if (useLoanAssetInput) {
       void refetchLoanTokenBalance();
@@ -275,14 +278,14 @@ export function AddCollateralAndLeverage({
   } = useLeverageTransaction({
     market,
     route,
-    collateralAmount,
-    collateralAmountInCollateralToken: quote.initialCollateralAmount,
-    flashCollateralAmount: quote.flashCollateralAmount,
-    flashLoanAmount: quote.flashLoanAmount,
-    totalAddedCollateral: quote.totalAddedCollateral,
+    initialCapitalInputAmount,
+    initialCapitalCollateralTokenAmount: quote.initialCapitalCollateralTokenAmount,
+    flashLegCollateralTokenAmount: quote.flashLegCollateralTokenAmount,
+    flashLoanAssetAmount: quote.flashLoanAssetAmount,
+    totalCollateralTokenAmountAdded: quote.totalCollateralTokenAmountAdded,
     collateralAssetPriceUsd,
     swapPriceRoute: quote.swapPriceRoute,
-    useLoanAssetAsInput: useLoanAssetInput,
+    useLoanAssetInput,
     slippageBps: swapSlippageBps,
     onSuccess: handleTransactionSuccess,
   });
@@ -311,18 +314,18 @@ export function AddCollateralAndLeverage({
   }, [isLeverageFeeReady, usePermit2Setting, permit2Authorized, signAndLeverage, approveAndLeverage]);
 
   const projectedOverLimit = projectedLTV >= lltv;
-  const insufficientLiquidity = quote.flashLoanAmount > marketLiquidity;
+  const insufficientLiquidity = quote.flashLoanAssetAmount > marketLiquidity;
   const inputAssetSymbol = useLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
   const inputAssetDecimals = useLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
   const inputAssetBalance = useLoanAssetInput ? (loanTokenBalance as bigint | undefined) : collateralTokenBalance;
   const inputTokenIconAddress = useLoanAssetInput ? market.loanAsset.address : market.collateralAsset.address;
   const flashBorrowPreview = useMemo(
-    () => formatTokenAmountPreview(quote.flashLoanAmount, market.loanAsset.decimals),
-    [quote.flashLoanAmount, market.loanAsset.decimals],
+    () => formatTokenAmountPreview(quote.flashLoanAssetAmount, market.loanAsset.decimals),
+    [quote.flashLoanAssetAmount, market.loanAsset.decimals],
   );
   const totalCollateralAddedPreview = useMemo(
-    () => formatTokenAmountPreview(quote.totalAddedCollateral, market.collateralAsset.decimals),
-    [quote.totalAddedCollateral, market.collateralAsset.decimals],
+    () => formatTokenAmountPreview(quote.totalCollateralTokenAmountAdded, market.collateralAsset.decimals),
+    [quote.totalCollateralTokenAmountAdded, market.collateralAsset.decimals],
   );
   const leverageFeePreview = useMemo(() => {
     if (!isLeverageFeeReady || leverageTransferFee == null) return null;
@@ -345,8 +348,8 @@ export function AddCollateralAndLeverage({
     }).format(feeUsdValue);
   }, [isLeverageFeeReady, leverageTransferFee, collateralAssetPriceUsd, market.collateralAsset.decimals]);
   const swapCollateralOutPreview = useMemo(
-    () => formatTokenAmountPreview(quote.flashCollateralAmount, market.collateralAsset.decimals),
-    [quote.flashCollateralAmount, market.collateralAsset.decimals],
+    () => formatTokenAmountPreview(quote.flashLegCollateralTokenAmount, market.collateralAsset.decimals),
+    [quote.flashLegCollateralTokenAmount, market.collateralAsset.decimals],
   );
   const collateralPreviewForDisplay = isSwapRoute && !useLoanAssetInput ? swapCollateralOutPreview : totalCollateralAddedPreview;
   const collateralPreviewLabel = isSwapRoute
@@ -354,12 +357,12 @@ export function AddCollateralAndLeverage({
       ? 'Total Collateral Added (Min.)'
       : 'Collateral From Swap (Min.)'
     : 'Total Collateral Added';
-  const hasExecutableInputConversion = useMemo(() => {
+  const hasExecutableInitialCapitalConversion = useMemo(() => {
     if (!useLoanAssetInput) return true;
-    if (isSwapRoute) return quote.totalAddedCollateral > 0n;
-    if (isErc4626Route) return quote.initialCollateralAmount > 0n;
+    if (isSwapRoute) return quote.totalCollateralTokenAmountAdded > 0n;
+    if (isErc4626Route) return quote.initialCapitalCollateralTokenAmount > 0n;
     return false;
-  }, [useLoanAssetInput, isSwapRoute, isErc4626Route, quote.totalAddedCollateral, quote.initialCollateralAmount]);
+  }, [useLoanAssetInput, isSwapRoute, isErc4626Route, quote.totalCollateralTokenAmountAdded, quote.initialCapitalCollateralTokenAmount]);
   const swapRatePreviewText = useMemo(() => {
     if (!isSwapRoute || !quote.swapPriceRoute) return null;
 
@@ -416,9 +419,9 @@ export function AddCollateralAndLeverage({
   }, [isErc4626Route, vaultRateInsight.borrowApy3d, market.state.borrowApy]);
   const projectedBorrowApy = useMemo(() => {
     if (!hasChanges) return null;
-    const preview = previewMarketState(market, undefined, quote.flashLoanAmount);
+    const preview = previewMarketState(market, undefined, quote.flashLoanAssetAmount);
     return preview?.borrowApy ?? null;
-  }, [hasChanges, market, quote.flashLoanAmount]);
+  }, [hasChanges, market, quote.flashLoanAssetAmount]);
   const previewBorrowApy = projectedBorrowApy ?? fallbackBorrowApy;
   const borrowRatePreviewLabel = projectedBorrowApy != null ? `Borrow ${rateLabel} (Est.)` : `Borrow ${rateLabel}`;
   const vaultTokenApy = isErc4626Route ? vaultRateInsight.vaultApy3d : 0;
@@ -495,24 +498,25 @@ export function AddCollateralAndLeverage({
     if (addedCollateralAssets <= 0n) return null;
 
     if (isSwapRoute && useLoanAssetInput) {
-      const totalLoanInput = collateralAmount + addedBorrowAssets;
+      const totalLoanInput = initialCapitalInputAmount + addedBorrowAssets;
       if (totalLoanInput <= 0n) return null;
 
-      const contributedFromLoanInput = (addedCollateralAssets * collateralAmount) / totalLoanInput;
+      const contributedFromLoanInput = (addedCollateralAssets * initialCapitalInputAmount) / totalLoanInput;
       return contributedFromLoanInput > 0n ? contributedFromLoanInput : null;
     }
 
-    if (quote.totalAddedCollateral <= 0n || quote.initialCollateralAmount <= 0n) return null;
+    if (quote.totalCollateralTokenAmountAdded <= 0n || quote.initialCapitalCollateralTokenAmount <= 0n) return null;
 
-    const contributedFromInitialCollateral = (addedCollateralAssets * quote.initialCollateralAmount) / quote.totalAddedCollateral;
+    const contributedFromInitialCollateral =
+      (addedCollateralAssets * quote.initialCapitalCollateralTokenAmount) / quote.totalCollateralTokenAmountAdded;
     return contributedFromInitialCollateral > 0n ? contributedFromInitialCollateral : null;
   }, [
     addedBorrowAssets,
     addedCollateralAssets,
-    collateralAmount,
+    initialCapitalInputAmount,
     isSwapRoute,
-    quote.initialCollateralAmount,
-    quote.totalAddedCollateral,
+    quote.initialCapitalCollateralTokenAmount,
+    quote.totalCollateralTokenAmountAdded,
     useLoanAssetInput,
   ]);
   const holdRewardsApy = useMemo(() => {
@@ -616,9 +620,7 @@ export function AddCollateralAndLeverage({
           <div className="mt-2 space-y-3">
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">
-                  {useLoanAssetInput ? `Start with ${market.loanAsset.symbol}` : `Add Collateral ${market.collateralAsset.symbol}`}
-                </p>
+                <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">Initial Capital</p>
                 {canUseLoanAssetInput && (
                   <div className="flex items-center gap-2">
                     <div className="text-xs text-secondary">Use {market.loanAsset.symbol}</div>
@@ -638,10 +640,10 @@ export function AddCollateralAndLeverage({
               <Input
                 decimals={inputAssetDecimals}
                 max={inputAssetBalance}
-                setValue={setCollateralAmount}
-                setError={setCollateralInputError}
+                setValue={setInitialCapitalInputAmount}
+                setError={setInitialCapitalInputError}
                 exceedMaxErrMessage="Insufficient Balance"
-                value={collateralAmount}
+                value={initialCapitalInputAmount}
                 inputClassName="h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums"
                 endAdornment={
                   <TokenIcon
@@ -654,7 +656,7 @@ export function AddCollateralAndLeverage({
                 }
               />
               <div className="mt-1 flex items-start gap-3 text-xs">
-                {collateralInputError && <p className="text-red-500">{collateralInputError}</p>}
+                {initialCapitalInputError && <p className="text-red-500">{initialCapitalInputError}</p>}
                 <span className="ml-auto text-right text-secondary">
                   Balance: {formatBalance(inputAssetBalance ?? 0n, inputAssetDecimals)} {inputAssetSymbol}
                 </span>
@@ -682,31 +684,27 @@ export function AddCollateralAndLeverage({
               </div>
               <div className="relative min-w-0">
                 {useTargetLtvInput ? (
-                  <>
-                    <Input
-                      decimals={2}
-                      setValue={(nextTargetLtvBps) => {
-                        const clampedTargetLtvBps = clampTargetLtvBps(nextTargetLtvBps, maxTargetLtvBps);
-                        setTargetLtvIntentBps(clampedTargetLtvBps);
-                        setTargetMultiplierBps(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
-                      }}
-                      value={targetLtvIntentBps}
-                      inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
-                      endAdornment={<span className="text-xs text-secondary">%</span>}
-                      debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
-                    />
-                  </>
+                  <Input
+                    decimals={2}
+                    setValue={(nextTargetLtvBps) => {
+                      const clampedTargetLtvBps = clampTargetLtvBps(nextTargetLtvBps, maxTargetLtvBps);
+                      setTargetLtvIntentBps(clampedTargetLtvBps);
+                      setTargetMultiplierBps(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
+                    }}
+                    value={targetLtvIntentBps}
+                    inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
+                    endAdornment={<span className="text-xs text-secondary">%</span>}
+                    debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
+                  />
                 ) : (
-                  <>
-                    <Input
-                      decimals={4}
-                      setValue={syncInputFieldsFromMultiplier}
-                      value={multiplierBps}
-                      inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
-                      endAdornment={<span className="text-xs text-secondary">x</span>}
-                      debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
-                    />
-                  </>
+                  <Input
+                    decimals={4}
+                    setValue={syncInputFieldsFromMultiplier}
+                    value={multiplierBps}
+                    inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
+                    endAdornment={<span className="text-xs text-secondary">x</span>}
+                    debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
+                  />
                 )}
               </div>
             </div>
@@ -881,13 +879,13 @@ export function AddCollateralAndLeverage({
                 isLoading={isLoadingPermit2 || leveragePending || quote.isLoading}
                 disabled={
                   route == null ||
-                  collateralInputError !== null ||
+                  initialCapitalInputError !== null ||
                   quote.error !== null ||
-                  collateralAmount <= 0n ||
+                  initialCapitalInputAmount <= 0n ||
                   !isBundlerAuthorizationReady ||
-                  !hasExecutableInputConversion ||
+                  !hasExecutableInitialCapitalConversion ||
                   !isLeverageFeeReady ||
-                  quote.flashLoanAmount <= 0n ||
+                  quote.flashLoanAssetAmount <= 0n ||
                   projectedOverLimit ||
                   insufficientLiquidity
                 }

@@ -12,7 +12,7 @@ import { useMorphoAuthorization } from '@/hooks/useMorphoAuthorization';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { getNetworkName, SupportedNetworks } from '@/utils/networks';
+import { getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import NetworkFilter from '@/features/markets/components/filters/network-filter';
 
 export default function ToolsPage() {
@@ -159,14 +159,16 @@ export default function ToolsPage() {
       }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
       value: 0n,
       chainId: selectedChainId,
-    }).catch((error: unknown) => {
-      const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to submit Bundler V2 asset sweep.');
-      if (userFacingMessage !== 'User rejected transaction.') {
-        toast.error('Asset sweep failed', userFacingMessage);
-      }
-    }).finally(() => {
-      setIsSweepConfirmModalOpen(false);
-    });
+    })
+      .catch((error: unknown) => {
+        const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to submit Bundler V2 asset sweep.');
+        if (userFacingMessage !== 'User rejected transaction.') {
+          toast.error('Asset sweep failed', userFacingMessage);
+        }
+      })
+      .finally(() => {
+        setIsSweepConfirmModalOpen(false);
+      });
   };
 
   const getInputClassName = () => {
@@ -277,9 +279,7 @@ export default function ToolsPage() {
                   Executes via Bundler V2 multicall on the selected network:
                   <code className="mx-1 rounded bg-hovered px-1 py-0.5 text-xs">erc20Transfer(asset, yourWallet, maxUint256)</code>.
                 </p>
-                <p className="text-sm text-red-500">
-                  ⚠️ This transfers only what Bundler V2 already holds for the asset address.
-                </p>
+                <p className="text-sm text-red-500">⚠️ This transfers only what Bundler V2 already holds for the asset address.</p>
               </div>
 
               <div className="flex flex-col gap-3">
@@ -292,7 +292,10 @@ export default function ToolsPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="bundler-asset-address" className="text-xs text-secondary">
+                  <label
+                    htmlFor="bundler-asset-address"
+                    className="text-xs text-secondary"
+                  >
                     Asset address
                   </label>
                   <input
@@ -315,9 +318,7 @@ export default function ToolsPage() {
                   <p>
                     Network: {getNetworkName(selectedChainId)} ({selectedChainId})
                   </p>
-                  <p>
-                    Bundler V2: {bundlerV2Address === zeroAddress ? 'Not configured' : bundlerV2Address}
-                  </p>
+                  <p>Bundler V2: {bundlerV2Address === zeroAddress ? 'Not configured' : bundlerV2Address}</p>
                   <p>Recipient: {account ?? 'Connect wallet'}</p>
                 </div>
 
@@ -360,7 +361,10 @@ export default function ToolsPage() {
               </div>
             </ModalBody>
             <ModalFooter>
-              <Button variant="default" onClick={onClose}>
+              <Button
+                variant="default"
+                onClick={onClose}
+              >
                 Cancel
               </Button>
               <Button

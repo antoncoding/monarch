@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import Input from '@/components/Input/Input';

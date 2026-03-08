@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useReadContract } from 'wagmi';
+import { zeroAddress } from 'viem';
+import { useReadContracts } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { withSlippageCeil, withSlippageFloor } from './leverage/math';
@@ -54,36 +55,41 @@ export function useDeleverageQuote({
 }: UseDeleverageQuoteParams): DeleverageQuote {
   const bufferedBorrowAssets = withSlippageCeil(currentBorrowAssets, slippageBps);
   const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
+  const erc4626VaultAddress = route?.kind === 'erc4626' ? route.collateralVault : zeroAddress;
 
   const {
-    data: erc4626PreviewRedeem,
-    isLoading: isLoadingRedeem,
-    error: redeemError,
-  } = useReadContract({
-    address: route?.kind === 'erc4626' ? route.collateralVault : undefined,
-    abi: erc4626Abi,
-    functionName: 'previewRedeem',
-    args: [withdrawCollateralAmount],
-    chainId,
+    data: erc4626PreviewData,
+    isLoading: isLoadingErc4626Previews,
+    error: erc4626PreviewError,
+  } = useReadContracts({
+    contracts: [
+      {
+        address: erc4626VaultAddress,
+        abi: erc4626Abi,
+        functionName: 'previewRedeem',
+        // `previewRedeem(collateral shares)` -> loan-token assets returned by redeeming that exact share amount.
+        args: [withdrawCollateralAmount],
+        chainId,
+      },
+      {
+        address: erc4626VaultAddress,
+        abi: erc4626Abi,
+        functionName: 'previewWithdraw',
+        // `previewWithdraw(buffered loan assets)` -> collateral shares needed to withdraw that exact asset amount.
+        args: [bufferedBorrowAssets],
+        chainId,
+      },
+    ],
+    allowFailure: false,
     query: {
-      enabled: route?.kind === 'erc4626' && withdrawCollateralAmount > 0n,
+      enabled: route?.kind === 'erc4626' && (withdrawCollateralAmount > 0n || bufferedBorrowAssets > 0n),
     },
   });
 
-  const {
-    data: erc4626PreviewWithdrawForDebt,
-    isLoading: isLoadingWithdraw,
-    error: withdrawError,
-  } = useReadContract({
-    address: route?.kind === 'erc4626' ? route.collateralVault : undefined,
-    abi: erc4626Abi,
-    functionName: 'previewWithdraw',
-    args: [bufferedBorrowAssets],
-    chainId,
-    query: {
-      enabled: route?.kind === 'erc4626' && bufferedBorrowAssets > 0n,
-    },
-  });
+  const [previewRedeemLoanAssetsFromCollateralShares, previewWithdrawCollateralSharesForBufferedDebtAssets] = useMemo(
+    () => (erc4626PreviewData as readonly [bigint, bigint] | undefined) ?? [0n, 0n],
+    [erc4626PreviewData],
+  );
 
   const swapRepayQuoteQuery = useQuery({
     queryKey: [
@@ -112,12 +118,9 @@ export function useDeleverageQuote({
         side: 'SELL',
       });
 
-      const quotedSellCollateral = BigInt(sellRoute.srcAmount);
-      if (quotedSellCollateral !== withdrawCollateralAmount) {
-        throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-      }
-
       return {
+        // Preview uses the requested unwind amount as the authoritative sell size.
+        // The submit path still re-validates the executable calldata before sending.
         rawRouteRepayAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
         priceRoute: sellRoute,
       };
@@ -181,8 +184,8 @@ export function useDeleverageQuote({
   const rawRouteRepayAmount = useMemo(() => {
     if (!route || withdrawCollateralAmount <= 0n) return 0n;
     if (route.kind === 'swap') return swapRepayQuote.rawRouteRepayAmount;
-    return (erc4626PreviewRedeem as bigint | undefined) ?? 0n;
-  }, [route, withdrawCollateralAmount, swapRepayQuote.rawRouteRepayAmount, erc4626PreviewRedeem]);
+    return previewRedeemLoanAssetsFromCollateralShares;
+  }, [route, withdrawCollateralAmount, swapRepayQuote.rawRouteRepayAmount, previewRedeemLoanAssetsFromCollateralShares]);
 
   const repayAmount = useMemo(() => {
     if (rawRouteRepayAmount <= 0n) return 0n;
@@ -200,14 +203,14 @@ export function useDeleverageQuote({
       if (!userAddress || swapMaxCollateralForDebtQuery.error) return 0n;
       return swapMaxCollateralForDebtQuery.data?.maxCollateralForDebtRepay ?? 0n;
     }
-    return (erc4626PreviewWithdrawForDebt as bigint | undefined) ?? 0n;
+    return previewWithdrawCollateralSharesForBufferedDebtAssets;
   }, [
     route,
     currentBorrowAssets,
     swapMaxCollateralForDebtQuery.data,
     swapMaxCollateralForDebtQuery.error,
     userAddress,
-    erc4626PreviewWithdrawForDebt,
+    previewWithdrawCollateralSharesForBufferedDebtAssets,
   ]);
 
   const closeRouteRequiresResolution = useMemo(() => {
@@ -280,7 +283,7 @@ export function useDeleverageQuote({
       if (!routeError) return null;
       return routeError instanceof Error ? routeError.message : 'Failed to quote Velora swap route for deleverage.';
     }
-    const routeError = redeemError ?? withdrawError;
+    const routeError = erc4626PreviewError;
     if (!routeError) return null;
     return routeError instanceof Error ? routeError.message : 'Failed to quote deleverage route';
   }, [
@@ -292,15 +295,14 @@ export function useDeleverageQuote({
     currentBorrowShares,
     swapMaxCollateralForDebtQuery.error,
     swapRepayQuoteQuery.error,
-    redeemError,
-    withdrawError,
+    erc4626PreviewError,
   ]);
 
   const isLoading =
     !!route &&
     (route.kind === 'swap'
       ? swapRepayQuoteQuery.isLoading || swapRepayQuoteQuery.isFetching || closeRouteRequiresResolution
-      : isLoadingRedeem || isLoadingWithdraw);
+      : isLoadingErc4626Previews);
 
   return {
     repayAmount,

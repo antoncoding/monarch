@@ -13,11 +13,7 @@ import { useDeleverageQuote } from '@/hooks/useDeleverageQuote';
 import { useDeleverageTransaction } from '@/hooks/useDeleverageTransaction';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LeverageRoute } from '@/hooks/leverage/types';
-import {
-  computeLtv,
-  formatLtvPercent,
-  getLTVColor,
-} from '@/modals/borrow/components/helpers';
+import { computeLtv, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 
 type RemoveCollateralAndDeleverageProps = {

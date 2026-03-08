@@ -365,14 +365,11 @@ export const buildVeloraTransactionPayload = async ({
     });
   }
 
-  const quotedSourceAmount = parseVeloraBigIntField(priceRoute.srcAmount, 'priceRoute.srcAmount', priceRoute);
-  if (quotedSourceAmount !== srcAmount) {
-    throw new VeloraApiError('Velora route source amount does not match the requested transaction source amount', 400, {
-      requestedSourceAmount: srcAmount.toString(),
-      quotedSourceAmount: quotedSourceAmount.toString(),
-      priceRoute,
-    });
-  }
+  // The transaction request's `srcAmount` is the execution-authoritative sell amount.
+  // Some routes can echo non-authoritative source metadata while still producing calldata
+  // with the exact requested sell amount, so we validate the built payload downstream
+  // instead of rejecting here on route metadata alone.
+  parseVeloraBigIntField(priceRoute.srcAmount, 'priceRoute.srcAmount', priceRoute);
 
   const query = new URLSearchParams();
   if (ignoreChecks) {
