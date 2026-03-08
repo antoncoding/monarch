@@ -1,40 +1,26 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeAbiParameters, encodeFunctionData, isAddress, isAddressEqual, keccak256, maxUint256, zeroHash } from 'viem';
+import type { Address } from 'viem';
+import type { VeloraPriceRoute } from '@/features/swap/api/velora';
 import { useConnection } from 'wagmi';
-import morphoBundlerAbi from '@/abis/bundlerV2';
-import { bundlerV3Abi } from '@/abis/bundlerV3';
-import morphoAbi from '@/abis/morpho';
-import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
-import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
-import permit2Abi from '@/abis/permit2';
 import { getLeverageFee } from '@/config/fees';
-import { LEVERAGE_FEE_RECIPIENT, resolveErc4626RouteBundler } from '@/config/leverage';
-import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
+import { resolveErc4626RouteBundler } from '@/config/leverage';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useTransactionTracking } from '@/hooks/useTransactionTracking';
+import { leverageWithErc4626Deposit } from '@/hooks/leverage/leverageWithErc4626Deposit';
+import { leverageWithSwap } from '@/hooks/leverage/leverageWithSwap';
+import { buildLeverageMarketParams, type LeverageStepType } from '@/hooks/leverage/transaction-shared';
+import type { LeverageRoute } from '@/hooks/leverage/types';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
-import { getMorphoAddress, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { PERMIT2_ADDRESS } from '@/utils/permit2';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
-import { type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets, readCalldataUint256 } from './leverage/bundler3';
-import { computeBorrowSharesWithBuffer, withSlippageFloor } from './leverage/math';
-import type { LeverageRoute } from './leverage/types';
-import { isVeloraBypassablePrecheckError } from './leverage/velora-precheck';
 
-export type LeverageStepType =
-  | 'approve_permit2'
-  | 'authorize_bundler_sig'
-  | 'sign_permit'
-  | 'authorize_bundler_tx'
-  | 'approve_token'
-  | 'execute';
+export type { LeverageStepType } from '@/hooks/leverage/transaction-shared';
 
 type UseLeverageTransactionProps = {
   market: Market;
@@ -81,12 +67,14 @@ export function useLeverageTransaction({
     if (route?.kind === 'swap') {
       return route.bundler3Address;
     }
+
     return resolveErc4626RouteBundler(market.morphoBlue.chain.id, market.uniqueKey);
   }, [route, market.uniqueKey, market.morphoBlue.chain.id]);
   const authorizationTarget = useMemo<Address>(() => {
     if (route?.kind === 'swap') {
       return route.generalAdapterAddress;
     }
+
     return bundlerAddress;
   }, [route, bundlerAddress]);
 
@@ -147,6 +135,16 @@ export function useLeverageTransaction({
       if (onSuccess) void onSuccess();
     },
   });
+  const trackingMetadata = useMemo(
+    () => ({
+      title: 'Leverage',
+      description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
+      tokenSymbol: inputTokenSymbol,
+      amount: collateralAmount,
+      marketId: market.uniqueKey,
+    }),
+    [market.collateralAsset.symbol, market.loanAsset.symbol, inputTokenSymbol, collateralAmount, market.uniqueKey],
+  );
 
   const getStepsForFlow = useCallback(
     (isPermit2: boolean, isSwap: boolean) => {
@@ -261,6 +259,7 @@ export function useLeverageTransaction({
       toast.info('Leverage unavailable', 'Collateral price unavailable for fee calculation.');
       return;
     }
+
     const leverageFeeAmount = getLeverageFee({
       amount: totalAddedCollateral,
       assetPriceUsd: collateralAssetPriceUsd,
@@ -272,485 +271,64 @@ export function useLeverageTransaction({
     }
 
     try {
-      const txs: `0x${string}`[] = [];
-      let swapRouteAuthorizationCall: Bundler3Call | null = null;
-      let swapRoutePermit2Call: Bundler3Call | null = null;
-
-      if (usePermit2ForRoute) {
-        if (!permit2Authorized) {
-          tracking.update('approve_permit2');
-          await authorizePermit2();
-          await new Promise((resolve) => setTimeout(resolve, 800));
-        }
-
-        if (!isBundlerAuthorized) {
-          tracking.update('authorize_bundler_sig');
-        }
-        const { authorized, authorizationTxData, authorizationSignatureData } = await ensureBundlerAuthorization({ mode: 'signature' });
-        if (!authorized) {
-          throw new Error('Failed to authorize Bundler via signature.');
-        }
-        if (isBundlerAuthorized && authorizationTxData) {
-          throw new Error('Authorization state changed. Please retry leverage.');
-        }
-        if (authorizationTxData) {
-          if (route.kind === 'swap') {
-            if (!authorizationSignatureData) {
-              throw new Error('Missing Morpho authorization signature payload for swap-backed leverage.');
-            }
-            swapRouteAuthorizationCall = {
-              to: getMorphoAddress(market.morphoBlue.chain.id) as Address,
-              data: encodeFunctionData({
-                abi: morphoAbi,
-                functionName: 'setAuthorizationWithSig',
-                args: [authorizationSignatureData.authorization, authorizationSignatureData.signature],
-              }),
-              value: 0n,
-              skipRevert: false,
-              callbackHash: zeroHash,
-            };
-          } else {
-            txs.push(authorizationTxData);
-          }
-          await new Promise((resolve) => setTimeout(resolve, 800));
-        }
-
-        tracking.update('sign_permit');
-        const { sigs, permitSingle } = await signForBundlers();
-        if (route.kind === 'swap') {
-          swapRoutePermit2Call = {
-            to: PERMIT2_ADDRESS,
-            data: encodeFunctionData({
-              abi: permit2Abi,
-              functionName: 'permit',
-              args: [account as Address, permitSingle, sigs],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          };
-        } else {
-          txs.push(
-            encodeFunctionData({
-              abi: morphoBundlerAbi,
-              functionName: 'approve2',
-              args: [permitSingle, sigs, false],
-            }),
-          );
-        }
-      } else {
-        if (!isBundlerAuthorized) {
-          tracking.update('authorize_bundler_tx');
-          const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
-          if (!authorized) {
-            throw new Error('Failed to authorize Bundler via transaction.');
-          }
-        }
-
-        if (!isApproved) {
-          tracking.update('approve_token');
-          await approve();
-          await new Promise((resolve) => setTimeout(resolve, 900));
-        }
-      }
-
-      const marketParams = {
-        loanToken: market.loanAsset.address as Address,
-        collateralToken: market.collateralAsset.address as Address,
-        oracle: market.oracleAddress as Address,
-        irm: market.irmAddress as Address,
-        lltv: BigInt(market.lltv),
-      };
+      const marketParams = buildLeverageMarketParams(market);
 
       if (route.kind === 'swap') {
-        if (!Number.isFinite(slippageBps) || slippageBps <= 0) {
-          throw new Error('Invalid slippage tolerance. Please set a positive slippage value.');
-        }
         if (!swapPriceRoute) {
           throw new Error('Missing Velora swap quote for leverage.');
         }
-        const preFlashCollateralFee =
-          !isLoanAssetInput && inputTokenAmountForTransfer > 0n
-            ? leverageFeeAmount < inputTokenAmountForTransfer
-              ? leverageFeeAmount
-              : inputTokenAmountForTransfer
-            : 0n;
-        const callbackCollateralFee = leverageFeeAmount - preFlashCollateralFee;
-        const preFlashCollateralSupplyAmount = inputTokenAmountForTransfer - preFlashCollateralFee;
-        const swapExecutionAddress = route.paraswapAdapterAddress;
-        // WHY: when starting from loan on a swap route, we combine the user's loan input
-        // with the flash-loaned loan and sell them together before supplying collateral.
-        const totalLoanSellAmount = isLoanAssetInput ? inputTokenAmountForTransfer + flashLoanAmount : flashLoanAmount;
-        if (totalLoanSellAmount <= 0n) {
-          throw new Error('Invalid total sell amount for swap-backed leverage.');
-        }
 
-        const activePriceRoute = swapPriceRoute;
-        const swapTxPayload = await (async () => {
-          const buildPayload = async (ignoreChecks: boolean) =>
-            buildVeloraTransactionPayload({
-              srcToken: market.loanAsset.address,
-              srcDecimals: market.loanAsset.decimals,
-              destToken: market.collateralAsset.address,
-              destDecimals: market.collateralAsset.decimals,
-              srcAmount: totalLoanSellAmount,
-              network: market.morphoBlue.chain.id,
-              userAddress: swapExecutionAddress,
-              priceRoute: activePriceRoute,
-              slippageBps,
-              ignoreChecks,
-            });
-
-          try {
-            return await buildPayload(false);
-          } catch (buildError: unknown) {
-            if (isVeloraRateChangedError(buildError)) {
-              throw new Error('Leverage quote changed. Please review the updated preview and try again.');
-            }
-            if (
-              !isVeloraBypassablePrecheckError({
-                error: buildError,
-                sourceTokenAddress: market.loanAsset.address,
-                sourceTokenSymbol: market.loanAsset.symbol,
-              })
-            ) {
-              throw buildError;
-            }
-
-            try {
-              return await buildPayload(true);
-            } catch (fallbackBuildError: unknown) {
-              if (isVeloraRateChangedError(fallbackBuildError)) {
-                throw new Error('Leverage quote changed. Please review the updated preview and try again.');
-              }
-              throw fallbackBuildError;
-            }
-          }
-        })();
-
-        const trustedVeloraTargets = [activePriceRoute.contractAddress, activePriceRoute.tokenTransferProxy].filter(
-          (candidate): candidate is Address => typeof candidate === 'string' && isAddress(candidate),
-        );
-        if (trustedVeloraTargets.length === 0 || !trustedVeloraTargets.some((target) => isAddressEqual(swapTxPayload.to, target))) {
-          throw new Error('Leverage quote changed. Please review the updated preview and try again.');
-        }
-
-        const expectedCollateralOut = isLoanAssetInput ? totalAddedCollateral : flashCollateralAmount;
-        if (expectedCollateralOut <= 0n) {
-          throw new Error('Velora returned zero collateral output for leverage swap.');
-        }
-
-        const sellOffsets = getParaswapSellOffsets(swapTxPayload.data);
-        const quotedSellAmount = BigInt(activePriceRoute.srcAmount);
-        const calldataSellAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
-        const calldataMinCollateralOut = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
-        if (
-          quotedSellAmount !== totalLoanSellAmount ||
-          calldataSellAmount !== totalLoanSellAmount ||
-          calldataMinCollateralOut !== expectedCollateralOut
-        ) {
-          throw new Error('Leverage quote changed. Please review the updated preview and try again.');
-        }
-
-        const callbackBundle: Bundler3Call[] = [
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'erc20Transfer',
-              args: [market.loanAsset.address as Address, route.paraswapAdapterAddress, totalLoanSellAmount],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.paraswapAdapterAddress,
-            data: encodeFunctionData({
-              abi: paraswapAdapterAbi,
-              functionName: 'sell',
-              args: [
-                swapTxPayload.to,
-                swapTxPayload.data,
-                market.loanAsset.address as Address,
-                market.collateralAsset.address as Address,
-                false,
-                sellOffsets,
-                route.generalAdapterAddress,
-              ],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-        ];
-
-        if (callbackCollateralFee > 0n) {
-          callbackBundle.push({
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'erc20Transfer',
-              args: [market.collateralAsset.address as Address, LEVERAGE_FEE_RECIPIENT, callbackCollateralFee],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          });
-        }
-
-        callbackBundle.push(
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'morphoSupplyCollateral',
-              args: [marketParams, maxUint256, account as Address, '0x'],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'morphoBorrow',
-              args: [marketParams, flashLoanAmount, 0n, 0n, route.generalAdapterAddress],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-        );
-        const callbackBundleData = encodeBundler3Calls(callbackBundle);
-
-        const bundleCalls: Bundler3Call[] = [];
-        if (swapRouteAuthorizationCall) {
-          bundleCalls.push(swapRouteAuthorizationCall);
-        }
-        if (swapRoutePermit2Call) {
-          bundleCalls.push(swapRoutePermit2Call);
-        }
-
-        if (inputTokenAmountForTransfer > 0n) {
-          bundleCalls.push({
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: usePermit2ForRoute ? 'permit2TransferFrom' : 'erc20TransferFrom',
-              args: [inputTokenAddress, route.generalAdapterAddress, inputTokenAmountForTransfer],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          });
-          if (!isLoanAssetInput) {
-            if (preFlashCollateralFee > 0n) {
-              bundleCalls.push({
-                to: route.generalAdapterAddress,
-                data: encodeFunctionData({
-                  abi: morphoGeneralAdapterV1Abi,
-                  functionName: 'erc20Transfer',
-                  args: [market.collateralAsset.address as Address, LEVERAGE_FEE_RECIPIENT, preFlashCollateralFee],
-                }),
-                value: 0n,
-                skipRevert: false,
-                callbackHash: zeroHash,
-              });
-            }
-            if (preFlashCollateralSupplyAmount > 0n) {
-              bundleCalls.push({
-                to: route.generalAdapterAddress,
-                data: encodeFunctionData({
-                  abi: morphoGeneralAdapterV1Abi,
-                  functionName: 'morphoSupplyCollateral',
-                  args: [marketParams, preFlashCollateralSupplyAmount, account as Address, '0x'],
-                }),
-                value: 0n,
-                skipRevert: false,
-                callbackHash: zeroHash,
-              });
-            }
-          }
-        }
-
-        bundleCalls.push({
-          to: route.generalAdapterAddress,
-          data: encodeFunctionData({
-            abi: morphoGeneralAdapterV1Abi,
-            functionName: 'morphoFlashLoan',
-            args: [market.loanAsset.address as Address, flashLoanAmount, callbackBundleData],
-          }),
-          value: 0n,
-          skipRevert: false,
-          callbackHash: keccak256(callbackBundleData),
-        });
-        // Safety net: sweep any residual loan/collateral balances from adapters to the user.
-        bundleCalls.push(
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'erc20Transfer',
-              args: [market.loanAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'erc20Transfer',
-              args: [market.collateralAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.paraswapAdapterAddress,
-            data: encodeFunctionData({
-              abi: paraswapAdapterAbi,
-              functionName: 'erc20Transfer',
-              args: [market.loanAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.paraswapAdapterAddress,
-            data: encodeFunctionData({
-              abi: paraswapAdapterAbi,
-              functionName: 'erc20Transfer',
-              args: [market.collateralAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-        );
-
-        tracking.update('execute');
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        await sendTransactionAsync({
-          account,
-          to: bundlerAddress,
-          data: (encodeFunctionData({
-            abi: bundlerV3Abi,
-            functionName: 'multicall',
-            args: [bundleCalls],
-          }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
-          value: 0n,
+        await leverageWithSwap({
+          account: account as Address,
+          bundlerAddress,
+          market,
+          marketParams,
+          route,
+          inputTokenAddress,
+          inputTokenAmountForTransfer,
+          isLoanAssetInput,
+          flashLoanAmount,
+          flashCollateralAmount,
+          totalAddedCollateral,
+          leverageFeeAmount,
+          swapPriceRoute,
+          slippageBps,
+          usePermit2: usePermit2ForRoute,
+          permit2Authorized,
+          isBundlerAuthorized,
+          authorizePermit2,
+          ensureBundlerAuthorization,
+          signForBundlers,
+          isApproved,
+          approve,
+          updateStep: tracking.update,
+          sendTransactionAsync,
         });
       } else {
-        const maxBorrowShares = computeBorrowSharesWithBuffer({
-          borrowAssets: flashLoanAmount,
-          totalBorrowAssets: BigInt(market.state.borrowAssets),
-          totalBorrowShares: BigInt(market.state.borrowShares),
-        });
-
-        if (inputTokenAmountForTransfer > 0n) {
-          txs.push(
-            encodeFunctionData({
-              abi: morphoBundlerAbi,
-              functionName: usePermit2ForRoute ? 'transferFrom2' : 'erc20TransferFrom',
-              args: [inputTokenAddress, inputTokenAmountForTransfer],
-            }),
-          );
-        }
-
-        if (isLoanAssetInput) {
-          // WHY: this lets users start with loan-token underlying for ERC4626 markets.
-          // We mint shares first so all leverage math and downstream Morpho collateral is in share units.
-          txs.push(
-            encodeFunctionData({
-              abi: morphoBundlerAbi,
-              functionName: 'erc4626Deposit',
-              args: [
-                route.collateralVault,
-                collateralAmount,
-                withSlippageFloor(collateralAmountInCollateralToken),
-                bundlerAddress as Address,
-              ],
-            }),
-          );
-        }
-
-        const callbackTxs: `0x${string}`[] = [
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc4626Deposit',
-            args: [route.collateralVault, flashLoanAmount, withSlippageFloor(flashCollateralAmount), bundlerAddress as Address],
-          }),
-        ];
-
-        if (leverageFeeAmount > 0n) {
-          callbackTxs.push(
-            encodeFunctionData({
-              abi: morphoBundlerAbi,
-              functionName: 'erc20Transfer',
-              args: [market.collateralAsset.address as Address, LEVERAGE_FEE_RECIPIENT, leverageFeeAmount],
-            }),
-          );
-        }
-
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'morphoSupplyCollateral',
-            args: [marketParams, maxUint256, account as Address, '0x'],
-          }),
-        );
-
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'morphoBorrow',
-            args: [marketParams, flashLoanAmount, 0n, maxBorrowShares, bundlerAddress as Address],
-          }),
-        );
-
-        const flashLoanCallbackData = encodeAbiParameters([{ type: 'bytes[]' }], [callbackTxs]);
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'morphoFlashLoan',
-            args: [market.loanAsset.address as Address, flashLoanAmount, flashLoanCallbackData],
-          }),
-        );
-        // Safety net: sweep any residual loan/collateral balances from bundler to the user.
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc20Transfer',
-            args: [market.loanAsset.address as Address, account as Address, maxUint256],
-          }),
-        );
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc20Transfer',
-            args: [market.collateralAsset.address as Address, account as Address, maxUint256],
-          }),
-        );
-
-        tracking.update('execute');
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        await sendTransactionAsync({
-          account,
-          to: bundlerAddress,
-          data: (encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'multicall',
-            args: [txs],
-          }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
-          value: 0n,
+        await leverageWithErc4626Deposit({
+          account: account as Address,
+          bundlerAddress,
+          market,
+          marketParams,
+          route,
+          collateralAmount,
+          collateralAmountInCollateralToken,
+          inputTokenAddress,
+          inputTokenAmountForTransfer,
+          isLoanAssetInput,
+          flashCollateralAmount,
+          flashLoanAmount,
+          leverageFeeAmount,
+          usePermit2: usePermit2ForRoute,
+          permit2Authorized,
+          isBundlerAuthorized,
+          authorizePermit2,
+          ensureBundlerAuthorization,
+          signForBundlers,
+          isApproved,
+          approve,
+          updateStep: tracking.update,
+          sendTransactionAsync,
         });
       }
 
@@ -772,12 +350,12 @@ export function useLeverageTransaction({
     }
   }, [
     account,
-    market,
     route,
+    market,
     collateralAmount,
     collateralAmountInCollateralToken,
-    inputTokenAmountForTransfer,
     inputTokenAddress,
+    inputTokenAmountForTransfer,
     isLoanAssetInput,
     flashCollateralAmount,
     flashLoanAmount,
@@ -800,60 +378,58 @@ export function useLeverageTransaction({
     toast,
   ]);
 
-  const approveAndLeverage = useCallback(async () => {
-    if (!account) {
-      toast.info('No account connected', 'Please connect your wallet.');
-      return;
-    }
-
-    try {
-      const initialStep: LeverageStepType = usePermit2ForRoute
-        ? permit2Authorized
-          ? isBundlerAuthorized
-            ? 'sign_permit'
-            : 'authorize_bundler_sig'
-          : 'approve_permit2'
-        : isBundlerAuthorized
-          ? isApproved
-            ? 'execute'
-            : 'approve_token'
-          : 'authorize_bundler_tx';
-      tracking.start(
-        getStepsForFlow(usePermit2ForRoute, isSwapRoute),
-        {
-          title: 'Leverage',
-          description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
-          tokenSymbol: inputTokenSymbol,
-          amount: collateralAmount,
-          marketId: market.uniqueKey,
-        },
-        initialStep,
-      );
-
-      await executeLeverage();
-    } catch (error: unknown) {
-      console.error('Error in approveAndLeverage:', error);
-      tracking.fail();
-      const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to process leverage transaction');
-      if (userFacingMessage !== 'User rejected transaction.') {
-        toast.error('Error', userFacingMessage);
+  const runLeverageFlow = useCallback(
+    async ({
+      initialStep,
+      usePermit2Flow,
+      errorTitle,
+      logLabel,
+    }: {
+      initialStep: LeverageStepType;
+      usePermit2Flow: boolean;
+      errorTitle: string;
+      logLabel: string;
+    }) => {
+      if (!account) {
+        toast.info('No account connected', 'Please connect your wallet.');
+        return;
       }
-    }
-  }, [
-    account,
-    usePermit2ForRoute,
-    permit2Authorized,
-    isBundlerAuthorized,
-    isApproved,
-    tracking,
-    getStepsForFlow,
-    isSwapRoute,
-    market,
-    inputTokenSymbol,
-    collateralAmount,
-    executeLeverage,
-    toast,
-  ]);
+
+      try {
+        tracking.start(getStepsForFlow(usePermit2Flow, isSwapRoute), trackingMetadata, initialStep);
+        await executeLeverage();
+      } catch (error: unknown) {
+        console.error(`Error in ${logLabel}:`, error);
+        tracking.fail();
+        const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to process leverage transaction');
+        if (userFacingMessage !== 'User rejected transaction.') {
+          toast.error(errorTitle, userFacingMessage);
+        }
+      }
+    },
+    [account, tracking, getStepsForFlow, isSwapRoute, trackingMetadata, executeLeverage, toast],
+  );
+
+  const approveAndLeverage = useCallback(async () => {
+    const initialStep: LeverageStepType = usePermit2ForRoute
+      ? permit2Authorized
+        ? isBundlerAuthorized
+          ? 'sign_permit'
+          : 'authorize_bundler_sig'
+        : 'approve_permit2'
+      : isBundlerAuthorized
+        ? isApproved
+          ? 'execute'
+          : 'approve_token'
+        : 'authorize_bundler_tx';
+
+    await runLeverageFlow({
+      initialStep,
+      usePermit2Flow: usePermit2ForRoute,
+      errorTitle: 'Error',
+      logLabel: 'approveAndLeverage',
+    });
+  }, [usePermit2ForRoute, permit2Authorized, isBundlerAuthorized, isApproved, runLeverageFlow]);
 
   const signAndLeverage = useCallback(async () => {
     if (!usePermit2ForRoute) {
@@ -861,53 +437,19 @@ export function useLeverageTransaction({
       return;
     }
 
-    if (!account) {
-      toast.info('No account connected', 'Please connect your wallet.');
-      return;
-    }
+    const initialStep: LeverageStepType = permit2Authorized
+      ? isBundlerAuthorized
+        ? 'sign_permit'
+        : 'authorize_bundler_sig'
+      : 'approve_permit2';
 
-    try {
-      const initialStep: LeverageStepType = permit2Authorized
-        ? isBundlerAuthorized
-          ? 'sign_permit'
-          : 'authorize_bundler_sig'
-        : 'approve_permit2';
-
-      tracking.start(
-        getStepsForFlow(true, isSwapRoute),
-        {
-          title: 'Leverage',
-          description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
-          tokenSymbol: inputTokenSymbol,
-          amount: collateralAmount,
-          marketId: market.uniqueKey,
-        },
-        initialStep,
-      );
-
-      await executeLeverage();
-    } catch (error: unknown) {
-      console.error('Error in signAndLeverage:', error);
-      tracking.fail();
-      const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'Failed to process leverage transaction');
-      if (userFacingMessage !== 'User rejected transaction.') {
-        toast.error('Transaction Error', userFacingMessage);
-      }
-    }
-  }, [
-    usePermit2ForRoute,
-    approveAndLeverage,
-    account,
-    tracking,
-    getStepsForFlow,
-    permit2Authorized,
-    isBundlerAuthorized,
-    market,
-    inputTokenSymbol,
-    collateralAmount,
-    executeLeverage,
-    toast,
-  ]);
+    await runLeverageFlow({
+      initialStep,
+      usePermit2Flow: true,
+      errorTitle: 'Transaction Error',
+      logLabel: 'signAndLeverage',
+    });
+  }, [usePermit2ForRoute, approveAndLeverage, permit2Authorized, isBundlerAuthorized, runLeverageFlow]);
 
   const isLoading =
     leveragePending || (usePermit2ForRoute && isLoadingPermit2) || !isAuthorizationReadyForRoute || isApproving || isAuthorizingBundler;

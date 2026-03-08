@@ -682,31 +682,27 @@ export function AddCollateralAndLeverage({
               </div>
               <div className="relative min-w-0">
                 {useTargetLtvInput ? (
-                  <>
-                    <Input
-                      decimals={2}
-                      setValue={(nextTargetLtvBps) => {
-                        const clampedTargetLtvBps = clampTargetLtvBps(nextTargetLtvBps, maxTargetLtvBps);
-                        setTargetLtvIntentBps(clampedTargetLtvBps);
-                        setTargetMultiplierBps(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
-                      }}
-                      value={targetLtvIntentBps}
-                      inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
-                      endAdornment={<span className="text-xs text-secondary">%</span>}
-                      debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
-                    />
-                  </>
+                  <Input
+                    decimals={2}
+                    setValue={(nextTargetLtvBps) => {
+                      const clampedTargetLtvBps = clampTargetLtvBps(nextTargetLtvBps, maxTargetLtvBps);
+                      setTargetLtvIntentBps(clampedTargetLtvBps);
+                      setTargetMultiplierBps(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
+                    }}
+                    value={targetLtvIntentBps}
+                    inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
+                    endAdornment={<span className="text-xs text-secondary">%</span>}
+                    debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
+                  />
                 ) : (
-                  <>
-                    <Input
-                      decimals={4}
-                      setValue={syncInputFieldsFromMultiplier}
-                      value={multiplierBps}
-                      inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
-                      endAdornment={<span className="text-xs text-secondary">x</span>}
-                      debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
-                    />
-                  </>
+                  <Input
+                    decimals={4}
+                    setValue={syncInputFieldsFromMultiplier}
+                    value={multiplierBps}
+                    inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
+                    endAdornment={<span className="text-xs text-secondary">x</span>}
+                    debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
+                  />
                 )}
               </div>
             </div>
