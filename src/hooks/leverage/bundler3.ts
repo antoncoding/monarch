@@ -1,4 +1,4 @@
-import { type Address, encodeAbiParameters } from 'viem';
+import { type Abi, type Address, encodeAbiParameters, encodeFunctionData, maxUint256, zeroHash } from 'viem';
 
 const PARASWAP_SELL_EXACT_AMOUNT_OFFSET = 100n;
 const PARASWAP_SELL_MIN_DEST_AMOUNT_OFFSET = 132n;
@@ -52,4 +52,43 @@ export const readCalldataUint256 = (callData: `0x${string}`, offset: bigint): bi
   }
 
   return BigInt(`0x${callData.slice(start, end)}`);
+};
+
+type Bundler3SweepTarget = {
+  adapterAbi: Abi;
+  adapterAddress: Address;
+};
+
+/**
+ * Explicitly sweep every touched adapter/token pair after execution.
+ * This keeps residual dust from remaining in Bundler3 adapters after flash-loan settlement.
+ */
+export const buildBundler3Erc20SweepCalls = ({
+  recipient,
+  sweepTargets,
+  tokenAddresses,
+}: {
+  recipient: Address;
+  sweepTargets: Bundler3SweepTarget[];
+  tokenAddresses: Address[];
+}): Bundler3Call[] => {
+  const sweepCalls: Bundler3Call[] = [];
+
+  for (const { adapterAbi, adapterAddress } of sweepTargets) {
+    for (const tokenAddress of tokenAddresses) {
+      sweepCalls.push({
+        to: adapterAddress,
+        data: encodeFunctionData({
+          abi: adapterAbi,
+          functionName: 'erc20Transfer',
+          args: [tokenAddress, recipient, maxUint256],
+        }),
+        value: 0n,
+        skipRevert: false,
+        callbackHash: zeroHash,
+      });
+    }
+  }
+
+  return sweepCalls;
 };

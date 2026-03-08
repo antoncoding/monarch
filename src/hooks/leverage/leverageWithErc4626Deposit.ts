@@ -5,11 +5,11 @@ import { MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market } from '@/utils/types';
 import { getBorrowSharesSlippageAmount, withSlippageFloor } from './math';
 import {
-  type EnsureLeverageAuthorization,
-  type LeverageMarketParams,
+  type EnsureBundlerAuthorization,
+  type MorphoMarketParams,
   type LeverageStepType,
-  type SendLeverageTransaction,
-  type SignForLeverageBundlers,
+  type SendBundlerTransaction,
+  type SignForBundlers,
   sleep,
 } from './transaction-shared';
 import type { Erc4626LeverageRoute } from './types';
@@ -18,7 +18,7 @@ type LeverageWithErc4626DepositParams = {
   account: Address;
   bundlerAddress: Address;
   market: Market;
-  marketParams: LeverageMarketParams;
+  marketParams: MorphoMarketParams;
   route: Erc4626LeverageRoute;
   collateralAmount: bigint;
   collateralAmountInCollateralToken: bigint;
@@ -32,12 +32,12 @@ type LeverageWithErc4626DepositParams = {
   permit2Authorized: boolean;
   isBundlerAuthorized: boolean | undefined;
   authorizePermit2: () => Promise<unknown>;
-  ensureBundlerAuthorization: EnsureLeverageAuthorization;
-  signForBundlers: SignForLeverageBundlers;
+  ensureBundlerAuthorization: EnsureBundlerAuthorization;
+  signForBundlers: SignForBundlers;
   isApproved: boolean;
   approve: () => Promise<unknown>;
   updateStep: (step: LeverageStepType) => void;
-  sendTransactionAsync: SendLeverageTransaction;
+  sendTransactionAsync: SendBundlerTransaction;
 };
 
 export const leverageWithErc4626Deposit = async ({

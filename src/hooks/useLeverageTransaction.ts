@@ -12,7 +12,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { leverageWithErc4626Deposit } from '@/hooks/leverage/leverageWithErc4626Deposit';
 import { leverageWithSwap } from '@/hooks/leverage/leverageWithSwap';
-import { buildLeverageMarketParams, type LeverageStepType } from '@/hooks/leverage/transaction-shared';
+import { buildMorphoMarketParams, type LeverageStepType } from '@/hooks/leverage/transaction-shared';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -271,7 +271,7 @@ export function useLeverageTransaction({
     }
 
     try {
-      const marketParams = buildLeverageMarketParams(market);
+      const marketParams = buildMorphoMarketParams(market);
 
       if (route.kind === 'swap') {
         if (!swapPriceRoute) {

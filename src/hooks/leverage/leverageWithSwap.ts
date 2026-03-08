@@ -1,31 +1,37 @@
-import { type Address, encodeFunctionData, isAddress, isAddressEqual, keccak256, maxUint256, zeroHash } from 'viem';
+import { type Address, encodeFunctionData, keccak256, maxUint256, zeroHash } from 'viem';
 import { bundlerV3Abi } from '@/abis/bundlerV3';
 import morphoAbi from '@/abis/morpho';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
 import permit2Abi from '@/abis/permit2';
 import { LEVERAGE_FEE_RECIPIENT } from '@/config/leverage';
-import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
+import type { VeloraPriceRoute } from '@/features/swap/api/velora';
 import { getMorphoAddress, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { PERMIT2_ADDRESS } from '@/utils/permit2';
 import type { Market } from '@/utils/types';
-import { type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets, readCalldataUint256 } from './bundler3';
 import {
-  type EnsureLeverageAuthorization,
-  type LeverageMarketParams,
+  buildBundler3Erc20SweepCalls,
+  type Bundler3Call,
+  encodeBundler3Calls,
+  getParaswapSellOffsets,
+  readCalldataUint256,
+} from './bundler3';
+import {
+  type EnsureBundlerAuthorization,
+  type MorphoMarketParams,
   type LeverageStepType,
-  type SendLeverageTransaction,
-  type SignForLeverageBundlers,
+  type SendBundlerTransaction,
+  type SignForBundlers,
   sleep,
 } from './transaction-shared';
 import type { SwapLeverageRoute } from './types';
-import { isVeloraBypassablePrecheckError } from './velora-precheck';
+import { assertTrustedVeloraExecutionTarget, buildVeloraBundlerTransactionPayload } from './velora-transaction';
 
 type LeverageWithSwapParams = {
   account: Address;
   bundlerAddress: Address;
   market: Market;
-  marketParams: LeverageMarketParams;
+  marketParams: MorphoMarketParams;
   route: SwapLeverageRoute;
   inputTokenAddress: Address;
   inputTokenAmountForTransfer: bigint;
@@ -40,68 +46,12 @@ type LeverageWithSwapParams = {
   permit2Authorized: boolean;
   isBundlerAuthorized: boolean | undefined;
   authorizePermit2: () => Promise<unknown>;
-  ensureBundlerAuthorization: EnsureLeverageAuthorization;
-  signForBundlers: SignForLeverageBundlers;
+  ensureBundlerAuthorization: EnsureBundlerAuthorization;
+  signForBundlers: SignForBundlers;
   isApproved: boolean;
   approve: () => Promise<unknown>;
   updateStep: (step: LeverageStepType) => void;
-  sendTransactionAsync: SendLeverageTransaction;
-};
-
-const buildSwapTransactionPayload = async ({
-  market,
-  route,
-  totalLoanSellAmount,
-  swapPriceRoute,
-  slippageBps,
-}: {
-  market: Market;
-  route: SwapLeverageRoute;
-  totalLoanSellAmount: bigint;
-  swapPriceRoute: VeloraPriceRoute;
-  slippageBps: number;
-}) => {
-  const buildPayload = async (ignoreChecks: boolean) =>
-    buildVeloraTransactionPayload({
-      srcToken: market.loanAsset.address,
-      srcDecimals: market.loanAsset.decimals,
-      destToken: market.collateralAsset.address,
-      destDecimals: market.collateralAsset.decimals,
-      srcAmount: totalLoanSellAmount,
-      network: market.morphoBlue.chain.id,
-      userAddress: route.paraswapAdapterAddress,
-      priceRoute: swapPriceRoute,
-      slippageBps,
-      ignoreChecks,
-    });
-
-  try {
-    return await buildPayload(false);
-  } catch (buildError: unknown) {
-    if (isVeloraRateChangedError(buildError)) {
-      throw new Error('Leverage quote changed. Please review the updated preview and try again.');
-    }
-
-    if (
-      !isVeloraBypassablePrecheckError({
-        error: buildError,
-        sourceTokenAddress: market.loanAsset.address,
-        sourceTokenSymbol: market.loanAsset.symbol,
-      })
-    ) {
-      throw buildError;
-    }
-
-    try {
-      return await buildPayload(true);
-    } catch (fallbackBuildError: unknown) {
-      if (isVeloraRateChangedError(fallbackBuildError)) {
-        throw new Error('Leverage quote changed. Please review the updated preview and try again.');
-      }
-
-      throw fallbackBuildError;
-    }
-  }
+  sendTransactionAsync: SendBundlerTransaction;
 };
 
 export const leverageWithSwap = async ({
@@ -223,16 +173,14 @@ export const leverageWithSwap = async ({
     swapPriceRoute,
     slippageBps,
   });
+  assertTrustedVeloraExecutionTarget({
+    priceRoute: swapPriceRoute,
+    quoteChangedMessage: 'Leverage quote changed. Please review the updated preview and try again.',
+    transactionTarget: swapTxPayload.to,
+  });
 
-  const trustedVeloraTargets = [swapPriceRoute.contractAddress, swapPriceRoute.tokenTransferProxy].filter(
-    (candidate): candidate is Address => typeof candidate === 'string' && isAddress(candidate),
-  );
-  if (trustedVeloraTargets.length === 0 || !trustedVeloraTargets.some((target) => isAddressEqual(swapTxPayload.to, target))) {
-    throw new Error('Leverage quote changed. Please review the updated preview and try again.');
-  }
-
-  const expectedCollateralOut = isLoanAssetInput ? totalAddedCollateral : flashCollateralAmount;
-  if (expectedCollateralOut <= 0n) {
+  const collateralOutSlippageFloor = isLoanAssetInput ? totalAddedCollateral : flashCollateralAmount;
+  if (collateralOutSlippageFloor <= 0n) {
     throw new Error('Velora returned zero collateral output for leverage swap.');
   }
 
@@ -243,13 +191,13 @@ export const leverageWithSwap = async ({
   if (
     quotedSellAmount !== totalLoanSellAmount ||
     calldataSellAmount !== totalLoanSellAmount ||
-    calldataMinCollateralOut !== expectedCollateralOut
+    calldataMinCollateralOut !== collateralOutSlippageFloor
   ) {
     throw new Error('Leverage quote changed. Please review the updated preview and try again.');
   }
 
   const callbackBundle: Bundler3Call[] = [
-    // put asset into parapswap adapter for swapping.
+    // Move the sold loan asset into the Paraswap adapter, which is the contract that actually executes the swap.
     {
       to: route.generalAdapterAddress,
       data: encodeFunctionData({
@@ -385,52 +333,16 @@ export const leverageWithSwap = async ({
     skipRevert: false,
     callbackHash: keccak256(callbackBundleData),
   });
-  // Safety net: sweep any residual loan/collateral balances from adapters to the user.
+  // Safety net: sweep both assets from every adapter touched by the swap route.
   bundleCalls.push(
-    {
-      to: route.generalAdapterAddress,
-      data: encodeFunctionData({
-        abi: morphoGeneralAdapterV1Abi,
-        functionName: 'erc20Transfer',
-        args: [market.loanAsset.address as Address, account, maxUint256],
-      }),
-      value: 0n,
-      skipRevert: false,
-      callbackHash: zeroHash,
-    },
-    {
-      to: route.generalAdapterAddress,
-      data: encodeFunctionData({
-        abi: morphoGeneralAdapterV1Abi,
-        functionName: 'erc20Transfer',
-        args: [market.collateralAsset.address as Address, account, maxUint256],
-      }),
-      value: 0n,
-      skipRevert: false,
-      callbackHash: zeroHash,
-    },
-    {
-      to: route.paraswapAdapterAddress,
-      data: encodeFunctionData({
-        abi: paraswapAdapterAbi,
-        functionName: 'erc20Transfer',
-        args: [market.loanAsset.address as Address, account, maxUint256],
-      }),
-      value: 0n,
-      skipRevert: false,
-      callbackHash: zeroHash,
-    },
-    {
-      to: route.paraswapAdapterAddress,
-      data: encodeFunctionData({
-        abi: paraswapAdapterAbi,
-        functionName: 'erc20Transfer',
-        args: [market.collateralAsset.address as Address, account, maxUint256],
-      }),
-      value: 0n,
-      skipRevert: false,
-      callbackHash: zeroHash,
-    },
+    ...buildBundler3Erc20SweepCalls({
+      recipient: account,
+      sweepTargets: [
+        { adapterAbi: morphoGeneralAdapterV1Abi, adapterAddress: route.generalAdapterAddress },
+        { adapterAbi: paraswapAdapterAbi, adapterAddress: route.paraswapAdapterAddress },
+      ],
+      tokenAddresses: [market.loanAsset.address as Address, market.collateralAsset.address as Address],
+    }),
   );
 
   updateStep('execute');
@@ -447,3 +359,30 @@ export const leverageWithSwap = async ({
     value: 0n,
   });
 };
+
+const buildSwapTransactionPayload = ({
+  market,
+  route,
+  totalLoanSellAmount,
+  swapPriceRoute,
+  slippageBps,
+}: {
+  market: Market;
+  route: SwapLeverageRoute;
+  totalLoanSellAmount: bigint;
+  swapPriceRoute: VeloraPriceRoute;
+  slippageBps: number;
+}) =>
+  buildVeloraBundlerTransactionPayload({
+    destinationTokenAddress: market.collateralAsset.address,
+    destinationTokenDecimals: market.collateralAsset.decimals,
+    executionAddress: route.paraswapAdapterAddress,
+    network: market.morphoBlue.chain.id,
+    priceRoute: swapPriceRoute,
+    quoteChangedMessage: 'Leverage quote changed. Please review the updated preview and try again.',
+    slippageBps,
+    sourceTokenAddress: market.loanAsset.address,
+    sourceTokenAmount: totalLoanSellAmount,
+    sourceTokenDecimals: market.loanAsset.decimals,
+    sourceTokenSymbol: market.loanAsset.symbol,
+  });

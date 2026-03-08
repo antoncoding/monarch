@@ -10,7 +10,7 @@ export type LeverageStepType =
   | 'approve_token'
   | 'execute';
 
-export type LeverageMarketParams = {
+export type MorphoMarketParams = {
   loanToken: Address;
   collateralToken: Address;
   oracle: Address;
@@ -20,13 +20,13 @@ export type LeverageMarketParams = {
 
 type AuthorizationMode = 'signature' | 'transaction';
 
-export type EnsureLeverageAuthorization = (params: { mode: AuthorizationMode }) => Promise<{
+export type EnsureBundlerAuthorization = (params: { mode: AuthorizationMode }) => Promise<{
   authorized: boolean;
   authorizationTxData: `0x${string}` | null;
   authorizationSignatureData: MorphoAuthorizationSignatureData | null;
 }>;
 
-export type Permit2LeverageSignature = {
+export type Permit2BundlerSignature = {
   sigs: `0x${string}`;
   permitSingle: {
     details: {
@@ -40,11 +40,11 @@ export type Permit2LeverageSignature = {
   };
 };
 
-export type SignForLeverageBundlers = () => Promise<Permit2LeverageSignature>;
+export type SignForBundlers = () => Promise<Permit2BundlerSignature>;
 
-export type SendLeverageTransaction = (params: { account: Address; to: Address; data: `0x${string}`; value: bigint }) => Promise<unknown>;
+export type SendBundlerTransaction = (params: { account: Address; to: Address; data: `0x${string}`; value: bigint }) => Promise<unknown>;
 
-export const buildLeverageMarketParams = (market: Market): LeverageMarketParams => ({
+export const buildMorphoMarketParams = (market: Market): MorphoMarketParams => ({
   loanToken: market.loanAsset.address as Address,
   collateralToken: market.collateralAsset.address as Address,
   oracle: market.oracleAddress as Address,

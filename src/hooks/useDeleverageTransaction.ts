@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
-import { type Address, encodeAbiParameters, encodeFunctionData, isAddress, isAddressEqual, keccak256, maxUint256, zeroHash } from 'viem';
+import { type Address, isAddress } from 'viem';
 import { useConnection } from 'wagmi';
-import morphoBundlerAbi from '@/abis/bundlerV2';
-import { bundlerV3Abi } from '@/abis/bundlerV3';
-import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
-import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
 import { resolveErc4626RouteBundler } from '@/config/leverage';
-import { buildVeloraTransactionPayload, isVeloraRateChangedError, type VeloraPriceRoute } from '@/features/swap/api/velora';
+import type { VeloraPriceRoute } from '@/features/swap/api/velora';
+import { deleverageWithErc4626Redeem } from '@/hooks/deleverage/deleverageWithErc4626Redeem';
+import { deleverageWithSwap } from '@/hooks/deleverage/deleverageWithSwap';
+import type { DeleverageStepType } from '@/hooks/deleverage/transaction-shared';
+import { buildMorphoMarketParams } from '@/hooks/leverage/transaction-shared';
+import type { LeverageRoute } from '@/hooks/leverage/types';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -14,29 +15,24 @@ import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
-import { MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import type { Market } from '@/utils/types';
-import { type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets, readCalldataUint256 } from './leverage/bundler3';
-import { withSlippageFloor } from './leverage/math';
-import type { LeverageRoute } from './leverage/types';
-import { computeMaxSharePriceE27, isVeloraBypassablePrecheckError } from './leverage/velora-precheck';
 
-export type DeleverageStepType = 'authorize_bundler_sig' | 'authorize_bundler_tx' | 'execute';
+export type { DeleverageStepType } from '@/hooks/deleverage/transaction-shared';
 
 type UseDeleverageTransactionProps = {
-  market: Market;
-  route: LeverageRoute | null;
-  withdrawCollateralAmount: bigint;
-  maxWithdrawCollateralAmount: bigint;
-  flashLoanAmount: bigint;
-  repayBySharesAmount: bigint;
-  useCloseRoute: boolean;
   autoWithdrawCollateralAmount: bigint;
+  flashLoanAmount: bigint;
+  market: Market;
   maxCollateralForDebtRepay: bigint;
-  swapSellPriceRoute: VeloraPriceRoute | null;
-  slippageBps: number;
+  maxWithdrawCollateralAmount: bigint;
   onSuccess?: () => void;
+  repayBySharesAmount: bigint;
+  route: LeverageRoute | null;
+  slippageBps: number;
+  swapSellPriceRoute: VeloraPriceRoute | null;
+  useCloseRoute: boolean;
+  withdrawCollateralAmount: bigint;
 };
 
 /**
@@ -45,18 +41,18 @@ type UseDeleverageTransactionProps = {
  * - generalized swap-backed loops on Bundler3 + adapters
  */
 export function useDeleverageTransaction({
-  market,
-  route,
-  withdrawCollateralAmount,
-  maxWithdrawCollateralAmount,
-  flashLoanAmount,
-  repayBySharesAmount,
-  useCloseRoute,
   autoWithdrawCollateralAmount,
+  flashLoanAmount,
+  market,
   maxCollateralForDebtRepay,
-  swapSellPriceRoute,
-  slippageBps,
+  maxWithdrawCollateralAmount,
   onSuccess,
+  repayBySharesAmount,
+  route,
+  slippageBps,
+  swapSellPriceRoute,
+  useCloseRoute,
+  withdrawCollateralAmount,
 }: UseDeleverageTransactionProps) {
   const { usePermit2: usePermit2Setting } = useAppSettings();
   const tracking = useTransactionTracking('deleverage');
@@ -68,6 +64,7 @@ export function useDeleverageTransaction({
   const bundlerAddress = useMemo<Address | undefined>(() => {
     if (!route) return undefined;
     if (route.kind === 'swap') return route.bundler3Address;
+
     try {
       const resolvedBundler = resolveErc4626RouteBundler(market.morphoBlue.chain.id, market.uniqueKey);
       return isAddress(resolvedBundler) ? resolvedBundler : undefined;
@@ -105,7 +102,7 @@ export function useDeleverageTransaction({
     },
   });
 
-  const getStepsForFlow = useCallback((isPermit2: boolean, isSwap: boolean) => {
+  const getStepsForFlow = useCallback((isSignatureAuthorization: boolean, isSwap: boolean) => {
     if (isSwap) {
       return [
         {
@@ -121,7 +118,7 @@ export function useDeleverageTransaction({
       ];
     }
 
-    if (isPermit2) {
+    if (isSignatureAuthorization) {
       return [
         {
           id: 'authorize_bundler_sig',
@@ -154,427 +151,88 @@ export function useDeleverageTransaction({
     if (!account) {
       throw new Error('No account connected. Please connect your wallet.');
     }
-
     if (!route) {
       throw new Error('This market is not supported for deleverage.');
     }
     if (!bundlerAddress) {
       throw new Error('Deleverage route data is unavailable. Please refresh and try again.');
     }
-
     if (withdrawCollateralAmount <= 0n || flashLoanAmount <= 0n) {
       throw new Error('Invalid deleverage inputs. Set a collateral unwind amount above zero.');
     }
     if (withdrawCollateralAmount > maxWithdrawCollateralAmount) {
       throw new Error('Stale deleverage input. The maximum unwind amount changed. Please review and try again.');
     }
-
-    try {
-      const txs: `0x${string}`[] = [];
-
-      if (useSignatureAuthorization) {
-        if (!isBundlerAuthorized) {
-          tracking.update('authorize_bundler_sig');
-        }
-        const { authorized, authorizationTxData } = await ensureBundlerAuthorization({ mode: 'signature' });
-        if (!authorized) {
-          throw new Error('Failed to authorize Bundler via signature.');
-        }
-        if (isBundlerAuthorized && authorizationTxData) {
-          throw new Error('Authorization state changed. Please retry deleverage.');
-        }
-        if (authorizationTxData) {
-          txs.push(authorizationTxData);
-          await new Promise((resolve) => setTimeout(resolve, 700));
-        }
-      } else {
-        if (!isBundlerAuthorized) {
-          tracking.update('authorize_bundler_tx');
-        }
-        const { authorized } = await ensureBundlerAuthorization({ mode: 'transaction' });
-        if (!authorized) {
-          throw new Error('Failed to authorize Bundler via transaction.');
-        }
-      }
-
-      const marketParams = {
-        loanToken: market.loanAsset.address as Address,
-        collateralToken: market.collateralAsset.address as Address,
-        oracle: market.oracleAddress as Address,
-        irm: market.irmAddress as Address,
-        lltv: BigInt(market.lltv),
-      };
-
-      const isRepayByShares = useCloseRoute;
-      if (isRepayByShares && repayBySharesAmount <= 0n) {
-        throw new Error('Debt shares are unavailable for a full close. Refresh your position data and try again.');
-      }
-      // WHY: when repaying by assets, Morpho expects a *minimum* shares bound.
-      // Using an upper-bound style estimate causes false "slippage exceeded" reverts.
-      const minRepayShares = 1n;
-      const bundlerV2RepaySlippageAmount = isRepayByShares ? flashLoanAmount : minRepayShares;
-      const generalAdapterMaxSharePriceE27 = isRepayByShares
-        ? computeMaxSharePriceE27(flashLoanAmount, repayBySharesAmount)
-        : computeMaxSharePriceE27(flashLoanAmount, minRepayShares);
-      if (generalAdapterMaxSharePriceE27 <= 0n) {
-        throw new Error('Invalid deleverage bounds for repay-by-shares. Refresh the quote and try again.');
-      }
-
-      if (route.kind === 'swap') {
-        if (!Number.isFinite(slippageBps) || slippageBps <= 0) {
-          throw new Error('Invalid slippage tolerance. Please set a positive slippage value.');
-        }
-        const swapExecutionAddress = route.paraswapAdapterAddress;
-        if (useCloseRoute) {
-          if (maxCollateralForDebtRepay <= 0n) {
-            throw new Error('The exact close bound is unavailable. Refresh the quote and try again.');
-          }
-          if (withdrawCollateralAmount < maxCollateralForDebtRepay) {
-            throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-          }
-        }
-
-        const isCloseSwap = isRepayByShares;
-        const activePriceRoute = swapSellPriceRoute;
-        if (!activePriceRoute) {
-          throw new Error('Missing Velora swap quote for deleverage.');
-        }
-
-        const swapTxPayload = await (async () => {
-          const buildPayload = async (ignoreChecks: boolean) =>
-            buildVeloraTransactionPayload({
-              srcToken: market.collateralAsset.address,
-              srcDecimals: market.collateralAsset.decimals,
-              destToken: market.loanAsset.address,
-              destDecimals: market.loanAsset.decimals,
-              srcAmount: withdrawCollateralAmount,
-              network: market.morphoBlue.chain.id,
-              userAddress: swapExecutionAddress,
-              priceRoute: activePriceRoute,
-              slippageBps,
-              ignoreChecks,
-            });
-
-          try {
-            return await buildPayload(false);
-          } catch (buildError: unknown) {
-            if (isVeloraRateChangedError(buildError)) {
-              throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-            }
-            if (
-              !isVeloraBypassablePrecheckError({
-                error: buildError,
-                sourceTokenAddress: market.collateralAsset.address,
-                sourceTokenSymbol: market.collateralAsset.symbol,
-              })
-            ) {
-              throw buildError;
-            }
-
-            try {
-              return await buildPayload(true);
-            } catch (fallbackBuildError: unknown) {
-              if (isVeloraRateChangedError(fallbackBuildError)) {
-                throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-              }
-              throw fallbackBuildError;
-            }
-          }
-        })();
-
-        const trustedVeloraTargets = [activePriceRoute.contractAddress, activePriceRoute.tokenTransferProxy].filter(
-          (candidate): candidate is Address => typeof candidate === 'string' && isAddress(candidate),
-        );
-        if (trustedVeloraTargets.length === 0 || !trustedVeloraTargets.some((target) => isAddressEqual(swapTxPayload.to, target))) {
-          throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-        }
-
-        const sellOffsets = getParaswapSellOffsets(swapTxPayload.data);
-        const quotedSellCollateral = BigInt(activePriceRoute.srcAmount);
-        const quotedLoanOut = BigInt(activePriceRoute.destAmount);
-        const calldataSellAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
-        const calldataQuotedLoanOut = readCalldataUint256(swapTxPayload.data, sellOffsets.quotedAmount);
-        if (
-          quotedSellCollateral !== withdrawCollateralAmount ||
-          calldataSellAmount !== withdrawCollateralAmount ||
-          calldataQuotedLoanOut !== quotedLoanOut
-        ) {
-          throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-        }
-
-        const swapCallData = swapTxPayload.data;
-        const minLoanOut = withSlippageFloor(quotedLoanOut, slippageBps);
-        if (isCloseSwap) {
-          if (minLoanOut < flashLoanAmount) {
-            throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-          }
-        } else if (minLoanOut <= 0n) {
-          throw new Error('Velora returned zero loan output for deleverage swap.');
-        }
-
-        const calldataMinLoanOut = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
-        if (calldataMinLoanOut !== minLoanOut) {
-          throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-        }
-
-        const callbackBundle: Bundler3Call[] = [
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'morphoRepay',
-              args: [
-                marketParams,
-                isRepayByShares ? 0n : flashLoanAmount,
-                isRepayByShares ? repayBySharesAmount : 0n,
-                generalAdapterMaxSharePriceE27,
-                account as Address,
-                '0x',
-              ],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'morphoWithdrawCollateral',
-              args: [marketParams, withdrawCollateralAmount, route.paraswapAdapterAddress],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.paraswapAdapterAddress,
-            data: encodeFunctionData({
-              abi: paraswapAdapterAbi,
-              functionName: 'sell',
-              args: [
-                swapTxPayload.to,
-                swapCallData,
-                market.collateralAsset.address as Address,
-                market.loanAsset.address as Address,
-                false,
-                sellOffsets,
-                route.generalAdapterAddress,
-              ],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-        ];
-
-        if (autoWithdrawCollateralAmount > 0n) {
-          callbackBundle.push({
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'morphoWithdrawCollateral',
-              args: [marketParams, autoWithdrawCollateralAmount, account as Address],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          });
-        }
-
-        const callbackBundleData = encodeBundler3Calls(callbackBundle);
-        const bundleCalls: Bundler3Call[] = [
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'morphoFlashLoan',
-              args: [market.loanAsset.address as Address, flashLoanAmount, callbackBundleData],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: keccak256(callbackBundleData),
-          },
-          // Safety net: sweep any residual loan/collateral balances from adapters to the user.
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'erc20Transfer',
-              args: [market.loanAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.generalAdapterAddress,
-            data: encodeFunctionData({
-              abi: morphoGeneralAdapterV1Abi,
-              functionName: 'erc20Transfer',
-              args: [market.collateralAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.paraswapAdapterAddress,
-            data: encodeFunctionData({
-              abi: paraswapAdapterAbi,
-              functionName: 'erc20Transfer',
-              args: [market.loanAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-          {
-            to: route.paraswapAdapterAddress,
-            data: encodeFunctionData({
-              abi: paraswapAdapterAbi,
-              functionName: 'erc20Transfer',
-              args: [market.collateralAsset.address as Address, account as Address, maxUint256],
-            }),
-            value: 0n,
-            skipRevert: false,
-            callbackHash: zeroHash,
-          },
-        ];
-
-        tracking.update('execute');
-        await new Promise((resolve) => setTimeout(resolve, 700));
-
-        await sendTransactionAsync({
-          account,
-          to: bundlerAddress,
-          data: (encodeFunctionData({
-            abi: bundlerV3Abi,
-            functionName: 'multicall',
-            args: [bundleCalls],
-          }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
-          value: 0n,
-        });
-      } else {
-        const callbackTxs: `0x${string}`[] = [
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'morphoRepay',
-            args: [
-              marketParams,
-              isRepayByShares ? 0n : flashLoanAmount,
-              isRepayByShares ? repayBySharesAmount : 0n,
-              bundlerV2RepaySlippageAmount,
-              account as Address,
-              '0x',
-            ],
-          }),
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'morphoWithdrawCollateral',
-            args: [marketParams, withdrawCollateralAmount, bundlerAddress as Address],
-          }),
-        ];
-
-        const minAssetsOut = withSlippageFloor(flashLoanAmount, slippageBps);
-        callbackTxs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc4626Redeem',
-            args: [route.collateralVault, withdrawCollateralAmount, minAssetsOut, bundlerAddress as Address, bundlerAddress as Address],
-          }),
-        );
-
-        if (autoWithdrawCollateralAmount > 0n) {
-          // WHY: if deleverage fully clears debt, keeping collateral locked in Morpho adds friction.
-          // We withdraw the remaining collateral in the same transaction so the position is closed.
-          callbackTxs.push(
-            encodeFunctionData({
-              abi: morphoBundlerAbi,
-              functionName: 'morphoWithdrawCollateral',
-              args: [marketParams, autoWithdrawCollateralAmount, account as Address],
-            }),
-          );
-        }
-
-        const flashLoanCallbackData = encodeAbiParameters([{ type: 'bytes[]' }], [callbackTxs]);
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'morphoFlashLoan',
-            args: [market.loanAsset.address as Address, flashLoanAmount, flashLoanCallbackData],
-          }),
-        );
-        // Safety net: sweep any residual loan/collateral balances from bundler to the user.
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc20Transfer',
-            args: [market.loanAsset.address as Address, account as Address, maxUint256],
-          }),
-        );
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc20Transfer',
-            args: [market.collateralAsset.address as Address, account as Address, maxUint256],
-          }),
-        );
-
-        tracking.update('execute');
-        await new Promise((resolve) => setTimeout(resolve, 700));
-
-        await sendTransactionAsync({
-          account,
-          to: bundlerAddress,
-          data: (encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'multicall',
-            args: [txs],
-          }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
-          value: 0n,
-        });
-      }
-
-      batchAddUserMarkets([
-        {
-          marketUniqueKey: market.uniqueKey,
-          chainId: market.morphoBlue.chain.id,
-        },
-      ]);
-
-      tracking.complete();
-    } catch (error: unknown) {
-      tracking.fail();
-      console.error('Error during deleverage execution:', error);
-      const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'An unexpected error occurred during deleverage.');
-      setExecutionError(userFacingMessage === 'User rejected transaction.' ? null : userFacingMessage);
-      if (userFacingMessage !== 'User rejected transaction.') {
-        toast.error('Deleverage Failed', userFacingMessage);
-      }
+    if (useCloseRoute && repayBySharesAmount <= 0n) {
+      throw new Error('Debt shares are unavailable for a full close. Refresh your position data and try again.');
     }
+
+    const marketParams = buildMorphoMarketParams(market);
+
+    if (route.kind === 'swap') {
+      if (!swapSellPriceRoute) {
+        throw new Error('Missing Velora swap quote for deleverage.');
+      }
+
+      await deleverageWithSwap({
+        account,
+        autoWithdrawCollateralAmount,
+        bundlerAddress,
+        ensureBundlerAuthorization,
+        flashLoanAmount,
+        isBundlerAuthorized,
+        market,
+        marketParams,
+        maxCollateralForDebtRepay,
+        repayBySharesAmount,
+        route,
+        sendTransactionAsync,
+        slippageBps,
+        swapSellPriceRoute,
+        updateStep: tracking.update,
+        useCloseRoute,
+        withdrawCollateralAmount,
+      });
+      return;
+    }
+
+    await deleverageWithErc4626Redeem({
+      account,
+      autoWithdrawCollateralAmount,
+      bundlerAddress,
+      ensureBundlerAuthorization,
+      flashLoanAmount,
+      isBundlerAuthorized,
+      market,
+      marketParams,
+      repayBySharesAmount,
+      route,
+      sendTransactionAsync,
+      slippageBps,
+      updateStep: tracking.update,
+      useCloseRoute,
+      useSignatureAuthorization,
+      withdrawCollateralAmount,
+    });
   }, [
     account,
-    market,
-    route,
-    withdrawCollateralAmount,
-    maxWithdrawCollateralAmount,
-    flashLoanAmount,
-    repayBySharesAmount,
-    useCloseRoute,
     autoWithdrawCollateralAmount,
-    maxCollateralForDebtRepay,
-    swapSellPriceRoute,
-    slippageBps,
-    useSignatureAuthorization,
-    isBundlerAuthorized,
-    ensureBundlerAuthorization,
     bundlerAddress,
+    ensureBundlerAuthorization,
+    flashLoanAmount,
+    isBundlerAuthorized,
+    market,
+    maxCollateralForDebtRepay,
+    maxWithdrawCollateralAmount,
+    repayBySharesAmount,
+    route,
     sendTransactionAsync,
-    batchAddUserMarkets,
-    tracking,
-    toast,
-    setExecutionError,
+    slippageBps,
+    swapSellPriceRoute,
+    tracking.update,
+    useCloseRoute,
+    useSignatureAuthorization,
+    withdrawCollateralAmount,
   ]);
 
   const clearExecutionError = useCallback(() => {
@@ -615,6 +273,15 @@ export function useDeleverageTransaction({
       );
 
       await executeDeleverage();
+
+      batchAddUserMarkets([
+        {
+          marketUniqueKey: market.uniqueKey,
+          chainId: market.morphoBlue.chain.id,
+        },
+      ]);
+
+      tracking.complete();
     } catch (error: unknown) {
       console.error('Error in authorizeAndDeleverage:', error);
       tracking.fail();
@@ -626,20 +293,20 @@ export function useDeleverageTransaction({
     }
   }, [
     account,
-    route,
+    batchAddUserMarkets,
     bundlerAddress,
-    isBundlerAuthorized,
+    executeDeleverage,
+    getStepsForFlow,
     isBundlerAuthorizationReady,
     isBundlerAuthorizationStatusReady,
-    useSignatureAuthorization,
-    tracking,
-    getStepsForFlow,
+    isBundlerAuthorized,
     isSwapRoute,
     market,
-    withdrawCollateralAmount,
-    executeDeleverage,
+    route,
     toast,
-    setExecutionError,
+    tracking,
+    useSignatureAuthorization,
+    withdrawCollateralAmount,
   ]);
 
   const isAuthorizationStatusLoading =
