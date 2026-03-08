@@ -185,14 +185,9 @@ export const leverageWithSwap = async ({
   }
 
   const sellOffsets = getParaswapSellOffsets(swapTxPayload.data);
-  const quotedSellAmount = BigInt(swapPriceRoute.srcAmount);
   const calldataSellAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
   const calldataMinCollateralOut = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
-  if (
-    quotedSellAmount !== totalLoanSellAmount ||
-    calldataSellAmount !== totalLoanSellAmount ||
-    calldataMinCollateralOut !== collateralOutSlippageFloor
-  ) {
+  if (calldataSellAmount !== totalLoanSellAmount || calldataMinCollateralOut !== collateralOutSlippageFloor) {
     throw new Error('Leverage quote changed. Please review the updated preview and try again.');
   }
 

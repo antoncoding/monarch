@@ -167,12 +167,11 @@ export function useLeverageQuote({
         userAddress: swapExecutionAddress as `0x${string}`,
         side: 'SELL',
       });
-      if (BigInt(sellRoute.srcAmount) !== borrowAssets) {
-        throw new Error('Failed to quote stable Velora swap route for leverage.');
-      }
 
       return {
         flashLoanAssetAmount: borrowAssets,
+        // Quote preview uses the requested sell size as authoritative. The built calldata
+        // still has to prove that exact sell amount before leverage execution can proceed.
         flashLegCollateralTokenAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
         priceRoute: sellRoute,
       };
@@ -218,9 +217,6 @@ export function useLeverageQuote({
         userAddress: swapExecutionAddress as `0x${string}`,
         side: 'SELL',
       });
-      if (BigInt(sellRoute.srcAmount) !== totalLoanSellAmount) {
-        throw new Error('Failed to quote stable Velora swap route for leverage.');
-      }
 
       const totalCollateralTokenAmountAdded = withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps);
 

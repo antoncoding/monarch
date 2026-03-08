@@ -110,15 +110,15 @@ export const deleverageWithSwap = async ({
   });
 
   const sellOffsets = getParaswapSellOffsets(swapTxPayload.data);
-  const quotedSellCollateralAmount = BigInt(swapSellPriceRoute.srcAmount);
   const quotedLoanAssetsOut = BigInt(swapSellPriceRoute.destAmount);
   const calldataSellCollateralAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
-  const calldataQuotedLoanAssetsOut = readCalldataUint256(swapTxPayload.data, sellOffsets.quotedAmount);
-  if (
-    quotedSellCollateralAmount !== withdrawCollateralAmount ||
-    calldataSellCollateralAmount !== withdrawCollateralAmount ||
-    calldataQuotedLoanAssetsOut !== quotedLoanAssetsOut
-  ) {
+  // Only validate execution-authoritative swap fields here:
+  // - exactAmount: the collateral amount the adapter will actually sell
+  // - limitAmount: the minimum loan assets the adapter must receive
+  //
+  // Paraswap's quotedAmount is informational route metadata, not the actual execution floor.
+  // Rejecting on that field creates false positives without improving flash-loan safety.
+  if (calldataSellCollateralAmount !== withdrawCollateralAmount) {
     throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
   }
 

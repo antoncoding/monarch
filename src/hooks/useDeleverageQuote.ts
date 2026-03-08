@@ -118,12 +118,9 @@ export function useDeleverageQuote({
         side: 'SELL',
       });
 
-      const quotedSellCollateral = BigInt(sellRoute.srcAmount);
-      if (quotedSellCollateral !== withdrawCollateralAmount) {
-        throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-      }
-
       return {
+        // Preview uses the requested unwind amount as the authoritative sell size.
+        // The submit path still re-validates the executable calldata before sending.
         rawRouteRepayAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
         priceRoute: sellRoute,
       };

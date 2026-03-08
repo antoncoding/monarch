@@ -637,11 +637,6 @@ export function AddCollateralAndLeverage({
                   </div>
                 )}
               </div>
-              <p className="mb-2 text-xs text-secondary">
-                {useLoanAssetInput
-                  ? `Enter the ${market.loanAsset.symbol} you want to start with. It will be converted into ${market.collateralAsset.symbol} during the leverage flow.`
-                  : `Enter the ${market.collateralAsset.symbol} you want to contribute before the flash leg.`}
-              </p>
               <Input
                 decimals={inputAssetDecimals}
                 max={inputAssetBalance}
