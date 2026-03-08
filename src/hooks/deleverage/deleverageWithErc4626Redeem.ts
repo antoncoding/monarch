@@ -1,6 +1,5 @@
 import { type Address, encodeAbiParameters, encodeFunctionData, maxUint256 } from 'viem';
 import morphoBundlerAbi from '@/abis/bundlerV2';
-import { withSlippageFloor } from '@/hooks/leverage/math';
 import {
   type EnsureBundlerAuthorization,
   type MorphoMarketParams,
@@ -24,7 +23,6 @@ type DeleverageWithErc4626RedeemParams = {
   repayBySharesAmount: bigint;
   route: Erc4626LeverageRoute;
   sendTransactionAsync: SendBundlerTransaction;
-  slippageBps: number;
   updateStep: (step: DeleverageStepType) => void;
   useCloseRoute: boolean;
   useSignatureAuthorization: boolean;
@@ -43,7 +41,6 @@ export const deleverageWithErc4626Redeem = async ({
   repayBySharesAmount,
   route,
   sendTransactionAsync,
-  slippageBps,
   updateStep,
   useCloseRoute,
   useSignatureAuthorization,
@@ -81,7 +78,11 @@ export const deleverageWithErc4626Redeem = async ({
     useRepayByShares: useCloseRoute,
   });
 
-  const loanAssetsOutSlippageFloor = withSlippageFloor(flashLoanAmount, slippageBps);
+  // No swap slippage exists on the ERC4626 redeem path.
+  // This redeem leg must return at least the flash-loan settlement amount or the whole bundle
+  // would revert later during flash-loan repayment. Extra loan assets from the buffered close
+  // amount are swept back to the user, while any remaining collateral is withdrawn separately below.
+  const minLoanAssetsOut = flashLoanAmount;
   const callbackTxs: `0x${string}`[] = [
     encodeFunctionData({
       abi: morphoBundlerAbi,
@@ -104,7 +105,7 @@ export const deleverageWithErc4626Redeem = async ({
     encodeFunctionData({
       abi: morphoBundlerAbi,
       functionName: 'erc4626Redeem',
-      args: [route.collateralVault, withdrawCollateralAmount, loanAssetsOutSlippageFloor, bundlerAddress, bundlerAddress],
+      args: [route.collateralVault, withdrawCollateralAmount, minLoanAssetsOut, bundlerAddress, bundlerAddress],
     }),
   ];
 

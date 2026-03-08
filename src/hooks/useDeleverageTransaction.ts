@@ -208,7 +208,6 @@ export function useDeleverageTransaction({
       repayBySharesAmount,
       route,
       sendTransactionAsync,
-      slippageBps,
       updateStep: tracking.update,
       useCloseRoute,
       useSignatureAuthorization,

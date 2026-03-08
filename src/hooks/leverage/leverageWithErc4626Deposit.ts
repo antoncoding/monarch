@@ -3,7 +3,7 @@ import morphoBundlerAbi from '@/abis/bundlerV2';
 import { LEVERAGE_FEE_RECIPIENT } from '@/config/leverage';
 import { MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market } from '@/utils/types';
-import { getBorrowSharesSlippageAmount, withSlippageFloor } from './math';
+import { getBorrowSharesSlippageAmount } from './math';
 import {
   type EnsureBundlerAuthorization,
   type MorphoMarketParams,
@@ -133,13 +133,14 @@ export const leverageWithErc4626Deposit = async ({
   }
 
   if (isLoanAssetInput) {
-    // WHY: this lets users start with loan-token underlying for ERC4626 markets.
-    // We mint shares first so all leverage math and downstream Morpho collateral is in share units.
+    // WHY: the user provided an exact amount of loan-token assets, so this leg should deposit that
+    // exact asset amount into the vault. The share floor is the exact quote returned by previewDeposit,
+    // not a swap-style slippage floor.
     txs.push(
       encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'erc4626Deposit',
-        args: [route.collateralVault, collateralAmount, withSlippageFloor(collateralAmountInCollateralToken), bundlerAddress],
+        args: [route.collateralVault, collateralAmount, collateralAmountInCollateralToken, bundlerAddress],
       }),
     );
   }
@@ -147,8 +148,11 @@ export const leverageWithErc4626Deposit = async ({
   const callbackTxs: `0x${string}`[] = [
     encodeFunctionData({
       abi: morphoBundlerAbi,
-      functionName: 'erc4626Deposit',
-      args: [route.collateralVault, flashLoanAmount, withSlippageFloor(flashCollateralAmount), bundlerAddress],
+      functionName: 'erc4626Mint',
+      // Mint the exact flash-leg collateral shares quoted off-chain. If the vault now requires
+      // more than flashLoanAmount assets, revert early instead of minting fewer shares and drifting
+      // above the previewed leverage target. If it requires fewer, residual loan assets are swept later.
+      args: [route.collateralVault, flashCollateralAmount, flashLoanAmount, bundlerAddress],
     }),
   ];
 

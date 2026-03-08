@@ -37,6 +37,20 @@ type UseLeverageTransactionProps = {
   onSuccess?: () => void;
 };
 
+type LeverageExecutionPreflight =
+  | {
+      account: Address;
+      leverageFeeAmount: bigint;
+      route: Extract<LeverageRoute, { kind: 'swap' }>;
+      swapPriceRoute: VeloraPriceRoute;
+    }
+  | {
+      account: Address;
+      leverageFeeAmount: bigint;
+      route: Extract<LeverageRoute, { kind: 'erc4626' }>;
+      swapPriceRoute: null;
+    };
+
 /**
  * Executes leverage transactions for:
  * - ERC4626 deterministic loops on Bundler V2
@@ -239,25 +253,25 @@ export function useLeverageTransaction({
     [inputTokenSymbol],
   );
 
-  const executeLeverage = useCallback(async () => {
+  const getLeverageExecutionPreflight = useCallback((): LeverageExecutionPreflight | null => {
     if (!account) {
       toast.info('No account connected', 'Please connect your wallet.');
-      return;
+      return null;
     }
 
     if (!route) {
       toast.info('Unsupported route', 'This market is not supported for leverage.');
-      return;
+      return null;
     }
 
     const hasCollateralOutput = route.kind === 'swap' && isLoanAssetInput ? totalAddedCollateral > 0n : flashCollateralAmount > 0n;
     if (collateralAmount <= 0n || flashLoanAmount <= 0n || !hasCollateralOutput) {
       toast.info('Invalid leverage inputs', 'Set collateral and multiplier above 1x before submitting.');
-      return;
+      return null;
     }
     if (collateralAssetPriceUsd == null || !Number.isFinite(collateralAssetPriceUsd) || collateralAssetPriceUsd <= 0) {
       toast.info('Leverage unavailable', 'Collateral price unavailable for fee calculation.');
-      return;
+      return null;
     }
 
     const leverageFeeAmount = getLeverageFee({
@@ -267,31 +281,71 @@ export function useLeverageTransaction({
     });
     if (totalAddedCollateral - leverageFeeAmount <= 0n) {
       toast.info('Leverage unavailable', 'Net collateral after fee must be positive.');
-      return;
+      return null;
     }
 
-    try {
+    if (route.kind === 'swap') {
+      if (!swapPriceRoute) {
+        toast.info('Quote unavailable', 'Missing swap quote for leverage. Refresh the preview and try again.');
+        return null;
+      }
+
+      return {
+        account: account as Address,
+        leverageFeeAmount,
+        route,
+        swapPriceRoute,
+      };
+    }
+
+    return {
+      account: account as Address,
+      leverageFeeAmount,
+      route,
+      swapPriceRoute: null,
+    };
+  }, [
+    account,
+    route,
+    isLoanAssetInput,
+    totalAddedCollateral,
+    flashCollateralAmount,
+    collateralAmount,
+    flashLoanAmount,
+    collateralAssetPriceUsd,
+    market.collateralAsset.decimals,
+    swapPriceRoute,
+    toast,
+  ]);
+
+  const executeLeverage = useCallback(
+    async (
+      execution: LeverageExecutionPreflight & {
+        updateStep: (step: LeverageStepType) => void;
+      },
+    ) => {
       const marketParams = buildMorphoMarketParams(market);
 
-      if (route.kind === 'swap') {
-        if (!swapPriceRoute) {
+      if (execution.route.kind === 'swap') {
+        const swapExecutionPriceRoute = execution.swapPriceRoute;
+        if (!swapExecutionPriceRoute) {
           throw new Error('Missing Velora swap quote for leverage.');
         }
 
         await leverageWithSwap({
-          account: account as Address,
+          account: execution.account,
           bundlerAddress,
           market,
           marketParams,
-          route,
+          route: execution.route,
           inputTokenAddress,
           inputTokenAmountForTransfer,
           isLoanAssetInput,
           flashLoanAmount,
           flashCollateralAmount,
           totalAddedCollateral,
-          leverageFeeAmount,
-          swapPriceRoute,
+          leverageFeeAmount: execution.leverageFeeAmount,
+          swapPriceRoute: swapExecutionPriceRoute,
           slippageBps,
           usePermit2: usePermit2ForRoute,
           permit2Authorized,
@@ -301,16 +355,16 @@ export function useLeverageTransaction({
           signForBundlers,
           isApproved,
           approve,
-          updateStep: tracking.update,
+          updateStep: execution.updateStep,
           sendTransactionAsync,
         });
       } else {
         await leverageWithErc4626Deposit({
-          account: account as Address,
+          account: execution.account,
           bundlerAddress,
           market,
           marketParams,
-          route,
+          route: execution.route,
           collateralAmount,
           collateralAmountInCollateralToken,
           inputTokenAddress,
@@ -318,7 +372,7 @@ export function useLeverageTransaction({
           isLoanAssetInput,
           flashCollateralAmount,
           flashLoanAmount,
-          leverageFeeAmount,
+          leverageFeeAmount: execution.leverageFeeAmount,
           usePermit2: usePermit2ForRoute,
           permit2Authorized,
           isBundlerAuthorized,
@@ -327,56 +381,34 @@ export function useLeverageTransaction({
           signForBundlers,
           isApproved,
           approve,
-          updateStep: tracking.update,
+          updateStep: execution.updateStep,
           sendTransactionAsync,
         });
       }
-
-      batchAddUserMarkets([
-        {
-          marketUniqueKey: market.uniqueKey,
-          chainId: market.morphoBlue.chain.id,
-        },
-      ]);
-
-      tracking.complete();
-    } catch (error: unknown) {
-      tracking.fail();
-      console.error('Error during leverage execution:', error);
-      const userFacingMessage = toUserFacingTransactionErrorMessage(error, 'An unexpected error occurred during leverage.');
-      if (userFacingMessage !== 'User rejected transaction.') {
-        toast.error('Leverage Failed', userFacingMessage);
-      }
-    }
-  }, [
-    account,
-    route,
-    market,
-    collateralAmount,
-    collateralAmountInCollateralToken,
-    inputTokenAddress,
-    inputTokenAmountForTransfer,
-    isLoanAssetInput,
-    flashCollateralAmount,
-    flashLoanAmount,
-    totalAddedCollateral,
-    collateralAssetPriceUsd,
-    swapPriceRoute,
-    slippageBps,
-    usePermit2ForRoute,
-    permit2Authorized,
-    isBundlerAuthorized,
-    authorizePermit2,
-    ensureBundlerAuthorization,
-    signForBundlers,
-    isApproved,
-    approve,
-    bundlerAddress,
-    sendTransactionAsync,
-    batchAddUserMarkets,
-    tracking,
-    toast,
-  ]);
+    },
+    [
+      market,
+      bundlerAddress,
+      collateralAmount,
+      collateralAmountInCollateralToken,
+      inputTokenAddress,
+      inputTokenAmountForTransfer,
+      isLoanAssetInput,
+      flashLoanAmount,
+      flashCollateralAmount,
+      totalAddedCollateral,
+      slippageBps,
+      usePermit2ForRoute,
+      permit2Authorized,
+      isBundlerAuthorized,
+      authorizePermit2,
+      ensureBundlerAuthorization,
+      signForBundlers,
+      isApproved,
+      approve,
+      sendTransactionAsync,
+    ],
+  );
 
   const runLeverageFlow = useCallback(
     async ({
@@ -390,14 +422,37 @@ export function useLeverageTransaction({
       errorTitle: string;
       logLabel: string;
     }) => {
-      if (!account) {
-        toast.info('No account connected', 'Please connect your wallet.');
+      const preflight = getLeverageExecutionPreflight();
+      if (!preflight) {
         return;
       }
 
+      const steps = getStepsForFlow(usePermit2Flow, isSwapRoute);
+      const stepIndexes = new Map(steps.map((step, index) => [step.id, index]));
+      let highestStepIndex = stepIndexes.get(initialStep) ?? -1;
+      const updateTrackedStep = (step: LeverageStepType) => {
+        const nextIndex = stepIndexes.get(step) ?? -1;
+        if (nextIndex > highestStepIndex) {
+          highestStepIndex = nextIndex;
+          tracking.update(step);
+        }
+      };
+
       try {
-        tracking.start(getStepsForFlow(usePermit2Flow, isSwapRoute), trackingMetadata, initialStep);
-        await executeLeverage();
+        tracking.start(steps, trackingMetadata, initialStep);
+        await executeLeverage({
+          ...preflight,
+          updateStep: updateTrackedStep,
+        });
+
+        batchAddUserMarkets([
+          {
+            marketUniqueKey: market.uniqueKey,
+            chainId: market.morphoBlue.chain.id,
+          },
+        ]);
+
+        tracking.complete();
       } catch (error: unknown) {
         console.error(`Error in ${logLabel}:`, error);
         tracking.fail();
@@ -407,7 +462,18 @@ export function useLeverageTransaction({
         }
       }
     },
-    [account, tracking, getStepsForFlow, isSwapRoute, trackingMetadata, executeLeverage, toast],
+    [
+      getLeverageExecutionPreflight,
+      getStepsForFlow,
+      isSwapRoute,
+      trackingMetadata,
+      executeLeverage,
+      batchAddUserMarkets,
+      market.uniqueKey,
+      market.morphoBlue.chain.id,
+      tracking,
+      toast,
+    ],
   );
 
   const approveAndLeverage = useCallback(async () => {
