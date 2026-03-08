@@ -25,15 +25,20 @@ export type { LeverageStepType } from '@/hooks/leverage/transaction-shared';
 type UseLeverageTransactionProps = {
   market: Market;
   route: LeverageRoute | null;
-  collateralAmount: bigint;
-  collateralAmountInCollateralToken: bigint;
-  flashCollateralAmount: bigint;
-  flashLoanAmount: bigint;
-  totalAddedCollateral: bigint;
+  /** Exact user-entered starting capital, denominated by `useLoanAssetInput`. */
+  initialCapitalInputAmount: bigint;
+  /** Market collateral-token amount sourced from the initial capital before the flash leg. */
+  initialCapitalCollateralTokenAmount: bigint;
+  /** Market collateral-token amount added by the flash leg. */
+  flashLegCollateralTokenAmount: bigint;
+  /** Flash-loaned market loan-asset amount. */
+  flashLoanAssetAmount: bigint;
+  /** Total market collateral-token amount added before leverage fee. */
+  totalCollateralTokenAmountAdded: bigint;
   collateralAssetPriceUsd: number | null;
   swapPriceRoute: VeloraPriceRoute | null;
   slippageBps: number;
-  useLoanAssetAsInput: boolean;
+  useLoanAssetInput: boolean;
   onSuccess?: () => void;
 };
 
@@ -59,15 +64,15 @@ type LeverageExecutionPreflight =
 export function useLeverageTransaction({
   market,
   route,
-  collateralAmount,
-  collateralAmountInCollateralToken,
-  flashCollateralAmount,
-  flashLoanAmount,
-  totalAddedCollateral,
+  initialCapitalInputAmount,
+  initialCapitalCollateralTokenAmount,
+  flashLegCollateralTokenAmount,
+  flashLoanAssetAmount,
+  totalCollateralTokenAmountAdded,
   collateralAssetPriceUsd,
   swapPriceRoute,
   slippageBps,
-  useLoanAssetAsInput,
+  useLoanAssetInput,
   onSuccess,
 }: UseLeverageTransactionProps) {
   const { usePermit2: usePermit2Setting } = useAppSettings();
@@ -93,11 +98,13 @@ export function useLeverageTransaction({
   }, [route, bundlerAddress]);
 
   const { batchAddUserMarkets } = useUserMarketsCache(account);
-  const isLoanAssetInput = useLoanAssetAsInput;
-  const inputTokenAddress = isLoanAssetInput ? (market.loanAsset.address as Address) : (market.collateralAsset.address as Address);
-  const inputTokenSymbol = isLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
-  const inputTokenDecimals = isLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
-  const inputTokenAmountForTransfer = isLoanAssetInput ? collateralAmount : collateralAmountInCollateralToken;
+  const initialCapitalUsesLoanAsset = useLoanAssetInput;
+  const initialCapitalInputTokenAddress = initialCapitalUsesLoanAsset
+    ? (market.loanAsset.address as Address)
+    : (market.collateralAsset.address as Address);
+  const initialCapitalInputTokenSymbol = initialCapitalUsesLoanAsset ? market.loanAsset.symbol : market.collateralAsset.symbol;
+  const initialCapitalInputTokenDecimals = initialCapitalUsesLoanAsset ? market.loanAsset.decimals : market.collateralAsset.decimals;
+  const initialCapitalTransferAmount = initialCapitalUsesLoanAsset ? initialCapitalInputAmount : initialCapitalCollateralTokenAmount;
   const approvalSpender = route?.kind === 'swap' ? route.generalAdapterAddress : bundlerAddress;
 
   const {
@@ -120,25 +127,25 @@ export function useLeverageTransaction({
   } = usePermit2({
     user: account as `0x${string}`,
     spender: approvalSpender,
-    token: inputTokenAddress as `0x${string}`,
+    token: initialCapitalInputTokenAddress as `0x${string}`,
     refetchInterval: 10_000,
     chainId: market.morphoBlue.chain.id,
-    tokenSymbol: inputTokenSymbol,
-    amount: usePermit2ForRoute ? inputTokenAmountForTransfer : 0n,
+    tokenSymbol: initialCapitalInputTokenSymbol,
+    amount: usePermit2ForRoute ? initialCapitalTransferAmount : 0n,
   });
   const isAuthorizationReadyForRoute = usePermit2ForRoute ? isBundlerAuthorizationReady : isBundlerAuthorizationStatusReady;
 
   const { isApproved, approve, isApproving } = useERC20Approval({
-    token: inputTokenAddress,
+    token: initialCapitalInputTokenAddress,
     spender: approvalSpender,
-    amount: inputTokenAmountForTransfer,
-    tokenSymbol: inputTokenSymbol,
+    amount: initialCapitalTransferAmount,
+    tokenSymbol: initialCapitalInputTokenSymbol,
     chainId: market.morphoBlue.chain.id,
   });
 
   const { isConfirming: leveragePending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'leverage',
-    pendingText: `Leveraging ${formatBalance(collateralAmount, inputTokenDecimals)} ${inputTokenSymbol}`,
+    pendingText: `Leveraging ${formatBalance(initialCapitalInputAmount, initialCapitalInputTokenDecimals)} ${initialCapitalInputTokenSymbol}`,
     successText: 'Leverage Executed',
     errorText: 'Failed to execute leverage',
     chainId,
@@ -153,11 +160,11 @@ export function useLeverageTransaction({
     () => ({
       title: 'Leverage',
       description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
-      tokenSymbol: inputTokenSymbol,
-      amount: collateralAmount,
+      tokenSymbol: initialCapitalInputTokenSymbol,
+      amount: initialCapitalInputAmount,
       marketId: market.uniqueKey,
     }),
-    [market.collateralAsset.symbol, market.loanAsset.symbol, inputTokenSymbol, collateralAmount, market.uniqueKey],
+    [market.collateralAsset.symbol, market.loanAsset.symbol, initialCapitalInputTokenSymbol, initialCapitalInputAmount, market.uniqueKey],
   );
 
   const getStepsForFlow = useCallback(
@@ -196,8 +203,8 @@ export function useLeverageTransaction({
           },
           {
             id: 'approve_token',
-            title: `Approve ${inputTokenSymbol}`,
-            description: `Approve ${inputTokenSymbol} transfer for the leverage flow.`,
+            title: `Approve ${initialCapitalInputTokenSymbol}`,
+            description: `Approve ${initialCapitalInputTokenSymbol} transfer for the leverage flow.`,
           },
           {
             id: 'execute',
@@ -222,7 +229,7 @@ export function useLeverageTransaction({
           {
             id: 'sign_permit',
             title: 'Sign Token Permit',
-            description: 'Sign Permit2 transfer authorization for collateral transfer.',
+            description: `Sign Permit2 transfer authorization for ${initialCapitalInputTokenSymbol}.`,
           },
           {
             id: 'execute',
@@ -240,8 +247,8 @@ export function useLeverageTransaction({
         },
         {
           id: 'approve_token',
-          title: `Approve ${inputTokenSymbol}`,
-          description: `Approve ${inputTokenSymbol} transfer for the leverage flow.`,
+          title: `Approve ${initialCapitalInputTokenSymbol}`,
+          description: `Approve ${initialCapitalInputTokenSymbol} transfer for the leverage flow.`,
         },
         {
           id: 'execute',
@@ -250,7 +257,7 @@ export function useLeverageTransaction({
         },
       ];
     },
-    [inputTokenSymbol],
+    [initialCapitalInputTokenSymbol],
   );
 
   const getLeverageExecutionPreflight = useCallback((): LeverageExecutionPreflight | null => {
@@ -264,9 +271,10 @@ export function useLeverageTransaction({
       return null;
     }
 
-    const hasCollateralOutput = route.kind === 'swap' && isLoanAssetInput ? totalAddedCollateral > 0n : flashCollateralAmount > 0n;
-    if (collateralAmount <= 0n || flashLoanAmount <= 0n || !hasCollateralOutput) {
-      toast.info('Invalid leverage inputs', 'Set collateral and multiplier above 1x before submitting.');
+    const hasCollateralOutput =
+      route.kind === 'swap' && initialCapitalUsesLoanAsset ? totalCollateralTokenAmountAdded > 0n : flashLegCollateralTokenAmount > 0n;
+    if (initialCapitalInputAmount <= 0n || flashLoanAssetAmount <= 0n || !hasCollateralOutput) {
+      toast.info('Invalid leverage inputs', 'Set initial capital and multiplier above 1x before submitting.');
       return null;
     }
     if (collateralAssetPriceUsd == null || !Number.isFinite(collateralAssetPriceUsd) || collateralAssetPriceUsd <= 0) {
@@ -275,11 +283,11 @@ export function useLeverageTransaction({
     }
 
     const leverageFeeAmount = getLeverageFee({
-      amount: totalAddedCollateral,
+      amount: totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
     });
-    if (totalAddedCollateral - leverageFeeAmount <= 0n) {
+    if (totalCollateralTokenAmountAdded - leverageFeeAmount <= 0n) {
       toast.info('Leverage unavailable', 'Net collateral after fee must be positive.');
       return null;
     }
@@ -307,11 +315,11 @@ export function useLeverageTransaction({
   }, [
     account,
     route,
-    isLoanAssetInput,
-    totalAddedCollateral,
-    flashCollateralAmount,
-    collateralAmount,
-    flashLoanAmount,
+    initialCapitalUsesLoanAsset,
+    totalCollateralTokenAmountAdded,
+    flashLegCollateralTokenAmount,
+    initialCapitalInputAmount,
+    flashLoanAssetAmount,
     collateralAssetPriceUsd,
     market.collateralAsset.decimals,
     swapPriceRoute,
@@ -338,12 +346,12 @@ export function useLeverageTransaction({
           market,
           marketParams,
           route: execution.route,
-          inputTokenAddress,
-          inputTokenAmountForTransfer,
-          isLoanAssetInput,
-          flashLoanAmount,
-          flashCollateralAmount,
-          totalAddedCollateral,
+          initialCapitalInputTokenAddress,
+          initialCapitalTransferAmount,
+          isLoanAssetInput: initialCapitalUsesLoanAsset,
+          flashLoanAssetAmount,
+          flashLegCollateralTokenAmount,
+          totalCollateralTokenAmountAdded,
           leverageFeeAmount: execution.leverageFeeAmount,
           swapPriceRoute: swapExecutionPriceRoute,
           slippageBps,
@@ -365,13 +373,13 @@ export function useLeverageTransaction({
           market,
           marketParams,
           route: execution.route,
-          collateralAmount,
-          collateralAmountInCollateralToken,
-          inputTokenAddress,
-          inputTokenAmountForTransfer,
-          isLoanAssetInput,
-          flashCollateralAmount,
-          flashLoanAmount,
+          initialCapitalInputAmount,
+          initialCapitalCollateralTokenAmount,
+          initialCapitalInputTokenAddress,
+          initialCapitalTransferAmount,
+          isLoanAssetInput: initialCapitalUsesLoanAsset,
+          flashLegCollateralTokenAmount,
+          flashLoanAssetAmount,
           leverageFeeAmount: execution.leverageFeeAmount,
           usePermit2: usePermit2ForRoute,
           permit2Authorized,
@@ -389,14 +397,14 @@ export function useLeverageTransaction({
     [
       market,
       bundlerAddress,
-      collateralAmount,
-      collateralAmountInCollateralToken,
-      inputTokenAddress,
-      inputTokenAmountForTransfer,
-      isLoanAssetInput,
-      flashLoanAmount,
-      flashCollateralAmount,
-      totalAddedCollateral,
+      initialCapitalInputAmount,
+      initialCapitalCollateralTokenAmount,
+      initialCapitalInputTokenAddress,
+      initialCapitalTransferAmount,
+      initialCapitalUsesLoanAsset,
+      flashLoanAssetAmount,
+      flashLegCollateralTokenAmount,
+      totalCollateralTokenAmountAdded,
       slippageBps,
       usePermit2ForRoute,
       permit2Authorized,

@@ -166,6 +166,13 @@ export function useDeleverageTransaction({
     if (useCloseRoute && repayBySharesAmount <= 0n) {
       throw new Error('Debt shares are unavailable for a full close. Refresh your position data and try again.');
     }
+    const collateralToRedeem = useCloseRoute ? maxCollateralForDebtRepay : withdrawCollateralAmount;
+    if (collateralToRedeem <= 0n) {
+      throw new Error('Collateral redeem amount is unavailable. Refresh the deleverage quote and try again.');
+    }
+    if (useCloseRoute && withdrawCollateralAmount < collateralToRedeem) {
+      throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
+    }
 
     const marketParams = buildMorphoMarketParams(market);
 
@@ -200,6 +207,7 @@ export function useDeleverageTransaction({
       account,
       autoWithdrawCollateralAmount,
       bundlerAddress,
+      collateralToRedeem,
       ensureBundlerAuthorization,
       flashLoanAmount,
       isBundlerAuthorized,
@@ -211,7 +219,6 @@ export function useDeleverageTransaction({
       updateStep: tracking.update,
       useCloseRoute,
       useSignatureAuthorization,
-      withdrawCollateralAmount,
     });
   }, [
     account,

@@ -33,12 +33,12 @@ type LeverageWithSwapParams = {
   market: Market;
   marketParams: MorphoMarketParams;
   route: SwapLeverageRoute;
-  inputTokenAddress: Address;
-  inputTokenAmountForTransfer: bigint;
+  initialCapitalInputTokenAddress: Address;
+  initialCapitalTransferAmount: bigint;
   isLoanAssetInput: boolean;
-  flashLoanAmount: bigint;
-  flashCollateralAmount: bigint;
-  totalAddedCollateral: bigint;
+  flashLoanAssetAmount: bigint;
+  flashLegCollateralTokenAmount: bigint;
+  totalCollateralTokenAmountAdded: bigint;
   leverageFeeAmount: bigint;
   swapPriceRoute: VeloraPriceRoute;
   slippageBps: number;
@@ -60,12 +60,12 @@ export const leverageWithSwap = async ({
   market,
   marketParams,
   route,
-  inputTokenAddress,
-  inputTokenAmountForTransfer,
+  initialCapitalInputTokenAddress,
+  initialCapitalTransferAmount,
   isLoanAssetInput,
-  flashLoanAmount,
-  flashCollateralAmount,
-  totalAddedCollateral,
+  flashLoanAssetAmount,
+  flashLegCollateralTokenAmount,
+  totalCollateralTokenAmountAdded,
   leverageFeeAmount,
   swapPriceRoute,
   slippageBps,
@@ -85,14 +85,14 @@ export const leverageWithSwap = async ({
   }
 
   const preFlashCollateralFee =
-    !isLoanAssetInput && inputTokenAmountForTransfer > 0n
-      ? leverageFeeAmount < inputTokenAmountForTransfer
+    !isLoanAssetInput && initialCapitalTransferAmount > 0n
+      ? leverageFeeAmount < initialCapitalTransferAmount
         ? leverageFeeAmount
-        : inputTokenAmountForTransfer
+        : initialCapitalTransferAmount
       : 0n;
   const callbackCollateralFee = leverageFeeAmount - preFlashCollateralFee;
-  const preFlashCollateralSupplyAmount = inputTokenAmountForTransfer - preFlashCollateralFee;
-  const totalLoanSellAmount = isLoanAssetInput ? inputTokenAmountForTransfer + flashLoanAmount : flashLoanAmount;
+  const preFlashCollateralSupplyAmount = initialCapitalTransferAmount - preFlashCollateralFee;
+  const totalLoanSellAmount = isLoanAssetInput ? initialCapitalTransferAmount + flashLoanAssetAmount : flashLoanAssetAmount;
   if (totalLoanSellAmount <= 0n) {
     throw new Error('Invalid total sell amount for swap-backed leverage.');
   }
@@ -179,7 +179,7 @@ export const leverageWithSwap = async ({
     transactionTarget: swapTxPayload.to,
   });
 
-  const collateralOutSlippageFloor = isLoanAssetInput ? totalAddedCollateral : flashCollateralAmount;
+  const collateralOutSlippageFloor = isLoanAssetInput ? totalCollateralTokenAmountAdded : flashLegCollateralTokenAmount;
   if (collateralOutSlippageFloor <= 0n) {
     throw new Error('Velora returned zero collateral output for leverage swap.');
   }
@@ -262,7 +262,7 @@ export const leverageWithSwap = async ({
         abi: morphoGeneralAdapterV1Abi,
         functionName: 'morphoBorrow',
         // receive the flashloan in general adapter address
-        args: [marketParams, flashLoanAmount, 0n, 0n, route.generalAdapterAddress],
+        args: [marketParams, flashLoanAssetAmount, 0n, 0n, route.generalAdapterAddress],
       }),
       value: 0n,
       skipRevert: false,
@@ -279,13 +279,13 @@ export const leverageWithSwap = async ({
     bundleCalls.push(permit2Call);
   }
 
-  if (inputTokenAmountForTransfer > 0n) {
+  if (initialCapitalTransferAmount > 0n) {
     bundleCalls.push({
       to: route.generalAdapterAddress,
       data: encodeFunctionData({
         abi: morphoGeneralAdapterV1Abi,
         functionName: usePermit2 ? 'permit2TransferFrom' : 'erc20TransferFrom',
-        args: [inputTokenAddress, route.generalAdapterAddress, inputTokenAmountForTransfer],
+        args: [initialCapitalInputTokenAddress, route.generalAdapterAddress, initialCapitalTransferAmount],
       }),
       value: 0n,
       skipRevert: false,
@@ -327,7 +327,7 @@ export const leverageWithSwap = async ({
     data: encodeFunctionData({
       abi: morphoGeneralAdapterV1Abi,
       functionName: 'morphoFlashLoan',
-      args: [market.loanAsset.address as Address, flashLoanAmount, callbackBundleData],
+      args: [market.loanAsset.address as Address, flashLoanAssetAmount, callbackBundleData],
     }),
     value: 0n,
     skipRevert: false,

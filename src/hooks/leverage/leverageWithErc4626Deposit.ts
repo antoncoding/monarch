@@ -20,13 +20,15 @@ type LeverageWithErc4626DepositParams = {
   market: Market;
   marketParams: MorphoMarketParams;
   route: Erc4626LeverageRoute;
-  collateralAmount: bigint;
-  collateralAmountInCollateralToken: bigint;
-  inputTokenAddress: Address;
-  inputTokenAmountForTransfer: bigint;
+  /** Exact user-entered starting capital, denominated by `isLoanAssetInput`. */
+  initialCapitalInputAmount: bigint;
+  /** Market collateral-token amount sourced from the initial capital before the flash leg. */
+  initialCapitalCollateralTokenAmount: bigint;
+  initialCapitalInputTokenAddress: Address;
+  initialCapitalTransferAmount: bigint;
   isLoanAssetInput: boolean;
-  flashCollateralAmount: bigint;
-  flashLoanAmount: bigint; // amount to flashloan in loan asset
+  flashLegCollateralTokenAmount: bigint;
+  flashLoanAssetAmount: bigint; // amount to flashloan in loan asset
   leverageFeeAmount: bigint;
   usePermit2: boolean;
   permit2Authorized: boolean;
@@ -46,13 +48,13 @@ export const leverageWithErc4626Deposit = async ({
   market,
   marketParams,
   route,
-  collateralAmount,
-  collateralAmountInCollateralToken,
-  inputTokenAddress,
-  inputTokenAmountForTransfer,
+  initialCapitalInputAmount,
+  initialCapitalCollateralTokenAmount,
+  initialCapitalInputTokenAddress,
+  initialCapitalTransferAmount,
   isLoanAssetInput,
-  flashCollateralAmount,
-  flashLoanAmount,
+  flashLegCollateralTokenAmount,
+  flashLoanAssetAmount,
   leverageFeeAmount,
   usePermit2,
   permit2Authorized,
@@ -117,17 +119,17 @@ export const leverageWithErc4626Deposit = async ({
 
   // Asset-based borrow uses an exact asset amount plus a max-share slippage bound.
   const borrowSharesSlippageAmount = getBorrowSharesSlippageAmount({
-    borrowAssets: flashLoanAmount,
+    borrowAssets: flashLoanAssetAmount,
     totalBorrowAssets: BigInt(market.state.borrowAssets),
     totalBorrowShares: BigInt(market.state.borrowShares),
   });
 
-  if (inputTokenAmountForTransfer > 0n) {
+  if (initialCapitalTransferAmount > 0n) {
     txs.push(
       encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: usePermit2 ? 'transferFrom2' : 'erc20TransferFrom',
-        args: [inputTokenAddress, inputTokenAmountForTransfer],
+        args: [initialCapitalInputTokenAddress, initialCapitalTransferAmount],
       }),
     );
   }
@@ -140,7 +142,7 @@ export const leverageWithErc4626Deposit = async ({
       encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'erc4626Deposit',
-        args: [route.collateralVault, collateralAmount, collateralAmountInCollateralToken, bundlerAddress],
+        args: [route.collateralVault, initialCapitalInputAmount, initialCapitalCollateralTokenAmount, bundlerAddress],
       }),
     );
   }
@@ -150,9 +152,9 @@ export const leverageWithErc4626Deposit = async ({
       abi: morphoBundlerAbi,
       functionName: 'erc4626Mint',
       // Mint the exact flash-leg collateral shares quoted off-chain. If the vault now requires
-      // more than flashLoanAmount assets, revert early instead of minting fewer shares and drifting
+      // more than flashLoanAssetAmount assets, revert early instead of minting fewer shares and drifting
       // above the previewed leverage target. If it requires fewer, residual loan assets are swept later.
-      args: [route.collateralVault, flashCollateralAmount, flashLoanAmount, bundlerAddress],
+      args: [route.collateralVault, flashLegCollateralTokenAmount, flashLoanAssetAmount, bundlerAddress],
     }),
   ];
 
@@ -179,7 +181,7 @@ export const leverageWithErc4626Deposit = async ({
     encodeFunctionData({
       abi: morphoBundlerAbi,
       functionName: 'morphoBorrow',
-      args: [marketParams, flashLoanAmount, 0n, borrowSharesSlippageAmount, bundlerAddress],
+      args: [marketParams, flashLoanAssetAmount, 0n, borrowSharesSlippageAmount, bundlerAddress],
     }),
   );
 
@@ -188,7 +190,7 @@ export const leverageWithErc4626Deposit = async ({
     encodeFunctionData({
       abi: morphoBundlerAbi,
       functionName: 'morphoFlashLoan',
-      args: [market.loanAsset.address as Address, flashLoanAmount, flashLoanCallbackData],
+      args: [market.loanAsset.address as Address, flashLoanAssetAmount, flashLoanCallbackData],
     }),
   );
   // Safety net: sweep any residual loan/collateral balances from bundler to the user.

@@ -15,6 +15,11 @@ type DeleverageWithErc4626RedeemParams = {
   account: Address;
   autoWithdrawCollateralAmount: bigint;
   bundlerAddress: Address;
+  /**
+   * Exact market collateral-share amount to route through the repay/redeem leg.
+   * On full-close-by-shares this must come from the quote-derived close bound, not the raw input field.
+   */
+  collateralToRedeem: bigint;
   ensureBundlerAuthorization: EnsureBundlerAuthorization;
   flashLoanAmount: bigint;
   isBundlerAuthorized: boolean | undefined;
@@ -26,13 +31,13 @@ type DeleverageWithErc4626RedeemParams = {
   updateStep: (step: DeleverageStepType) => void;
   useCloseRoute: boolean;
   useSignatureAuthorization: boolean;
-  withdrawCollateralAmount: bigint;
 };
 
 export const deleverageWithErc4626Redeem = async ({
   account,
   autoWithdrawCollateralAmount,
   bundlerAddress,
+  collateralToRedeem,
   ensureBundlerAuthorization,
   flashLoanAmount,
   isBundlerAuthorized,
@@ -44,7 +49,6 @@ export const deleverageWithErc4626Redeem = async ({
   updateStep,
   useCloseRoute,
   useSignatureAuthorization,
-  withdrawCollateralAmount,
 }: DeleverageWithErc4626RedeemParams): Promise<void> => {
   const txs: `0x${string}`[] = [];
 
@@ -100,12 +104,12 @@ export const deleverageWithErc4626Redeem = async ({
       abi: morphoBundlerAbi,
       functionName: 'morphoWithdrawCollateral',
       // Withdraw ERC4626 shares onto the bundler because the same bundler multicall redeems them immediately.
-      args: [marketParams, withdrawCollateralAmount, bundlerAddress],
+      args: [marketParams, collateralToRedeem, bundlerAddress],
     }),
     encodeFunctionData({
       abi: morphoBundlerAbi,
       functionName: 'erc4626Redeem',
-      args: [route.collateralVault, withdrawCollateralAmount, minLoanAssetsOut, bundlerAddress, bundlerAddress],
+      args: [route.collateralVault, collateralToRedeem, minLoanAssetsOut, bundlerAddress, bundlerAddress],
     }),
   ];
 
