@@ -5,8 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import moment from 'moment';
 import { ChevronUpIcon, ChevronDownIcon } from '@radix-ui/react-icons';
+import type { Address } from 'viem';
+import { AccountIdentity } from '@/components/shared/account-identity';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { AddressIdentity } from '@/components/shared/address-identity';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
@@ -297,9 +298,11 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                         className="px-2 py-3"
                         style={{ minWidth: '140px' }}
                       >
-                        <AddressIdentity
-                          address={tx.onBehalf}
+                        <AccountIdentity
+                          address={tx.onBehalf as Address}
                           chainId={tx.chainId}
+                          variant="badge"
+                          linkTo="profile"
                         />
                       </TableCell>
 
