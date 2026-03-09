@@ -110,6 +110,10 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                     aria-expanded={isExpanded}
                     onClick={() => toggleRow(rowKey)}
                     onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) {
+                        return;
+                      }
+
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
                         toggleRow(rowKey);
