@@ -213,6 +213,8 @@ export function WithdrawCollateralAndRepay({
           oraclePrice={oraclePrice}
           currentCollateral={currentCollateralAssets}
           currentBorrow={currentBorrowAssets}
+          projectedCollateral={projectedCollateralAssets}
+          projectedBorrow={projectedBorrowAssets}
           currentLtv={currentLTV}
           projectedLtv={projectedLTV}
           lltv={lltv}
