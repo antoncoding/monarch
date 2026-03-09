@@ -210,6 +210,7 @@ export function WithdrawCollateralAndRepay({
         <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">My Position</p>
         <BorrowPositionRiskCard
           market={market}
+          oraclePrice={oraclePrice}
           currentCollateral={currentCollateralAssets}
           currentBorrow={currentBorrowAssets}
           currentLtv={currentLTV}

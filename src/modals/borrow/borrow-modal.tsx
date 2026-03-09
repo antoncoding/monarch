@@ -132,6 +132,7 @@ export function BorrowModal({
       isOpen
       onOpenChange={onOpenChange}
       size="lg"
+      className="!max-h-[92dvh]"
     >
       <ModalHeader
         mainIcon={mainIcon}

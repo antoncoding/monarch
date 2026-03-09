@@ -1,7 +1,12 @@
+import { formatUnits } from 'viem';
+
 export const LTV_WAD = 10n ** 18n;
 export const ORACLE_PRICE_SCALE = 10n ** 36n;
 export const INFINITE_LTV = 10n ** 30n;
 const TARGET_LTV_MARGIN_WAD = 10n ** 15n; // 0.1 percentage points
+const ORACLE_PRICE_DISPLAY_DECIMALS = 36;
+const DEFAULT_PRICE_MIN_FRACTION_DIGITS = 2;
+const DEFAULT_PRICE_MAX_FRACTION_DIGITS = 6;
 const EDITABLE_PERCENT_REGEX = /^\d*\.?\d*$/;
 
 export const LTV_THRESHOLDS = {
@@ -13,10 +18,68 @@ type LTVLevel = 'neutral' | 'safe' | 'warning' | 'danger';
 
 const clampNonNegative = (value: bigint): bigint => (value > 0n ? value : 0n);
 const divCeil = (numerator: bigint, denominator: bigint): bigint => (denominator > 0n ? (numerator + denominator - 1n) / denominator : 0n);
+const getScaleFactor = (decimals: number): bigint => 10n ** BigInt(Math.max(0, decimals));
+const trimTrailingZeros = (value: string): string => value.replace(/(\.\d*?[1-9])0+$/u, '$1').replace(/\.0*$/u, '');
 
 export const getCollateralValueInLoan = (collateralAssets: bigint, oraclePrice: bigint): bigint => {
   if (collateralAssets <= 0n || oraclePrice <= 0n) return 0n;
   return (collateralAssets * oraclePrice) / ORACLE_PRICE_SCALE;
+};
+
+export const scaleMarketOraclePriceForDisplay = ({
+  oraclePrice,
+  collateralDecimals,
+  loanDecimals,
+}: {
+  oraclePrice: bigint;
+  collateralDecimals: number;
+  loanDecimals: number;
+}): bigint => {
+  if (oraclePrice <= 0n) return 0n;
+  return (oraclePrice * getScaleFactor(collateralDecimals)) / getScaleFactor(loanDecimals);
+};
+
+export const formatMarketOraclePrice = ({
+  oraclePrice,
+  collateralDecimals,
+  loanDecimals,
+  minimumFractionDigits = DEFAULT_PRICE_MIN_FRACTION_DIGITS,
+  maximumFractionDigits = DEFAULT_PRICE_MAX_FRACTION_DIGITS,
+}: {
+  oraclePrice: bigint;
+  collateralDecimals: number;
+  loanDecimals: number;
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
+}): string => {
+  const safeMinimumFractionDigits = Math.max(0, minimumFractionDigits);
+  const safeMaximumFractionDigits = Math.max(safeMinimumFractionDigits, maximumFractionDigits);
+  const normalizedPrice = scaleMarketOraclePriceForDisplay({
+    oraclePrice,
+    collateralDecimals,
+    loanDecimals,
+  });
+  const plainDecimalPrice = trimTrailingZeros(formatUnits(normalizedPrice, ORACLE_PRICE_DISPLAY_DECIMALS));
+  const numericPrice = Number(plainDecimalPrice);
+
+  if (Number.isFinite(numericPrice)) {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: safeMinimumFractionDigits,
+      maximumFractionDigits: safeMaximumFractionDigits,
+    }).format(numericPrice);
+  }
+
+  if (!plainDecimalPrice.includes('.')) return plainDecimalPrice;
+
+  const [integerPart, fractionPart = ''] = plainDecimalPrice.split('.');
+  const paddedFraction = fractionPart.padEnd(safeMinimumFractionDigits, '0');
+  const cappedFraction = paddedFraction.slice(0, safeMaximumFractionDigits);
+  const normalizedFraction =
+    cappedFraction.replace(/0+$/u, '').length >= safeMinimumFractionDigits
+      ? cappedFraction.replace(/0+$/u, '')
+      : paddedFraction.slice(0, safeMinimumFractionDigits);
+
+  return normalizedFraction ? `${integerPart}.${normalizedFraction}` : integerPart;
 };
 
 export const computeLtv = ({
@@ -68,6 +131,31 @@ export const isInfiniteLtv = (ltv: bigint): boolean => ltv >= INFINITE_LTV;
 
 export const formatLtvPercent = (ltv: bigint, fractionDigits = 2): string =>
   isInfiniteLtv(ltv) ? '∞' : ltvWadToPercent(ltv).toFixed(fractionDigits);
+
+export const computeLiquidationOraclePrice = ({
+  oraclePrice,
+  ltv,
+  lltv,
+}: {
+  oraclePrice: bigint;
+  ltv: bigint;
+  lltv: bigint;
+}): bigint | null => {
+  if (oraclePrice <= 0n || ltv <= 0n || lltv <= 0n) return null;
+  return (oraclePrice * ltv) / lltv;
+};
+
+export const computeOraclePriceChangePercent = ({
+  currentOraclePrice,
+  targetOraclePrice,
+}: {
+  currentOraclePrice: bigint;
+  targetOraclePrice: bigint;
+}): number | null => {
+  if (currentOraclePrice <= 0n || targetOraclePrice < 0n) return null;
+  const percentChangeBps = ((currentOraclePrice - targetOraclePrice) * 10_000n) / currentOraclePrice;
+  return Number(percentChangeBps) / 100;
+};
 
 export const computeRequiredCollateralAssets = ({
   borrowAssets,
