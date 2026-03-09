@@ -54,14 +54,11 @@ export type BorrowPositionRow = {
     borrowShares: string;
     collateral: string;
   };
+  oraclePrice: string | null;
   borrowAmount: number;
   collateralAmount: number;
-  ltvPercent: number | null;
   isActiveDebt: boolean;
-  hasResidualCollateral: boolean;
 };
-
-const MARKET_ORACLE_SCALE = 10n ** 36n;
 
 function normalizeOraclePriceResult(value: unknown): string | null {
   if (typeof value === 'bigint' || typeof value === 'number' || typeof value === 'string') {
@@ -290,29 +287,6 @@ export async function fetchLatestPositionSnapshotsWithOraclePrices(
 }
 
 /**
- * Compute LTV% from borrow assets, collateral assets and oracle price.
- *
- * @returns LTV percentage with two-decimal precision, or null when unavailable.
- */
-export function calculatePositionLtvPercent(
-  borrowAssets: bigint,
-  collateralAssets: bigint,
-  oraclePrice: bigint | null | undefined,
-): number | null {
-  if (!oraclePrice || oraclePrice <= 0n || borrowAssets <= 0n || collateralAssets <= 0n) {
-    return null;
-  }
-
-  const collateralValueInLoan = (collateralAssets * oraclePrice) / MARKET_ORACLE_SCALE;
-  if (collateralValueInLoan <= 0n) {
-    return null;
-  }
-
-  const ltvBps = (borrowAssets * 10_000n) / collateralValueInLoan;
-  return Number(ltvBps) / 100;
-}
-
-/**
  * Fetches a position snapshot for a specific market, user, and block number using a PublicClient
  *
  * @param marketId - The unique ID of the market
@@ -528,12 +502,10 @@ export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[])
       const borrowShares = BigInt(position.state.borrowShares);
       const borrowAssets = BigInt(position.state.borrowAssets);
       const collateralAssets = BigInt(position.state.collateral);
-      const oraclePrice = position.oraclePrice ? BigInt(position.oraclePrice) : null;
       const collateralAsset = position.market.collateralAsset;
       const hasCollateralAsset = typeof collateralAsset?.decimals === 'number';
 
       const isActiveDebt = borrowShares > 0n;
-      const hasResidualCollateral = hasCollateralAsset && borrowShares === 0n && collateralAssets > 0n;
 
       return {
         market: position.market,
@@ -542,11 +514,10 @@ export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[])
           borrowShares: position.state.borrowShares,
           collateral: position.state.collateral,
         },
+        oraclePrice: position.oraclePrice ?? null,
         borrowAmount: Number(formatUnits(borrowAssets, position.market.loanAsset.decimals)),
         collateralAmount: hasCollateralAsset ? Number(formatUnits(collateralAssets, collateralAsset.decimals)) : 0,
-        ltvPercent: isActiveDebt && hasCollateralAsset ? calculatePositionLtvPercent(borrowAssets, collateralAssets, oraclePrice) : null,
         isActiveDebt,
-        hasResidualCollateral,
       };
     })
     .sort((a, b) => {

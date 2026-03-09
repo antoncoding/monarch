@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
+import { RateFormatted } from '@/components/shared/rate-formatted';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { NetworkIcon } from '@/components/shared/network-icon';
@@ -13,12 +15,11 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
-import { useAppSettings } from '@/stores/useAppSettings';
 import { formatReadable } from '@/utils/balance';
-import { convertApyToApr } from '@/utils/rateMath';
 import { buildBorrowPositionRows } from '@/utils/positions';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import { BorrowPositionActionsDropdown } from './borrow-position-actions-dropdown';
+import { BorrowedMorphoBlueRowDetail, deriveBorrowPositionMetrics } from './borrowed-morpho-blue-row-detail';
 
 type BorrowedMorphoBlueTableProps = {
   account: string;
@@ -31,10 +32,22 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
   const { address } = useConnection();
   const { open } = useModal();
   const { short: rateLabel } = useRateLabel();
-  const { isAprDisplay } = useAppSettings();
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const borrowRows = useMemo(() => buildBorrowPositionRows(positions), [positions]);
   const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
+
+  const toggleRow = (rowKey: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowKey)) {
+        next.delete(rowKey);
+      } else {
+        next.add(rowKey);
+      }
+      return next;
+    });
+  };
 
   const headerActions = (
     <Tooltip
@@ -84,135 +97,178 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
           <TableBody className="text-sm">
             {borrowRows.map((row) => {
               const rowKey = `${row.market.uniqueKey}-${row.market.morphoBlue.chain.id}`;
+              const detailRowId = `${rowKey}-detail`;
+              const metrics = deriveBorrowPositionMetrics(row);
+              const isExpanded = expandedRows.has(rowKey);
 
               return (
-                <TableRow key={rowKey}>
-                  <TableCell className="w-16">
-                    <div className="flex items-center justify-center">
-                      <NetworkIcon
-                        networkId={row.market.morphoBlue.chain.id}
-                        size={20}
-                      />
-                    </div>
-                  </TableCell>
+                <Fragment key={rowKey}>
+                  <TableRow
+                    className="cursor-pointer hover:bg-gray-50"
+                    tabIndex={0}
+                    aria-controls={detailRowId}
+                    aria-expanded={isExpanded}
+                    onClick={() => toggleRow(rowKey)}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) {
+                        return;
+                      }
 
-                  <TableCell data-label="Market">
-                    <div className="flex items-center gap-2">
-                      <MarketIdentity
-                        market={row.market}
-                        mode={MarketIdentityMode.Focused}
-                        focus={MarketIdentityFocus.Collateral}
-                        chainId={row.market.morphoBlue.chain.id}
-                        showId
-                        showOracle
-                        showLltv
-                      />
-                    </div>
-                  </TableCell>
-
-                  <TableCell data-label="Loan">
-                    <div className="flex items-center justify-center gap-2">
-                      {row.isActiveDebt ? (
-                        <>
-                          <span className="font-medium">{formatReadable(row.borrowAmount)}</span>
-                          <span>{row.market.loanAsset.symbol}</span>
-                          <TokenIcon
-                            address={row.market.loanAsset.address}
-                            chainId={row.market.morphoBlue.chain.id}
-                            symbol={row.market.loanAsset.symbol}
-                            width={16}
-                            height={16}
-                          />
-                        </>
-                      ) : (
-                        <span className="font-medium text-secondary">-</span>
-                      )}
-                    </div>
-                  </TableCell>
-
-                  <TableCell data-label={`${rateLabel} (now)`}>
-                    <div className="flex items-center justify-center">
-                      <span className="font-medium">
-                        {formatReadable(
-                          (isAprDisplay ? convertApyToApr(row.market.state.borrowApy ?? 0) : (row.market.state.borrowApy ?? 0)) * 100,
-                        )}
-                        %
-                      </span>
-                    </div>
-                  </TableCell>
-
-                  <TableCell data-label="Collateral">
-                    <div className="flex items-center justify-center gap-2">
-                      {row.collateralAmount > 0 ? (
-                        <>
-                          <span className="font-medium">{formatReadable(row.collateralAmount)}</span>
-                          <span>{row.market.collateralAsset.symbol}</span>
-                          <TokenIcon
-                            address={row.market.collateralAsset.address}
-                            chainId={row.market.morphoBlue.chain.id}
-                            symbol={row.market.collateralAsset.symbol}
-                            width={16}
-                            height={16}
-                          />
-                        </>
-                      ) : (
-                        <span className="font-medium text-secondary">-</span>
-                      )}
-                    </div>
-                  </TableCell>
-
-                  <TableCell data-label="LTV">
-                    <div className="flex items-center justify-center">
-                      {row.ltvPercent === null ? (
-                        <span className="font-medium text-secondary">-</span>
-                      ) : (
-                        <span className="font-medium">{formatReadable(row.ltvPercent)}%</span>
-                      )}
-                    </div>
-                  </TableCell>
-
-                  <TableCell
-                    data-label="Actions"
-                    className="justify-center px-4 py-3"
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        toggleRow(rowKey);
+                      }
+                    }}
                   >
-                    <div className="flex items-center justify-center">
-                      <BorrowPositionActionsDropdown
-                        isOwner={isOwner}
-                        isActiveDebt={row.isActiveDebt}
-                        onBorrowMoreClick={() =>
-                          open('borrow', {
-                            market: row.market,
-                            defaultMode: 'borrow',
-                            toggleBorrowRepay: false,
-                            refetch: () => {
-                              void onRefetch();
-                            },
-                          })
-                        }
-                        onRepayClick={() =>
-                          open('borrow', {
-                            market: row.market,
-                            defaultMode: 'repay',
-                            toggleBorrowRepay: false,
-                            refetch: () => {
-                              void onRefetch();
-                            },
-                          })
-                        }
-                        onDeleverageClick={() =>
-                          open('leverage', {
-                            market: row.market,
-                            defaultMode: 'deleverage',
-                            toggleLeverageDeleverage: false,
-                            refetch: () => {
-                              void onRefetch();
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
+                    <TableCell className="w-16">
+                      <div className="flex items-center justify-center">
+                        <NetworkIcon
+                          networkId={row.market.morphoBlue.chain.id}
+                          size={20}
+                        />
+                      </div>
+                    </TableCell>
+
+                    <TableCell data-label="Market">
+                      <div className="flex items-center gap-2">
+                        <MarketIdentity
+                          market={row.market}
+                          mode={MarketIdentityMode.Focused}
+                          focus={MarketIdentityFocus.Collateral}
+                          chainId={row.market.morphoBlue.chain.id}
+                          showId
+                          showOracle
+                          showLltv
+                        />
+                      </div>
+                    </TableCell>
+
+                    <TableCell data-label="Loan">
+                      <div className="flex items-center justify-center gap-2">
+                        {row.isActiveDebt ? (
+                          <>
+                            <span className="font-medium">{formatReadable(row.borrowAmount)}</span>
+                            <span>{row.market.loanAsset.symbol}</span>
+                            <TokenIcon
+                              address={row.market.loanAsset.address}
+                              chainId={row.market.morphoBlue.chain.id}
+                              symbol={row.market.loanAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          </>
+                        ) : (
+                          <span className="font-medium text-secondary">-</span>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    <TableCell data-label={`${rateLabel} (now)`}>
+                      <div className="flex items-center justify-center">
+                        {row.market.state.borrowApy == null ? (
+                          <span className="font-medium text-secondary">-</span>
+                        ) : (
+                          <RateFormatted
+                            value={row.market.state.borrowApy}
+                            className="font-medium"
+                          />
+                        )}
+                      </div>
+                    </TableCell>
+
+                    <TableCell data-label="Collateral">
+                      <div className="flex items-center justify-center gap-2">
+                        {row.collateralAmount > 0 ? (
+                          <>
+                            <span className="font-medium">{formatReadable(row.collateralAmount)}</span>
+                            <span>{row.market.collateralAsset.symbol}</span>
+                            <TokenIcon
+                              address={row.market.collateralAsset.address}
+                              chainId={row.market.morphoBlue.chain.id}
+                              symbol={row.market.collateralAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          </>
+                        ) : (
+                          <span className="font-medium text-secondary">-</span>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    <TableCell data-label="LTV">
+                      <div className="flex items-center justify-center">
+                        {metrics.currentLtvLabel == null ? (
+                          <span className="font-medium text-secondary">-</span>
+                        ) : (
+                          <div className="whitespace-nowrap tabular-nums">
+                            <span className="font-medium">{metrics.currentLtvLabel}</span>
+                            <span className="ml-1 text-xs text-secondary">/ {metrics.lltvLabel}</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    <TableCell
+                      data-label="Actions"
+                      className="justify-center px-4 py-3"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-center">
+                        <BorrowPositionActionsDropdown
+                          isOwner={isOwner}
+                          isActiveDebt={row.isActiveDebt}
+                          onBorrowMoreClick={() =>
+                            open('borrow', {
+                              market: row.market,
+                              defaultMode: 'borrow',
+                              toggleBorrowRepay: false,
+                              refetch: () => {
+                                void onRefetch();
+                              },
+                            })
+                          }
+                          onRepayClick={() =>
+                            open('borrow', {
+                              market: row.market,
+                              defaultMode: 'repay',
+                              toggleBorrowRepay: false,
+                              refetch: () => {
+                                void onRefetch();
+                              },
+                            })
+                          }
+                          onDeleverageClick={() =>
+                            open('leverage', {
+                              market: row.market,
+                              defaultMode: 'deleverage',
+                              toggleLeverageDeleverage: false,
+                              refetch: () => {
+                                void onRefetch();
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <TableRow
+                        id={detailRowId}
+                        className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface"
+                      >
+                        <TableCell
+                          colSpan={7}
+                          className="bg-surface"
+                        >
+                          <BorrowedMorphoBlueRowDetail row={row} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </AnimatePresence>
+                </Fragment>
               );
             })}
           </TableBody>
