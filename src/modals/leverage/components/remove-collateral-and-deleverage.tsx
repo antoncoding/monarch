@@ -245,6 +245,8 @@ export function RemoveCollateralAndDeleverage({
             oraclePrice={oraclePrice}
             currentCollateral={currentCollateralAssets}
             currentBorrow={currentBorrowAssets}
+            projectedCollateral={projection.projectedCollateralAssets}
+            projectedBorrow={projection.projectedBorrowAssets}
             currentLtv={currentLTV}
             projectedLtv={displayProjectedLTV}
             lltv={lltv}

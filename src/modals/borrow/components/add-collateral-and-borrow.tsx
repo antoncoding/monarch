@@ -61,6 +61,7 @@ export function AddCollateralAndBorrow({
   const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
   const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
   const projectedCollateralAssets = currentCollateralAssets + collateralAmount;
+  const projectedBorrowAssets = currentBorrowAssets + borrowAmount;
   const hasChanges = collateralAmount > 0n || borrowAmount > 0n;
 
   const extraLiquidity = liquiditySourcing?.totalAvailableExtraLiquidity ?? 0n;
@@ -99,11 +100,11 @@ export function AddCollateralAndBorrow({
   const projectedLTV = useMemo(
     () =>
       computeLtv({
-        borrowAssets: currentBorrowAssets + borrowAmount,
+        borrowAssets: projectedBorrowAssets,
         collateralAssets: projectedCollateralAssets,
         oraclePrice,
       }),
-    [currentBorrowAssets, borrowAmount, projectedCollateralAssets, oraclePrice],
+    [projectedBorrowAssets, projectedCollateralAssets, oraclePrice],
   );
 
   const maxTargetLtvPercent = useMemo(() => Math.min(100, ltvWadToPercent(clampTargetLtv(lltv, lltv))), [lltv]);
@@ -207,6 +208,8 @@ export function AddCollateralAndBorrow({
             oraclePrice={oraclePrice}
             currentCollateral={currentCollateralAssets}
             currentBorrow={currentBorrowAssets}
+            projectedCollateral={projectedCollateralAssets}
+            projectedBorrow={projectedBorrowAssets}
             currentLtv={currentLTV}
             projectedLtv={projectedLTV}
             lltv={lltv}
