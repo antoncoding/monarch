@@ -376,20 +376,20 @@ export function AddCollateralAndLeverage({
     }
 
     return formatSwapRatePreview({
-      baseAmount: quotedLoanAmount,
-      baseTokenDecimals: market.loanAsset.decimals,
-      baseTokenSymbol: market.loanAsset.symbol,
-      quoteAmount: quotedCollateralAmount,
-      quoteTokenDecimals: market.collateralAsset.decimals,
-      quoteTokenSymbol: market.collateralAsset.symbol,
+      baseAmount: quotedCollateralAmount,
+      baseTokenDecimals: market.collateralAsset.decimals,
+      baseTokenSymbol: market.collateralAsset.symbol,
+      quoteAmount: quotedLoanAmount,
+      quoteTokenDecimals: market.loanAsset.decimals,
+      quoteTokenSymbol: market.loanAsset.symbol,
     });
   }, [
     isSwapRoute,
     quote.swapPriceRoute,
-    market.loanAsset.decimals,
-    market.loanAsset.symbol,
     market.collateralAsset.decimals,
     market.collateralAsset.symbol,
+    market.loanAsset.decimals,
+    market.loanAsset.symbol,
   ]);
   const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapPriceRoute != null && swapRatePreviewText != null;
   const toDisplayRate = useCallback(
@@ -604,6 +604,7 @@ export function AddCollateralAndLeverage({
           <p className="mb-2 text-xs uppercase tracking-[0.14em] text-secondary">Leverage Preview</p>
           <BorrowPositionRiskCard
             market={market}
+            oraclePrice={oraclePrice}
             currentCollateral={currentCollateralAssets}
             currentBorrow={currentBorrowAssets}
             projectedCollateral={projectedCollateralAssets}
