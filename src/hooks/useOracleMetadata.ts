@@ -101,6 +101,10 @@ export type OracleMetadataMap = Map<string, OracleOutput>;
 
 const ORACLE_GIST_BASE_URL = process.env.NEXT_PUBLIC_ORACLE_GIST_BASE_URL?.replace(/\/+$/, '');
 
+export function getOracleMetadataKey(chainId: number, oracleAddress: string): string {
+  return `${chainId}-${oracleAddress.toLowerCase()}`;
+}
+
 /**
  * Fetch oracle metadata directly from the centralized Gist.
  */
@@ -166,14 +170,24 @@ export function useOracleMetadata(chainId: SupportedNetworks | number | undefine
 export function getOracleFromMetadata(
   metadataRecord: OracleMetadataRecord | OracleMetadataMap | undefined,
   oracleAddress: string | undefined,
+  chainId?: number,
 ): OracleOutput | undefined {
   if (!metadataRecord || !oracleAddress) return undefined;
 
   const key = oracleAddress.toLowerCase();
+  const scopedKey = chainId == null ? null : getOracleMetadataKey(chainId, oracleAddress);
 
   // Handle both Map and Record
   if (metadataRecord instanceof Map) {
+    if (scopedKey) {
+      const scopedOracle = metadataRecord.get(scopedKey);
+      if (scopedOracle) return scopedOracle;
+    }
     return metadataRecord.get(key);
+  }
+
+  if (scopedKey && metadataRecord[scopedKey]) {
+    return metadataRecord[scopedKey];
   }
 
   return metadataRecord[key];
@@ -227,8 +241,8 @@ export function useAllOracleMetadata() {
       const oracles = query.data?.oracles;
       if (oracles) {
         for (const oracle of oracles) {
-          if (oracle?.address) {
-            record[oracle.address.toLowerCase()] = oracle;
+          if (oracle?.address && oracle.chainId != null) {
+            record[getOracleMetadataKey(oracle.chainId, oracle.address)] = oracle;
           }
         }
       }

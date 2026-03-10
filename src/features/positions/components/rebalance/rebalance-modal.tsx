@@ -165,6 +165,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     feeAmount: smartFeeAmount,
     feeUsdValue: smartFeeUsdValue,
     isFeeCapped: smartFeeIsCapped,
+    isFeeReady: isSmartFeeReady,
     estimatedDailyEarningsUsd,
   } = useSmartRebalance(groupedPosition, smartPlan, handleSmartTxSuccess);
 
@@ -282,7 +283,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     [groupedPosition.loanAssetDecimals, smartTotalMoved],
   );
   const smartFeePreview = useMemo(
-    () => formatTokenAmountPreview(smartFeeAmount, groupedPosition.loanAssetDecimals),
+    () => (smartFeeAmount == null ? null : formatTokenAmountPreview(smartFeeAmount, groupedPosition.loanAssetDecimals)),
     [groupedPosition.loanAssetDecimals, smartFeeAmount],
   );
   const smartFeeUsdDisplay = useMemo(() => (smartFeeUsdValue == null ? null : formatUsdValueDisplay(smartFeeUsdValue)), [smartFeeUsdValue]);
@@ -317,12 +318,14 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         label: 'Capital Moved',
         value: fmtAmount(smartTotalMoved),
       });
-      items.push({
-        id: 'fee',
-        label: SMART_REBALANCE_FEE_LABEL,
-        value: `${smartFeePreview.compact} ${groupedPosition.loanAssetSymbol}`,
-        detail: smartFeeSummaryDetail || undefined,
-      });
+      if (smartFeePreview != null) {
+        items.push({
+          id: 'fee',
+          label: SMART_REBALANCE_FEE_LABEL,
+          value: `${smartFeePreview.compact} ${groupedPosition.loanAssetSymbol}`,
+          detail: smartFeeSummaryDetail || undefined,
+        });
+      }
     }
 
     return items;
@@ -332,8 +335,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     rateLabel,
     smartCurrentWeightedRate,
     estimatedDailyEarningsUsd,
-    smartFeeAmount,
-    smartFeePreview.compact,
+    smartFeePreview,
     smartFeeSummaryDetail,
     smartPlan,
     smartProjectedWeightedRate,
@@ -341,8 +343,10 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     smartWeightedRateDiff,
   ]);
 
-  const smartFeePreviewRow = useMemo<PreviewRow>(
-    () => ({
+  const smartFeePreviewRow = useMemo<PreviewRow | null>(() => {
+    if (smartFeePreview == null) return null;
+
+    return {
       id: 'fee',
       label: (
         <span className="flex items-center gap-0.5 text-secondary">
@@ -389,17 +393,15 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
           />
         </span>
       ),
-    }),
-    [
-      groupedPosition.chainId,
-      groupedPosition.loanAssetAddress,
-      groupedPosition.loanAssetSymbol,
-      smartFeeIsCapped,
-      smartFeePreview.compact,
-      smartFeePreview.full,
-      smartFeeUsdDisplay,
-    ],
-  );
+    };
+  }, [
+    groupedPosition.chainId,
+    groupedPosition.loanAssetAddress,
+    groupedPosition.loanAssetSymbol,
+    smartFeeIsCapped,
+    smartFeePreview,
+    smartFeeUsdDisplay,
+  ]);
 
   const smartRows = useMemo(() => {
     const selectedMarkets = [...smartSelectedMarketKeys]
@@ -476,7 +478,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     return JSON.stringify(sourceEntries) !== JSON.stringify(debouncedEntries);
   }, [debouncedSmartMaxAllocationBps, smartMaxAllocationBps]);
 
-  const smartCanExecute = !isSmartCalculating && !isSmartConstraintsPending && !!smartPlan && smartTotalMoved > 0n;
+  const smartCanExecute = !isSmartCalculating && !isSmartConstraintsPending && !!smartPlan && smartTotalMoved > 0n && isSmartFeeReady;
 
   const handleDeleteSmartMarket = useCallback(
     (uniqueKey: string) => {
@@ -722,8 +724,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   }, [executeRebalance, refetch, toast]);
 
   const handleExecuteSmartRebalance = useCallback(() => {
+    if (!smartCanExecute) return;
     void executeSmartRebalance(smartSummaryItems);
-  }, [executeSmartRebalance, smartSummaryItems]);
+  }, [executeSmartRebalance, smartCanExecute, smartSummaryItems]);
 
   const refreshActionLoading = isManualRefreshing || isRefetching;
 
@@ -1070,6 +1073,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
             </div>
 
             {smartCalculationError && <div className="text-sm text-red-500">{smartCalculationError}</div>}
+            {!isSmartCalculating && smartPlan && smartTotalMoved > 0n && !isSmartFeeReady && (
+              <div className="text-sm text-red-500">Waiting for loan asset USD price to enforce the smart rebalance fee cap.</div>
+            )}
             {!isSmartCalculating && constraintViolations.length > 0 && (
               <div className="rounded border border-yellow-500/30 bg-yellow-500/10 px-2 py-1.5 text-xs text-yellow-300">
                 Some max-allocation limits could not be fully satisfied due to current market liquidity/capacity.
@@ -1079,7 +1085,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
             {smartPlan && (
               <PreviewSection
                 title="Transaction Preview"
-                rows={[...smartPreviewRows, smartFeePreviewRow]}
+                rows={smartFeePreviewRow == null ? smartPreviewRows : [...smartPreviewRows, smartFeePreviewRow]}
               />
             )}
           </>

@@ -1,6 +1,7 @@
 import { formatUnits } from 'viem';
 
 const USD_TINY_DISPLAY_THRESHOLD = 0.01;
+const USD_EXACT_TOOLTIP_FRACTION_DIGITS = 10;
 
 function formatUsd(value: number, maximumFractionDigits: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -34,16 +35,15 @@ export function formatUsdValueDisplay(usdValue: number): {
   exact: string;
   showExactTooltip: boolean;
 } {
-  const exact = formatUsd(usdValue, 6);
-
   if (usdValue > 0 && usdValue < USD_TINY_DISPLAY_THRESHOLD) {
     return {
       display: '< $0.01',
-      exact,
+      exact: formatUsd(usdValue, USD_EXACT_TOOLTIP_FRACTION_DIGITS),
       showExactTooltip: true,
     };
   }
 
+  const exact = formatUsd(usdValue, 6);
   const display = formatUsd(usdValue, usdValue < 1 ? 4 : 2);
   return {
     display,
