@@ -1,9 +1,9 @@
 import { parseUnits } from 'viem';
 
 const FEE_DENOMINATOR_PPM = 1_000_000n;
-const REBALANCE_FEE_RATE_PPM = 40n; // 0.4 bps = 0.004%
+const REBALANCE_FEE_RATE_PPM = 30n; // 0.3 bps = 0.003%
 const LEVERAGE_FEE_RATE_PPM = 75n; // 0.75 bps = 0.0075%
-export const REBALANCE_FEE_CEILING_USD = 4;
+export const REBALANCE_FEE_CEILING_USD = 10;
 export const LEVERAGE_FEE_CEILING_USD = 5;
 
 type FeeParams = {

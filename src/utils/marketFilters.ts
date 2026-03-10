@@ -104,7 +104,7 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMeta
     const oracleType = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id, oracleMetadataMap);
 
     if (oracleType === OracleType.Meta) {
-      const metadata = getOracleFromMetadata(oracleMetadataMap, market.oracleAddress);
+      const metadata = getOracleFromMetadata(oracleMetadataMap, market.oracleAddress, market.morphoBlue.chain.id);
       if (metadata?.data && isMetaOracleData(metadata.data)) {
         const info = parseMetaOracleVendors(metadata.data);
         return !info.hasUnknown;

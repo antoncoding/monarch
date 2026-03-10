@@ -263,7 +263,7 @@ export function getOracleType(
 ) {
   // Check scanner metadata for oracle type (meta or standard with vault-only)
   if (metadataMap && oracleAddress) {
-    const metadata = getOracleFromMetadata(metadataMap, oracleAddress);
+    const metadata = getOracleFromMetadata(metadataMap, oracleAddress, chainId);
     if (metadata?.type === 'meta') return OracleType.Meta;
     if (metadata?.type === 'standard') return OracleType.Standard;
   }
@@ -308,7 +308,9 @@ export function parsePriceFeedVendors(
   if (!oracleData.baseFeedOne && !oracleData.baseFeedTwo && !oracleData.quoteFeedOne && !oracleData.quoteFeedTwo) {
     // Check if this is a vault-only oracle (no feeds but has vault conversion)
     const oracleMetadata =
-      options?.metadataMap && options.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
+      options?.metadataMap && options.oracleAddress
+        ? getOracleFromMetadata(options.metadataMap, options.oracleAddress, chainId)
+        : undefined;
     const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
     const hasVault = oracleMetadataData?.baseVault || oracleMetadataData?.quoteVault;
 
@@ -343,7 +345,7 @@ export function parsePriceFeedVendors(
 
   // Try to get enriched metadata for this oracle
   const oracleMetadata =
-    options?.metadataMap && options.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
+    options?.metadataMap && options.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress, chainId) : undefined;
   const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
 
   for (const feed of feeds) {
@@ -571,7 +573,7 @@ export function checkFeedsPath(
 
   // Get metadata for feed path resolution
   const oracleMetadata =
-    options?.metadataMap && options?.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress) : undefined;
+    options?.metadataMap && options?.oracleAddress ? getOracleFromMetadata(options.metadataMap, options.oracleAddress, chainId) : undefined;
   const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
 
   const feedPaths: FeedPathEntry[] = [

@@ -35,6 +35,7 @@ import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineE
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
 import { getLeverageFee } from '@/config/fees';
+import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { formatBalance } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
 import { convertAprToApy, toApyFromDisplayRate, toDisplayRateFromApy } from '@/utils/rateMath';
@@ -53,6 +54,7 @@ type AddCollateralAndLeverageProps = {
 
 const LEVERAGE_SAFE_LTV_BUFFER_BPS = 100n; // keep a 1% buffer below liquidation LTV
 const TARGET_INPUT_DEBOUNCE_MS = 300;
+const INLINE_VALUE_TOOLTIP_CLASS_NAME = 'px-4 py-3 text-xs';
 
 export function AddCollateralAndLeverage({
   market,
@@ -331,22 +333,14 @@ export function AddCollateralAndLeverage({
     if (!isLeverageFeeReady || leverageTransferFee == null) return null;
     return formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals);
   }, [isLeverageFeeReady, leverageTransferFee, market.collateralAsset.decimals]);
-  const leverageFeeUsdPreview = useMemo(() => {
+  const leverageFeeUsdValue = useMemo(() => {
     if (!isLeverageFeeReady || leverageTransferFee == null || collateralAssetPriceUsd == null) return null;
-
-    const feeAmount = Number(formatUnits(leverageTransferFee, market.collateralAsset.decimals));
-    if (!Number.isFinite(feeAmount) || feeAmount < 0) return null;
-
-    const feeUsdValue = feeAmount * collateralAssetPriceUsd;
-    if (!Number.isFinite(feeUsdValue) || feeUsdValue < 0) return null;
-
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 3,
-    }).format(feeUsdValue);
+    return computeAssetUsdValue(leverageTransferFee, market.collateralAsset.decimals, collateralAssetPriceUsd);
   }, [isLeverageFeeReady, leverageTransferFee, collateralAssetPriceUsd, market.collateralAsset.decimals]);
+  const leverageFeeUsdDisplay = useMemo(
+    () => (leverageFeeUsdValue == null ? null : formatUsdValueDisplay(leverageFeeUsdValue)),
+    [leverageFeeUsdValue],
+  );
   const swapCollateralOutPreview = useMemo(
     () => formatTokenAmountPreview(quote.flashLegCollateralTokenAmount, market.collateralAsset.decimals),
     [quote.flashLegCollateralTokenAmount, market.collateralAsset.decimals],
@@ -759,10 +753,25 @@ export function AddCollateralAndLeverage({
                       />
                     </span>
                     <span className="tabular-nums inline-flex items-center gap-1.5">
-                      <Tooltip content={<span className="text-xs">{leverageFeePreview.full}</span>}>
+                      <Tooltip
+                        content={`${leverageFeePreview.full} ${market.collateralAsset.symbol}`}
+                        className={INLINE_VALUE_TOOLTIP_CLASS_NAME}
+                      >
                         <span className="cursor-help border-b border-dotted border-white/40">{leverageFeePreview.compact}</span>
                       </Tooltip>
-                      {leverageFeeUsdPreview != null && <span className="text-secondary">({leverageFeeUsdPreview})</span>}
+                      {leverageFeeUsdDisplay != null &&
+                        (leverageFeeUsdDisplay.showExactTooltip ? (
+                          <Tooltip
+                            content={`Exact fee: ${leverageFeeUsdDisplay.exact}`}
+                            className={INLINE_VALUE_TOOLTIP_CLASS_NAME}
+                          >
+                            <span className="cursor-help border-b border-dotted border-white/40 text-secondary">
+                              {leverageFeeUsdDisplay.display}
+                            </span>
+                          </Tooltip>
+                        ) : (
+                          <span className="text-secondary">{leverageFeeUsdDisplay.display}</span>
+                        ))}
                       <TokenIcon
                         address={market.collateralAsset.address}
                         chainId={market.morphoBlue.chain.id}
