@@ -15,6 +15,7 @@ import { TrustedByCell } from '@/features/autovault/components/trusted-vault-bad
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useModal } from '@/hooks/useModal';
+import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -317,6 +318,7 @@ export function MarketsTableWithSameLoanAsset({
   // Get global market settings
   const { showUnwhitelistedMarkets, isAprDisplay } = useAppSettings();
   const { findToken } = useTokensQuery();
+  const { data: oracleMetadataMap } = useAllOracleMetadata();
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
@@ -453,14 +455,17 @@ export function MarketsTableWithSameLoanAsset({
 
     markets.forEach((m) => {
       if (!m?.market?.morphoBlue?.chain?.id) return;
-      const vendorInfo = parsePriceFeedVendors(m.market.oracle?.data, m.market.morphoBlue.chain.id);
+      const vendorInfo = parsePriceFeedVendors(m.market.oracle?.data, m.market.morphoBlue.chain.id, {
+        metadataMap: oracleMetadataMap,
+        oracleAddress: m.market.oracleAddress,
+      });
       if (vendorInfo?.coreVendors) {
         vendorInfo.coreVendors.forEach((vendor) => oracleSet.add(vendor));
       }
     });
 
     return Array.from(oracleSet);
-  }, [markets]);
+  }, [markets, oracleMetadataMap]);
 
   // Filter and sort markets using the new shared filtering system
   const processedMarkets = useMemo(() => {
@@ -489,6 +494,7 @@ export function MarketsTableWithSameLoanAsset({
       },
       findToken,
       searchQuery,
+      oracleMetadataMap,
     });
 
     // Apply whitelist filter (not in the shared utility because it uses global state)
@@ -542,6 +548,7 @@ export function MarketsTableWithSameLoanAsset({
     usdFilters,
     findToken,
     hasTrustedVault,
+    oracleMetadataMap,
     trustedVaultsOnly,
   ]);
 

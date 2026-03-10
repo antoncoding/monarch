@@ -12,12 +12,16 @@ import type { SmartRebalancePlan } from '@/features/positions/smart-rebalance/pl
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useRebalanceExecution, type RebalanceExecutionStepType } from './useRebalanceExecution';
 import { useConnection } from 'wagmi';
+import { computeAssetUsdValue } from '@/utils/assetDisplay';
 
 const FULL_RATE_PPM = 1_000_000n;
 const SMART_REBALANCE_SHARE_WITHDRAW_DUST_BUFFER = 1000n;
+const DAYS_PER_YEAR = 365;
 
 type SmartRebalanceFeeBreakdown = {
   totalFee: bigint;
+  uncappedTotalFee: bigint;
+  assetPriceUsd: number | null;
   feeByMarket: Map<string, bigint>;
 };
 
@@ -46,7 +50,7 @@ function computeFeeBreakdown(
   pricedLoanAssetUsd: number | null,
 ): SmartRebalanceFeeBreakdown {
   if (!plan) {
-    return { totalFee: 0n, feeByMarket: new Map<string, bigint>() };
+    return { totalFee: 0n, uncappedTotalFee: 0n, assetPriceUsd: null, feeByMarket: new Map<string, bigint>() };
   }
 
   const feeByMarket = new Map<string, bigint>();
@@ -65,7 +69,7 @@ function computeFeeBreakdown(
   }
 
   if (uncappedTotal === 0n) {
-    return { totalFee: 0n, feeByMarket };
+    return { totalFee: 0n, uncappedTotalFee: 0n, assetPriceUsd: null, feeByMarket };
   }
 
   const fallbackPriceUsd = deriveLoanAssetPriceUsdFromPlan(plan, loanAssetDecimals);
@@ -92,8 +96,38 @@ function computeFeeBreakdown(
 
   return {
     totalFee: cappedTotal,
+    uncappedTotalFee: uncappedTotal,
+    assetPriceUsd: effectiveLoanAssetPriceUsd,
     feeByMarket,
   };
+}
+
+function computeEstimatedDailyEarningsUsd(
+  plan: SmartRebalancePlan | null,
+  loanAssetDecimals: number,
+  pricedLoanAssetUsd: number | null,
+): number | null {
+  if (!plan || pricedLoanAssetUsd == null || !Number.isFinite(pricedLoanAssetUsd) || pricedLoanAssetUsd <= 0) {
+    return null;
+  }
+
+  const totalPoolToken = Number(formatUnits(plan.totalPool, loanAssetDecimals));
+  if (!Number.isFinite(totalPoolToken) || totalPoolToken <= 0) {
+    return null;
+  }
+
+  const projectedApy = plan.projectedWeightedApy;
+  if (!Number.isFinite(projectedApy)) {
+    return null;
+  }
+
+  const totalPoolUsd = totalPoolToken * pricedLoanAssetUsd;
+  const estimatedDailyEarningsUsd = (totalPoolUsd * projectedApy) / DAYS_PER_YEAR;
+  if (!Number.isFinite(estimatedDailyEarningsUsd)) {
+    return null;
+  }
+
+  return estimatedDailyEarningsUsd;
 }
 
 export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartRebalancePlan | null, onSuccess?: () => void) => {
@@ -124,6 +158,21 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
   const feeAmount = useMemo(() => {
     return feeBreakdown.totalFee;
   }, [feeBreakdown.totalFee]);
+
+  const feeUsdValue = useMemo(
+    () => computeAssetUsdValue(feeBreakdown.totalFee, groupedPosition.loanAssetDecimals, feeBreakdown.assetPriceUsd),
+    [feeBreakdown.assetPriceUsd, feeBreakdown.totalFee, groupedPosition.loanAssetDecimals],
+  );
+
+  const isFeeCapped = useMemo(
+    () => feeBreakdown.totalFee > 0n && feeBreakdown.uncappedTotalFee > feeBreakdown.totalFee,
+    [feeBreakdown.totalFee, feeBreakdown.uncappedTotalFee],
+  );
+
+  const estimatedDailyEarningsUsd = useMemo(
+    () => computeEstimatedDailyEarningsUsd(plan, groupedPosition.loanAssetDecimals, pricedLoanAssetUsd),
+    [groupedPosition.loanAssetDecimals, plan, pricedLoanAssetUsd],
+  );
 
   const transferAmountEstimate = useMemo(() => {
     if (!plan) return 0n;
@@ -318,6 +367,9 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
     isProcessing: execution.isProcessing,
     totalMoved,
     feeAmount,
+    feeUsdValue,
+    isFeeCapped,
+    estimatedDailyEarningsUsd,
     transaction: execution.transaction,
     dismiss: execution.dismiss,
     currentStep: execution.currentStep as RebalanceExecutionStepType | null,

@@ -14,7 +14,7 @@ import {
   useMarketMetricsMap,
   type FlowTimeWindow,
 } from '@/hooks/queries/useMarketMetricsQuery';
-import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
+import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketPreferences, type CustomTagConfig } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { RewardsIndicator } from '@/features/markets/components/rewards-indicator';
@@ -88,7 +88,8 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
   const customTagKeys = useCustomTagMarketKeys();
   const hasCustomTag = customTagConfig.enabled && customTagKeys.has(marketKey);
 
-  const warnings = showRisk ? computeMarketWarnings(market, { considerWhitelist: true }) : [];
+  const marketWarnings = useMarketWarnings(showRisk ? market : null);
+  const warnings = showRisk ? marketWarnings : [];
   const hasWarnings = warnings.length > 0;
   const alertWarning = warnings.find((w) => w.level === 'alert');
   const warningLevel = alertWarning ? 'alert' : warnings.length > 0 ? 'warning' : null;

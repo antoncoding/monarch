@@ -5,10 +5,13 @@ import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
+import { HelpTooltipIcon } from '@/components/shared/help-tooltip-icon';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { TooltipContent as SharedTooltipContent } from '@/components/shared/tooltip-content';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useModalStore } from '@/stores/useModalStore';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useRebalance } from '@/hooks/useRebalance';
@@ -19,11 +22,15 @@ import { useRateLabel } from '@/hooks/useRateLabel';
 import type { Market } from '@/utils/types';
 import type { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { formatBalance, formatReadable } from '@/utils/balance';
+import { formatUsdValue } from '@/utils/portfolio';
+import { formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { convertApyToApr } from '@/utils/rateMath';
 import { calculateSmartRebalancePlan, type SmartRebalancePlan } from '@/features/positions/smart-rebalance/planner';
 import type { SmartRebalanceConstraintMap } from '@/features/positions/smart-rebalance/types';
 import type { TransactionSummaryItem } from '@/stores/useTransactionProcessStore';
 import type { SupportedNetworks } from '@/utils/networks';
+import { formatTokenAmountPreview } from '@/hooks/leverage/math';
+import { REBALANCE_FEE_CEILING_USD } from '@/config/fees';
 import { RiSparklingFill } from 'react-icons/ri';
 import { FiTrash2 } from 'react-icons/fi';
 import { AllocationCell } from '../allocation-cell';
@@ -50,7 +57,8 @@ const SMART_REBALANCE_RECALC_DEBOUNCE_MS = 300;
 const MAX_ALLOCATION_PERCENT_MIN = 0;
 const MAX_ALLOCATION_PERCENT_MAX = 100;
 const MAX_ALLOCATION_PERCENT_STEP = 0.5;
-const SMART_REBALANCE_FEE_LABEL = 'Fee (0.004%)';
+const SMART_REBALANCE_FEE_LABEL = 'Fee';
+const INLINE_VALUE_TOOLTIP_CLASS_NAME = 'px-4 py-3 text-xs';
 
 function formatPercent(value: number, digits = 2): string {
   return `${value.toFixed(digits)}%`;
@@ -61,6 +69,11 @@ function formatRate(apy: number, isAprDisplay: boolean): string {
   const displayRate = isAprDisplay ? convertApyToApr(apy) : apy;
   if (!Number.isFinite(displayRate)) return '-';
   return formatPercent(displayRate * 100, 2);
+}
+
+function formatDailyEarning(value: number): string {
+  const formattedValue = formatUsdValue(value, value < 1 ? 4 : 2);
+  return `${formattedValue}/day`;
 }
 
 function formatMaxAllocationInput(value: number): string {
@@ -79,7 +92,8 @@ function parseMaxAllocationInput(raw: string): number | null {
 }
 
 type PreviewRow = {
-  label: string;
+  id: string;
+  label: ReactNode;
   value: ReactNode;
   valueClassName?: string;
 };
@@ -91,7 +105,7 @@ function PreviewSection({ title, rows }: { title: string; rows: PreviewRow[] }) 
       <div className="space-y-1 text-xs">
         {rows.map((row) => (
           <div
-            key={row.label}
+            key={row.id}
             className="flex items-center justify-between gap-3"
           >
             <span className="text-secondary">{row.label}</span>
@@ -149,6 +163,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     isProcessing: isSmartProcessing,
     totalMoved: smartTotalMoved,
     feeAmount: smartFeeAmount,
+    feeUsdValue: smartFeeUsdValue,
+    isFeeCapped: smartFeeIsCapped,
+    estimatedDailyEarningsUsd,
   } = useSmartRebalance(groupedPosition, smartPlan, handleSmartTxSuccess);
 
   const eligibleMarkets = useMemo(() => {
@@ -260,6 +277,18 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   const smartCurrentWeightedRate = isAprDisplay ? smartCurrentWeightedApr : smartCurrentWeightedApy;
   const smartProjectedWeightedRate = isAprDisplay ? smartProjectedWeightedApr : smartProjectedWeightedApy;
   const smartWeightedRateDiff = smartProjectedWeightedRate - smartCurrentWeightedRate;
+  const smartCapitalMovedPreview = useMemo(
+    () => formatTokenAmountPreview(smartTotalMoved, groupedPosition.loanAssetDecimals),
+    [groupedPosition.loanAssetDecimals, smartTotalMoved],
+  );
+  const smartFeePreview = useMemo(
+    () => formatTokenAmountPreview(smartFeeAmount, groupedPosition.loanAssetDecimals),
+    [groupedPosition.loanAssetDecimals, smartFeeAmount],
+  );
+  const smartFeeUsdDisplay = useMemo(() => (smartFeeUsdValue == null ? null : formatUsdValueDisplay(smartFeeUsdValue)), [smartFeeUsdValue]);
+  const smartFeeSummaryDetail = useMemo(() => {
+    return [smartFeeUsdDisplay?.display, smartFeeIsCapped ? 'capped' : null].filter((part): part is string => part != null).join(' · ');
+  }, [smartFeeIsCapped, smartFeeUsdDisplay]);
 
   const smartSummaryItems = useMemo((): TransactionSummaryItem[] => {
     if (!smartPlan) return [];
@@ -274,30 +303,103 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       },
     ];
 
+    if (estimatedDailyEarningsUsd !== null) {
+      items.push({
+        id: 'estimated-daily-earning',
+        label: 'Estimated Daily Earning',
+        value: formatDailyEarning(estimatedDailyEarningsUsd),
+      });
+    }
+
     if (smartTotalMoved > 0n) {
       items.push({
         id: 'capital-moved',
-        label: 'Capital moved',
+        label: 'Capital Moved',
         value: fmtAmount(smartTotalMoved),
       });
       items.push({
         id: 'fee',
         label: SMART_REBALANCE_FEE_LABEL,
-        value: fmtAmount(smartFeeAmount),
+        value: `${smartFeePreview.compact} ${groupedPosition.loanAssetSymbol}`,
+        detail: smartFeeSummaryDetail || undefined,
       });
     }
 
     return items;
   }, [
     fmtAmount,
+    groupedPosition.loanAssetSymbol,
     rateLabel,
     smartCurrentWeightedRate,
+    estimatedDailyEarningsUsd,
     smartFeeAmount,
+    smartFeePreview.compact,
+    smartFeeSummaryDetail,
     smartPlan,
     smartProjectedWeightedRate,
     smartTotalMoved,
     smartWeightedRateDiff,
   ]);
+
+  const smartFeePreviewRow = useMemo<PreviewRow>(
+    () => ({
+      id: 'fee',
+      label: (
+        <span className="flex items-center gap-0.5 text-secondary">
+          Fee
+          <HelpTooltipIcon
+            content={
+              <SharedTooltipContent
+                title="Fee policy"
+                detail="0.3 bps (0.003%) of capital moved."
+                secondaryDetail={`Capped at $${REBALANCE_FEE_CEILING_USD} per transaction.`}
+              />
+            }
+            ariaLabel="Explain smart rebalance fee policy"
+            className="h-auto w-auto"
+          />
+        </span>
+      ),
+      value: (
+        <span className="tabular-nums inline-flex items-center gap-1.5">
+          <Tooltip
+            content={`${smartFeePreview.full} ${groupedPosition.loanAssetSymbol}`}
+            className={INLINE_VALUE_TOOLTIP_CLASS_NAME}
+          >
+            <span className="cursor-help border-b border-dotted border-white/40">{smartFeePreview.compact}</span>
+          </Tooltip>
+          {smartFeeUsdDisplay != null &&
+            (smartFeeUsdDisplay.showExactTooltip ? (
+              <Tooltip
+                content={`Exact fee: ${smartFeeUsdDisplay.exact}`}
+                className={INLINE_VALUE_TOOLTIP_CLASS_NAME}
+              >
+                <span className="cursor-help border-b border-dotted border-white/40 text-secondary">{smartFeeUsdDisplay.display}</span>
+              </Tooltip>
+            ) : (
+              <span className="text-secondary">{smartFeeUsdDisplay.display}</span>
+            ))}
+          {smartFeeIsCapped && <span className="text-secondary">capped</span>}
+          <TokenIcon
+            address={groupedPosition.loanAssetAddress as `0x${string}`}
+            chainId={groupedPosition.chainId}
+            symbol={groupedPosition.loanAssetSymbol}
+            width={14}
+            height={14}
+          />
+        </span>
+      ),
+    }),
+    [
+      groupedPosition.chainId,
+      groupedPosition.loanAssetAddress,
+      groupedPosition.loanAssetSymbol,
+      smartFeeIsCapped,
+      smartFeePreview.compact,
+      smartFeePreview.full,
+      smartFeeUsdDisplay,
+    ],
+  );
 
   const smartRows = useMemo(() => {
     const selectedMarkets = [...smartSelectedMarketKeys]
@@ -651,9 +753,10 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     });
   }, [refetch, refreshActionLoading, toast]);
 
-  const smartPreviewRows = useMemo<PreviewRow[]>(
-    () => [
+  const smartPreviewRows = useMemo<PreviewRow[]>(() => {
+    const rows: PreviewRow[] = [
       {
+        id: 'weighted-rate',
         label: `Weighted ${rateLabel}`,
         value: (
           <>
@@ -665,17 +768,52 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
           </>
         ),
       },
-      {
-        label: 'Capital moved',
-        value: fmtAmount(smartTotalMoved),
-      },
-      {
-        label: SMART_REBALANCE_FEE_LABEL,
-        value: fmtAmount(smartFeeAmount),
-      },
-    ],
-    [fmtAmount, rateLabel, smartCurrentWeightedRate, smartFeeAmount, smartProjectedWeightedRate, smartTotalMoved, smartWeightedRateDiff],
-  );
+    ];
+
+    if (estimatedDailyEarningsUsd !== null) {
+      rows.push({
+        id: 'estimated-daily-earning',
+        label: 'Estimated Daily Earning',
+        value: formatDailyEarning(estimatedDailyEarningsUsd),
+        valueClassName: 'tabular-nums text-green-600',
+      });
+    }
+
+    rows.push({
+      id: 'capital-moved',
+      label: 'Capital Moved',
+      value: (
+        <span className="tabular-nums inline-flex items-center gap-1.5">
+          <Tooltip
+            content={`${smartCapitalMovedPreview.full} ${groupedPosition.loanAssetSymbol}`}
+            className={INLINE_VALUE_TOOLTIP_CLASS_NAME}
+          >
+            <span className="cursor-help border-b border-dotted border-white/40">{smartCapitalMovedPreview.compact}</span>
+          </Tooltip>
+          <TokenIcon
+            address={groupedPosition.loanAssetAddress as `0x${string}`}
+            chainId={groupedPosition.chainId}
+            symbol={groupedPosition.loanAssetSymbol}
+            width={14}
+            height={14}
+          />
+        </span>
+      ),
+    });
+
+    return rows;
+  }, [
+    estimatedDailyEarningsUsd,
+    groupedPosition.chainId,
+    groupedPosition.loanAssetAddress,
+    groupedPosition.loanAssetSymbol,
+    rateLabel,
+    smartCapitalMovedPreview,
+    smartCurrentWeightedRate,
+    smartProjectedWeightedRate,
+    smartTotalMoved,
+    smartWeightedRateDiff,
+  ]);
 
   return (
     <Modal
@@ -941,7 +1079,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
             {smartPlan && (
               <PreviewSection
                 title="Transaction Preview"
-                rows={smartPreviewRows}
+                rows={[...smartPreviewRows, smartFeePreviewRow]}
               />
             )}
           </>
