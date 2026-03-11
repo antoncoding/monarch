@@ -72,7 +72,7 @@ export const fetchTokenPrices = async (tokens: TokenPriceInput[]): Promise<Map<s
     Array.from(tokensByChain.entries()).map(async ([chainId, addresses]) => {
       try {
         const addressChunks = chunkAddresses(addresses);
-        const responses = await Promise.all(
+        const responses = await Promise.allSettled(
           addressChunks.map((addressChunk) =>
             morphoGraphqlFetcher<AssetPricesResponse>(assetPricesQuery, {
               where: {
@@ -83,7 +83,14 @@ export const fetchTokenPrices = async (tokens: TokenPriceInput[]): Promise<Map<s
           ),
         );
 
-        for (const response of responses) {
+        for (const responseResult of responses) {
+          if (responseResult.status === 'rejected') {
+            console.error(`Failed to fetch prices for chain ${chainId}:`, responseResult.reason);
+            continue;
+          }
+
+          const response = responseResult.value;
+
           // Handle NOT_FOUND - skip this batch
           if (!response) {
             continue;
