@@ -1,6 +1,8 @@
 import { assetPricesQuery } from '@/graphql/morpho-api-queries';
 import { morphoGraphqlFetcher } from './fetchers';
 
+const MAX_ASSET_PRICE_ADDRESSES_PER_QUERY = 100;
+
 // Type for token price input
 export type TokenPriceInput = {
   address: string;
@@ -31,6 +33,16 @@ export const getTokenPriceKey = (address: string, chainId: number): string => {
   return `${address.toLowerCase()}-${chainId}`;
 };
 
+const chunkAddresses = (addresses: string[]): string[][] => {
+  const chunks: string[][] = [];
+
+  for (let index = 0; index < addresses.length; index += MAX_ASSET_PRICE_ADDRESSES_PER_QUERY) {
+    chunks.push(addresses.slice(index, index + MAX_ASSET_PRICE_ADDRESSES_PER_QUERY));
+  }
+
+  return chunks;
+};
+
 /**
  * Fetches token prices from Morpho API for a list of tokens
  * @param tokens - Array of token addresses and chain IDs
@@ -59,30 +71,44 @@ export const fetchTokenPrices = async (tokens: TokenPriceInput[]): Promise<Map<s
   await Promise.all(
     Array.from(tokensByChain.entries()).map(async ([chainId, addresses]) => {
       try {
-        const response = await morphoGraphqlFetcher<AssetPricesResponse>(assetPricesQuery, {
-          where: {
-            address_in: addresses,
-            chainId_in: [chainId],
-          },
-        });
+        const addressChunks = chunkAddresses(addresses);
+        const responses = await Promise.allSettled(
+          addressChunks.map((addressChunk) =>
+            morphoGraphqlFetcher<AssetPricesResponse>(assetPricesQuery, {
+              where: {
+                address_in: addressChunk,
+                chainId_in: [chainId],
+              },
+            }),
+          ),
+        );
 
-        // Handle NOT_FOUND - skip this chain
-        if (!response) {
-          return;
-        }
-
-        if (!response.data?.assets?.items) {
-          console.warn(`No price data returned for chain ${chainId}`);
-          return;
-        }
-
-        // Process each asset and add to price map
-        response.data.assets.items.forEach((asset) => {
-          if (asset.priceUsd !== null) {
-            const key = getTokenPriceKey(asset.address, asset.chain.id);
-            priceMap.set(key, asset.priceUsd);
+        for (const responseResult of responses) {
+          if (responseResult.status === 'rejected') {
+            console.error(`Failed to fetch prices for chain ${chainId}:`, responseResult.reason);
+            continue;
           }
-        });
+
+          const response = responseResult.value;
+
+          // Handle NOT_FOUND - skip this batch
+          if (!response) {
+            continue;
+          }
+
+          if (!response.data?.assets?.items) {
+            console.warn(`No price data returned for chain ${chainId}`);
+            continue;
+          }
+
+          // Process each asset and add to price map
+          for (const asset of response.data.assets.items) {
+            if (asset.priceUsd !== null) {
+              const key = getTokenPriceKey(asset.address, asset.chain.id);
+              priceMap.set(key, asset.priceUsd);
+            }
+          }
+        }
       } catch (error) {
         console.error(`Failed to fetch prices for chain ${chainId}:`, error);
       }
