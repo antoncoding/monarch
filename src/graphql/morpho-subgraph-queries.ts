@@ -74,9 +74,10 @@ export const marketFragment = `
 `;
 
 export const marketsQuery = `
-  query getSubgraphMarkets($first: Int, $where: Market_filter, $network: String) {
+  query getSubgraphMarkets($first: Int, $skip: Int, $where: Market_filter, $network: String) {
     markets(
       first: $first,
+      skip: $skip,
       where: $where,
       orderBy: totalValueLockedUSD,
       orderDirection: desc,

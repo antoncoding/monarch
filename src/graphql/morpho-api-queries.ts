@@ -155,12 +155,7 @@ export const marketsQuery = `
       }
       pageInfo {
         countTotal
-        count
-        limit
-        skip
-        __typename
-      }  
-      __typename
+      }
     }
   }
     
@@ -173,7 +168,6 @@ export const marketsQuery = `
     }
     listed
     morphoBlue {
-      id
       address
       chain {
         id
@@ -187,19 +181,13 @@ export const marketsQuery = `
       decimals
     }
     collateralAsset {
-      id
       address
       symbol
       name
       decimals
     }
-    badDebt {
-      underlying
-      usd
-    }
     realizedBadDebt {
       underlying
-      usd
     }
     supplyingVaults {
       address
@@ -232,7 +220,6 @@ export const marketsQuery = `
     warnings {
       type
       level
-      __typename
     }
   }
 `;

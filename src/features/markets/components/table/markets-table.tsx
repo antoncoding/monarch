@@ -34,7 +34,6 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   const { vaults: trustedVaults } = useTrustedVaults();
 
   const markets = useFilteredMarkets();
-
   const isEmpty = !rawMarkets;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
