@@ -206,11 +206,7 @@ type SubgraphMarketsVariables = {
 const SUBGRAPH_MARKETS_PAGE_SIZE = 1000;
 const SUBGRAPH_MARKETS_PAGE_BATCH_SIZE = 4;
 
-const fetchSubgraphMarketsPage = async (
-  subgraphApiUrl: string,
-  network: SupportedNetworks,
-  skip: number,
-): Promise<SubgraphMarket[]> => {
+const fetchSubgraphMarketsPage = async (subgraphApiUrl: string, network: SupportedNetworks, skip: number): Promise<SubgraphMarket[]> => {
   const variables: SubgraphMarketsVariables = {
     first: SUBGRAPH_MARKETS_PAGE_SIZE,
     skip,
@@ -241,45 +237,41 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
     throw new Error(`Subgraph URL for network ${network} is not defined.`);
   }
 
-  try {
-    const majorPricesPromise = fetchMajorPrices();
-    const allMarkets: SubgraphMarket[] = [];
+  const majorPricesPromise = fetchMajorPrices();
+  const allMarkets: SubgraphMarket[] = [];
 
-    const firstPage = await fetchSubgraphMarketsPage(subgraphApiUrl, network, 0);
-    allMarkets.push(...firstPage);
+  const firstPage = await fetchSubgraphMarketsPage(subgraphApiUrl, network, 0);
+  allMarkets.push(...firstPage);
 
-    if (firstPage.length === SUBGRAPH_MARKETS_PAGE_SIZE) {
-      let nextSkip = SUBGRAPH_MARKETS_PAGE_SIZE;
-      let hasMorePages = true;
+  if (firstPage.length === SUBGRAPH_MARKETS_PAGE_SIZE) {
+    let nextSkip = SUBGRAPH_MARKETS_PAGE_SIZE;
+    let hasMorePages = true;
 
-      while (hasMorePages) {
-        const offsetBatch = Array.from({ length: SUBGRAPH_MARKETS_PAGE_BATCH_SIZE }, (_, index) => nextSkip + index * SUBGRAPH_MARKETS_PAGE_SIZE);
-        const settledPages = await Promise.allSettled(
-          offsetBatch.map((skip) => fetchSubgraphMarketsPage(subgraphApiUrl, network, skip)),
-        );
+    while (hasMorePages) {
+      const offsetBatch = Array.from(
+        { length: SUBGRAPH_MARKETS_PAGE_BATCH_SIZE },
+        (_, index) => nextSkip + index * SUBGRAPH_MARKETS_PAGE_SIZE,
+      );
+      const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchSubgraphMarketsPage(subgraphApiUrl, network, skip)));
 
-        hasMorePages = false;
+      hasMorePages = false;
 
-        for (const settledPage of settledPages) {
-          if (settledPage.status === 'rejected') {
-            throw settledPage.reason;
-          }
-
-          allMarkets.push(...settledPage.value);
-
-          if (settledPage.value.length === SUBGRAPH_MARKETS_PAGE_SIZE) {
-            hasMorePages = true;
-          }
+      for (const settledPage of settledPages) {
+        if (settledPage.status === 'rejected') {
+          throw settledPage.reason;
         }
 
-        nextSkip += SUBGRAPH_MARKETS_PAGE_BATCH_SIZE * SUBGRAPH_MARKETS_PAGE_SIZE;
-      }
-    }
+        allMarkets.push(...settledPage.value);
 
-    const majorPrices = await majorPricesPromise;
-    return allMarkets.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
-  } catch (error) {
-    console.error(`Error fetching subgraph markets on ${network}:`, error);
-    return [];
+        if (settledPage.value.length === SUBGRAPH_MARKETS_PAGE_SIZE) {
+          hasMorePages = true;
+        }
+      }
+
+      nextSkip += SUBGRAPH_MARKETS_PAGE_BATCH_SIZE * SUBGRAPH_MARKETS_PAGE_SIZE;
+    }
   }
+
+  const majorPrices = await majorPricesPromise;
+  return allMarkets.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
 };

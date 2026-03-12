@@ -100,60 +100,55 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
   const allMarkets: Market[] = [];
   const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 
-  try {
-    const firstPage = await fetchMorphoMarketsPage(network, 0, pageSize);
+  const firstPage = await fetchMorphoMarketsPage(network, 0, pageSize);
 
-    if (!firstPage) {
-      return [];
-    }
+  if (!firstPage) {
+    return [];
+  }
 
-    allMarkets.push(...firstPage.items);
+  allMarkets.push(...firstPage.items);
 
-    const firstPageCount = firstPage.items.length;
-    const totalCount = firstPage.totalCount;
+  const firstPageCount = firstPage.items.length;
+  const totalCount = firstPage.totalCount;
 
-    if (firstPageCount === 0 && totalCount > 0) {
-      console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
-      return allMarkets.filter(
-        (market) =>
-          !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
-          !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
-      );
-    }
-
-    const remainingOffsets: number[] = [];
-    for (let nextSkip = firstPageCount; nextSkip < totalCount; nextSkip += pageSize) {
-      remainingOffsets.push(nextSkip);
-    }
-
-    for (let index = 0; index < remainingOffsets.length; index += MORPHO_MARKETS_PAGE_BATCH_SIZE) {
-      const offsetBatch = remainingOffsets.slice(index, index + MORPHO_MARKETS_PAGE_BATCH_SIZE);
-      const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchMorphoMarketsPage(network, skip, pageSize)));
-
-      const successfulPages: MorphoMarketsPage[] = [];
-
-      for (const settledPage of settledPages) {
-        if (settledPage.status === 'rejected') {
-          throw settledPage.reason;
-        }
-        if (settledPage.value) {
-          successfulPages.push(settledPage.value);
-        }
-      }
-
-      successfulPages.forEach((page) => {
-        allMarkets.push(...page.items);
-      });
-    }
-
-    // final filter: remove scam markets
+  if (firstPageCount === 0 && totalCount > 0) {
+    console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
     return allMarkets.filter(
       (market) =>
         !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
         !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
     );
-  } catch (error) {
-    console.error(`Error fetching markets via Morpho API for network ${network}:`, error);
-    throw error;
   }
+
+  const remainingOffsets: number[] = [];
+  for (let nextSkip = firstPageCount; nextSkip < totalCount; nextSkip += pageSize) {
+    remainingOffsets.push(nextSkip);
+  }
+
+  for (let index = 0; index < remainingOffsets.length; index += MORPHO_MARKETS_PAGE_BATCH_SIZE) {
+    const offsetBatch = remainingOffsets.slice(index, index + MORPHO_MARKETS_PAGE_BATCH_SIZE);
+    const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchMorphoMarketsPage(network, skip, pageSize)));
+
+    const successfulPages: MorphoMarketsPage[] = [];
+
+    for (const settledPage of settledPages) {
+      if (settledPage.status === 'rejected') {
+        throw settledPage.reason;
+      }
+      if (settledPage.value) {
+        successfulPages.push(settledPage.value);
+      }
+    }
+
+    successfulPages.forEach((page) => {
+      allMarkets.push(...page.items);
+    });
+  }
+
+  // final filter: remove scam markets
+  return allMarkets.filter(
+    (market) =>
+      !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
+      !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
+  );
 };
