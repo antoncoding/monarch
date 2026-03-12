@@ -292,7 +292,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                       {showDaysToLiquidation && <TableCell className="text-right text-sm">{daysDisplay}</TableCell>}
                       {showLiquidationPrice && (
                         <TableCell className="text-right text-sm">
-                          <div className="flex flex-col items-end">
+                          <div className="flex items-center justify-end gap-1">
                             <span>{borrower.liquidationPrice}</span>
                             <span className="text-xs text-secondary">{borrower.liquidationPriceMove}</span>
                           </div>
