@@ -75,7 +75,7 @@ function PreviewIndicator({ isPreview, title, detail, secondaryDetail, children 
         />
       }
     >
-      <span className="inline-flex min-w-0 cursor-help items-center border-b border-dotted border-white/40">{children}</span>
+      <span className="inline-flex min-w-0 cursor-help items-center border-b border-dotted border-secondary/70 pb-px">{children}</span>
     </Tooltip>
   );
 }
