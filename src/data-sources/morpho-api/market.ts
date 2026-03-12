@@ -1,5 +1,4 @@
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
-import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import type { SupportedNetworks } from '@/utils/networks';
 import { blacklistTokens } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
@@ -38,13 +37,8 @@ type MorphoMarketsPage = {
 };
 
 const MORPHO_MARKETS_PAGE_SIZE = 500;
-const MORPHO_MARKETS_FALLBACK_TIMEOUT_MS = 10_000;
-const MORPHO_MARKETS_NO_FALLBACK_TIMEOUT_MS = 20_000;
+const MORPHO_MARKETS_TIMEOUT_MS = 20_000;
 const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
-
-const getMorphoMarketsTimeoutMs = (network: SupportedNetworks): number => {
-  return getSubgraphUrl(network) ? MORPHO_MARKETS_FALLBACK_TIMEOUT_MS : MORPHO_MARKETS_NO_FALLBACK_TIMEOUT_MS;
-};
 
 // Transform API response to internal Market type
 const processMarketData = (market: MorphoApiMarket): Market => {
@@ -79,7 +73,7 @@ const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, 
   };
 
   const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(marketsQuery, variables, {
-    timeoutMs: getMorphoMarketsTimeoutMs(network),
+    timeoutMs: MORPHO_MARKETS_TIMEOUT_MS,
   });
 
   if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {

@@ -42,10 +42,8 @@ export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
         // Morpho API sometimes returns NOT_FOUND error alongside valid data
         // Only return null if there's truly no data
         if ('data' in result && result.data !== null) {
-          console.log('Morpho API returned NOT_FOUND error but has valid data, using data');
           return result;
         }
-        console.log('Morpho API return Not Found error:', notFoundError);
         return null;
       }
 
