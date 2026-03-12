@@ -21,27 +21,6 @@ Always consult these docs for detailed information:
 4. Do not claim repo facts without evidence (no invented counts).
 5. Prevent double-capture, noisy heuristics, or duplicate logic.
 
-## ACP Delegation Boundaries (Mandatory)
-
-When using ACP agents (Codex/Claude Code/etc):
-
-1. ACP agents are for implementation work (code edits, local checks), not end-to-end workflow ownership.
-2. The primary assistant must personally handle workflow orchestration and final accountability:
-   - branch/commit/push/PR actions,
-   - CI/review follow-up decisions,
-   - browser verification and screenshots,
-   - final reporting to the user.
-3. Do not delegate "take screenshots", "open PR", or similar workflow-completion tasks into ACP prompts.
-4. If ACP status telemetry is noisy/incomplete, verify directly via local git/gh/browser state and report from that evidence.
-
-## Shared Utilities Over Ad Hoc Helpers (Mandatory)
-
-Before adding formatting/math/helper functions (especially percent/price/liquidation formatting):
-
-1. Search for existing shared utilities/components first and reuse them.
-2. If equivalent logic exists, do not duplicate it in feature files.
-3. If no suitable shared helper exists, extract a reusable utility in the proper shared location (not inline ad hoc functions in table/component files).
-4. During review, explicitly check for duplicate helpers introduced by the change and consolidate them.
 
 ## Post-Implementation Consolidation (Mandatory)
 
