@@ -2,28 +2,28 @@ import { FiSliders } from 'react-icons/fi';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import {
-  BORROWER_TABLE_COLUMN_DESCRIPTIONS,
-  BORROWER_TABLE_COLUMN_LABELS,
-  DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY,
-  type BorrowerTableColumnVisibility,
-} from './borrower-table-column-visibility';
+  BORROWED_TABLE_COLUMN_DESCRIPTIONS,
+  BORROWED_TABLE_COLUMN_LABELS,
+  DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
+  type BorrowedTableColumnVisibility,
+} from './borrowed-table-column-visibility';
 
-type BorrowerTableSettingsModalProps = {
+type BorrowedTableSettingsModalProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  columnVisibility: BorrowerTableColumnVisibility;
+  columnVisibility: BorrowedTableColumnVisibility;
   onColumnVisibilityChange: (
-    visibilityOrUpdater: BorrowerTableColumnVisibility | ((prev: BorrowerTableColumnVisibility) => BorrowerTableColumnVisibility),
+    visibilityOrUpdater: BorrowedTableColumnVisibility | ((prev: BorrowedTableColumnVisibility) => BorrowedTableColumnVisibility),
   ) => void;
 };
 
-export function BorrowerTableSettingsModal({
+export function BorrowedTableSettingsModal({
   isOpen,
   onOpenChange,
   columnVisibility,
   onColumnVisibilityChange,
-}: BorrowerTableSettingsModalProps) {
-  const columnKeys = Object.keys(BORROWER_TABLE_COLUMN_LABELS) as (keyof BorrowerTableColumnVisibility)[];
+}: BorrowedTableSettingsModalProps) {
+  const columnKeys = Object.keys(BORROWED_TABLE_COLUMN_LABELS) as (keyof BorrowedTableColumnVisibility)[];
 
   return (
     <Modal
@@ -37,7 +37,7 @@ export function BorrowerTableSettingsModal({
         <>
           <ModalHeader
             title="Table Preferences"
-            description="Configure borrower table columns"
+            description="Configure borrowed markets table columns"
             mainIcon={<FiSliders className="h-5 w-5" />}
             onClose={onClose}
           />
@@ -51,19 +51,19 @@ export function BorrowerTableSettingsModal({
                     className="flex items-center justify-between gap-4 py-1"
                   >
                     <label
-                      htmlFor={`borrower-col-${key}`}
+                      htmlFor={`borrowed-col-${key}`}
                       className="flex-grow cursor-pointer"
                     >
-                      <p className="text-sm font-medium text-primary">{BORROWER_TABLE_COLUMN_LABELS[key]}</p>
-                      <p className="text-xs text-secondary">{BORROWER_TABLE_COLUMN_DESCRIPTIONS[key]}</p>
+                      <p className="text-sm font-medium text-primary">{BORROWED_TABLE_COLUMN_LABELS[key]}</p>
+                      <p className="text-xs text-secondary">{BORROWED_TABLE_COLUMN_DESCRIPTIONS[key]}</p>
                     </label>
                     <IconSwitch
-                      id={`borrower-col-${key}`}
-                      selected={columnVisibility[key] ?? DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY[key]}
+                      id={`borrowed-col-${key}`}
+                      selected={columnVisibility[key] ?? DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY[key]}
                       onChange={(value) => onColumnVisibilityChange((prev) => ({ ...prev, [key]: value }))}
                       size="xs"
                       color="primary"
-                      aria-label={`Toggle ${BORROWER_TABLE_COLUMN_LABELS[key]} column`}
+                      aria-label={`Toggle ${BORROWED_TABLE_COLUMN_LABELS[key]} column`}
                     />
                   </div>
                 ))}

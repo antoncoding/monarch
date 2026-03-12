@@ -15,6 +15,7 @@ import type { Market, MarketPosition } from '@/utils/types';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { computeLtv, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
+import { PreviewSectionHeader } from '@/modals/borrow/components/preview-section-header';
 
 type RemoveCollateralAndDeleverageProps = {
   market: Market;
@@ -239,7 +240,11 @@ export function RemoveCollateralAndDeleverage({
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
-          <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">Deleverage Preview</p>
+          <PreviewSectionHeader
+            title="Deleverage Preview"
+            onRefresh={onSuccess}
+            isRefreshing={isRefreshing}
+          />
           <BorrowPositionRiskCard
             market={market}
             oraclePrice={oraclePrice}
@@ -250,8 +255,6 @@ export function RemoveCollateralAndDeleverage({
             currentLtv={currentLTV}
             projectedLtv={displayProjectedLTV}
             lltv={lltv}
-            onRefresh={onSuccess}
-            isRefreshing={isRefreshing}
             hasChanges={shouldShowProjectedRisk}
           />
 

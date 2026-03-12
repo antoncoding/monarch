@@ -132,6 +132,17 @@ export const isInfiniteLtv = (ltv: bigint): boolean => ltv >= INFINITE_LTV;
 export const formatLtvPercent = (ltv: bigint, fractionDigits = 2): string =>
   isInfiniteLtv(ltv) ? '∞' : ltvWadToPercent(ltv).toFixed(fractionDigits);
 
+export const computeHealthScoreFromLtv = ({ ltv, lltv }: { ltv: bigint; lltv: bigint }): number | null => {
+  if (ltv <= 0n || lltv <= 0n || isInfiniteLtv(ltv)) return null;
+  const healthScore = Number(lltv) / Number(ltv);
+  return Number.isFinite(healthScore) ? healthScore : null;
+};
+
+export const formatHealthScore = (healthScore: number | null, fractionDigits = 2): string => {
+  if (healthScore == null || !Number.isFinite(healthScore)) return '—';
+  return healthScore.toFixed(fractionDigits);
+};
+
 export const computeLiquidationOraclePrice = ({
   oraclePrice,
   ltv,
