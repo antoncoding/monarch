@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { GearIcon } from '@radix-ui/react-icons';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { GoFilter } from 'react-icons/go';
@@ -11,11 +12,20 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { useMarketDetailPreferences } from '@/stores/useMarketDetailPreferences';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useMarketBorrowers } from '@/hooks/useMarketBorrowers';
 import { formatSimple } from '@/utils/balance';
 import type { Market } from '@/utils/types';
 import { LiquidateModal } from '@/modals/liquidate/liquidate-modal';
+import {
+  computeLiquidationOraclePrice,
+  computeLtv,
+  computeOraclePriceChangePercent,
+  formatMarketOraclePrice,
+  isInfiniteLtv,
+} from '@/modals/borrow/components/helpers';
+import { BorrowerTableSettingsModal } from './borrower-table-settings-modal';
 
 type BorrowersTableProps = {
   chainId: number;
@@ -25,11 +35,50 @@ type BorrowersTableProps = {
   onOpenFiltersModal: () => void;
 };
 
+type BorrowerRowMetric = {
+  ltvPercent: number | null;
+  daysToLiquidation: number | null;
+  liquidationPrice: string;
+  liquidationPriceMove: string;
+};
+
+const formatPercent = (value: number): string => value.toFixed(2).replace(/\.?0+$/u, '');
+
+const formatPriceMove = (percentChange: number | null): string => {
+  if (percentChange == null || !Number.isFinite(percentChange)) {
+    return '—';
+  }
+
+  if (percentChange > 0) {
+    return `(-${formatPercent(percentChange)}%)`;
+  }
+
+  if (percentChange < 0) {
+    return `(+${formatPercent(Math.abs(percentChange))}%)`;
+  }
+
+  return '(0%)';
+};
+
+const formatBorrowerLiquidationPrice = (market: Market, liquidationOraclePrice: bigint | null): string => {
+  if (liquidationOraclePrice == null || liquidationOraclePrice <= 0n) {
+    return '—';
+  }
+
+  return `${formatMarketOraclePrice({
+    oraclePrice: liquidationOraclePrice,
+    collateralDecimals: market.collateralAsset.decimals,
+    loanDecimals: market.loanAsset.decimals,
+  })} ${market.loanAsset.symbol}`;
+};
+
 export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpenFiltersModal }: BorrowersTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [liquidateBorrower, setLiquidateBorrower] = useState<Address | null>(null);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const pageSize = 10;
   const { showDeveloperOptions } = useAppSettings();
+  const { borrowerTableColumnVisibility, setBorrowerTableColumnVisibility } = useMarketDetailPreferences();
 
   const { data: paginatedData, isLoading, isFetching } = useMarketBorrowers(market?.uniqueKey, chainId, minShares, currentPage, pageSize);
 
@@ -43,49 +92,62 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
 
   const hasActiveFilter = minShares !== '0';
   const tableKey = `borrowers-table-${currentPage}`;
+  const showDaysToLiquidation = borrowerTableColumnVisibility.daysToLiquidation;
+  const showLiquidationPrice = borrowerTableColumnVisibility.liquidationPrice;
 
-  // Calculate LTV and Days to Liquidation for each borrower
-  // LTV = borrowAssets / (collateral * oraclePrice)
-  // Days to Liquidation = ln(lltv/ltv) / ln(1 + borrowApy) * 365
-  // (using continuous compounding: r = ln(1 + APY) to convert annual APY to continuous rate)
   const borrowersWithMetrics = useMemo(() => {
     if (!oraclePrice) return [];
 
-    const lltv = Number(market.lltv) / 1e16; // lltv in WAD format (e.g., 8e17 = 80%)
+    const lltv = BigInt(market.lltv);
     const borrowApy = market.state.borrowApy;
 
     return borrowers.map((borrower) => {
       const borrowAssets = BigInt(borrower.borrowAssets);
-      const collateral = BigInt(borrower.collateral);
+      const collateralAssets = BigInt(borrower.collateral);
+      const ltvWad = computeLtv({ borrowAssets, collateralAssets, oraclePrice });
+      const ltvPercent = isInfiniteLtv(ltvWad) ? null : Number(ltvWad) / 1e16;
 
-      // Calculate collateral value in loan asset terms
-      // oraclePrice is scaled by 10^36, need to adjust for token decimals
-      const collateralValueInLoan = (collateral * oraclePrice) / BigInt(10 ** 36);
-
-      // Calculate LTV as a percentage
-      let ltv = 0;
-      if (collateralValueInLoan > 0n) {
-        ltv = Number((borrowAssets * 10000n) / collateralValueInLoan) / 100;
-      }
-
-      // Calculate Days to Liquidation
-      // Only calculate if borrower has position, LTV > 0, and borrow rate > 0
       let daysToLiquidation: number | null = null;
-      if (ltv > 0 && borrowApy > 0 && lltv > ltv) {
-        // Use continuous compounding: LTV(t) = LTV * e^(r * t) where r = ln(1 + APY)
-        // Solve for t when LTV(t) = lltv: t = ln(lltv/ltv) / r
+      if (!isInfiniteLtv(ltvWad) && ltvWad > 0n && borrowApy > 0 && lltv > ltvWad) {
         const continuousRate = Math.log(1 + borrowApy);
-        const yearsToLiquidation = Math.log(lltv / ltv) / continuousRate;
+        const yearsToLiquidation = Math.log(Number(lltv) / Number(ltvWad)) / continuousRate;
         daysToLiquidation = Math.max(0, Math.round(yearsToLiquidation * 365));
       }
 
+      const liquidationOraclePrice =
+        !isInfiniteLtv(ltvWad) && ltvWad > 0n && lltv > 0n
+          ? computeLiquidationOraclePrice({
+              oraclePrice,
+              ltv: ltvWad,
+              lltv,
+            })
+          : null;
+      const liquidationPrice = formatBorrowerLiquidationPrice(market, liquidationOraclePrice);
+      const liquidationPriceMove =
+        liquidationOraclePrice == null
+          ? '—'
+          : formatPriceMove(
+              computeOraclePriceChangePercent({
+                currentOraclePrice: oraclePrice,
+                targetOraclePrice: liquidationOraclePrice,
+              }),
+            );
+
+      const metrics: BorrowerRowMetric = {
+        ltvPercent,
+        daysToLiquidation,
+        liquidationPrice,
+        liquidationPriceMove,
+      };
+
       return {
         ...borrower,
-        ltv,
-        daysToLiquidation,
+        ...metrics,
       };
     });
-  }, [borrowers, oraclePrice, market.lltv, market.state.borrowApy]);
+  }, [borrowers, oraclePrice, market]);
+
+  const emptyStateColSpan = 5 + (showDaysToLiquidation ? 1 : 0) + (showLiquidationPrice ? 1 : 0) + (showDeveloperOptions ? 1 : 0);
 
   return (
     <div>
@@ -114,11 +176,29 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
               />
             </Button>
           </Tooltip>
+
+          <Tooltip
+            content={
+              <TooltipContent
+                title="Table Preferences"
+                detail="Configure borrower table columns"
+              />
+            }
+          >
+            <Button
+              aria-label="Borrower Table Preferences"
+              variant="ghost"
+              size="sm"
+              className="text-secondary min-w-0 px-2"
+              onClick={() => setIsSettingsModalOpen(true)}
+            >
+              <GearIcon className="h-3 w-3" />
+            </Button>
+          </Tooltip>
         </div>
       </div>
 
       <div className="relative">
-        {/* Loading overlay */}
         {isFetching && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-surface/80 backdrop-blur-sm">
             <Spinner size={24} />
@@ -136,18 +216,35 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                 <TableHead className="text-right">BORROWED</TableHead>
                 <TableHead className="text-right">COLLATERAL</TableHead>
                 <TableHead className="text-right">LTV</TableHead>
-                <TableHead className="text-right">
-                  <Tooltip
-                    content={
-                      <TooltipContent
-                        title="Days to Liquidation"
-                        detail="Estimated days until position reaches liquidation threshold, based on current LTV and borrow rate"
-                      />
-                    }
-                  >
-                    <span className="cursor-help border-b border-dashed border-secondary/50">DAYS TO LIQ.</span>
-                  </Tooltip>
-                </TableHead>
+                {showDaysToLiquidation && (
+                  <TableHead className="text-right">
+                    <Tooltip
+                      content={
+                        <TooltipContent
+                          title="Days to Liquidation"
+                          detail="Estimated days until position reaches liquidation threshold, based on current LTV and borrow rate"
+                        />
+                      }
+                    >
+                      <span className="cursor-help border-b border-dashed border-secondary/50">DAYS TO LIQ.</span>
+                    </Tooltip>
+                  </TableHead>
+                )}
+                {showLiquidationPrice && (
+                  <TableHead className="text-right">
+                    <Tooltip
+                      content={
+                        <TooltipContent
+                          title="Liquidation Price"
+                          detail="Oracle price where this borrower becomes liquidatable."
+                          secondaryDetail="Secondary text shows relative move from current oracle price."
+                        />
+                      }
+                    >
+                      <span className="cursor-help border-b border-dashed border-secondary/50">LIQ. PRICE</span>
+                    </Tooltip>
+                  </TableHead>
+                )}
                 <TableHead className="text-right">% OF BORROW</TableHead>
                 {showDeveloperOptions && <TableHead className="text-right">ACTIONS</TableHead>}
               </TableRow>
@@ -156,7 +253,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
               {borrowersWithMetrics.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={showDeveloperOptions ? 7 : 6}
+                    colSpan={emptyStateColSpan}
                     className="text-center text-gray-400"
                   >
                     No borrowers found for this market
@@ -168,9 +265,8 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                   const borrowerAssets = BigInt(borrower.borrowAssets);
                   const percentOfBorrow = totalBorrow > 0n ? (Number(borrowerAssets) / Number(totalBorrow)) * 100 : 0;
                   const percentDisplay = percentOfBorrow < 0.01 && percentOfBorrow > 0 ? '<0.01%' : `${percentOfBorrow.toFixed(2)}%`;
-
-                  // Days to liquidation display
                   const daysDisplay = borrower.daysToLiquidation !== null ? `${borrower.daysToLiquidation}` : '—';
+                  const ltvDisplay = borrower.ltvPercent !== null ? `${borrower.ltvPercent.toFixed(2)}%` : '∞';
 
                   return (
                     <TableRow key={`borrower-${borrower.userAddress}`}>
@@ -210,8 +306,16 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right text-sm">{borrower.ltv.toFixed(2)}%</TableCell>
-                      <TableCell className="text-right text-sm">{daysDisplay}</TableCell>
+                      <TableCell className="text-right text-sm">{ltvDisplay}</TableCell>
+                      {showDaysToLiquidation && <TableCell className="text-right text-sm">{daysDisplay}</TableCell>}
+                      {showLiquidationPrice && (
+                        <TableCell className="text-right text-sm">
+                          <div className="flex flex-col items-end">
+                            <span>{borrower.liquidationPrice}</span>
+                            <span className="text-xs text-secondary">{borrower.liquidationPriceMove}</span>
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell className="text-right text-sm">{percentDisplay}</TableCell>
                       {showDeveloperOptions && (
                         <TableCell className="text-right">
@@ -254,6 +358,13 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
           }}
         />
       )}
+
+      <BorrowerTableSettingsModal
+        isOpen={isSettingsModalOpen}
+        onOpenChange={setIsSettingsModalOpen}
+        columnVisibility={borrowerTableColumnVisibility}
+        onColumnVisibilityChange={setBorrowerTableColumnVisibility}
+      />
     </div>
   );
 }
