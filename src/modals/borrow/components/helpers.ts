@@ -157,6 +157,51 @@ export const computeOraclePriceChangePercent = ({
   return Number(percentChangeBps) / 100;
 };
 
+const formatPercentForDisplay = (value: number): string => value.toFixed(2).replace(/\.?0+$/u, '');
+
+export const formatRelativeLiquidationPriceMove = ({
+  percentChange,
+  wrapInParentheses = false,
+}: {
+  percentChange: number | null;
+  wrapInParentheses?: boolean;
+}): string => {
+  if (percentChange == null || !Number.isFinite(percentChange)) {
+    return '—';
+  }
+
+  const signedValue =
+    percentChange > 0
+      ? `-${formatPercentForDisplay(percentChange)}%`
+      : percentChange < 0
+        ? `+${formatPercentForDisplay(Math.abs(percentChange))}%`
+        : '0%';
+
+  return wrapInParentheses ? `(${signedValue})` : signedValue;
+};
+
+export const formatMarketOraclePriceWithSymbol = ({
+  oraclePrice,
+  collateralDecimals,
+  loanDecimals,
+  loanSymbol,
+}: {
+  oraclePrice: bigint;
+  collateralDecimals: number;
+  loanDecimals: number;
+  loanSymbol: string;
+}): string => {
+  if (oraclePrice <= 0n) {
+    return '—';
+  }
+
+  return `${formatMarketOraclePrice({
+    oraclePrice,
+    collateralDecimals,
+    loanDecimals,
+  })} ${loanSymbol}`;
+};
+
 export const computeRequiredCollateralAssets = ({
   borrowAssets,
   oraclePrice,

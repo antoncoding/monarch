@@ -22,7 +22,8 @@ import {
   computeLiquidationOraclePrice,
   computeLtv,
   computeOraclePriceChangePercent,
-  formatMarketOraclePrice,
+  formatMarketOraclePriceWithSymbol,
+  formatRelativeLiquidationPriceMove,
   isInfiniteLtv,
 } from '@/modals/borrow/components/helpers';
 import { BorrowerTableSettingsModal } from './borrower-table-settings-modal';
@@ -41,36 +42,6 @@ type BorrowerRowMetric = {
   daysToLiquidation: number | null;
   liquidationPrice: string;
   liquidationPriceMove: string;
-};
-
-const formatPercent = (value: number): string => value.toFixed(2).replace(/\.?0+$/u, '');
-
-const formatPriceMove = (percentChange: number | null): string => {
-  if (percentChange == null || !Number.isFinite(percentChange)) {
-    return '—';
-  }
-
-  if (percentChange > 0) {
-    return `(-${formatPercent(percentChange)}%)`;
-  }
-
-  if (percentChange < 0) {
-    return `(+${formatPercent(Math.abs(percentChange))}%)`;
-  }
-
-  return '(0%)';
-};
-
-const formatBorrowerLiquidationPrice = (market: Market, liquidationOraclePrice: bigint | null): string => {
-  if (liquidationOraclePrice == null || liquidationOraclePrice <= 0n) {
-    return '—';
-  }
-
-  return `${formatMarketOraclePrice({
-    oraclePrice: liquidationOraclePrice,
-    collateralDecimals: market.collateralAsset.decimals,
-    loanDecimals: market.loanAsset.decimals,
-  })} ${market.loanAsset.symbol}`;
 };
 
 export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpenFiltersModal }: BorrowersTableProps) {
@@ -124,16 +95,25 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
               lltv,
             })
           : null;
-      const liquidationPrice = formatBorrowerLiquidationPrice(market, liquidationOraclePrice);
-      const liquidationPriceMove =
+      const liquidationPrice =
         liquidationOraclePrice == null
           ? '—'
-          : formatPriceMove(
-              computeOraclePriceChangePercent({
+          : formatMarketOraclePriceWithSymbol({
+              oraclePrice: liquidationOraclePrice,
+              collateralDecimals: market.collateralAsset.decimals,
+              loanDecimals: market.loanAsset.decimals,
+              loanSymbol: market.loanAsset.symbol,
+            });
+      const liquidationPriceMove = formatRelativeLiquidationPriceMove({
+        percentChange:
+          liquidationOraclePrice == null
+            ? null
+            : computeOraclePriceChangePercent({
                 currentOraclePrice: oraclePrice,
                 targetOraclePrice: liquidationOraclePrice,
               }),
-            );
+        wrapInParentheses: true,
+      });
 
       const metrics: BorrowerRowMetric = {
         ltvPercent,

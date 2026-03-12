@@ -10,7 +10,8 @@ import {
   computeLtv,
   computeOraclePriceChangePercent,
   formatLtvPercent,
-  formatMarketOraclePrice,
+  formatMarketOraclePriceWithSymbol,
+  formatRelativeLiquidationPriceMove,
   getLTVColor,
   getLTVProgressColor,
   isInfiniteLtv,
@@ -40,36 +41,13 @@ type MetricRowProps = {
   valueClassName?: string;
 };
 
-function formatPercent(value: number): string {
-  return value.toFixed(2).replace(/\.?0+$/u, '');
-}
-
-function formatPriceMove(percentChange: number | null): string {
-  if (percentChange == null || !Number.isFinite(percentChange)) {
-    return '—';
-  }
-
-  if (percentChange > 0) {
-    return `-${formatPercent(percentChange)}%`;
-  }
-
-  if (percentChange < 0) {
-    return `+${formatPercent(Math.abs(percentChange))}%`;
-  }
-
-  return '0%';
-}
-
 function formatBorrowPositionPrice(row: BorrowPositionRow, oraclePrice: bigint): string {
-  if (oraclePrice <= 0n) {
-    return '—';
-  }
-
-  return `${formatMarketOraclePrice({
+  return formatMarketOraclePriceWithSymbol({
     oraclePrice,
     collateralDecimals: row.market.collateralAsset.decimals,
     loanDecimals: row.market.loanAsset.decimals,
-  })} ${row.market.loanAsset.symbol}`;
+    loanSymbol: row.market.loanAsset.symbol,
+  });
 }
 
 export function deriveBorrowPositionMetrics(row: BorrowPositionRow): BorrowPositionMetrics {
@@ -177,7 +155,7 @@ export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetail
                 </div>
               </div>
             }
-            secondaryDetail={priceMove == null ? undefined : `Relative to current: ${formatPriceMove(priceMove)}`}
+            secondaryDetail={priceMove == null ? undefined : `Relative to current: ${formatRelativeLiquidationPriceMove({ percentChange: priceMove })}`}
           />
         );
 
@@ -225,7 +203,7 @@ export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetail
               label="Price Move"
               tooltipTitle="Price Move"
               tooltipDetail="Relative move from the current oracle price to liquidation."
-              value={formatPriceMove(priceMove)}
+              value={formatRelativeLiquidationPriceMove({ percentChange: priceMove })}
             />
           </section>
 
