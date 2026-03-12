@@ -21,6 +21,7 @@ Always consult these docs for detailed information:
 4. Do not claim repo facts without evidence (no invented counts).
 5. Prevent double-capture, noisy heuristics, or duplicate logic.
 
+
 ## Post-Implementation Consolidation (Mandatory)
 
 Before closing any non-trivial change:
