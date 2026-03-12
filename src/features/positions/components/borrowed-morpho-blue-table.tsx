@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useMemo, useState } from 'react';
+import { GearIcon } from '@radix-ui/react-icons';
 import { AnimatePresence } from 'framer-motion';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
@@ -15,11 +16,15 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
 import { formatReadable } from '@/utils/balance';
 import { buildBorrowPositionRows } from '@/utils/positions';
+import { computeHealthScoreFromLtv, formatHealthScore } from '@/modals/borrow/components/helpers';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import { BorrowPositionActionsDropdown } from './borrow-position-actions-dropdown';
 import { BorrowedMorphoBlueRowDetail, deriveBorrowPositionMetrics } from './borrowed-morpho-blue-row-detail';
+import { BorrowedTableSettingsModal } from './borrowed-table-settings-modal';
+import { DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY } from './borrowed-table-column-visibility';
 
 type BorrowedMorphoBlueTableProps = {
   account: string;
@@ -33,9 +38,12 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
   const { open } = useModal();
   const { short: rateLabel } = useRateLabel();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   const borrowRows = useMemo(() => buildBorrowPositionRows(positions), [positions]);
   const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
+  const { borrowedTableColumnVisibility, setBorrowedTableColumnVisibility } = usePositionsPreferences();
+  const showHealthScore = borrowedTableColumnVisibility.healthScore ?? DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY.healthScore;
 
   const toggleRow = (rowKey: string) => {
     setExpandedRows((prev) => {
@@ -50,26 +58,47 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
   };
 
   const headerActions = (
-    <Tooltip
-      content={
-        <TooltipContent
-          title="Refresh"
-          detail="Fetch latest borrow position data"
-        />
-      }
-    >
-      <span>
+    <>
+      <Tooltip
+        content={
+          <TooltipContent
+            title="Refresh"
+            detail="Fetch latest borrow position data"
+          />
+        }
+      >
+        <span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void onRefetch()}
+            disabled={isRefetching}
+            className="min-w-0 px-2 text-secondary"
+          >
+            <RefetchIcon isLoading={isRefetching} />
+          </Button>
+        </span>
+      </Tooltip>
+
+      <Tooltip
+        content={
+          <TooltipContent
+            title="Table Preferences"
+            detail="Configure borrowed markets table columns"
+          />
+        }
+      >
         <Button
+          aria-label="Borrowed Table Preferences"
           variant="ghost"
           size="sm"
-          onClick={() => void onRefetch()}
-          disabled={isRefetching}
-          className="min-w-0 px-2 text-secondary"
+          className="text-secondary min-w-0 px-2"
+          onClick={() => setIsSettingsModalOpen(true)}
         >
-          <RefetchIcon isLoading={isRefetching} />
+          <GearIcon className="h-3 w-3" />
         </Button>
-      </span>
-    </Tooltip>
+      </Tooltip>
+    </>
   );
 
   if (borrowRows.length === 0) {
@@ -91,6 +120,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
               <TableHead>{rateLabel} (now)</TableHead>
               <TableHead>Collateral</TableHead>
               <TableHead>LTV</TableHead>
+              {showHealthScore && <TableHead>Health Score</TableHead>}
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -209,6 +239,20 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                       </div>
                     </TableCell>
 
+                    {showHealthScore && (
+                      <TableCell data-label="Health Score">
+                        <div className="flex items-center justify-center tabular-nums">
+                          <span className="font-medium">
+                            {formatHealthScore(
+                              metrics.displayLtv == null
+                                ? null
+                                : computeHealthScoreFromLtv({ ltv: metrics.displayLtv, lltv: metrics.lltv }),
+                            )}
+                          </span>
+                        </div>
+                      </TableCell>
+                    )}
+
                     <TableCell
                       data-label="Actions"
                       className="justify-center px-4 py-3"
@@ -260,7 +304,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface"
                       >
                         <TableCell
-                          colSpan={7}
+                          colSpan={7 + (showHealthScore ? 1 : 0)}
                           className="bg-surface"
                         >
                           <BorrowedMorphoBlueRowDetail row={row} />
@@ -274,6 +318,13 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
           </TableBody>
         </Table>
       </TableContainerWithHeader>
+
+      <BorrowedTableSettingsModal
+        isOpen={isSettingsModalOpen}
+        onOpenChange={setIsSettingsModalOpen}
+        columnVisibility={borrowedTableColumnVisibility}
+        onColumnVisibilityChange={setBorrowedTableColumnVisibility}
+      />
     </div>
   );
 }

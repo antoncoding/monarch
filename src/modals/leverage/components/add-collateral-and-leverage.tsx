@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { erc20Abi, formatUnits } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
+import { PreviewSectionHeader } from '@/modals/borrow/components/preview-section-header';
 import { LTV_WAD, computeLtv } from '@/modals/borrow/components/helpers';
 import { HelpTooltipIcon } from '@/components/shared/help-tooltip-icon';
 import { RateFormatted } from '@/components/shared/rate-formatted';
@@ -595,7 +596,11 @@ export function AddCollateralAndLeverage({
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
-          <p className="mb-2 text-xs uppercase tracking-[0.14em] text-secondary">Leverage Preview</p>
+          <PreviewSectionHeader
+            title="Leverage Preview"
+            onRefresh={onSuccess}
+            isRefreshing={isRefreshing}
+          />
           <BorrowPositionRiskCard
             market={market}
             oraclePrice={oraclePrice}
@@ -606,8 +611,6 @@ export function AddCollateralAndLeverage({
             currentLtv={currentLTV}
             projectedLtv={projectedLTV}
             lltv={lltv}
-            onRefresh={onSuccess}
-            isRefreshing={isRefreshing}
             hasChanges={hasChanges}
             useCompactAmountDisplay
           />

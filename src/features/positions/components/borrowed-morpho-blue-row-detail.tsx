@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -121,8 +121,7 @@ function MetricRow({
 }
 
 export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetailProps) {
-  const { currentLtvLabel, displayLtv, liquidationOraclePrice, lltv, lltvLabel, ltvWidth, oraclePrice } =
-    deriveBorrowPositionMetrics(row);
+  const { currentLtvLabel, displayLtv, liquidationOraclePrice, lltv, lltvLabel, ltvWidth, oraclePrice } = deriveBorrowPositionMetrics(row);
   const currentPrice = formatBorrowPositionPrice(row, oraclePrice);
   const liquidationPrice = liquidationOraclePrice == null ? '—' : formatBorrowPositionPrice(row, liquidationOraclePrice);
   const priceMove =
@@ -138,26 +137,26 @@ export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetail
       : `font-zen text-sm tabular-nums text-right ${getLTVColor(displayLtv, lltv)}`;
   const ltvBarClassName = displayLtv == null ? 'bg-gray-500/50' : getLTVProgressColor(displayLtv, lltv);
   const liquidationTooltip =
-    liquidationPrice === '—'
-      ? null
-      : (
-          <TooltipContent
-            title="Liquidation Price"
-            detail={
-              <div className="space-y-1">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-secondary">Current Price</span>
-                  <span className="tabular-nums">{currentPrice}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-secondary">Liquidation Price</span>
-                  <span className="tabular-nums">{liquidationPrice}</span>
-                </div>
-              </div>
-            }
-            secondaryDetail={priceMove == null ? undefined : `Relative to current: ${formatRelativeLiquidationPriceMove({ percentChange: priceMove })}`}
-          />
-        );
+    liquidationPrice === '—' ? null : (
+      <TooltipContent
+        title="Liquidation Price"
+        detail={
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-secondary">Current Price</span>
+              <span className="tabular-nums">{currentPrice}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-secondary">Liquidation Price</span>
+              <span className="tabular-nums">{liquidationPrice}</span>
+            </div>
+          </div>
+        }
+        secondaryDetail={
+          priceMove == null ? undefined : `Relative to current: ${formatRelativeLiquidationPriceMove({ percentChange: priceMove })}`
+        }
+      />
+    );
 
   return (
     <motion.div
@@ -215,14 +214,14 @@ export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetail
               tooltipDetail="Borrow divided by collateral value."
               tooltipSecondaryDetail={`Liquidation starts at ${lltvLabel}.`}
               value={
-                currentLtvLabel == null
-                  ? '—'
-                  : (
-                      <span>
-                        <span>{currentLtvLabel}</span>
-                        <span className="ml-1 text-xs text-secondary">/ {lltvLabel}</span>
-                      </span>
-                    )
+                currentLtvLabel == null ? (
+                  '—'
+                ) : (
+                  <span>
+                    <span>{currentLtvLabel}</span>
+                    <span className="ml-1 text-xs text-secondary">/ {lltvLabel}</span>
+                  </span>
+                )
               }
               valueClassName={ltvValueClassName}
             />

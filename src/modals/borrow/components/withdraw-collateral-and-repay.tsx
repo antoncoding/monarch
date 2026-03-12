@@ -10,6 +10,7 @@ import { MarketDetailsBlock } from '@/features/markets/components/market-details
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { BorrowPositionRiskCard } from './borrow-position-risk-card';
+import { PreviewSectionHeader } from './preview-section-header';
 import {
   clampEditablePercent,
   clampTargetLtv,
@@ -207,7 +208,11 @@ export function WithdrawCollateralAndRepay({
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       <div className="flex flex-col">
-        <p className="mb-2 font-monospace text-xs uppercase tracking-[0.14em] text-secondary">My Position</p>
+        <PreviewSectionHeader
+          title="My Position"
+          onRefresh={onSuccess ? handleRefresh : undefined}
+          isRefreshing={isRefreshing}
+        />
         <BorrowPositionRiskCard
           market={market}
           oraclePrice={oraclePrice}
@@ -218,8 +223,6 @@ export function WithdrawCollateralAndRepay({
           currentLtv={currentLTV}
           projectedLtv={projectedLTV}
           lltv={lltv}
-          onRefresh={onSuccess ? handleRefresh : undefined}
-          isRefreshing={isRefreshing}
           hasChanges={hasChanges}
         />
 

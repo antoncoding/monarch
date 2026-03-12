@@ -19,9 +19,11 @@ import { formatSimple } from '@/utils/balance';
 import type { Market } from '@/utils/types';
 import { LiquidateModal } from '@/modals/liquidate/liquidate-modal';
 import {
+  computeHealthScoreFromLtv,
   computeLiquidationOraclePrice,
   computeLtv,
   computeOraclePriceChangePercent,
+  formatHealthScore,
   formatMarketOraclePriceWithSymbol,
   formatRelativeLiquidationPriceMove,
   isInfiniteLtv,
@@ -39,6 +41,7 @@ type BorrowersTableProps = {
 
 type BorrowerRowMetric = {
   ltvPercent: number | null;
+  healthScore: string;
   daysToLiquidation: number | null;
   liquidationPrice: string;
   liquidationPriceMove: string;
@@ -64,6 +67,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
 
   const hasActiveFilter = minShares !== '0';
   const tableKey = `borrowers-table-${currentPage}`;
+  const showHealthScore = borrowerTableColumnVisibility.healthScore ?? DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY.healthScore;
   const showDaysToLiquidation =
     borrowerTableColumnVisibility.daysToLiquidation ?? DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY.daysToLiquidation;
   const showLiquidationPrice = borrowerTableColumnVisibility.liquidationPrice ?? DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY.liquidationPrice;
@@ -79,6 +83,12 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
       const collateralAssets = BigInt(borrower.collateral);
       const ltvWad = computeLtv({ borrowAssets, collateralAssets, oraclePrice });
       const ltvPercent = isInfiniteLtv(ltvWad) ? null : Number(ltvWad) / 1e16;
+      const healthScore = formatHealthScore(
+        computeHealthScoreFromLtv({
+          ltv: ltvWad,
+          lltv,
+        }),
+      );
 
       let daysToLiquidation: number | null = null;
       if (!isInfiniteLtv(ltvWad) && ltvWad > 0n && borrowApy > 0 && lltv > ltvWad) {
@@ -117,6 +127,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
 
       const metrics: BorrowerRowMetric = {
         ltvPercent,
+        healthScore,
         daysToLiquidation,
         liquidationPrice,
         liquidationPriceMove,
@@ -129,7 +140,8 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
     });
   }, [borrowers, oraclePrice, market]);
 
-  const emptyStateColSpan = 5 + (showDaysToLiquidation ? 1 : 0) + (showLiquidationPrice ? 1 : 0) + (showDeveloperOptions ? 1 : 0);
+  const emptyStateColSpan =
+    5 + (showHealthScore ? 1 : 0) + (showDaysToLiquidation ? 1 : 0) + (showLiquidationPrice ? 1 : 0) + (showDeveloperOptions ? 1 : 0);
 
   return (
     <div>
@@ -198,6 +210,20 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                 <TableHead className="text-right">BORROWED</TableHead>
                 <TableHead className="text-right">COLLATERAL</TableHead>
                 <TableHead className="text-right">LTV</TableHead>
+                {showHealthScore && (
+                  <TableHead className="text-right">
+                    <Tooltip
+                      content={
+                        <TooltipContent
+                          title="Health Score"
+                          detail="Liquidation threshold divided by current LTV. 1.00 is the liquidation boundary."
+                        />
+                      }
+                    >
+                      <span className="cursor-help border-b border-dashed border-secondary/50">HEALTH SCORE</span>
+                    </Tooltip>
+                  </TableHead>
+                )}
                 {showDaysToLiquidation && (
                   <TableHead className="text-right">
                     <Tooltip
@@ -289,6 +315,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                         </div>
                       </TableCell>
                       <TableCell className="text-right text-sm">{ltvDisplay}</TableCell>
+                      {showHealthScore && <TableCell className="text-right text-sm tabular-nums">{borrower.healthScore}</TableCell>}
                       {showDaysToLiquidation && <TableCell className="text-right text-sm">{daysDisplay}</TableCell>}
                       {showLiquidationPrice && (
                         <TableCell className="text-right text-sm">
