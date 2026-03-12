@@ -1,4 +1,5 @@
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
+import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import type { SupportedNetworks } from '@/utils/networks';
 import { blacklistTokens } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
@@ -25,13 +26,25 @@ type MarketsGraphQLResponse = {
       items?: MorphoApiMarket[];
       pageInfo?: {
         countTotal: number;
-        count: number;
-        limit: number;
-        skip: number;
       };
     };
   };
   errors?: { message: string }[];
+};
+
+type MorphoMarketsPage = {
+  items: Market[];
+  totalCount: number;
+};
+
+const MORPHO_MARKETS_PAGE_SIZE = 500;
+const MORPHO_MARKETS_FALLBACK_TIMEOUT_MS = 10_000;
+const MORPHO_MARKETS_NO_FALLBACK_TIMEOUT_MS = 20_000;
+const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
+const shouldLogMorphoMarketsPerf = process.env.NODE_ENV !== 'production';
+
+const getMorphoMarketsTimeoutMs = (network: SupportedNetworks): number => {
+  return getSubgraphUrl(network) ? MORPHO_MARKETS_FALLBACK_TIMEOUT_MS : MORPHO_MARKETS_NO_FALLBACK_TIMEOUT_MS;
 };
 
 // Transform API response to internal Market type
@@ -57,62 +70,99 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
   return processMarketData(response.data.marketByUniqueKey);
 };
 
+const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
+  if (shouldLogMorphoMarketsPerf) {
+    console.info(`[Markets] Fetching page skip=${skip}, pageSize=${pageSize} for network ${network}`);
+  }
+
+  const variables = {
+    first: pageSize,
+    skip,
+    where: {
+      chainId_in: [network],
+    },
+  };
+
+  const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(marketsQuery, variables, {
+    timeoutMs: getMorphoMarketsTimeoutMs(network),
+  });
+
+  if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {
+    console.warn(`[Markets] Skipping failed page at skip=${skip} for network ${network}`);
+    return null;
+  }
+
+  const { items, pageInfo } = response.data.markets;
+
+  return {
+    items: items.map(processMarketData),
+    totalCount: pageInfo.countTotal,
+  };
+};
+
 // Fetcher for multiple markets from Morpho API with pagination
 export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
   const allMarkets: Market[] = [];
-  let skip = 0;
-  const pageSize = 500;
-  let totalCount = 0;
-  let queryCount = 0;
+  const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 
   try {
-    do {
-      queryCount++;
-      console.log(`Fetching markets query ${queryCount}, skip: ${skip}, pageSize: ${pageSize}`);
+    const firstPage = await fetchMorphoMarketsPage(network, 0, pageSize);
 
-      // Construct the variables object including the where clause and pagination
-      const variables = {
-        first: pageSize,
-        skip,
-        where: {
-          chainId_in: [network],
+    if (!firstPage) {
+      return [];
+    }
 
-          // Remove whitelisted filter to fetch all markets
-          // Add other potential filters to 'where' if needed in the future
-        },
-      };
+    allMarkets.push(...firstPage.items);
 
-      const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(marketsQuery, variables);
+    const firstPageCount = firstPage.items.length;
+    const totalCount = firstPage.totalCount;
+    if (shouldLogMorphoMarketsPerf) {
+      console.info(`[Markets] First page fetched ${firstPageCount} markets for network ${network}, total=${totalCount}`);
+    }
 
-      // Handle failed pages - skip to next page instead of breaking entirely
-      // This handles corrupted market records that cause NOT_FOUND errors
-      if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {
-        console.warn(`[Markets] Skipping failed page at skip=${skip} for network ${network}`);
-        skip += pageSize; // Skip ahead to next page
-        if (totalCount > 0 && skip >= totalCount) break;
-        continue;
+    if (firstPageCount === 0 && totalCount > 0) {
+      console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
+      return allMarkets.filter(
+        (market) =>
+          !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
+          !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
+      );
+    }
+
+    const remainingOffsets: number[] = [];
+    for (let nextSkip = firstPageCount; nextSkip < totalCount; nextSkip += pageSize) {
+      remainingOffsets.push(nextSkip);
+    }
+
+    for (let index = 0; index < remainingOffsets.length; index += MORPHO_MARKETS_PAGE_BATCH_SIZE) {
+      const offsetBatch = remainingOffsets.slice(index, index + MORPHO_MARKETS_PAGE_BATCH_SIZE);
+      const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchMorphoMarketsPage(network, skip, pageSize)));
+
+      const successfulPages: MorphoMarketsPage[] = [];
+
+      for (const settledPage of settledPages) {
+        if (settledPage.status === 'rejected') {
+          throw settledPage.reason;
+        }
+        if (settledPage.value) {
+          successfulPages.push(settledPage.value);
+        }
       }
 
-      const { items, pageInfo } = response.data.markets;
+      successfulPages.forEach((page) => {
+        allMarkets.push(...page.items);
+      });
 
-      // Process and add markets to the collection
-      const processedMarkets = items.map(processMarketData);
-      allMarkets.push(...processedMarkets);
-
-      // Update pagination info
-      totalCount = pageInfo.countTotal;
-      skip += pageInfo.count;
-
-      console.log(`Query ${queryCount}: Fetched ${pageInfo.count} markets, total so far: ${allMarkets.length}/${totalCount}`);
-
-      // Safety break if pageInfo.count is 0 to prevent infinite loop
-      if (pageInfo.count === 0 && skip < totalCount) {
-        console.warn('Received 0 items in a page, but not yet at total count. Breaking loop.');
-        break;
+      if (shouldLogMorphoMarketsPerf) {
+        console.info(`[Markets] Parallel batch fetched ${successfulPages.length} pages for network ${network}, total so far: ${allMarkets.length}/${totalCount}`);
       }
-    } while (skip < totalCount);
+    }
 
-    console.log(`Completed fetching all markets for network ${network}. Total queries: ${queryCount}, Total markets: ${allMarkets.length}`);
+    if (shouldLogMorphoMarketsPerf) {
+      console.info(
+        `[Markets] Completed fetching all markets for network ${network}. Total requests: ${remainingOffsets.length + 1}, Total markets: ${allMarkets.length}`,
+      );
+    }
 
     // final filter: remove scam markets
     return allMarkets.filter(

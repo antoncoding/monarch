@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GoStar, GoStarFill } from 'react-icons/go';
 import { Table, TableHeader, TableRow, TableHead } from '@/components/ui/table';
 import { TablePagination } from '@/components/shared/table-pagination';
@@ -26,6 +26,10 @@ type MarketsTableProps = {
   isMobile: boolean;
 };
 
+const now = (): number => globalThis.performance?.now() ?? Date.now();
+const roundDuration = (durationMs: number): number => Number(durationMs.toFixed(1));
+const shouldLogMarketsPerf = process.env.NODE_ENV !== 'production';
+
 function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, onRefresh, isMobile }: MarketsTableProps) {
   // Get loading states directly from query (no prop drilling!)
   const { isLoading: loading, isRefetching, data: rawMarkets, dataUpdatedAt } = useMarketsQuery();
@@ -34,6 +38,9 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   const { vaults: trustedVaults } = useTrustedVaults();
 
   const markets = useFilteredMarkets();
+  const mountedAtRef = useRef<number>(now());
+  const previousLoadingRef = useRef<boolean | null>(null);
+  const didLogReadyRef = useRef(false);
 
   const isEmpty = !rawMarkets;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
@@ -84,6 +91,46 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   const currentEntries = markets.slice(indexOfFirstEntry, indexOfLastEntry);
 
   const totalPages = Math.ceil(markets.length / entriesPerPage);
+
+  useEffect(() => {
+    if (!shouldLogMarketsPerf) return;
+
+    if (previousLoadingRef.current === null) {
+      previousLoadingRef.current = loading;
+      console.info('[markets-table] mounted', {
+        initialLoading: loading,
+        entriesPerPage,
+      });
+      return;
+    }
+
+    if (previousLoadingRef.current !== loading) {
+      console.info('[markets-table] loading state changed', {
+        from: previousLoadingRef.current,
+        to: loading,
+        elapsedSinceMountMs: roundDuration(now() - mountedAtRef.current),
+        rawMarketCount: rawMarkets?.length ?? 0,
+        filteredMarketCount: markets.length,
+        currentEntriesCount: currentEntries.length,
+      });
+      previousLoadingRef.current = loading;
+    }
+  }, [loading, rawMarkets?.length, markets.length, currentEntries.length, entriesPerPage]);
+
+  useEffect(() => {
+    if (!shouldLogMarketsPerf || loading || !rawMarkets || didLogReadyRef.current) return;
+
+    didLogReadyRef.current = true;
+    console.info('[markets-table] first ready commit', {
+      elapsedSinceMountMs: roundDuration(now() - mountedAtRef.current),
+      rawMarketCount: rawMarkets.length,
+      filteredMarketCount: markets.length,
+      currentEntriesCount: currentEntries.length,
+      totalPages,
+      isRefetching,
+      dataUpdatedAtAgeMs: dataUpdatedAt > 0 ? roundDuration(Date.now() - dataUpdatedAt) : null,
+    });
+  }, [loading, rawMarkets, markets.length, currentEntries.length, totalPages, isRefetching, dataUpdatedAt]);
 
   const containerClassName = [
     'flex flex-col gap-2 pb-4',

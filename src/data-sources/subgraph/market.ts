@@ -196,44 +196,99 @@ export const fetchSubgraphMarket = async (uniqueKey: string, network: SupportedN
 
 type SubgraphMarketsVariables = {
   first: number;
+  skip: number;
   where?: {
     inputToken_not_in?: string[];
   };
   network?: string;
 };
 
-export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
-  const subgraphApiUrl = getSubgraphUrl(network);
+const SUBGRAPH_MARKETS_PAGE_SIZE = 1000;
+const SUBGRAPH_MARKETS_PAGE_BATCH_SIZE = 4;
+const shouldLogSubgraphMarketsPerf = process.env.NODE_ENV !== 'production';
 
-  if (!subgraphApiUrl) {
-    console.warn(`Subgraph URL for network ${network} is not defined. Skipping subgraph fetch.`);
-    return [];
-  }
-
+const fetchSubgraphMarketsPage = async (
+  subgraphApiUrl: string,
+  network: SupportedNetworks,
+  skip: number,
+): Promise<SubgraphMarket[]> => {
   const variables: SubgraphMarketsVariables = {
-    first: 1000, // Max limit
+    first: SUBGRAPH_MARKETS_PAGE_SIZE,
+    skip,
     where: {
       inputToken_not_in: [...blacklistTokens, '0x0000000000000000000000000000000000000000'],
     },
   };
 
+  const response = await subgraphGraphqlFetcher<SubgraphMarketsQueryResponse>(
+    subgraphApiUrl,
+    subgraphMarketsQuery,
+    variables as unknown as Record<string, unknown>,
+  );
+
+  const marketsData = response?.data?.markets;
+
+  if (!marketsData || !Array.isArray(marketsData)) {
+    throw new Error(`No markets found or invalid format in Subgraph response for network ${network} at skip ${skip}.`);
+  }
+
+  return marketsData;
+};
+
+export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
+  const subgraphApiUrl = getSubgraphUrl(network);
+
+  if (!subgraphApiUrl) {
+    throw new Error(`Subgraph URL for network ${network} is not defined.`);
+  }
+
   try {
-    const response = await subgraphGraphqlFetcher<SubgraphMarketsQueryResponse>(
-      subgraphApiUrl,
-      subgraphMarketsQuery,
-      variables as unknown as Record<string, unknown>,
-    );
+    const majorPricesPromise = fetchMajorPrices();
+    const allMarkets: SubgraphMarket[] = [];
 
-    // Handle cases where GraphQL errors resulted in missing data
-    const marketsData = response?.data?.markets;
+    const firstPage = await fetchSubgraphMarketsPage(subgraphApiUrl, network, 0);
+    allMarkets.push(...firstPage);
 
-    if (!marketsData || !Array.isArray(marketsData)) {
-      console.warn(`No markets found or invalid format in Subgraph response for network ${network}.`);
-      return [];
+    if (shouldLogSubgraphMarketsPerf) {
+      console.info(`[subgraph-markets] network ${network}: fetched page skip=0 count=${firstPage.length}`);
     }
 
-    const majorPrices = await fetchMajorPrices();
-    return marketsData.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
+    if (firstPage.length === SUBGRAPH_MARKETS_PAGE_SIZE) {
+      let nextSkip = SUBGRAPH_MARKETS_PAGE_SIZE;
+      let hasMorePages = true;
+
+      while (hasMorePages) {
+        const offsetBatch = Array.from({ length: SUBGRAPH_MARKETS_PAGE_BATCH_SIZE }, (_, index) => nextSkip + index * SUBGRAPH_MARKETS_PAGE_SIZE);
+        const settledPages = await Promise.allSettled(
+          offsetBatch.map((skip) => fetchSubgraphMarketsPage(subgraphApiUrl, network, skip)),
+        );
+
+        hasMorePages = false;
+
+        for (const settledPage of settledPages) {
+          if (settledPage.status === 'rejected') {
+            throw settledPage.reason;
+          }
+
+          allMarkets.push(...settledPage.value);
+
+          if (settledPage.value.length === SUBGRAPH_MARKETS_PAGE_SIZE) {
+            hasMorePages = true;
+          }
+        }
+
+        if (shouldLogSubgraphMarketsPerf) {
+          console.info(
+            `[subgraph-markets] network ${network}: fetched batch starting at skip=${nextSkip} totalSoFar=${allMarkets.length}`,
+          );
+        }
+
+        nextSkip += SUBGRAPH_MARKETS_PAGE_BATCH_SIZE * SUBGRAPH_MARKETS_PAGE_SIZE;
+      }
+    }
+
+    const majorPrices = await majorPricesPromise;
+    return allMarkets.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
   } catch (error) {
     console.error(`Error fetching subgraph markets on ${network}:`, error);
     return [];
