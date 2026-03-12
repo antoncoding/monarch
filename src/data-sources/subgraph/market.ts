@@ -205,7 +205,6 @@ type SubgraphMarketsVariables = {
 
 const SUBGRAPH_MARKETS_PAGE_SIZE = 1000;
 const SUBGRAPH_MARKETS_PAGE_BATCH_SIZE = 4;
-const shouldLogSubgraphMarketsPerf = process.env.NODE_ENV !== 'production';
 
 const fetchSubgraphMarketsPage = async (
   subgraphApiUrl: string,
@@ -249,10 +248,6 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
     const firstPage = await fetchSubgraphMarketsPage(subgraphApiUrl, network, 0);
     allMarkets.push(...firstPage);
 
-    if (shouldLogSubgraphMarketsPerf) {
-      console.info(`[subgraph-markets] network ${network}: fetched page skip=0 count=${firstPage.length}`);
-    }
-
     if (firstPage.length === SUBGRAPH_MARKETS_PAGE_SIZE) {
       let nextSkip = SUBGRAPH_MARKETS_PAGE_SIZE;
       let hasMorePages = true;
@@ -275,12 +270,6 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
           if (settledPage.value.length === SUBGRAPH_MARKETS_PAGE_SIZE) {
             hasMorePages = true;
           }
-        }
-
-        if (shouldLogSubgraphMarketsPerf) {
-          console.info(
-            `[subgraph-markets] network ${network}: fetched batch starting at skip=${nextSkip} totalSoFar=${allMarkets.length}`,
-          );
         }
 
         nextSkip += SUBGRAPH_MARKETS_PAGE_BATCH_SIZE * SUBGRAPH_MARKETS_PAGE_SIZE;

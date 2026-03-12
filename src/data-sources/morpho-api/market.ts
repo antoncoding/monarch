@@ -41,7 +41,6 @@ const MORPHO_MARKETS_PAGE_SIZE = 500;
 const MORPHO_MARKETS_FALLBACK_TIMEOUT_MS = 10_000;
 const MORPHO_MARKETS_NO_FALLBACK_TIMEOUT_MS = 20_000;
 const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
-const shouldLogMorphoMarketsPerf = process.env.NODE_ENV !== 'production';
 
 const getMorphoMarketsTimeoutMs = (network: SupportedNetworks): number => {
   return getSubgraphUrl(network) ? MORPHO_MARKETS_FALLBACK_TIMEOUT_MS : MORPHO_MARKETS_NO_FALLBACK_TIMEOUT_MS;
@@ -71,10 +70,6 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
 };
 
 const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
-  if (shouldLogMorphoMarketsPerf) {
-    console.info(`[Markets] Fetching page skip=${skip}, pageSize=${pageSize} for network ${network}`);
-  }
-
   const variables = {
     first: pageSize,
     skip,
@@ -116,9 +111,6 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
 
     const firstPageCount = firstPage.items.length;
     const totalCount = firstPage.totalCount;
-    if (shouldLogMorphoMarketsPerf) {
-      console.info(`[Markets] First page fetched ${firstPageCount} markets for network ${network}, total=${totalCount}`);
-    }
 
     if (firstPageCount === 0 && totalCount > 0) {
       console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
@@ -152,16 +144,6 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
       successfulPages.forEach((page) => {
         allMarkets.push(...page.items);
       });
-
-      if (shouldLogMorphoMarketsPerf) {
-        console.info(`[Markets] Parallel batch fetched ${successfulPages.length} pages for network ${network}, total so far: ${allMarkets.length}/${totalCount}`);
-      }
-    }
-
-    if (shouldLogMorphoMarketsPerf) {
-      console.info(
-        `[Markets] Completed fetching all markets for network ${network}. Total requests: ${remainingOffsets.length + 1}, Total markets: ${allMarkets.length}`,
-      );
     }
 
     // final filter: remove scam markets
