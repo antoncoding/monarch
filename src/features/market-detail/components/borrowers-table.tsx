@@ -26,6 +26,7 @@ import {
   isInfiniteLtv,
 } from '@/modals/borrow/components/helpers';
 import { BorrowerTableSettingsModal } from './borrower-table-settings-modal';
+import { DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY } from './borrower-table-column-visibility';
 
 type BorrowersTableProps = {
   chainId: number;
@@ -92,8 +93,9 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
 
   const hasActiveFilter = minShares !== '0';
   const tableKey = `borrowers-table-${currentPage}`;
-  const showDaysToLiquidation = borrowerTableColumnVisibility.daysToLiquidation;
-  const showLiquidationPrice = borrowerTableColumnVisibility.liquidationPrice;
+  const showDaysToLiquidation =
+    borrowerTableColumnVisibility.daysToLiquidation ?? DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY.daysToLiquidation;
+  const showLiquidationPrice = borrowerTableColumnVisibility.liquidationPrice ?? DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY.liquidationPrice;
 
   const borrowersWithMetrics = useMemo(() => {
     if (!oraclePrice) return [];

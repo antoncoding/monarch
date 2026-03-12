@@ -37,6 +37,37 @@ export const useMarketDetailPreferences = create<MarketDetailPreferencesStore>()
     }),
     {
       name: 'monarch_store_marketDetailPreferences',
+      version: 2,
+      migrate: (state, version) => {
+        if (!state || typeof state !== 'object') {
+          return {
+            selectedTab: 'trend',
+            borrowerTableColumnVisibility: DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY,
+          } as MarketDetailPreferencesState;
+        }
+
+        const persisted = state as Partial<MarketDetailPreferencesState>;
+
+        if (version < 2) {
+          return {
+            ...persisted,
+            selectedTab: persisted.selectedTab ?? 'trend',
+            borrowerTableColumnVisibility: {
+              ...DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY,
+              ...(persisted.borrowerTableColumnVisibility ?? {}),
+            },
+          } as MarketDetailPreferencesState;
+        }
+
+        return {
+          ...persisted,
+          selectedTab: persisted.selectedTab ?? 'trend',
+          borrowerTableColumnVisibility: {
+            ...DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY,
+            ...(persisted.borrowerTableColumnVisibility ?? {}),
+          },
+        } as MarketDetailPreferencesState;
+      },
     },
   ),
 );
