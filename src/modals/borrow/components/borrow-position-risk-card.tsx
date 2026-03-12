@@ -296,7 +296,7 @@ export function BorrowPositionRiskCard({
           </div>
         </div>
 
-        <div>
+        <div className="md:justify-self-end md:text-right">
           <p className={metricLabelClassName}>Health Score</p>
           <PreviewIndicator
             isPreview={showProjectedHealthScore}
