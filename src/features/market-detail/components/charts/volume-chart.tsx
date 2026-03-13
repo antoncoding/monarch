@@ -30,6 +30,18 @@ type VolumeChartProps = {
   market: Market;
 };
 
+const MAX_NET_GROWTH_PERCENT = 20_000;
+
+function formatNetChangePercentage(value: number): string {
+  if (!Number.isFinite(value)) return '0.00%';
+
+  if (value > MAX_NET_GROWTH_PERCENT) {
+    return '>' + MAX_NET_GROWTH_PERCENT.toLocaleString() + '%';
+  }
+
+  return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+}
+
 function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
@@ -191,8 +203,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
             <div className="flex items-baseline gap-2">
               <span className="tabular-nums text-lg">{formatValue(supplyStats.current)}</span>
               <span className={`text-xs tabular-nums ${supplyStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {supplyStats.netChangePercentage >= 0 ? '+' : ''}
-                {supplyStats.netChangePercentage.toFixed(2)}%
+                {formatNetChangePercentage(supplyStats.netChangePercentage)}
               </span>
             </div>
           </div>
@@ -201,8 +212,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
             <div className="flex items-baseline gap-2">
               <span className="tabular-nums text-lg">{formatValue(borrowStats.current)}</span>
               <span className={`text-xs tabular-nums ${borrowStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {borrowStats.netChangePercentage >= 0 ? '+' : ''}
-                {borrowStats.netChangePercentage.toFixed(2)}%
+                {formatNetChangePercentage(borrowStats.netChangePercentage)}
               </span>
             </div>
           </div>
@@ -211,8 +221,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
             <div className="flex items-baseline gap-2">
               <span className="tabular-nums text-lg">{formatValue(liquidityStats.current)}</span>
               <span className={`text-xs tabular-nums ${liquidityStats.netChangePercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {liquidityStats.netChangePercentage >= 0 ? '+' : ''}
-                {liquidityStats.netChangePercentage.toFixed(2)}%
+                {formatNetChangePercentage(liquidityStats.netChangePercentage)}
               </span>
             </div>
           </div>
