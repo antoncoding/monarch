@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { usePublicClient } from 'wagmi';
-import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoUserPositionForMarket } from '@/data-sources/morpho-api/positions';
-import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/positions';
+import { fetchUserPositionForMarket } from '@/data-sources/user-position';
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
 import type { MarketPosition } from '@/utils/types';
@@ -36,7 +34,6 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
     queryKey: queryKey,
     queryFn: async (): Promise<MarketPosition | null> => {
       if (!user || !chainId || !marketKey) {
-        console.log('Missing user, chainId, or marketKey for useUserPosition');
         return null;
       }
 
@@ -46,11 +43,9 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
       }
 
       // 1. Try fetching the on-chain snapshot first
-      console.log(`Attempting fetchPositionSnapshot for ${user} on market ${marketKey}`);
       let snapshot = null;
       try {
         snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, undefined, publicClient);
-        console.log(`Snapshot result for ${marketKey}:`, snapshot ? 'Exists' : 'Null');
       } catch (snapshotError) {
         console.error(`Error fetching position snapshot for ${user} on market ${marketKey}:`, snapshotError);
         // Snapshot fetch failed, will proceed to fallback fetch
@@ -64,7 +59,6 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
 
         if (market) {
           // Local market data found, construct position directly
-          console.log(`Found local market data for ${marketKey}, constructing position from snapshot.`);
           finalPosition = {
             market: market,
             state: {
@@ -79,29 +73,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
         } else {
           // Local market data NOT found, need to fetch from fallback to get structure
           console.warn(`Local market data not found for ${marketKey}. Fetching from fallback source to combine with snapshot.`);
-          let fallbackPosition: MarketPosition | null = null;
-
-          // Try Morpho API first if supported
-          if (supportsMorphoApi(chainId)) {
-            try {
-              console.log(`Attempting to fetch position via Morpho API for ${marketKey}`);
-              fallbackPosition = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
-            } catch (morphoError) {
-              console.error('Failed to fetch position via Morpho API:', morphoError);
-              // Continue to Subgraph fallback
-            }
-          }
-
-          // If Morpho API failed or not supported, try Subgraph
-          if (!fallbackPosition) {
-            try {
-              console.log(`Attempting to fetch position via Subgraph for ${marketKey}`);
-              fallbackPosition = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
-            } catch (subgraphError) {
-              console.error('Failed to fetch position via Subgraph:', subgraphError);
-              fallbackPosition = null;
-            }
-          }
+          const fallbackPosition = await fetchUserPositionForMarket(marketKey, user, chainId);
 
           if (fallbackPosition) {
             // Fallback succeeded, combine with snapshot state
@@ -123,32 +95,8 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
         }
       } else {
         // Snapshot failed, rely entirely on the fallback data source
-        console.log(`Snapshot failed for ${marketKey}, fetching from fallback source.`);
-
-        // Try Morpho API first if supported
-        if (supportsMorphoApi(chainId)) {
-          try {
-            console.log(`Attempting to fetch position via Morpho API for ${marketKey}`);
-            finalPosition = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
-          } catch (morphoError) {
-            console.error('Failed to fetch position via Morpho API:', morphoError);
-            // Continue to Subgraph fallback
-          }
-        }
-
-        // If Morpho API failed or not supported, try Subgraph
-        if (!finalPosition) {
-          try {
-            console.log(`Attempting to fetch position via Subgraph for ${marketKey}`);
-            finalPosition = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
-          } catch (subgraphError) {
-            console.error('Failed to fetch position via Subgraph:', subgraphError);
-            finalPosition = null;
-          }
-        }
+        finalPosition = await fetchUserPositionForMarket(marketKey, user, chainId);
       }
-
-      console.log(`Final position data for ${user} on market ${marketKey}:`, finalPosition ? 'Found' : 'Not Found');
       // If finalPosition has zero balances, it's still a valid position state from the snapshot or fallback
       return finalPosition;
     },

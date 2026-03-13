@@ -1,5 +1,5 @@
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
-import type { SupportedNetworks } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { blacklistTokens } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
@@ -48,6 +48,7 @@ const processMarketData = (market: MorphoApiMarket): Market => {
     oracleAddress: (oracle?.address ?? zeroAddress) as Address,
     whitelisted: listed,
     hasUSDPrice: true,
+    usdPriceSource: 'direct',
   };
 };
 
@@ -64,11 +65,19 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
 };
 
 const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
+  return fetchMorphoMarketsPageForChains([network], skip, pageSize);
+};
+
+const fetchMorphoMarketsPageForChains = async (
+  chainIds: SupportedNetworks[],
+  skip: number,
+  pageSize: number,
+): Promise<MorphoMarketsPage | null> => {
   const variables = {
     first: pageSize,
     skip,
     where: {
-      chainId_in: [network],
+      chainId_in: chainIds,
     },
   };
 
@@ -77,7 +86,7 @@ const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, 
   });
 
   if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {
-    console.warn(`[Markets] Skipping failed page at skip=${skip} for network ${network}`);
+    console.warn(`[Markets] Skipping failed page at skip=${skip} for chains ${chainIds.join(',')}`);
     return null;
   }
 
@@ -91,10 +100,14 @@ const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, 
 
 // Fetcher for multiple markets from Morpho API with pagination
 export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
+  return fetchMorphoMarketsMultiChain([network]);
+};
+
+export const fetchMorphoMarketsMultiChain = async (chainIds: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS): Promise<Market[]> => {
   const allMarkets: Market[] = [];
   const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 
-  const firstPage = await fetchMorphoMarketsPage(network, 0, pageSize);
+  const firstPage = await fetchMorphoMarketsPageForChains(chainIds, 0, pageSize);
 
   if (!firstPage) {
     return [];
@@ -121,7 +134,7 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
 
   for (let index = 0; index < remainingOffsets.length; index += MORPHO_MARKETS_PAGE_BATCH_SIZE) {
     const offsetBatch = remainingOffsets.slice(index, index + MORPHO_MARKETS_PAGE_BATCH_SIZE);
-    const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchMorphoMarketsPage(network, skip, pageSize)));
+    const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchMorphoMarketsPageForChains(chainIds, skip, pageSize)));
 
     const successfulPages: MorphoMarketsPage[] = [];
 

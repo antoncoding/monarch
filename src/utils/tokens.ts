@@ -99,7 +99,7 @@ const supportedTokens = [
   {
     symbol: 'USDA',
     img: require('../imgs/tokens/usda.png') as string,
-    decimals: 6,
+    decimals: 18,
     networks: [{ chain: mainnet, address: '0x0000206329b97DB379d5E1Bf586BbDB969C63274' }],
     peg: TokenPeg.USD,
   },
@@ -238,7 +238,7 @@ const supportedTokens = [
   {
     symbol: 'EURCV',
     img: require('../imgs/tokens/eurcv.svg') as string,
-    decimals: 6,
+    decimals: 18,
     networks: [{ chain: mainnet, address: '0x5F7827FDeb7c20b443265Fc2F40845B715385Ff2' }],
   },
   {
@@ -387,7 +387,7 @@ const supportedTokens = [
   {
     symbol: 'tBTC',
     img: require('../imgs/tokens/tbtc.webp') as string,
-    decimals: 8,
+    decimals: 18,
     networks: [{ chain: mainnet, address: '0x18084fbA666a33d37592fA2633fD49a74DD93a88' }],
     peg: TokenPeg.BTC,
   },

@@ -65,12 +65,32 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     return formatReadable(value);
   };
 
+  const convertAssetValue = (raw: number | bigint | null): number => {
+    const value = raw ?? 0;
+
+    if (typeof value === 'bigint') {
+      return Number(formatUnits(value, market.loanAsset.decimals));
+    }
+
+    if (!Number.isFinite(value)) {
+      return 0;
+    }
+
+    // Historical asset series should be raw smallest-unit integers.
+    // Be tolerant of cached decimal display-unit points during source transitions.
+    if (!Number.isInteger(value)) {
+      return value;
+    }
+
+    return Number(formatUnits(BigInt(value), market.loanAsset.decimals));
+  };
+
   const convertValue = (raw: number | bigint | null): number => {
     const value = raw ?? 0;
     if (volumeView === 'USD') {
       return Number(value);
     }
-    return Number(formatUnits(BigInt(value), market.loanAsset.decimals));
+    return convertAssetValue(value);
   };
 
   const chartData = useMemo(() => {
@@ -159,7 +179,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     if (validAssetData.length === 0) return { current, netChangePercentage: 0, average: 0 };
 
     // Net change percentage: compare asset-to-asset for consistent units
-    const startAsset = Number(formatUnits(BigInt(validAssetData[0].y ?? 0), market.loanAsset.decimals));
+    const startAsset = convertAssetValue(validAssetData[0].y ?? 0);
     const netChangePercentage = startAsset !== 0 ? ((current - startAsset) / startAsset) * 100 : 0;
 
     // Average: use selected view data (USD or Asset) for display

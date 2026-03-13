@@ -114,6 +114,8 @@ export type TokenInfo = {
   decimals: number;
 };
 
+export type MarketUsdPriceSource = 'direct' | 'peg' | 'none';
+
 type AssetType = {
   id: string;
   address: string;
@@ -344,6 +346,7 @@ export type Market = {
     address: string;
   }[];
   hasUSDPrice: boolean;
+  usdPriceSource: MarketUsdPriceSource;
   warnings: MarketWarning[];
   oracle?: {
     data: MorphoChainlinkOracleData;

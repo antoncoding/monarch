@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchTokenPrices, type TokenPriceInput } from '@/data-sources/morpho-api/prices';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { findToken, TokenPeg, supportedTokens } from '@/utils/tokens';
+import type { MarketUsdPriceSource } from '@/utils/types';
 import { fetchMajorPrices, type MajorPrices } from '@/utils/majorPrices';
 
 // Query keys for token prices
@@ -20,6 +21,7 @@ export const tokenPriceKeys = {
 
 type UseTokenPricesReturn = {
   prices: Map<string, number>;
+  sources: Map<string, MarketUsdPriceSource>;
   isLoading: boolean;
   error: Error | null;
 };
@@ -173,8 +175,36 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
     return resolvedPrices;
   }, [prices, stableTokens, tokensWithPegRefs, majorPrices]);
 
+  const priceSources = useMemo(() => {
+    const basePrices = prices ?? new Map<string, number>();
+    const resolvedSources = new Map<string, MarketUsdPriceSource>();
+
+    stableTokens.forEach((token) => {
+      const key = getTokenPriceKey(token.address, token.chainId);
+      const directPrice = basePrices.get(key);
+
+      if (isFinitePositive(directPrice)) {
+        resolvedSources.set(key, 'direct');
+        return;
+      }
+
+      const meta = findToken(token.address, token.chainId);
+      if (!meta?.peg) {
+        return;
+      }
+
+      const fallbackPrice = pricesWithFallback.get(key);
+      if (isFinitePositive(fallbackPrice)) {
+        resolvedSources.set(key, 'peg');
+      }
+    });
+
+    return resolvedSources;
+  }, [prices, pricesWithFallback, stableTokens]);
+
   return {
     prices: pricesWithFallback,
+    sources: priceSources,
     isLoading,
     error: error ?? null,
   };

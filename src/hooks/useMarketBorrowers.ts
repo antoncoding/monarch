@@ -1,8 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoMarketBorrowers } from '@/data-sources/morpho-api/market-borrowers';
-import { fetchSubgraphMarketBorrowers } from '@/data-sources/subgraph/market-borrowers';
+import { fetchMarketBorrowers } from '@/data-sources/market-participants';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketBorrowers } from '@/utils/types';
 
@@ -40,30 +38,7 @@ export const useMarketBorrowers = (
       }
 
       const targetSkip = (targetPage - 1) * pageSize;
-      let result: PaginatedMarketBorrowers | null = null;
-
-      // Try Morpho API first if supported
-      if (supportsMorphoApi(network)) {
-        try {
-          console.log(`Attempting to fetch borrowers via Morpho API for ${marketId} (page ${targetPage})`);
-          result = await fetchMorphoMarketBorrowers(marketId, Number(network), effectiveMinShares, pageSize, targetSkip);
-        } catch (morphoError) {
-          console.error('Failed to fetch borrowers via Morpho API:', morphoError);
-        }
-      }
-
-      // Fallback to Subgraph if Morpho API failed or not supported
-      if (!result) {
-        try {
-          console.log(`Attempting to fetch borrowers via Subgraph for ${marketId} (page ${targetPage})`);
-          result = await fetchSubgraphMarketBorrowers(marketId, network, effectiveMinShares, pageSize, targetSkip);
-        } catch (subgraphError) {
-          console.error('Failed to fetch borrowers via Subgraph:', subgraphError);
-          throw subgraphError;
-        }
-      }
-
-      return result;
+      return fetchMarketBorrowers(marketId, network, effectiveMinShares, pageSize, targetSkip);
     },
     [marketId, network, effectiveMinShares, pageSize],
   );

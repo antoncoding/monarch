@@ -4,9 +4,8 @@ import { formatBalance } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { SubgraphMarket, SubgraphMarketQueryResponse, SubgraphMarketsQueryResponse, SubgraphToken } from '@/utils/subgraph-types';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { blacklistTokens, type ERC20Token, findToken, type UnknownERC20Token, TokenPeg } from '@/utils/tokens';
-import { fetchMajorPrices, type MajorPrices } from '@/utils/majorPrices';
-import type { Market, MarketWarning } from '@/utils/types';
+import { blacklistTokens, findToken } from '@/utils/tokens';
+import type { Market, MarketUsdPriceSource, MarketWarning } from '@/utils/types';
 import { UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
 import { subgraphGraphqlFetcher } from './fetchers';
 
@@ -32,7 +31,6 @@ const safeParseInt = (value: string | null | undefined): number => {
 const transformSubgraphMarketToMarket = (
   subgraphMarket: Partial<SubgraphMarket>,
   network: SupportedNetworks,
-  majorPrices: MajorPrices,
 ): Market => {
   const marketId = subgraphMarket.id ?? '';
   const lltv = subgraphMarket.lltv ?? '0';
@@ -42,17 +40,6 @@ const transformSubgraphMarketToMarket = (
   const totalSupplyShares = subgraphMarket.totalSupplyShares ?? '0';
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
   const fee = subgraphMarket.fee ?? '0';
-
-  const getEstimateValue = (token: ERC20Token | UnknownERC20Token): number | undefined => {
-    if (!('peg' in token) || token.peg === undefined) {
-      return undefined;
-    }
-    const peg = token.peg as TokenPeg;
-    if (peg === TokenPeg.USD) {
-      return 1;
-    }
-    return majorPrices[peg];
-  };
 
   const mapToken = (token: Partial<SubgraphToken> | undefined) => ({
     id: token?.id ?? '0x',
@@ -84,7 +71,8 @@ const transformSubgraphMarketToMarket = (
 
   let loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
   let collateralAssetPrice = safeParseFloat(subgraphMarket.inputToken?.lastPriceUSD ?? '0');
-  const hasUSDPrice = loanAssetPrice > 0 && collateralAssetPrice > 0;
+  const hasUSDPrice = loanAssetPrice > 0;
+  const usdPriceSource: MarketUsdPriceSource = hasUSDPrice ? 'direct' : 'none';
 
   const knownLoadAsset = findToken(loanAsset.address, network);
   const knownCollateralAsset = findToken(collateralAsset.address, network);
@@ -94,16 +82,6 @@ const transformSubgraphMarketToMarket = (
   }
   if (!knownCollateralAsset) {
     warnings.push(UNRECOGNIZED_COLLATERAL);
-  }
-
-  if (!hasUSDPrice) {
-    // no price available, try to estimate
-    if (knownLoadAsset) {
-      loanAssetPrice = getEstimateValue(knownLoadAsset) ?? 0;
-    }
-    if (knownCollateralAsset) {
-      collateralAssetPrice = getEstimateValue(knownCollateralAsset) ?? 0;
-    }
   }
 
   const supplyAssetsUsd = formatBalance(supplyAssets, loanAsset.decimals) * loanAssetPrice;
@@ -156,6 +134,7 @@ const transformSubgraphMarketToMarket = (
     },
     warnings,
     hasUSDPrice,
+    usdPriceSource,
     realizedBadDebt: { underlying: '0' },
     supplyingVaults: [],
   };
@@ -185,9 +164,7 @@ export const fetchSubgraphMarket = async (uniqueKey: string, network: SupportedN
       return null;
     }
 
-    const majorPrices = await fetchMajorPrices();
-
-    return transformSubgraphMarketToMarket(marketData, network, majorPrices);
+    return transformSubgraphMarketToMarket(marketData, network);
   } catch (error) {
     console.error(`Error fetching subgraph market ${uniqueKey} on ${network}:`, error);
     return null;
@@ -237,7 +214,6 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
     throw new Error(`Subgraph URL for network ${network} is not defined.`);
   }
 
-  const majorPricesPromise = fetchMajorPrices();
   const allMarkets: SubgraphMarket[] = [];
 
   const firstPage = await fetchSubgraphMarketsPage(subgraphApiUrl, network, 0);
@@ -272,6 +248,5 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
     }
   }
 
-  const majorPrices = await majorPricesPromise;
-  return allMarkets.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
+  return allMarkets.map((market) => transformSubgraphMarketToMarket(market, network));
 };

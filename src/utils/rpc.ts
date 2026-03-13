@@ -4,6 +4,18 @@ import { getDefaultRPC, getViemChain, SupportedNetworks, hyperEvm } from './netw
 
 // Default clients (cached)
 let defaultClients: Partial<Record<SupportedNetworks, PublicClient>> = {};
+const customClients = new Map<string, PublicClient>();
+
+const RPC_BATCH_WAIT_MS = 16;
+const RPC_BATCH_SIZE = 1000;
+
+const createHttpTransport = (url: string) =>
+  http(url, {
+    batch: {
+      batchSize: RPC_BATCH_SIZE,
+      wait: RPC_BATCH_WAIT_MS,
+    },
+  });
 
 // Initialize default clients
 const initializeDefaultClients = () => {
@@ -11,31 +23,31 @@ const initializeDefaultClients = () => {
     defaultClients = {
       [SupportedNetworks.Mainnet]: createPublicClient({
         chain: mainnet,
-        transport: http(getDefaultRPC(SupportedNetworks.Mainnet)),
+        transport: createHttpTransport(getDefaultRPC(SupportedNetworks.Mainnet)),
       }),
       [SupportedNetworks.Base]: createPublicClient({
         chain: base,
-        transport: http(getDefaultRPC(SupportedNetworks.Base)),
+        transport: createHttpTransport(getDefaultRPC(SupportedNetworks.Base)),
       }) as PublicClient,
       [SupportedNetworks.Polygon]: createPublicClient({
         chain: polygon,
-        transport: http(getDefaultRPC(SupportedNetworks.Polygon)),
+        transport: createHttpTransport(getDefaultRPC(SupportedNetworks.Polygon)),
       }),
       [SupportedNetworks.Unichain]: createPublicClient({
         chain: unichain,
-        transport: http(getDefaultRPC(SupportedNetworks.Unichain)),
+        transport: createHttpTransport(getDefaultRPC(SupportedNetworks.Unichain)),
       }) as PublicClient,
       [SupportedNetworks.Arbitrum]: createPublicClient({
         chain: arbitrum,
-        transport: http(getDefaultRPC(SupportedNetworks.Arbitrum)),
+        transport: createHttpTransport(getDefaultRPC(SupportedNetworks.Arbitrum)),
       }) as PublicClient,
       [SupportedNetworks.HyperEVM]: createPublicClient({
         chain: hyperEvm,
-        transport: http(getDefaultRPC(SupportedNetworks.HyperEVM)),
+        transport: createHttpTransport(getDefaultRPC(SupportedNetworks.HyperEVM)),
       }) as PublicClient,
       [SupportedNetworks.Monad]: createPublicClient({
         chain: monad,
-        transport: http(getDefaultRPC(SupportedNetworks.Monad)),
+        transport: createHttpTransport(getDefaultRPC(SupportedNetworks.Monad)),
       }) as PublicClient,
     };
   }
@@ -50,14 +62,23 @@ function createClientWithCustomRpc(chainId: SupportedNetworks, rpcUrl: string): 
 
   return createPublicClient({
     chain,
-    transport: http(rpcUrl),
+    transport: createHttpTransport(rpcUrl),
   }) as PublicClient;
 }
 
 // Get client with optional custom RPC URL
 export const getClient = (chainId: SupportedNetworks, customRpcUrl?: string): PublicClient => {
   if (customRpcUrl) {
-    return createClientWithCustomRpc(chainId, customRpcUrl);
+    const cacheKey = `${chainId}:${customRpcUrl}`;
+    const cachedClient = customClients.get(cacheKey);
+
+    if (cachedClient) {
+      return cachedClient;
+    }
+
+    const client = createClientWithCustomRpc(chainId, customRpcUrl);
+    customClients.set(cacheKey, client);
+    return client;
   }
 
   initializeDefaultClients();

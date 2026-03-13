@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoMarketLiquidations } from '@/data-sources/morpho-api/market-liquidations';
-import { fetchSubgraphMarketLiquidations } from '@/data-sources/subgraph/market-liquidations';
+import { fetchMarketLiquidations } from '@/data-sources/market-activity';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketLiquidationTransaction } from '@/utils/types'; // Use simplified type
 
@@ -22,31 +20,7 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
         return null;
       }
 
-      let liquidations: MarketLiquidationTransaction[] | null = null;
-
-      // Try Morpho API first if supported
-      if (supportsMorphoApi(network)) {
-        try {
-          console.log(`Attempting to fetch liquidations via Morpho API for ${marketId}`);
-          liquidations = await fetchMorphoMarketLiquidations(marketId);
-        } catch (morphoError) {
-          console.error('Failed to fetch liquidations via Morpho API:', morphoError);
-          // Continue to Subgraph fallback
-        }
-      }
-
-      // If Morpho API failed or not supported, try Subgraph
-      if (!liquidations) {
-        try {
-          console.log(`Attempting to fetch liquidations via Subgraph for ${marketId}`);
-          liquidations = await fetchSubgraphMarketLiquidations(marketId, network);
-        } catch (subgraphError) {
-          console.error('Failed to fetch liquidations via Subgraph:', subgraphError);
-          liquidations = null;
-        }
-      }
-
-      return liquidations;
+      return fetchMarketLiquidations(marketId, network);
     },
     enabled: !!marketId && !!network,
     staleTime: 1000 * 60 * 5, // 5 minutes, liquidations are less frequent

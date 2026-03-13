@@ -86,6 +86,7 @@ export const createUiLabMarketFixture = (): Market => ({
   },
   supplyingVaults: [],
   hasUSDPrice: true,
+  usdPriceSource: 'direct',
   warnings: [],
 });
 

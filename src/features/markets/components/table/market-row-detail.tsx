@@ -32,7 +32,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
         <div className="mb-1 flex items-start justify-between">
           <p className="font-inter text-sm opacity-80">Available Liquidity</p>
           <p className="text-right font-zen text-sm">
-            <EstimatedValueTooltip isEstimated={!market.hasUSDPrice}>
+            <EstimatedValueTooltip isEstimated={market.usdPriceSource === 'peg'}>
               {formatReadable(Number(market.state.liquidityAssetsUsd))}
             </EstimatedValueTooltip>
           </p>

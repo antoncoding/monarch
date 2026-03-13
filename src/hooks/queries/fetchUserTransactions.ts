@@ -1,4 +1,5 @@
-import { supportsMorphoApi } from '@/config/dataSources';
+import { hasEnvioIndexer, supportsMorphoApi } from '@/config/dataSources';
+import { fetchEnvioTransactions } from '@/data-sources/envio/transactions';
 import { fetchMorphoTransactions } from '@/data-sources/morpho-api/transactions';
 import { fetchSubgraphTransactions } from '@/data-sources/subgraph/transactions';
 import { isSupportedChain } from '@/utils/networks';
@@ -50,7 +51,7 @@ export async function fetchUserTransactions(filters: TransactionFilters): Promis
   }
 
   // Check subgraph user address limitation
-  if (!supportsMorphoApi(chainId) && filters.userAddress.length !== 1) {
+  if (!hasEnvioIndexer() && !supportsMorphoApi(chainId) && filters.userAddress.length !== 1) {
     const errorMsg = 'Subgraph data source requires exactly one user address.';
     console.error(errorMsg);
     return {
@@ -60,7 +61,18 @@ export async function fetchUserTransactions(filters: TransactionFilters): Promis
     };
   }
 
-  // Try Morpho API first if supported
+  if (hasEnvioIndexer()) {
+    try {
+      const response = await fetchEnvioTransactions(filters);
+      if (!response.error) {
+        return response;
+      }
+    } catch (envioError) {
+      console.warn(`Envio failed for chain ${chainId}, falling back to legacy sources:`, envioError);
+    }
+  }
+
+  // Try Morpho API next if supported
   if (supportsMorphoApi(chainId)) {
     try {
       const response = await fetchMorphoTransactions(filters);
@@ -74,7 +86,7 @@ export async function fetchUserTransactions(filters: TransactionFilters): Promis
     }
   }
 
-  // Fallback to Subgraph
+  // Final fallback to Subgraph
   try {
     return await fetchSubgraphTransactions(filters, chainId);
   } catch (subgraphError) {
