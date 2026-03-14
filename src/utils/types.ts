@@ -41,6 +41,7 @@ export enum UserTxTypes {
 }
 
 export type UserTransaction = {
+  chainId: number;
   hash: string;
   timestamp: number;
   type: UserTxTypes;
@@ -90,6 +91,15 @@ export type MarketWarning = {
   type: string;
   level: string;
   __typename: string;
+};
+
+export type MarketMetadata = {
+  uniqueKey: string;
+  chainId: SupportedNetworks;
+  warnings: MarketWarning[];
+  supplyingVaults: {
+    address: string;
+  }[];
 };
 
 export type WarningWithDetail = {

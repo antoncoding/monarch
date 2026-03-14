@@ -6,7 +6,7 @@ Monarch is a client-side DeFi dashboard for the Morpho Blue lending protocol. It
 
 **Key Architectural Decisions:**
 - Next.js 15 App Router with React 18
-- Dual data source strategy: Morpho API (primary) → Subgraph (fallback)
+- Composed market data strategy: Morpho API metadata + Envio indexed state + RPC enrichment
 - Zustand for client state, React Query for server state
 - All user data in localStorage (no backend DB)
 - Multi-chain support with custom RPC override capability
@@ -148,15 +148,14 @@ MorphoChainlinkOracleData {
 
 ## Data Sources
 
-### Dual-Source Strategy
+### Market Data Strategy
 
 ```
-Primary: Morpho API (https://blue-api.morpho.org/graphql)
-         ↓ (if unavailable or unsupported chain)
-Fallback: Subgraph (The Graph / Goldsky)
+Envio/Monarch  → primary indexed market state, positions, and transactions
+Morpho API     → indexed fallback + separate market metadata
+RPC            → fresh snapshots and derived enrichments
+Subgraph       → kept only for Vault V2 / adapter discovery
 ```
-
-**Morpho API Supported Chains:** Mainnet, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
 
 ### Static Data (Build-time or cached)
 | Data Type | Source | Location |
@@ -170,29 +169,32 @@ Fallback: Subgraph (The Graph / Goldsky)
 ### Dynamic Data (Runtime fetched)
 | Data Type | Source | Refresh | Query Hook |
 |-----------|--------|---------|------------|
-| Markets list | Morpho API/Subgraph | 5 min stale | `useMarketsQuery` |
+| Markets list | Envio + Morpho fallback + RPC enrichment | 5 min stale | `useMarketsQuery` |
 | Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
-| Market state (APY, utilization) | Morpho API | 30s stale | `useMarketData` |
-| User positions | Morpho API + on-chain | 5 min | `useUserPositions` |
+| Market state (APY, utilization) | Envio + Morpho fallback + on-chain | 30s stale | `useMarketData` |
+| User positions | Envio/Morpho + on-chain | 5 min | `useUserPositions` |
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
 | Vault allocations | On-chain (Wagmi) | On demand | `useAllocations` |
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
 | Oracle prices | Morpho API | 5 min | `useOracleDataQuery` |
 | Merkl rewards | Merkl API | On demand | `useMerklCampaignsQuery` |
-| Market liquidations | Morpho API/Subgraph | 5 min stale | `useMarketLiquidations` |
+| Market liquidations | Envio/Morpho | 5 min stale | `useMarketLiquidations` |
 
 ### Data Flow Patterns
 
 **Market Data Flow:**
 ```
-Raw API fetch → Blacklist filtering → Oracle enrichment →
-Split: allMarkets vs whitelistedMarkets
+1. Fetch indexed market state from Envio, or fall back to Morpho API
+2. Apply blacklist and USD/target-rate/historical APY enrichments
+3. Fetch Morpho market metadata separately (warnings, trusted-by / supplying vaults)
+4. Recombine metadata at the hook layer for UI consumers that need it
+5. Split: allMarkets vs whitelistedMarkets
 ```
 
 **Position Data Flow:**
 ```
-1. Fetch market keys from API (which markets user has positions in)
-2. Fetch on-chain snapshots per market (usePositionSnapshots)
+1. Discover user position markets from cross-chain Envio or cross-chain Morpho fallback
+2. Fetch on-chain snapshots per chain (usePositionSnapshots)
 3. Combine with market metadata
 4. Group by loan asset
 5. Calculate earnings
@@ -250,7 +252,7 @@ All hooks in `/src/hooks/queries/` follow React Query patterns:
 
 | Hook | Key | Stale Time | Refetch | Focus |
 |------|-----|------------|---------|-------|
-| `useMarketsQuery` | `['markets']` | 5 min | 5 min | Yes |
+| `useMarketsQuery` | `['markets', rpcConfigVersion]` | 5 min | 5 min | Yes |
 | `useMarketMetricsQuery` | `['market-metrics', ...]` | 5 min | 5 min | No |
 | `useTokensQuery` | `['tokens']` | 5 min | 5 min | Yes |
 | `useOracleDataQuery` | `['oracle-data']` | 5 min | 5 min | Yes |
@@ -260,18 +262,22 @@ All hooks in `/src/hooks/queries/` follow React Query patterns:
 | `useUserTransactionsQuery` | `['user-transactions', ...]` | 60s | - | No |
 | `useAllocationsQuery` | `['vault-allocations', ...]` | 30s | - | No |
 
-### Data Source Switching
+### Data Source Composition
 
 **File:** `/src/config/dataSources.ts`
 
 ```
-supportsMorphoApi(network) returns true for:
-- Mainnet, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
+Envio endpoint present:
+- use Envio for indexed state/events/positions/history when available
 
-Fallback Strategy:
-1. IF supportsMorphoApi(network) → Try Morpho API
-2. IF API fails OR unsupported → Try Subgraph
-3. Each network fails independently (partial data OK)
+Market reads:
+- use Envio first for indexed market data
+- fall back to Morpho-only indexed data if Envio fails
+- fetch Morpho market metadata separately for warnings / supplying vaults
+
+Position/history reads:
+- use cross-chain Envio first
+- fall back to cross-chain Morpho
 ```
 
 ### GraphQL Fetchers
@@ -282,9 +288,8 @@ Fallback Strategy:
 - Throws on GraphQL errors (strict)
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
+- Used only for Vault V2 / adapter discovery
 - Configurable URL per network
-- Logs GraphQL errors but continues (lenient)
-- Adds price estimation for unknown tokens
 
 ### Complete Data Flow: Market Data
 
@@ -294,25 +299,26 @@ Fallback Strategy:
 2. Parallel queries start:
    - usePublicClient() for on-chain reads
    - useOracleDataQuery() for oracle enrichment
+   - useMarketMetadataQuery() for Morpho metadata
    ↓
 3. Market fetch:
    a. Try on-chain snapshot (viem multicall)
-   b. Try Morpho API (if supported)
-   c. Fallback to Subgraph
-   d. Merge snapshot with API state
+   b. Fetch indexed market details (Envio first, Morpho fallback)
+   c. Merge snapshot with indexed state
    ↓
-4. Oracle enrichment via useMemo()
+4. Recombine metadata + oracle enrichment via useMemo()
    ↓
 5. Return { data: enrichedMarket, isLoading, error }
 ```
 
 ### Key Patterns
 
-1. **Fallback Chain**: API → Subgraph → Empty
-2. **Parallel Execution**: `Promise.all()` for multi-network
-3. **Graceful Degradation**: Partial data > Error
-4. **Two-Phase Market**: On-chain snapshot + API state
-5. **Hybrid Caching**: Static JSON + dynamic API (oracles)
+1. **Split Indexed Data From Metadata**: indexed state and metadata are fetched separately and recombined only at shared hook boundaries
+2. **Envio First For Indexed Reads**: Morpho API is fallback-only for market/position/history state
+3. **Cross-Chain First**: adapter boundaries accept multiple chains and own pagination internally
+4. **Chain-Scoped Identity**: market and transaction identity uses `chainId + uniqueKey`
+5. **RPC Loops Only Where Necessary**: snapshots and historical enrichments stay per chain
+6. **Graceful Degradation**: fallback indexed data beats empty, and metadata failure must not blank primary state
 
 ---
 
@@ -321,8 +327,9 @@ Fallback Strategy:
 ### APIs
 | Service | Endpoint | Purpose |
 |---------|----------|---------|
-| Morpho API | `https://blue-api.morpho.org/graphql` | Markets, vaults, positions |
-| The Graph | Per-chain subgraph URLs | Fallback data, suppliers, borrowers |
+| Morpho API | `https://blue-api.morpho.org/graphql` | Market metadata, vaults, fallback positions/history |
+| Envio / Monarch indexer | Configured via `NEXT_PUBLIC_ENVIO_INDEXER_ENDPOINT` | Indexed markets, positions, participants, transactions |
+| The Graph | Per-chain subgraph URLs | Vault V2 / adapter discovery only |
 | Merkl API | `https://api.merkl.xyz` | Reward campaigns |
 | Velora API | `https://api.paraswap.io` | Swap quotes and executable tx payloads |
 | Alchemy | Per-chain RPC | Default RPC provider |

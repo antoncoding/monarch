@@ -33,7 +33,7 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
     data: paginatedData,
     isLoading,
     isFetching,
-  } = useMarketSupplies(market?.uniqueKey, market.loanAsset.address, chainId, minAssets, currentPage, pageSize);
+  } = useMarketSupplies(market?.uniqueKey, chainId, minAssets, currentPage, pageSize);
 
   const supplies = paginatedData?.items ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;

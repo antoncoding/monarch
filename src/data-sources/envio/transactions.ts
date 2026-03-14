@@ -20,14 +20,19 @@ const sortTransactionsByTimestampDescending = (transactions: UserTransaction[]):
   return transactions.sort((left, right) => right.timestamp - left.timestamp);
 };
 
+const resolveChainIds = (filters: TransactionFilters): number[] => {
+  return [...new Set(filters.chainIds ?? (filters.chainId != null ? [filters.chainId] : []))];
+};
+
 const buildAddressFilter = (addresses: string[]) => ({
   _in: addresses.map((address) => address.toLowerCase()),
 });
 
 const buildSharedWhereClause = (filters: TransactionFilters) => {
+  const chainIds = resolveChainIds(filters);
   const where: Record<string, unknown> = {
     chainId: {
-      _eq: filters.chainId,
+      _in: chainIds,
     },
   };
 
@@ -65,11 +70,9 @@ const buildLiquidationWhere = (filters: TransactionFilters) => ({
 
 const matchesAssetFilter = async ({
   assetIds,
-  chainId,
   transactions,
 }: {
   assetIds: string[] | undefined;
-  chainId: SupportedNetworks;
   transactions: UserTransaction[];
 }): Promise<UserTransaction[]> => {
   if (!assetIds || assetIds.length === 0 || transactions.length === 0) {
@@ -77,53 +80,62 @@ const matchesAssetFilter = async ({
   }
 
   const normalizedAssetIds = new Set(assetIds.map((assetId) => assetId.toLowerCase()));
-  const uniqueMarketIds = [...new Set(transactions.map((transaction) => transaction.data.market.uniqueKey.toLowerCase()))];
-  const envioMarketMap = await fetchEnvioMarketsByKeys(
-    uniqueMarketIds.map((marketId) => ({
-      chainId,
-      marketUniqueKey: marketId,
-    })),
-  ).catch(() => new Map());
-  const marketMap = new Map<string, Awaited<ReturnType<typeof fetchMarketDetails>>>();
-  const missingMarketIds: string[] = [];
+  const uniqueMarketRequests = new Map<string, { chainId: SupportedNetworks; marketUniqueKey: string }>();
 
-  for (const marketId of uniqueMarketIds) {
-    const marketKey = getChainScopedMarketKey(marketId, chainId);
+  for (const transaction of transactions) {
+    uniqueMarketRequests.set(getChainScopedMarketKey(transaction.data.market.uniqueKey, transaction.chainId), {
+      chainId: transaction.chainId as SupportedNetworks,
+      marketUniqueKey: transaction.data.market.uniqueKey.toLowerCase(),
+    });
+  }
+
+  const envioMarketMap = await fetchEnvioMarketsByKeys(Array.from(uniqueMarketRequests.values())).catch(() => new Map());
+  const marketMap = new Map<string, Awaited<ReturnType<typeof fetchMarketDetails>>>();
+  const missingMarketRequests: { chainId: SupportedNetworks; marketUniqueKey: string }[] = [];
+
+  for (const marketRequest of uniqueMarketRequests.values()) {
+    const marketKey = getChainScopedMarketKey(marketRequest.marketUniqueKey, marketRequest.chainId);
     const envioMarket = envioMarketMap.get(marketKey);
 
     if (envioMarket) {
-      marketMap.set(marketId, envioMarket);
+      marketMap.set(marketKey, envioMarket);
       continue;
     }
-    missingMarketIds.push(marketId);
+    missingMarketRequests.push(marketRequest);
   }
 
   const fallbackResults = await Promise.allSettled(
-    missingMarketIds.map((marketId) => fetchMarketDetails(marketId, chainId, { enrichHistoricalApys: false })),
+    missingMarketRequests.map((marketRequest) =>
+      fetchMarketDetails(marketRequest.marketUniqueKey, marketRequest.chainId, { enrichHistoricalApys: false }),
+    ),
   );
 
   for (const [index, result] of fallbackResults.entries()) {
     if (result.status === 'fulfilled' && result.value) {
-      marketMap.set(missingMarketIds[index]!, result.value);
+      const marketRequest = missingMarketRequests[index];
+      if (marketRequest) {
+        marketMap.set(getChainScopedMarketKey(marketRequest.marketUniqueKey, marketRequest.chainId), result.value);
+      }
     }
   }
 
-  if (marketMap.size !== uniqueMarketIds.length) {
+  if (marketMap.size !== uniqueMarketRequests.size) {
     throw new Error(
-      `Failed to hydrate ${uniqueMarketIds.length - marketMap.size} Envio transaction markets for asset filtering on chain ${chainId}`,
+      `Failed to hydrate ${uniqueMarketRequests.size - marketMap.size} Envio transaction markets for asset filtering`,
     );
   }
 
   return transactions.filter((transaction) => {
-    const market = marketMap.get(transaction.data.market.uniqueKey.toLowerCase());
+    const marketKey = getChainScopedMarketKey(transaction.data.market.uniqueKey, transaction.chainId);
+    const market = marketMap.get(marketKey);
     if (!market) {
-      throw new Error(`Missing hydrated market for Envio transaction ${transaction.hash} on chain ${chainId}`);
+      throw new Error(`Missing hydrated market for Envio transaction ${transaction.hash} on chain ${transaction.chainId}`);
     }
 
     const isCollateralTransaction =
       transaction.type === UserTxTypes.MarketSupplyCollateral || transaction.type === UserTxTypes.MarketWithdrawCollateral;
     const relevantAsset = isCollateralTransaction ? market.collateralAsset.address : market.loanAsset.address;
-    const canonicalAssetId = infoToKey(relevantAsset, chainId);
+    const canonicalAssetId = infoToKey(relevantAsset, transaction.chainId);
 
     return normalizedAssetIds.has(relevantAsset.toLowerCase()) || normalizedAssetIds.has(canonicalAssetId);
   });
@@ -131,6 +143,7 @@ const matchesAssetFilter = async ({
 
 const toUserTransaction = ({
   assets,
+  chainId,
   marketId,
   shares,
   timestamp,
@@ -138,12 +151,14 @@ const toUserTransaction = ({
   type,
 }: {
   assets: string | number;
+  chainId: number;
   marketId: string;
   shares?: string | number;
   timestamp: string | number;
   txHash: string;
   type: UserTxTypes;
 }): UserTransaction => ({
+  chainId,
   data: {
     __typename: type,
     assets: normalizeEnvioString(assets),
@@ -176,6 +191,7 @@ export const fetchEnvioTransactions = async (filters: TransactionFilters): Promi
     ...supplyEvents.map((event) =>
       toUserTransaction({
         assets: event.assets,
+        chainId: event.chainId,
         marketId: event.market_id,
         shares: event.shares,
         timestamp: event.timestamp,
@@ -186,6 +202,7 @@ export const fetchEnvioTransactions = async (filters: TransactionFilters): Promi
     ...withdrawEvents.map((event) =>
       toUserTransaction({
         assets: event.assets,
+        chainId: event.chainId,
         marketId: event.market_id,
         shares: event.shares,
         timestamp: event.timestamp,
@@ -196,6 +213,7 @@ export const fetchEnvioTransactions = async (filters: TransactionFilters): Promi
     ...borrowEvents.map((event) =>
       toUserTransaction({
         assets: event.assets,
+        chainId: event.chainId,
         marketId: event.market_id,
         shares: event.shares,
         timestamp: event.timestamp,
@@ -206,6 +224,7 @@ export const fetchEnvioTransactions = async (filters: TransactionFilters): Promi
     ...repayEvents.map((event) =>
       toUserTransaction({
         assets: event.assets,
+        chainId: event.chainId,
         marketId: event.market_id,
         shares: event.shares,
         timestamp: event.timestamp,
@@ -216,6 +235,7 @@ export const fetchEnvioTransactions = async (filters: TransactionFilters): Promi
     ...supplyCollateralEvents.map((event) =>
       toUserTransaction({
         assets: event.assets,
+        chainId: event.chainId,
         marketId: event.market_id,
         timestamp: event.timestamp,
         txHash: event.txHash,
@@ -225,6 +245,7 @@ export const fetchEnvioTransactions = async (filters: TransactionFilters): Promi
     ...withdrawCollateralEvents.map((event) =>
       toUserTransaction({
         assets: event.assets,
+        chainId: event.chainId,
         marketId: event.market_id,
         timestamp: event.timestamp,
         txHash: event.txHash,
@@ -234,6 +255,7 @@ export const fetchEnvioTransactions = async (filters: TransactionFilters): Promi
     ...liquidations.map((event) =>
       toUserTransaction({
         assets: event.repaidAssets,
+        chainId: event.chainId,
         marketId: event.market_id,
         shares: event.repaidShares,
         timestamp: event.timestamp,
@@ -246,7 +268,6 @@ export const fetchEnvioTransactions = async (filters: TransactionFilters): Promi
   items = sortTransactionsByTimestampDescending(items);
   items = await matchesAssetFilter({
     assetIds: filters.assetIds,
-    chainId: filters.chainId,
     transactions: items,
   });
 

@@ -10,6 +10,7 @@ import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { usePositionDetailPreferences } from '@/stores/usePositionDetailPreferences';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
+import { getChainScopedMarketKey } from '@/utils/marketIdentity';
 import { usePositionDetailData } from './hooks/usePositionDetailData';
 import { PositionBreadcrumbs } from './components/position-breadcrumbs';
 import { PositionHeader } from './components/position-header';
@@ -80,8 +81,10 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
   // Filter transactions relevant to this position's markets
   const relevantTransactions = useMemo(() => {
     if (!currentPosition) return [];
-    const marketKeys = new Set(currentPosition.markets.map((m) => m.market.uniqueKey.toLowerCase()));
-    return transactions.filter((tx) => tx.data.market && marketKeys.has(tx.data.market.uniqueKey.toLowerCase()));
+    const marketKeys = new Set(
+      currentPosition.markets.map((position) => getChainScopedMarketKey(position.market.uniqueKey, position.market.morphoBlue.chain.id)),
+    );
+    return transactions.filter((tx) => tx.data.market && marketKeys.has(getChainScopedMarketKey(tx.data.market.uniqueKey, tx.chainId)));
   }, [transactions, currentPosition]);
 
   // Handle refetch

@@ -1,4 +1,4 @@
-import { hasEnvioIndexer, supportsMorphoApi } from '@/config/dataSources';
+import { hasEnvioIndexer } from '@/config/dataSources';
 import {
   fetchEnvioMarketBorrows,
   fetchEnvioMarketLiquidations,
@@ -8,15 +8,11 @@ import { fetchMorphoMarketBorrows } from '@/data-sources/morpho-api/market-borro
 import { fetchMorphoMarketLiquidations } from '@/data-sources/morpho-api/market-liquidations';
 import { fetchMorphoMarketSupplies } from '@/data-sources/morpho-api/market-supplies';
 import { getErrorMessage, logDataSourceEvent } from '@/data-sources/shared/source-debug';
-import { fetchSubgraphMarketBorrows } from '@/data-sources/subgraph/market-borrows';
-import { fetchSubgraphMarketLiquidations } from '@/data-sources/subgraph/market-liquidations';
-import { fetchSubgraphMarketSupplies } from '@/data-sources/subgraph/market-supplies';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketLiquidationTransaction, PaginatedMarketActivityTransactions } from '@/utils/types';
 
 export const fetchMarketSupplies = async (
   marketId: string,
-  loanAssetId: string,
   network: SupportedNetworks,
   minAssets = '0',
   pageSize = 8,
@@ -34,28 +30,24 @@ export const fetchMarketSupplies = async (
     }
   }
 
-  if (supportsMorphoApi(network)) {
-    try {
-      return await fetchMorphoMarketSupplies(marketId, network, minAssets, pageSize, skip);
-    } catch (error) {
-      logDataSourceEvent('market-supplies', 'Morpho API supplies fetch failed, falling back to subgraph', {
-        chainId: network,
-        marketUniqueKey: marketId,
-        reason: getErrorMessage(error),
-      });
-    }
+  try {
+    return await fetchMorphoMarketSupplies(marketId, network, minAssets, pageSize, skip);
+  } catch (error) {
+    logDataSourceEvent('market-supplies', 'Morpho API supplies fetch failed', {
+      chainId: network,
+      marketUniqueKey: marketId,
+      reason: getErrorMessage(error),
+    });
   }
 
-  logDataSourceEvent('market-supplies', 'using subgraph fallback for supplies', {
-    chainId: network,
-    marketUniqueKey: marketId,
-  });
-  return fetchSubgraphMarketSupplies(marketId, loanAssetId, network, minAssets, pageSize, skip);
+  return {
+    items: [],
+    totalCount: 0,
+  };
 };
 
 export const fetchMarketBorrows = async (
   marketId: string,
-  loanAssetId: string,
   network: SupportedNetworks,
   minAssets = '0',
   pageSize = 8,
@@ -73,23 +65,20 @@ export const fetchMarketBorrows = async (
     }
   }
 
-  if (supportsMorphoApi(network)) {
-    try {
-      return await fetchMorphoMarketBorrows(marketId, network, minAssets, pageSize, skip);
-    } catch (error) {
-      logDataSourceEvent('market-borrows', 'Morpho API borrows fetch failed, falling back to subgraph', {
-        chainId: network,
-        marketUniqueKey: marketId,
-        reason: getErrorMessage(error),
-      });
-    }
+  try {
+    return await fetchMorphoMarketBorrows(marketId, network, minAssets, pageSize, skip);
+  } catch (error) {
+    logDataSourceEvent('market-borrows', 'Morpho API borrows fetch failed', {
+      chainId: network,
+      marketUniqueKey: marketId,
+      reason: getErrorMessage(error),
+    });
   }
 
-  logDataSourceEvent('market-borrows', 'using subgraph fallback for borrows', {
-    chainId: network,
-    marketUniqueKey: marketId,
-  });
-  return fetchSubgraphMarketBorrows(marketId, loanAssetId, network, minAssets, pageSize, skip);
+  return {
+    items: [],
+    totalCount: 0,
+  };
 };
 
 export const fetchMarketLiquidations = async (
@@ -108,21 +97,15 @@ export const fetchMarketLiquidations = async (
     }
   }
 
-  if (supportsMorphoApi(network)) {
-    try {
-      return await fetchMorphoMarketLiquidations(marketId, network);
-    } catch (error) {
-      logDataSourceEvent('market-liquidations', 'Morpho API liquidations fetch failed, falling back to subgraph', {
-        chainId: network,
-        marketUniqueKey: marketId,
-        reason: getErrorMessage(error),
-      });
-    }
+  try {
+    return await fetchMorphoMarketLiquidations(marketId, network);
+  } catch (error) {
+    logDataSourceEvent('market-liquidations', 'Morpho API liquidations fetch failed', {
+      chainId: network,
+      marketUniqueKey: marketId,
+      reason: getErrorMessage(error),
+    });
   }
 
-  logDataSourceEvent('market-liquidations', 'using subgraph fallback for liquidations', {
-    chainId: network,
-    marketUniqueKey: marketId,
-  });
-  return fetchSubgraphMarketLiquidations(marketId, network);
+  return [];
 };

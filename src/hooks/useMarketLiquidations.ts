@@ -10,7 +10,6 @@ import type { MarketLiquidationTransaction } from '@/utils/types'; // Use simpli
  * @returns List of liquidation transactions for the market.
  */
 export const useMarketLiquidations = (marketId: string | undefined, network: SupportedNetworks | undefined) => {
-  // Note: loanAssetId is not needed for liquidations query
   const queryKey = ['marketLiquidations', marketId, network];
 
   const { data, isLoading, error, refetch } = useQuery<MarketLiquidationTransaction[] | null>({

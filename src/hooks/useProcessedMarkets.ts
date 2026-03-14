@@ -1,12 +1,16 @@
 import { useMemo } from 'react';
+import { applyMarketMetadataMap } from '@/data-sources/shared/market-metadata';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { useMarketsMetadataQuery } from '@/hooks/queries/useMarketsMetadataQuery';
 import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { collectTokenPriceInputsForMarkets, applyTokenPriceResolutionToMarkets } from '@/data-sources/shared/market-usd';
 import { isForceUnwhitelisted } from '@/utils/markets';
-import type { Market } from '@/utils/types';
+import type { Market, MarketMetadata } from '@/utils/types';
+
+const EMPTY_MARKET_METADATA_MAP = new Map<string, MarketMetadata>();
 
 /**
  * Processes raw markets data with blacklist filtering and oracle enrichment.
@@ -30,6 +34,7 @@ import type { Market } from '@/utils/types';
  */
 export const useProcessedMarkets = () => {
   const { data: rawMarketsFromQuery, isLoading, isRefetching, error, refetch } = useMarketsQuery();
+  const { data: marketMetadataMap, refetch: refetchMetadata } = useMarketsMetadataQuery();
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
   const { getOracleData } = useOracleDataQuery();
   const { showUnwhitelistedMarkets } = useAppSettings();
@@ -94,19 +99,29 @@ export const useProcessedMarkets = () => {
     return allMarketsWithUsd.filter((market) => market.whitelisted);
   }, [allMarketsWithUsd]);
 
+  const allMarketsWithMetadata = useMemo(() => {
+    return applyMarketMetadataMap(allMarketsWithUsd, marketMetadataMap ?? EMPTY_MARKET_METADATA_MAP);
+  }, [allMarketsWithUsd, marketMetadataMap]);
+
+  const whitelistedMarketsWithMetadata = useMemo(() => {
+    return allMarketsWithMetadata.filter((market) => market.whitelisted);
+  }, [allMarketsWithMetadata]);
+
   // Computed markets based on showUnwhitelistedMarkets setting (for backward compatibility)
   const markets = useMemo(() => {
-    return showUnwhitelistedMarkets ? allMarketsWithUsd : whitelistedMarketsWithUsd;
-  }, [showUnwhitelistedMarkets, allMarketsWithUsd, whitelistedMarketsWithUsd]);
+    return showUnwhitelistedMarkets ? allMarketsWithMetadata : whitelistedMarketsWithMetadata;
+  }, [showUnwhitelistedMarkets, allMarketsWithMetadata, whitelistedMarketsWithMetadata]);
 
   return {
     ...processedData,
-    allMarkets: allMarketsWithUsd,
-    whitelistedMarkets: whitelistedMarketsWithUsd,
+    allMarkets: allMarketsWithMetadata,
+    whitelistedMarkets: whitelistedMarketsWithMetadata,
     markets, // Computed from setting (backward compatible with old context)
     loading: isLoading,
     isRefetching,
     error,
-    refetch,
+    refetch: async () => {
+      await Promise.all([refetch(), refetchMetadata()]);
+    },
   };
 };

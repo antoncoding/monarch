@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarketDetails } from '@/data-sources/market-details';
+import { applyMarketMetadata } from '@/data-sources/shared/market-metadata';
+import { useMarketMetadataQuery } from '@/hooks/queries/useMarketMetadataQuery';
 import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
 import { useReadOnlyClient } from '@/hooks/useReadOnlyClient';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -11,6 +13,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
   const { client, customRpcUrls, rpcConfigVersion } = useReadOnlyClient(network);
   const queryKey = ['marketData', uniqueKey, network, rpcConfigVersion];
   const { getOracleData } = useOracleDataQuery();
+  const { data: marketMetadata, error: marketMetadataError, refetch: refetchMarketMetadata } = useMarketMetadataQuery(uniqueKey, network);
 
   const { data, isLoading, error, refetch } = useQuery<Market | null>({
     queryKey: queryKey,
@@ -79,24 +82,27 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
   const enrichedMarket = useMemo(() => {
     if (!data || !network) return data;
 
-    const oracleData = getOracleData(data.oracleAddress, network);
+    const marketWithMetadata = applyMarketMetadata(data, marketMetadata);
+    const oracleData = getOracleData(marketWithMetadata.oracleAddress, network);
 
     if (oracleData) {
       return {
-        ...data,
+        ...marketWithMetadata,
         oracle: {
           data: oracleData,
         },
       };
     }
 
-    return data;
-  }, [data, network, getOracleData]);
+    return marketWithMetadata;
+  }, [data, marketMetadata, network, getOracleData]);
 
   return {
     data: enrichedMarket,
     isLoading: isLoading,
-    error: error,
-    refetch: refetch,
+    error: error ?? (!data ? marketMetadataError : null),
+    refetch: async () => {
+      await Promise.all([refetch(), refetchMarketMetadata()]);
+    },
   };
 };

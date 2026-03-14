@@ -1,5 +1,5 @@
 import { userPositionsQuery, userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
-import type { SupportedNetworks } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import type { MarketPosition } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
@@ -36,10 +36,16 @@ export const fetchMorphoUserPositionMarkets = async (
   userAddress: string,
   network: SupportedNetworks,
 ): Promise<{ marketUniqueKey: string; chainId: number }[]> => {
+  return fetchMorphoUserPositionMarketsMultiChain(userAddress, [network]);
+};
+
+export const fetchMorphoUserPositionMarketsMultiChain = async (
+  userAddress: string,
+  chainIds: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS,
+): Promise<{ marketUniqueKey: string; chainId: number }[]> => {
   try {
     const result = await morphoGraphqlFetcher<MorphoUserPositionsApiResponse>(userPositionsQuery, {
       address: userAddress.toLowerCase(),
-      chainId: network,
     });
 
     // Handle NOT_FOUND - return empty array
@@ -48,12 +54,15 @@ export const fetchMorphoUserPositionMarkets = async (
     }
 
     const marketPositions = result.data?.userByAddress?.marketPositions ?? [];
+    const chainIdSet = new Set(chainIds);
 
     // Filter for valid positions and extract market key and chain ID
     const positionMarkets = marketPositions
       .filter(
         (position): position is ValidMarketPosition =>
-          position.market?.uniqueKey !== undefined && position.market?.morphoBlue?.chain?.id !== undefined,
+          position.market?.uniqueKey !== undefined &&
+          position.market?.morphoBlue?.chain?.id !== undefined &&
+          chainIdSet.has(position.market.morphoBlue.chain.id as SupportedNetworks),
       )
       .map((position) => ({
         marketUniqueKey: position.market.uniqueKey,
@@ -62,7 +71,7 @@ export const fetchMorphoUserPositionMarkets = async (
 
     return positionMarkets;
   } catch (error) {
-    console.error(`Failed to fetch position markets from Morpho API for ${userAddress} on ${network}:`, error);
+    console.error(`Failed to fetch cross-chain position markets from Morpho API for ${userAddress}:`, error);
     throw error; // Re-throw to allow caller to handle fallback
   }
 };

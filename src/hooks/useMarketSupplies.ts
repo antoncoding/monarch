@@ -5,11 +5,8 @@ import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 
 /**
- * Hook to fetch supply and withdraw activities for a specific market's loan asset,
- * using the appropriate data source based on the network.
- * Supports pagination with server-side pagination for Morpho API and client-side for Subgraph.
+ * Hook to fetch supply and withdraw activities for a specific market.
  * @param marketId The ID of the market (e.g., 0x...).
- * @param loanAssetId The address of the loan asset for the market.
  * @param network The blockchain network.
  * @param minAssets Minimum asset amount to filter transactions (optional, defaults to '0').
  * @param page Current page number (1-indexed, defaults to 1).
@@ -18,7 +15,6 @@ import type { PaginatedMarketActivityTransactions } from '@/utils/types';
  */
 export const useMarketSupplies = (
   marketId: string | undefined,
-  loanAssetId: string | undefined,
   network: SupportedNetworks | undefined,
   minAssets = '0',
   page = 1,
@@ -26,24 +22,24 @@ export const useMarketSupplies = (
 ) => {
   const queryClient = useQueryClient();
 
-  const queryKey = ['marketSupplies', marketId, loanAssetId, network, minAssets, page, pageSize];
+  const queryKey = ['marketSupplies', marketId, network, minAssets, page, pageSize];
 
   const queryFn = useCallback(
     async (targetPage: number): Promise<PaginatedMarketActivityTransactions | null> => {
-      if (!marketId || !loanAssetId || !network) {
+      if (!marketId || !network) {
         return null;
       }
 
       const targetSkip = (targetPage - 1) * pageSize;
-      return fetchMarketSupplies(marketId, loanAssetId, network, minAssets, pageSize, targetSkip);
+      return fetchMarketSupplies(marketId, network, minAssets, pageSize, targetSkip);
     },
-    [marketId, loanAssetId, network, minAssets, pageSize],
+    [marketId, network, minAssets, pageSize],
   );
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<PaginatedMarketActivityTransactions | null>({
     queryKey: queryKey,
     queryFn: async () => queryFn(page),
-    enabled: !!marketId && !!loanAssetId && !!network,
+    enabled: !!marketId && !!network,
     staleTime: 1000 * 60 * 5, // 5 minutes - keep cached data fresh longer
     placeholderData: (previousData) => previousData ?? null,
     retry: 1,
@@ -51,12 +47,12 @@ export const useMarketSupplies = (
 
   // Prefetch adjacent pages for faster navigation
   useEffect(() => {
-    if (!marketId || !loanAssetId || !network || !data) return;
+    if (!marketId || !network || !data) return;
 
     const totalPages = data.totalCount > 0 ? Math.ceil(data.totalCount / pageSize) : 0;
 
     if (page > 1) {
-      const prevPageKey = ['marketSupplies', marketId, loanAssetId, network, minAssets, page - 1, pageSize];
+      const prevPageKey = ['marketSupplies', marketId, network, minAssets, page - 1, pageSize];
       void queryClient.prefetchQuery({
         queryKey: prevPageKey,
         queryFn: async () => queryFn(page - 1),
@@ -65,7 +61,7 @@ export const useMarketSupplies = (
     }
 
     if (page < totalPages) {
-      const nextPageKey = ['marketSupplies', marketId, loanAssetId, network, minAssets, page + 1, pageSize];
+      const nextPageKey = ['marketSupplies', marketId, network, minAssets, page + 1, pageSize];
       void queryClient.prefetchQuery({
         queryKey: nextPageKey,
         queryFn: async () => queryFn(page + 1),

@@ -13,6 +13,7 @@ import { MarketIdentity, MarketIdentityMode } from '@/features/markets/component
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import { formatReadable } from '@/utils/balance';
+import { getChainScopedMarketKey } from '@/utils/marketIdentity';
 import { groupTransactionsByHash, getWithdrawals, getSupplies } from '@/utils/transactionGrouping';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import type { Market } from '@/utils/types';
@@ -56,6 +57,14 @@ export function TransactionHistoryPreview({
     if (viewAllHref) return viewAllHref;
     return `/positions/${account}`;
   }, [account, viewAllHref]);
+
+  const findTransactionMarket = (marketUniqueKey: string, transactionChainId: number): Market | undefined => {
+    return allMarkets.find(
+      (market) =>
+        getChainScopedMarketKey(market.uniqueKey, market.morphoBlue.chain.id) ===
+        getChainScopedMarketKey(marketUniqueKey, transactionChainId),
+    );
+  };
 
   const actions = (
     <Link
@@ -129,8 +138,7 @@ export function TransactionHistoryPreview({
             </TableRow>
           ) : (
             history.map((group) => {
-              const chainIdForTx =
-                chainId ?? allMarkets.find((m) => m.uniqueKey === group.transactions[0].data.market.uniqueKey)?.morphoBlue.chain.id;
+              const chainIdForTx = chainId ?? group.transactions[0]?.chainId;
 
               // Handle rebalances
               if (group.isMetaAction && group.metaActionType === 'rebalance') {
@@ -139,10 +147,10 @@ export function TransactionHistoryPreview({
                 const firstWithdrawal = withdrawals[0];
                 const firstSupply = supplies[0];
                 const fromMarket = firstWithdrawal
-                  ? (allMarkets.find((m) => m.uniqueKey === firstWithdrawal.data.market.uniqueKey) as Market | undefined)
+                  ? findTransactionMarket(firstWithdrawal.data.market.uniqueKey, firstWithdrawal.chainId)
                   : undefined;
                 const toMarket = firstSupply
-                  ? (allMarkets.find((m) => m.uniqueKey === firstSupply.data.market.uniqueKey) as Market | undefined)
+                  ? findTransactionMarket(firstSupply.data.market.uniqueKey, firstSupply.chainId)
                   : undefined;
                 const loanAssetDecimals = fromMarket?.loanAsset.decimals ?? toMarket?.loanAsset.decimals ?? 18;
                 const loanAssetSymbol = fromMarket?.loanAsset.symbol ?? toMarket?.loanAsset.symbol ?? '';
@@ -215,8 +223,10 @@ export function TransactionHistoryPreview({
               // Handle multiple deposits
               if (group.isMetaAction && group.metaActionType === 'deposits') {
                 const firstTx = group.transactions[0];
-                const market = allMarkets.find((m) => m.uniqueKey === firstTx.data.market.uniqueKey) as Market | undefined;
-                const marketCount = new Set(group.transactions.map((t) => t.data.market.uniqueKey)).size;
+                const market = findTransactionMarket(firstTx.data.market.uniqueKey, firstTx.chainId);
+                const marketCount = new Set(
+                  group.transactions.map((transaction) => getChainScopedMarketKey(transaction.data.market.uniqueKey, transaction.chainId)),
+                ).size;
                 const hasMoreMarkets = marketCount > 1;
 
                 return (
@@ -268,8 +278,10 @@ export function TransactionHistoryPreview({
               // Handle multiple withdrawals
               if (group.isMetaAction && group.metaActionType === 'withdrawals') {
                 const firstTx = group.transactions[0];
-                const market = allMarkets.find((m) => m.uniqueKey === firstTx.data.market.uniqueKey) as Market | undefined;
-                const marketCount = new Set(group.transactions.map((t) => t.data.market.uniqueKey)).size;
+                const market = findTransactionMarket(firstTx.data.market.uniqueKey, firstTx.chainId);
+                const marketCount = new Set(
+                  group.transactions.map((transaction) => getChainScopedMarketKey(transaction.data.market.uniqueKey, transaction.chainId)),
+                ).size;
                 const hasMoreMarkets = marketCount > 1;
 
                 return (
@@ -319,7 +331,7 @@ export function TransactionHistoryPreview({
               }
 
               const tx = group.transactions[0];
-              const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market | undefined;
+              const market = findTransactionMarket(tx.data.market.uniqueKey, tx.chainId);
               const sign = tx.type === 'MarketSupply' ? '+' : '-';
               const side = tx.type === 'MarketSupply' ? 'Supply' : 'Withdraw';
 

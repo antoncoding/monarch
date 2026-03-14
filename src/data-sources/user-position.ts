@@ -1,9 +1,8 @@
-import { hasEnvioIndexer, supportsMorphoApi } from '@/config/dataSources';
+import { hasEnvioIndexer } from '@/config/dataSources';
 import { fetchEnvioUserPositionForMarket } from '@/data-sources/envio/positions';
 import { fetchMarketDetails } from '@/data-sources/market-details';
 import { fetchMorphoUserPositionForMarket } from '@/data-sources/morpho-api/positions';
 import { getErrorMessage, logDataSourceEvent } from '@/data-sources/shared/source-debug';
-import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/positions';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import { getChainScopedMarketKey } from '@/utils/marketIdentity';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -101,51 +100,28 @@ export const fetchUserPositionForMarket = async (
     }
   }
 
-  if (supportsMorphoApi(chainId)) {
-    try {
-      const morphoPosition = getValidatedPosition({
-        chainId,
-        marketUniqueKey,
-        position: await fetchMorphoUserPositionForMarket(marketUniqueKey, userAddress, chainId),
-        source: 'Morpho API',
-      });
-
-      if (morphoPosition) {
-        logDataSourceEvent('user-position', 'using Morpho API fallback for position', {
-          chainId,
-          marketUniqueKey,
-        });
-        return hydratePositionMarket(morphoPosition, chainId, options);
-      }
-    } catch (error) {
-      logDataSourceEvent('user-position', 'Morpho API position fetch failed, falling back to subgraph', {
-        chainId,
-        marketUniqueKey,
-        reason: getErrorMessage(error),
-      });
-    }
-  }
-
-  logDataSourceEvent('user-position', 'using subgraph fallback for position', {
-    chainId,
-    marketUniqueKey,
-  });
-  let subgraphPosition: MarketPosition | null = null;
-
   try {
-    subgraphPosition = await fetchSubgraphUserPositionForMarket(marketUniqueKey, userAddress, chainId);
+    const morphoPosition = getValidatedPosition({
+      chainId,
+      marketUniqueKey,
+      position: await fetchMorphoUserPositionForMarket(marketUniqueKey, userAddress, chainId),
+      source: 'Morpho API',
+    });
+
+    if (morphoPosition) {
+      logDataSourceEvent('user-position', 'using Morpho API fallback for position', {
+        chainId,
+        marketUniqueKey,
+      });
+      return hydratePositionMarket(morphoPosition, chainId, options);
+    }
   } catch (error) {
-    logDataSourceEvent('user-position', 'subgraph position fallback failed', {
+    logDataSourceEvent('user-position', 'Morpho API position fetch failed', {
       chainId,
       marketUniqueKey,
       reason: getErrorMessage(error),
-    });
-    return null;
+    }); 
   }
 
-  if (!subgraphPosition || !isMatchingPosition(subgraphPosition, marketUniqueKey, chainId)) {
-    return null;
-  }
-
-  return hydratePositionMarket(subgraphPosition, chainId, options);
+  return null;
 };

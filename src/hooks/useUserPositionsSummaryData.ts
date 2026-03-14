@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
+import { getChainScopedMarketKey } from '@/utils/marketIdentity';
 import type { SupportedNetworks } from '@/utils/networks';
 import useUserPositions, { positionKeys } from './useUserPositions';
 import { useCurrentBlocks } from './queries/useCurrentBlocks';
@@ -66,18 +67,31 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
       mergeUserTransactionsWithRecentCache({
         userAddress: user,
         chainIds: uniqueChainIds,
-        apiTransactions: txData?.items ?? [],
+        apiTransactions: txData?.items.filter((tx) =>
+          positions?.some(
+            (position) =>
+              getChainScopedMarketKey(position.market.uniqueKey, position.market.morphoBlue.chain.id) ===
+              getChainScopedMarketKey(tx.data.market.uniqueKey, tx.chainId),
+          ),
+        ) ?? [],
       }),
-    [user, uniqueChainIds, txData?.items],
+    [user, uniqueChainIds, txData?.items, positions],
   );
 
   useEffect(() => {
     reconcileUserTransactionHistoryCache({
       userAddress: user,
       chainIds: uniqueChainIds,
-      apiTransactions: txData?.items ?? [],
+      apiTransactions:
+        txData?.items.filter((tx) =>
+          positions?.some(
+            (position) =>
+              getChainScopedMarketKey(position.market.uniqueKey, position.market.morphoBlue.chain.id) ===
+              getChainScopedMarketKey(tx.data.market.uniqueKey, tx.chainId),
+          ),
+        ) ?? [],
     });
-  }, [user, uniqueChainIds, txData?.items]);
+  }, [user, uniqueChainIds, txData?.items, positions]);
 
   const {
     data: allSnapshots,

@@ -34,7 +34,7 @@ const getTransactionDedupKey = (transaction: UserTransaction): string => {
   const marketKey = transaction.data?.market?.uniqueKey?.toLowerCase() ?? '';
   const assets = transaction.data?.assets ?? '0';
   const shares = transaction.data?.shares ?? '0';
-  return `${transaction.hash.toLowerCase()}:${transaction.type}:${marketKey}:${assets}:${shares}`;
+  return `${transaction.chainId}:${transaction.hash.toLowerCase()}:${transaction.type}:${marketKey}:${assets}:${shares}`;
 };
 
 const getCacheEntryDedupKey = (entry: CachedUserTransactionEntry): string =>
@@ -51,6 +51,7 @@ const isCacheEntry = (value: unknown): value is CachedUserTransactionEntry => {
     typeof candidate.logIndex === 'number' &&
     !!candidate.tx &&
     typeof candidate.tx.hash === 'string' &&
+    typeof candidate.tx.chainId === 'number' &&
     typeof candidate.tx.timestamp === 'number' &&
     typeof candidate.tx.type === 'string' &&
     !!candidate.tx.data &&
@@ -158,6 +159,7 @@ export function cacheUserTransactionHistoryFromReceipt({
         expiresAt,
         logIndex: log.logIndex ?? index,
         tx: {
+          chainId,
           hash: txHash,
           timestamp,
           type: txType,

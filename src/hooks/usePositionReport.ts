@@ -6,7 +6,7 @@ import { getClient } from '@/utils/rpc';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { useCustomRpc } from '@/stores/useCustomRpc';
-import { fetchUserTransactions } from './queries/fetchUserTransactions';
+import { fetchAllUserTransactions } from './queries/fetchUserTransactions';
 
 export type PositionReport = {
   market: Market;
@@ -76,38 +76,23 @@ export const usePositionReport = (
 
     // Fetch ALL transactions for this asset with auto-pagination
     // Query by assetId to discover all markets (including closed ones)
-    const PAGE_SIZE = 1000; // Larger page size for report generation
-    let allTransactions: UserTransaction[] = [];
-    let hasMore = true;
-    let skip = 0;
-
-    while (hasMore) {
-      const transactionResult = await fetchUserTransactions({
+    const transactionResult = await fetchAllUserTransactions(
+      {
         userAddress: [account],
         chainId: selectedAsset.chainId,
         timestampGte: actualStartTimestamp,
         timestampLte: actualEndTimestamp,
         assetIds: [selectedAsset.address],
-        first: PAGE_SIZE,
-        skip,
-      });
+      },
+      {
+        pageSize: 1000,
+      },
+    );
 
-      if (!transactionResult) {
-        throw new Error('Failed to fetch transactions');
-      }
-
-      allTransactions = [...allTransactions, ...transactionResult.items];
-
-      // Check if we've fetched all transactions
-      hasMore = transactionResult.items.length === PAGE_SIZE;
-      skip += PAGE_SIZE;
-
-      // Safety check to prevent infinite loops (50 pages = 50k transactions)
-      if (skip > PAGE_SIZE * 50) {
-        console.warn('Reached maximum pagination limit (50k transactions), some data might be missing');
-        break;
-      }
+    if (transactionResult.error) {
+      throw new Error(transactionResult.error);
     }
+    const allTransactions = transactionResult.items;
 
     // Discover unique markets from transactions (includes closed markets)
     const discoveredMarketIds = [...new Set(allTransactions.map((tx) => tx.data?.market?.uniqueKey).filter((id): id is string => !!id))];

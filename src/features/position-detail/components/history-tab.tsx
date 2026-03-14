@@ -25,6 +25,7 @@ import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQue
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
+import { getChainScopedMarketKey } from '@/utils/marketIdentity';
 import { UserTxTypes, type Market } from '@/utils/types';
 import { actionTypeToText } from '@/utils/morpho';
 import type { GroupedPosition, UserTransaction } from '@/utils/types';
@@ -296,7 +297,11 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
               history.map((tx, index) => {
                 if (!tx.data.market) return null;
 
-                const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market | undefined;
+                const market = allMarkets.find(
+                  (candidateMarket) =>
+                    getChainScopedMarketKey(candidateMarket.uniqueKey, candidateMarket.morphoBlue.chain.id) ===
+                    getChainScopedMarketKey(tx.data.market.uniqueKey, tx.chainId),
+                ) as Market | undefined;
                 if (!market) return null;
 
                 const isSupply = tx.type === UserTxTypes.MarketSupply;

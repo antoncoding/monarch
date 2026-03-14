@@ -1,8 +1,8 @@
-import { hasEnvioIndexer, supportsMorphoApi } from '@/config/dataSources';
+import { hasEnvioIndexer } from '@/config/dataSources';
 import { fetchEnvioMarket } from '@/data-sources/envio/market';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
+import { toIndexedMarket } from '@/data-sources/shared/market-metadata';
 import { isTokenBlacklistedMarket } from '@/data-sources/shared/market-visibility';
-import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import { enrichMarketsWithHistoricalApysWithinTimeout } from '@/data-sources/shared/market-rate-enrichment';
 import { enrichMarketsWithTargetRate } from '@/data-sources/shared/market-target-rate-enrichment';
 import { fillMissingMarketUsdValues } from '@/data-sources/shared/market-usd';
@@ -26,37 +26,24 @@ export const fetchMarketDetails = async (
 
   if (hasEnvioIndexer()) {
     try {
-      baseMarket = await fetchEnvioMarket(uniqueKey, network, {
+      const envioMarket = await fetchEnvioMarket(uniqueKey, network, {
         customRpcUrls,
       });
 
-      if (baseMarket) {
+      if (envioMarket) {
+        baseMarket = toIndexedMarket(envioMarket);
         logDataSourceEvent('market-details', 'using Envio market details', {
           chainId: network,
           marketUniqueKey: uniqueKey,
         });
-      }
-    } catch (error) {
-      logDataSourceEvent('market-details', 'Envio market details failed, falling back', {
-        chainId: network,
-        marketUniqueKey: uniqueKey,
-        reason: getErrorMessage(error),
-      });
-    }
-  }
-
-  if (!baseMarket && supportsMorphoApi(network)) {
-    try {
-      baseMarket = await fetchMorphoMarket(uniqueKey, network);
-
-      if (baseMarket) {
-        logDataSourceEvent('market-details', 'using Morpho API fallback for market details', {
+      } else {
+        logDataSourceEvent('market-details', 'Envio market details returned no result, falling back', {
           chainId: network,
           marketUniqueKey: uniqueKey,
         });
       }
     } catch (error) {
-      logDataSourceEvent('market-details', 'Morpho market details failed, falling back to subgraph', {
+      logDataSourceEvent('market-details', 'Envio market details failed', {
         chainId: network,
         marketUniqueKey: uniqueKey,
         reason: getErrorMessage(error),
@@ -66,16 +53,14 @@ export const fetchMarketDetails = async (
 
   if (!baseMarket) {
     try {
-      baseMarket = await fetchSubgraphMarket(uniqueKey, network);
-
-      if (baseMarket) {
-        logDataSourceEvent('market-details', 'using subgraph fallback for market details', {
-          chainId: network,
-          marketUniqueKey: uniqueKey,
-        });
-      }
+      const morphoMarket = await fetchMorphoMarket(uniqueKey, network);
+      baseMarket = toIndexedMarket(morphoMarket);
+      logDataSourceEvent('market-details', 'using Morpho market details fallback', {
+        chainId: network,
+        marketUniqueKey: uniqueKey,
+      });
     } catch (error) {
-      logDataSourceEvent('market-details', 'subgraph market details failed', {
+      logDataSourceEvent('market-details', 'Morpho market details failed', {
         chainId: network,
         marketUniqueKey: uniqueKey,
         reason: getErrorMessage(error),

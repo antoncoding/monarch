@@ -147,6 +147,52 @@ export const marketsFragment = `
   }
 `;
 
+const commonMarketMetadataFields = `
+uniqueKey
+morphoBlue {
+  chain {
+    id
+  }
+}
+warnings {
+  type
+  level
+  __typename
+}
+supplyingVaults {
+  address
+}
+`;
+
+export const marketMetadataFragment = `
+  fragment MarketMetadataFields on Market {
+    ${commonMarketMetadataFields}
+  }
+`;
+
+export const marketsMetadataQuery = `
+  query getMarketsMetadata($first: Int, $skip: Int, $where: MarketFilters) {
+    markets(first: $first, skip: $skip, where: $where) {
+      items {
+        ...MarketMetadataFields
+      }
+      pageInfo {
+        countTotal
+      }
+    }
+  }
+  ${marketMetadataFragment}
+`;
+
+export const marketMetadataDetailQuery = `
+  query getMarketMetadata($uniqueKey: String!, $chainId: Int) {
+    marketByUniqueKey(uniqueKey: $uniqueKey, chainId: $chainId) {
+      ...MarketMetadataFields
+    }
+  }
+  ${marketMetadataFragment}
+`;
+
 export const marketsQuery = `
   query getMarkets($first: Int, $skip: Int, $where: MarketFilters) {
     markets(first: $first, skip: $skip, where: $where) {
@@ -353,6 +399,11 @@ export const userTransactionsQuery = `
             assets
             market {
               uniqueKey
+              morphoBlue {
+                chain {
+                  id
+                }
+              }
             }
           }
         }

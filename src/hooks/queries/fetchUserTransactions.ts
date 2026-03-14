@@ -1,17 +1,16 @@
-import { hasEnvioIndexer, supportsMorphoApi } from '@/config/dataSources';
+import { hasEnvioIndexer } from '@/config/dataSources';
 import { fetchEnvioTransactions } from '@/data-sources/envio/transactions';
 import { fetchMorphoTransactions } from '@/data-sources/morpho-api/transactions';
-import { fetchSubgraphTransactions } from '@/data-sources/subgraph/transactions';
 import { isSupportedChain } from '@/utils/networks';
 import type { UserTransaction } from '@/utils/types';
 
 /**
  * Filters for fetching user transactions.
- * Requires a single chainId - for multi-chain queries, use useUserTransactionsQuery with paginate: true.
  */
 export type TransactionFilters = {
   userAddress: string[];
-  chainId: number;
+  chainId?: number;
+  chainIds?: number[];
   marketUniqueKeys?: string[];
   timestampGte?: number;
   timestampLte?: number;
@@ -30,72 +29,98 @@ export type TransactionResponse = {
   error: string | null;
 };
 
+const resolveTransactionChainIds = (filters: TransactionFilters): number[] => {
+  const chainIds = filters.chainIds ?? (filters.chainId != null ? [filters.chainId] : []);
+  return [...new Set(chainIds)];
+};
+
 /**
- * Fetches user transactions for a SINGLE chain from Morpho API or Subgraph.
- * For multi-chain queries, use useUserTransactionsQuery with paginate: true.
+ * Fetches user transactions for one or more chains using the configured indexer source.
  *
- * @param filters - Transaction filters (chainId is required)
+ * @param filters - Transaction filters
  * @returns Promise resolving to transaction response
  */
 export async function fetchUserTransactions(filters: TransactionFilters): Promise<TransactionResponse> {
-  const { chainId } = filters;
+  const chainIds = resolveTransactionChainIds(filters);
 
-  // Validate chainId
-  if (!isSupportedChain(chainId)) {
-    console.warn(`Unsupported chain: ${chainId}`);
+  if (chainIds.length === 0) {
     return {
       items: [],
       pageInfo: { count: 0, countTotal: 0 },
-      error: `Unsupported chain: ${chainId}`,
+      error: 'At least one chainId is required',
     };
   }
 
-  // Check subgraph user address limitation
-  if (!hasEnvioIndexer() && !supportsMorphoApi(chainId) && filters.userAddress.length !== 1) {
-    const errorMsg = 'Subgraph data source requires exactly one user address.';
-    console.error(errorMsg);
+  const unsupportedChainId = chainIds.find((chainId) => !isSupportedChain(chainId));
+  if (unsupportedChainId != null) {
+    console.warn(`Unsupported chain: ${unsupportedChainId}`);
     return {
       items: [],
       pageInfo: { count: 0, countTotal: 0 },
-      error: errorMsg,
+      error: `Unsupported chain: ${unsupportedChainId}`,
     };
   }
+
+  const normalizedFilters: TransactionFilters = {
+    ...filters,
+    chainIds,
+    chainId: chainIds.length === 1 ? chainIds[0] : undefined,
+  };
 
   if (hasEnvioIndexer()) {
     try {
-      const response = await fetchEnvioTransactions(filters);
+      const response = await fetchEnvioTransactions(normalizedFilters);
       if (!response.error) {
         return response;
       }
     } catch (envioError) {
-      console.warn(`Envio failed for chain ${chainId}, falling back to legacy sources:`, envioError);
+      console.warn(`Envio failed for chains ${chainIds.join(',')}, falling back to Morpho API:`, envioError);
     }
   }
 
-  // Try Morpho API next if supported
-  if (supportsMorphoApi(chainId)) {
-    try {
-      const response = await fetchMorphoTransactions(filters);
-      if (!response.error) {
-        return response;
-      }
-      // Morpho API returned an error, fall through to Subgraph
-    } catch (morphoError) {
-      console.warn(`Morpho API failed for chain ${chainId}, falling back to Subgraph:`, morphoError);
-      // Fall through to Subgraph
+  return fetchMorphoTransactions(normalizedFilters);
+}
+
+export async function fetchAllUserTransactions(
+  filters: Omit<TransactionFilters, 'skip' | 'first'> & {
+    chainId?: number;
+    chainIds?: number[];
+  },
+  options: {
+    pageSize?: number;
+    maxPages?: number;
+  } = {},
+): Promise<TransactionResponse> {
+  const pageSize = options.pageSize ?? 1000;
+  const maxPages = options.maxPages ?? 50;
+  const items: UserTransaction[] = [];
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const response = await fetchUserTransactions({
+      ...filters,
+      first: pageSize,
+      skip: page * pageSize,
+    });
+
+    if (response.error) {
+      return response;
+    }
+
+    items.push(...response.items);
+
+    if (response.items.length < pageSize) {
+      break;
     }
   }
 
-  // Final fallback to Subgraph
-  try {
-    return await fetchSubgraphTransactions(filters, chainId);
-  } catch (subgraphError) {
-    const errorMsg = `Failed to fetch transactions: ${(subgraphError as Error)?.message ?? 'Unknown error'}`;
-    console.error(errorMsg);
-    return {
-      items: [],
-      pageInfo: { count: 0, countTotal: 0 },
-      error: errorMsg,
-    };
-  }
+  items.sort((left, right) => right.timestamp - left.timestamp);
+
+  return {
+    items,
+    pageInfo: {
+      count: items.length,
+      countTotal: items.length,
+    },
+    error: null,
+  };
 }

@@ -12,7 +12,7 @@ import { useProcessedMarkets } from './useProcessedMarkets';
  * Hook to fetch a user's position in a specific market.
  *
  * Prioritizes the latest on-chain snapshot via `fetchPositionSnapshot`.
- * Falls back to the configured data source (Morpho API or Subgraph) if the snapshot is unavailable.
+ * Falls back to the indexed position adapter when the snapshot is unavailable.
  *
  * @param user The user's address.
  * @param chainId The network ID.
@@ -75,8 +75,8 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
             },
           };
         } else {
-          // Local market data NOT found, need to fetch from fallback to get structure
-          console.warn(`Local market data not found for ${marketKey}. Fetching from fallback source to combine with snapshot.`);
+          // Local market data NOT found, fetch from the indexed adapter to hydrate the position shape.
+          console.warn(`Local market data not found for ${marketKey}. Fetching indexed position data to combine with snapshot.`);
           const fallbackPosition = await fetchUserPositionForMarket(marketKey, user, chainId, {
             customRpcUrls,
           });

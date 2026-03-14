@@ -8,9 +8,9 @@ import type { Market } from '@/utils/types';
  * Fetches markets from all supported networks using React Query.
  *
  * Data fetching strategy:
- * - Uses the shared market catalog adapter to fetch all supported chains in one go
- * - Merges Morpho API metadata with Envio state when Envio is configured
- * - Falls back to per-network Morpho/Subgraph fetching only if the cross-chain path fails
+ * - Uses the shared indexed market catalog adapter to fetch all supported chains in one go
+ * - Uses Envio as the primary indexed source when configured
+ * - Falls back to Morpho API only if Envio is unavailable or returns no usable markets
  * - Applies basic filtering (required fields, supported chains)
  *
  * Cache behavior:

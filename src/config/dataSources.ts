@@ -1,27 +1,6 @@
-import { SupportedNetworks } from '@/utils/networks';
-
 type EnvioIndexerConfig = {
   endpoint: string;
   apiKey?: string;
-};
-
-/**
- * Check if a network supports Morpho API as a data source
- */
-export const supportsMorphoApi = (network: SupportedNetworks): boolean => {
-  switch (network) {
-    case SupportedNetworks.Mainnet:
-    case SupportedNetworks.Base:
-    case SupportedNetworks.Unichain:
-    case SupportedNetworks.Polygon:
-    case SupportedNetworks.Arbitrum:
-    case SupportedNetworks.HyperEVM:
-    case SupportedNetworks.Monad:
-      return true;
-
-    default:
-      return false;
-  }
 };
 
 const getTrimmedEnv = (value: string | undefined): string | undefined => {
