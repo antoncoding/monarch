@@ -138,7 +138,7 @@ export function TransactionHistoryPreview({
             </TableRow>
           ) : (
             history.map((group) => {
-              const chainIdForTx = chainId ?? group.transactions[0]?.chainId;
+              const chainIdForTx = group.transactions[0]?.chainId ?? chainId;
 
               // Handle rebalances
               if (group.isMetaAction && group.metaActionType === 'rebalance') {

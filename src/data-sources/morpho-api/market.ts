@@ -64,7 +64,7 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
   return processMarketData(response.data.marketByUniqueKey);
 };
 
-const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
+const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage> => {
   return fetchMorphoMarketsPageForChains([network], skip, pageSize);
 };
 

@@ -29,6 +29,11 @@ export type TransactionResponse = {
   error: string | null;
 };
 
+const getUserTransactionDedupKey = (transaction: UserTransaction): string => {
+  const marketKey = transaction.data.market.uniqueKey.toLowerCase();
+  return `${transaction.chainId}:${transaction.hash.toLowerCase()}:${transaction.type}:${marketKey}:${transaction.data.assets}:${transaction.data.shares}`;
+};
+
 const resolveTransactionChainIds = (filters: TransactionFilters): number[] => {
   const chainIds = filters.chainIds ?? (filters.chainId != null ? [filters.chainId] : []);
   return [...new Set(chainIds)];
@@ -94,6 +99,8 @@ export async function fetchAllUserTransactions(
   const pageSize = options.pageSize ?? 1000;
   const maxPages = options.maxPages ?? 50;
   const items: UserTransaction[] = [];
+  let expectedTotalCount: number | null = null;
+  let rawFetchedCount = 0;
 
   for (let page = 0; page < maxPages; page += 1) {
     const response = await fetchUserTransactions({
@@ -107,19 +114,37 @@ export async function fetchAllUserTransactions(
     }
 
     items.push(...response.items);
+    rawFetchedCount += response.items.length;
+    expectedTotalCount ??= response.pageInfo.countTotal;
 
-    if (response.items.length < pageSize) {
+    if (response.items.length === 0 || rawFetchedCount >= expectedTotalCount) {
       break;
     }
   }
 
-  items.sort((left, right) => right.timestamp - left.timestamp);
+  if (expectedTotalCount != null && rawFetchedCount < expectedTotalCount) {
+    return {
+      items: [],
+      pageInfo: { count: 0, countTotal: expectedTotalCount },
+      error: `Transaction pagination hit the maxPages limit (${maxPages}) before completion.`,
+    };
+  }
+
+  const dedupedItems = new Map<string, UserTransaction>();
+  for (const item of items) {
+    const dedupKey = getUserTransactionDedupKey(item);
+    if (!dedupedItems.has(dedupKey)) {
+      dedupedItems.set(dedupKey, item);
+    }
+  }
+
+  const sortedItems = Array.from(dedupedItems.values()).sort((left, right) => right.timestamp - left.timestamp);
 
   return {
-    items,
+    items: sortedItems,
     pageInfo: {
-      count: items.length,
-      countTotal: items.length,
+      count: sortedItems.length,
+      countTotal: sortedItems.length,
     },
     error: null,
   };

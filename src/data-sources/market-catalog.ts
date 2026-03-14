@@ -5,6 +5,7 @@ import { toIndexedMarket } from '@/data-sources/shared/market-metadata';
 import { filterTokenBlacklistedMarkets } from '@/data-sources/shared/market-visibility';
 import { enrichMarketsWithHistoricalApysWithinTimeout } from '@/data-sources/shared/market-rate-enrichment';
 import { enrichMarketsWithTargetRate } from '@/data-sources/shared/market-target-rate-enrichment';
+import { fillMissingMarketUsdValues } from '@/data-sources/shared/market-usd';
 import { getErrorMessage, logDataSourceEvent } from '@/data-sources/shared/source-debug';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
@@ -32,7 +33,8 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: str
 };
 
 const enrichCatalogMarkets = async (markets: Market[], customRpcUrls?: CustomRpcUrls): Promise<Market[]> => {
-  const marketsWithTargetRate = await enrichMarketsWithTargetRate(markets, {
+  const marketsWithUsd = await fillMissingMarketUsdValues(markets);
+  const marketsWithTargetRate = await enrichMarketsWithTargetRate(marketsWithUsd, {
     customRpcUrls,
   });
 
@@ -45,15 +47,26 @@ const enrichCatalogMarketsWithLogging = async (
   details: Record<string, unknown>,
 ): Promise<Market[]> => {
   const enrichmentStartedAt = Date.now();
-  const enrichedMarkets = await enrichCatalogMarkets(markets, customRpcUrls);
+  try {
+    const enrichedMarkets = await enrichCatalogMarkets(markets, customRpcUrls);
 
-  logDataSourceEvent('market-catalog', 'market enrichment completed', {
-    ...details,
-    count: enrichedMarkets.length,
-    durationMs: Date.now() - enrichmentStartedAt,
-  });
+    logDataSourceEvent('market-catalog', 'market enrichment completed', {
+      ...details,
+      count: enrichedMarkets.length,
+      durationMs: Date.now() - enrichmentStartedAt,
+    });
 
-  return enrichedMarkets;
+    return enrichedMarkets;
+  } catch (error) {
+    logDataSourceEvent('market-catalog', 'market enrichment failed, using base catalog', {
+      ...details,
+      count: markets.length,
+      durationMs: Date.now() - enrichmentStartedAt,
+      reason: getErrorMessage(error),
+    });
+
+    return markets;
+  }
 };
 
 export const fetchMarketCatalog = async (

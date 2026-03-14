@@ -1,12 +1,15 @@
-import { envioMarketBorrowersQuery, envioMarketSuppliersQuery } from '@/graphql/envio-queries';
+import {
+  envioMarketBorrowersCountQuery,
+  envioMarketBorrowersQuery,
+  envioMarketSuppliersCountQuery,
+  envioMarketSuppliersQuery,
+} from '@/graphql/envio-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketBorrower, MarketSupplier, PaginatedMarketBorrowers, PaginatedMarketSuppliers } from '@/utils/types';
 import { fetchEnvioMarket } from './market';
 import { envioGraphqlFetcher } from './fetchers';
-import { fetchAllEnvioPages, normalizeEnvioString } from './utils';
+import { normalizeEnvioString } from './utils';
 
-const ENVIO_PARTICIPANTS_PAGE_SIZE = 500;
-const ENVIO_PARTICIPANTS_MAX_ITEMS = Number.MAX_SAFE_INTEGER;
 const ENVIO_PARTICIPANTS_TIMEOUT_MS = 15_000;
 
 type EnvioSupplierRow = {
@@ -25,6 +28,16 @@ type EnvioBorrowerRow = {
 type EnvioParticipantsResponse = {
   data?: {
     Position?: (EnvioSupplierRow | EnvioBorrowerRow)[];
+  };
+};
+
+type EnvioParticipantsCountResponse = {
+  data?: {
+    Position_aggregate?: {
+      aggregate?: {
+        count?: number | null;
+      } | null;
+    } | null;
   };
 };
 
@@ -70,6 +83,26 @@ const fetchPositionRows = async <TRow extends EnvioSupplierRow | EnvioBorrowerRo
   return (response.data?.Position ?? []) as TRow[];
 };
 
+const fetchPositionCount = async ({
+  query,
+  where,
+}: {
+  query: string;
+  where: Record<string, unknown>;
+}): Promise<number> => {
+  const response = await envioGraphqlFetcher<EnvioParticipantsCountResponse>(
+    query,
+    {
+      where,
+    },
+    {
+      timeoutMs: ENVIO_PARTICIPANTS_TIMEOUT_MS,
+    },
+  );
+
+  return response.data?.Position_aggregate?.aggregate?.count ?? 0;
+};
+
 export const fetchEnvioMarketSuppliers = async (
   marketId: string,
   chainId: SupportedNetworks,
@@ -89,17 +122,18 @@ export const fetchEnvioMarketSuppliers = async (
     },
   };
 
-  const suppliers = await fetchAllEnvioPages({
-    fetchPage: async (limit, offset) =>
-      fetchPositionRows<EnvioSupplierRow>({
-        limit,
-        offset,
-        query: envioMarketSuppliersQuery,
-        where,
-      }),
-    maxItems: ENVIO_PARTICIPANTS_MAX_ITEMS,
-    pageSize: ENVIO_PARTICIPANTS_PAGE_SIZE,
-  });
+  const [suppliers, totalCount] = await Promise.all([
+    fetchPositionRows<EnvioSupplierRow>({
+      limit: pageSize,
+      offset: skip,
+      query: envioMarketSuppliersQuery,
+      where,
+    }),
+    fetchPositionCount({
+      query: envioMarketSuppliersCountQuery,
+      where,
+    }),
+  ]);
 
   const items: MarketSupplier[] = suppliers.map((supplier) => ({
     supplyShares: normalizeEnvioString(supplier.supplyShares),
@@ -107,8 +141,8 @@ export const fetchEnvioMarketSuppliers = async (
   }));
 
   return {
-    items: items.slice(skip, skip + pageSize),
-    totalCount: items.length,
+    items,
+    totalCount,
   };
 };
 
@@ -131,18 +165,17 @@ export const fetchEnvioMarketBorrowers = async (
     },
   };
 
-  const [market, borrowers] = await Promise.all([
+  const [market, borrowers, totalCount] = await Promise.all([
     fetchEnvioMarket(marketId, chainId),
-    fetchAllEnvioPages({
-      fetchPage: async (limit, offset) =>
-        fetchPositionRows<EnvioBorrowerRow>({
-          limit,
-          offset,
-          query: envioMarketBorrowersQuery,
-          where,
-        }),
-      maxItems: ENVIO_PARTICIPANTS_MAX_ITEMS,
-      pageSize: ENVIO_PARTICIPANTS_PAGE_SIZE,
+    fetchPositionRows<EnvioBorrowerRow>({
+      limit: pageSize,
+      offset: skip,
+      query: envioMarketBorrowersQuery,
+      where,
+    }),
+    fetchPositionCount({
+      query: envioMarketBorrowersCountQuery,
+      where,
     }),
   ]);
 
@@ -161,7 +194,7 @@ export const fetchEnvioMarketBorrowers = async (
   });
 
   return {
-    items: items.slice(skip, skip + pageSize),
-    totalCount: items.length,
+    items,
+    totalCount,
   };
 };

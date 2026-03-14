@@ -51,6 +51,10 @@ export const fetchHistoricalChainContext = async ({
   targetTimestamps?: number[];
   timeoutMs?: number;
 }): Promise<HistoricalChainContext | null> => {
+  if ((targetLookbackSeconds?.length ?? 0) > 0 && (targetTimestamps?.length ?? 0) > 0) {
+    throw new Error('Provide either targetLookbackSeconds or targetTimestamps, not both.');
+  }
+
   const targetSignature =
     targetLookbackSeconds && targetLookbackSeconds.length > 0 ? `lookback:${targetLookbackSeconds.join(',')}` : `ts:${(targetTimestamps ?? []).join(',')}`;
   const cacheKey = `${chainId}:${targetSignature}:${timeoutMs}`;
@@ -116,7 +120,7 @@ export const fetchHistoricalChainContext = async ({
 
   const nextCachedByClient = cachedByClient ?? new Map<string, CachedHistoricalChainContext>();
   nextCachedByClient.set(cacheKey, {
-    expiresAt: now + CHAIN_CONTEXT_CACHE_TTL_MS,
+    expiresAt: now + Math.max(CHAIN_CONTEXT_CACHE_TTL_MS, timeoutMs),
     promise: requestPromise,
   });
   historicalChainContextCache.set(client, nextCachedByClient);

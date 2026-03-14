@@ -90,6 +90,16 @@ export const envioMarketSuppliersQuery = `
   }
 `;
 
+export const envioMarketSuppliersCountQuery = `
+  query EnvioMarketSuppliersCount($where: Position_bool_exp) {
+    Position_aggregate(where: $where) {
+      aggregate {
+        count
+      }
+    }
+  }
+`;
+
 export const envioMarketBorrowersQuery = `
   query EnvioMarketBorrowers($limit: Int!, $offset: Int!, $where: Position_bool_exp) {
     Position(limit: $limit, offset: $offset, where: $where, order_by: [{ borrowShares: desc }, { user: asc }]) {
@@ -98,6 +108,16 @@ export const envioMarketBorrowersQuery = `
       borrowShares
       collateral
       user
+    }
+  }
+`;
+
+export const envioMarketBorrowersCountQuery = `
+  query EnvioMarketBorrowersCount($where: Position_bool_exp) {
+    Position_aggregate(where: $where) {
+      aggregate {
+        count
+      }
     }
   }
 `;

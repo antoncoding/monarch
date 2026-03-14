@@ -339,7 +339,11 @@ export const fetchEnvioMarketsByKeys = async (
   const uniqueRequests = new Map<string, { marketUniqueKey: string; chainId: SupportedNetworks }>();
 
   for (const marketRequest of marketRequests) {
-    uniqueRequests.set(getChainScopedMarketKey(marketRequest.marketUniqueKey, marketRequest.chainId), marketRequest);
+    const canonicalMarketUniqueKey = marketRequest.marketUniqueKey.toLowerCase();
+    uniqueRequests.set(getChainScopedMarketKey(canonicalMarketUniqueKey, marketRequest.chainId), {
+      ...marketRequest,
+      marketUniqueKey: canonicalMarketUniqueKey,
+    });
   }
 
   const rows = await fetchEnvioMarketsPage({
@@ -371,10 +375,10 @@ export const fetchEnvioMarket = async (
 ): Promise<Market | null> => {
   const marketMap = await fetchEnvioMarketsByKeys([
     {
-      marketUniqueKey: uniqueKey,
+      marketUniqueKey: uniqueKey.toLowerCase(),
       chainId,
     },
   ], options);
 
-  return marketMap.get(getChainScopedMarketKey(uniqueKey, chainId)) ?? null;
+  return marketMap.get(getChainScopedMarketKey(uniqueKey.toLowerCase(), chainId)) ?? null;
 };
