@@ -95,17 +95,20 @@ export const fetchMarketDetails = async (
     return null;
   }
 
-  const [marketWithUsd] = await fillMissingMarketUsdValues([baseMarket]);
+  const [marketWithUsd] = await fillMissingMarketUsdValues([baseMarket]).catch(() => [baseMarket]);
   baseMarket = marketWithUsd ?? baseMarket;
+
   const [marketWithTargetRate] = await enrichMarketsWithTargetRate([baseMarket], {
     customRpcUrls,
-  });
+  }).catch(() => [baseMarket]);
   baseMarket = marketWithTargetRate ?? baseMarket;
 
   if (!enrichHistoricalApys) {
     return baseMarket;
   }
 
-  const [enrichedMarket] = await enrichMarketsWithHistoricalApysWithinTimeout([baseMarket], MARKET_ENRICHMENT_TIMEOUT_MS, customRpcUrls);
+  const [enrichedMarket] = await enrichMarketsWithHistoricalApysWithinTimeout([baseMarket], MARKET_ENRICHMENT_TIMEOUT_MS, customRpcUrls).catch(
+    () => [baseMarket],
+  );
   return enrichedMarket ?? baseMarket;
 };

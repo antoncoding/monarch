@@ -1,6 +1,7 @@
-import { fetchTokenPrices, getTokenPriceKey, type TokenPriceInput } from '@/data-sources/morpho-api/prices';
+import { getTokenPriceKey, type TokenPriceInput } from '@/data-sources/morpho-api/prices';
 import { formatBalance } from '@/utils/balance';
 import type { Market, MarketUsdPriceSource } from '@/utils/types';
+import { fetchResolvedTokenPrices } from './token-prices';
 
 const hasPositiveAssets = (value?: string): boolean => {
   if (!value) return false;
@@ -54,11 +55,15 @@ export const collectTokenPriceInputsForMarkets = (markets: Market[]): TokenPrice
     const needsCollateralUsd = shouldComputeUsd(market.state.collateralAssetsUsd ?? null, market.state.collateralAssets);
 
     if (needsLoanUsd) {
-      addToken(market.loanAsset.address, chainId);
+      if (market.loanAsset?.address) {
+        addToken(market.loanAsset.address, chainId);
+      }
     }
 
     if (needsCollateralUsd) {
-      addToken(market.collateralAsset.address, chainId);
+      if (market.collateralAsset?.address) {
+        addToken(market.collateralAsset.address, chainId);
+      }
     }
   }
 
@@ -86,12 +91,12 @@ export const applyTokenPriceResolutionToMarkets = (
 
   return markets.map((market) => {
     const chainId = market.morphoBlue.chain.id;
-    const loanPriceKey = getTokenPriceKey(market.loanAsset.address, chainId);
-    const collateralPriceKey = getTokenPriceKey(market.collateralAsset.address, chainId);
-    const loanPrice = tokenPrices.get(loanPriceKey);
-    const collateralPrice = tokenPrices.get(collateralPriceKey);
+    const loanPriceKey = market.loanAsset?.address ? getTokenPriceKey(market.loanAsset.address, chainId) : null;
+    const collateralPriceKey = market.collateralAsset?.address ? getTokenPriceKey(market.collateralAsset.address, chainId) : null;
+    const loanPrice = loanPriceKey ? tokenPrices.get(loanPriceKey) : undefined;
+    const collateralPrice = collateralPriceKey ? tokenPrices.get(collateralPriceKey) : undefined;
     const loanPriceSource =
-      tokenPriceSources.get(loanPriceKey) ?? (isFinitePositiveNumber(loanPrice) ? 'direct' : undefined);
+      (loanPriceKey ? tokenPriceSources.get(loanPriceKey) : undefined) ?? (isFinitePositiveNumber(loanPrice) ? 'direct' : undefined);
 
     let nextState = market.state;
     let changed = false;
@@ -152,6 +157,10 @@ export const fillMissingMarketUsdValues = async (markets: Market[]): Promise<Mar
     return markets;
   }
 
-  const tokenPrices = await fetchTokenPrices(tokenInputs);
-  return applyTokenPricesToMarkets(markets, tokenPrices);
+  try {
+    const { prices, sources } = await fetchResolvedTokenPrices(tokenInputs);
+    return applyTokenPriceResolutionToMarkets(markets, prices, sources);
+  } catch {
+    return markets;
+  }
 };

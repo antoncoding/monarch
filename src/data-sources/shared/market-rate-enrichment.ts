@@ -261,9 +261,10 @@ const enrichChainMarkets = async (
     return markets;
   }
 
+  const requestedTimeoutMs = options.timeoutMs ?? CHAIN_ENRICHMENT_TIMEOUT_MS;
   const customRpcKey = options.customRpcUrls?.[chainId] ?? 'default';
   const marketKey = [...new Set(markets.map((market) => market.uniqueKey))].sort().join(',');
-  const pendingKey = `${chainId}:${customRpcKey}:${marketKey}`;
+  const pendingKey = `${chainId}:${customRpcKey}:${requestedTimeoutMs}:${marketKey}`;
   const pendingRequest = pendingChainHistoricalEnrichment.get(pendingKey);
 
   if (pendingRequest) {
@@ -271,7 +272,6 @@ const enrichChainMarkets = async (
   }
 
   const requestPromise = (async (): Promise<Market[]> => {
-    const requestedTimeoutMs = options.timeoutMs ?? CHAIN_ENRICHMENT_TIMEOUT_MS;
     const timeoutMs = getHistoricalEnrichmentTimeoutMs(markets.length, requestedTimeoutMs);
     const chunkSize = getHistoricalMulticallChunkSize(chainId, markets.length);
     const deadlineMs = Date.now() + timeoutMs;

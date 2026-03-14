@@ -3,7 +3,7 @@ import { type Address, formatUnits } from 'viem';
 import morphoAbi from '@/abis/morpho';
 import { fetchMarketDetails } from '@/data-sources/market-details';
 import type { HistoricalDataSuccessResult } from '@/data-sources/morpho-api/historical';
-import { fetchEnvioBorrowRateUpdates } from '@/data-sources/envio/events';
+import { fetchEnvioBorrowRateUpdates, fetchLatestEnvioBorrowRateUpdateBefore } from '@/data-sources/envio/events';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import type { BlockWithTimestamp } from '@/utils/blockEstimation';
 import { getMorphoAddress } from '@/utils/morpho';
@@ -198,16 +198,18 @@ const buildHistoricalResult = ({
   loanAssetPrice,
   market,
   rateUpdates,
+  seedRateAtTarget,
 }: {
   historicalStates: { state: HistoricalMarketState; timestamp: number }[];
   loanAssetDecimals: number;
   loanAssetPrice: number;
   market: NonNullable<Awaited<ReturnType<typeof fetchMarketDetails>>>;
   rateUpdates: Awaited<ReturnType<typeof fetchEnvioBorrowRateUpdates>>;
+  seedRateAtTarget: bigint;
 }): HistoricalDataSuccessResult => {
   const result = buildEmptyResult();
   const sortedUpdates = [...rateUpdates].sort((left, right) => normalizeEnvioTimestamp(left.timestamp) - normalizeEnvioTimestamp(right.timestamp));
-  let rateAtTarget = normalizeRateAtTarget(market.state.rateAtTarget);
+  let rateAtTarget = seedRateAtTarget;
   let updateIndex = 0;
 
   for (const historicalPoint of historicalStates) {
@@ -295,7 +297,7 @@ export const fetchEnvioMarketHistoricalData = async (
     return null;
   }
 
-  const [historicalStates, rateUpdates] = await Promise.all([
+  const [historicalStates, rateUpdates, latestRateUpdateBeforeWindow] = await Promise.all([
     fetchHistoricalStates({
       blocks: chainContext.historicalBlocks,
       chainId: network,
@@ -307,7 +309,12 @@ export const fetchEnvioMarketHistoricalData = async (
       marketId,
       timestampGte: options.startTimestamp,
       timestampLte: options.endTimestamp,
-    }).catch(() => []),
+    }),
+    fetchLatestEnvioBorrowRateUpdateBefore({
+      chainId: network,
+      marketId,
+      timestampLte: options.startTimestamp,
+    }),
   ]);
 
   if (historicalStates.length === 0) {
@@ -320,5 +327,8 @@ export const fetchEnvioMarketHistoricalData = async (
     loanAssetPrice: deriveLoanAssetPrice(market),
     market,
     rateUpdates,
+    seedRateAtTarget: latestRateUpdateBeforeWindow
+      ? normalizeRateAtTarget(normalizeEnvioString(latestRateUpdateBeforeWindow.rateAtTarget))
+      : normalizeRateAtTarget(market.state.rateAtTarget),
   });
 };

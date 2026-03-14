@@ -72,7 +72,7 @@ const fetchMorphoMarketsPageForChains = async (
   chainIds: SupportedNetworks[],
   skip: number,
   pageSize: number,
-): Promise<MorphoMarketsPage | null> => {
+): Promise<MorphoMarketsPage> => {
   const variables = {
     first: pageSize,
     skip,
@@ -86,8 +86,7 @@ const fetchMorphoMarketsPageForChains = async (
   });
 
   if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {
-    console.warn(`[Markets] Skipping failed page at skip=${skip} for chains ${chainIds.join(',')}`);
-    return null;
+    throw new Error(`Morpho markets page is incomplete at skip=${skip} for chains ${chainIds.join(',')}`);
   }
 
   const { items, pageInfo } = response.data.markets;
@@ -109,22 +108,13 @@ export const fetchMorphoMarketsMultiChain = async (chainIds: SupportedNetworks[]
 
   const firstPage = await fetchMorphoMarketsPageForChains(chainIds, 0, pageSize);
 
-  if (!firstPage) {
-    return [];
-  }
-
   allMarkets.push(...firstPage.items);
 
   const firstPageCount = firstPage.items.length;
   const totalCount = firstPage.totalCount;
 
   if (firstPageCount === 0 && totalCount > 0) {
-    console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
-    return allMarkets.filter(
-      (market) =>
-        !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
-        !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
-    );
+    throw new Error('Morpho markets first page returned zero items despite a positive total count.');
   }
 
   const remainingOffsets: number[] = [];
@@ -142,9 +132,7 @@ export const fetchMorphoMarketsMultiChain = async (chainIds: SupportedNetworks[]
       if (settledPage.status === 'rejected') {
         throw settledPage.reason;
       }
-      if (settledPage.value) {
-        successfulPages.push(settledPage.value);
-      }
+      successfulPages.push(settledPage.value);
     }
 
     successfulPages.forEach((page) => {

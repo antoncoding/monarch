@@ -70,6 +70,7 @@ export function TDTotalSupplyOrBorrow({
   decimals,
   symbol,
   isEstimated = false,
+  isMissingUsd = false,
 }: {
   dataLabel: string;
   assetsUSD: number;
@@ -77,6 +78,7 @@ export function TDTotalSupplyOrBorrow({
   decimals: number;
   symbol: string;
   isEstimated?: boolean;
+  isMissingUsd?: boolean;
 }) {
   return (
     <TableCell
@@ -85,7 +87,7 @@ export function TDTotalSupplyOrBorrow({
       style={{ minWidth: '120px' }}
     >
       <p className="z-50">
-        <EstimatedValueTooltip isEstimated={isEstimated}>${formatReadable(Number(assetsUSD))}</EstimatedValueTooltip>
+        {isMissingUsd ? '—' : <EstimatedValueTooltip isEstimated={isEstimated}>${formatReadable(Number(assetsUSD))}</EstimatedValueTooltip>}
       </p>
       <p className="z-50 opacity-70">{`${formatReadable(formatBalance(assets, decimals))} ${symbol}`}</p>
     </TableCell>

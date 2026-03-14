@@ -99,7 +99,6 @@ const transformSubgraphSnapshotsToHistoricalResult = (
     const utilization =
       supplyNative > 0n ? Number((borrowNative * UTILIZATION_SCALE) / supplyNative) / Number(UTILIZATION_SCALE) : 0;
 
-    rates.apyAtTarget.push({ x: timestamp, y: 0 });
     rates.utilization.push({ x: timestamp, y: utilization });
 
     volumes.supplyAssetsUsd.push({ x: timestamp, y: supplyAssetsUsd });

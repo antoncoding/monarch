@@ -34,7 +34,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
     isLoading,
     isFetching,
     error,
-  } = useMarketBorrows(market?.uniqueKey, market.loanAsset.id, chainId, minAssets, currentPage, pageSize);
+  } = useMarketBorrows(market?.uniqueKey, market.loanAsset.address, chainId, minAssets, currentPage, pageSize);
 
   const borrows = paginatedData?.items ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;

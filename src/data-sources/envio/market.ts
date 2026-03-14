@@ -36,6 +36,7 @@ type EnvioMarketsResponse = {
 };
 
 const ENVIO_MARKETS_PAGE_SIZE = 1000;
+const ENVIO_MARKETS_PAGE_BATCH_SIZE = 4;
 const ENVIO_MARKETS_TIMEOUT_MS = 20_000;
 
 const normalizeAddress = (value: string | number | null | undefined): Address => {
@@ -67,11 +68,11 @@ const normalizeRateAtTarget = (value: string | number | null | undefined): bigin
   }
 };
 
-const toFallbackTokenInfo = (address: string): TokenInfo => {
+const toFallbackTokenInfo = (address: string, chainId: SupportedNetworks): TokenInfo => {
   return {
     address,
     decimals: 18,
-    id: address,
+    id: infoToKey(address, chainId),
     name: 'Unknown Token',
     symbol: 'Unknown',
   };
@@ -89,6 +90,7 @@ const withVisibleMarketsFilter = (where: Record<string, unknown>): Record<string
       },
       {
         loanToken: {
+          _neq: zeroAddress,
           _nin: blacklistTokens,
         },
       },
@@ -102,7 +104,11 @@ const withVisibleMarketsFilter = (where: Record<string, unknown>): Record<string
 };
 
 const hasExcludedEnvioAddresses = (market: EnvioMarketRow): boolean => {
-  return normalizeAddress(market.collateralToken) === zeroAddress || normalizeAddress(market.irm) === zeroAddress;
+  return (
+    normalizeAddress(market.loanToken) === zeroAddress ||
+    normalizeAddress(market.collateralToken) === zeroAddress ||
+    normalizeAddress(market.irm) === zeroAddress
+  );
 };
 
 const fetchEnvioMarketsPage = async ({
@@ -145,13 +151,14 @@ const buildEnvioMarket = (market: EnvioMarketRow, tokenMetadataMap: Map<string, 
   const totalBorrowAssets = normalizeString(market.totalBorrowAssets);
   const totalBorrowShares = normalizeString(market.totalBorrowShares);
   const lastUpdate = normalizeTimestamp(market.lastUpdate);
-  const rawFee = normalizeString(market.fee);
-  const fee = Number(formatUnits(BigInt(rawFee), 18));
-  const rateAtTarget = normalizeRateAtTarget(market.rateAtTarget);
-  const loanAsset = tokenMetadataMap.get(infoToKey(loanTokenAddress, chainId)) ?? toFallbackTokenInfo(loanTokenAddress);
-  const collateralAsset = tokenMetadataMap.get(infoToKey(collateralTokenAddress, chainId)) ?? toFallbackTokenInfo(collateralTokenAddress);
+  const loanAsset = tokenMetadataMap.get(infoToKey(loanTokenAddress, chainId)) ?? toFallbackTokenInfo(loanTokenAddress, chainId);
+  const collateralAsset =
+    tokenMetadataMap.get(infoToKey(collateralTokenAddress, chainId)) ?? toFallbackTokenInfo(collateralTokenAddress, chainId);
 
   try {
+    const rawFee = normalizeString(market.fee);
+    const fee = Number(formatUnits(BigInt(rawFee), 18));
+    const rateAtTarget = normalizeRateAtTarget(market.rateAtTarget);
     const blueMarket = new BlueMarket({
       params: new BlueMarketParams({
         loanToken: loanTokenAddress,
@@ -262,7 +269,7 @@ const buildEnvioMarketsMap = async (
     const market = buildEnvioMarket(row, tokenMetadataMap);
 
     if (!market) {
-      continue;
+      throw new Error(`Failed to map Envio market ${getChainScopedMarketKey(normalizeString(row.marketId), row.chainId)}`);
     }
 
     marketsByKey.set(getChainScopedMarketKey(market.uniqueKey, market.morphoBlue.chain.id), market);
@@ -279,21 +286,39 @@ export const fetchEnvioMarkets = async (
 ): Promise<Market[]> => {
   const rows: EnvioMarketRow[] = [];
 
-  for (let offset = 0; ; offset += ENVIO_MARKETS_PAGE_SIZE) {
-    const page = await fetchEnvioMarketsPage({
-      limit: ENVIO_MARKETS_PAGE_SIZE,
-      offset,
-      where: {
-        chainId: {
-          _in: chainIds,
-        },
-      },
-    });
-    if (page.length === 0) break;
+  for (let offset = 0; ; offset += ENVIO_MARKETS_PAGE_SIZE * ENVIO_MARKETS_PAGE_BATCH_SIZE) {
+    const offsets = Array.from({ length: ENVIO_MARKETS_PAGE_BATCH_SIZE }, (_, index) => offset + index * ENVIO_MARKETS_PAGE_SIZE);
+    const pages = await Promise.all(
+      offsets.map((currentOffset) =>
+        fetchEnvioMarketsPage({
+          limit: ENVIO_MARKETS_PAGE_SIZE,
+          offset: currentOffset,
+          where: {
+            chainId: {
+              _in: chainIds,
+            },
+          },
+        }),
+      ),
+    );
 
-    rows.push(...page);
+    let reachedEnd = false;
 
-    if (page.length < ENVIO_MARKETS_PAGE_SIZE) {
+    for (const page of pages) {
+      if (page.length === 0) {
+        reachedEnd = true;
+        break;
+      }
+
+      rows.push(...page);
+
+      if (page.length < ENVIO_MARKETS_PAGE_SIZE) {
+        reachedEnd = true;
+        break;
+      }
+    }
+
+    if (reachedEnd) {
       break;
     }
   }

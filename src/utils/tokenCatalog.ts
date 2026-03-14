@@ -13,6 +13,7 @@ const PendleAssetSchema = z.object({
 type PendleAsset = z.infer<typeof PendleAssetSchema>;
 
 const TOKEN_CATALOG_TTL_MS = 5 * 60 * 1000;
+const PENDLE_FETCH_TIMEOUT_MS = 5_000;
 const PENDLE_SUPPORTED_CHAIN_IDS = [
   SupportedNetworks.Mainnet,
   SupportedNetworks.Base,
@@ -33,8 +34,13 @@ let tokenCatalogCache:
   | null = null;
 
 const fetchPendleAssets = async (chainId: number): Promise<PendleAsset[]> => {
+  const abortController = new AbortController();
+  const timeoutHandle = globalThis.setTimeout(() => abortController.abort(), PENDLE_FETCH_TIMEOUT_MS);
+
   try {
-    const response = await fetch(`https://api-v2.pendle.finance/core/v1/${chainId}/assets/all`);
+    const response = await fetch(`https://api-v2.pendle.finance/core/v1/${chainId}/assets/all`, {
+      signal: abortController.signal,
+    });
 
     if (!response.ok) {
       return [];
@@ -45,6 +51,8 @@ const fetchPendleAssets = async (chainId: number): Promise<PendleAsset[]> => {
   } catch (error) {
     console.error(`Error fetching Pendle assets for chain ${chainId}:`, error);
     return [];
+  } finally {
+    globalThis.clearTimeout(timeoutHandle);
   }
 };
 
@@ -96,13 +104,14 @@ export const fetchMergedTokenCatalog = async (): Promise<ERC20Token[]> => {
 
   const promise = (async () => {
     try {
-      const externalTokenGroups = await Promise.all(
+      const settledExternalTokenGroups = await Promise.allSettled(
         PENDLE_SUPPORTED_CHAIN_IDS.map(async (chainId) => {
           const assets = await fetchPendleAssets(chainId);
           return assets.map((asset) => convertPendleAssetToToken(asset, chainId));
         }),
       );
 
+      const externalTokenGroups = settledExternalTokenGroups.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
       return mergeCatalogTokens(externalTokenGroups.flat());
     } catch (error) {
       tokenCatalogCache = null;

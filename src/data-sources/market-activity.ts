@@ -36,7 +36,7 @@ export const fetchMarketSupplies = async (
 
   if (supportsMorphoApi(network)) {
     try {
-      return await fetchMorphoMarketSupplies(marketId, minAssets, pageSize, skip);
+      return await fetchMorphoMarketSupplies(marketId, network, minAssets, pageSize, skip);
     } catch (error) {
       logDataSourceEvent('market-supplies', 'Morpho API supplies fetch failed, falling back to subgraph', {
         chainId: network,
@@ -75,7 +75,7 @@ export const fetchMarketBorrows = async (
 
   if (supportsMorphoApi(network)) {
     try {
-      return await fetchMorphoMarketBorrows(marketId, minAssets, pageSize, skip);
+      return await fetchMorphoMarketBorrows(marketId, network, minAssets, pageSize, skip);
     } catch (error) {
       logDataSourceEvent('market-borrows', 'Morpho API borrows fetch failed, falling back to subgraph', {
         chainId: network,
@@ -110,7 +110,7 @@ export const fetchMarketLiquidations = async (
 
   if (supportsMorphoApi(network)) {
     try {
-      return await fetchMorphoMarketLiquidations(marketId);
+      return await fetchMorphoMarketLiquidations(marketId, network);
     } catch (error) {
       logDataSourceEvent('market-liquidations', 'Morpho API liquidations fetch failed, falling back to subgraph', {
         chainId: network,

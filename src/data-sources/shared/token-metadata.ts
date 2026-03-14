@@ -20,22 +20,27 @@ type DeferredTokenInfo = {
 
 const createFallbackTokenInfo = (
   address: string,
+  chainId: SupportedNetworks,
   metadata?: Partial<Pick<TokenInfo, 'decimals' | 'name' | 'symbol'>>,
 ): TokenInfo => {
   return {
     address,
     decimals: metadata?.decimals ?? DEFAULT_TOKEN_DECIMALS,
-    id: address,
+    id: infoToKey(address, chainId),
     name: metadata?.name ?? UNKNOWN_TOKEN_NAME,
     symbol: metadata?.symbol ?? 'Unknown',
   };
 };
 
-const toTokenInfoFromCatalog = (address: string, token: Awaited<ReturnType<typeof fetchMergedTokenCatalog>>[number]): TokenInfo => {
+const toTokenInfoFromCatalog = (
+  address: string,
+  chainId: SupportedNetworks,
+  token: Awaited<ReturnType<typeof fetchMergedTokenCatalog>>[number],
+): TokenInfo => {
   return {
     address,
     decimals: token.decimals,
-    id: address,
+    id: infoToKey(address, chainId),
     name: token.symbol,
     symbol: token.symbol,
   };
@@ -97,7 +102,7 @@ export const fetchTokenMetadataMap = async (
     const catalogToken = findTokenInCatalog(tokenCatalog, tokenRef.address, tokenRef.chainId);
 
     if (catalogToken) {
-      const tokenInfo = toTokenInfoFromCatalog(tokenRef.address, catalogToken);
+      const tokenInfo = toTokenInfoFromCatalog(tokenRef.address, tokenRef.chainId, catalogToken);
       resolvedTokenMetadataCache.set(key, tokenInfo);
       metadataMap.set(key, tokenInfo);
       continue;
@@ -115,7 +120,7 @@ export const fetchTokenMetadataMap = async (
     unresolvedByChain.set(tokenRef.chainId, chainAddresses);
   }
 
-  await Promise.all(
+  await Promise.allSettled(
     Array.from(unresolvedByChain.entries()).map(async ([chainId, addresses]) => {
       const uniqueAddresses = [...new Set(addresses)];
 
@@ -123,7 +128,6 @@ export const fetchTokenMetadataMap = async (
         return;
       }
 
-      const client = getClient(chainId, customRpcUrls?.[chainId]);
       const deferredByKey = new Map<string, DeferredTokenInfo>();
 
       for (const address of uniqueAddresses) {
@@ -134,6 +138,8 @@ export const fetchTokenMetadataMap = async (
       }
 
       try {
+        const client = getClient(chainId, customRpcUrls?.[chainId]);
+
         for (const addressChunk of chunkAddresses(uniqueAddresses)) {
           try {
             const contracts = addressChunk.flatMap((address) => [
@@ -164,7 +170,7 @@ export const fetchTokenMetadataMap = async (
               const nameResult = results[index * 3 + 1];
               const decimalsResult = results[index * 3 + 2];
 
-              const tokenInfo = createFallbackTokenInfo(address, {
+              const tokenInfo = createFallbackTokenInfo(address, chainId, {
                 decimals:
                   decimalsResult?.status === 'success' && typeof decimalsResult.result === 'number'
                     ? decimalsResult.result
@@ -184,8 +190,7 @@ export const fetchTokenMetadataMap = async (
           } catch {
             for (const address of addressChunk) {
               const key = infoToKey(address, chainId);
-              const tokenInfo = createFallbackTokenInfo(address);
-              resolvedTokenMetadataCache.set(key, tokenInfo);
+              const tokenInfo = createFallbackTokenInfo(address, chainId);
               metadataMap.set(key, tokenInfo);
               deferredByKey.get(key)?.resolve(tokenInfo);
             }
@@ -194,8 +199,7 @@ export const fetchTokenMetadataMap = async (
       } catch {
         for (const address of uniqueAddresses) {
           const key = infoToKey(address, chainId);
-          const tokenInfo = createFallbackTokenInfo(address);
-          resolvedTokenMetadataCache.set(key, tokenInfo);
+          const tokenInfo = createFallbackTokenInfo(address, chainId);
           metadataMap.set(key, tokenInfo);
           deferredByKey.get(key)?.resolve(tokenInfo);
         }

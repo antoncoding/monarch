@@ -216,3 +216,24 @@ export const envioBorrowRateUpdatesQuery = `
     }
   }
 `;
+
+export const envioLatestBorrowRateUpdateBeforeQuery = `
+  query EnvioLatestBorrowRateUpdateBefore($chainId: Int!, $marketId: String!, $timestampLte: BigInt!) {
+    AdaptiveCurveIrm_BorrowRateUpdate(
+      limit: 1
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+        timestamp: { _lte: $timestampLte }
+      }
+      order_by: [{ timestamp: desc }, { id: desc }]
+    ) {
+      avgBorrowRate
+      chainId
+      market_id
+      rateAtTarget
+      timestamp
+      txHash
+    }
+  }
+`;

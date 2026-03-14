@@ -3,6 +3,7 @@ import { fetchMarketDetails } from '@/data-sources/market-details';
 import { fetchEnvioMarketsByKeys } from '@/data-sources/envio/market';
 import { getChainScopedMarketKey } from '@/utils/marketIdentity';
 import type { SupportedNetworks } from '@/utils/networks';
+import { infoToKey } from '@/utils/tokens';
 import { type UserTransaction, UserTxTypes } from '@/utils/types';
 import {
   fetchEnvioBorrowRows,
@@ -107,18 +108,24 @@ const matchesAssetFilter = async ({
     }
   }
 
+  if (marketMap.size !== uniqueMarketIds.length) {
+    throw new Error(
+      `Failed to hydrate ${uniqueMarketIds.length - marketMap.size} Envio transaction markets for asset filtering on chain ${chainId}`,
+    );
+  }
+
   return transactions.filter((transaction) => {
     const market = marketMap.get(transaction.data.market.uniqueKey.toLowerCase());
-
     if (!market) {
-      return false;
+      throw new Error(`Missing hydrated market for Envio transaction ${transaction.hash} on chain ${chainId}`);
     }
 
     const isCollateralTransaction =
       transaction.type === UserTxTypes.MarketSupplyCollateral || transaction.type === UserTxTypes.MarketWithdrawCollateral;
     const relevantAsset = isCollateralTransaction ? market.collateralAsset.address : market.loanAsset.address;
+    const canonicalAssetId = infoToKey(relevantAsset, chainId);
 
-    return normalizedAssetIds.has(relevantAsset.toLowerCase());
+    return normalizedAssetIds.has(relevantAsset.toLowerCase()) || normalizedAssetIds.has(canonicalAssetId);
   });
 };
 

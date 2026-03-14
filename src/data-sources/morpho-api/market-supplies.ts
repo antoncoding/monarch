@@ -41,11 +41,13 @@ type MorphoAPISuppliesResponse = {
  */
 export const fetchMorphoMarketSupplies = async (
   marketId: string,
+  chainId: number,
   minAssets = '0',
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketActivityTransactions> => {
   const variables = {
+    chainId,
     uniqueKey: marketId, // Ensure this matches the variable name in the query
     minAssets,
     first,

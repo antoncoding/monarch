@@ -40,11 +40,13 @@ type MorphoAPIBorrowsResponse = {
  */
 export const fetchMorphoMarketBorrows = async (
   marketId: string,
+  chainId: number,
   minAssets = '0',
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketActivityTransactions> => {
   const variables = {
+    chainId,
     uniqueKey: marketId,
     minAssets,
     first,

@@ -28,6 +28,10 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, fallbackVa
   }
 };
 
+const getRemainingTimeoutMs = (deadlineAt: number): number => {
+  return Math.max(0, deadlineAt - Date.now());
+};
+
 export type HistoricalChainContext = {
   currentBlockNumber: bigint;
   currentTimestamp: number;
@@ -49,7 +53,7 @@ export const fetchHistoricalChainContext = async ({
 }): Promise<HistoricalChainContext | null> => {
   const targetSignature =
     targetLookbackSeconds && targetLookbackSeconds.length > 0 ? `lookback:${targetLookbackSeconds.join(',')}` : `ts:${(targetTimestamps ?? []).join(',')}`;
-  const cacheKey = `${chainId}:${targetSignature}`;
+  const cacheKey = `${chainId}:${targetSignature}:${timeoutMs}`;
   const now = Date.now();
   const cachedByClient = historicalChainContextCache.get(client);
   const cachedEntry = cachedByClient?.get(cacheKey);
@@ -59,13 +63,24 @@ export const fetchHistoricalChainContext = async ({
   }
 
   const requestPromise = (async (): Promise<HistoricalChainContext | null> => {
-    const currentBlockNumber = await withTimeout(client.getBlockNumber(), timeoutMs, null);
+    const deadlineAt = Date.now() + timeoutMs;
+    const currentBlockTimeoutMs = getRemainingTimeoutMs(deadlineAt);
+    if (currentBlockTimeoutMs === 0) {
+      return null;
+    }
+
+    const currentBlockNumber = await withTimeout(client.getBlockNumber(), currentBlockTimeoutMs, null);
 
     if (currentBlockNumber == null) {
       return null;
     }
 
-    const currentBlock = await withTimeout(client.getBlock({ blockNumber: currentBlockNumber }), timeoutMs, null);
+    const currentBlockFetchTimeoutMs = getRemainingTimeoutMs(deadlineAt);
+    if (currentBlockFetchTimeoutMs === 0) {
+      return null;
+    }
+
+    const currentBlock = await withTimeout(client.getBlock({ blockNumber: currentBlockNumber }), currentBlockFetchTimeoutMs, null);
 
     if (!currentBlock) {
       return null;
@@ -76,9 +91,15 @@ export const fetchHistoricalChainContext = async ({
       targetLookbackSeconds && targetLookbackSeconds.length > 0
         ? targetLookbackSeconds.map((seconds) => currentTimestamp - seconds)
         : (targetTimestamps ?? []);
+    const historicalBlocksTimeoutMs = getRemainingTimeoutMs(deadlineAt);
+
+    if (historicalBlocksTimeoutMs === 0) {
+      return null;
+    }
+
     const historicalBlocks = await withTimeout(
       fetchBlocksWithTimestamps(client, chainId, resolvedTargetTimestamps, Number(currentBlockNumber), currentTimestamp),
-      timeoutMs,
+      historicalBlocksTimeoutMs,
       [],
     );
 

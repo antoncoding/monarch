@@ -6,7 +6,7 @@ import { envioGraphqlFetcher } from './fetchers';
 import { fetchAllEnvioPages, normalizeEnvioString } from './utils';
 
 const ENVIO_PARTICIPANTS_PAGE_SIZE = 500;
-const ENVIO_PARTICIPANTS_MAX_ITEMS = 1000;
+const ENVIO_PARTICIPANTS_MAX_ITEMS = Number.MAX_SAFE_INTEGER;
 const ENVIO_PARTICIPANTS_TIMEOUT_MS = 15_000;
 
 type EnvioSupplierRow = {
@@ -85,7 +85,7 @@ export const fetchEnvioMarketSuppliers = async (
       _eq: marketId.toLowerCase(),
     },
     supplyShares: {
-      _gt: minShares,
+      _gte: minShares,
     },
   };
 
@@ -121,7 +121,7 @@ export const fetchEnvioMarketBorrowers = async (
 ): Promise<PaginatedMarketBorrowers> => {
   const where = {
     borrowShares: {
-      _gt: minShares,
+      _gte: minShares,
     },
     chainId: {
       _eq: chainId,
@@ -147,10 +147,7 @@ export const fetchEnvioMarketBorrowers = async (
   ]);
 
   if (!market) {
-    return {
-      items: [],
-      totalCount: 0,
-    };
+    throw new Error(`Failed to hydrate Envio market ${marketId} on chain ${chainId} for borrower mapping`);
   }
 
   const items: MarketBorrower[] = borrowers.map((borrower) => {

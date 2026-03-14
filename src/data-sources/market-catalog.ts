@@ -12,6 +12,25 @@ import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks
 import type { Market } from '@/utils/types';
 
 const MARKET_ENRICHMENT_TIMEOUT_MS = 8_000;
+const ENVIO_MARKET_CATALOG_TIMEOUT_MS = 12_000;
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+  let timeoutHandle: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = globalThis.setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutHandle) {
+      globalThis.clearTimeout(timeoutHandle);
+    }
+  }
+};
 
 const enrichCatalogMarkets = async (markets: Market[], customRpcUrls?: CustomRpcUrls): Promise<Market[]> => {
   const marketsWithTargetRate = await enrichMarketsWithTargetRate(markets, {
@@ -43,22 +62,36 @@ const getMissingChainIds = (chainIds: SupportedNetworks[], markets: Market[]): S
   return chainIds.filter((chainId) => !coveredChainIds.has(chainId));
 };
 
-const fetchMarketsPerNetworkFallback = async (chainIds: SupportedNetworks[]): Promise<Market[]> => {
-  const results = await Promise.allSettled(
-    chainIds.map(async (network) => {
-      if (supportsMorphoApi(network)) {
-        try {
-          return await fetchMorphoMarkets(network);
-        } catch {
-          return fetchSubgraphMarkets(network);
-        }
+const fetchMarketsForNetwork = async (network: SupportedNetworks): Promise<Market[]> => {
+  logDataSourceEvent('market-catalog', 'fetching fallback markets for chain', {
+    chainId: network,
+    primary: supportsMorphoApi(network) ? 'morpho' : 'subgraph',
+  });
+
+  if (supportsMorphoApi(network)) {
+    try {
+      return await fetchMorphoMarkets(network);
+    } catch (morphoError) {
+      try {
+        return await fetchSubgraphMarkets(network);
+      } catch (subgraphError) {
+        throw new Error(
+          `Failed to fetch markets for chain ${network}: Morpho API failed (${getErrorMessage(morphoError)}); Subgraph failed (${getErrorMessage(subgraphError)})`,
+        );
       }
+    }
+  }
 
-      return fetchSubgraphMarkets(network);
-    }),
-  );
+  try {
+    return await fetchSubgraphMarkets(network);
+  } catch (subgraphError) {
+    throw new Error(`Failed to fetch markets for chain ${network}: Subgraph failed (${getErrorMessage(subgraphError)})`);
+  }
+};
 
-  return filterTokenBlacklistedMarkets(results.flatMap((result) => (result.status === 'fulfilled' ? result.value : [])));
+const fetchMarketsPerNetworkFallback = async (chainIds: SupportedNetworks[]): Promise<Market[]> => {
+  const results = await Promise.all(chainIds.map((network) => fetchMarketsForNetwork(network)));
+  return filterTokenBlacklistedMarkets(results.flat());
 };
 
 export const fetchMarketCatalog = async (
@@ -71,10 +104,17 @@ export const fetchMarketCatalog = async (
 
   if (hasEnvioIndexer()) {
     try {
-      const envioFetchStartedAt = Date.now();
-      const envioMarkets = await fetchEnvioMarkets(chainIds, {
-        customRpcUrls,
+      logDataSourceEvent('market-catalog', 'fetching Envio market catalog', {
+        chainIds: chainIds.join(','),
       });
+      const envioFetchStartedAt = Date.now();
+      const envioMarkets = await withTimeout(
+        fetchEnvioMarkets(chainIds, {
+          customRpcUrls,
+        }),
+        ENVIO_MARKET_CATALOG_TIMEOUT_MS,
+        'Envio market catalog',
+      );
       const envioFetchDurationMs = Date.now() - envioFetchStartedAt;
       const missingChainIds = getMissingChainIds(chainIds, envioMarkets);
 
@@ -91,7 +131,7 @@ export const fetchMarketCatalog = async (
         });
       }
 
-      logDataSourceEvent('market-catalog', 'Envio fetch completed with incomplete coverage; falling back for missing chains only', {
+      logDataSourceEvent('market-catalog', 'Envio fetch completed with missing chains; falling back for those chains', {
         requestedChainIds: chainIds.join(','),
         coveredChainIds: [...new Set(envioMarkets.map((market) => market.morphoBlue.chain.id))].join(','),
         missingChainIds: missingChainIds.join(','),
@@ -104,6 +144,7 @@ export const fetchMarketCatalog = async (
 
       if (mergedMarkets.length > 0) {
         logDataSourceEvent('market-catalog', 'merged Envio with fallback markets', {
+          fallbackChainIds: missingChainIds.join(','),
           fallbackCount: fallbackMarkets.length,
           totalCount: mergedMarkets.length,
         });
@@ -145,8 +186,8 @@ export const fetchMarketCatalog = async (
   }
 
   if (subgraphOnlyChainIds.length > 0) {
-    const subgraphResults = await Promise.allSettled(subgraphOnlyChainIds.map((network) => fetchSubgraphMarkets(network)));
-    markets.push(...filterTokenBlacklistedMarkets(subgraphResults.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))));
+    const subgraphMarkets = await Promise.all(subgraphOnlyChainIds.map((network) => fetchSubgraphMarkets(network)));
+    markets.push(...filterTokenBlacklistedMarkets(subgraphMarkets.flat()));
 
     logDataSourceEvent('market-catalog', 'used subgraph fallback for non-Morpho chains', {
       chainIds: subgraphOnlyChainIds.join(','),

@@ -23,6 +23,14 @@ export const fetchAllEnvioPages = async <T>({
   maxItems?: number;
   pageSize?: number;
 }): Promise<T[]> => {
+  if (!Number.isInteger(pageSize) || pageSize <= 0) {
+    throw new Error(`Invalid Envio page size: ${pageSize}. Expected a positive integer.`);
+  }
+
+  if (!Number.isFinite(maxItems) || maxItems < 0) {
+    throw new Error(`Invalid Envio maxItems: ${maxItems}. Expected a non-negative number.`);
+  }
+
   const items: T[] = [];
 
   for (let offset = 0; offset < maxItems; offset += pageSize) {

@@ -1,5 +1,6 @@
 import {
   envioBorrowEventsQuery,
+  envioLatestBorrowRateUpdateBeforeQuery,
   envioBorrowRateUpdatesQuery,
   envioLiquidationsQuery,
   envioRepayEventsQuery,
@@ -13,7 +14,7 @@ import { envioGraphqlFetcher } from './fetchers';
 import { fetchAllEnvioPages } from './utils';
 
 const ENVIO_EVENTS_PAGE_SIZE = 500;
-const ENVIO_EVENTS_MAX_ITEMS = 1000;
+const ENVIO_EVENTS_MAX_ITEMS = Number.MAX_SAFE_INTEGER;
 const ENVIO_EVENTS_TIMEOUT_MS = 15_000;
 
 export type EnvioLoanEventRow = {
@@ -265,4 +266,28 @@ export const fetchEnvioBorrowRateUpdates = async ({
     maxItems: ENVIO_EVENTS_MAX_ITEMS,
     pageSize: ENVIO_EVENTS_PAGE_SIZE,
   });
+};
+
+export const fetchLatestEnvioBorrowRateUpdateBefore = async ({
+  chainId,
+  marketId,
+  timestampLte,
+}: {
+  chainId: SupportedNetworks;
+  marketId: string;
+  timestampLte: number;
+}): Promise<EnvioBorrowRateUpdateRow | null> => {
+  const response = await envioGraphqlFetcher<EnvioBorrowRateUpdatesResponse>(
+    envioLatestBorrowRateUpdateBeforeQuery,
+    {
+      chainId,
+      marketId: marketId.toLowerCase(),
+      timestampLte,
+    },
+    {
+      timeoutMs: ENVIO_EVENTS_TIMEOUT_MS,
+    },
+  );
+
+  return response.data?.AdaptiveCurveIrm_BorrowRateUpdate?.[0] ?? null;
 };

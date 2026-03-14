@@ -366,9 +366,10 @@ export const userTransactionsQuery = `
 `;
 
 export const marketLiquidationsQuery = `
-  query getMarketLiquidations($uniqueKey: String!, $first: Int, $skip: Int) {
+  query getMarketLiquidations($uniqueKey: String!, $chainId: Int!, $first: Int, $skip: Int) {
   transactions (where: {
     marketUniqueKey_in: [$uniqueKey],
+    chainId_in: [$chainId],
     type_in: [MarketLiquidation]
   },
   first: $first,
@@ -398,9 +399,10 @@ export const marketLiquidationsQuery = `
 `;
 
 export const marketSuppliesQuery = `
-  query getMarketSupplyActivities($uniqueKey: String!, $minAssets: BigInt!,  $first: Int, $skip: Int) {
+  query getMarketSupplyActivities($uniqueKey: String!, $chainId: Int!, $minAssets: BigInt!,  $first: Int, $skip: Int) {
     transactions (where: {
       marketUniqueKey_in: [$uniqueKey],
+      chainId_in: [$chainId],
       assets_gte: $minAssets,
       type_in: [MarketSupply, MarketWithdraw]
     },
@@ -432,9 +434,10 @@ export const marketSuppliesQuery = `
 `;
 
 export const marketBorrowsQuery = `
-  query getMarketBorrowActivities($uniqueKey: String!, $minAssets: BigInt, $first: Int, $skip: Int) {
+  query getMarketBorrowActivities($uniqueKey: String!, $chainId: Int!, $minAssets: BigInt, $first: Int, $skip: Int) {
     transactions (where: {
       marketUniqueKey_in: [$uniqueKey],
+      chainId_in: [$chainId],
       assets_gte: $minAssets,
       type_in: [MarketBorrow, MarketRepay]
     },

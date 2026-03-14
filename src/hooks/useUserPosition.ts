@@ -38,18 +38,17 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
         return null;
       }
 
-      if (!client) {
-        console.error('Public client not available');
-        return null;
-      }
-
       // 1. Try fetching the on-chain snapshot first
       let snapshot = null;
-      try {
-        snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, undefined, client);
-      } catch (snapshotError) {
-        console.error(`Error fetching position snapshot for ${user} on market ${marketKey}:`, snapshotError);
-        // Snapshot fetch failed, will proceed to fallback fetch
+      if (client) {
+        try {
+          snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, undefined, client);
+        } catch (snapshotError) {
+          console.error(`Error fetching position snapshot for ${user} on market ${marketKey}:`, snapshotError);
+          // Snapshot fetch failed, will proceed to fallback fetch
+        }
+      } else {
+        console.warn(`Public client not available for chain ${chainId}. Using indexed position fallback.`);
       }
 
       let finalPosition: MarketPosition | null = null;

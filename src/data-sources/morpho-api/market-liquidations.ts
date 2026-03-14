@@ -28,8 +28,9 @@ type MorphoAPILiquidationsResponse = {
  * @param marketId The unique key or ID of the market.
  * @returns A promise resolving to an array of unified MarketLiquidationTransaction objects.
  */
-export const fetchMorphoMarketLiquidations = async (marketId: string): Promise<MarketLiquidationTransaction[]> => {
+export const fetchMorphoMarketLiquidations = async (marketId: string, chainId: number): Promise<MarketLiquidationTransaction[]> => {
   const variables = {
+    chainId,
     uniqueKey: marketId,
     // Morpho API query might not need first/skip for liquidations, adjust if needed
   };
