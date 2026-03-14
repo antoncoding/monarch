@@ -121,8 +121,6 @@ const fetchAllMarketMetrics = async (params: MarketMetricsParams): Promise<Marke
     allMarkets.push(...page.markets);
   }
 
-  console.log(`[Metrics] Fetched ${allMarkets.length} markets in ${remainingPages + 1} requests`);
-
   return {
     total,
     limit: total,

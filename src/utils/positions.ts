@@ -322,38 +322,73 @@ export async function fetchMarketSnapshot(
   client: PublicClient,
   blockNumber?: number,
 ): Promise<MarketSnapshot | null> {
+  const snapshots = await fetchMarketSnapshots([marketId], chainId, client, blockNumber);
+  return snapshots.get(marketId) ?? null;
+}
+
+/**
+ * Fetches market snapshots for one or more markets using multicall.
+ *
+ * @param marketIds - Array of market unique IDs
+ * @param chainId - The chain ID of the network
+ * @param client - The viem PublicClient to use for the request
+ * @param blockNumber - The block number to fetch the market at (undefined for latest)
+ * @returns Map of marketId to market snapshot
+ */
+export async function fetchMarketSnapshots(
+  marketIds: string[],
+  chainId: number,
+  client: PublicClient,
+  blockNumber?: number,
+): Promise<Map<string, MarketSnapshot>> {
+  const snapshots = new Map<string, MarketSnapshot>();
+
+  if (marketIds.length === 0) {
+    return snapshots;
+  }
+
   try {
     const isLatest = blockNumber === undefined;
-
-    // Get the market data
-    const marketArray = (await client.readContract({
-      address: getMorphoAddress(chainId as SupportedNetworks),
-      abi: morphoABI,
-      functionName: 'market',
-      args: [marketId as `0x${string}`],
+    const morphoAddress = getMorphoAddress(chainId as SupportedNetworks);
+    const results = await client.multicall({
+      allowFailure: true,
       blockNumber: isLatest ? undefined : BigInt(blockNumber),
-    })) as readonly bigint[];
+      contracts: marketIds.map((currentMarketId) => ({
+        address: morphoAddress as `0x${string}`,
+        abi: morphoABI,
+        functionName: 'market' as const,
+        args: [currentMarketId as `0x${string}`],
+      })),
+    });
 
-    // Convert array to market object
-    const market = arrayToMarket(marketArray);
+    results.forEach((result, index) => {
+      const currentMarketId = marketIds[index];
 
-    const liquidityAssets = market.totalSupplyAssets - market.totalBorrowAssets;
+      if (!currentMarketId || result.status !== 'success' || !result.result) {
+        return;
+      }
 
-    return {
-      totalSupplyAssets: market.totalSupplyAssets.toString(),
-      totalSupplyShares: market.totalSupplyShares.toString(),
-      totalBorrowAssets: market.totalBorrowAssets.toString(),
-      totalBorrowShares: market.totalBorrowShares.toString(),
-      liquidityAssets: liquidityAssets.toString(),
-    };
+      const market = arrayToMarket(result.result as readonly bigint[]);
+      const liquidityAssets = market.totalSupplyAssets - market.totalBorrowAssets;
+
+      snapshots.set(currentMarketId, {
+        totalSupplyAssets: market.totalSupplyAssets.toString(),
+        totalSupplyShares: market.totalSupplyShares.toString(),
+        totalBorrowAssets: market.totalBorrowAssets.toString(),
+        totalBorrowShares: market.totalBorrowShares.toString(),
+        liquidityAssets: liquidityAssets.toString(),
+      });
+    });
+
+    return snapshots;
   } catch (error) {
-    console.error('Error reading market:', {
-      marketId,
+    console.error('Error reading markets:', {
+      marketIds,
       chainId,
       blockNumber,
       error,
     });
-    return null;
+    return snapshots;
   }
 }
 

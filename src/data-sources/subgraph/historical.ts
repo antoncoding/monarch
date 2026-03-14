@@ -37,6 +37,16 @@ type SubgraphMarketHourlySnapshotQueryResponse = {
 };
 // --- End Subgraph Specific Types ---
 
+const safeParseFloat = (value: string | null | undefined): number => {
+  if (!value) {
+    return 0;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+const UTILIZATION_SCALE = 1_000_000n;
+
 // Transformation function (simplified)
 const transformSubgraphSnapshotsToHistoricalResult = (
   snapshots: SubgraphMarketHourlySnapshot[], // Expect non-empty array here
@@ -79,16 +89,22 @@ const transformSubgraphSnapshotsToHistoricalResult = (
       x: timestamp,
       y: isNaN(borrowApyValue) ? 0 : borrowApyValue,
     });
-    rates.apyAtTarget.push({ x: timestamp, y: 0 });
-    rates.utilization.push({ x: timestamp, y: 0 });
+    const supplyAssetsUsd = safeParseFloat(snapshot.totalDepositBalanceUSD);
+    const borrowAssetsUsd = safeParseFloat(snapshot.totalBorrowBalanceUSD);
+    const liquidityAssetsUsd = Math.max(0, supplyAssetsUsd - borrowAssetsUsd);
 
     const supplyNative = BigInt(snapshot.inputTokenBalance ?? '0');
     const borrowNative = BigInt(snapshot.variableBorrowedTokenBalance ?? '0');
     const liquidityNative = supplyNative - borrowNative;
+    const utilization =
+      supplyNative > 0n ? Number((borrowNative * UTILIZATION_SCALE) / supplyNative) / Number(UTILIZATION_SCALE) : 0;
 
-    volumes.supplyAssetsUsd.push({ x: timestamp, y: 0 });
-    volumes.borrowAssetsUsd.push({ x: timestamp, y: 0 });
-    volumes.liquidityAssetsUsd.push({ x: timestamp, y: 0 });
+    rates.apyAtTarget.push({ x: timestamp, y: 0 });
+    rates.utilization.push({ x: timestamp, y: utilization });
+
+    volumes.supplyAssetsUsd.push({ x: timestamp, y: supplyAssetsUsd });
+    volumes.borrowAssetsUsd.push({ x: timestamp, y: borrowAssetsUsd });
+    volumes.liquidityAssetsUsd.push({ x: timestamp, y: liquidityAssetsUsd });
 
     volumes.supplyAssets.push({ x: timestamp, y: Number(supplyNative) });
     volumes.borrowAssets.push({ x: timestamp, y: Number(borrowNative) });

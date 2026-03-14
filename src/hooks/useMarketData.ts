@@ -1,17 +1,15 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { usePublicClient } from 'wagmi';
-import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { fetchMarketDetails } from '@/data-sources/market-details';
 import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
+import { useReadOnlyClient } from '@/hooks/useReadOnlyClient';
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchMarketSnapshot } from '@/utils/positions';
 import type { Market } from '@/utils/types';
 
 export const useMarketData = (uniqueKey: string | undefined, network: SupportedNetworks | undefined) => {
-  const { customRpcUrls, rpcConfigVersion } = useCustomRpcContext();
+  const { client, customRpcUrls, rpcConfigVersion } = useReadOnlyClient(network);
   const queryKey = ['marketData', uniqueKey, network, rpcConfigVersion];
-  const publicClient = usePublicClient({ chainId: network });
   const { getOracleData } = useOracleDataQuery();
 
   const { data, isLoading, error, refetch } = useQuery<Market | null>({
@@ -21,7 +19,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
         return null;
       }
 
-      if (!publicClient) {
+      if (!client) {
         console.error('Public client not available');
         return null;
       }
@@ -29,7 +27,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
       // 1. Try fetching the on-chain market snapshot first
       let snapshot = null;
       try {
-        snapshot = await fetchMarketSnapshot(uniqueKey, network, publicClient);
+        snapshot = await fetchMarketSnapshot(uniqueKey, network, client);
       } catch (snapshotError) {
         console.error(`Error fetching market snapshot for ${uniqueKey}:`, snapshotError);
         // Snapshot fetch failed, will proceed to fallback fetch

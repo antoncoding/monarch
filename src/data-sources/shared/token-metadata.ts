@@ -8,6 +8,7 @@ import type { TokenInfo } from '@/utils/types';
 
 const DEFAULT_TOKEN_DECIMALS = 18;
 const UNKNOWN_TOKEN_NAME = 'Unknown Token';
+const TOKEN_METADATA_ADDRESSES_PER_MULTICALL = 100;
 
 const resolvedTokenMetadataCache = new Map<string, TokenInfo>();
 const pendingTokenMetadataCache = new Map<string, Promise<TokenInfo>>();
@@ -57,6 +58,16 @@ const createDeferredTokenInfo = (): DeferredTokenInfo => {
   });
 
   return { promise, resolve };
+};
+
+const chunkAddresses = (addresses: string[]): string[][] => {
+  const chunks: string[][] = [];
+
+  for (let index = 0; index < addresses.length; index += TOKEN_METADATA_ADDRESSES_PER_MULTICALL) {
+    chunks.push(addresses.slice(index, index + TOKEN_METADATA_ADDRESSES_PER_MULTICALL));
+  }
+
+  return chunks;
 };
 
 export const fetchTokenMetadataMap = async (
@@ -123,47 +134,62 @@ export const fetchTokenMetadataMap = async (
       }
 
       try {
-        const contracts = uniqueAddresses.flatMap((address) => [
-          {
-            abi: erc20Abi,
-            address: address as Address,
-            functionName: 'symbol' as const,
-          },
-          {
-            abi: erc20Abi,
-            address: address as Address,
-            functionName: 'name' as const,
-          },
-          {
-            abi: erc20Abi,
-            address: address as Address,
-            functionName: 'decimals' as const,
-          },
-        ]);
+        for (const addressChunk of chunkAddresses(uniqueAddresses)) {
+          try {
+            const contracts = addressChunk.flatMap((address) => [
+              {
+                abi: erc20Abi,
+                address: address as Address,
+                functionName: 'symbol' as const,
+              },
+              {
+                abi: erc20Abi,
+                address: address as Address,
+                functionName: 'name' as const,
+              },
+              {
+                abi: erc20Abi,
+                address: address as Address,
+                functionName: 'decimals' as const,
+              },
+            ]);
 
-        const results = await client.multicall({
-          allowFailure: true,
-          contracts,
-        });
+            const results = await client.multicall({
+              allowFailure: true,
+              contracts,
+            });
 
-        for (const [index, address] of uniqueAddresses.entries()) {
-          const symbolResult = results[index * 3];
-          const nameResult = results[index * 3 + 1];
-          const decimalsResult = results[index * 3 + 2];
+            for (const [index, address] of addressChunk.entries()) {
+              const symbolResult = results[index * 3];
+              const nameResult = results[index * 3 + 1];
+              const decimalsResult = results[index * 3 + 2];
 
-          const tokenInfo = createFallbackTokenInfo(address, {
-            decimals:
-              decimalsResult?.status === 'success' && typeof decimalsResult.result === 'number'
-                ? decimalsResult.result
-                : DEFAULT_TOKEN_DECIMALS,
-            name: nameResult?.status === 'success' && typeof nameResult.result === 'string' ? nameResult.result : UNKNOWN_TOKEN_NAME,
-            symbol: symbolResult?.status === 'success' && typeof symbolResult.result === 'string' ? symbolResult.result : 'Unknown',
-          });
+              const tokenInfo = createFallbackTokenInfo(address, {
+                decimals:
+                  decimalsResult?.status === 'success' && typeof decimalsResult.result === 'number'
+                    ? decimalsResult.result
+                    : DEFAULT_TOKEN_DECIMALS,
+                name:
+                  nameResult?.status === 'success' && typeof nameResult.result === 'string'
+                    ? nameResult.result
+                    : UNKNOWN_TOKEN_NAME,
+                symbol: symbolResult?.status === 'success' && typeof symbolResult.result === 'string' ? symbolResult.result : 'Unknown',
+              });
 
-          const key = infoToKey(address, chainId);
-          resolvedTokenMetadataCache.set(key, tokenInfo);
-          metadataMap.set(key, tokenInfo);
-          deferredByKey.get(key)?.resolve(tokenInfo);
+              const key = infoToKey(address, chainId);
+              resolvedTokenMetadataCache.set(key, tokenInfo);
+              metadataMap.set(key, tokenInfo);
+              deferredByKey.get(key)?.resolve(tokenInfo);
+            }
+          } catch {
+            for (const address of addressChunk) {
+              const key = infoToKey(address, chainId);
+              const tokenInfo = createFallbackTokenInfo(address);
+              resolvedTokenMetadataCache.set(key, tokenInfo);
+              metadataMap.set(key, tokenInfo);
+              deferredByKey.get(key)?.resolve(tokenInfo);
+            }
+          }
         }
       } catch {
         for (const address of uniqueAddresses) {

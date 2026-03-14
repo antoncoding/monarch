@@ -4,6 +4,7 @@ import { formatBalance } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { SubgraphMarket, SubgraphMarketQueryResponse, SubgraphMarketsQueryResponse, SubgraphToken } from '@/utils/subgraph-types';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
+import { isForceUnwhitelisted } from '@/utils/markets';
 import { blacklistTokens, findToken } from '@/utils/tokens';
 import type { Market, MarketUsdPriceSource, MarketWarning } from '@/utils/types';
 import { UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
@@ -97,7 +98,7 @@ const transformSubgraphMarketToMarket = (
     uniqueKey: marketId,
     lltv,
     irmAddress: irmAddress as Address,
-    whitelisted: true,
+    whitelisted: !isForceUnwhitelisted(marketId),
     loanAsset,
     collateralAsset,
     state: {

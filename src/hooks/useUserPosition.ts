@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
-import { usePublicClient } from 'wagmi';
 import { fetchUserPositionForMarket } from '@/data-sources/user-position';
+import { useReadOnlyClient } from '@/hooks/useReadOnlyClient';
+import { getChainScopedMarketKey } from '@/utils/marketIdentity';
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
 import type { MarketPosition } from '@/utils/types';
@@ -19,10 +20,10 @@ import { useProcessedMarkets } from './useProcessedMarkets';
  * @returns User position data, loading state, error state, and refetch function.
  */
 const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | undefined, marketKey: string | undefined) => {
-  const queryKey = ['userPosition', user, chainId, marketKey];
+  const { client, customRpcUrls, rpcConfigVersion } = useReadOnlyClient(chainId);
+  const queryKey = ['userPosition', user, chainId, marketKey, rpcConfigVersion];
 
   const { allMarkets: markets } = useProcessedMarkets();
-  const publicClient = usePublicClient({ chainId });
 
   const {
     data,
@@ -37,7 +38,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
         return null;
       }
 
-      if (!publicClient) {
+      if (!client) {
         console.error('Public client not available');
         return null;
       }
@@ -45,7 +46,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
       // 1. Try fetching the on-chain snapshot first
       let snapshot = null;
       try {
-        snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, undefined, publicClient);
+        snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, undefined, client);
       } catch (snapshotError) {
         console.error(`Error fetching position snapshot for ${user} on market ${marketKey}:`, snapshotError);
         // Snapshot fetch failed, will proceed to fallback fetch
@@ -55,7 +56,11 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
 
       if (snapshot) {
         // Snapshot succeeded, try to use local market data first
-        const market = markets?.find((m) => m.uniqueKey.toLowerCase() === marketKey.toLowerCase());
+        const scopedMarketKey = getChainScopedMarketKey(marketKey, chainId);
+        const market = markets?.find(
+          (candidateMarket) =>
+            getChainScopedMarketKey(candidateMarket.uniqueKey, candidateMarket.morphoBlue.chain.id) === scopedMarketKey,
+        );
 
         if (market) {
           // Local market data found, construct position directly
@@ -73,7 +78,9 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
         } else {
           // Local market data NOT found, need to fetch from fallback to get structure
           console.warn(`Local market data not found for ${marketKey}. Fetching from fallback source to combine with snapshot.`);
-          const fallbackPosition = await fetchUserPositionForMarket(marketKey, user, chainId);
+          const fallbackPosition = await fetchUserPositionForMarket(marketKey, user, chainId, {
+            customRpcUrls,
+          });
 
           if (fallbackPosition) {
             // Fallback succeeded, combine with snapshot state
@@ -95,7 +102,9 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
         }
       } else {
         // Snapshot failed, rely entirely on the fallback data source
-        finalPosition = await fetchUserPositionForMarket(marketKey, user, chainId);
+        finalPosition = await fetchUserPositionForMarket(marketKey, user, chainId, {
+          customRpcUrls,
+        });
       }
       // If finalPosition has zero balances, it's still a valid position state from the snapshot or fallback
       return finalPosition;

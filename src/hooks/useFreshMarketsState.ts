@@ -1,20 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { usePublicClient } from 'wagmi';
-import morphoABI from '@/abis/morpho';
-import { getMorphoAddress } from '@/utils/morpho';
+import { useReadOnlyClient } from '@/hooks/useReadOnlyClient';
 import type { SupportedNetworks } from '@/utils/networks';
+import { fetchMarketSnapshots, type MarketSnapshot } from '@/utils/positions';
 import type { Market } from '@/utils/types';
 
 const REFRESH_INTERVAL = 15_000; // 15 seconds
-
-type MarketSnapshot = {
-  totalSupplyAssets: string;
-  totalSupplyShares: string;
-  totalBorrowAssets: string;
-  totalBorrowShares: string;
-  liquidityAssets: string;
-};
 
 /**
  * Hook to fetch fresh market states using multicall.
@@ -40,7 +31,7 @@ export const useFreshMarketsState = (
   // Derive chainId from first market if not provided
   const effectiveChainId = chainId ?? (markets?.[0]?.morphoBlue.chain.id as SupportedNetworks | undefined);
 
-  const publicClient = usePublicClient({ chainId: effectiveChainId });
+  const { client, rpcConfigVersion } = useReadOnlyClient(effectiveChainId);
   const queryClient = useQueryClient();
 
   // Create stable query key from market unique keys
@@ -53,7 +44,7 @@ export const useFreshMarketsState = (
     [markets],
   );
 
-  const queryKey = ['fresh-markets-state', effectiveChainId, marketKeys];
+  const queryKey = ['fresh-markets-state', effectiveChainId, marketKeys, rpcConfigVersion];
 
   const {
     data: snapshots,
@@ -63,56 +54,17 @@ export const useFreshMarketsState = (
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      if (!markets || markets.length === 0 || !effectiveChainId || !publicClient) {
+      if (!markets || markets.length === 0 || !effectiveChainId || !client) {
         return null;
       }
 
-      console.log(`Reading fresh state for ${markets.length} markets from chain...`);
-
-      // Create multicall contracts for all markets
-      const contracts = markets.map((market) => ({
-        address: getMorphoAddress(effectiveChainId) as `0x${string}`,
-        abi: morphoABI,
-        functionName: 'market' as const,
-        args: [market.uniqueKey as `0x${string}`],
-      }));
-
-      // Use multicall to batch all market queries into a single RPC call
-      const results = await publicClient.multicall({
-        contracts,
-        allowFailure: true,
-      });
-
-      console.log(`complete reading ${markets.length} market states`);
-
-      // Process results into snapshots map
-      const snapshotsMap = new Map<string, MarketSnapshot>();
-
-      results.forEach((result, index) => {
-        const market = markets[index];
-        if (result.status === 'success' && result.result) {
-          const data = result.result as readonly bigint[];
-          const totalSupplyAssets = data[0];
-          const totalSupplyShares = data[1];
-          const totalBorrowAssets = data[2];
-          const totalBorrowShares = data[3];
-          const liquidityAssets = totalSupplyAssets - totalBorrowAssets;
-
-          snapshotsMap.set(market.uniqueKey, {
-            totalSupplyAssets: totalSupplyAssets.toString(),
-            totalSupplyShares: totalSupplyShares.toString(),
-            totalBorrowAssets: totalBorrowAssets.toString(),
-            totalBorrowShares: totalBorrowShares.toString(),
-            liquidityAssets: liquidityAssets.toString(),
-          });
-        } else {
-          console.warn(`Failed to fetch snapshot for market ${market.uniqueKey}`);
-        }
-      });
-
-      return snapshotsMap;
+      return fetchMarketSnapshots(
+        markets.map((market) => market.uniqueKey),
+        effectiveChainId,
+        client,
+      );
     },
-    enabled: !!markets && markets.length > 0 && !!effectiveChainId && !!publicClient,
+    enabled: !!markets && markets.length > 0 && !!effectiveChainId && !!client,
     staleTime: 0, // Always fetch fresh when requested
     gcTime: 20_000, // Keep in cache for 20 seconds
     refetchOnWindowFocus: false,
@@ -137,7 +89,7 @@ export const useFreshMarketsState = (
     if (!snapshots) return markets;
 
     return markets.map((market) => {
-      const snapshot = snapshots.get(market.uniqueKey);
+      const snapshot = snapshots.get(market.uniqueKey) as MarketSnapshot | undefined;
       if (!snapshot) return market;
 
       return {

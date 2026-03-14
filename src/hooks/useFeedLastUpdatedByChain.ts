@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { type Address, zeroAddress } from 'viem';
-import { usePublicClient } from 'wagmi';
+import { useReadOnlyClient } from '@/hooks/useReadOnlyClient';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
 import { formatOraclePrice, type FeedUpdateKind } from '@/utils/oracle';
 import {
@@ -134,7 +134,7 @@ function chunkAddresses(addresses: string[]): string[][] {
 }
 
 export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | undefined) {
-  const publicClient = usePublicClient({ chainId });
+  const { client, rpcConfigVersion } = useReadOnlyClient(chainId);
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
 
   const { addresses: feedAddresses, hintByAddress } = useMemo(() => getFeedMetadataSnapshot(oracleMetadataMap), [oracleMetadataMap]);
@@ -142,18 +142,18 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
   const hintFingerprint = useMemo(() => createHintsFingerprint(hintByAddress), [hintByAddress]);
 
   const query = useQuery({
-    queryKey: ['feed-snapshot', chainId, addressFingerprint, hintFingerprint],
-    enabled: Boolean(chainId && publicClient && feedAddresses.length > 0),
+    queryKey: ['feed-snapshot', chainId, addressFingerprint, hintFingerprint, rpcConfigVersion],
+    enabled: Boolean(chainId && client && feedAddresses.length > 0),
     staleTime: FEED_REFRESH_INTERVAL_MS,
     refetchInterval: FEED_REFRESH_INTERVAL_MS,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<FeedSnapshotByAddress> => {
-      if (!publicClient) return {};
+      if (!client) return {};
 
       const snapshotByAddress: FeedSnapshotByAddress = {};
       const addressChunks = chunkAddresses(feedAddresses);
-      const blockNumber = await publicClient.getBlockNumber();
-      const block = await publicClient.getBlock({ blockNumber });
+      const blockNumber = await client.getBlockNumber();
+      const block = await client.getBlock({ blockNumber });
       const queryBlockTimestamp = Number(block.timestamp);
 
       for (const addressChunk of addressChunks) {
@@ -170,12 +170,12 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
         }));
 
         const [roundResults, decimalsResults] = await Promise.all([
-          publicClient.multicall({
+          client.multicall({
             contracts: latestRoundContracts,
             allowFailure: true,
             blockNumber,
           }),
-          publicClient.multicall({
+          client.multicall({
             contracts: decimalsContracts,
             allowFailure: true,
             blockNumber,

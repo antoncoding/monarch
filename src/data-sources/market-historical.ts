@@ -1,6 +1,7 @@
 import { hasEnvioIndexer, supportsMorphoApi } from '@/config/dataSources';
 import { fetchEnvioMarketHistoricalData } from '@/data-sources/envio/historical';
 import { fetchMorphoMarketHistoricalData, type HistoricalDataSuccessResult } from '@/data-sources/morpho-api/historical';
+import { getErrorMessage, logDataSourceEvent } from '@/data-sources/shared/source-debug';
 import { fetchSubgraphMarketHistoricalData } from '@/data-sources/subgraph/historical';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -23,10 +24,18 @@ export const fetchMarketHistoricalData = async (
       });
 
       if (envioData) {
+        logDataSourceEvent('market-historical', 'using Envio historical source', {
+          chainId: network,
+          marketUniqueKey: uniqueKey,
+        });
         return envioData;
       }
-    } catch (envioError) {
-      console.error('Failed to fetch historical data via Envio:', envioError);
+    } catch (error) {
+      logDataSourceEvent('market-historical', 'Envio historical fetch failed, falling back', {
+        chainId: network,
+        marketUniqueKey: uniqueKey,
+        reason: getErrorMessage(error),
+      });
     }
   }
 
@@ -35,12 +44,24 @@ export const fetchMarketHistoricalData = async (
       const morphoData = await fetchMorphoMarketHistoricalData(uniqueKey, network, options);
 
       if (morphoData) {
+        logDataSourceEvent('market-historical', 'using Morpho API fallback for historical data', {
+          chainId: network,
+          marketUniqueKey: uniqueKey,
+        });
         return morphoData;
       }
-    } catch (morphoError) {
-      console.error('Failed to fetch historical data via Morpho API:', morphoError);
+    } catch (error) {
+      logDataSourceEvent('market-historical', 'Morpho historical fetch failed, falling back to subgraph', {
+        chainId: network,
+        marketUniqueKey: uniqueKey,
+        reason: getErrorMessage(error),
+      });
     }
   }
 
+  logDataSourceEvent('market-historical', 'using subgraph fallback for historical data', {
+    chainId: network,
+    marketUniqueKey: uniqueKey,
+  });
   return fetchSubgraphMarketHistoricalData(uniqueKey, network, options);
 };

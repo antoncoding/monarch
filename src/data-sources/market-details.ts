@@ -4,6 +4,7 @@ import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { isTokenBlacklistedMarket } from '@/data-sources/shared/market-visibility';
 import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import { enrichMarketsWithHistoricalApysWithinTimeout } from '@/data-sources/shared/market-rate-enrichment';
+import { enrichMarketsWithTargetRate } from '@/data-sources/shared/market-target-rate-enrichment';
 import { fillMissingMarketUsdValues } from '@/data-sources/shared/market-usd';
 import { getErrorMessage, logDataSourceEvent } from '@/data-sources/shared/source-debug';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
@@ -96,6 +97,10 @@ export const fetchMarketDetails = async (
 
   const [marketWithUsd] = await fillMissingMarketUsdValues([baseMarket]);
   baseMarket = marketWithUsd ?? baseMarket;
+  const [marketWithTargetRate] = await enrichMarketsWithTargetRate([baseMarket], {
+    customRpcUrls,
+  });
+  baseMarket = marketWithTargetRate ?? baseMarket;
 
   if (!enrichHistoricalApys) {
     return baseMarket;

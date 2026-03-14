@@ -4,6 +4,7 @@ import { fetchMorphoMarkets, fetchMorphoMarketsMultiChain } from '@/data-sources
 import { mergeMarketsByIdentity } from '@/data-sources/shared/market-merge';
 import { filterTokenBlacklistedMarkets } from '@/data-sources/shared/market-visibility';
 import { enrichMarketsWithHistoricalApysWithinTimeout } from '@/data-sources/shared/market-rate-enrichment';
+import { enrichMarketsWithTargetRate } from '@/data-sources/shared/market-target-rate-enrichment';
 import { getErrorMessage, logDataSourceEvent } from '@/data-sources/shared/source-debug';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
@@ -11,6 +12,31 @@ import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks
 import type { Market } from '@/utils/types';
 
 const MARKET_ENRICHMENT_TIMEOUT_MS = 8_000;
+
+const enrichCatalogMarkets = async (markets: Market[], customRpcUrls?: CustomRpcUrls): Promise<Market[]> => {
+  const marketsWithTargetRate = await enrichMarketsWithTargetRate(markets, {
+    customRpcUrls,
+  });
+
+  return enrichMarketsWithHistoricalApysWithinTimeout(marketsWithTargetRate, MARKET_ENRICHMENT_TIMEOUT_MS, customRpcUrls);
+};
+
+const enrichCatalogMarketsWithLogging = async (
+  markets: Market[],
+  customRpcUrls: CustomRpcUrls | undefined,
+  details: Record<string, unknown>,
+): Promise<Market[]> => {
+  const enrichmentStartedAt = Date.now();
+  const enrichedMarkets = await enrichCatalogMarkets(markets, customRpcUrls);
+
+  logDataSourceEvent('market-catalog', 'market enrichment completed', {
+    ...details,
+    count: enrichedMarkets.length,
+    durationMs: Date.now() - enrichmentStartedAt,
+  });
+
+  return enrichedMarkets;
+};
 
 const getMissingChainIds = (chainIds: SupportedNetworks[], markets: Market[]): SupportedNetworks[] => {
   const coveredChainIds = new Set(markets.map((market) => market.morphoBlue.chain.id));
@@ -45,25 +71,32 @@ export const fetchMarketCatalog = async (
 
   if (hasEnvioIndexer()) {
     try {
+      const envioFetchStartedAt = Date.now();
       const envioMarkets = await fetchEnvioMarkets(chainIds, {
         customRpcUrls,
       });
+      const envioFetchDurationMs = Date.now() - envioFetchStartedAt;
       const missingChainIds = getMissingChainIds(chainIds, envioMarkets);
 
       if (missingChainIds.length === 0 && envioMarkets.length > 0) {
-        logDataSourceEvent('market-catalog', 'using Envio as primary source', {
+        logDataSourceEvent('market-catalog', 'Envio fetch completed; using Envio as primary source', {
           chainIds: chainIds.join(','),
           count: envioMarkets.length,
+          durationMs: envioFetchDurationMs,
         });
 
-        return enrichMarketsWithHistoricalApysWithinTimeout(envioMarkets, MARKET_ENRICHMENT_TIMEOUT_MS, customRpcUrls);
+        return enrichCatalogMarketsWithLogging(envioMarkets, customRpcUrls, {
+          chainIds: chainIds.join(','),
+          source: 'envio-primary',
+        });
       }
 
-      logDataSourceEvent('market-catalog', 'Envio returned incomplete coverage, falling back for missing chains only', {
+      logDataSourceEvent('market-catalog', 'Envio fetch completed with incomplete coverage; falling back for missing chains only', {
         requestedChainIds: chainIds.join(','),
         coveredChainIds: [...new Set(envioMarkets.map((market) => market.morphoBlue.chain.id))].join(','),
         missingChainIds: missingChainIds.join(','),
         envioCount: envioMarkets.length,
+        durationMs: envioFetchDurationMs,
       });
 
       const fallbackMarkets = missingChainIds.length > 0 ? await fetchMarketsPerNetworkFallback(missingChainIds) : [];
@@ -75,7 +108,10 @@ export const fetchMarketCatalog = async (
           totalCount: mergedMarkets.length,
         });
 
-        return enrichMarketsWithHistoricalApysWithinTimeout(mergedMarkets, MARKET_ENRICHMENT_TIMEOUT_MS, customRpcUrls);
+        return enrichCatalogMarketsWithLogging(mergedMarkets, customRpcUrls, {
+          chainIds: chainIds.join(','),
+          source: 'envio-merged-fallback',
+        });
       }
     } catch (error) {
       logDataSourceEvent('market-catalog', 'Envio market catalog failed, using legacy fallback', {
@@ -120,7 +156,10 @@ export const fetchMarketCatalog = async (
   const mergedMarkets = mergeMarketsByIdentity(markets);
 
   if (mergedMarkets.length > 0) {
-    return enrichMarketsWithHistoricalApysWithinTimeout(mergedMarkets, MARKET_ENRICHMENT_TIMEOUT_MS, customRpcUrls);
+    return enrichCatalogMarketsWithLogging(mergedMarkets, customRpcUrls, {
+      chainIds: chainIds.join(','),
+      source: 'legacy-fallback',
+    });
   }
 
   return fetchMarketsPerNetworkFallback(chainIds);

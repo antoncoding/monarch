@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
+import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { fetchUserPositionMarkets } from '@/data-sources/position-markets';
 import { getChainScopedMarketKey } from '@/utils/marketIdentity';
 import { SupportedNetworks } from '@/utils/networks';
@@ -8,7 +9,6 @@ import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, ty
 import { getClient } from '@/utils/rpc';
 import type { Market, MarketPosition } from '@/utils/types';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
-import { useCustomRpc } from '@/stores/useCustomRpc';
 import { useProcessedMarkets } from './useProcessedMarkets';
 
 // Type for market key and chain identifier
@@ -52,7 +52,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
   const { allMarkets } = useProcessedMarkets();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
-  const { customRpcUrls } = useCustomRpc();
+  const { customRpcUrls, rpcConfigVersion } = useCustomRpcContext();
 
   // 1. Query for initial data: Fetch keys from sources, combine with cache, deduplicate
   const {
@@ -101,7 +101,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
     isLoading: isLoadingEnhanced,
     isRefetching: isRefetchingEnhanced,
   } = useQuery<EnhancedMarketPosition[]>({
-    queryKey: positionKeys.enhanced(user, initialData),
+    queryKey: [...positionKeys.enhanced(user, initialData), rpcConfigVersion],
     queryFn: async () => {
       if (!initialData || !user) throw new Error('Assertion failed: initialData/user should be defined here.');
 

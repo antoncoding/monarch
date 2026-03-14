@@ -1,4 +1,5 @@
 import type { MarketPosition } from '@/utils/types';
+import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { envioPositionForMarketQuery, envioPositionsQuery } from '@/graphql/envio-queries';
 import { fetchEnvioMarket } from './market';
@@ -111,6 +112,9 @@ export const fetchEnvioUserPositionForMarket = async (
   marketUniqueKey: string,
   userAddress: string,
   chainId: SupportedNetworks,
+  options: {
+    customRpcUrls?: CustomRpcUrls;
+  } = {},
 ): Promise<MarketPosition | null> => {
   const response = await envioGraphqlFetcher<EnvioPositionsResponse>(
     envioPositionForMarketQuery,
@@ -130,7 +134,7 @@ export const fetchEnvioUserPositionForMarket = async (
     return null;
   }
 
-  const market = await fetchEnvioMarket(marketUniqueKey, chainId);
+  const market = await fetchEnvioMarket(marketUniqueKey, chainId, options);
 
   if (!market) {
     return null;

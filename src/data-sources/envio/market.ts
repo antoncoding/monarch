@@ -83,6 +83,7 @@ const withVisibleMarketsFilter = (where: Record<string, unknown>): Record<string
       where,
       {
         collateralToken: {
+          _neq: zeroAddress,
           _nin: blacklistTokens,
         },
       },
@@ -91,8 +92,17 @@ const withVisibleMarketsFilter = (where: Record<string, unknown>): Record<string
           _nin: blacklistTokens,
         },
       },
+      {
+        irm: {
+          _neq: zeroAddress,
+        },
+      },
     ],
   };
+};
+
+const hasExcludedEnvioAddresses = (market: EnvioMarketRow): boolean => {
+  return normalizeAddress(market.collateralToken) === zeroAddress || normalizeAddress(market.irm) === zeroAddress;
 };
 
 const fetchEnvioMarketsPage = async ({
@@ -244,7 +254,7 @@ const buildEnvioMarketsMap = async (
     customRpcUrls?: CustomRpcUrls;
   } = {},
 ): Promise<Map<string, Market>> => {
-  const visibleRows = rows.filter((market) => !isTokenBlacklistedMarket(market));
+  const visibleRows = rows.filter((market) => !hasExcludedEnvioAddresses(market) && !isTokenBlacklistedMarket(market));
   const tokenMetadataMap = await fetchTokenMetadataMap(toMarketTokenRefs(visibleRows), options.customRpcUrls);
   const marketsByKey = new Map<string, Market>();
 
