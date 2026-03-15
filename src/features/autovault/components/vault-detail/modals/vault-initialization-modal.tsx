@@ -339,7 +339,7 @@ export function VaultInitializationModal() {
 
   // Auto-advance when adapter already exists in Monarch data.
   useEffect(() => {
-    if (marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
+    if (marketAdapter != null && marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
       setStepIndex(1);
     }
   }, [marketAdapter, stepIndex, deployedAdapter]);

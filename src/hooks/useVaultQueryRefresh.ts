@@ -27,7 +27,7 @@ const refetchVaultQuerySet = async (queryClient: QueryClient, vaultAddress: Addr
 
   await Promise.all([
     queryClient.refetchQueries({ queryKey: ['vault-v2-data', normalizedVaultAddress, chainId], exact: false }),
-    queryClient.refetchQueries({ queryKey: ['vault-allocations', vaultAddress, chainId], exact: false }),
+    queryClient.refetchQueries({ queryKey: ['vault-allocations', normalizedVaultAddress, chainId], exact: false }),
     queryClient.refetchQueries({ queryKey: ['user-vaults-v2'], exact: false }),
   ]);
 };
@@ -51,7 +51,7 @@ export function useVaultQueryRefresh({ vaultAddress, chainId }: { vaultAddress?:
   const [refreshInProgress, setRefreshInProgress] = useState(false);
   const normalizedVaultAddress = vaultAddress?.toLowerCase() as Address | undefined;
   const vaultDataFetchCount = useIsFetching({ queryKey: ['vault-v2-data', normalizedVaultAddress, chainId] });
-  const vaultAllocationFetchCount = useIsFetching({ queryKey: ['vault-allocations', vaultAddress, chainId] });
+  const vaultAllocationFetchCount = useIsFetching({ queryKey: ['vault-allocations', normalizedVaultAddress, chainId] });
   const userVaultFetchCount = useIsFetching({ queryKey: ['user-vaults-v2'] });
 
   const refetch = useCallback(

@@ -36,17 +36,19 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   const { refetch: refetchContract } = contract;
   const { refetch: refetchAdapter } = adapterQuery;
   const { refetch: refetchAllocations } = allocationsQuery;
+  const hasResolvedAdapterState = !adapterQuery.isLoading && !adapterQuery.error;
+  const hasResolvedVaultState = !vaultDataQuery.isLoading && !vaultDataQuery.isError;
 
   // Complex derived state: isVaultInitialized (needs multiple sources)
   const isVaultInitialized = useMemo(() => {
-    if (adapterQuery.isLoading || vaultDataQuery.isLoading) return false;
+    if (!hasResolvedAdapterState || !hasResolvedVaultState) return false;
     if (!adapterQuery.primaryAdapter) return false;
     return vaultDataQuery.data !== null && vaultDataQuery.data !== undefined;
-  }, [adapterQuery.isLoading, adapterQuery.primaryAdapter, vaultDataQuery.isLoading, vaultDataQuery.data]);
+  }, [adapterQuery.primaryAdapter, hasResolvedAdapterState, hasResolvedVaultState, vaultDataQuery.data]);
 
   const needsAdapterDeployment = useMemo(
-    () => !adapterQuery.isLoading && !adapterQuery.primaryAdapter,
-    [adapterQuery.isLoading, adapterQuery.primaryAdapter],
+    () => hasResolvedAdapterState && !adapterQuery.primaryAdapter,
+    [adapterQuery.primaryAdapter, hasResolvedAdapterState],
   );
 
   // Fetch adapter positions for APY calculation
@@ -94,9 +96,17 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   const needsInitialization = useMemo(() => {
     const isLoading = vaultDataQuery.isLoading || contract.isLoading || adapterQuery.isLoading;
     if (isLoading) return false;
+    if (!hasResolvedAdapterState || !hasResolvedVaultState) return false;
     if (isVaultInitialized) return false;
     return true;
-  }, [vaultDataQuery.isLoading, contract.isLoading, adapterQuery.isLoading, isVaultInitialized]);
+  }, [
+    vaultDataQuery.isLoading,
+    contract.isLoading,
+    adapterQuery.isLoading,
+    hasResolvedAdapterState,
+    hasResolvedVaultState,
+    isVaultInitialized,
+  ]);
 
   // Aggregated refetch function (convenience)
   const refetchAll = useCallback(() => {

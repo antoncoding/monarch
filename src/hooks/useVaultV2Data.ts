@@ -56,16 +56,21 @@ const fetchBasicVaultRpcData = async (vaultAddress: Address, chainId: SupportedN
     allowFailure: true,
   });
 
+  const hasCoreSuccess = owner.status === 'success' || curator.status === 'success' || asset.status === 'success';
   const adaptersLength = await client
     .readContract({
       ...contractBase,
       functionName: 'adaptersLength',
       args: [],
     })
-    .catch(() => 0n);
+    .catch(() => null);
+
+  if (!hasCoreSuccess && adaptersLength === null) {
+    throw new Error('RPC_UNAVAILABLE');
+  }
 
   let adapters: string[] = [];
-  if (adaptersLength > 0n) {
+  if (adaptersLength && adaptersLength > 0n) {
     const adapterResults = await client.multicall({
       contracts: Array.from({ length: Number(adaptersLength) }, (_, index) => ({
         ...contractBase,

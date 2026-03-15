@@ -16,24 +16,28 @@ export function useMorphoMarketAdapters({ vaultAddress, chainId }: { vaultAddres
 
   const adapters = useMemo<VaultMarketAdapter[]>(() => {
     const adapterDetails = query.data?.adapterDetails ?? [];
+    const adapterDetailsByAddress = new Map(adapterDetails.map((adapterDetail) => [adapterDetail.address, adapterDetail]));
+    const adapterAddresses = [...(query.data?.adapters ?? []), ...adapterDetails.map((adapterDetail) => adapterDetail.address)];
+    const seenAddresses = new Set<string>();
 
-    if (adapterDetails.length > 0) {
-      return adapterDetails.map((adapterDetail) => ({
-        adapter: adapterDetail.address as Address,
-        adapterType: adapterDetail.adapterType,
-        factoryAddress: adapterDetail.factoryAddress as Address,
-        id: `${chainId}-${vaultAddress ?? 'unknown'}-${adapterDetail.address}`,
-        parentVault: (vaultAddress ?? zeroAddress) as Address,
-      }));
-    }
+    return adapterAddresses.flatMap((adapterAddress) => {
+      if (seenAddresses.has(adapterAddress)) {
+        return [];
+      }
 
-    return (query.data?.adapters ?? []).map((adapterAddress) => ({
-      adapter: adapterAddress as Address,
-      adapterType: undefined,
-      factoryAddress: undefined,
-      id: `${chainId}-${vaultAddress ?? 'unknown'}-${adapterAddress}`,
-      parentVault: (vaultAddress ?? zeroAddress) as Address,
-    }));
+      seenAddresses.add(adapterAddress);
+      const adapterDetail = adapterDetailsByAddress.get(adapterAddress);
+
+      return [
+        {
+          adapter: adapterAddress as Address,
+          adapterType: adapterDetail?.adapterType,
+          factoryAddress: adapterDetail?.factoryAddress as Address | undefined,
+          id: `${chainId}-${vaultAddress ?? 'unknown'}-${adapterAddress}`,
+          parentVault: (vaultAddress ?? zeroAddress) as Address,
+        },
+      ];
+    });
   }, [chainId, query.data?.adapterDetails, query.data?.adapters, vaultAddress]);
 
   const { primaryAdapter, primaryAdapterType, primaryFactoryAddress } = useMemo(() => {
