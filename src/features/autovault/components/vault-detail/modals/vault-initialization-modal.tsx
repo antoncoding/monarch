@@ -247,7 +247,7 @@ export function VaultInitializationModal() {
   }, [chainId]);
 
   // Adapter is detected if Monarch has indexed it or we just deployed it locally.
-  const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : (marketAdapter ?? ZERO_ADDRESS);
+  const adapterAddress = deployedAdapter === ZERO_ADDRESS ? (marketAdapter ?? ZERO_ADDRESS) : deployedAdapter;
   const adapterDetected = adapterAddress !== ZERO_ADDRESS;
 
   const { deploy, isDeploying, canDeploy, factoryAddress } = useDeployMorphoMarketAdapter({

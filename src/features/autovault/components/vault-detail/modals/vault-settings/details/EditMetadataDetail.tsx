@@ -17,7 +17,7 @@ export function EditMetadataDetail({ vaultAddress, chainId, onBack }: EditMetada
   const { address: connectedAddress } = useConnection();
 
   const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
-  const { isOwner, name, symbol, updateNameAndSymbol, isUpdatingMetadata } = useVaultV2({
+  const { isOwner, updateNameAndSymbol, isUpdatingMetadata } = useVaultV2({
     vaultAddress,
     chainId,
     connectedAddress,
@@ -34,8 +34,8 @@ export function EditMetadataDetail({ vaultAddress, chainId, onBack }: EditMetada
       isUpdating={isUpdatingMetadata}
       defaultName={defaultName}
       defaultSymbol={defaultSymbol}
-      currentName={name}
-      currentSymbol={symbol}
+      currentName={defaultName}
+      currentSymbol={defaultSymbol}
       onUpdate={(newName, newSymbol) => updateNameAndSymbol({ name: newName, symbol: newSymbol })}
       onBack={onBack}
     />

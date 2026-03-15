@@ -3,7 +3,7 @@ import { vaultv2Abi } from '@/abis/vaultv2';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 
-const getVaultBalanceKey = (address: Address | string, networkId: SupportedNetworks) => `${address.toLowerCase()}-${networkId}`;
+export const getVaultReadKey = (address: Address | string, networkId: SupportedNetworks) => `${address.toLowerCase()}-${networkId}`;
 
 /**
  * Calculate allocation percentage relative to total
@@ -13,6 +13,19 @@ export function calculateAllocationPercent(amount: bigint, total: bigint): strin
   const percent = (Number(amount) / Number(total)) * 100;
   return percent.toFixed(2);
 }
+
+const groupVaultsByNetwork = (vaults: { address: Address; networkId: SupportedNetworks }[]): Record<SupportedNetworks, Address[]> => {
+  return vaults.reduce(
+    (acc, vault) => {
+      if (!acc[vault.networkId]) {
+        acc[vault.networkId] = [];
+      }
+      acc[vault.networkId].push(vault.address);
+      return acc;
+    },
+    {} as Record<SupportedNetworks, Address[]>,
+  );
+};
 
 /**
  * Batch fetch user's vault shares and convert to redeemable assets
@@ -25,16 +38,7 @@ export async function fetchUserVaultShares(
   userAddress: Address,
 ): Promise<Map<string, bigint>> {
   // Group vaults by network for efficient batching
-  const vaultsByNetwork = vaults.reduce(
-    (acc, vault) => {
-      if (!acc[vault.networkId]) {
-        acc[vault.networkId] = [];
-      }
-      acc[vault.networkId].push(vault.address);
-      return acc;
-    },
-    {} as Record<SupportedNetworks, Address[]>,
-  );
+  const vaultsByNetwork = groupVaultsByNetwork(vaults);
 
   const results = new Map<string, bigint>();
 
@@ -81,7 +85,7 @@ export async function fetchUserVaultShares(
         if (redeemContracts.length === 0) {
           // No vaults with balance, return zeros
           vaultAddresses.forEach((addr) => {
-            results.set(getVaultBalanceKey(addr, networkId), 0n);
+            results.set(getVaultReadKey(addr, networkId), 0n);
           });
           return;
         }
@@ -100,7 +104,7 @@ export async function fetchUserVaultShares(
         redeemContracts.forEach((contract, index) => {
           if (contract) {
             const result = redeemResults[index];
-            const vaultAddress = getVaultBalanceKey(contract._vaultAddress, networkId);
+            const vaultAddress = getVaultReadKey(contract._vaultAddress, networkId);
             if (result.status === 'success' && result.result) {
               results.set(vaultAddress, result.result as bigint);
             } else {
@@ -111,7 +115,7 @@ export async function fetchUserVaultShares(
 
         // Set 0 for vaults that had 0 balance
         vaultAddresses.forEach((addr) => {
-          const vaultKey = getVaultBalanceKey(addr, networkId);
+          const vaultKey = getVaultReadKey(addr, networkId);
           if (!results.has(vaultKey)) {
             results.set(vaultKey, 0n);
           }
@@ -120,8 +124,43 @@ export async function fetchUserVaultShares(
         console.error(`Failed to fetch vault shares for network ${networkId}:`, error);
         // Set all to 0 on error
         vaultAddresses.forEach((addr) => {
-          results.set(getVaultBalanceKey(addr, networkId), 0n);
+          results.set(getVaultReadKey(addr, networkId), 0n);
         });
+      }
+    }),
+  );
+
+  return results;
+}
+
+export async function fetchVaultTotalAssets(vaults: { address: Address; networkId: SupportedNetworks }[]): Promise<Map<string, bigint>> {
+  const vaultsByNetwork = groupVaultsByNetwork(vaults);
+  const results = new Map<string, bigint>();
+
+  await Promise.all(
+    Object.entries(vaultsByNetwork).map(async ([networkIdStr, vaultAddresses]) => {
+      const networkId = Number(networkIdStr) as SupportedNetworks;
+      const client = getClient(networkId);
+
+      try {
+        const totalAssetsResults = await client.multicall({
+          contracts: vaultAddresses.map((vaultAddress) => ({
+            address: vaultAddress,
+            abi: vaultv2Abi,
+            functionName: 'totalAssets' as const,
+            args: [],
+          })),
+          allowFailure: true,
+        });
+
+        vaultAddresses.forEach((vaultAddress, index) => {
+          const result = totalAssetsResults[index];
+          if (result.status === 'success' && typeof result.result === 'bigint') {
+            results.set(getVaultReadKey(vaultAddress, networkId), result.result);
+          }
+        });
+      } catch (error) {
+        console.error(`Failed to fetch vault total assets for network ${networkId}:`, error);
       }
     }),
   );

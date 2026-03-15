@@ -7,15 +7,15 @@ import { GearIcon } from '@radix-ui/react-icons';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
 import { useAppKit } from '@reown/appkit/react';
-import { type Address } from 'viem';
+import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/Avatar/Avatar';
-import { TokenIcon } from '@/components/shared/token-icon';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import Header from '@/components/layout/header/Header';
 import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { formatCompactTokenAmount } from '@/utils/token-amount-format';
 import { getNetworkName } from '@/utils/networks';
 import { getDeployedVaults } from '@/utils/vault-storage';
 import { DeploymentModal } from './components/deployment/deployment-modal';
@@ -27,6 +27,7 @@ type VaultListItem = {
   name?: string;
   networkId: number;
   symbol?: string;
+  totalAssets?: bigint;
 };
 
 const getVaultLabel = (vault: VaultListItem): string => {
@@ -78,6 +79,7 @@ export default function AutovaultListContent() {
     enabled: hasMounted && isConnected && Boolean(address),
     includeApy: false,
     includeBalances: false,
+    includeTotalAssets: true,
   });
 
   const handleConnect = () => {
@@ -100,6 +102,7 @@ export default function AutovaultListContent() {
       name: vault.name,
       networkId: vault.networkId,
       symbol: vault.symbol,
+      totalAssets: vault.totalAssets,
     }));
     const existingVaults = new Set(combined.map((vault) => `${vault.address.toLowerCase()}-${vault.networkId}`));
 
@@ -119,13 +122,8 @@ export default function AutovaultListContent() {
     return combined;
   }, [address, userVaultsQuery.data]);
 
-  const handleManageVault = (vaultAddress?: string, networkId?: number) => {
-    if (vaultAddress && networkId) {
-      router.push(`/autovault/${networkId}/${vaultAddress}`);
-    } else if (mergedVaults.length > 0) {
-      const firstVault = mergedVaults[0];
-      router.push(`/autovault/${firstVault.networkId}/${firstVault.address}`);
-    }
+  const handleManageVault = (vaultAddress: string, networkId: number) => {
+    router.push(`/autovault/${networkId}/${vaultAddress}`);
   };
 
   const hasVaults = mergedVaults.length > 0;
@@ -133,6 +131,24 @@ export default function AutovaultListContent() {
   const hasMultipleVaults = mergedVaults.length > 1;
   const fetchError = userVaultsQuery.error ? 'Unable to load vaults. Please try again.' : null;
   const vaultsLoading = userVaultsQuery.isLoading;
+  const primaryVault = mergedVaults[0] ?? null;
+
+  const getVaultSecondaryLabel = (vault: VaultListItem): string => {
+    const token = vault.asset ? findToken(vault.asset, vault.networkId) : undefined;
+    const amountLabel =
+      token && vault.totalAssets !== undefined ? `${formatCompactTokenAmount(vault.totalAssets, token.decimals)} ${token.symbol}` : null;
+    const networkLabel = getNetworkName(vault.networkId) ?? `Chain ${vault.networkId}`;
+
+    if (amountLabel) {
+      return `${amountLabel} · ${networkLabel}`;
+    }
+
+    if (token?.symbol) {
+      return `${token.symbol} · ${networkLabel}`;
+    }
+
+    return `${networkLabel} · Indexing`;
+  };
 
   return (
     <div className="bg-main min-h-screen font-zen relative flex flex-col">
@@ -184,39 +200,48 @@ export default function AutovaultListContent() {
               {isConnected && hasVaults && (
                 <div className="flex items-center justify-center gap-3 pt-6">
                   {/* Single vault - show avatar with address */}
-                  {hasSingleVault && (
+                  {hasSingleVault && primaryVault && (
                     <Button
                       variant="primary"
                       size="lg"
-                      className="font-zen px-6"
-                      onClick={() => handleManageVault()}
+                      className="font-zen h-auto px-6 py-3"
+                      onClick={() => handleManageVault(primaryVault.address, primaryVault.networkId)}
                     >
                       <Avatar
-                        address={mergedVaults[0].address as `0x${string}`}
+                        address={primaryVault.address as `0x${string}`}
                         size={20}
                       />
-                      <span className="ml-2">Manage {getVaultLabel(mergedVaults[0])}</span>
+                      <div className="ml-3 flex min-w-0 flex-col items-start text-left leading-tight">
+                        <span className="truncate">Manage {getVaultLabel(primaryVault)}</span>
+                        <span className="truncate text-[11px] opacity-80">{getVaultSecondaryLabel(primaryVault)}</span>
+                      </div>
                     </Button>
                   )}
 
                   {/* Multiple vaults - show dropdown */}
-                  {hasMultipleVaults && (
+                  {hasMultipleVaults && primaryVault && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="primary"
                           size="lg"
-                          className="font-zen px-6"
+                          className="font-zen h-auto px-6 py-3"
                         >
                           <Avatar
-                            address={mergedVaults[0].address as `0x${string}`}
+                            address={primaryVault.address as `0x${string}`}
                             size={20}
                           />
-                          <span className="ml-2">Manage {getVaultLabel(mergedVaults[0])}</span>
+                          <div className="ml-3 flex min-w-0 flex-col items-start text-left leading-tight">
+                            <span className="truncate">Manage {getVaultLabel(primaryVault)}</span>
+                            <span className="truncate text-[11px] opacity-80">{`${getVaultSecondaryLabel(primaryVault)} · ${mergedVaults.length} vaults`}</span>
+                          </div>
                           <ChevronDownIcon className="ml-2 h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="center">
+                      <DropdownMenuContent
+                        align="center"
+                        className="min-w-72"
+                      >
                         {mergedVaults.map((vault) => (
                           <DropdownMenuItem
                             key={`${vault.networkId}-${vault.address}`}
@@ -229,9 +254,9 @@ export default function AutovaultListContent() {
                               />
                             }
                           >
-                            <div className="flex flex-col">
-                              <span>{getVaultLabel(vault)}</span>
-                              <span className="text-[11px] text-secondary">{getNetworkName(vault.networkId) ?? `Chain ${vault.networkId}`}</span>
+                            <div className="flex min-w-0 flex-col">
+                              <span className="truncate">{getVaultLabel(vault)}</span>
+                              <span className="truncate text-[11px] text-secondary">{getVaultSecondaryLabel(vault)}</span>
                             </div>
                           </DropdownMenuItem>
                         ))}
@@ -283,55 +308,6 @@ export default function AutovaultListContent() {
                 </div>
               )}
             </div>
-
-            {isConnected && hasVaults && (
-              <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 pt-2 md:grid-cols-2">
-                {mergedVaults.map((vault) => {
-                  const assetToken = vault.asset ? findToken(vault.asset, vault.networkId) : undefined;
-                  const displayName = getVaultLabel(vault);
-                  const displaySymbol = vault.symbol?.trim();
-                  const isIndexed = Boolean(vault.name || vault.symbol || vault.asset);
-
-                  return (
-                    <button
-                      key={`${vault.networkId}-${vault.address}`}
-                      type="button"
-                      onClick={() => handleManageVault(vault.address, vault.networkId)}
-                      className="bg-surface hover:border-primary/40 rounded border border-border p-4 text-left transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Avatar
-                              address={vault.address as `0x${string}`}
-                              size={22}
-                            />
-                            <p className="truncate text-base text-primary">{displayName}</p>
-                            {displaySymbol && <span className="rounded bg-hovered px-2 py-0.5 text-[11px] text-secondary">{displaySymbol}</span>}
-                          </div>
-                          <p className="text-sm text-secondary">{getNetworkName(vault.networkId) ?? `Chain ${vault.networkId}`}</p>
-                          <p className="font-monospace text-xs text-secondary">{`${vault.address.slice(0, 6)}...${vault.address.slice(-4)}`}</p>
-                        </div>
-                        {assetToken ? (
-                          <div className="flex items-center gap-2 rounded bg-hovered px-2 py-1 text-xs text-secondary">
-                            <TokenIcon
-                              address={vault.asset as Address}
-                              chainId={vault.networkId}
-                              width={16}
-                              height={16}
-                              disableTooltip
-                            />
-                            <span>{assetToken.symbol}</span>
-                          </div>
-                        ) : (
-                          <div className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{isIndexed ? 'Asset unavailable' : 'Indexing...'}</div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
 
             {/* Benefits Section */}
             <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">

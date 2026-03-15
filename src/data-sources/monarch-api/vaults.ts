@@ -36,6 +36,7 @@ export type VaultV2Details = {
 export type UserVaultV2 = VaultV2Details & {
   networkId: SupportedNetworks;
   balance?: bigint;
+  totalAssets?: bigint;
   adapter?: Address;
   actualApy?: number;
 };
@@ -159,7 +160,9 @@ const transformVault = (vault: MonarchVault, adapterDetails: VaultAdapterDetails
   }
 
   const activeAdapters = vault.adapters.filter((adapter) => adapter.isActive).map((adapter) => normalizeAddress(adapter.adapterAddress));
-  const activeAllocators = vault.allocators.filter((allocator) => allocator.isAllocator).map((allocator) => normalizeAddress(allocator.account));
+  const activeAllocators = vault.allocators
+    .filter((allocator) => allocator.isAllocator)
+    .map((allocator) => normalizeAddress(allocator.account));
   const activeSentinels = vault.sentinels.filter((sentinel) => sentinel.isSentinel).map((sentinel) => normalizeAddress(sentinel.account));
 
   return {

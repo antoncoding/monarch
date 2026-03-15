@@ -41,20 +41,16 @@ type BasicVaultRpcData = {
   assetAddress: string;
   adapters: string[];
   curator: string;
-  displayName: string;
-  displaySymbol: string;
   owner: string;
 };
 
 const fetchBasicVaultRpcData = async (vaultAddress: Address, chainId: SupportedNetworks): Promise<BasicVaultRpcData> => {
   const client = getClient(chainId);
   const contractBase = { address: vaultAddress, abi: vaultv2Abi } as const;
-  const [owner, curator, name, symbol, asset] = await client.multicall({
+  const [owner, curator, asset] = await client.multicall({
     contracts: [
       { ...contractBase, functionName: 'owner', args: [] },
       { ...contractBase, functionName: 'curator', args: [] },
-      { ...contractBase, functionName: 'name', args: [] },
-      { ...contractBase, functionName: 'symbol', args: [] },
       { ...contractBase, functionName: 'asset', args: [] },
     ],
     allowFailure: true,
@@ -91,8 +87,6 @@ const fetchBasicVaultRpcData = async (vaultAddress: Address, chainId: SupportedN
     adapters,
     owner: owner.status === 'success' && owner.result !== zeroAddress ? owner.result : '',
     curator: curator.status === 'success' && curator.result !== zeroAddress ? curator.result : '',
-    displayName: name.status === 'success' ? name.result : '',
-    displaySymbol: symbol.status === 'success' ? symbol.result : '',
     assetAddress: asset.status === 'success' && asset.result !== zeroAddress ? asset.result : '',
   };
 };
@@ -150,8 +144,8 @@ export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
       const curator = monarchVault?.curator || rpcFallback?.curator || '';
 
       return {
-        displayName: monarchVault?.name || rpcFallback?.displayName || '',
-        displaySymbol: monarchVault?.symbol || rpcFallback?.displaySymbol || '',
+        displayName: monarchVault?.name || '',
+        displaySymbol: monarchVault?.symbol || '',
         assetAddress,
         tokenSymbol,
         tokenDecimals,

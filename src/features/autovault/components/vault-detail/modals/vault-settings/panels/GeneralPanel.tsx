@@ -19,7 +19,7 @@ export function GeneralPanel({ vaultAddress, chainId, onNavigateToDetail }: Gene
 
   // Pull data directly - TanStack Query deduplicates
   const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
-  const { isOwner, name, symbol } = useVaultV2({
+  const { isOwner } = useVaultV2({
     vaultAddress,
     chainId,
     connectedAddress,
@@ -27,8 +27,6 @@ export function GeneralPanel({ vaultAddress, chainId, onNavigateToDetail }: Gene
 
   const defaultName = vaultData?.displayName ?? '';
   const defaultSymbol = vaultData?.displaySymbol ?? '';
-  const currentName = name !== '' ? name : defaultName;
-  const currentSymbol = symbol !== '' ? symbol : defaultSymbol;
 
   return (
     <div className="space-y-6">
@@ -52,12 +50,12 @@ export function GeneralPanel({ vaultAddress, chainId, onNavigateToDetail }: Gene
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
             <p className="text-xs uppercase text-secondary">Vault Name</p>
-            <p className="text-sm font-medium text-primary">{currentName}</p>
+            <p className="text-sm font-medium text-primary">{defaultName || '--'}</p>
           </div>
 
           <div className="space-y-1">
             <p className="text-xs uppercase text-secondary">Vault Symbol</p>
-            <p className="text-sm font-medium text-primary">{currentSymbol}</p>
+            <p className="text-sm font-medium text-primary">{defaultSymbol || '--'}</p>
           </div>
         </div>
       </div>

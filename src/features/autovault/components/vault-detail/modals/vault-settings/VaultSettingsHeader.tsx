@@ -22,7 +22,7 @@ export function VaultSettingsHeader({ vaultAddress, chainId, detailView, onBack,
 
   return (
     <SettingsHeader
-      actions={(
+      actions={
         <button
           type="button"
           onClick={() => void refetch({ includeRetries: true })}
@@ -32,7 +32,7 @@ export function VaultSettingsHeader({ vaultAddress, chainId, detailView, onBack,
         >
           <RefetchIcon isLoading={isRefetching} />
         </button>
-      )}
+      }
       title={title}
       showBack={!!detailView}
       onBack={onBack}

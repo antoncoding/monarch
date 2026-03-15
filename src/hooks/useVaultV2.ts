@@ -101,18 +101,6 @@ export function useVaultV2({
         args: [],
       },
       {
-        // name
-        ...vaultContract,
-        functionName: 'name',
-        args: [],
-      },
-      {
-        // symbol
-        ...vaultContract,
-        functionName: 'symbol',
-        args: [],
-      },
-      {
         // totalAssets
         ...vaultContract,
         functionName: 'totalAssets',
@@ -136,15 +124,13 @@ export function useVaultV2({
     },
   });
 
-  const [owner, curator, name, symbol, totalAssets, userShares, totalSupply] = useMemo(() => {
+  const [owner, curator, totalAssets, userShares, totalSupply] = useMemo(() => {
     return [
       batchData?.[0].result ?? zeroAddress,
       batchData?.[1].result ?? zeroAddress,
-      batchData?.[2].result ?? '',
-      batchData?.[3].result ?? '',
+      batchData?.[2].result ?? 0n,
+      batchData?.[3].result ?? 0n,
       batchData?.[4].result ?? 0n,
-      batchData?.[5].result ?? 0n,
-      batchData?.[6].result ?? 0n,
     ];
   }, [batchData]);
 
@@ -503,7 +489,7 @@ export function useVaultV2({
         throw allocatorError;
       }
     },
-    [account, chainIdToUse, sendAllocatorTx, vaultAddress, queryClient],
+    [account, chainIdToUse, sendAllocatorTx, vaultAddress],
   );
 
   const swapAllocator = useCallback(
@@ -570,7 +556,7 @@ export function useVaultV2({
         throw swapError;
       }
     },
-    [account, chainIdToUse, sendSwapAllocatorTx, vaultAddress, queryClient],
+    [account, chainIdToUse, sendSwapAllocatorTx, vaultAddress],
   );
 
   const updateCaps = useCallback(
@@ -681,7 +667,7 @@ export function useVaultV2({
         throw capsError;
       }
     },
-    [account, chainIdToUse, sendCapsTx, vaultAddress, queryClient],
+    [account, chainIdToUse, sendCapsTx, vaultAddress],
   );
 
   const { isConfirming: isDepositing, sendTransactionAsync: sendDepositTx } = useTransactionWithToast({
@@ -852,8 +838,6 @@ export function useVaultV2({
     refetch: refetchAll,
     completeInitialization,
     isInitializing,
-    name,
-    symbol,
     owner,
     isOwner,
     updateNameAndSymbol,

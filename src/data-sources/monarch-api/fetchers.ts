@@ -33,7 +33,11 @@ export const monarchGraphqlFetcher = async <T extends Record<string, unknown>>(
   const result = (await response.json()) as T & { errors?: GraphQLError[] };
 
   if (result.errors && result.errors.length > 0) {
-    const message = result.errors.map((error) => error.message).filter(Boolean).join('; ') || 'Unknown Monarch GraphQL error';
+    const message =
+      result.errors
+        .map((error) => error.message)
+        .filter(Boolean)
+        .join('; ') || 'Unknown Monarch GraphQL error';
     throw new Error(message);
   }
 

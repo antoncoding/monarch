@@ -3,11 +3,12 @@ import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { fetchMorphoVaultApys } from '@/data-sources/morpho-api/vaults';
 import { fetchUserVaultV2DetailsAllNetworks, type UserVaultV2 } from '@/data-sources/monarch-api/vaults';
-import { fetchUserVaultShares } from '@/utils/vaultAllocation';
+import { fetchUserVaultShares, fetchVaultTotalAssets, getVaultReadKey } from '@/utils/vaultAllocation';
 
 type UseUserVaultsV2Options = {
   includeApy?: boolean;
   includeBalances?: boolean;
+  includeTotalAssets?: boolean;
   userAddress?: Address;
   enabled?: boolean;
 };
@@ -16,15 +17,15 @@ function filterValidVaults(vaults: UserVaultV2[]): UserVaultV2[] {
   return vaults.filter((vault) => vault.owner && vault.asset && vault.address);
 }
 
-const getVaultQueryKey = (address: string, networkId: number) => `${address.toLowerCase()}-${networkId}`;
-
 async function fetchAndProcessVaults({
   includeApy,
   includeBalances,
+  includeTotalAssets,
   userAddress,
 }: {
   includeApy: boolean;
   includeBalances: boolean;
+  includeTotalAssets: boolean;
   userAddress: Address;
 }): Promise<UserVaultV2[]> {
   const validVaults = filterValidVaults(await fetchUserVaultV2DetailsAllNetworks(userAddress));
@@ -33,7 +34,7 @@ async function fetchAndProcessVaults({
     return [];
   }
 
-  const [avgApyByVault, shareBalances] = await Promise.all([
+  const [avgApyByVault, shareBalances, totalAssetsByVault] = await Promise.all([
     includeApy
       ? fetchMorphoVaultApys(
           validVaults.map((vault) => ({
@@ -48,14 +49,18 @@ async function fetchAndProcessVaults({
           userAddress,
         )
       : Promise.resolve(new Map<string, bigint>()),
+    includeTotalAssets
+      ? fetchVaultTotalAssets(validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })))
+      : Promise.resolve(new Map<string, bigint>()),
   ]);
 
   // Combine Monarch vault metadata with optional balances and supplemental APY
   return validVaults.map((vault) => ({
     ...vault,
     adapter: vault.adapters[0] as Address | undefined,
-    avgApy: avgApyByVault.get(getVaultQueryKey(vault.address, vault.networkId)),
-    balance: shareBalances.get(getVaultQueryKey(vault.address, vault.networkId)) ?? 0n,
+    avgApy: avgApyByVault.get(getVaultReadKey(vault.address, vault.networkId)),
+    balance: shareBalances.get(getVaultReadKey(vault.address, vault.networkId)) ?? 0n,
+    totalAssets: totalAssetsByVault.get(getVaultReadKey(vault.address, vault.networkId)),
   }));
 }
 
@@ -65,8 +70,9 @@ async function fetchAndProcessVaults({
  * Data fetching strategy:
  * - Fetches cross-chain vault details from Monarch API
  * - Optionally enriches current APY from batched Morpho API vault rates
- * - Fetches user's share balances via multicall
- * - Returns complete vault data with balances
+ * - Optionally enriches user's share balances via multicall
+ * - Optionally enriches vault total assets via multicall
+ * - Returns complete vault data with optional on-chain enrichments
  *
  * Cache behavior:
  * - staleTime: 60 seconds (complex multi-step fetch)
@@ -85,18 +91,19 @@ export const useUserVaultsV2Query = (options: UseUserVaultsV2Options = {}) => {
 
   const includeApy = options.includeApy ?? true;
   const includeBalances = options.includeBalances ?? true;
+  const includeTotalAssets = options.includeTotalAssets ?? false;
   const userAddress = (options.userAddress ?? connectedAddress) as Address;
   const enabled = options.enabled ?? true;
 
   return useQuery<UserVaultV2[], Error>({
-    queryKey: ['user-vaults-v2', userAddress, { includeApy, includeBalances }],
+    queryKey: ['user-vaults-v2', userAddress, { includeApy, includeBalances, includeTotalAssets }],
     queryFn: async () => {
       if (!userAddress) {
         return [];
       }
 
       try {
-        return await fetchAndProcessVaults({ includeApy, includeBalances, userAddress });
+        return await fetchAndProcessVaults({ includeApy, includeBalances, includeTotalAssets, userAddress });
       } catch (err) {
         const fetchError = err instanceof Error ? err : new Error('Failed to fetch user vaults');
         console.error('Error fetching user V2 vaults:', fetchError);

@@ -7,13 +7,7 @@ import { useTransactionWithToast } from './useTransactionWithToast';
 
 const TX_TOAST_ID = 'deploy-morpho-market-adapter';
 
-export function useDeployMorphoMarketAdapter({
-  vaultAddress,
-  chainId,
-}: {
-  vaultAddress?: Address;
-  chainId?: SupportedNetworks | number;
-}) {
+export function useDeployMorphoMarketAdapter({ vaultAddress, chainId }: { vaultAddress?: Address; chainId?: SupportedNetworks | number }) {
   const { address: account } = useConnection();
   const connectedChainId = useChainId();
   const resolvedChainId = (chainId ?? connectedChainId) as SupportedNetworks;
