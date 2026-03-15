@@ -12,6 +12,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { Spinner } from '@/components/ui/spinner';
 import { useDeployMorphoMarketAdapter } from '@/hooks/useDeployMorphoMarketAdapter';
 import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
+import { useVaultQueryRefresh } from '@/hooks/useVaultQueryRefresh';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { v2AgentsBase } from '@/utils/monarch-agent';
@@ -225,6 +226,10 @@ export function VaultInitializationModal() {
   });
 
   const { completeInitialization, isInitializing } = vaultContract;
+  const { refetch: refetchVaultQueries } = useVaultQueryRefresh({
+    vaultAddress: vaultAddressValue,
+    chainId,
+  });
 
   // Fetch adapter
   const { primaryAdapter: marketAdapter, refetch: refetchAdapter } = useMorphoMarketAdapters({
@@ -301,10 +306,7 @@ export function VaultInitializationModal() {
         return;
       }
 
-      // Trigger refetch after initialization completes.
-      void vaultDataQuery.refetch();
-      void vaultContract.refetch();
-      void refetchAdapter();
+      await refetchVaultQueries({ includeRetries: true });
 
       close();
     } catch (_error) {
@@ -312,10 +314,8 @@ export function VaultInitializationModal() {
     }
   }, [
     completeInitialization,
-    vaultDataQuery,
-    vaultContract,
-    refetchAdapter,
     close,
+    refetchVaultQueries,
     registryAddress,
     selectedAgent,
     adapterAddress,

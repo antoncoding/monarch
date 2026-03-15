@@ -8,14 +8,22 @@ type MonarchGraphqlFetcherOptions = {
   signal?: AbortSignal;
 };
 
+const MONARCH_GRAPHQL_API_ENDPOINT = process.env.NEXT_PUBLIC_MONARCH_API_NEW;
+const MONARCH_GRAPHQL_API_KEY = process.env.NEXT_PUBLIC_MONARCH_API_KEY;
+
 export const monarchGraphqlFetcher = async <T extends Record<string, unknown>>(
   query: string,
   variables: GraphQLVariables = {},
   options: MonarchGraphqlFetcherOptions = {},
 ): Promise<T> => {
-  const response = await fetch('/api/monarch/graphql', {
+  if (!MONARCH_GRAPHQL_API_ENDPOINT || !MONARCH_GRAPHQL_API_KEY) {
+    throw new Error('Monarch GraphQL client not configured');
+  }
+
+  const response = await fetch(MONARCH_GRAPHQL_API_ENDPOINT, {
     method: 'POST',
     headers: {
+      Authorization: `Bearer ${MONARCH_GRAPHQL_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
