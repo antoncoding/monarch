@@ -21,7 +21,6 @@ const ACTIONABLE_QUERY_ROOT_KEYS = new Set<string>([
   'markets',
   'monarch-transactions',
   'merkl-campaigns',
-  'morpho-market-v1-adapters',
   'oracle-data',
   'oracle-metadata',
   'morpho-vaults',

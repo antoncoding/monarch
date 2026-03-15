@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, formatUnits, zeroAddress } from 'viem';
+import { type Address, formatUnits } from 'viem';
 import type { SupportedNetworks } from '@/utils/networks';
-import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
+import { useMorphoMarketAdapters } from './useMorphoMarketAdapters';
 import useUserPositionsSummaryData from './useUserPositionsSummaryData';
 import { useVaultAllocations } from './useVaultAllocations';
 import { useVaultV2 } from './useVaultV2';
@@ -30,24 +30,30 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   // Pull only what we need for computations
   const vaultDataQuery = useVaultV2Data({ vaultAddress, chainId });
   const contract = useVaultV2({ vaultAddress, chainId, connectedAddress, onTransactionSuccess: vaultDataQuery.refetch });
-  const adapterQuery = useMorphoMarketV1Adapters({ vaultAddress, chainId });
+  const adapterQuery = useMorphoMarketAdapters({ vaultAddress, chainId });
   const allocationsQuery = useVaultAllocations({ vaultAddress, chainId });
+  const { refetch: refetchVaultData } = vaultDataQuery;
+  const { refetch: refetchContract } = contract;
+  const { refetch: refetchAdapter } = adapterQuery;
+  const { refetch: refetchAllocations } = allocationsQuery;
+  const hasResolvedAdapterState = !adapterQuery.isLoading && !adapterQuery.error;
+  const hasResolvedVaultState = !vaultDataQuery.isLoading && !vaultDataQuery.isError;
 
   // Complex derived state: isVaultInitialized (needs multiple sources)
   const isVaultInitialized = useMemo(() => {
-    if (adapterQuery.isLoading || vaultDataQuery.isLoading) return false;
-    if (adapterQuery.morphoMarketV1Adapter === zeroAddress) return false;
+    if (!hasResolvedAdapterState || !hasResolvedVaultState) return false;
+    if (!adapterQuery.primaryAdapter) return false;
     return vaultDataQuery.data !== null && vaultDataQuery.data !== undefined;
-  }, [adapterQuery.isLoading, adapterQuery.morphoMarketV1Adapter, vaultDataQuery.isLoading, vaultDataQuery.data]);
+  }, [adapterQuery.primaryAdapter, hasResolvedAdapterState, hasResolvedVaultState, vaultDataQuery.data]);
 
   const needsAdapterDeployment = useMemo(
-    () => !adapterQuery.isLoading && adapterQuery.morphoMarketV1Adapter === zeroAddress,
-    [adapterQuery.isLoading, adapterQuery.morphoMarketV1Adapter],
+    () => hasResolvedAdapterState && !adapterQuery.primaryAdapter,
+    [adapterQuery.primaryAdapter, hasResolvedAdapterState],
   );
 
   // Fetch adapter positions for APY calculation
   const { positions: adapterPositions, isEarningsLoading: isAPYLoading } = useUserPositionsSummaryData(
-    !needsAdapterDeployment && adapterQuery.morphoMarketV1Adapter !== zeroAddress ? adapterQuery.morphoMarketV1Adapter : undefined,
+    needsAdapterDeployment ? undefined : adapterQuery.primaryAdapter,
     'day',
     [chainId],
   );
@@ -77,11 +83,11 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     if (!adapterPositions || adapterPositions.length === 0) return null;
 
     let total = 0n;
-    adapterPositions.forEach((position) => {
+    for (const position of adapterPositions) {
       if (position.earned) {
         total += BigInt(position.earned);
       }
-    });
+    }
 
     return total;
   }, [adapterPositions]);
@@ -90,17 +96,25 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   const needsInitialization = useMemo(() => {
     const isLoading = vaultDataQuery.isLoading || contract.isLoading || adapterQuery.isLoading;
     if (isLoading) return false;
+    if (!hasResolvedAdapterState || !hasResolvedVaultState) return false;
     if (isVaultInitialized) return false;
     return true;
-  }, [vaultDataQuery.isLoading, contract.isLoading, adapterQuery.isLoading, isVaultInitialized]);
+  }, [
+    vaultDataQuery.isLoading,
+    contract.isLoading,
+    adapterQuery.isLoading,
+    hasResolvedAdapterState,
+    hasResolvedVaultState,
+    isVaultInitialized,
+  ]);
 
   // Aggregated refetch function (convenience)
   const refetchAll = useCallback(() => {
-    void vaultDataQuery.refetch();
-    void contract.refetch();
-    void adapterQuery.refetch();
-    void allocationsQuery.refetch();
-  }, [vaultDataQuery, contract, adapterQuery, allocationsQuery]);
+    void refetchVaultData();
+    void refetchContract();
+    void refetchAdapter();
+    void refetchAllocations();
+  }, [refetchVaultData, refetchContract, refetchAdapter, refetchAllocations]);
 
   // Return ONLY computed/derived state - no raw data!
   return {

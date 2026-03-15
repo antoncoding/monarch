@@ -2,19 +2,16 @@ import type { Address } from 'viem';
 import { zeroAddress } from 'viem';
 import { useQuery } from '@tanstack/react-query';
 import { vaultv2Abi } from '@/abis/vaultv2';
+import { fetchMonarchVaultDetails, type VaultAdapterDetails, type VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
-import { fetchVaultV2Details, type VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { getSlicedAddress } from '@/utils/address';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
-import { useVaultKeysCache, type CachedCap, combineAddresses, combineCaps } from '@/stores/useVaultKeysCache';
 
 type UseVaultV2DataArgs = {
   vaultAddress?: Address;
   chainId: SupportedNetworks;
-  fallbackName?: string;
-  fallbackSymbol?: string;
 };
 
 export type CapData = {
@@ -28,200 +25,160 @@ export type VaultV2Data = {
   displayName: string;
   displaySymbol: string;
   assetAddress: string;
-  tokenSymbol: string; // Always has default: '--'
-  tokenDecimals: number; // Always has default: 18
+  tokenSymbol: string;
+  tokenDecimals: number;
   allocators: string[];
   sentinels: string[];
   owner: string;
   curator: string;
-  capsData: CapData;
+  capsData?: CapData;
   adapters: string[];
+  adapterDetails: VaultAdapterDetails[];
   curatorDisplay: string;
 };
 
-export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallbackSymbol = '' }: UseVaultV2DataArgs) {
+type BasicVaultRpcData = {
+  assetAddress: string;
+  adapters: string[];
+  curator: string;
+  owner: string;
+};
+
+const fetchBasicVaultRpcData = async (vaultAddress: Address, chainId: SupportedNetworks): Promise<BasicVaultRpcData> => {
+  const client = getClient(chainId);
+  const contractBase = { address: vaultAddress, abi: vaultv2Abi } as const;
+  const [owner, curator, asset] = await client.multicall({
+    contracts: [
+      { ...contractBase, functionName: 'owner', args: [] },
+      { ...contractBase, functionName: 'curator', args: [] },
+      { ...contractBase, functionName: 'asset', args: [] },
+    ],
+    allowFailure: true,
+  });
+
+  const hasCoreSuccess = owner.status === 'success' || curator.status === 'success' || asset.status === 'success';
+  const adaptersLength = await client
+    .readContract({
+      ...contractBase,
+      functionName: 'adaptersLength',
+      args: [],
+    })
+    .catch(() => null);
+
+  if (!hasCoreSuccess && adaptersLength === null) {
+    throw new Error('RPC_UNAVAILABLE');
+  }
+
+  let adapters: string[] = [];
+  if (adaptersLength && adaptersLength > 0n) {
+    const adapterResults = await client.multicall({
+      contracts: Array.from({ length: Number(adaptersLength) }, (_, index) => ({
+        ...contractBase,
+        functionName: 'adapters' as const,
+        args: [BigInt(index)],
+      })),
+      allowFailure: true,
+    });
+
+    adapters = adapterResults.flatMap((result) => {
+      if (result.status !== 'success' || result.result === zeroAddress) {
+        return [];
+      }
+      return [result.result.toLowerCase()];
+    });
+  }
+
+  return {
+    adapters,
+    owner: owner.status === 'success' && owner.result !== zeroAddress ? owner.result : '',
+    curator: curator.status === 'success' && curator.result !== zeroAddress ? curator.result : '',
+    assetAddress: asset.status === 'success' && asset.result !== zeroAddress ? asset.result : '',
+  };
+};
+
+export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
   const { findToken } = useTokensQuery();
-  const { getVaultKeys, seedFromApi } = useVaultKeysCache(vaultAddress, chainId);
+  const normalizedVaultAddress = vaultAddress?.toLowerCase() as Address | undefined;
 
   const query = useQuery({
-    queryKey: ['vault-v2-data', vaultAddress, chainId],
+    queryKey: ['vault-v2-data', normalizedVaultAddress, chainId],
     queryFn: async () => {
-      if (!vaultAddress) {
+      if (!normalizedVaultAddress) {
         return null;
       }
 
-      // --- Stage 1: Discovery (API seed + cache merge) ---
-
-      // Try Morpho API — gracefully handle errors (e.g. new vault not indexed yet)
-      let apiResult = null;
+      let monarchVault = null;
       try {
-        apiResult = await fetchVaultV2Details(vaultAddress, chainId);
-      } catch (apiError) {
-        console.warn('[useVaultV2Data] API fetch failed, continuing with cache + RPC:', apiError);
+        monarchVault = await fetchMonarchVaultDetails(normalizedVaultAddress, chainId);
+      } catch (monarchError) {
+        console.warn('[useVaultV2Data] Monarch vault fetch failed, continuing with RPC fallback:', monarchError);
       }
 
-      // Read cached keys
-      const cachedKeys = getVaultKeys();
-
-      // Merge API + cache keys with deduplication
-      const allocatorAddresses = combineAddresses(apiResult?.allocators, cachedKeys.allocators);
-      const apiCaps: CachedCap[] = apiResult?.caps.map((c) => ({ capId: c.capId, idParams: c.idParams })) ?? [];
-      const capEntries = combineCaps(apiCaps, cachedKeys.caps);
-      const adapterAddresses = combineAddresses(apiResult?.adapters, cachedKeys.adapters);
-
-      // Seed cache with API-discovered keys (deduplication handled by store)
-      if (apiResult) {
-        seedFromApi({
-          allocators: apiResult.allocators,
-          caps: apiResult.caps.map((c) => ({ capId: c.capId, idParams: c.idParams })),
-          adapters: apiResult.adapters,
-        });
-      }
-
-      // --- Stage 2: RPC truth (single multicall) ---
-
-      const client = getClient(chainId);
-      const contractBase = { address: vaultAddress, abi: vaultv2Abi } as const;
-
-      // Build multicall contracts array with known layout
-      const basicContracts = [
-        // Basic vault data (always read from RPC)
-        { ...contractBase, functionName: 'owner' as const, args: [] },
-        { ...contractBase, functionName: 'curator' as const, args: [] },
-        { ...contractBase, functionName: 'name' as const, args: [] },
-        { ...contractBase, functionName: 'symbol' as const, args: [] },
-        { ...contractBase, functionName: 'asset' as const, args: [] },
-      ];
-
-      const allocatorContracts = allocatorAddresses.map((addr) => ({
-        ...contractBase,
-        functionName: 'isAllocator' as const,
-        args: [addr as Address],
-      }));
-
-      const capContracts = capEntries.flatMap((cap) => [
-        { ...contractBase, functionName: 'relativeCap' as const, args: [cap.capId as `0x${string}`] },
-        { ...contractBase, functionName: 'absoluteCap' as const, args: [cap.capId as `0x${string}`] },
-      ]);
-
-      const adapterContracts = adapterAddresses.map((addr) => ({
-        ...contractBase,
-        functionName: 'isAdapter' as const,
-        args: [addr as Address],
-      }));
-
-      const contracts = [...basicContracts, ...allocatorContracts, ...capContracts, ...adapterContracts];
-
-      const results = await client.multicall({
-        contracts,
-        allowFailure: true,
-      });
-
-      // --- Process results ---
-
-      // Offsets
-      const allocatorOffset = basicContracts.length;
-      const capsOffset = allocatorOffset + allocatorContracts.length;
-      const adapterOffset = capsOffset + capContracts.length;
-
-      // Basic fields
-      const rpcOwner = (results[0].status === 'success' ? results[0].result : zeroAddress) as Address;
-      const rpcCurator = (results[1].status === 'success' ? results[1].result : zeroAddress) as Address;
-      const rpcName = (results[2].status === 'success' ? results[2].result : '') as string;
-      const rpcSymbol = (results[3].status === 'success' ? results[3].result : '') as string;
-      const rpcAsset = (results[4].status === 'success' ? results[4].result : zeroAddress) as Address;
-
-      // Filter active allocators
-      const activeAllocators: string[] = [];
-      for (let i = 0; i < allocatorAddresses.length; i++) {
-        const r = results[allocatorOffset + i];
-        if (r.status === 'success' && r.result === true) {
-          activeAllocators.push(allocatorAddresses[i]);
+      let rpcFallback: BasicVaultRpcData | null = null;
+      if (!monarchVault) {
+        try {
+          rpcFallback = await fetchBasicVaultRpcData(normalizedVaultAddress, chainId);
+        } catch (rpcError) {
+          console.warn('[useVaultV2Data] RPC fallback failed for vault metadata:', rpcError);
         }
       }
 
-      // Build caps with RPC values, classify by type
+      if (!monarchVault && !rpcFallback) {
+        throw new Error('Failed to load vault metadata from Monarch API and RPC fallback');
+      }
+
+      const caps = monarchVault?.caps ?? [];
       let adapterCap: VaultV2Cap | null = null;
       const collateralCaps: VaultV2Cap[] = [];
       const marketCaps: VaultV2Cap[] = [];
 
-      for (let i = 0; i < capEntries.length; i++) {
-        const relIdx = capsOffset + i * 2;
-        const absIdx = capsOffset + i * 2 + 1;
-        const relResult = results[relIdx];
-        const absResult = results[absIdx];
-
-        const relativeCapValue = relResult.status === 'success' ? (relResult.result as bigint) : 0n;
-        const absoluteCapValue = absResult.status === 'success' ? (absResult.result as bigint) : 0n;
-
-        // Skip caps where both values are zero (removed or unset)
-        if (relativeCapValue === 0n && absoluteCapValue === 0n) continue;
-
-        const cap: VaultV2Cap = {
-          capId: capEntries[i].capId,
-          idParams: capEntries[i].idParams,
-          relativeCap: relativeCapValue.toString(),
-          absoluteCap: absoluteCapValue.toString(),
-        };
-
+      for (const cap of caps) {
         const parsed = parseCapIdParams(cap.idParams);
         if (parsed.type === 'adapter') {
           adapterCap = cap;
-        } else if (parsed.type === 'collateral') {
+          continue;
+        }
+        if (parsed.type === 'collateral') {
           collateralCaps.push(cap);
-        } else if (parsed.type === 'market') {
+          continue;
+        }
+        if (parsed.type === 'market') {
           marketCaps.push(cap);
         }
       }
 
-      // Filter active adapters
-      const activeAdapters: string[] = [];
-      for (let i = 0; i < adapterAddresses.length; i++) {
-        const r = results[adapterOffset + i];
-        if (r.status === 'success' && r.result === true) {
-          activeAdapters.push(adapterAddresses[i]);
-        }
-      }
-
-      // Resolve token metadata
-      const assetAddress = rpcAsset !== zeroAddress ? rpcAsset : (apiResult?.asset ?? '');
+      const assetAddress = monarchVault?.asset || rpcFallback?.assetAddress || '';
       const token = assetAddress ? findToken(assetAddress, chainId) : undefined;
       const tokenSymbol = token?.symbol ?? '--';
       const tokenDecimals = token?.decimals ?? 18;
+      const curator = monarchVault?.curator || rpcFallback?.curator || '';
+      const capsData = monarchVault
+        ? {
+            adapterCap,
+            collateralCaps,
+            marketCaps,
+            needSetupCaps: !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0,
+          }
+        : undefined;
 
-      // Curator display
-      const curatorAddr = rpcCurator !== zeroAddress ? rpcCurator : (apiResult?.curator ?? '');
-      const curatorDisplay = curatorAddr ? getSlicedAddress(curatorAddr as Address) : '--';
-
-      // Sentinels come from API only (not cached, not critical for post-init flow)
-      const sentinels = apiResult?.sentinels ?? [];
-
-      const needSetupCaps = !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0;
-
-      const vaultData: VaultV2Data = {
-        displayName: rpcName || apiResult?.name || fallbackName,
-        displaySymbol: rpcSymbol || apiResult?.symbol || fallbackSymbol,
+      return {
+        displayName: monarchVault?.name || '',
+        displaySymbol: monarchVault?.symbol || '',
         assetAddress,
         tokenSymbol,
         tokenDecimals,
-        allocators: activeAllocators,
-        sentinels,
-        owner: rpcOwner !== zeroAddress ? rpcOwner : (apiResult?.owner ?? ''),
-        curator: curatorAddr,
-        capsData: {
-          adapterCap,
-          collateralCaps,
-          marketCaps,
-          needSetupCaps,
-        },
-        adapters: activeAdapters,
-        curatorDisplay,
-      };
-
-      return vaultData;
+        allocators: monarchVault?.allocators ?? [],
+        sentinels: monarchVault?.sentinels ?? [],
+        owner: monarchVault?.owner || rpcFallback?.owner || '',
+        curator,
+        capsData,
+        adapters: monarchVault?.adapters ?? rpcFallback?.adapters ?? [],
+        adapterDetails: monarchVault?.adapterDetails ?? [],
+        curatorDisplay: curator ? getSlicedAddress(curator as Address) : '--',
+      } satisfies VaultV2Data;
     },
-    enabled: Boolean(vaultAddress),
-    staleTime: 30_000, // 30 seconds - data is cacheable across components
+    enabled: Boolean(normalizedVaultAddress),
+    staleTime: 30_000,
   });
 
   return query;

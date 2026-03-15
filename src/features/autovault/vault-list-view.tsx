@@ -7,15 +7,32 @@ import { GearIcon } from '@radix-ui/react-icons';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
 import { useAppKit } from '@reown/appkit/react';
+import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import Header from '@/components/layout/header/Header';
-import { fetchUserVaultV2AddressesAllNetworks } from '@/data-sources/subgraph/v2-vaults';
+import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { formatCompactTokenAmount } from '@/utils/token-amount-format';
+import { getNetworkName } from '@/utils/networks';
 import { getDeployedVaults } from '@/utils/vault-storage';
 import { DeploymentModal } from './components/deployment/deployment-modal';
 import { SectionTag, FeatureCard } from '@/components/landing';
+
+type VaultListItem = {
+  address: string;
+  asset?: string;
+  name?: string;
+  networkId: number;
+  symbol?: string;
+  totalAssets?: bigint;
+};
+
+const getVaultLabel = (vault: VaultListItem): string => {
+  return vault.name?.trim() || vault.symbol?.trim() || `${vault.address.slice(0, 6)}...${vault.address.slice(-4)}`;
+};
 
 // Skeleton component for loading state
 function PageSkeleton() {
@@ -49,51 +66,21 @@ export default function AutovaultListContent() {
   const router = useRouter();
   const { open } = useAppKit();
   const { isConnected, address } = useConnection();
+  const { findToken } = useTokensQuery();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
-  const [vaultAddresses, setVaultAddresses] = useState<{ address: string; networkId: number }[]>([]);
-  const [vaultsLoading, setVaultsLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
-  // Fetch vault addresses from subgraph (simple, fast, works for uninitialized vaults)
-  useEffect(() => {
-    if (!address || !isConnected) {
-      setVaultAddresses([]);
-      setFetchError(null);
-      return;
-    }
-
-    const fetchVaults = async () => {
-      setVaultsLoading(true);
-      setFetchError(null);
-      try {
-        const addresses = await fetchUserVaultV2AddressesAllNetworks(address);
-        setVaultAddresses(addresses);
-      } catch (_error) {
-        setFetchError('Unable to load vaults. Please try again.');
-        // Keep existing vault addresses if we had them (don't clear on error)
-      } finally {
-        setVaultsLoading(false);
-      }
-    };
-
-    void fetchVaults();
-  }, [address, isConnected]);
-
-  const handleRetryFetch = () => {
-    if (address && isConnected) {
-      setVaultsLoading(true);
-      setFetchError(null);
-      fetchUserVaultV2AddressesAllNetworks(address)
-        .then((addresses) => setVaultAddresses(addresses))
-        .catch(() => setFetchError('Unable to load vaults. Please try again.'))
-        .finally(() => setVaultsLoading(false));
-    }
-  };
+  const userVaultsQuery = useUserVaultsV2Query({
+    userAddress: address as Address | undefined,
+    enabled: hasMounted && isConnected && Boolean(address),
+    includeApy: false,
+    includeBalances: false,
+    includeTotalAssets: true,
+  });
 
   const handleConnect = () => {
     open();
@@ -103,42 +90,65 @@ export default function AutovaultListContent() {
     setShowDeploymentModal(true);
   };
 
-  // Merge locally stored vaults with API results (filtered by connected address)
-  const mergedVaultAddresses = useMemo(() => {
-    const apiVaults = vaultAddresses;
+  // Merge locally stored vaults with Monarch details for optimistic post-deploy visibility.
+  const mergedVaults = useMemo<VaultListItem[]>(() => {
+    const indexedVaults = userVaultsQuery.data ?? [];
     // Only get locally stored vaults for the currently connected address
     const localVaults = address ? getDeployedVaults(address) : [];
 
-    // Create a map of existing vaults by address+chainId for quick lookup
-    const existingVaults = new Set(apiVaults.map((v) => `${v.address.toLowerCase()}-${v.networkId}`));
+    const combined: VaultListItem[] = indexedVaults.map((vault) => ({
+      address: vault.address.toLowerCase(),
+      asset: vault.asset,
+      name: vault.name,
+      networkId: vault.networkId,
+      symbol: vault.symbol,
+      totalAssets: vault.totalAssets,
+    }));
+    const existingVaults = new Set(combined.map((vault) => `${vault.address.toLowerCase()}-${vault.networkId}`));
 
-    // Add local vaults that aren't in API results yet
-    const combined = [...apiVaults];
     for (const localVault of localVaults) {
       const key = `${localVault.address.toLowerCase()}-${localVault.chainId}`;
       if (!existingVaults.has(key)) {
         combined.push({
-          address: localVault.address,
+          address: localVault.address.toLowerCase(),
+          asset: undefined,
+          name: undefined,
           networkId: localVault.chainId,
+          symbol: undefined,
         });
       }
     }
 
     return combined;
-  }, [vaultAddresses, address]);
+  }, [address, userVaultsQuery.data]);
 
-  const handleManageVault = (vaultAddress?: string, networkId?: number) => {
-    if (vaultAddress && networkId) {
-      router.push(`/autovault/${networkId}/${vaultAddress}`);
-    } else if (mergedVaultAddresses.length > 0) {
-      const firstVault = mergedVaultAddresses[0];
-      router.push(`/autovault/${firstVault.networkId}/${firstVault.address}`);
-    }
+  const handleManageVault = (vaultAddress: string, networkId: number) => {
+    router.push(`/autovault/${networkId}/${vaultAddress}`);
   };
 
-  const hasVaults = mergedVaultAddresses.length > 0;
-  const hasSingleVault = mergedVaultAddresses.length === 1;
-  const hasMultipleVaults = mergedVaultAddresses.length > 1;
+  const hasVaults = mergedVaults.length > 0;
+  const hasSingleVault = mergedVaults.length === 1;
+  const hasMultipleVaults = mergedVaults.length > 1;
+  const fetchError = userVaultsQuery.error ? 'Unable to load vaults. Please try again.' : null;
+  const vaultsLoading = userVaultsQuery.isLoading;
+  const primaryVault = mergedVaults[0] ?? null;
+
+  const getVaultSecondaryLabel = (vault: VaultListItem): string => {
+    const token = vault.asset ? findToken(vault.asset, vault.networkId) : undefined;
+    const amountLabel =
+      token && vault.totalAssets !== undefined ? `${formatCompactTokenAmount(vault.totalAssets, token.decimals)} ${token.symbol}` : null;
+    const networkLabel = getNetworkName(vault.networkId) ?? `Chain ${vault.networkId}`;
+
+    if (amountLabel) {
+      return `${amountLabel} · ${networkLabel}`;
+    }
+
+    if (token?.symbol) {
+      return `${token.symbol} · ${networkLabel}`;
+    }
+
+    return `${networkLabel} · Indexing`;
+  };
 
   return (
     <div className="bg-main min-h-screen font-zen relative flex flex-col">
@@ -165,10 +175,10 @@ export default function AutovaultListContent() {
             <Button
               variant="default"
               size="sm"
-              onClick={handleRetryFetch}
-              disabled={vaultsLoading}
+              onClick={() => void userVaultsQuery.refetch()}
+              disabled={userVaultsQuery.isRefetching}
             >
-              {vaultsLoading ? 'Retrying...' : 'Retry'}
+              {userVaultsQuery.isRefetching ? 'Retrying...' : 'Retry'}
             </Button>
           </div>
         )}
@@ -190,40 +200,49 @@ export default function AutovaultListContent() {
               {isConnected && hasVaults && (
                 <div className="flex items-center justify-center gap-3 pt-6">
                   {/* Single vault - show avatar with address */}
-                  {hasSingleVault && (
+                  {hasSingleVault && primaryVault && (
                     <Button
                       variant="primary"
                       size="lg"
-                      className="font-zen px-6"
-                      onClick={() => handleManageVault()}
+                      className="font-zen h-auto px-6 py-3"
+                      onClick={() => handleManageVault(primaryVault.address, primaryVault.networkId)}
                     >
                       <Avatar
-                        address={mergedVaultAddresses[0].address as `0x${string}`}
+                        address={primaryVault.address as `0x${string}`}
                         size={20}
                       />
-                      <span className="ml-2">Manage {mergedVaultAddresses[0].address.slice(0, 6)}</span>
+                      <div className="ml-3 flex min-w-0 flex-col items-start text-left leading-tight">
+                        <span className="truncate">Manage {getVaultLabel(primaryVault)}</span>
+                        <span className="truncate text-[11px] opacity-80">{getVaultSecondaryLabel(primaryVault)}</span>
+                      </div>
                     </Button>
                   )}
 
                   {/* Multiple vaults - show dropdown */}
-                  {hasMultipleVaults && (
+                  {hasMultipleVaults && primaryVault && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="primary"
                           size="lg"
-                          className="font-zen px-6"
+                          className="font-zen h-auto px-6 py-3"
                         >
                           <Avatar
-                            address={mergedVaultAddresses[0].address as `0x${string}`}
+                            address={primaryVault.address as `0x${string}`}
                             size={20}
                           />
-                          <span className="ml-2">Manage {mergedVaultAddresses[0].address.slice(0, 6)}</span>
+                          <div className="ml-3 flex min-w-0 flex-col items-start text-left leading-tight">
+                            <span className="truncate">Manage {getVaultLabel(primaryVault)}</span>
+                            <span className="truncate text-[11px] opacity-80">{`${getVaultSecondaryLabel(primaryVault)} · ${mergedVaults.length} vaults`}</span>
+                          </div>
                           <ChevronDownIcon className="ml-2 h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="center">
-                        {mergedVaultAddresses.map((vault) => (
+                      <DropdownMenuContent
+                        align="center"
+                        className="min-w-72"
+                      >
+                        {mergedVaults.map((vault) => (
                           <DropdownMenuItem
                             key={`${vault.networkId}-${vault.address}`}
                             onClick={() => handleManageVault(vault.address, vault.networkId)}
@@ -235,7 +254,10 @@ export default function AutovaultListContent() {
                               />
                             }
                           >
-                            {vault.address.slice(0, 6)}
+                            <div className="flex min-w-0 flex-col">
+                              <span className="truncate">{getVaultLabel(vault)}</span>
+                              <span className="truncate text-[11px] text-secondary">{getVaultSecondaryLabel(vault)}</span>
+                            </div>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>

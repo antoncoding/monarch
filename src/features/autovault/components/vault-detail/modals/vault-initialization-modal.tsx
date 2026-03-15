@@ -2,26 +2,25 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiZap } from 'react-icons/fi';
-import { type Address, zeroAddress, decodeEventLog } from 'viem';
+import { type Address, zeroAddress } from 'viem';
 import { useParams } from 'next/navigation';
-import { useConnection, usePublicClient } from 'wagmi';
+import { usePublicClient } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AllocatorCard } from '@/components/shared/allocator-card';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/ui/spinner';
-import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
-import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
+import { useDeployMorphoMarketAdapter } from '@/hooks/useDeployMorphoMarketAdapter';
+import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
+import { useVaultQueryRefresh } from '@/hooks/useVaultQueryRefresh';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
-import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { v2AgentsBase } from '@/utils/monarch-agent';
-import { getMorphoAddress } from '@/utils/morpho';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 const ZERO_ADDRESS = zeroAddress;
+const MORPHO_MARKET_ADAPTER_V2_CREATED_TOPIC = '0x2d5aa62fff752ff7caa68d3c82c1ae04ccb2053bd3be0ffee086953f6adc894e';
 const shortenAddress = (value: Address | string) => (value === ZERO_ADDRESS ? '0x0000…0000' : `${value.slice(0, 6)}…${value.slice(-4)}`);
 
 const STEP_SEQUENCE = ['deploy', 'metadata', 'agents', 'finalize'] as const;
@@ -191,7 +190,6 @@ const MAX_SYMBOL_LENGTH = 16;
 export function VaultInitializationModal() {
   // Modal state from Zustand (UI state)
   const { isOpen, close } = useVaultInitializationModalStore();
-  const { address: connectedAccount } = useConnection();
 
   // Get vault address and chain ID from URL params
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -208,9 +206,6 @@ export function VaultInitializationModal() {
     }
     return SupportedNetworks.Base;
   }, [chainIdParam]);
-
-  // Cache for pushing known keys after init (instant RPC data on next refetch)
-  const { addAllocators, addAdapters } = useVaultKeysCache(vaultAddress, chainId);
 
   // Fetch vault data
   const vaultDataQuery = useVaultV2Data({
@@ -231,9 +226,13 @@ export function VaultInitializationModal() {
   });
 
   const { completeInitialization, isInitializing } = vaultContract;
+  const { refetch: refetchVaultQueries } = useVaultQueryRefresh({
+    vaultAddress: vaultAddressValue,
+    chainId,
+  });
 
   // Fetch adapter
-  const { morphoMarketV1Adapter: marketAdapter, refetch: refetchAdapter } = useMorphoMarketV1Adapters({
+  const { primaryAdapter: marketAdapter, refetch: refetchAdapter } = useMorphoMarketAdapters({
     vaultAddress: vaultAddressValue,
     chainId,
   });
@@ -246,73 +245,49 @@ export function VaultInitializationModal() {
   const currentStep = STEP_SEQUENCE[stepIndex];
 
   const publicClient = usePublicClient({ chainId });
-
-  const morphoAddress = useMemo(() => (chainId ? getMorphoAddress(chainId) : ZERO_ADDRESS), [chainId]);
   const registryAddress = useMemo(() => {
     if (!chainId) return ZERO_ADDRESS;
     const configured = getNetworkConfig(chainId).vaultConfig?.morphoRegistry;
     return (configured as Address | undefined) ?? ZERO_ADDRESS;
   }, [chainId]);
 
-  // Adapter is detected if it exists in the subgraph OR we just deployed it
-  const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : (marketAdapter ?? ZERO_ADDRESS);
+  // Adapter is detected if Monarch has indexed it or we just deployed it locally.
+  const adapterAddress = deployedAdapter === ZERO_ADDRESS ? (marketAdapter ?? ZERO_ADDRESS) : deployedAdapter;
   const adapterDetected = adapterAddress !== ZERO_ADDRESS;
 
-  const { deploy, isDeploying, canDeploy } = useDeployMorphoMarketV1Adapter({
+  const { deploy, isDeploying, canDeploy, factoryAddress } = useDeployMorphoMarketAdapter({
     vaultAddress: vaultAddressValue,
     chainId,
-    morphoAddress,
   });
 
   const handleDeploy = useCallback(async () => {
-    if (!publicClient) return;
+    if (!publicClient || !factoryAddress) return;
 
     try {
-      // Execute deployment and get transaction hash
       const txHash = await deploy();
-
       if (!txHash) {
         return;
       }
 
-      // Wait for transaction receipt
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+      void refetchAdapter();
 
-      // Parse CreateMorphoMarketV1Adapter event to get adapter address
       const createEvent = receipt.logs.find((log) => {
-        try {
-          const decoded = decodeEventLog({
-            abi: adapterFactoryAbi,
-            data: log.data,
-            topics: log.topics,
-          });
-          return decoded.eventName === 'CreateMorphoMarketV1Adapter';
-        } catch {
+        if (log.address.toLowerCase() !== factoryAddress.toLowerCase()) {
           return false;
         }
+        return log.topics[0] === MORPHO_MARKET_ADAPTER_V2_CREATED_TOPIC && Boolean(log.topics[2]);
       });
 
-      if (createEvent) {
-        const decoded = decodeEventLog({
-          abi: adapterFactoryAbi,
-          data: createEvent.data,
-          topics: createEvent.topics,
-        });
-
-        // Extract adapter address from event
-        const adapter = (decoded.args as any).morphoMarketV1Adapter as Address;
-        setDeployedAdapter(adapter);
-
-        // Trigger refetch for subgraph sync
-        void refetchAdapter();
-
-        // Auto-advance to next step
+      if (createEvent && createEvent.topics[2]) {
+        const adapter = `0x${createEvent.topics[2].slice(-40)}` as Address;
+        setDeployedAdapter(adapter.toLowerCase() as Address);
         setStepIndex(1);
       }
     } catch (_error) {
-      // Error is handled by useDeployMorphoMarketV1Adapter hook
+      // Error is handled by useDeployMorphoMarketAdapter hook
     }
-  }, [deploy, publicClient, refetchAdapter]);
+  }, [deploy, factoryAddress, publicClient, refetchAdapter]);
 
   const handleCompleteInitialization = useCallback(async () => {
     if (adapterAddress === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS || !vaultAddress || !chainId) return;
@@ -331,25 +306,7 @@ export function VaultInitializationModal() {
         return;
       }
 
-      // Push known keys to cache so RPC fetches them instantly on next refetch
-      const allocatorsToCache: string[] = [];
-      if (connectedAccount) {
-        allocatorsToCache.push(connectedAccount);
-      }
-      if (selectedAgent) {
-        allocatorsToCache.push(selectedAgent);
-      }
-      if (allocatorsToCache.length > 0) {
-        addAllocators(allocatorsToCache);
-      }
-      if (adapterAddress !== ZERO_ADDRESS) {
-        addAdapters([adapterAddress]);
-      }
-
-      // Trigger refetch — cache keys are now available, RPC will return fresh data
-      void vaultDataQuery.refetch();
-      void vaultContract.refetch();
-      void refetchAdapter();
+      await refetchVaultQueries({ includeRetries: true });
 
       close();
     } catch (_error) {
@@ -357,13 +314,8 @@ export function VaultInitializationModal() {
     }
   }, [
     completeInitialization,
-    vaultDataQuery,
-    vaultContract,
-    refetchAdapter,
     close,
-    addAllocators,
-    addAdapters,
-    connectedAccount,
+    refetchVaultQueries,
     registryAddress,
     selectedAgent,
     adapterAddress,
@@ -385,12 +337,14 @@ export function VaultInitializationModal() {
     }
   }, [isOpen]);
 
-  // Auto-advance when adapter already exists (from subgraph)
+  // Auto-advance when adapter already exists in Monarch data.
   useEffect(() => {
-    if (marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
+    if (marketAdapter != null && marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
       setStepIndex(1);
     }
   }, [marketAdapter, stepIndex, deployedAdapter]);
+
+  const canCompleteInitialization = adapterAddress !== ZERO_ADDRESS && registryAddress !== ZERO_ADDRESS;
 
   const stepTitle = useMemo(() => {
     switch (currentStep) {
@@ -462,7 +416,7 @@ export function VaultInitializationModal() {
       <Button
         variant="primary"
         className="min-w-[170px]"
-        disabled={isInitializing}
+        disabled={isInitializing || !canCompleteInitialization}
         onClick={() => void handleCompleteInitialization()}
       >
         {isInitializing ? (

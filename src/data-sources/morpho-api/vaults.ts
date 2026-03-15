@@ -1,5 +1,10 @@
-import { allVaultsQuery } from '@/graphql/vault-queries';
+import { allVaultsQuery, vaultApysQuery } from '@/graphql/vault-queries';
 import { morphoGraphqlFetcher } from './fetchers';
+
+type VaultAddressByNetwork = {
+  address: string;
+  networkId: number;
+};
 
 // Constants for Morpho vault fetching
 const MORPHO_SUPPORTED_CHAIN_IDS = [1, 8453, 999, 137, 42_161, 130];
@@ -22,6 +27,7 @@ type ApiVault = {
     id: number;
   };
   name: string;
+  avgApy?: number | null;
   state: {
     totalAssets: string;
   };
@@ -39,6 +45,17 @@ type AllVaultsApiResponse = {
   };
   errors?: { message: string }[];
 };
+
+type VaultApysApiResponse = {
+  data?: {
+    vaults?: {
+      items?: Pick<ApiVault, 'address' | 'avgApy' | 'chain'>[];
+    };
+  };
+  errors?: { message: string }[];
+};
+
+const getVaultApyKey = (address: string, chainId: number) => `${address.toLowerCase()}-${chainId}`;
 
 /**
  * Transforms API vault response to internal MorphoVault format
@@ -86,5 +103,46 @@ export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
   } catch (error) {
     console.error('Error fetching all Morpho vaults:', error);
     return [];
+  }
+};
+
+export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Promise<Map<string, number>> => {
+  if (vaults.length === 0) {
+    return new Map();
+  }
+
+  const requestedKeys = new Set(vaults.map((vault) => getVaultApyKey(vault.address, vault.networkId)));
+
+  try {
+    const response = await morphoGraphqlFetcher<VaultApysApiResponse>(vaultApysQuery, {
+      first: vaults.length,
+      where: {
+        address_in: vaults.map((vault) => vault.address.toLowerCase()),
+        chainId_in: [...new Set(vaults.map((vault) => vault.networkId))],
+      },
+    });
+
+    if (!response) {
+      return new Map();
+    }
+
+    const items = response.data?.vaults?.items ?? [];
+    const apys = new Map<string, number>();
+
+    for (const vault of items) {
+      const key = getVaultApyKey(vault.address, vault.chain.id);
+      if (vault.avgApy === null || vault.avgApy === undefined) {
+        continue;
+      }
+      if (!requestedKeys.has(key)) {
+        continue;
+      }
+      apys.set(key, vault.avgApy);
+    }
+
+    return apys;
+  } catch (error) {
+    console.warn('Error fetching Morpho vault APYs:', error);
+    return new Map();
   }
 };

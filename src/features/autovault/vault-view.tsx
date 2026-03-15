@@ -8,9 +8,10 @@ import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
+import { useVaultQueryRefresh } from '@/hooks/useVaultQueryRefresh';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
-import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
+import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
 import { getSlicedAddress } from '@/utils/address';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { parseCapIdParams } from '@/utils/morpho';
@@ -67,7 +68,7 @@ export default function VaultContent() {
     connectedAddress,
     onTransactionSuccess: vaultDataQuery.refetch,
   });
-  const adapterQuery = useMorphoMarketV1Adapters({ vaultAddress: vaultAddressValue, chainId });
+  const adapterQuery = useMorphoMarketAdapters({ vaultAddress: vaultAddressValue, chainId });
 
   // Only use useVaultPage for complex computed state
   const { vaultAPY, isVaultInitialized, needsInitialization } = useVaultPage({
@@ -75,18 +76,17 @@ export default function VaultContent() {
     chainId,
     connectedAddress,
   });
-
-  const refetchVaultData = vaultDataQuery.refetch;
-  const refetchVaultContract = vaultContract.refetch;
-  const refetchAdapters = adapterQuery.refetch;
+  const { refetch: refetchVaultQueries, isRefetching: isRefetchingVaultQueries } = useVaultQueryRefresh({
+    vaultAddress: vaultAddressValue,
+    chainId,
+  });
 
   const handleRefreshVault = useCallback(() => {
-    void refetchVaultData();
-    void refetchVaultContract();
-    void refetchAdapters();
-  }, [refetchVaultData, refetchVaultContract, refetchAdapters]);
+    void vaultContract.refetch();
+    void refetchVaultQueries({ includeRetries: true });
+  }, [refetchVaultQueries, vaultContract]);
 
-  const isRefetching = vaultDataQuery.isRefetching || vaultContract.isRefetching || adapterQuery.isRefetching;
+  const isRefetching = vaultDataQuery.isRefetching || vaultContract.isRefetching || adapterQuery.isRefetching || isRefetchingVaultQueries;
 
   // Extract minimal data for vault-view rendering
   const vaultData = vaultDataQuery.data;
@@ -97,7 +97,7 @@ export default function VaultContent() {
   const tokenDecimals = vaultData?.tokenDecimals;
   const tokenSymbol = vaultData?.tokenSymbol;
   const assetAddress = vaultData?.assetAddress as Address | undefined;
-  const adapterAddress = adapterQuery.morphoMarketV1Adapter as Address | undefined;
+  const adapterAddress = adapterQuery.primaryAdapter;
 
   const adapterPortfolioHref = useMemo(() => {
     if (!adapterAddress || !assetAddress) return undefined;
@@ -109,9 +109,9 @@ export default function VaultContent() {
   const { open: openInitialization } = useVaultInitializationModalStore();
 
   // Computed state flags for vault-view banners
-  const hasNoAllocators = (vaultData?.allocators ?? []).length === 0;
-  const capsUninitialized =
-    !vaultData?.capsData || (vaultData.capsData.collateralCaps.length === 0 && vaultData.capsData.marketCaps.length === 0);
+  const hasNoAllocators = Boolean(vaultData?.capsData) && (vaultData?.allocators ?? []).length === 0;
+  const capsUninitialized = vaultData?.capsData?.needSetupCaps === true;
+  const capsInitialized = vaultData?.capsData?.needSetupCaps === false;
 
   // Format APY for APY card in vault-view
   const apyLabel = useMemo(() => {
@@ -149,7 +149,7 @@ export default function VaultContent() {
 
   // Extract collateral addresses from caps for header
   const collateralAddresses = useMemo(() => {
-    return (vaultData?.capsData.collateralCaps ?? [])
+    return (vaultData?.capsData?.collateralCaps ?? [])
       .map((cap) => {
         const addr = parseCapIdParams(cap.idParams).collateralToken;
         if (!addr) return null;
@@ -161,7 +161,7 @@ export default function VaultContent() {
         };
       })
       .filter((c): c is { address: Address; symbol: string; amount: number } => !!c);
-  }, [vaultData?.capsData.collateralCaps, findToken, chainId]);
+  }, [vaultData?.capsData?.collateralCaps, findToken, chainId]);
 
   const handleDeposit = useCallback(() => {
     if (!assetAddress || !tokenSymbol || tokenDecimals === undefined) return;
@@ -238,7 +238,7 @@ export default function VaultContent() {
           />
 
           {/* Setup Banner - Show if vault needs initialization */}
-          {needsInitialization && vaultContract.isOwner && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
+          {needsInitialization && vaultContract.isOwner && networkConfig?.vaultConfig?.marketAdapterFactory && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Complete vault setup</p>
@@ -302,7 +302,7 @@ export default function VaultContent() {
           />
 
           {/* Transaction History Preview - only show when vault is fully set up */}
-          {adapterAddress && isVaultInitialized && !capsUninitialized && (
+          {adapterAddress && isVaultInitialized && capsInitialized && (
             <TransactionHistoryPreview
               account={adapterAddress}
               chainId={chainId}
@@ -321,7 +321,7 @@ export default function VaultContent() {
       </div>
 
       {/* Initialization Modal - Pulls own data from URL params */}
-      {networkConfig?.vaultConfig?.marketV1AdapterFactory && <VaultInitializationModal />}
+      {networkConfig?.vaultConfig?.marketAdapterFactory && <VaultInitializationModal />}
     </div>
   );
 }

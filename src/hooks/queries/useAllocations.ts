@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { Address } from 'viem';
 import { useQuery } from '@tanstack/react-query';
 import { vaultv2Abi } from '@/abis/vaultv2';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 
@@ -20,6 +20,8 @@ type UseAllocationsArgs = {
 };
 
 export function useAllocationsQuery({ vaultAddress, chainId, caps = [], enabled = true }: UseAllocationsArgs) {
+  const normalizedVaultAddress = vaultAddress?.toLowerCase() as Address | undefined;
+
   // Create a stable key from capIds to detect actual changes
   const capsKey = useMemo(() => {
     return caps
@@ -29,15 +31,15 @@ export function useAllocationsQuery({ vaultAddress, chainId, caps = [], enabled 
   }, [caps]);
 
   const query = useQuery({
-    queryKey: ['vault-allocations', vaultAddress, chainId, capsKey],
+    queryKey: ['vault-allocations', normalizedVaultAddress, chainId, capsKey],
     queryFn: async () => {
-      if (!vaultAddress || caps.length === 0) {
+      if (!normalizedVaultAddress || caps.length === 0) {
         return [];
       }
 
       const client = getClient(chainId);
       const contracts = caps.map((cap) => ({
-        address: vaultAddress,
+        address: normalizedVaultAddress,
         abi: vaultv2Abi,
         functionName: 'allocation' as const,
         args: [cap.capId as `0x${string}`],
@@ -51,7 +53,7 @@ export function useAllocationsQuery({ vaultAddress, chainId, caps = [], enabled 
         cap,
       }));
     },
-    enabled: enabled && Boolean(vaultAddress) && caps.length > 0,
+    enabled: enabled && Boolean(normalizedVaultAddress) && caps.length > 0,
     staleTime: 30_000, // 30 seconds - allocation data is cacheable
   });
 

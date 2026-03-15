@@ -8,10 +8,10 @@ import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import Input from '@/components/Input/Input';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
+import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
-import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketAllocation } from '@/types/vaultAllocations';
@@ -47,7 +47,7 @@ export function VaultWithdrawModal({
   // Fetch vault data
   const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
   const { marketAllocations, loading: allocationsLoading } = useVaultAllocations({ vaultAddress, chainId });
-  const { morphoMarketV1Adapter, isLoading: adaptersLoading } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
+  const { primaryAdapter, isLoading: adaptersLoading } = useMorphoMarketAdapters({ vaultAddress, chainId });
 
   // Vault hook for transactions
   const { withdrawFromMarket, isWithdrawing, isOwner } = useVaultV2({
@@ -90,13 +90,13 @@ export function VaultWithdrawModal({
 
   // Handle withdraw
   const handleWithdraw = useCallback(async () => {
-    if (!connectedAddress || !selectedMarket || !morphoMarketV1Adapter) return;
+    if (!connectedAddress || !selectedMarket || !primaryAdapter) return;
 
     // Determine if we need to set self as allocator
     const needsAllocatorSetup = isOwner && !isAllocator;
 
-    await withdrawFromMarket(withdrawAmount, connectedAddress, selectedMarket.market, morphoMarketV1Adapter, needsAllocatorSetup);
-  }, [connectedAddress, selectedMarket, morphoMarketV1Adapter, isOwner, isAllocator, withdrawFromMarket, withdrawAmount]);
+    await withdrawFromMarket(withdrawAmount, connectedAddress, selectedMarket.market, primaryAdapter, needsAllocatorSetup);
+  }, [connectedAddress, selectedMarket, isOwner, isAllocator, withdrawFromMarket, withdrawAmount, primaryAdapter]);
 
   const isLoading = allocationsLoading || adaptersLoading;
 
@@ -185,13 +185,18 @@ export function VaultWithdrawModal({
                       exceedMaxErrMessage="Exceeds available amount"
                     />
                     {inputError && <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>}
+                    {!primaryAdapter && (
+                      <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
+                        Vault adapter unavailable. Refresh and try again.
+                      </p>
+                    )}
                   </div>
 
                   <ExecuteTransactionButton
                     targetChainId={chainId}
                     onClick={handleWithdraw}
                     isLoading={isWithdrawing}
-                    disabled={inputError !== null || !withdrawAmount || withdrawAmount === 0n}
+                    disabled={!primaryAdapter || inputError !== null || !withdrawAmount || withdrawAmount === 0n}
                     variant="primary"
                     className="ml-2 min-w-32"
                   >

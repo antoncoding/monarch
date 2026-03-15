@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { Address } from 'viem';
 import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';

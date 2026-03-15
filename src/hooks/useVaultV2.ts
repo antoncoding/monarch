@@ -1,15 +1,15 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, zeroAddress, toFunctionSelector } from 'viem';
+import { type Address, encodeFunctionData, zeroAddress } from 'viem';
 import { useQueryClient } from '@tanstack/react-query';
 import { useConnection, useChainId, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import type { SupportedNetworks } from '@/utils/networks';
+import { MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS, refetchVaultQueryData } from './useVaultQueryRefresh';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
 import { findAgent } from '@/utils/monarch-agent';
-import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 
 export type PerformanceFeeConfig = {
   fee: bigint;
@@ -74,7 +74,6 @@ export function useVaultV2({
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
   const { address: account } = useConnection();
   const queryClient = useQueryClient();
-  const { addAllocators: cacheAllocators, addCaps: cacheCaps } = useVaultKeysCache(vaultAddress, chainIdToUse);
 
   const vaultContract = {
     address: vaultAddress ?? zeroAddress,
@@ -102,18 +101,6 @@ export function useVaultV2({
         args: [],
       },
       {
-        // name
-        ...vaultContract,
-        functionName: 'name',
-        args: [],
-      },
-      {
-        // symbol
-        ...vaultContract,
-        functionName: 'symbol',
-        args: [],
-      },
-      {
         // totalAssets
         ...vaultContract,
         functionName: 'totalAssets',
@@ -137,15 +124,13 @@ export function useVaultV2({
     },
   });
 
-  const [owner, curator, name, symbol, totalAssets, userShares, totalSupply] = useMemo(() => {
+  const [owner, curator, totalAssets, userShares, totalSupply] = useMemo(() => {
     return [
       batchData?.[0].result ?? zeroAddress,
       batchData?.[1].result ?? zeroAddress,
-      batchData?.[2].result ?? '',
-      batchData?.[3].result ?? '',
+      batchData?.[2].result ?? 0n,
+      batchData?.[3].result ?? 0n,
       batchData?.[4].result ?? 0n,
-      batchData?.[5].result ?? 0n,
-      batchData?.[6].result ?? 0n,
     ];
   }, [batchData]);
 
@@ -154,6 +139,19 @@ export function useVaultV2({
     if (!connectedAddress || userShares === 0n || totalSupply === 0n) return undefined;
     return (userShares * totalAssets) / totalSupply;
   }, [connectedAddress, userShares, totalAssets, totalSupply]);
+
+  const refreshVaultStateAfterTransaction = useCallback(
+    (includeMonarchRetries: boolean) => {
+      void refetchAll();
+      void refetchVaultQueryData(queryClient, {
+        vaultAddress,
+        chainId: chainIdToUse,
+        retryDelaysMs: includeMonarchRetries ? MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS : undefined,
+      });
+      onTransactionSuccess?.();
+    },
+    [chainIdToUse, onTransactionSuccess, queryClient, refetchAll, vaultAddress],
+  );
 
   const { isConfirming: isInitializing, sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
     toastId: `init-${vaultAddress ?? 'unknown'}`,
@@ -164,9 +162,7 @@ export function useVaultV2({
     successDescription: 'Vault is ready to use',
     chainId: chainIdToUse,
     onSuccess: () => {
-      void refetchAll();
-      void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
-      onTransactionSuccess?.();
+      refreshVaultStateAfterTransaction(true);
     },
   });
 
@@ -178,7 +174,9 @@ export function useVaultV2({
     pendingDescription: 'Applying new name and symbol',
     successDescription: 'Vault metadata saved',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(true);
+    },
   });
 
   const { isConfirming: isUpdatingAllocator, sendTransactionAsync: sendAllocatorTx } = useTransactionWithToast({
@@ -189,7 +187,9 @@ export function useVaultV2({
     pendingDescription: 'Updating allocator status',
     successDescription: 'Allocator status changed',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(true);
+    },
   });
 
   const { isConfirming: isSwappingAllocator, sendTransactionAsync: sendSwapAllocatorTx } = useTransactionWithToast({
@@ -200,7 +200,9 @@ export function useVaultV2({
     pendingDescription: 'Changing from old to new allocator',
     successDescription: 'Allocators swapped successfully',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(true);
+    },
   });
 
   const { isConfirming: isUpdatingCaps, sendTransactionAsync: sendCapsTx } = useTransactionWithToast({
@@ -211,13 +213,15 @@ export function useVaultV2({
     pendingDescription: 'Applying new market caps',
     successDescription: 'Caps updated successfully',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(true);
+    },
   });
 
   // All morpho v2 vault operations have to be proposed first, and then execute
   const completeInitialization = useCallback(
-    async (morphoRegistry: Address, marketV1Adapter: Address, allocator?: Address, _name?: string, _symbol?: string): Promise<boolean> => {
-      if (!account || !vaultAddress || marketV1Adapter === zeroAddress) return false;
+    async (morphoRegistry: Address, marketAdapter: Address, allocator?: Address, _name?: string, _symbol?: string): Promise<boolean> => {
+      if (!account || !vaultAddress || marketAdapter === zeroAddress) return false;
 
       const txs: `0x${string}`[] = [];
 
@@ -269,7 +273,7 @@ export function useVaultV2({
       const addAdapterTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'addAdapter',
-        args: [marketV1Adapter],
+        args: [marketAdapter],
       });
 
       const submitAddAdapterTx = encodeFunctionData({
@@ -285,21 +289,21 @@ export function useVaultV2({
 
       // Note: do not do this for maximized flexibility for now: open in the future!
       // Step 5. Abdicate registry control.
-      const setAdapterRegistrySelector = toFunctionSelector('setAdapterRegistry(address)');
+      // const setAdapterRegistrySelector = toFunctionSelector('setAdapterRegistry(address)');
 
-      const abdicateSetAdapterRegistryTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'abdicate',
-        args: [setAdapterRegistrySelector],
-      });
+      // const abdicateSetAdapterRegistryTx = encodeFunctionData({
+      //   abi: vaultv2Abi,
+      //   functionName: 'abdicate',
+      //   args: [setAdapterRegistrySelector],
+      // });
 
-      const submitAbdicateSetAdapterRegistryTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'submit',
-        args: [abdicateSetAdapterRegistryTx],
-      });
+      // const submitAbdicateSetAdapterRegistryTx = encodeFunctionData({
+      //   abi: vaultv2Abi,
+      //   functionName: 'submit',
+      //   args: [abdicateSetAdapterRegistryTx],
+      // });
 
-      txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
+      // txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
 
       // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data)
       const setSelfAllocatorTx = encodeFunctionData({
@@ -476,12 +480,6 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
 
-        // Push to cache so RPC picks it up instantly on next refetch
-        if (isAllocator) {
-          cacheAllocators([allocator]);
-        }
-        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
-
         return true;
       } catch (allocatorError) {
         if (allocatorError instanceof Error && allocatorError.message.toLowerCase().includes('reject')) {
@@ -491,7 +489,7 @@ export function useVaultV2({
         throw allocatorError;
       }
     },
-    [account, chainIdToUse, sendAllocatorTx, vaultAddress, cacheAllocators, queryClient],
+    [account, chainIdToUse, sendAllocatorTx, vaultAddress],
   );
 
   const swapAllocator = useCallback(
@@ -549,10 +547,6 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
 
-        // Push new allocator to cache
-        cacheAllocators([newAllocator]);
-        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
-
         return true;
       } catch (swapError) {
         if (swapError instanceof Error && swapError.message.toLowerCase().includes('reject')) {
@@ -562,7 +556,7 @@ export function useVaultV2({
         throw swapError;
       }
     },
-    [account, chainIdToUse, sendSwapAllocatorTx, vaultAddress, cacheAllocators, queryClient],
+    [account, chainIdToUse, sendSwapAllocatorTx, vaultAddress],
   );
 
   const updateCaps = useCallback(
@@ -664,11 +658,6 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
 
-        // Push cap keys to cache so RPC picks them up instantly on next refetch
-        cacheCaps(caps.map((cap) => ({ capId: cap.capId, idParams: cap.idParams })));
-        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
-        void queryClient.invalidateQueries({ queryKey: ['vault-allocations', vaultAddress, chainIdToUse] });
-
         return true;
       } catch (capsError) {
         if (capsError instanceof Error && capsError.message.toLowerCase().includes('reject')) {
@@ -678,7 +667,7 @@ export function useVaultV2({
         throw capsError;
       }
     },
-    [account, chainIdToUse, sendCapsTx, vaultAddress, cacheCaps],
+    [account, chainIdToUse, sendCapsTx, vaultAddress],
   );
 
   const { isConfirming: isDepositing, sendTransactionAsync: sendDepositTx } = useTransactionWithToast({
@@ -689,7 +678,9 @@ export function useVaultV2({
     pendingDescription: 'Depositing assets to vault',
     successDescription: 'Assets deposited successfully',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(false);
+    },
   });
 
   const { isConfirming: isWithdrawing, sendTransactionAsync: sendWithdrawTx } = useTransactionWithToast({
@@ -700,7 +691,9 @@ export function useVaultV2({
     pendingDescription: 'Withdrawing assets from vault',
     successDescription: 'Assets withdrawn successfully',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(false);
+    },
   });
 
   const deposit = useCallback(
@@ -845,8 +838,6 @@ export function useVaultV2({
     refetch: refetchAll,
     completeInitialization,
     isInitializing,
-    name,
-    symbol,
     owner,
     isOwner,
     updateNameAndSymbol,

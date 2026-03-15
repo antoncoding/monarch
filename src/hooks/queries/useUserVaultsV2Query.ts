@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import { fetchMorphoMarketV1Adapters } from '@/data-sources/subgraph/morpho-market-v1-adapters';
-import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
-import { fetchUserVaultV2AddressesAllNetworks, type UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
-import { getMorphoAddress } from '@/utils/morpho';
-import { getNetworkConfig } from '@/utils/networks';
-import { fetchUserVaultShares } from '@/utils/vaultAllocation';
+import { fetchMorphoVaultApys } from '@/data-sources/morpho-api/vaults';
+import { fetchUserVaultV2DetailsAllNetworks, type UserVaultV2 } from '@/data-sources/monarch-api/vaults';
+import { fetchUserVaultShares, fetchVaultTotalAssets, getVaultReadKey } from '@/utils/vaultAllocation';
 
 type UseUserVaultsV2Options = {
+  includeApy?: boolean;
+  includeBalances?: boolean;
+  includeTotalAssets?: boolean;
   userAddress?: Address;
   enabled?: boolean;
 };
@@ -17,79 +17,66 @@ function filterValidVaults(vaults: UserVaultV2[]): UserVaultV2[] {
   return vaults.filter((vault) => vault.owner && vault.asset && vault.address);
 }
 
-async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[]> {
-  // Step 1: Fetch vault addresses from subgraph across all networks
-  const vaultAddresses = await fetchUserVaultV2AddressesAllNetworks(userAddress);
-
-  if (vaultAddresses.length === 0) {
-    return [];
-  }
-
-  // Step 2: Fetch full vault details from Morpho API
-  const vaultDetails = await fetchMultipleVaultV2DetailsAcrossNetworks(vaultAddresses);
-
-  // Step 3: Filter valid vaults
-  const validVaults = filterValidVaults(vaultDetails as UserVaultV2[]);
+async function fetchAndProcessVaults({
+  includeApy,
+  includeBalances,
+  includeTotalAssets,
+  userAddress,
+}: {
+  includeApy: boolean;
+  includeBalances: boolean;
+  includeTotalAssets: boolean;
+  userAddress: Address;
+}): Promise<UserVaultV2[]> {
+  const validVaults = filterValidVaults(await fetchUserVaultV2DetailsAllNetworks(userAddress));
 
   if (validVaults.length === 0) {
     return [];
   }
 
-  // Step 4: Batch fetch adapters from subgraph for each vault
-  const adapterPromises = validVaults.map(async (vault) => {
-    const networkConfig = getNetworkConfig(vault.networkId);
-    const subgraphUrl = networkConfig?.vaultConfig?.adapterSubgraphEndpoint;
+  const [avgApyByVault, shareBalances, totalAssetsByVault] = await Promise.all([
+    includeApy
+      ? fetchMorphoVaultApys(
+          validVaults.map((vault) => ({
+            address: vault.address,
+            networkId: vault.networkId,
+          })),
+        )
+      : Promise.resolve(new Map<string, number>()),
+    includeBalances
+      ? fetchUserVaultShares(
+          validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })),
+          userAddress,
+        )
+      : Promise.resolve(new Map<string, bigint>()),
+    includeTotalAssets
+      ? fetchVaultTotalAssets(validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })))
+      : Promise.resolve(new Map<string, bigint>()),
+  ]);
 
-    if (!subgraphUrl) {
-      return { vaultAddress: vault.address, adapter: undefined };
-    }
+  // Combine Monarch vault metadata with optional balances and supplemental APY
+  return validVaults.map((vault) => {
+    const vaultKey = getVaultReadKey(vault.address, vault.networkId);
 
-    try {
-      const morphoAddress = getMorphoAddress(vault.networkId);
-      const adapters = await fetchMorphoMarketV1Adapters({
-        subgraphUrl,
-        parentVault: vault.address as Address,
-        morpho: morphoAddress as Address,
-      });
-
-      return {
-        vaultAddress: vault.address,
-        adapter: adapters.length > 0 ? adapters[0].adapter : undefined,
-      };
-    } catch (error) {
-      console.error(`Failed to fetch adapter for vault ${vault.address}:`, error);
-      return { vaultAddress: vault.address, adapter: undefined };
-    }
+    return {
+      ...vault,
+      adapter: vault.adapters[0] as Address | undefined,
+      avgApy: avgApyByVault.get(vaultKey),
+      balance: includeBalances ? (shareBalances.has(vaultKey) ? shareBalances.get(vaultKey) : undefined) : undefined,
+      totalAssets: totalAssetsByVault.get(vaultKey),
+    };
   });
-
-  const adapterResults = await Promise.all(adapterPromises);
-  const adapterMap = new Map(adapterResults.map((r) => [r.vaultAddress.toLowerCase(), r.adapter]));
-
-  // Step 5: Batch fetch user's share balances via multicall
-  const shareBalances = await fetchUserVaultShares(
-    validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })),
-    userAddress,
-  );
-
-  // Step 6: Combine all data
-  const vaultsWithBalancesAndAdapters = validVaults.map((vault) => ({
-    ...vault,
-    adapter: adapterMap.get(vault.address.toLowerCase()),
-    balance: shareBalances.get(vault.address.toLowerCase()) ?? 0n,
-  }));
-
-  return vaultsWithBalancesAndAdapters;
 }
 
 /**
  * Fetches user's V2 vaults using React Query.
  *
  * Data fetching strategy:
- * - Fetches vault addresses from subgraph across all networks
- * - Enriches with vault details from Morpho API
- * - Fetches adapter info from subgraph
- * - Fetches user's share balances via multicall
- * - Returns complete vault data with balances
+ * - Fetches cross-chain vault details from Monarch API
+ * - Optionally enriches current APY from batched Morpho API vault rates
+ * - Optionally enriches user's share balances via multicall
+ * - Optionally enriches vault total assets via multicall
+ * - Returns complete vault data with optional on-chain enrichments
  *
  * Cache behavior:
  * - staleTime: 60 seconds (complex multi-step fetch)
@@ -106,18 +93,21 @@ async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[
 export const useUserVaultsV2Query = (options: UseUserVaultsV2Options = {}) => {
   const { address: connectedAddress } = useConnection();
 
+  const includeApy = options.includeApy ?? true;
+  const includeBalances = options.includeBalances ?? true;
+  const includeTotalAssets = options.includeTotalAssets ?? false;
   const userAddress = (options.userAddress ?? connectedAddress) as Address;
   const enabled = options.enabled ?? true;
 
   return useQuery<UserVaultV2[], Error>({
-    queryKey: ['user-vaults-v2', userAddress],
+    queryKey: ['user-vaults-v2', userAddress, { includeApy, includeBalances, includeTotalAssets }],
     queryFn: async () => {
       if (!userAddress) {
         return [];
       }
 
       try {
-        return await fetchAndProcessVaults(userAddress);
+        return await fetchAndProcessVaults({ includeApy, includeBalances, includeTotalAssets, userAddress });
       } catch (err) {
         const fetchError = err instanceof Error ? err : new Error('Failed to fetch user vaults');
         console.error('Error fetching user V2 vaults:', fetchError);

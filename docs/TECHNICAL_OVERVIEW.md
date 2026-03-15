@@ -6,7 +6,7 @@ Monarch is a client-side DeFi dashboard for the Morpho Blue lending protocol. It
 
 **Key Architectural Decisions:**
 - Next.js 15 App Router with React 18
-- Dual data source strategy: Morpho API (primary) → Subgraph (fallback)
+- Multi-source strategy: Morpho API + Monarch API + selective subgraph fallback
 - Zustand for client state, React Query for server state
 - All user data in localStorage (no backend DB)
 - Multi-chain support with custom RPC override capability
@@ -148,12 +148,18 @@ MorphoChainlinkOracleData {
 
 ## Data Sources
 
-### Dual-Source Strategy
+### Multi-Source Strategy
 
 ```
-Primary: Morpho API (https://blue-api.morpho.org/graphql)
-         ↓ (if unavailable or unsupported chain)
-Fallback: Subgraph (The Graph / Goldsky)
+Markets / positions: Morpho API (https://blue-api.morpho.org/graphql)
+                    ↓ (if unavailable or unsupported chain)
+                    Subgraph (The Graph / Goldsky)
+
+Autovault metadata: Monarch GraphQL (https://api.monarchlend.xyz/graphql)
+                   ↓ (if indexer lag / API failure)
+                   Narrow on-chain RPC fallback
+
+Market metrics: Monarch metrics API via `/api/monarch/metrics`
 ```
 
 **Morpho API Supported Chains:** Mainnet, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
@@ -175,7 +181,9 @@ Fallback: Subgraph (The Graph / Goldsky)
 | Market state (APY, utilization) | Morpho API | 30s stale | `useMarketData` |
 | User positions | Morpho API + on-chain | 5 min | `useUserPositions` |
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
-| Vault allocations | On-chain (Wagmi) | On demand | `useAllocations` |
+| User autovault metadata | Monarch GraphQL + on-chain enrichment | 60s | `useUserVaultsV2Query` |
+| Vault detail/settings metadata | Monarch GraphQL + narrow RPC fallback | 30s | `useVaultV2Data` |
+| Vault allocations | On-chain multicall | 30s | `useAllocationsQuery` |
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
 | Oracle prices | Morpho API | 5 min | `useOracleDataQuery` |
 | Merkl rewards | Merkl API | On demand | `useMerklCampaignsQuery` |
@@ -200,9 +208,11 @@ Split: allMarkets vs whitelistedMarkets
 
 **Vault Data Flow:**
 ```
-1. Fetch vault list from API
-2. Wagmi contract reads for owner, curator, caps
-3. Historical allocations via subgraph
+1. Fetch chain-scoped vault metadata from Monarch GraphQL
+2. Enrich user-specific balances / totalAssets via multicall where needed
+3. Use narrow RPC fallback only when Monarch vault metadata is unavailable
+4. Fetch live allocations from on-chain `allocation(capId)` reads
+5. After vault writes, use shared bounded retry refreshes so Monarch indexing can catch up
 ```
 
 ---
@@ -256,6 +266,7 @@ All hooks in `/src/hooks/queries/` follow React Query patterns:
 | `useOracleDataQuery` | `['oracle-data']` | 5 min | 5 min | Yes |
 | `useUserBalancesQuery` | `['user-balances', addr, networks]` | 30s | - | Yes |
 | `useUserVaultsV2Query` | `['user-vaults-v2', addr]` | 60s | - | Yes |
+| `useVaultV2Data` | `['vault-v2-data', addr, chainId]` | 30s | - | No |
 | `useMarketLiquidations` | `['marketLiquidations', id, net]` | 5 min | - | Yes |
 | `useUserTransactionsQuery` | `['user-transactions', ...]` | 60s | - | No |
 | `useAllocationsQuery` | `['vault-allocations', ...]` | 30s | - | No |
@@ -280,6 +291,11 @@ Fallback Strategy:
 - Endpoint: `https://blue-api.morpho.org/graphql`
 - `cache: 'no-store'` (disable browser cache)
 - Throws on GraphQL errors (strict)
+
+**Monarch GraphQL** (`/src/data-sources/monarch-api/fetchers.ts`):
+- Endpoint: `NEXT_PUBLIC_MONARCH_API_NEW`
+- Browser fetch with `NEXT_PUBLIC_MONARCH_API_KEY`
+- Used as the primary read path for autovault V2 metadata
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
 - Configurable URL per network
@@ -322,6 +338,8 @@ Fallback Strategy:
 | Service | Endpoint | Purpose |
 |---------|----------|---------|
 | Morpho API | `https://blue-api.morpho.org/graphql` | Markets, vaults, positions |
+| Monarch GraphQL | `https://api.monarchlend.xyz/graphql` | Autovault metadata, adapters, caps |
+| Monarch Metrics | `/api/monarch/metrics` → external Monarch metrics API | Market metrics and admin stats |
 | The Graph | Per-chain subgraph URLs | Fallback data, suppliers, borrowers |
 | Merkl API | `https://api.merkl.xyz` | Reward campaigns |
 | Velora API | `https://api.paraswap.io` | Swap quotes and executable tx payloads |
