@@ -1,50 +1,30 @@
 import { useMemo } from 'react';
 import { type Address, zeroAddress } from 'viem';
-import { useQuery } from '@tanstack/react-query';
-import { fetchMorphoMarketV1Adapters } from '@/data-sources/subgraph/morpho-market-v1-adapters';
-import { getMorphoAddress } from '@/utils/morpho';
-import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
+import { useVaultV2Data } from './useVaultV2Data';
+import type { SupportedNetworks } from '@/utils/networks';
 
 export function useMorphoMarketV1Adapters({ vaultAddress, chainId }: { vaultAddress?: Address; chainId: SupportedNetworks }) {
-  const vaultConfig = useMemo(() => {
-    try {
-      return getNetworkConfig(chainId).vaultConfig;
-    } catch (_err) {
-      return undefined;
-    }
-  }, [chainId]);
+  const query = useVaultV2Data({ vaultAddress, chainId });
 
-  const subgraphUrl = vaultConfig?.adapterSubgraphEndpoint ?? null;
-  const morpho = useMemo(() => getMorphoAddress(chainId), [chainId]);
+  const adapters = useMemo(
+    () =>
+      (query.data?.adapters ?? []).map((adapterAddress) => ({
+        adapter: adapterAddress as Address,
+        id: `${chainId}-${vaultAddress ?? 'unknown'}-${adapterAddress}`,
+        parentVault: (vaultAddress ?? zeroAddress) as Address,
+      })),
+    [chainId, query.data?.adapters, vaultAddress],
+  );
 
-  const query = useQuery({
-    queryKey: ['morpho-market-v1-adapters', vaultAddress, chainId],
-    queryFn: async () => {
-      if (!vaultAddress || !subgraphUrl) {
-        return [];
-      }
-
-      const result = await fetchMorphoMarketV1Adapters({
-        subgraphUrl,
-        parentVault: vaultAddress,
-        morpho,
-      });
-
-      return result;
-    },
-    enabled: Boolean(vaultAddress && subgraphUrl),
-    staleTime: 30_000, // 30 seconds - adapter data is cacheable
-  });
-
-  const morphoMarketV1Adapter = useMemo(() => (query.data && query.data.length > 0 ? query.data[0].adapter : zeroAddress), [query.data]);
+  const morphoMarketV1Adapter = useMemo(() => (adapters.length > 0 ? adapters[0].adapter : zeroAddress), [adapters]);
 
   return {
     morphoMarketV1Adapter,
-    adapters: query.data ?? [], // all market adapters (should only be just one)
+    adapters,
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
     isRefetching: query.isRefetching,
-    hasAdapters: (query.data ?? []).length > 0,
+    hasAdapters: adapters.length > 0,
   };
 }

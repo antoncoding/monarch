@@ -1,0 +1,232 @@
+import type { Address } from 'viem';
+import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
+import { monarchGraphqlFetcher } from './fetchers';
+
+export type VaultV2Cap = {
+  relativeCap: string;
+  absoluteCap: string;
+  capId: string;
+  idParams: string;
+  oldRelativeCap?: string;
+  oldAbsoluteCap?: string;
+};
+
+export type VaultV2Details = {
+  id: string;
+  address: string;
+  asset: string;
+  symbol: string;
+  name: string;
+  curator: string;
+  owner: string;
+  allocators: string[];
+  sentinels: string[];
+  caps: VaultV2Cap[];
+  adapters: string[];
+  avgApy?: number;
+};
+
+export type UserVaultV2Address = {
+  address: string;
+  networkId: SupportedNetworks;
+};
+
+export type UserVaultV2 = VaultV2Details & {
+  networkId: SupportedNetworks;
+  balance?: bigint;
+  adapter?: Address;
+  actualApy?: number;
+};
+
+type MonarchVaultAllocator = {
+  account: string;
+  isAllocator: boolean;
+};
+
+type MonarchVaultSentinel = {
+  account: string;
+  isSentinel: boolean;
+};
+
+type MonarchVaultAdapter = {
+  adapterAddress: string;
+  isActive: boolean;
+};
+
+type MonarchVaultCap = {
+  id: string;
+  paramId: string;
+  paramIdData: string;
+  absoluteCap: string;
+  relativeCap: string;
+};
+
+type MonarchVault = {
+  id: string;
+  vaultAddress: string;
+  chainId: number;
+  asset: string;
+  symbol: string | null;
+  name: string | null;
+  owner: string;
+  curator: string | null;
+  allocators: MonarchVaultAllocator[];
+  sentinels: MonarchVaultSentinel[];
+  adapters: MonarchVaultAdapter[];
+  caps: MonarchVaultCap[];
+};
+
+type MonarchVaultsResponse = {
+  data?: {
+    Vault?: MonarchVault[];
+  };
+};
+
+type MonarchVaultAddressRecord = Pick<MonarchVault, 'vaultAddress' | 'chainId'>;
+
+type MonarchVaultAddressesResponse = {
+  data?: {
+    Vault?: MonarchVaultAddressRecord[];
+  };
+};
+
+const MONARCH_VAULT_FIELDS = `
+  id
+  vaultAddress
+  chainId
+  asset
+  symbol
+  name
+  owner
+  curator
+  allocators {
+    account
+    isAllocator
+  }
+  sentinels {
+    account
+    isSentinel
+  }
+  adapters {
+    adapterAddress
+    isActive
+  }
+  caps {
+    id
+    paramId
+    paramIdData
+    absoluteCap
+    relativeCap
+  }
+`;
+
+const MONARCH_VAULT_ADDRESS_FIELDS = `
+  vaultAddress
+  chainId
+`;
+
+const normalizeAddress = (value: string | null | undefined): string => value?.toLowerCase() ?? '';
+
+const toSupportedNetwork = (chainId: number): SupportedNetworks | null => {
+  return ALL_SUPPORTED_NETWORKS.includes(chainId as SupportedNetworks) ? (chainId as SupportedNetworks) : null;
+};
+
+const transformCap = (cap: MonarchVaultCap): VaultV2Cap => {
+  return {
+    capId: cap.paramId,
+    idParams: cap.paramIdData,
+    absoluteCap: cap.absoluteCap,
+    relativeCap: cap.relativeCap,
+  };
+};
+
+const transformVault = (vault: MonarchVault): UserVaultV2 | null => {
+  const networkId = toSupportedNetwork(vault.chainId);
+  if (!networkId) {
+    return null;
+  }
+
+  const activeAdapters = vault.adapters.filter((adapter) => adapter.isActive).map((adapter) => normalizeAddress(adapter.adapterAddress));
+  const activeAllocators = vault.allocators.filter((allocator) => allocator.isAllocator).map((allocator) => normalizeAddress(allocator.account));
+  const activeSentinels = vault.sentinels.filter((sentinel) => sentinel.isSentinel).map((sentinel) => normalizeAddress(sentinel.account));
+
+  return {
+    id: vault.id,
+    address: normalizeAddress(vault.vaultAddress),
+    asset: normalizeAddress(vault.asset),
+    symbol: vault.symbol ?? '',
+    name: vault.name ?? '',
+    curator: normalizeAddress(vault.curator),
+    owner: normalizeAddress(vault.owner),
+    allocators: activeAllocators,
+    sentinels: activeSentinels,
+    caps: vault.caps.map(transformCap),
+    adapters: activeAdapters,
+    adapter: activeAdapters[0] as Address | undefined,
+    networkId,
+  };
+};
+
+const transformVaultAddress = (vault: MonarchVaultAddressRecord): UserVaultV2Address | null => {
+  const networkId = toSupportedNetwork(vault.chainId);
+  if (!networkId) {
+    return null;
+  }
+
+  return {
+    address: normalizeAddress(vault.vaultAddress),
+    networkId,
+  };
+};
+
+const userVaultsQuery = `
+  query MonarchUserVaults($owner: String!) {
+    Vault(where: { owner: { _eq: $owner } }, order_by: [{ lastUpdate: desc }]) {
+      ${MONARCH_VAULT_FIELDS}
+    }
+  }
+`;
+
+const userVaultAddressesQuery = `
+  query MonarchUserVaultAddresses($owner: String!) {
+    Vault(where: { owner: { _eq: $owner } }, order_by: [{ lastUpdate: desc }]) {
+      ${MONARCH_VAULT_ADDRESS_FIELDS}
+    }
+  }
+`;
+
+const vaultByAddressQuery = `
+  query MonarchVaultByAddress($address: String!, $chainId: Int!) {
+    Vault(where: { vaultAddress: { _eq: $address }, chainId: { _eq: $chainId } }, limit: 1) {
+      ${MONARCH_VAULT_FIELDS}
+    }
+  }
+`;
+
+export const fetchUserVaultV2DetailsAllNetworks = async (owner: string): Promise<UserVaultV2[]> => {
+  const response = await monarchGraphqlFetcher<MonarchVaultsResponse>(userVaultsQuery, {
+    owner: owner.toLowerCase(),
+  });
+
+  const vaults = response.data?.Vault ?? [];
+  return vaults.map(transformVault).filter((vault): vault is UserVaultV2 => vault !== null);
+};
+
+export const fetchUserVaultV2AddressesAllNetworks = async (owner: string): Promise<UserVaultV2Address[]> => {
+  const response = await monarchGraphqlFetcher<MonarchVaultAddressesResponse>(userVaultAddressesQuery, {
+    owner: owner.toLowerCase(),
+  });
+
+  const vaults = response.data?.Vault ?? [];
+  return vaults.map(transformVaultAddress).filter((vault): vault is UserVaultV2Address => vault !== null);
+};
+
+export const fetchMonarchVaultDetails = async (vaultAddress: string, chainId: SupportedNetworks): Promise<UserVaultV2 | null> => {
+  const response = await monarchGraphqlFetcher<MonarchVaultsResponse>(vaultByAddressQuery, {
+    address: vaultAddress.toLowerCase(),
+    chainId,
+  });
+
+  const vault = response.data?.Vault?.[0];
+  return vault ? transformVault(vault) : null;
+};

@@ -18,7 +18,6 @@ import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 const ZERO_ADDRESS = zeroAddress;
@@ -209,9 +208,6 @@ export function VaultInitializationModal() {
     return SupportedNetworks.Base;
   }, [chainIdParam]);
 
-  // Cache for pushing known keys after init (instant RPC data on next refetch)
-  const { addAllocators, addAdapters } = useVaultKeysCache(vaultAddress, chainId);
-
   // Fetch vault data
   const vaultDataQuery = useVaultV2Data({
     vaultAddress: vaultAddressValue,
@@ -254,7 +250,7 @@ export function VaultInitializationModal() {
     return (configured as Address | undefined) ?? ZERO_ADDRESS;
   }, [chainId]);
 
-  // Adapter is detected if it exists in the subgraph OR we just deployed it
+  // Adapter is detected if Monarch has indexed it or we just deployed it locally.
   const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : (marketAdapter ?? ZERO_ADDRESS);
   const adapterDetected = adapterAddress !== ZERO_ADDRESS;
 
@@ -303,7 +299,7 @@ export function VaultInitializationModal() {
         const adapter = (decoded.args as any).morphoMarketV1Adapter as Address;
         setDeployedAdapter(adapter);
 
-        // Trigger refetch for subgraph sync
+        // Trigger refetch so the Monarch-backed vault query can pick up the new adapter.
         void refetchAdapter();
 
         // Auto-advance to next step
@@ -331,22 +327,7 @@ export function VaultInitializationModal() {
         return;
       }
 
-      // Push known keys to cache so RPC fetches them instantly on next refetch
-      const allocatorsToCache: string[] = [];
-      if (connectedAccount) {
-        allocatorsToCache.push(connectedAccount);
-      }
-      if (selectedAgent) {
-        allocatorsToCache.push(selectedAgent);
-      }
-      if (allocatorsToCache.length > 0) {
-        addAllocators(allocatorsToCache);
-      }
-      if (adapterAddress !== ZERO_ADDRESS) {
-        addAdapters([adapterAddress]);
-      }
-
-      // Trigger refetch — cache keys are now available, RPC will return fresh data
+      // Trigger refetch after initialization completes.
       void vaultDataQuery.refetch();
       void vaultContract.refetch();
       void refetchAdapter();
@@ -361,8 +342,6 @@ export function VaultInitializationModal() {
     vaultContract,
     refetchAdapter,
     close,
-    addAllocators,
-    addAdapters,
     connectedAccount,
     registryAddress,
     selectedAgent,
@@ -385,7 +364,7 @@ export function VaultInitializationModal() {
     }
   }, [isOpen]);
 
-  // Auto-advance when adapter already exists (from subgraph)
+  // Auto-advance when adapter already exists in Monarch data.
   useEffect(() => {
     if (marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
       setStepIndex(1);

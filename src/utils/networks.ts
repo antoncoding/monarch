@@ -60,10 +60,8 @@ export const hyperEvm = defineChain({
 
 type VaultAgentConfig = {
   v2FactoryAddress: Address;
-  vaultsSubgraphEndpoint?: string; // temporary Subgraph to fetch deployed vaults for users
   morphoRegistry: Address; // the RegistryList contract deployed by morpho!
   marketV1AdapterFactory: Address; // MorphoMarketV1AdapterFactory contract used to create adapters for markets
-  adapterSubgraphEndpoint?: string;
   strategies?: AgentMetadata[];
 };
 
@@ -108,10 +106,8 @@ export const networks: NetworkConfig[] = [
     vaultConfig: {
       v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
       strategies: v2AgentsBase,
-      vaultsSubgraphEndpoint: 'https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest',
       morphoRegistry: '0x5C2531Cbd2cf112Cf687da3Cd536708aDd7DB10a',
       marketV1AdapterFactory: '0x133baC94306B99f6dAD85c381a5be851d8DD717c',
-      adapterSubgraphEndpoint: 'https://gateway.thegraph.com/api/subgraphs/id/8dNeYJ1jDzXQ7KUX43CzAjkuVrY2WgQCJZiDeMDq5EuN',
     },
     blocktime: 2,
     maxBlockDelay: 5,
@@ -206,7 +202,7 @@ export const isAgentAvailable = (chainId: number): boolean => {
   const network = getNetworkConfig(chainId);
   if (!network || !network.vaultConfig) return false;
 
-  return network.vaultConfig.vaultsSubgraphEndpoint !== undefined;
+  return true;
 };
 
 export const getAgentConfig = (chainId: SupportedNetworks): VaultAgentConfig | undefined => {

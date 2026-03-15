@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { Address } from 'viem';
 import { useQuery } from '@tanstack/react-query';
 import { vaultv2Abi } from '@/abis/vaultv2';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 

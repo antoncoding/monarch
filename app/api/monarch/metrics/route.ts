@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { MONARCH_API_KEY, getMonarchUrl } from '../utils';
+import { MONARCH_METRICS_API_KEY, getMonarchMetricsUrl } from '../utils';
 import { reportApiRouteError } from '@/utils/sentry-server';
 
 export async function GET(req: NextRequest) {
-  if (!MONARCH_API_KEY) {
+  if (!MONARCH_METRICS_API_KEY) {
     console.error('[Monarch Metrics API] Missing MONARCH_API_KEY');
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
@@ -11,14 +11,14 @@ export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
 
   try {
-    const url = getMonarchUrl('/v1/markets/metrics');
+    const url = getMonarchMetricsUrl('/v1/markets/metrics');
     for (const key of ['chain_id', 'sort_by', 'sort_order', 'limit', 'offset']) {
       const value = searchParams.get(key);
       if (value) url.searchParams.set(key, value);
     }
 
     const response = await fetch(url, {
-      headers: { 'X-API-Key': MONARCH_API_KEY },
+      headers: { 'X-API-Key': MONARCH_METRICS_API_KEY },
       cache: 'no-store',
     });
 

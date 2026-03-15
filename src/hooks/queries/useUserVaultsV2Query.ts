@@ -1,11 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import { fetchMorphoMarketV1Adapters } from '@/data-sources/subgraph/morpho-market-v1-adapters';
-import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
-import { fetchUserVaultV2AddressesAllNetworks, type UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
-import { getMorphoAddress } from '@/utils/morpho';
-import { getNetworkConfig } from '@/utils/networks';
+import { fetchMorphoVaultApys } from '@/data-sources/morpho-api/vaults';
+import { fetchUserVaultV2DetailsAllNetworks, type UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import { fetchUserVaultShares } from '@/utils/vaultAllocation';
 
 type UseUserVaultsV2Options = {
@@ -18,76 +15,40 @@ function filterValidVaults(vaults: UserVaultV2[]): UserVaultV2[] {
 }
 
 async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[]> {
-  // Step 1: Fetch vault addresses from subgraph across all networks
-  const vaultAddresses = await fetchUserVaultV2AddressesAllNetworks(userAddress);
-
-  if (vaultAddresses.length === 0) {
-    return [];
-  }
-
-  // Step 2: Fetch full vault details from Morpho API
-  const vaultDetails = await fetchMultipleVaultV2DetailsAcrossNetworks(vaultAddresses);
-
-  // Step 3: Filter valid vaults
-  const validVaults = filterValidVaults(vaultDetails as UserVaultV2[]);
+  const validVaults = filterValidVaults(await fetchUserVaultV2DetailsAllNetworks(userAddress));
 
   if (validVaults.length === 0) {
     return [];
   }
 
-  // Step 4: Batch fetch adapters from subgraph for each vault
-  const adapterPromises = validVaults.map(async (vault) => {
-    const networkConfig = getNetworkConfig(vault.networkId);
-    const subgraphUrl = networkConfig?.vaultConfig?.adapterSubgraphEndpoint;
+  const avgApyByVault = await fetchMorphoVaultApys(
+    validVaults.map((vault) => ({
+      address: vault.address,
+      networkId: vault.networkId,
+    })),
+  );
 
-    if (!subgraphUrl) {
-      return { vaultAddress: vault.address, adapter: undefined };
-    }
-
-    try {
-      const morphoAddress = getMorphoAddress(vault.networkId);
-      const adapters = await fetchMorphoMarketV1Adapters({
-        subgraphUrl,
-        parentVault: vault.address as Address,
-        morpho: morphoAddress as Address,
-      });
-
-      return {
-        vaultAddress: vault.address,
-        adapter: adapters.length > 0 ? adapters[0].adapter : undefined,
-      };
-    } catch (error) {
-      console.error(`Failed to fetch adapter for vault ${vault.address}:`, error);
-      return { vaultAddress: vault.address, adapter: undefined };
-    }
-  });
-
-  const adapterResults = await Promise.all(adapterPromises);
-  const adapterMap = new Map(adapterResults.map((r) => [r.vaultAddress.toLowerCase(), r.adapter]));
-
-  // Step 5: Batch fetch user's share balances via multicall
+  // Step 2: Batch fetch user's share balances via multicall
   const shareBalances = await fetchUserVaultShares(
     validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })),
     userAddress,
   );
 
-  // Step 6: Combine all data
-  const vaultsWithBalancesAndAdapters = validVaults.map((vault) => ({
+  // Step 3: Combine Monarch vault metadata with balances and supplemental APY
+  return validVaults.map((vault) => ({
     ...vault,
-    adapter: adapterMap.get(vault.address.toLowerCase()),
+    adapter: vault.adapters[0] as Address | undefined,
+    avgApy: avgApyByVault.get(`${vault.address.toLowerCase()}-${vault.networkId}`),
     balance: shareBalances.get(vault.address.toLowerCase()) ?? 0n,
   }));
-
-  return vaultsWithBalancesAndAdapters;
 }
 
 /**
  * Fetches user's V2 vaults using React Query.
  *
  * Data fetching strategy:
- * - Fetches vault addresses from subgraph across all networks
- * - Enriches with vault details from Morpho API
- * - Fetches adapter info from subgraph
+ * - Fetches cross-chain vault details from Monarch API
+ * - Optionally enriches current APY from batched Morpho API vault rates
  * - Fetches user's share balances via multicall
  * - Returns complete vault data with balances
  *

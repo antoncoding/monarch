@@ -11,12 +11,27 @@ export const allVaultsQuery = `
           id
         }
         name
+        avgApy
         state {
           totalAssets
         }
         asset {
           address
           symbol
+        }
+      }
+    }
+  }
+`;
+
+export const vaultApysQuery = `
+  query VaultApys($first: Int, $where: VaultFilters) {
+    vaults(first: $first, where: $where) {
+      items {
+        address
+        avgApy
+        chain {
+          id
         }
       }
     }

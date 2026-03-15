@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { SupportedNetworks } from '@/utils/networks';

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import Header from '@/components/layout/header/Header';
-import { fetchUserVaultV2AddressesAllNetworks } from '@/data-sources/subgraph/v2-vaults';
+import { fetchUserVaultV2AddressesAllNetworks } from '@/data-sources/monarch-api/vaults';
 import { getDeployedVaults } from '@/utils/vault-storage';
 import { DeploymentModal } from './components/deployment/deployment-modal';
 import { SectionTag, FeatureCard } from '@/components/landing';
@@ -59,7 +59,7 @@ export default function AutovaultListContent() {
     setHasMounted(true);
   }, []);
 
-  // Fetch vault addresses from subgraph (simple, fast, works for uninitialized vaults)
+  // Fetch vault addresses from Monarch API and merge with local optimistic vaults below.
   useEffect(() => {
     if (!address || !isConnected) {
       setVaultAddresses([]);

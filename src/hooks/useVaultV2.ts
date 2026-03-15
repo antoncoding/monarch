@@ -3,13 +3,12 @@ import { type Address, encodeFunctionData, zeroAddress, toFunctionSelector } fro
 import { useQueryClient } from '@tanstack/react-query';
 import { useConnection, useChainId, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import type { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
 import { findAgent } from '@/utils/monarch-agent';
-import { useVaultKeysCache } from '@/stores/useVaultKeysCache';
 
 export type PerformanceFeeConfig = {
   fee: bigint;
@@ -74,7 +73,6 @@ export function useVaultV2({
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
   const { address: account } = useConnection();
   const queryClient = useQueryClient();
-  const { addAllocators: cacheAllocators, addCaps: cacheCaps } = useVaultKeysCache(vaultAddress, chainIdToUse);
 
   const vaultContract = {
     address: vaultAddress ?? zeroAddress,
@@ -476,10 +474,6 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
 
-        // Push to cache so RPC picks it up instantly on next refetch
-        if (isAllocator) {
-          cacheAllocators([allocator]);
-        }
         void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
 
         return true;
@@ -491,7 +485,7 @@ export function useVaultV2({
         throw allocatorError;
       }
     },
-    [account, chainIdToUse, sendAllocatorTx, vaultAddress, cacheAllocators, queryClient],
+    [account, chainIdToUse, sendAllocatorTx, vaultAddress, queryClient],
   );
 
   const swapAllocator = useCallback(
@@ -549,8 +543,6 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
 
-        // Push new allocator to cache
-        cacheAllocators([newAllocator]);
         void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
 
         return true;
@@ -562,7 +554,7 @@ export function useVaultV2({
         throw swapError;
       }
     },
-    [account, chainIdToUse, sendSwapAllocatorTx, vaultAddress, cacheAllocators, queryClient],
+    [account, chainIdToUse, sendSwapAllocatorTx, vaultAddress, queryClient],
   );
 
   const updateCaps = useCallback(
@@ -664,8 +656,6 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
 
-        // Push cap keys to cache so RPC picks them up instantly on next refetch
-        cacheCaps(caps.map((cap) => ({ capId: cap.capId, idParams: cap.idParams })));
         void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
         void queryClient.invalidateQueries({ queryKey: ['vault-allocations', vaultAddress, chainIdToUse] });
 
@@ -678,7 +668,7 @@ export function useVaultV2({
         throw capsError;
       }
     },
-    [account, chainIdToUse, sendCapsTx, vaultAddress, cacheCaps],
+    [account, chainIdToUse, sendCapsTx, vaultAddress, queryClient],
   );
 
   const { isConfirming: isDepositing, sendTransactionAsync: sendDepositTx } = useTransactionWithToast({

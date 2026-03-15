@@ -5,7 +5,7 @@ import { type Address, parseUnits, maxUint128 } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import type { CapData } from '@/hooks/useVaultV2Data';

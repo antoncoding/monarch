@@ -1,4 +1,5 @@
-import { allVaultsQuery } from '@/graphql/vault-queries';
+import { allVaultsQuery, vaultApysQuery } from '@/graphql/vault-queries';
+import type { UserVaultV2Address } from '@/data-sources/monarch-api/vaults';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Constants for Morpho vault fetching
@@ -22,6 +23,7 @@ type ApiVault = {
     id: number;
   };
   name: string;
+  avgApy?: number | null;
   state: {
     totalAssets: string;
   };
@@ -39,6 +41,17 @@ type AllVaultsApiResponse = {
   };
   errors?: { message: string }[];
 };
+
+type VaultApysApiResponse = {
+  data?: {
+    vaults?: {
+      items?: Pick<ApiVault, 'address' | 'avgApy' | 'chain'>[];
+    };
+  };
+  errors?: { message: string }[];
+};
+
+const getVaultApyKey = (address: string, chainId: number) => `${address.toLowerCase()}-${chainId}`;
 
 /**
  * Transforms API vault response to internal MorphoVault format
@@ -86,5 +99,40 @@ export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
   } catch (error) {
     console.error('Error fetching all Morpho vaults:', error);
     return [];
+  }
+};
+
+export const fetchMorphoVaultApys = async (vaults: UserVaultV2Address[]): Promise<Map<string, number>> => {
+  if (vaults.length === 0) {
+    return new Map();
+  }
+
+  try {
+    const response = await morphoGraphqlFetcher<VaultApysApiResponse>(vaultApysQuery, {
+      first: vaults.length,
+      where: {
+        address_in: vaults.map((vault) => vault.address.toLowerCase()),
+        chainId_in: [...new Set(vaults.map((vault) => vault.networkId))],
+      },
+    });
+
+    if (!response) {
+      return new Map();
+    }
+
+    const items = response.data?.vaults?.items ?? [];
+    const apys = new Map<string, number>();
+
+    for (const vault of items) {
+      if (vault.avgApy === null || vault.avgApy === undefined) {
+        continue;
+      }
+      apys.set(getVaultApyKey(vault.address, vault.chain.id), vault.avgApy);
+    }
+
+    return apys;
+  } catch (error) {
+    console.warn('Error fetching Morpho vault APYs:', error);
+    return new Map();
   }
 };
