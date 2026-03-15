@@ -99,7 +99,7 @@ const supportedTokens = [
   {
     symbol: 'USDA',
     img: require('../imgs/tokens/usda.png') as string,
-    decimals: 6,
+    decimals: 18,
     networks: [{ chain: mainnet, address: '0x0000206329b97DB379d5E1Bf586BbDB969C63274' }],
     peg: TokenPeg.USD,
   },
@@ -169,7 +169,7 @@ const supportedTokens = [
   {
     symbol: 'aUSD',
     img: require('../imgs/tokens/aUSD.webp') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [
       { chain: mainnet, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' },
       { chain: monad, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' },
@@ -238,7 +238,7 @@ const supportedTokens = [
   {
     symbol: 'EURCV',
     img: require('../imgs/tokens/eurcv.svg') as string,
-    decimals: 6,
+    decimals: 18,
     networks: [{ chain: mainnet, address: '0x5F7827FDeb7c20b443265Fc2F40845B715385Ff2' }],
   },
   {
@@ -387,7 +387,7 @@ const supportedTokens = [
   {
     symbol: 'tBTC',
     img: require('../imgs/tokens/tbtc.webp') as string,
-    decimals: 8,
+    decimals: 18,
     networks: [{ chain: mainnet, address: '0x18084fbA666a33d37592fA2633fD49a74DD93a88' }],
     peg: TokenPeg.BTC,
   },
@@ -555,7 +555,7 @@ const supportedTokens = [
   {
     symbol: 'USYC',
     img: require('../imgs/tokens/usyc.png') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [{ chain: mainnet, address: '0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b' }],
     peg: TokenPeg.USD,
   },
@@ -572,7 +572,7 @@ const supportedTokens = [
   {
     symbol: 'syrupUSDC',
     img: require('../imgs/tokens/syrupUSDC.svg') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [
       {
         chain: arbitrum,
@@ -596,7 +596,7 @@ const supportedTokens = [
   {
     symbol: 'wUSDL',
     img: require('../imgs/tokens/wusdl.webp') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [{ chain: mainnet, address: '0x7751E2F4b8ae93EF6B79d86419d42FE3295A4559' }],
     peg: TokenPeg.USD,
   },
@@ -710,7 +710,7 @@ const supportedTokens = [
   {
     symbol: 'PYTH',
     img: require('../imgs/oracles/pyth.png') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [{ chain: base, address: '0x4c5d8A75F3762c1561D96f177694f67378705E98' }],
   },
   {
@@ -728,7 +728,7 @@ const supportedTokens = [
   {
     symbol: 'USD₮0',
     img: require('../imgs/tokens/usdt0.png') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [
       {
         chain: hyperEvm,
@@ -780,7 +780,7 @@ const supportedTokens = [
   {
     symbol: 'UBTC',
     img: require('../imgs/tokens/ubtc.png') as string,
-    decimals: 18,
+    decimals: 8,
     networks: [
       {
         chain: hyperEvm,
@@ -862,7 +862,7 @@ const supportedTokens = [
   {
     symbol: 'USDHL',
     img: require('../imgs/tokens/usdhl.png') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [
       {
         chain: hyperEvm,
