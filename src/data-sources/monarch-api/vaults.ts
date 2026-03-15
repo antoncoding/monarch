@@ -11,6 +11,12 @@ export type VaultV2Cap = {
   oldAbsoluteCap?: string;
 };
 
+export type VaultAdapterDetails = {
+  adapterType: string;
+  address: string;
+  factoryAddress: string;
+};
+
 export type VaultV2Details = {
   id: string;
   address: string;
@@ -23,6 +29,7 @@ export type VaultV2Details = {
   sentinels: string[];
   caps: VaultV2Cap[];
   adapters: string[];
+  adapterDetails: VaultAdapterDetails[];
   avgApy?: number;
 };
 
@@ -76,8 +83,23 @@ type MonarchVault = {
   caps: MonarchVaultCap[];
 };
 
+type MonarchAdapterRecord = {
+  adapterAddress: string;
+  adapterType: string;
+  chainId: number;
+  factoryAddress: string;
+  vaultAddress: string;
+};
+
 type MonarchVaultsResponse = {
   data?: {
+    Vault?: MonarchVault[];
+  };
+};
+
+type MonarchVaultDetailResponse = {
+  data?: {
+    Adapter?: MonarchAdapterRecord[];
     Vault?: MonarchVault[];
   };
 };
@@ -140,7 +162,15 @@ const transformCap = (cap: MonarchVaultCap): VaultV2Cap => {
   };
 };
 
-const transformVault = (vault: MonarchVault): UserVaultV2 | null => {
+const transformAdapterRecord = (adapter: MonarchAdapterRecord): VaultAdapterDetails => {
+  return {
+    address: normalizeAddress(adapter.adapterAddress),
+    adapterType: adapter.adapterType,
+    factoryAddress: normalizeAddress(adapter.factoryAddress),
+  };
+};
+
+const transformVault = (vault: MonarchVault, adapterDetails: VaultAdapterDetails[] = []): UserVaultV2 | null => {
   const networkId = toSupportedNetwork(vault.chainId);
   if (!networkId) {
     return null;
@@ -162,6 +192,7 @@ const transformVault = (vault: MonarchVault): UserVaultV2 | null => {
     sentinels: activeSentinels,
     caps: vault.caps.map(transformCap),
     adapters: activeAdapters,
+    adapterDetails,
     adapter: activeAdapters[0] as Address | undefined,
     networkId,
   };
@@ -200,6 +231,13 @@ const vaultByAddressQuery = `
     Vault(where: { vaultAddress: { _eq: $address }, chainId: { _eq: $chainId } }, limit: 1) {
       ${MONARCH_VAULT_FIELDS}
     }
+    Adapter(where: { vaultAddress: { _eq: $address }, chainId: { _eq: $chainId } }, order_by: [{ createdAt: desc }]) {
+      adapterAddress
+      adapterType
+      chainId
+      factoryAddress
+      vaultAddress
+    }
   }
 `;
 
@@ -209,7 +247,7 @@ export const fetchUserVaultV2DetailsAllNetworks = async (owner: string): Promise
   });
 
   const vaults = response.data?.Vault ?? [];
-  return vaults.map(transformVault).filter((vault): vault is UserVaultV2 => vault !== null);
+  return vaults.map((vault) => transformVault(vault)).filter((vault): vault is UserVaultV2 => vault !== null);
 };
 
 export const fetchUserVaultV2AddressesAllNetworks = async (owner: string): Promise<UserVaultV2Address[]> => {
@@ -222,11 +260,22 @@ export const fetchUserVaultV2AddressesAllNetworks = async (owner: string): Promi
 };
 
 export const fetchMonarchVaultDetails = async (vaultAddress: string, chainId: SupportedNetworks): Promise<UserVaultV2 | null> => {
-  const response = await monarchGraphqlFetcher<MonarchVaultsResponse>(vaultByAddressQuery, {
+  const response = await monarchGraphqlFetcher<MonarchVaultDetailResponse>(vaultByAddressQuery, {
     address: vaultAddress.toLowerCase(),
     chainId,
   });
 
   const vault = response.data?.Vault?.[0];
-  return vault ? transformVault(vault) : null;
+  if (!vault) {
+    return null;
+  }
+
+  const activeAdapterAddresses = new Set(
+    vault.adapters.filter((adapter) => adapter.isActive).map((adapter) => normalizeAddress(adapter.adapterAddress)),
+  );
+  const adapterDetails = (response.data?.Adapter ?? [])
+    .map(transformAdapterRecord)
+    .filter((adapter) => activeAdapterAddresses.size === 0 || activeAdapterAddresses.has(adapter.address));
+
+  return transformVault(vault, adapterDetails);
 };

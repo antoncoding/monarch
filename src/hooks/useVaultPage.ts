@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { type Address, formatUnits, zeroAddress } from 'viem';
 import type { SupportedNetworks } from '@/utils/networks';
-import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
+import { useMorphoMarketAdapters } from './useMorphoMarketAdapters';
 import useUserPositionsSummaryData from './useUserPositionsSummaryData';
 import { useVaultAllocations } from './useVaultAllocations';
 import { useVaultV2 } from './useVaultV2';
@@ -30,24 +30,24 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   // Pull only what we need for computations
   const vaultDataQuery = useVaultV2Data({ vaultAddress, chainId });
   const contract = useVaultV2({ vaultAddress, chainId, connectedAddress, onTransactionSuccess: vaultDataQuery.refetch });
-  const adapterQuery = useMorphoMarketV1Adapters({ vaultAddress, chainId });
+  const adapterQuery = useMorphoMarketAdapters({ vaultAddress, chainId });
   const allocationsQuery = useVaultAllocations({ vaultAddress, chainId });
 
   // Complex derived state: isVaultInitialized (needs multiple sources)
   const isVaultInitialized = useMemo(() => {
     if (adapterQuery.isLoading || vaultDataQuery.isLoading) return false;
-    if (adapterQuery.morphoMarketV1Adapter === zeroAddress) return false;
+    if (adapterQuery.primaryAdapter === zeroAddress) return false;
     return vaultDataQuery.data !== null && vaultDataQuery.data !== undefined;
-  }, [adapterQuery.isLoading, adapterQuery.morphoMarketV1Adapter, vaultDataQuery.isLoading, vaultDataQuery.data]);
+  }, [adapterQuery.isLoading, adapterQuery.primaryAdapter, vaultDataQuery.isLoading, vaultDataQuery.data]);
 
   const needsAdapterDeployment = useMemo(
-    () => !adapterQuery.isLoading && adapterQuery.morphoMarketV1Adapter === zeroAddress,
-    [adapterQuery.isLoading, adapterQuery.morphoMarketV1Adapter],
+    () => !adapterQuery.isLoading && adapterQuery.primaryAdapter === zeroAddress,
+    [adapterQuery.isLoading, adapterQuery.primaryAdapter],
   );
 
   // Fetch adapter positions for APY calculation
   const { positions: adapterPositions, isEarningsLoading: isAPYLoading } = useUserPositionsSummaryData(
-    !needsAdapterDeployment && adapterQuery.morphoMarketV1Adapter !== zeroAddress ? adapterQuery.morphoMarketV1Adapter : undefined,
+    !needsAdapterDeployment && adapterQuery.primaryAdapter !== zeroAddress ? adapterQuery.primaryAdapter : undefined,
     'day',
     [chainId],
   );

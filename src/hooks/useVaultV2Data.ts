@@ -2,7 +2,7 @@ import type { Address } from 'viem';
 import { zeroAddress } from 'viem';
 import { useQuery } from '@tanstack/react-query';
 import { vaultv2Abi } from '@/abis/vaultv2';
-import { fetchMonarchVaultDetails, type VaultV2Cap } from '@/data-sources/monarch-api/vaults';
+import { fetchMonarchVaultDetails, type VaultAdapterDetails, type VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { getSlicedAddress } from '@/utils/address';
 import { parseCapIdParams } from '@/utils/morpho';
@@ -35,6 +35,7 @@ export type VaultV2Data = {
   curator: string;
   capsData: CapData;
   adapters: string[];
+  adapterDetails: VaultAdapterDetails[];
   curatorDisplay: string;
 };
 
@@ -167,6 +168,7 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
           needSetupCaps: !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0,
         },
         adapters: monarchVault?.adapters ?? rpcFallback?.adapters ?? [],
+        adapterDetails: monarchVault?.adapterDetails ?? [],
         curatorDisplay: curator ? getSlicedAddress(curator as Address) : '--',
       } satisfies VaultV2Data;
     },

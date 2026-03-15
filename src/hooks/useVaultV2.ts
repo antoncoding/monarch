@@ -5,6 +5,7 @@ import { useConnection, useChainId, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import type { SupportedNetworks } from '@/utils/networks';
+import { MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS, refetchVaultQueryData } from './useVaultQueryRefresh';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
@@ -153,6 +154,19 @@ export function useVaultV2({
     return (userShares * totalAssets) / totalSupply;
   }, [connectedAddress, userShares, totalAssets, totalSupply]);
 
+  const refreshVaultStateAfterTransaction = useCallback(
+    (includeMonarchRetries: boolean) => {
+      void refetchAll();
+      void refetchVaultQueryData(queryClient, {
+        vaultAddress,
+        chainId: chainIdToUse,
+        retryDelaysMs: includeMonarchRetries ? MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS : undefined,
+      });
+      onTransactionSuccess?.();
+    },
+    [chainIdToUse, onTransactionSuccess, queryClient, refetchAll, vaultAddress],
+  );
+
   const { isConfirming: isInitializing, sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
     toastId: `init-${vaultAddress ?? 'unknown'}`,
     pendingText: 'Completing vault initialization',
@@ -162,9 +176,7 @@ export function useVaultV2({
     successDescription: 'Vault is ready to use',
     chainId: chainIdToUse,
     onSuccess: () => {
-      void refetchAll();
-      void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
-      onTransactionSuccess?.();
+      refreshVaultStateAfterTransaction(true);
     },
   });
 
@@ -176,7 +188,9 @@ export function useVaultV2({
     pendingDescription: 'Applying new name and symbol',
     successDescription: 'Vault metadata saved',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(true);
+    },
   });
 
   const { isConfirming: isUpdatingAllocator, sendTransactionAsync: sendAllocatorTx } = useTransactionWithToast({
@@ -187,7 +201,9 @@ export function useVaultV2({
     pendingDescription: 'Updating allocator status',
     successDescription: 'Allocator status changed',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(true);
+    },
   });
 
   const { isConfirming: isSwappingAllocator, sendTransactionAsync: sendSwapAllocatorTx } = useTransactionWithToast({
@@ -198,7 +214,9 @@ export function useVaultV2({
     pendingDescription: 'Changing from old to new allocator',
     successDescription: 'Allocators swapped successfully',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(true);
+    },
   });
 
   const { isConfirming: isUpdatingCaps, sendTransactionAsync: sendCapsTx } = useTransactionWithToast({
@@ -209,7 +227,9 @@ export function useVaultV2({
     pendingDescription: 'Applying new market caps',
     successDescription: 'Caps updated successfully',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(true);
+    },
   });
 
   // All morpho v2 vault operations have to be proposed first, and then execute
@@ -474,8 +494,6 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
 
-        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
-
         return true;
       } catch (allocatorError) {
         if (allocatorError instanceof Error && allocatorError.message.toLowerCase().includes('reject')) {
@@ -542,8 +560,6 @@ export function useVaultV2({
           data: multicallTx,
           chainId: chainIdToUse,
         });
-
-        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
 
         return true;
       } catch (swapError) {
@@ -656,9 +672,6 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
 
-        void queryClient.invalidateQueries({ queryKey: ['vault-v2-data', vaultAddress, chainIdToUse] });
-        void queryClient.invalidateQueries({ queryKey: ['vault-allocations', vaultAddress, chainIdToUse] });
-
         return true;
       } catch (capsError) {
         if (capsError instanceof Error && capsError.message.toLowerCase().includes('reject')) {
@@ -679,7 +692,9 @@ export function useVaultV2({
     pendingDescription: 'Depositing assets to vault',
     successDescription: 'Assets deposited successfully',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(false);
+    },
   });
 
   const { isConfirming: isWithdrawing, sendTransactionAsync: sendWithdrawTx } = useTransactionWithToast({
@@ -690,7 +705,9 @@ export function useVaultV2({
     pendingDescription: 'Withdrawing assets from vault',
     successDescription: 'Assets withdrawn successfully',
     chainId: chainIdToUse,
-    onSuccess: onTransactionSuccess,
+    onSuccess: () => {
+      refreshVaultStateAfterTransaction(false);
+    },
   });
 
   const deposit = useCallback(

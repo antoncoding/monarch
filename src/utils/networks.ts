@@ -61,7 +61,7 @@ export const hyperEvm = defineChain({
 type VaultAgentConfig = {
   v2FactoryAddress: Address;
   morphoRegistry: Address; // the RegistryList contract deployed by morpho!
-  marketV1AdapterFactory: Address; // MorphoMarketV1AdapterFactory contract used to create adapters for markets
+  marketAdapterFactory: Address; // MorphoMarketV1AdapterV2Factory used to create adapters for vault markets
   strategies?: AgentMetadata[];
 };
 
@@ -107,7 +107,7 @@ export const networks: NetworkConfig[] = [
       v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
       strategies: v2AgentsBase,
       morphoRegistry: '0x5C2531Cbd2cf112Cf687da3Cd536708aDd7DB10a',
-      marketV1AdapterFactory: '0x133baC94306B99f6dAD85c381a5be851d8DD717c',
+      marketAdapterFactory: '0x9a1B378C43BA535cDB89934230F0D3890c51C0EB',
     },
     blocktime: 2,
     maxBlockDelay: 5,

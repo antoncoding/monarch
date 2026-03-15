@@ -60,6 +60,8 @@ export function VaultSettingsContent({
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <VaultSettingsHeader
+        vaultAddress={vaultAddress}
+        chainId={chainId}
         detailView={detailView}
         onBack={onBack}
         onClose={onClose}

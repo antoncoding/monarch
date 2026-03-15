@@ -4,7 +4,7 @@ import type { Address } from 'viem';
 import { zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
+import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -27,15 +27,26 @@ export function RolesPanel({ vaultAddress, chainId, onNavigateToDetail }: RolesP
     chainId,
     connectedAddress,
   });
-  const { morphoMarketV1Adapter } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
+  const { adapters: marketAdapters, primaryAdapter } = useMorphoMarketAdapters({ vaultAddress, chainId });
 
   const owner = vaultData?.owner;
   const curator = vaultData?.curator;
   const allocators = vaultData?.allocators ?? [];
   const adapters = vaultData?.adapters ?? [];
 
-  const isMarketV1Adapter = (addr: string) =>
-    morphoMarketV1Adapter !== zeroAddress && addr.toLowerCase() === morphoMarketV1Adapter.toLowerCase();
+  const getAdapterLabel = (addr: string) => {
+    const adapter = marketAdapters.find((candidate) => candidate.adapter.toLowerCase() === addr.toLowerCase());
+    if (!adapter) {
+      return primaryAdapter !== zeroAddress && addr.toLowerCase() === primaryAdapter.toLowerCase() ? 'MorphoBlue Adapter' : undefined;
+    }
+    if (adapter.adapterType === 'MorphoMarketV1AdapterV2') {
+      return 'MorphoBlue Adapter V2';
+    }
+    if (adapter.adapterType === 'MorphoMarketV1Adapter') {
+      return 'MorphoBlue Adapter V1';
+    }
+    return 'MorphoBlue Adapter';
+  };
 
   const renderRoleSection = (
     label: string,
@@ -114,7 +125,7 @@ export function RolesPanel({ vaultAddress, chainId, onNavigateToDetail }: RolesP
 
       {/* Adapters */}
       {renderRoleSection('Adapters', 'Contracts enabling vault interactions with underlying protocols.', adapters, {
-        getLabelOverride: (addr) => (isMarketV1Adapter(addr) ? 'MorphoBlue Adapter' : undefined),
+        getLabelOverride: getAdapterLabel,
       })}
     </div>
   );

@@ -2,9 +2,9 @@
 
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
+import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
-import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import type { SupportedNetworks } from '@/utils/networks';
 import { EditCaps } from '../../../settings/EditCaps';
 
@@ -25,7 +25,7 @@ export function EditCapsDetail({ vaultAddress, chainId, onBack }: EditCapsDetail
     connectedAddress,
     onTransactionSuccess: onBack, // Navigate AFTER tx confirms, not when sent
   });
-  const { morphoMarketV1Adapter: adapterAddress } = useMorphoMarketV1Adapters({
+  const { primaryAdapter: adapterAddress } = useMorphoMarketAdapters({
     vaultAddress,
     chainId,
   });
