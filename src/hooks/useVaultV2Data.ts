@@ -12,8 +12,6 @@ import { getClient } from '@/utils/rpc';
 type UseVaultV2DataArgs = {
   vaultAddress?: Address;
   chainId: SupportedNetworks;
-  fallbackName?: string;
-  fallbackSymbol?: string;
 };
 
 export type CapData = {
@@ -99,7 +97,7 @@ const fetchBasicVaultRpcData = async (vaultAddress: Address, chainId: SupportedN
   };
 };
 
-export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallbackSymbol = '' }: UseVaultV2DataArgs) {
+export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
   const { findToken } = useTokensQuery();
 
   const query = useQuery({
@@ -152,8 +150,8 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
       const curator = monarchVault?.curator || rpcFallback?.curator || '';
 
       return {
-        displayName: monarchVault?.name || rpcFallback?.displayName || fallbackName,
-        displaySymbol: monarchVault?.symbol || rpcFallback?.displaySymbol || fallbackSymbol,
+        displayName: monarchVault?.name || rpcFallback?.displayName || '',
+        displaySymbol: monarchVault?.symbol || rpcFallback?.displaySymbol || '',
         assetAddress,
         tokenSymbol,
         tokenDecimals,

@@ -1,6 +1,10 @@
 import { allVaultsQuery, vaultApysQuery } from '@/graphql/vault-queries';
-import type { UserVaultV2Address } from '@/data-sources/monarch-api/vaults';
 import { morphoGraphqlFetcher } from './fetchers';
+
+type VaultAddressByNetwork = {
+  address: string;
+  networkId: number;
+};
 
 // Constants for Morpho vault fetching
 const MORPHO_SUPPORTED_CHAIN_IDS = [1, 8453, 999, 137, 42_161, 130];
@@ -102,7 +106,7 @@ export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
   }
 };
 
-export const fetchMorphoVaultApys = async (vaults: UserVaultV2Address[]): Promise<Map<string, number>> => {
+export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Promise<Map<string, number>> => {
   if (vaults.length === 0) {
     return new Map();
   }

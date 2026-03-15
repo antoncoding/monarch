@@ -7,15 +7,31 @@ import { GearIcon } from '@radix-ui/react-icons';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
 import { useAppKit } from '@reown/appkit/react';
+import { type Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { TokenIcon } from '@/components/shared/token-icon';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import Header from '@/components/layout/header/Header';
-import { fetchUserVaultV2AddressesAllNetworks } from '@/data-sources/monarch-api/vaults';
+import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { getNetworkName } from '@/utils/networks';
 import { getDeployedVaults } from '@/utils/vault-storage';
 import { DeploymentModal } from './components/deployment/deployment-modal';
 import { SectionTag, FeatureCard } from '@/components/landing';
+
+type VaultListItem = {
+  address: string;
+  asset?: string;
+  name?: string;
+  networkId: number;
+  symbol?: string;
+};
+
+const getVaultLabel = (vault: VaultListItem): string => {
+  return vault.name?.trim() || vault.symbol?.trim() || `${vault.address.slice(0, 6)}...${vault.address.slice(-4)}`;
+};
 
 // Skeleton component for loading state
 function PageSkeleton() {
@@ -49,51 +65,20 @@ export default function AutovaultListContent() {
   const router = useRouter();
   const { open } = useAppKit();
   const { isConnected, address } = useConnection();
+  const { findToken } = useTokensQuery();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
-  const [vaultAddresses, setVaultAddresses] = useState<{ address: string; networkId: number }[]>([]);
-  const [vaultsLoading, setVaultsLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
-  // Fetch vault addresses from Monarch API and merge with local optimistic vaults below.
-  useEffect(() => {
-    if (!address || !isConnected) {
-      setVaultAddresses([]);
-      setFetchError(null);
-      return;
-    }
-
-    const fetchVaults = async () => {
-      setVaultsLoading(true);
-      setFetchError(null);
-      try {
-        const addresses = await fetchUserVaultV2AddressesAllNetworks(address);
-        setVaultAddresses(addresses);
-      } catch (_error) {
-        setFetchError('Unable to load vaults. Please try again.');
-        // Keep existing vault addresses if we had them (don't clear on error)
-      } finally {
-        setVaultsLoading(false);
-      }
-    };
-
-    void fetchVaults();
-  }, [address, isConnected]);
-
-  const handleRetryFetch = () => {
-    if (address && isConnected) {
-      setVaultsLoading(true);
-      setFetchError(null);
-      fetchUserVaultV2AddressesAllNetworks(address)
-        .then((addresses) => setVaultAddresses(addresses))
-        .catch(() => setFetchError('Unable to load vaults. Please try again.'))
-        .finally(() => setVaultsLoading(false));
-    }
-  };
+  const userVaultsQuery = useUserVaultsV2Query({
+    userAddress: address as Address | undefined,
+    enabled: hasMounted && isConnected && Boolean(address),
+    includeApy: false,
+    includeBalances: false,
+  });
 
   const handleConnect = () => {
     open();
@@ -103,42 +88,51 @@ export default function AutovaultListContent() {
     setShowDeploymentModal(true);
   };
 
-  // Merge locally stored vaults with API results (filtered by connected address)
-  const mergedVaultAddresses = useMemo(() => {
-    const apiVaults = vaultAddresses;
+  // Merge locally stored vaults with Monarch details for optimistic post-deploy visibility.
+  const mergedVaults = useMemo<VaultListItem[]>(() => {
+    const indexedVaults = userVaultsQuery.data ?? [];
     // Only get locally stored vaults for the currently connected address
     const localVaults = address ? getDeployedVaults(address) : [];
 
-    // Create a map of existing vaults by address+chainId for quick lookup
-    const existingVaults = new Set(apiVaults.map((v) => `${v.address.toLowerCase()}-${v.networkId}`));
+    const combined: VaultListItem[] = indexedVaults.map((vault) => ({
+      address: vault.address,
+      asset: vault.asset,
+      name: vault.name,
+      networkId: vault.networkId,
+      symbol: vault.symbol,
+    }));
+    const existingVaults = new Set(combined.map((vault) => `${vault.address.toLowerCase()}-${vault.networkId}`));
 
-    // Add local vaults that aren't in API results yet
-    const combined = [...apiVaults];
     for (const localVault of localVaults) {
       const key = `${localVault.address.toLowerCase()}-${localVault.chainId}`;
       if (!existingVaults.has(key)) {
         combined.push({
           address: localVault.address,
+          asset: undefined,
+          name: undefined,
           networkId: localVault.chainId,
+          symbol: undefined,
         });
       }
     }
 
     return combined;
-  }, [vaultAddresses, address]);
+  }, [address, userVaultsQuery.data]);
 
   const handleManageVault = (vaultAddress?: string, networkId?: number) => {
     if (vaultAddress && networkId) {
       router.push(`/autovault/${networkId}/${vaultAddress}`);
-    } else if (mergedVaultAddresses.length > 0) {
-      const firstVault = mergedVaultAddresses[0];
+    } else if (mergedVaults.length > 0) {
+      const firstVault = mergedVaults[0];
       router.push(`/autovault/${firstVault.networkId}/${firstVault.address}`);
     }
   };
 
-  const hasVaults = mergedVaultAddresses.length > 0;
-  const hasSingleVault = mergedVaultAddresses.length === 1;
-  const hasMultipleVaults = mergedVaultAddresses.length > 1;
+  const hasVaults = mergedVaults.length > 0;
+  const hasSingleVault = mergedVaults.length === 1;
+  const hasMultipleVaults = mergedVaults.length > 1;
+  const fetchError = userVaultsQuery.error ? 'Unable to load vaults. Please try again.' : null;
+  const vaultsLoading = userVaultsQuery.isLoading;
 
   return (
     <div className="bg-main min-h-screen font-zen relative flex flex-col">
@@ -165,10 +159,10 @@ export default function AutovaultListContent() {
             <Button
               variant="default"
               size="sm"
-              onClick={handleRetryFetch}
-              disabled={vaultsLoading}
+              onClick={() => void userVaultsQuery.refetch()}
+              disabled={userVaultsQuery.isRefetching}
             >
-              {vaultsLoading ? 'Retrying...' : 'Retry'}
+              {userVaultsQuery.isRefetching ? 'Retrying...' : 'Retry'}
             </Button>
           </div>
         )}
@@ -198,10 +192,10 @@ export default function AutovaultListContent() {
                       onClick={() => handleManageVault()}
                     >
                       <Avatar
-                        address={mergedVaultAddresses[0].address as `0x${string}`}
+                        address={mergedVaults[0].address as `0x${string}`}
                         size={20}
                       />
-                      <span className="ml-2">Manage {mergedVaultAddresses[0].address.slice(0, 6)}</span>
+                      <span className="ml-2">Manage {getVaultLabel(mergedVaults[0])}</span>
                     </Button>
                   )}
 
@@ -215,15 +209,15 @@ export default function AutovaultListContent() {
                           className="font-zen px-6"
                         >
                           <Avatar
-                            address={mergedVaultAddresses[0].address as `0x${string}`}
+                            address={mergedVaults[0].address as `0x${string}`}
                             size={20}
                           />
-                          <span className="ml-2">Manage {mergedVaultAddresses[0].address.slice(0, 6)}</span>
+                          <span className="ml-2">Manage {getVaultLabel(mergedVaults[0])}</span>
                           <ChevronDownIcon className="ml-2 h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="center">
-                        {mergedVaultAddresses.map((vault) => (
+                        {mergedVaults.map((vault) => (
                           <DropdownMenuItem
                             key={`${vault.networkId}-${vault.address}`}
                             onClick={() => handleManageVault(vault.address, vault.networkId)}
@@ -235,7 +229,10 @@ export default function AutovaultListContent() {
                               />
                             }
                           >
-                            {vault.address.slice(0, 6)}
+                            <div className="flex flex-col">
+                              <span>{getVaultLabel(vault)}</span>
+                              <span className="text-[11px] text-secondary">{getNetworkName(vault.networkId) ?? `Chain ${vault.networkId}`}</span>
+                            </div>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -286,6 +283,55 @@ export default function AutovaultListContent() {
                 </div>
               )}
             </div>
+
+            {isConnected && hasVaults && (
+              <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 pt-2 md:grid-cols-2">
+                {mergedVaults.map((vault) => {
+                  const assetToken = vault.asset ? findToken(vault.asset, vault.networkId) : undefined;
+                  const displayName = getVaultLabel(vault);
+                  const displaySymbol = vault.symbol?.trim();
+                  const isIndexed = Boolean(vault.name || vault.symbol || vault.asset);
+
+                  return (
+                    <button
+                      key={`${vault.networkId}-${vault.address}`}
+                      type="button"
+                      onClick={() => handleManageVault(vault.address, vault.networkId)}
+                      className="bg-surface hover:border-primary/40 rounded border border-border p-4 text-left transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Avatar
+                              address={vault.address as `0x${string}`}
+                              size={22}
+                            />
+                            <p className="truncate text-base text-primary">{displayName}</p>
+                            {displaySymbol && <span className="rounded bg-hovered px-2 py-0.5 text-[11px] text-secondary">{displaySymbol}</span>}
+                          </div>
+                          <p className="text-sm text-secondary">{getNetworkName(vault.networkId) ?? `Chain ${vault.networkId}`}</p>
+                          <p className="font-monospace text-xs text-secondary">{`${vault.address.slice(0, 6)}...${vault.address.slice(-4)}`}</p>
+                        </div>
+                        {assetToken ? (
+                          <div className="flex items-center gap-2 rounded bg-hovered px-2 py-1 text-xs text-secondary">
+                            <TokenIcon
+                              address={vault.asset as Address}
+                              chainId={vault.networkId}
+                              width={16}
+                              height={16}
+                              disableTooltip
+                            />
+                            <span>{assetToken.symbol}</span>
+                          </div>
+                        ) : (
+                          <div className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{isIndexed ? 'Asset unavailable' : 'Indexing...'}</div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Benefits Section */}
             <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">

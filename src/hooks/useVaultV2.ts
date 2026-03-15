@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, zeroAddress, toFunctionSelector } from 'viem';
+import { type Address, encodeFunctionData, zeroAddress } from 'viem';
 import { useQueryClient } from '@tanstack/react-query';
 import { useConnection, useChainId, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
@@ -234,8 +234,8 @@ export function useVaultV2({
 
   // All morpho v2 vault operations have to be proposed first, and then execute
   const completeInitialization = useCallback(
-    async (morphoRegistry: Address, marketV1Adapter: Address, allocator?: Address, _name?: string, _symbol?: string): Promise<boolean> => {
-      if (!account || !vaultAddress || marketV1Adapter === zeroAddress) return false;
+    async (morphoRegistry: Address, marketAdapter: Address, allocator?: Address, _name?: string, _symbol?: string): Promise<boolean> => {
+      if (!account || !vaultAddress || marketAdapter === zeroAddress) return false;
 
       const txs: `0x${string}`[] = [];
 
@@ -287,7 +287,7 @@ export function useVaultV2({
       const addAdapterTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'addAdapter',
-        args: [marketV1Adapter],
+        args: [marketAdapter],
       });
 
       const submitAddAdapterTx = encodeFunctionData({
@@ -303,21 +303,21 @@ export function useVaultV2({
 
       // Note: do not do this for maximized flexibility for now: open in the future!
       // Step 5. Abdicate registry control.
-      const setAdapterRegistrySelector = toFunctionSelector('setAdapterRegistry(address)');
+      // const setAdapterRegistrySelector = toFunctionSelector('setAdapterRegistry(address)');
 
-      const abdicateSetAdapterRegistryTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'abdicate',
-        args: [setAdapterRegistrySelector],
-      });
+      // const abdicateSetAdapterRegistryTx = encodeFunctionData({
+      //   abi: vaultv2Abi,
+      //   functionName: 'abdicate',
+      //   args: [setAdapterRegistrySelector],
+      // });
 
-      const submitAbdicateSetAdapterRegistryTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'submit',
-        args: [abdicateSetAdapterRegistryTx],
-      });
+      // const submitAbdicateSetAdapterRegistryTx = encodeFunctionData({
+      //   abi: vaultv2Abi,
+      //   functionName: 'submit',
+      //   args: [abdicateSetAdapterRegistryTx],
+      // });
 
-      txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
+      // txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
 
       // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data)
       const setSelfAllocatorTx = encodeFunctionData({

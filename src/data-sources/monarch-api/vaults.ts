@@ -33,11 +33,6 @@ export type VaultV2Details = {
   avgApy?: number;
 };
 
-export type UserVaultV2Address = {
-  address: string;
-  networkId: SupportedNetworks;
-};
-
 export type UserVaultV2 = VaultV2Details & {
   networkId: SupportedNetworks;
   balance?: bigint;
@@ -104,14 +99,6 @@ type MonarchVaultDetailResponse = {
   };
 };
 
-type MonarchVaultAddressRecord = Pick<MonarchVault, 'vaultAddress' | 'chainId'>;
-
-type MonarchVaultAddressesResponse = {
-  data?: {
-    Vault?: MonarchVaultAddressRecord[];
-  };
-};
-
 const MONARCH_VAULT_FIELDS = `
   id
   vaultAddress
@@ -140,11 +127,6 @@ const MONARCH_VAULT_FIELDS = `
     absoluteCap
     relativeCap
   }
-`;
-
-const MONARCH_VAULT_ADDRESS_FIELDS = `
-  vaultAddress
-  chainId
 `;
 
 const normalizeAddress = (value: string | null | undefined): string => value?.toLowerCase() ?? '';
@@ -198,30 +180,10 @@ const transformVault = (vault: MonarchVault, adapterDetails: VaultAdapterDetails
   };
 };
 
-const transformVaultAddress = (vault: MonarchVaultAddressRecord): UserVaultV2Address | null => {
-  const networkId = toSupportedNetwork(vault.chainId);
-  if (!networkId) {
-    return null;
-  }
-
-  return {
-    address: normalizeAddress(vault.vaultAddress),
-    networkId,
-  };
-};
-
 const userVaultsQuery = `
   query MonarchUserVaults($owner: String!) {
     Vault(where: { owner: { _eq: $owner } }, order_by: [{ lastUpdate: desc }]) {
       ${MONARCH_VAULT_FIELDS}
-    }
-  }
-`;
-
-const userVaultAddressesQuery = `
-  query MonarchUserVaultAddresses($owner: String!) {
-    Vault(where: { owner: { _eq: $owner } }, order_by: [{ lastUpdate: desc }]) {
-      ${MONARCH_VAULT_ADDRESS_FIELDS}
     }
   }
 `;
@@ -248,15 +210,6 @@ export const fetchUserVaultV2DetailsAllNetworks = async (owner: string): Promise
 
   const vaults = response.data?.Vault ?? [];
   return vaults.map((vault) => transformVault(vault)).filter((vault): vault is UserVaultV2 => vault !== null);
-};
-
-export const fetchUserVaultV2AddressesAllNetworks = async (owner: string): Promise<UserVaultV2Address[]> => {
-  const response = await monarchGraphqlFetcher<MonarchVaultAddressesResponse>(userVaultAddressesQuery, {
-    owner: owner.toLowerCase(),
-  });
-
-  const vaults = response.data?.Vault ?? [];
-  return vaults.map(transformVaultAddress).filter((vault): vault is UserVaultV2Address => vault !== null);
 };
 
 export const fetchMonarchVaultDetails = async (vaultAddress: string, chainId: SupportedNetworks): Promise<UserVaultV2 | null> => {

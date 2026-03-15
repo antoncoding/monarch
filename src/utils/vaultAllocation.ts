@@ -3,6 +3,8 @@ import { vaultv2Abi } from '@/abis/vaultv2';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 
+const getVaultBalanceKey = (address: Address | string, networkId: SupportedNetworks) => `${address.toLowerCase()}-${networkId}`;
+
 /**
  * Calculate allocation percentage relative to total
  */
@@ -79,7 +81,7 @@ export async function fetchUserVaultShares(
         if (redeemContracts.length === 0) {
           // No vaults with balance, return zeros
           vaultAddresses.forEach((addr) => {
-            results.set(addr.toLowerCase(), 0n);
+            results.set(getVaultBalanceKey(addr, networkId), 0n);
           });
           return;
         }
@@ -98,7 +100,7 @@ export async function fetchUserVaultShares(
         redeemContracts.forEach((contract, index) => {
           if (contract) {
             const result = redeemResults[index];
-            const vaultAddress = contract._vaultAddress.toLowerCase();
+            const vaultAddress = getVaultBalanceKey(contract._vaultAddress, networkId);
             if (result.status === 'success' && result.result) {
               results.set(vaultAddress, result.result as bigint);
             } else {
@@ -109,15 +111,16 @@ export async function fetchUserVaultShares(
 
         // Set 0 for vaults that had 0 balance
         vaultAddresses.forEach((addr) => {
-          if (!results.has(addr.toLowerCase())) {
-            results.set(addr.toLowerCase(), 0n);
+          const vaultKey = getVaultBalanceKey(addr, networkId);
+          if (!results.has(vaultKey)) {
+            results.set(vaultKey, 0n);
           }
         });
       } catch (error) {
         console.error(`Failed to fetch vault shares for network ${networkId}:`, error);
         // Set all to 0 on error
         vaultAddresses.forEach((addr) => {
-          results.set(addr.toLowerCase(), 0n);
+          results.set(getVaultBalanceKey(addr, networkId), 0n);
         });
       }
     }),
