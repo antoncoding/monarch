@@ -36,9 +36,15 @@ export function useMorphoMarketAdapters({ vaultAddress, chainId }: { vaultAddres
     }));
   }, [chainId, query.data?.adapterDetails, query.data?.adapters, vaultAddress]);
 
-  const primaryAdapter = useMemo(() => (adapters.length > 0 ? adapters[0].adapter : zeroAddress), [adapters]);
-  const primaryAdapterType = adapters[0]?.adapterType;
-  const primaryFactoryAddress = adapters[0]?.factoryAddress;
+  const { primaryAdapter, primaryAdapterType, primaryFactoryAddress } = useMemo(() => {
+    const primary = adapters[0];
+
+    return {
+      primaryAdapter: primary?.adapter,
+      primaryAdapterType: primary?.adapterType,
+      primaryFactoryAddress: primary?.factoryAddress,
+    };
+  }, [adapters]);
 
   return {
     primaryAdapter,

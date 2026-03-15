@@ -96,7 +96,7 @@ export function VaultWithdrawModal({
     const needsAllocatorSetup = isOwner && !isAllocator;
 
     await withdrawFromMarket(withdrawAmount, connectedAddress, selectedMarket.market, primaryAdapter, needsAllocatorSetup);
-  }, [connectedAddress, selectedMarket, primaryAdapter, isOwner, isAllocator, withdrawFromMarket, withdrawAmount]);
+  }, [connectedAddress, selectedMarket, isOwner, isAllocator, withdrawFromMarket, withdrawAmount, primaryAdapter]);
 
   const isLoading = allocationsLoading || adaptersLoading;
 
@@ -185,13 +185,18 @@ export function VaultWithdrawModal({
                       exceedMaxErrMessage="Exceeds available amount"
                     />
                     {inputError && <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>}
+                    {!primaryAdapter && (
+                      <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
+                        Vault adapter unavailable. Refresh and try again.
+                      </p>
+                    )}
                   </div>
 
                   <ExecuteTransactionButton
                     targetChainId={chainId}
                     onClick={handleWithdraw}
                     isLoading={isWithdrawing}
-                    disabled={inputError !== null || !withdrawAmount || withdrawAmount === 0n}
+                    disabled={!primaryAdapter || inputError !== null || !withdrawAmount || withdrawAmount === 0n}
                     variant="primary"
                     className="ml-2 min-w-32"
                   >

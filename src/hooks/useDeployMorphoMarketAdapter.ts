@@ -20,7 +20,7 @@ export function useDeployMorphoMarketAdapter({ vaultAddress, chainId }: { vaultA
     }
   }, [resolvedChainId]);
 
-  const canDeploy = Boolean(factoryAddress && vaultAddress);
+  const canDeploy = Boolean(account && factoryAddress && vaultAddress);
 
   const { isConfirming: isDeploying, sendTransactionAsync } = useTransactionWithToast({
     toastId: TX_TOAST_ID,

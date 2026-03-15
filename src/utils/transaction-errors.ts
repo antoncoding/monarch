@@ -20,8 +20,8 @@ type ErrorLike = {
   cause?: unknown;
 };
 
-const isErrorLike = (value: unknown): value is ErrorLike => {
-  return typeof value === 'object' && value !== null;
+const asErrorLike = (value: unknown): ErrorLike | null => {
+  return typeof value === 'object' && value !== null ? (value as ErrorLike) : null;
 };
 
 const asNonEmptyString = (value: unknown): string | null => {
@@ -47,14 +47,19 @@ const sanitizeViemErrorMessage = (message: string): string => {
 
 const collectErrorChain = (error: unknown): ErrorLike[] => {
   const chain: ErrorLike[] = [];
-  const visited = new Set<unknown>();
+  const visited = new Set<object>();
   let current: unknown = error;
   let depth = 0;
 
-  while (isErrorLike(current) && !visited.has(current) && depth < ERROR_CAUSE_MAX_DEPTH) {
-    chain.push(current);
-    visited.add(current);
-    current = current.cause;
+  while (depth < ERROR_CAUSE_MAX_DEPTH) {
+    const errorRecord = asErrorLike(current);
+    if (!errorRecord || visited.has(errorRecord)) {
+      break;
+    }
+
+    chain.push(errorRecord);
+    visited.add(errorRecord);
+    current = errorRecord.cause;
     depth += 1;
   }
 

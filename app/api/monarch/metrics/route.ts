@@ -1,10 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { MONARCH_METRICS_API_KEY, getMonarchMetricsUrl } from '../utils';
+import {
+  MONARCH_METRICS_API_KEY,
+  MONARCH_METRICS_TIMEOUT_MS,
+  fetchMonarchUpstream,
+  getMonarchMetricsUrl,
+  getMonarchRouteFailure,
+} from '../utils';
 import { reportApiRouteError } from '@/utils/sentry-server';
 
 export async function GET(req: NextRequest) {
   if (!MONARCH_METRICS_API_KEY) {
-    console.error('[Monarch Metrics API] Missing MONARCH_API_KEY');
+    console.error('[Monarch Metrics API] Missing MONARCH_METRICS_API_KEY');
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
@@ -17,9 +23,8 @@ export async function GET(req: NextRequest) {
       if (value) url.searchParams.set(key, value);
     }
 
-    const response = await fetch(url, {
+    const response = await fetchMonarchUpstream(url, MONARCH_METRICS_TIMEOUT_MS, {
       headers: { 'X-API-Key': MONARCH_METRICS_API_KEY },
-      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -30,12 +35,14 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(await response.json());
   } catch (error) {
+    const failure = getMonarchRouteFailure(error, 'Failed to fetch market metrics', 'Monarch metrics request timed out');
+
     reportApiRouteError(error, {
       route: '/api/monarch/metrics',
       method: 'GET',
-      status: 500,
+      status: failure.status,
     });
     console.error('[Monarch Metrics API] Failed to fetch:', error);
-    return NextResponse.json({ error: 'Failed to fetch market metrics' }, { status: 500 });
+    return NextResponse.json({ error: failure.message }, { status: failure.status });
   }
 }

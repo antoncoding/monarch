@@ -1,7 +1,6 @@
 'use client';
 
 import type { Address } from 'viem';
-import { zeroAddress } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
@@ -37,7 +36,7 @@ export function RolesPanel({ vaultAddress, chainId, onNavigateToDetail }: RolesP
   const getAdapterLabel = (addr: string) => {
     const adapter = marketAdapters.find((candidate) => candidate.adapter.toLowerCase() === addr.toLowerCase());
     if (!adapter) {
-      return primaryAdapter !== zeroAddress && addr.toLowerCase() === primaryAdapter.toLowerCase() ? 'MorphoBlue Adapter' : undefined;
+      return primaryAdapter && addr.toLowerCase() === primaryAdapter.toLowerCase() ? 'MorphoBlue Adapter' : undefined;
     }
     if (adapter.adapterType === 'MorphoMarketV1AdapterV2') {
       return 'MorphoBlue Adapter V2';

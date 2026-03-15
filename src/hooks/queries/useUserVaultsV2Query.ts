@@ -55,13 +55,17 @@ async function fetchAndProcessVaults({
   ]);
 
   // Combine Monarch vault metadata with optional balances and supplemental APY
-  return validVaults.map((vault) => ({
-    ...vault,
-    adapter: vault.adapters[0] as Address | undefined,
-    avgApy: avgApyByVault.get(getVaultReadKey(vault.address, vault.networkId)),
-    balance: shareBalances.get(getVaultReadKey(vault.address, vault.networkId)) ?? 0n,
-    totalAssets: totalAssetsByVault.get(getVaultReadKey(vault.address, vault.networkId)),
-  }));
+  return validVaults.map((vault) => {
+    const vaultKey = getVaultReadKey(vault.address, vault.networkId);
+
+    return {
+      ...vault,
+      adapter: vault.adapters[0] as Address | undefined,
+      avgApy: avgApyByVault.get(vaultKey),
+      balance: includeBalances ? (shareBalances.has(vaultKey) ? shareBalances.get(vaultKey) : undefined) : undefined,
+      totalAssets: totalAssetsByVault.get(vaultKey),
+    };
+  });
 }
 
 /**

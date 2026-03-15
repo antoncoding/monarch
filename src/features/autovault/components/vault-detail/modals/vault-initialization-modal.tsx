@@ -265,6 +265,7 @@ export function VaultInitializationModal() {
       }
 
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+      void refetchAdapter();
 
       const createEvent = receipt.logs.find((log) => {
         if (log.address.toLowerCase() !== factoryAddress.toLowerCase()) {
@@ -276,7 +277,6 @@ export function VaultInitializationModal() {
       if (createEvent && createEvent.topics[2]) {
         const adapter = `0x${createEvent.topics[2].slice(-40)}` as Address;
         setDeployedAdapter(adapter.toLowerCase() as Address);
-        void refetchAdapter();
         setStepIndex(1);
       }
     } catch (_error) {
@@ -343,6 +343,8 @@ export function VaultInitializationModal() {
       setStepIndex(1);
     }
   }, [marketAdapter, stepIndex, deployedAdapter]);
+
+  const canCompleteInitialization = adapterAddress !== ZERO_ADDRESS && registryAddress !== ZERO_ADDRESS;
 
   const stepTitle = useMemo(() => {
     switch (currentStep) {
@@ -414,7 +416,7 @@ export function VaultInitializationModal() {
       <Button
         variant="primary"
         className="min-w-[170px]"
-        disabled={isInitializing}
+        disabled={isInitializing || !canCompleteInitialization}
         onClick={() => void handleCompleteInitialization()}
       >
         {isInitializing ? (

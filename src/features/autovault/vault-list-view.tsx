@@ -97,7 +97,7 @@ export default function AutovaultListContent() {
     const localVaults = address ? getDeployedVaults(address) : [];
 
     const combined: VaultListItem[] = indexedVaults.map((vault) => ({
-      address: vault.address,
+      address: vault.address.toLowerCase(),
       asset: vault.asset,
       name: vault.name,
       networkId: vault.networkId,
@@ -110,7 +110,7 @@ export default function AutovaultListContent() {
       const key = `${localVault.address.toLowerCase()}-${localVault.chainId}`;
       if (!existingVaults.has(key)) {
         combined.push({
-          address: localVault.address,
+          address: localVault.address.toLowerCase(),
           asset: undefined,
           name: undefined,
           networkId: localVault.chainId,

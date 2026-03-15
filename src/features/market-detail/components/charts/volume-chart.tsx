@@ -36,10 +36,10 @@ function formatNetChangePercentage(value: number): string {
   if (!Number.isFinite(value)) return '0.00%';
 
   if (value > MAX_NET_GROWTH_PERCENT) {
-    return '>' + MAX_NET_GROWTH_PERCENT.toLocaleString() + '%';
+    return `>${MAX_NET_GROWTH_PERCENT.toLocaleString()}%`;
   }
 
-  return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
 function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {

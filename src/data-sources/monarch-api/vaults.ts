@@ -231,7 +231,7 @@ export const fetchMonarchVaultDetails = async (vaultAddress: string, chainId: Su
   );
   const adapterDetails = (response.data?.Adapter ?? [])
     .map(transformAdapterRecord)
-    .filter((adapter) => activeAdapterAddresses.size === 0 || activeAdapterAddresses.has(adapter.address));
+    .filter((adapter) => activeAdapterAddresses.has(adapter.address));
 
   return transformVault(vault, adapterDetails);
 };

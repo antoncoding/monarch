@@ -111,6 +111,8 @@ export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Pro
     return new Map();
   }
 
+  const requestedKeys = new Set(vaults.map((vault) => getVaultApyKey(vault.address, vault.networkId)));
+
   try {
     const response = await morphoGraphqlFetcher<VaultApysApiResponse>(vaultApysQuery, {
       first: vaults.length,
@@ -128,10 +130,14 @@ export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Pro
     const apys = new Map<string, number>();
 
     for (const vault of items) {
+      const key = getVaultApyKey(vault.address, vault.chain.id);
       if (vault.avgApy === null || vault.avgApy === undefined) {
         continue;
       }
-      apys.set(getVaultApyKey(vault.address, vault.chain.id), vault.avgApy);
+      if (!requestedKeys.has(key)) {
+        continue;
+      }
+      apys.set(key, vault.avgApy);
     }
 
     return apys;

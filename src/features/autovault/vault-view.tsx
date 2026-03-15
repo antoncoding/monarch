@@ -97,7 +97,7 @@ export default function VaultContent() {
   const tokenDecimals = vaultData?.tokenDecimals;
   const tokenSymbol = vaultData?.tokenSymbol;
   const assetAddress = vaultData?.assetAddress as Address | undefined;
-  const adapterAddress = adapterQuery.primaryAdapter as Address | undefined;
+  const adapterAddress = adapterQuery.primaryAdapter;
 
   const adapterPortfolioHref = useMemo(() => {
     if (!adapterAddress || !assetAddress) return undefined;
@@ -109,9 +109,9 @@ export default function VaultContent() {
   const { open: openInitialization } = useVaultInitializationModalStore();
 
   // Computed state flags for vault-view banners
-  const hasNoAllocators = (vaultData?.allocators ?? []).length === 0;
-  const capsUninitialized =
-    !vaultData?.capsData || (vaultData.capsData.collateralCaps.length === 0 && vaultData.capsData.marketCaps.length === 0);
+  const hasNoAllocators = Boolean(vaultData?.capsData) && (vaultData?.allocators ?? []).length === 0;
+  const capsUninitialized = vaultData?.capsData?.needSetupCaps === true;
+  const capsInitialized = vaultData?.capsData?.needSetupCaps === false;
 
   // Format APY for APY card in vault-view
   const apyLabel = useMemo(() => {
@@ -149,7 +149,7 @@ export default function VaultContent() {
 
   // Extract collateral addresses from caps for header
   const collateralAddresses = useMemo(() => {
-    return (vaultData?.capsData.collateralCaps ?? [])
+    return (vaultData?.capsData?.collateralCaps ?? [])
       .map((cap) => {
         const addr = parseCapIdParams(cap.idParams).collateralToken;
         if (!addr) return null;
@@ -161,7 +161,7 @@ export default function VaultContent() {
         };
       })
       .filter((c): c is { address: Address; symbol: string; amount: number } => !!c);
-  }, [vaultData?.capsData.collateralCaps, findToken, chainId]);
+  }, [vaultData?.capsData?.collateralCaps, findToken, chainId]);
 
   const handleDeposit = useCallback(() => {
     if (!assetAddress || !tokenSymbol || tokenDecimals === undefined) return;
@@ -302,7 +302,7 @@ export default function VaultContent() {
           />
 
           {/* Transaction History Preview - only show when vault is fully set up */}
-          {adapterAddress && isVaultInitialized && !capsUninitialized && (
+          {adapterAddress && isVaultInitialized && capsInitialized && (
             <TransactionHistoryPreview
               account={adapterAddress}
               chainId={chainId}

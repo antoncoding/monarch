@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { type QueryClient, useIsFetching, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -23,8 +23,10 @@ const wait = async (delayMs: number): Promise<void> => {
 };
 
 const refetchVaultQuerySet = async (queryClient: QueryClient, vaultAddress: Address, chainId: SupportedNetworks): Promise<void> => {
+  const normalizedVaultAddress = vaultAddress.toLowerCase() as Address;
+
   await Promise.all([
-    queryClient.refetchQueries({ queryKey: ['vault-v2-data', vaultAddress, chainId], exact: false }),
+    queryClient.refetchQueries({ queryKey: ['vault-v2-data', normalizedVaultAddress, chainId], exact: false }),
     queryClient.refetchQueries({ queryKey: ['vault-allocations', vaultAddress, chainId], exact: false }),
     queryClient.refetchQueries({ queryKey: ['user-vaults-v2'], exact: false }),
   ]);
@@ -46,23 +48,30 @@ export const refetchVaultQueryData = async (
 
 export function useVaultQueryRefresh({ vaultAddress, chainId }: { vaultAddress?: Address; chainId: SupportedNetworks }) {
   const queryClient = useQueryClient();
-  const vaultDataFetchCount = useIsFetching({ queryKey: ['vault-v2-data', vaultAddress, chainId] });
+  const [refreshInProgress, setRefreshInProgress] = useState(false);
+  const normalizedVaultAddress = vaultAddress?.toLowerCase() as Address | undefined;
+  const vaultDataFetchCount = useIsFetching({ queryKey: ['vault-v2-data', normalizedVaultAddress, chainId] });
   const vaultAllocationFetchCount = useIsFetching({ queryKey: ['vault-allocations', vaultAddress, chainId] });
   const userVaultFetchCount = useIsFetching({ queryKey: ['user-vaults-v2'] });
 
   const refetch = useCallback(
     async ({ includeRetries = false }: { includeRetries?: boolean } = {}): Promise<void> => {
-      await refetchVaultQueryData(queryClient, {
-        vaultAddress,
-        chainId,
-        retryDelaysMs: includeRetries ? MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS : DEFAULT_REFETCH_DELAYS_MS,
-      });
+      setRefreshInProgress(true);
+      try {
+        await refetchVaultQueryData(queryClient, {
+          vaultAddress,
+          chainId,
+          retryDelaysMs: includeRetries ? MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS : DEFAULT_REFETCH_DELAYS_MS,
+        });
+      } finally {
+        setRefreshInProgress(false);
+      }
     },
     [chainId, queryClient, vaultAddress],
   );
 
   return {
     refetch,
-    isRefetching: vaultDataFetchCount + vaultAllocationFetchCount + userVaultFetchCount > 0,
+    isRefetching: refreshInProgress || vaultDataFetchCount + vaultAllocationFetchCount + userVaultFetchCount > 0,
   };
 }

@@ -31,7 +31,7 @@ export type VaultV2Data = {
   sentinels: string[];
   owner: string;
   curator: string;
-  capsData: CapData;
+  capsData?: CapData;
   adapters: string[];
   adapterDetails: VaultAdapterDetails[];
   curatorDisplay: string;
@@ -93,17 +93,18 @@ const fetchBasicVaultRpcData = async (vaultAddress: Address, chainId: SupportedN
 
 export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
   const { findToken } = useTokensQuery();
+  const normalizedVaultAddress = vaultAddress?.toLowerCase() as Address | undefined;
 
   const query = useQuery({
-    queryKey: ['vault-v2-data', vaultAddress, chainId],
+    queryKey: ['vault-v2-data', normalizedVaultAddress, chainId],
     queryFn: async () => {
-      if (!vaultAddress) {
+      if (!normalizedVaultAddress) {
         return null;
       }
 
       let monarchVault = null;
       try {
-        monarchVault = await fetchMonarchVaultDetails(vaultAddress, chainId);
+        monarchVault = await fetchMonarchVaultDetails(normalizedVaultAddress, chainId);
       } catch (monarchError) {
         console.warn('[useVaultV2Data] Monarch vault fetch failed, continuing with RPC fallback:', monarchError);
       }
@@ -111,10 +112,14 @@ export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
       let rpcFallback: BasicVaultRpcData | null = null;
       if (!monarchVault) {
         try {
-          rpcFallback = await fetchBasicVaultRpcData(vaultAddress, chainId);
+          rpcFallback = await fetchBasicVaultRpcData(normalizedVaultAddress, chainId);
         } catch (rpcError) {
           console.warn('[useVaultV2Data] RPC fallback failed for vault metadata:', rpcError);
         }
+      }
+
+      if (!monarchVault && !rpcFallback) {
+        throw new Error('Failed to load vault metadata from Monarch API and RPC fallback');
       }
 
       const caps = monarchVault?.caps ?? [];
@@ -142,6 +147,14 @@ export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
       const tokenSymbol = token?.symbol ?? '--';
       const tokenDecimals = token?.decimals ?? 18;
       const curator = monarchVault?.curator || rpcFallback?.curator || '';
+      const capsData = monarchVault
+        ? {
+            adapterCap,
+            collateralCaps,
+            marketCaps,
+            needSetupCaps: !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0,
+          }
+        : undefined;
 
       return {
         displayName: monarchVault?.name || '',
@@ -153,18 +166,13 @@ export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
         sentinels: monarchVault?.sentinels ?? [],
         owner: monarchVault?.owner || rpcFallback?.owner || '',
         curator,
-        capsData: {
-          adapterCap,
-          collateralCaps,
-          marketCaps,
-          needSetupCaps: !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0,
-        },
+        capsData,
         adapters: monarchVault?.adapters ?? rpcFallback?.adapters ?? [],
         adapterDetails: monarchVault?.adapterDetails ?? [],
         curatorDisplay: curator ? getSlicedAddress(curator as Address) : '--',
       } satisfies VaultV2Data;
     },
-    enabled: Boolean(vaultAddress),
+    enabled: Boolean(normalizedVaultAddress),
     staleTime: 30_000,
   });
 
