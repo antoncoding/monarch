@@ -59,7 +59,7 @@ export function AccountIdentity({
   const [mounted, setMounted] = useState(false);
   const toast = useStyledToast();
   const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
-  const { vaultName, shortAddress } = useAddressLabel(address);
+  const { vaultName, shortAddress } = useAddressLabel(address, chainId);
   const { data: ensName } = useEnsName({
     address: address as `0x${string}`,
     chainId: 1,
