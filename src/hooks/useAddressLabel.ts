@@ -18,8 +18,15 @@ export function useAddressLabel(address: Address, chainId?: number): UseAddressL
   const { getVaultByAddress } = useVaultRegistry();
 
   const vaultName = useMemo(() => {
-    const vault = getVaultByAddress(address, chainId);
-    return vault?.name;
+    const vaultOnChain = getVaultByAddress(address, chainId);
+    if (vaultOnChain?.name) {
+      return vaultOnChain.name;
+    }
+
+    // Fallback: some surfaces may pass a mismatched/unknown chainId for a known vault address.
+    // In that case, resolve by address only so vault labels still render.
+    const vaultAnyChain = getVaultByAddress(address);
+    return vaultAnyChain?.name;
   }, [address, chainId, getVaultByAddress]);
 
   const shortAddress = useMemo(() => {
