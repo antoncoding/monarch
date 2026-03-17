@@ -1,4 +1,5 @@
 import { allVaultsQuery, vaultApysQuery } from '@/graphql/vault-queries';
+import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 import { morphoGraphqlFetcher } from './fetchers';
 
 type VaultAddressByNetwork = {
@@ -7,7 +8,6 @@ type VaultAddressByNetwork = {
 };
 
 // Constants for Morpho vault fetching
-const MORPHO_SUPPORTED_CHAIN_IDS = [1, 8453, 999, 137, 42_161, 130];
 const MAX_VAULTS_LIMIT = 500;
 
 // Type for vault from Morpho API
@@ -82,7 +82,7 @@ export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
       first: MAX_VAULTS_LIMIT,
       where: {
         listed: true,
-        chainId_in: MORPHO_SUPPORTED_CHAIN_IDS,
+        chainId_in: ALL_SUPPORTED_NETWORKS,
       },
     };
 
