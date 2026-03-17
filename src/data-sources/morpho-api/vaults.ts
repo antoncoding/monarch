@@ -27,8 +27,8 @@ type ApiVault = {
     id: number;
   };
   name: string;
-  avgApy?: number | null;
   state: {
+    apy?: number | null;
     totalAssets: string;
   };
   asset: {
@@ -49,7 +49,7 @@ type AllVaultsApiResponse = {
 type VaultApysApiResponse = {
   data?: {
     vaults?: {
-      items?: Pick<ApiVault, 'address' | 'avgApy' | 'chain'>[];
+      items?: Pick<ApiVault, 'address' | 'chain' | 'state'>[];
     };
   };
   errors?: { message: string }[];
@@ -131,13 +131,14 @@ export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Pro
 
     for (const vault of items) {
       const key = getVaultApyKey(vault.address, vault.chain.id);
-      if (vault.avgApy === null || vault.avgApy === undefined) {
+      const apy = vault.state.apy;
+      if (apy === null || apy === undefined) {
         continue;
       }
       if (!requestedKeys.has(key)) {
         continue;
       }
-      apys.set(key, vault.avgApy);
+      apys.set(key, apy);
     }
 
     return apys;

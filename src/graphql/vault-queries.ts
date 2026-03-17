@@ -11,7 +11,6 @@ export const allVaultsQuery = `
           id
         }
         name
-        avgApy
         state {
           totalAssets
         }
@@ -29,9 +28,11 @@ export const vaultApysQuery = `
     vaults(first: $first, where: $where) {
       items {
         address
-        avgApy
         chain {
           id
+        }
+        state {
+          apy
         }
       }
     }

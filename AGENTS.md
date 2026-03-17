@@ -171,6 +171,7 @@ When touching transaction and position flows, validation MUST include all releva
 35. **Monarch proxy boundary integrity**: server-side Monarch proxy routes must use server-only API key env vars and bounded `AbortController` timeouts on upstream fetches. Do not let Monarch GraphQL or metrics calls hang indefinitely, and do not reference `NEXT_PUBLIC_*` secrets in server authorization headers.
 36. **Vault fallback and adapter-sentinel integrity**: treat `zeroAddress` as “no adapter” in all vault routing and transaction-critical paths, canonicalize vault query/cache identity by lowercase address plus chain, and when Monarch metadata is unavailable fail closed or return explicit unknown state instead of synthesizing empty vault data or assuming missing allocators/caps from absent indexed fields.
 37. **Vault setup-state derivation integrity**: only infer “adapter missing”, “needs initialization”, or auto-advance setup states from resolved adapter/vault queries, never from undefined/loading/error values. When Monarch returns both active adapter addresses and adapter detail rows, merge the union by canonical address instead of letting one source replace the other.
+38. **Morpho vault query schema integrity**: shared Morpho vault metadata/rate queries must only request fields confirmed on the live `Vault`/`VaultState` schema. Do not add speculative top-level fields to the registry query, and do not swallow schema errors in a way that turns the global vault registry into an empty success state.
 
 
 ### REQUIRED: Regression Rule Capture
