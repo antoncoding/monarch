@@ -129,6 +129,10 @@ badDebt {
   underlying
   usd
 }
+
+supplyingVaults {
+  address
+}
 `;
 
 export const marketFragment = `
@@ -185,6 +189,9 @@ export const marketsQuery = `
     realizedBadDebt {
       underlying
     }
+    supplyingVaults {
+      address
+    }
     state {
       borrowAssets
       supplyAssets
@@ -213,27 +220,6 @@ export const marketsQuery = `
     warnings {
       type
       level
-    }
-  }
-`;
-
-export const marketSupplyingVaultsQuery = `
-  query getMarketSupplyingVaults($first: Int, $where: MarketFilters) {
-    markets(first: $first, where: $where) {
-      items {
-        uniqueKey
-        morphoBlue {
-          chain {
-            id
-          }
-        }
-        supplyingVaults {
-          address
-        }
-      }
-      pageInfo {
-        countTotal
-      }
     }
   }
 `;

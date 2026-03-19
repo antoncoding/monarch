@@ -36,17 +36,9 @@ type MorphoMarketsPage = {
   totalCount: number;
 };
 
-const MORPHO_MARKETS_PAGE_SIZE = 600;
+const MORPHO_MARKETS_PAGE_SIZE = 500;
 const MORPHO_MARKETS_TIMEOUT_MS = 20_000;
-const MORPHO_MARKETS_PAGE_BATCH_SIZE = 6;
-
-const filterBlacklistedMarkets = (markets: Market[]): Market[] => {
-  return markets.filter(
-    (market) =>
-      !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
-      !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
-  );
-};
+const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
 
 // Transform API response to internal Market type
 const processMarketData = (market: MorphoApiMarket): Market => {
@@ -57,16 +49,6 @@ const processMarketData = (market: MorphoApiMarket): Market => {
     whitelisted: listed,
     hasUSDPrice: true,
   };
-};
-
-const buildRemainingOffsets = (firstPageCount: number, totalCount: number, pageSize: number): number[] => {
-  const offsets: number[] = [];
-
-  for (let skip = firstPageCount; skip < totalCount; skip += pageSize) {
-    offsets.push(skip);
-  }
-
-  return offsets;
 };
 
 // Fetcher for market details from Morpho API
@@ -81,16 +63,12 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
   return processMarketData(response.data.marketByUniqueKey);
 };
 
-const fetchMorphoMarketsPage = async (
-  networks: SupportedNetworks[],
-  skip: number,
-  pageSize: number,
-): Promise<MorphoMarketsPage> => {
+const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
   const variables = {
     first: pageSize,
     skip,
     where: {
-      chainId_in: networks,
+      chainId_in: [network],
     },
   };
 
@@ -99,7 +77,8 @@ const fetchMorphoMarketsPage = async (
   });
 
   if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {
-    throw new Error(`[Markets] Missing or malformed Morpho response at skip=${skip} for networks ${networks.join(',')}`);
+    console.warn(`[Markets] Skipping failed page at skip=${skip} for network ${network}`);
+    return null;
   }
 
   const { items, pageInfo } = response.data.markets;
@@ -111,15 +90,15 @@ const fetchMorphoMarketsPage = async (
 };
 
 // Fetcher for multiple markets from Morpho API with pagination
-export const fetchMorphoMarketsForNetworks = async (networks: SupportedNetworks[]): Promise<Market[]> => {
-  if (networks.length === 0) {
-    return [];
-  }
-
+export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
   const allMarkets: Market[] = [];
   const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 
-  const firstPage = await fetchMorphoMarketsPage(networks, 0, pageSize);
+  const firstPage = await fetchMorphoMarketsPage(network, 0, pageSize);
+
+  if (!firstPage) {
+    return [];
+  }
 
   allMarkets.push(...firstPage.items);
 
@@ -128,29 +107,42 @@ export const fetchMorphoMarketsForNetworks = async (networks: SupportedNetworks[
 
   if (firstPageCount === 0 && totalCount > 0) {
     console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
-    return filterBlacklistedMarkets(allMarkets);
+    return allMarkets.filter(
+      (market) =>
+        !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
+        !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
+    );
   }
 
-  // The first page reveals the full count, so we can precompute every remaining offset
-  // and fetch the rest in bounded parallel batches instead of strict sequential pagination.
-  const remainingOffsets = buildRemainingOffsets(firstPageCount, totalCount, pageSize);
+  const remainingOffsets: number[] = [];
+  for (let nextSkip = firstPageCount; nextSkip < totalCount; nextSkip += pageSize) {
+    remainingOffsets.push(nextSkip);
+  }
 
   for (let index = 0; index < remainingOffsets.length; index += MORPHO_MARKETS_PAGE_BATCH_SIZE) {
     const offsetBatch = remainingOffsets.slice(index, index + MORPHO_MARKETS_PAGE_BATCH_SIZE);
-    const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchMorphoMarketsPage(networks, skip, pageSize)));
+    const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchMorphoMarketsPage(network, skip, pageSize)));
+
+    const successfulPages: MorphoMarketsPage[] = [];
 
     for (const settledPage of settledPages) {
       if (settledPage.status === 'rejected') {
         throw settledPage.reason;
       }
-
-      allMarkets.push(...settledPage.value.items);
+      if (settledPage.value) {
+        successfulPages.push(settledPage.value);
+      }
     }
+
+    successfulPages.forEach((page) => {
+      allMarkets.push(...page.items);
+    });
   }
 
-  return filterBlacklistedMarkets(allMarkets);
-};
-
-export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
-  return fetchMorphoMarketsForNetworks([network]);
+  // final filter: remove scam markets
+  return allMarkets.filter(
+    (market) =>
+      !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
+      !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
+  );
 };
