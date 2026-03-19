@@ -58,7 +58,18 @@ type TrustedByCellProps = {
 
 export function TrustedByCell({ vaults, badgeSize = 22, isLoading = false }: TrustedByCellProps) {
   if (isLoading) {
-    return <span className="inline-block h-5 w-12 animate-pulse rounded bg-hovered" />;
+    return (
+      <span
+        aria-busy="true"
+        className="inline-flex items-center justify-center"
+      >
+        <span className="sr-only">Loading trusted vaults</span>
+        <span
+          aria-hidden="true"
+          className="inline-block h-5 w-12 animate-pulse rounded bg-hovered"
+        />
+      </span>
+    );
   }
 
   if (!vaults.length) {

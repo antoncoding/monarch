@@ -67,6 +67,22 @@ type ValidPositionMarketItem = {
   } | null;
 };
 
+type RawPositionMarketItem = {
+  market?: {
+    uniqueKey?: string;
+    morphoBlue?: {
+      chain?: {
+        id?: number;
+      };
+    };
+  } | null;
+  state?: {
+    supplyShares?: string | number | null;
+    borrowShares?: string | number | null;
+    collateral?: string | number | null;
+  } | null;
+};
+
 const MORPHO_POSITION_MARKETS_PAGE_SIZE = 500;
 
 const hasNonZeroPositionState = (
@@ -83,6 +99,28 @@ const hasNonZeroPositionState = (
 
     return value.toString() !== '0';
   });
+};
+
+const appendPositionMarkets = (
+  items: RawPositionMarketItem[] | undefined,
+  positionMarkets: Map<string, { marketUniqueKey: string; chainId: number }>,
+): void => {
+  for (const item of items ?? []) {
+    const market = item.market;
+    if (!market?.uniqueKey || market.morphoBlue?.chain?.id === undefined) {
+      continue;
+    }
+
+    if (!hasNonZeroPositionState(item.state)) {
+      continue;
+    }
+
+    const positionMarket = {
+      marketUniqueKey: market.uniqueKey,
+      chainId: market.morphoBlue.chain.id,
+    };
+    positionMarkets.set(`${positionMarket.marketUniqueKey.toLowerCase()}-${positionMarket.chainId}`, positionMarket);
+  }
 };
 
 /**
@@ -135,44 +173,42 @@ export const fetchMorphoUserPositionMarketsForNetworks = async (
   }
 
   const positionMarkets = new Map<string, { marketUniqueKey: string; chainId: number }>();
-  let skip = 0;
+  const firstResult = await morphoGraphqlFetcher<MorphoUserPositionMarketsApiResponse>(userPositionMarketsQuery, {
+    address: userAddress.toLowerCase(),
+    chainIds: networks,
+    first: MORPHO_POSITION_MARKETS_PAGE_SIZE,
+    skip: 0,
+  });
 
-  while (true) {
-    const result = await morphoGraphqlFetcher<MorphoUserPositionMarketsApiResponse>(userPositionMarketsQuery, {
-      address: userAddress.toLowerCase(),
-      chainIds: networks,
-      first: MORPHO_POSITION_MARKETS_PAGE_SIZE,
-      skip,
-    });
-
-    if (!result) {
-      return Array.from(positionMarkets.values());
-    }
-
-    const items = result.data?.marketPositions?.items ?? [];
-    const totalCount = result.data?.marketPositions?.pageInfo?.countTotal ?? 0;
-
-    for (const item of items) {
-      const market = item.market;
-      if (!market?.uniqueKey || market.morphoBlue?.chain?.id === undefined) {
-        continue;
-      }
-      if (!hasNonZeroPositionState(item.state)) {
-        continue;
-      }
-
-      const positionMarket = {
-        marketUniqueKey: market.uniqueKey,
-        chainId: market.morphoBlue.chain.id,
-      };
-      positionMarkets.set(`${positionMarket.marketUniqueKey.toLowerCase()}-${positionMarket.chainId}`, positionMarket);
-    }
-
-    skip += items.length;
-    if (items.length === 0 || skip >= totalCount) {
-      return Array.from(positionMarkets.values());
-    }
+  if (!firstResult) {
+    return Array.from(positionMarkets.values());
   }
+
+  const firstItems = firstResult.data?.marketPositions?.items ?? [];
+  const totalCount = firstResult.data?.marketPositions?.pageInfo?.countTotal ?? 0;
+  appendPositionMarkets(firstItems, positionMarkets);
+
+  const remainingOffsets: number[] = [];
+  for (let skip = firstItems.length; skip < totalCount; skip += MORPHO_POSITION_MARKETS_PAGE_SIZE) {
+    remainingOffsets.push(skip);
+  }
+
+  const remainingResults = await Promise.all(
+    remainingOffsets.map((skip) =>
+      morphoGraphqlFetcher<MorphoUserPositionMarketsApiResponse>(userPositionMarketsQuery, {
+        address: userAddress.toLowerCase(),
+        chainIds: networks,
+        first: MORPHO_POSITION_MARKETS_PAGE_SIZE,
+        skip,
+      }),
+    ),
+  );
+
+  for (const result of remainingResults) {
+    appendPositionMarkets(result?.data?.marketPositions?.items, positionMarkets);
+  }
+
+  return Array.from(positionMarkets.values());
 };
 
 /**

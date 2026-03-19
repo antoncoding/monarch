@@ -85,7 +85,7 @@ const fetchMorphoMarketsPage = async (
   networks: SupportedNetworks[],
   skip: number,
   pageSize: number,
-): Promise<MorphoMarketsPage | null> => {
+): Promise<MorphoMarketsPage> => {
   const variables = {
     first: pageSize,
     skip,
@@ -99,8 +99,7 @@ const fetchMorphoMarketsPage = async (
   });
 
   if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {
-    console.warn(`[Markets] Skipping failed page at skip=${skip} for networks ${networks.join(',')}`);
-    return null;
+    throw new Error(`[Markets] Missing or malformed Morpho response at skip=${skip} for networks ${networks.join(',')}`);
   }
 
   const { items, pageInfo } = response.data.markets;
@@ -121,10 +120,6 @@ export const fetchMorphoMarketsForNetworks = async (networks: SupportedNetworks[
   const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 
   const firstPage = await fetchMorphoMarketsPage(networks, 0, pageSize);
-
-  if (!firstPage) {
-    return [];
-  }
 
   allMarkets.push(...firstPage.items);
 
@@ -147,10 +142,6 @@ export const fetchMorphoMarketsForNetworks = async (networks: SupportedNetworks[
     for (const settledPage of settledPages) {
       if (settledPage.status === 'rejected') {
         throw settledPage.reason;
-      }
-
-      if (!settledPage.value) {
-        continue;
       }
 
       allMarkets.push(...settledPage.value.items);

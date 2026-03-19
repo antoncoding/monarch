@@ -57,44 +57,59 @@ const chunkArray = <T>(items: T[], chunkSize: number): T[][] => {
   return chunks;
 };
 
-const fetchSupplyingVaultsChunk = async (markets: MarketReference[]): Promise<Map<string, string[]>> => {
-  const result = await morphoGraphqlFetcher<MarketSupplyingVaultsResponse>(
-    marketSupplyingVaultsQuery,
-    {
-      first: markets.length,
-      where: {
-        uniqueKey_in: markets.map((market) => market.uniqueKey),
-        chainId_in: [...new Set(markets.map((market) => market.chainId))],
-      },
-    },
-    {
-      timeoutMs: SUPPLYING_VAULTS_TIMEOUT_MS,
-    },
-  );
+const groupMarketsByChainId = (markets: MarketReference[]): Map<number, MarketReference[]> => {
+  const marketsByChainId = new Map<number, MarketReference[]>();
 
-  const supplyingVaultsByMarket = new Map<string, string[]>();
-
-  if (!result) {
-    return supplyingVaultsByMarket;
+  for (const market of markets) {
+    const existingMarkets = marketsByChainId.get(market.chainId) ?? [];
+    existingMarkets.push(market);
+    marketsByChainId.set(market.chainId, existingMarkets);
   }
 
-  for (const item of result.data?.markets?.items ?? []) {
-    const uniqueKey = item.uniqueKey;
-    const chainId = item.morphoBlue?.chain?.id;
+  return marketsByChainId;
+};
 
-    if (!uniqueKey || chainId === undefined) {
+const fetchSupplyingVaultsChunk = async (markets: MarketReference[]): Promise<Map<string, string[]>> => {
+  const supplyingVaultsByMarket = new Map<string, string[]>();
+  const marketsByChainId = groupMarketsByChainId(markets);
+
+  for (const [chainId, chainMarkets] of marketsByChainId.entries()) {
+    const result = await morphoGraphqlFetcher<MarketSupplyingVaultsResponse>(
+      marketSupplyingVaultsQuery,
+      {
+        first: chainMarkets.length,
+        where: {
+          uniqueKey_in: chainMarkets.map((market) => market.uniqueKey),
+          chainId_in: [chainId],
+        },
+      },
+      {
+        timeoutMs: SUPPLYING_VAULTS_TIMEOUT_MS,
+      },
+    );
+
+    if (!result) {
       continue;
     }
 
-    const vaultAddresses = Array.from(
-      new Set(
-        (item.supplyingVaults ?? [])
-          .map((vault) => vault.address?.toLowerCase())
-          .filter((address): address is string => Boolean(address)),
-      ),
-    );
+    for (const item of result.data?.markets?.items ?? []) {
+      const uniqueKey = item.uniqueKey;
+      const itemChainId = item.morphoBlue?.chain?.id;
 
-    supplyingVaultsByMarket.set(getChainScopedMarketKey(chainId, uniqueKey), vaultAddresses);
+      if (!uniqueKey || itemChainId === undefined) {
+        continue;
+      }
+
+      const vaultAddresses = Array.from(
+        new Set(
+          (item.supplyingVaults ?? [])
+            .map((vault) => vault.address?.toLowerCase())
+            .filter((address): address is string => Boolean(address)),
+        ),
+      );
+
+      supplyingVaultsByMarket.set(getChainScopedMarketKey(itemChainId, uniqueKey), vaultAddresses);
+    }
   }
 
   return supplyingVaultsByMarket;

@@ -18,6 +18,30 @@ type PositionMarket = {
   chainId: number;
 };
 
+type PositionsFetchSource = 'morpho-api' | 'subgraph' | 'combined';
+
+export class PositionsFetchError extends Error {
+  network: SupportedNetworks;
+  source: PositionsFetchSource;
+  override cause?: unknown;
+
+  constructor({
+    network,
+    source,
+    cause,
+  }: {
+    network: SupportedNetworks;
+    source: PositionsFetchSource;
+    cause?: unknown;
+  }) {
+    super(`[Positions] Failed to fetch source markets for network ${network} via ${source}`);
+    this.name = 'PositionsFetchError';
+    this.network = network;
+    this.source = source;
+    this.cause = cause;
+  }
+}
+
 // Type returned by the first query
 type InitialDataResponse = {
   finalMarketKeys: PositionMarket[];
@@ -52,14 +76,16 @@ const fetchSourceMarketKeysForNetwork = async (user: string, network: SupportedN
   let markets: PositionMarket[] = [];
   let apiError = false;
   const morphoApiSupported = supportsMorphoApi(network);
+  let morphoError: unknown;
 
   if (morphoApiSupported) {
     try {
       console.log(`Attempting to fetch positions via Morpho API for network ${network}`);
       markets = await fetchMorphoUserPositionMarkets(user, network);
-    } catch (morphoError) {
-      console.error(`Failed to fetch positions via Morpho API for network ${network}:`, morphoError);
+    } catch (error) {
+      console.error(`Failed to fetch positions via Morpho API for network ${network}:`, error);
       apiError = true;
+      morphoError = error;
     }
   }
 
@@ -69,11 +95,30 @@ const fetchSourceMarketKeysForNetwork = async (user: string, network: SupportedN
       markets = await fetchSubgraphUserPositionMarkets(user, network);
     } catch (subgraphError) {
       console.error(`Failed to fetch positions via Subgraph for network ${network}:`, subgraphError);
-      return [];
+      throw new PositionsFetchError({
+        network,
+        source: morphoApiSupported && apiError ? 'combined' : 'subgraph',
+        cause: morphoApiSupported && apiError ? { morphoError, subgraphError } : subgraphError,
+      });
     }
   }
 
   return markets;
+};
+
+const appendFulfilledPositionMarkets = (
+  results: PromiseSettledResult<PositionMarket[]>[],
+  sourcePositionMarkets: PositionMarket[],
+  fetchErrors: Error[],
+): void => {
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      sourcePositionMarkets.push(...result.value);
+      continue;
+    }
+
+    fetchErrors.push(result.reason instanceof Error ? result.reason : new Error(String(result.reason)));
+  }
 };
 
 // Fetches market keys ONLY from API/Subgraph sources
@@ -82,6 +127,8 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
   const morphoApiNetworks = networksToFetch.filter((network) => supportsMorphoApi(network));
   const fallbackNetworks = networksToFetch.filter((network) => !supportsMorphoApi(network));
   const sourcePositionMarkets: PositionMarket[] = [];
+  const fetchErrors: Error[] = [];
+  const fallbackResultsPromise = Promise.allSettled(fallbackNetworks.map((network) => fetchSourceMarketKeysForNetwork(user, network)));
 
   if (morphoApiNetworks.length > 0) {
     const startedAt = Date.now();
@@ -96,20 +143,15 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
     } catch (error) {
       console.error('[Positions] Failed batched Morpho position lookup, falling back to per-network strategy:', error);
       const morphoResults = await Promise.allSettled(morphoApiNetworks.map((network) => fetchSourceMarketKeysForNetwork(user, network)));
-
-      for (const result of morphoResults) {
-        if (result.status === 'fulfilled') {
-          sourcePositionMarkets.push(...result.value);
-        }
-      }
+      appendFulfilledPositionMarkets(morphoResults, sourcePositionMarkets, fetchErrors);
     }
   }
 
-  const fallbackResults = await Promise.allSettled(fallbackNetworks.map((network) => fetchSourceMarketKeysForNetwork(user, network)));
-  for (const result of fallbackResults) {
-    if (result.status === 'fulfilled') {
-      sourcePositionMarkets.push(...result.value);
-    }
+  const fallbackResults = await fallbackResultsPromise;
+  appendFulfilledPositionMarkets(fallbackResults, sourcePositionMarkets, fetchErrors);
+
+  if (fetchErrors.length > 0) {
+    throw fetchErrors[0];
   }
 
   return sourcePositionMarkets;
