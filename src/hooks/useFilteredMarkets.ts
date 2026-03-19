@@ -11,7 +11,7 @@ import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } 
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
-import { getChainScopedMarketKey } from '@/utils/markets';
+import { hasTrustedVaultForMarket } from '@/utils/markets';
 import type { Market } from '@/utils/types';
 
 type UseFilteredMarketsResult = {
@@ -46,10 +46,7 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
     if (markets.length === 0) return [];
 
     const hasTrustedVault = (market: Market): boolean => {
-      const chainId = market.morphoBlue.chain.id;
-      const marketKey = getChainScopedMarketKey(chainId, market.uniqueKey);
-      const supplyingVaults = supplyingVaultsByMarket.get(marketKey) ?? [];
-      return supplyingVaults.some((address) => trustedVaultKeys.has(getVaultKey(address, chainId)));
+      return hasTrustedVaultForMarket(market, supplyingVaultsByMarket, trustedVaultKeys);
     };
 
     markets = filterMarkets(markets, {

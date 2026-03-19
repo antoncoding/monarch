@@ -59,6 +59,16 @@ const processMarketData = (market: MorphoApiMarket): Market => {
   };
 };
 
+const buildRemainingOffsets = (firstPageCount: number, totalCount: number, pageSize: number): number[] => {
+  const offsets: number[] = [];
+
+  for (let skip = firstPageCount; skip < totalCount; skip += pageSize) {
+    offsets.push(skip);
+  }
+
+  return offsets;
+};
+
 // Fetcher for market details from Morpho API
 export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market> => {
   const response = await morphoGraphqlFetcher<MarketGraphQLResponse>(marketDetailQuery, {
@@ -126,29 +136,25 @@ export const fetchMorphoMarketsForNetworks = async (networks: SupportedNetworks[
     return filterBlacklistedMarkets(allMarkets);
   }
 
-  const remainingOffsets: number[] = [];
-  for (let nextSkip = firstPageCount; nextSkip < totalCount; nextSkip += pageSize) {
-    remainingOffsets.push(nextSkip);
-  }
+  // The first page reveals the full count, so we can precompute every remaining offset
+  // and fetch the rest in bounded parallel batches instead of strict sequential pagination.
+  const remainingOffsets = buildRemainingOffsets(firstPageCount, totalCount, pageSize);
 
   for (let index = 0; index < remainingOffsets.length; index += MORPHO_MARKETS_PAGE_BATCH_SIZE) {
     const offsetBatch = remainingOffsets.slice(index, index + MORPHO_MARKETS_PAGE_BATCH_SIZE);
     const settledPages = await Promise.allSettled(offsetBatch.map((skip) => fetchMorphoMarketsPage(networks, skip, pageSize)));
 
-    const successfulPages: MorphoMarketsPage[] = [];
-
     for (const settledPage of settledPages) {
       if (settledPage.status === 'rejected') {
         throw settledPage.reason;
       }
-      if (settledPage.value) {
-        successfulPages.push(settledPage.value);
-      }
-    }
 
-    successfulPages.forEach((page) => {
-      allMarkets.push(...page.items);
-    });
+      if (!settledPage.value) {
+        continue;
+      }
+
+      allMarkets.push(...settledPage.value.items);
+    }
   }
 
   return filterBlacklistedMarkets(allMarkets);

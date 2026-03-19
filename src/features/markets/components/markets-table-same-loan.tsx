@@ -14,7 +14,7 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { useMarketSupplyingVaultsQuery } from '@/hooks/queries/useMarketSupplyingVaultsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
-import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useModal } from '@/hooks/useModal';
 import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
@@ -24,7 +24,7 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
-import { getChainScopedMarketKey } from '@/utils/markets';
+import { getTrustedVaultsForMarket, hasTrustedVaultForMarket } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, type PriceFeedVendors } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
@@ -73,41 +73,6 @@ enum SortColumn {
   Risk = 7,
   TrustedBy = 8,
   UtilizationRate = 9,
-}
-
-function getTrustedVaultsForMarket(
-  market: Market,
-  trustedVaultMap: Map<string, TrustedVault>,
-  supplyingVaultsByMarket: Map<string, string[]>,
-): TrustedVault[] {
-  const chainId = market.morphoBlue.chain.id;
-  const supplyingVaults = supplyingVaultsByMarket.get(getChainScopedMarketKey(chainId, market.uniqueKey)) ?? [];
-
-  if (supplyingVaults.length === 0) {
-    return [];
-  }
-
-  const seen = new Set<string>();
-  const matches: TrustedVault[] = [];
-
-  supplyingVaults.forEach((address) => {
-    const key = getVaultKey(address, chainId);
-    if (seen.has(key)) return;
-    seen.add(key);
-    const trusted = trustedVaultMap.get(key);
-    if (trusted) {
-      matches.push(trusted);
-    }
-  });
-
-  return matches.sort((a, b) => {
-    const aUnknown = a.curator === 'unknown';
-    const bUnknown = b.curator === 'unknown';
-    if (aUnknown !== bUnknown) {
-      return aUnknown ? 1 : -1;
-    }
-    return a.name.localeCompare(b.name);
-  });
 }
 
 function HTSortable({
@@ -383,6 +348,7 @@ export function MarketsTableWithSameLoanAsset({
   const trustedVaultMap = useMemo(() => {
     return buildTrustedVaultMap(userTrustedVaults);
   }, [userTrustedVaults]);
+  const trustedVaultKeys = useMemo(() => new Set(trustedVaultMap.keys()), [trustedVaultMap]);
 
   const shouldFetchSupplyingVaults =
     trustedVaultMap.size > 0 && (columnVisibility.trustedBy || trustedVaultsOnly || sortColumn === SortColumn.TrustedBy);
@@ -393,12 +359,8 @@ export function MarketsTableWithSameLoanAsset({
   );
 
   const hasTrustedVault = useCallback(
-    (market: Market) => {
-      const chainId = market.morphoBlue.chain.id;
-      const supplyingVaults = supplyingVaultsByMarket.get(getChainScopedMarketKey(chainId, market.uniqueKey)) ?? [];
-      return supplyingVaults.some((address) => trustedVaultMap.has(getVaultKey(address, chainId)));
-    },
-    [supplyingVaultsByMarket, trustedVaultMap],
+    (market: Market) => hasTrustedVaultForMarket(market, supplyingVaultsByMarket, trustedVaultKeys),
+    [supplyingVaultsByMarket, trustedVaultKeys],
   );
 
   // Create memoized usdFilters object from individual localStorage values

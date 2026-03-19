@@ -1,3 +1,6 @@
+import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import type { Market } from '@/utils/types';
+
 /**
  * Parse and normalize a numeric threshold value from user input.
  * - Empty string or "0" → 0 (no threshold)
@@ -19,6 +22,62 @@ export const parseNumericThreshold = (rawValue: string | undefined | null): numb
 
 export const getChainScopedMarketKey = (chainId: number, marketId: string): string => {
   return `${chainId}-${marketId.toLowerCase()}`;
+};
+
+const EMPTY_SUPPLYING_VAULTS: string[] = [];
+
+export const getSupplyingVaultAddressesForMarket = (
+  market: Pick<Market, 'uniqueKey' | 'morphoBlue'>,
+  supplyingVaultsByMarket: ReadonlyMap<string, string[]>,
+): string[] => {
+  return supplyingVaultsByMarket.get(getChainScopedMarketKey(market.morphoBlue.chain.id, market.uniqueKey)) ?? EMPTY_SUPPLYING_VAULTS;
+};
+
+export const hasTrustedVaultForMarket = (
+  market: Pick<Market, 'uniqueKey' | 'morphoBlue'>,
+  supplyingVaultsByMarket: ReadonlyMap<string, string[]>,
+  trustedVaultKeys: ReadonlySet<string>,
+): boolean => {
+  const chainId = market.morphoBlue.chain.id;
+
+  return getSupplyingVaultAddressesForMarket(market, supplyingVaultsByMarket).some((address) =>
+    trustedVaultKeys.has(getVaultKey(address, chainId)),
+  );
+};
+
+export const getTrustedVaultsForMarket = (
+  market: Pick<Market, 'uniqueKey' | 'morphoBlue'>,
+  trustedVaultMap: ReadonlyMap<string, TrustedVault>,
+  supplyingVaultsByMarket: ReadonlyMap<string, string[]>,
+): TrustedVault[] => {
+  const chainId = market.morphoBlue.chain.id;
+  const matches: TrustedVault[] = [];
+  const seen = new Set<string>();
+
+  for (const address of getSupplyingVaultAddressesForMarket(market, supplyingVaultsByMarket)) {
+    const key = getVaultKey(address, chainId);
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+
+    const trustedVault = trustedVaultMap.get(key);
+    if (trustedVault) {
+      matches.push(trustedVault);
+    }
+  }
+
+  return matches.sort((a, b) => {
+    const aUnknown = a.curator === 'unknown';
+    const bUnknown = b.curator === 'unknown';
+
+    if (aUnknown !== bUnknown) {
+      return aUnknown ? 1 : -1;
+    }
+
+    return a.name.localeCompare(b.name);
+  });
 };
 
 // Blacklisted markets by uniqueKey
