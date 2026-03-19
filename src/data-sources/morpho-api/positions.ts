@@ -1,4 +1,4 @@
-import { userPositionsQuery, userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
+import { userPositionMarketsQuery, userPositionsQuery, userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketPosition } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
@@ -21,12 +21,106 @@ type MorphoUserMarketPositionApiResponse = {
   errors?: { message: string }[];
 };
 
+type MorphoUserPositionMarketsApiResponse = {
+  data?: {
+    marketPositions?: {
+      items?: {
+        state?: {
+          supplyShares?: string | number | null;
+          borrowShares?: string | number | null;
+          collateral?: string | number | null;
+        } | null;
+        market?: {
+          uniqueKey?: string;
+          morphoBlue?: {
+            chain?: {
+              id?: number;
+            };
+          };
+        } | null;
+      }[];
+      pageInfo?: {
+        countTotal: number;
+      };
+    };
+  };
+  errors?: { message: string }[];
+};
+
 // Type for a valid position with required fields
 type ValidMarketPosition = MarketPosition & {
   market: {
     uniqueKey: string;
     morphoBlue: { chain: { id: number } };
   };
+};
+
+type ValidPositionMarketItem = {
+  market: {
+    uniqueKey: string;
+    morphoBlue: { chain: { id: number } };
+  };
+  state?: {
+    supplyShares?: string | number | null;
+    borrowShares?: string | number | null;
+    collateral?: string | number | null;
+  } | null;
+};
+
+type RawPositionMarketItem = {
+  market?: {
+    uniqueKey?: string;
+    morphoBlue?: {
+      chain?: {
+        id?: number;
+      };
+    };
+  } | null;
+  state?: {
+    supplyShares?: string | number | null;
+    borrowShares?: string | number | null;
+    collateral?: string | number | null;
+  } | null;
+};
+
+const MORPHO_POSITION_MARKETS_PAGE_SIZE = 500;
+
+const hasNonZeroPositionState = (
+  state: ValidPositionMarketItem['state'],
+): boolean => {
+  if (!state) {
+    return false;
+  }
+
+  return [state.supplyShares, state.borrowShares, state.collateral].some((value) => {
+    if (value === null || value === undefined) {
+      return false;
+    }
+
+    return value.toString() !== '0';
+  });
+};
+
+const appendPositionMarkets = (
+  items: RawPositionMarketItem[] | undefined,
+  positionMarkets: Map<string, { marketUniqueKey: string; chainId: number }>,
+): void => {
+  for (const item of items ?? []) {
+    const market = item.market;
+    if (!market?.uniqueKey || market.morphoBlue?.chain?.id === undefined) {
+      continue;
+    }
+
+    if (!hasNonZeroPositionState(item.state)) {
+      continue;
+    }
+
+    const positionMarket = {
+      marketUniqueKey: market.uniqueKey,
+      chainId: market.morphoBlue.chain.id,
+    };
+    positionMarkets.set(`${positionMarket.marketUniqueKey.toLowerCase()}-${positionMarket.chainId}`, positionMarket);
+  }
 };
 
 /**
@@ -65,6 +159,56 @@ export const fetchMorphoUserPositionMarkets = async (
     console.error(`Failed to fetch position markets from Morpho API for ${userAddress} on ${network}:`, error);
     throw error; // Re-throw to allow caller to handle fallback
   }
+};
+
+/**
+ * Fetches the unique keys of markets where a user has a position across multiple networks from the Morpho API.
+ */
+export const fetchMorphoUserPositionMarketsForNetworks = async (
+  userAddress: string,
+  networks: SupportedNetworks[],
+): Promise<{ marketUniqueKey: string; chainId: number }[]> => {
+  if (networks.length === 0) {
+    return [];
+  }
+
+  const positionMarkets = new Map<string, { marketUniqueKey: string; chainId: number }>();
+  const firstResult = await morphoGraphqlFetcher<MorphoUserPositionMarketsApiResponse>(userPositionMarketsQuery, {
+    address: userAddress.toLowerCase(),
+    chainIds: networks,
+    first: MORPHO_POSITION_MARKETS_PAGE_SIZE,
+    skip: 0,
+  });
+
+  if (!firstResult) {
+    return Array.from(positionMarkets.values());
+  }
+
+  const firstItems = firstResult.data?.marketPositions?.items ?? [];
+  const totalCount = firstResult.data?.marketPositions?.pageInfo?.countTotal ?? 0;
+  appendPositionMarkets(firstItems, positionMarkets);
+
+  const remainingOffsets: number[] = [];
+  for (let skip = firstItems.length; skip < totalCount; skip += MORPHO_POSITION_MARKETS_PAGE_SIZE) {
+    remainingOffsets.push(skip);
+  }
+
+  const remainingResults = await Promise.all(
+    remainingOffsets.map((skip) =>
+      morphoGraphqlFetcher<MorphoUserPositionMarketsApiResponse>(userPositionMarketsQuery, {
+        address: userAddress.toLowerCase(),
+        chainIds: networks,
+        first: MORPHO_POSITION_MARKETS_PAGE_SIZE,
+        skip,
+      }),
+    ),
+  );
+
+  for (const result of remainingResults) {
+    appendPositionMarkets(result?.data?.marketPositions?.items, positionMarkets);
+  }
+
+  return Array.from(positionMarkets.values());
 };
 
 /**
