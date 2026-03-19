@@ -5,6 +5,7 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
+import { useMarketSupplyingVaultsQuery } from '@/hooks/queries/useMarketSupplyingVaultsQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -33,7 +34,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   // Get trusted vaults directly from store (no prop drilling!)
   const { vaults: trustedVaults } = useTrustedVaults();
 
-  const markets = useFilteredMarkets();
+  const { markets, isTrustedVaultDataLoading } = useFilteredMarkets();
   const isEmpty = !rawMarkets;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
@@ -81,13 +82,19 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
   const currentEntries = markets.slice(indexOfFirstEntry, indexOfLastEntry);
+  const shouldFetchVisibleSupplyingVaults = columnVisibility.trustedBy && trustedVaults.length > 0;
+  const { data: supplyingVaultsByMarket, isLoading: isSupplyingVaultsLoading } = useMarketSupplyingVaultsQuery(
+    currentEntries,
+    shouldFetchVisibleSupplyingVaults,
+  );
 
   const totalPages = Math.ceil(markets.length / entriesPerPage);
+  const isTableLoading = loading || isTrustedVaultDataLoading;
 
   const containerClassName = [
     'flex flex-col gap-2 pb-4',
-    loading ? 'w-full' : (className ?? 'w-full'),
-    loading || isEmpty || markets.length === 0 ? 'items-center' : '',
+    isTableLoading ? 'w-full' : (className ?? 'w-full'),
+    isTableLoading || isEmpty || markets.length === 0 ? 'items-center' : '',
   ]
     .filter((value): value is string => Boolean(value))
     .join(' ');
@@ -130,7 +137,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
         }
         className="w-full"
       >
-        {loading ? (
+        {isTableLoading ? (
           <LoadingScreen
             message="Loading Morpho Blue Markets..."
             className="min-h-[300px] w-full px-4"
@@ -334,11 +341,13 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
               expandedRowId={expandedRowId}
               setExpandedRowId={setExpandedRowId}
               trustedVaultMap={trustedVaultMap}
+              supplyingVaultsByMarket={supplyingVaultsByMarket}
+              isSupplyingVaultsLoading={isSupplyingVaultsLoading}
             />
-          </Table>
-        )}
+            </Table>
+          )}
       </TableContainerWithHeader>
-      {!loading && !isEmpty && markets.length > 0 && (
+      {!isTableLoading && !isEmpty && markets.length > 0 && (
         <TablePagination
           totalPages={totalPages}
           totalEntries={markets.length}

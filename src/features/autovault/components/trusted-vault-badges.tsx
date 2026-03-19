@@ -53,9 +53,14 @@ export function MoreVaultsBadge({ vaults, badgeSize = 22 }: MoreVaultsBadgeProps
 type TrustedByCellProps = {
   vaults: TrustedVault[];
   badgeSize?: number;
+  isLoading?: boolean;
 };
 
-export function TrustedByCell({ vaults, badgeSize = 22 }: TrustedByCellProps) {
+export function TrustedByCell({ vaults, badgeSize = 22, isLoading = false }: TrustedByCellProps) {
+  if (isLoading) {
+    return <span className="inline-block h-5 w-12 animate-pulse rounded bg-hovered" />;
+  }
+
   if (!vaults.length) {
     return <span className="text-xs text-secondary">-</span>;
   }

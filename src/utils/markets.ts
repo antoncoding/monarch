@@ -17,6 +17,10 @@ export const parseNumericThreshold = (rawValue: string | undefined | null): numb
   return Math.max(parsed, 0);
 };
 
+export const getChainScopedMarketKey = (chainId: number, marketId: string): string => {
+  return `${chainId}-${marketId.toLowerCase()}`;
+};
+
 // Blacklisted markets by uniqueKey
 export const blacklistedMarkets = [
   '0x8eaf7b29f02ba8d8c1d7aeb587403dcb16e2e943e4e2f5f94b0963c2386406c9', // PAXG / USDC market with wrong oracle

@@ -12,6 +12,7 @@ import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults'
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { getChainScopedMarketKey } from '@/utils/markets';
 import type { Market } from '@/utils/types';
 import { APYCell } from '../apy-breakdown-tooltip';
 import { MarketActionsDropdown } from '../market-actions-dropdown';
@@ -23,9 +24,18 @@ type MarketTableBodyProps = {
   expandedRowId: string | null;
   setExpandedRowId: (id: string | null) => void;
   trustedVaultMap: Map<string, TrustedVault>;
+  supplyingVaultsByMarket: Map<string, string[]>;
+  isSupplyingVaultsLoading: boolean;
 };
 
-export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
+export function MarketTableBody({
+  currentEntries,
+  expandedRowId,
+  setExpandedRowId,
+  trustedVaultMap,
+  supplyingVaultsByMarket,
+  isSupplyingVaultsLoading,
+}: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
 
@@ -51,17 +61,17 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
     (columnVisibility.monthlyBorrowAPY ? 1 : 0);
 
   const getTrustedVaultsForMarket = (market: Market): TrustedVault[] => {
-    if (!columnVisibility.trustedBy || !market.supplyingVaults?.length) {
+    if (!columnVisibility.trustedBy) {
       return [];
     }
 
     const chainId = market.morphoBlue.chain.id;
+    const supplyingVaults = supplyingVaultsByMarket.get(getChainScopedMarketKey(chainId, market.uniqueKey)) ?? [];
     const uniqueMatches: TrustedVault[] = [];
     const seen = new Set<string>();
 
-    market.supplyingVaults.forEach((vault) => {
-      if (!vault.address) return;
-      const key = getVaultKey(vault.address as string, chainId);
+    supplyingVaults.forEach((address) => {
+      const key = getVaultKey(address, chainId);
       if (seen.has(key)) return;
       seen.add(key);
       const trusted = trustedVaultMap.get(key);
@@ -167,7 +177,10 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}
                 >
-                  <TrustedByCell vaults={getTrustedVaultsForMarket(item)} />
+                  <TrustedByCell
+                    vaults={getTrustedVaultsForMarket(item)}
+                    isLoading={isSupplyingVaultsLoading}
+                  />
                 </TableCell>
               )}
               {columnVisibility.totalSupply && (

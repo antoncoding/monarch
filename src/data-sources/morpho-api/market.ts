@@ -36,9 +36,9 @@ type MorphoMarketsPage = {
   totalCount: number;
 };
 
-const MORPHO_MARKETS_PAGE_SIZE = 500;
+const MORPHO_MARKETS_PAGE_SIZE = 600;
 const MORPHO_MARKETS_TIMEOUT_MS = 20_000;
-const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
+const MORPHO_MARKETS_PAGE_BATCH_SIZE = 6;
 
 const filterBlacklistedMarkets = (markets: Market[]): Market[] => {
   return markets.filter(

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
+import { useMarketSupplyingVaultsQuery } from '@/hooks/queries/useMarketSupplyingVaultsQuery';
 import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -10,9 +11,15 @@ import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } 
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
+import { getChainScopedMarketKey } from '@/utils/markets';
 import type { Market } from '@/utils/types';
 
-export const useFilteredMarkets = (): Market[] => {
+type UseFilteredMarketsResult = {
+  markets: Market[];
+  isTrustedVaultDataLoading: boolean;
+};
+
+export const useFilteredMarkets = (): UseFilteredMarketsResult => {
   const { allMarkets, whitelistedMarkets } = useProcessedMarkets();
   const { data: oracleMetadataMap } = useAllOracleMetadata();
   const filters = useMarketsFilters();
@@ -22,10 +29,28 @@ export const useFilteredMarkets = (): Market[] => {
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys();
   const customTagKeys = useCustomTagMarketKeys();
+  const candidateMarkets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
+  const trustedVaultKeys = useMemo(
+    () => new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId))),
+    [trustedVaults],
+  );
+  const needsTrustedVaultData =
+    trustedVaultKeys.size > 0 && (preferences.trustedVaultsOnly || preferences.sortColumn === SortColumn.TrustedBy);
+  const { data: supplyingVaultsByMarket, isLoading: isTrustedVaultDataLoading } = useMarketSupplyingVaultsQuery(
+    candidateMarkets,
+    needsTrustedVaultData,
+  );
 
-  return useMemo(() => {
-    let markets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
+  const markets = useMemo(() => {
+    let markets = candidateMarkets;
     if (markets.length === 0) return [];
+
+    const hasTrustedVault = (market: Market): boolean => {
+      const chainId = market.morphoBlue.chain.id;
+      const marketKey = getChainScopedMarketKey(chainId, market.uniqueKey);
+      const supplyingVaults = supplyingVaultsByMarket.get(marketKey) ?? [];
+      return supplyingVaults.some((address) => trustedVaultKeys.has(getVaultKey(address, chainId)));
+    };
 
     markets = filterMarkets(markets, {
       selectedNetwork: filters.selectedNetwork,
@@ -55,15 +80,7 @@ export const useFilteredMarkets = (): Market[] => {
     });
 
     if (preferences.trustedVaultsOnly) {
-      const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
-      markets = markets.filter((market) => {
-        if (!market.supplyingVaults?.length) return false;
-        const chainId = market.morphoBlue.chain.id;
-        return market.supplyingVaults.some((vault) => {
-          if (!vault.address) return false;
-          return trustedVaultKeys.has(getVaultKey(vault.address as string, chainId));
-        });
-      });
+      markets = markets.filter(hasTrustedVault);
     }
 
     // Official trending filter (backend-computed)
@@ -93,16 +110,9 @@ export const useFilteredMarkets = (): Market[] => {
     }
 
     if (preferences.sortColumn === SortColumn.TrustedBy) {
-      const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
       return sortMarkets(
         markets,
-        (a, b) => {
-          const aHasTrusted =
-            a.supplyingVaults?.some((v) => v.address && trustedVaultKeys.has(getVaultKey(v.address, a.morphoBlue.chain.id))) ?? false;
-          const bHasTrusted =
-            b.supplyingVaults?.some((v) => v.address && trustedVaultKeys.has(getVaultKey(v.address, b.morphoBlue.chain.id))) ?? false;
-          return Number(aHasTrusted) - Number(bHasTrusted);
-        },
+        (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)),
         preferences.sortDirection as 1 | -1,
       );
     }
@@ -136,15 +146,19 @@ export const useFilteredMarkets = (): Market[] => {
 
     return markets;
   }, [
-    allMarkets,
-    whitelistedMarkets,
-    showUnwhitelistedMarkets,
+    candidateMarkets,
     filters,
     preferences,
-    trustedVaults,
+    trustedVaultKeys,
     findToken,
     officialTrendingKeys,
     customTagKeys,
     oracleMetadataMap,
+    supplyingVaultsByMarket,
   ]);
+
+  return {
+    markets,
+    isTrustedVaultDataLoading: needsTrustedVaultData && isTrustedVaultDataLoading,
+  };
 };

@@ -4,12 +4,14 @@ import { ArrowDownIcon, ArrowUpIcon, GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { ExpandableSearchInput } from '@/features/markets/components/filters/expandable-search-input';
 import EmptyScreen from '@/components/status/empty-screen';
+import LoadingScreen from '@/components/status/loading-screen';
 import AssetFilter from '@/features/markets/components/filters/asset-filter';
 import OracleFilter from '@/features/markets/components/filters/oracle-filter';
 import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
 import type { ModalZIndex } from '@/components/common/Modal';
 import { ClearFiltersButton } from '@/components/shared/clear-filters-button';
 import { TablePagination } from '@/components/shared/table-pagination';
+import { useMarketSupplyingVaultsQuery } from '@/hooks/queries/useMarketSupplyingVaultsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
@@ -22,6 +24,7 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
+import { getChainScopedMarketKey } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, type PriceFeedVendors } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
@@ -72,18 +75,23 @@ enum SortColumn {
   UtilizationRate = 9,
 }
 
-function getTrustedVaultsForMarket(market: Market, trustedVaultMap: Map<string, TrustedVault>): TrustedVault[] {
-  if (!market.supplyingVaults?.length) {
+function getTrustedVaultsForMarket(
+  market: Market,
+  trustedVaultMap: Map<string, TrustedVault>,
+  supplyingVaultsByMarket: Map<string, string[]>,
+): TrustedVault[] {
+  const chainId = market.morphoBlue.chain.id;
+  const supplyingVaults = supplyingVaultsByMarket.get(getChainScopedMarketKey(chainId, market.uniqueKey)) ?? [];
+
+  if (supplyingVaults.length === 0) {
     return [];
   }
 
-  const chainId = market.morphoBlue.chain.id;
   const seen = new Set<string>();
   const matches: TrustedVault[] = [];
 
-  market.supplyingVaults.forEach((vault) => {
-    if (!vault.address) return;
-    const key = getVaultKey(vault.address, chainId);
+  supplyingVaults.forEach((address) => {
+    const key = getVaultKey(address, chainId);
     if (seen.has(key)) return;
     seen.add(key);
     const trusted = trustedVaultMap.get(key);
@@ -136,6 +144,8 @@ function MarketRow({
   disabled,
   showSelectColumn,
   trustedVaultMap,
+  supplyingVaultsByMarket,
+  isSupplyingVaultsLoading,
   supplyRateLabel,
   borrowRateLabel,
   isAprDisplay,
@@ -145,6 +155,8 @@ function MarketRow({
   disabled: boolean;
   showSelectColumn: boolean;
   trustedVaultMap: Map<string, TrustedVault>;
+  supplyingVaultsByMarket: Map<string, string[]>;
+  isSupplyingVaultsLoading: boolean;
   supplyRateLabel: string;
   borrowRateLabel: string;
   isAprDisplay: boolean;
@@ -156,8 +168,8 @@ function MarketRow({
     if (!columnVisibility.trustedBy) {
       return [];
     }
-    return getTrustedVaultsForMarket(market, trustedVaultMap);
-  }, [columnVisibility.trustedBy, market, trustedVaultMap]);
+    return getTrustedVaultsForMarket(market, trustedVaultMap, supplyingVaultsByMarket);
+  }, [columnVisibility.trustedBy, market, trustedVaultMap, supplyingVaultsByMarket]);
 
   return (
     <tr
@@ -212,7 +224,10 @@ function MarketRow({
           className="z-50 py-1 text-center"
           style={{ minWidth: '110px' }}
         >
-          <TrustedByCell vaults={trustedVaults} />
+          <TrustedByCell
+            vaults={trustedVaults}
+            isLoading={isSupplyingVaultsLoading}
+          />
         </td>
       )}
       {columnVisibility.totalSupply && (
@@ -369,16 +384,21 @@ export function MarketsTableWithSameLoanAsset({
     return buildTrustedVaultMap(userTrustedVaults);
   }, [userTrustedVaults]);
 
+  const shouldFetchSupplyingVaults =
+    trustedVaultMap.size > 0 && (columnVisibility.trustedBy || trustedVaultsOnly || sortColumn === SortColumn.TrustedBy);
+  const supplyingVaultMarkets = useMemo(() => marketsWithFreshState.map(({ market }) => market), [marketsWithFreshState]);
+  const { data: supplyingVaultsByMarket, isLoading: isSupplyingVaultsLoading } = useMarketSupplyingVaultsQuery(
+    supplyingVaultMarkets,
+    shouldFetchSupplyingVaults,
+  );
+
   const hasTrustedVault = useCallback(
     (market: Market) => {
-      if (!market.supplyingVaults?.length) return false;
       const chainId = market.morphoBlue.chain.id;
-      return market.supplyingVaults.some((vault) => {
-        if (!vault.address) return false;
-        return trustedVaultMap.has(getVaultKey(vault.address as string, chainId));
-      });
+      const supplyingVaults = supplyingVaultsByMarket.get(getChainScopedMarketKey(chainId, market.uniqueKey)) ?? [];
+      return supplyingVaults.some((address) => trustedVaultMap.has(getVaultKey(address, chainId)));
     },
-    [trustedVaultMap],
+    [supplyingVaultsByMarket, trustedVaultMap],
   );
 
   // Create memoized usdFilters object from individual localStorage values
@@ -558,6 +578,8 @@ export function MarketsTableWithSameLoanAsset({
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
   const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
+  const isTrustedVaultBehaviorLoading =
+    trustedVaultMap.size > 0 && isSupplyingVaultsLoading && (trustedVaultsOnly || sortColumn === SortColumn.TrustedBy);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -621,7 +643,12 @@ export function MarketsTableWithSameLoanAsset({
       </div>
 
       {/* Table or Empty State */}
-      {paginatedMarkets.length === 0 ? (
+      {isTrustedVaultBehaviorLoading ? (
+        <LoadingScreen
+          message="Loading trusted vaults..."
+          className="min-h-64"
+        />
+      ) : paginatedMarkets.length === 0 ? (
         <EmptyScreen
           message="No markets found"
           hint="Try adjusting your filter settings or search query"
@@ -750,6 +777,8 @@ export function MarketsTableWithSameLoanAsset({
                   disabled={disabled}
                   showSelectColumn={showSelectColumn}
                   trustedVaultMap={trustedVaultMap}
+                  supplyingVaultsByMarket={supplyingVaultsByMarket}
+                  isSupplyingVaultsLoading={isSupplyingVaultsLoading}
                   supplyRateLabel={supplyRateLabel}
                   borrowRateLabel={borrowRateLabel}
                   isAprDisplay={isAprDisplay}
