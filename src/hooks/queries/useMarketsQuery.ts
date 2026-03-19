@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
+import { fetchMorphoMarkets, fetchMorphoMarketsForNetworks } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
 import type { Market } from '@/utils/types';
@@ -8,6 +8,24 @@ import type { Market } from '@/utils/types';
 const toError = (error: unknown): Error => {
   if (error instanceof Error) return error;
   return new Error(String(error));
+};
+
+const fetchMarketsForNetwork = async (network: (typeof ALL_SUPPORTED_NETWORKS)[number]): Promise<Market[]> => {
+  let trySubgraph = !supportsMorphoApi(network);
+
+  if (!trySubgraph) {
+    try {
+      return await fetchMorphoMarkets(network);
+    } catch {
+      trySubgraph = true;
+    }
+  }
+
+  if (trySubgraph) {
+    return fetchSubgraphMarkets(network);
+  }
+
+  return [];
 };
 
 /**
@@ -35,43 +53,51 @@ export const useMarketsQuery = () => {
     queryFn: async () => {
       const combinedMarkets: Market[] = [];
       const fetchErrors: Error[] = [];
+      const morphoApiNetworks = ALL_SUPPORTED_NETWORKS.filter((network) => supportsMorphoApi(network));
+      const nonMorphoNetworks = ALL_SUPPORTED_NETWORKS.filter((network) => !supportsMorphoApi(network));
 
-      // Fetch markets for each network based on its data source.
-      // Use allSettled so a single chain failure cannot reject the whole query.
-      const results = await Promise.allSettled(
-        ALL_SUPPORTED_NETWORKS.map(async (network) => {
-          let networkMarkets: Market[] = [];
-          let trySubgraph = !supportsMorphoApi(network);
+      if (morphoApiNetworks.length > 0) {
+        const startedAt = Date.now();
+        try {
+          combinedMarkets.push(...(await fetchMorphoMarketsForNetworks(morphoApiNetworks)));
 
-          // Try Morpho API first if supported
-          if (!trySubgraph) {
-            try {
-              networkMarkets = await fetchMorphoMarkets(network);
-            } catch {
-              trySubgraph = true;
-              // Continue to Subgraph fallback
+          if (process.env.NODE_ENV !== 'production') {
+            console.info(
+              `[Markets] Batched Morpho fetch for ${morphoApiNetworks.length} chains completed in ${Date.now() - startedAt}ms`,
+            );
+          }
+        } catch (error) {
+          const batchedError = toError(error);
+          console.error('Failed batched Morpho market fetch, falling back to per-network strategy:', batchedError);
+          fetchErrors.push(batchedError);
+
+          const morphoFallbackResults = await Promise.allSettled(morphoApiNetworks.map(fetchMarketsForNetwork));
+          for (const [index, result] of morphoFallbackResults.entries()) {
+            if (result.status === 'fulfilled') {
+              combinedMarkets.push(...result.value);
+              continue;
             }
+
+            const network = morphoApiNetworks[index];
+            const networkError = toError(result.reason);
+            console.error(`Failed to fetch markets for network ${network}:`, networkError);
+            fetchErrors.push(networkError);
           }
+        }
+      }
 
-          // If Morpho API failed or not supported, try Subgraph
-          if (trySubgraph) {
-            networkMarkets = await fetchSubgraphMarkets(network);
-          }
-
-          return networkMarkets;
-        }),
-      );
-
-      results.forEach((result, index) => {
+      const subgraphResults = await Promise.allSettled(nonMorphoNetworks.map(fetchMarketsForNetwork));
+      for (const [index, result] of subgraphResults.entries()) {
         if (result.status === 'fulfilled') {
           combinedMarkets.push(...result.value);
-        } else {
-          const network = ALL_SUPPORTED_NETWORKS[index];
-          const error = toError(result.reason);
-          console.error(`Failed to fetch markets for network ${network}:`, error);
-          fetchErrors.push(error);
+          continue;
         }
-      });
+
+        const network = nonMorphoNetworks[index];
+        const error = toError(result.reason);
+        console.error(`Failed to fetch markets for network ${network}:`, error);
+        fetchErrors.push(error);
+      }
 
       // Apply basic filtering
       const filtered = combinedMarkets

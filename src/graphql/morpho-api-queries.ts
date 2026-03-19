@@ -246,6 +246,41 @@ export const userPositionsQuery = `
   ${marketFragment}
 `;
 
+export const userPositionMarketsQuery = `
+  query getUserPositionMarkets($address: String!, $chainIds: [Int!], $first: Int, $skip: Int) {
+    marketPositions(
+      where: {
+        userAddress_in: [$address]
+        chainId_in: $chainIds
+      }
+      first: $first
+      skip: $skip
+    ) {
+      items {
+        state {
+          supplyShares
+          borrowShares
+          collateral
+        }
+        market {
+          uniqueKey
+          morphoBlue {
+            chain {
+              id
+            }
+          }
+        }
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
+      }
+    }
+  }
+`;
+
 export const userPositionForMarketQuery = `
   query getUserMarketPosition($address: String!, $chainId: Int, $marketKey: String!) {
     marketPosition(userAddress: $address, marketUniqueKey: $marketKey, chainId: $chainId){
