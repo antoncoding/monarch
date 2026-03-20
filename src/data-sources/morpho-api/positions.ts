@@ -85,9 +85,7 @@ type RawPositionMarketItem = {
 
 const MORPHO_POSITION_MARKETS_PAGE_SIZE = 500;
 
-const hasNonZeroPositionState = (
-  state: ValidPositionMarketItem['state'],
-): boolean => {
+const hasNonZeroPositionState = (state: ValidPositionMarketItem['state']): boolean => {
   if (!state) {
     return false;
   }

@@ -4,7 +4,7 @@ import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoUserPositionMarkets, fetchMorphoUserPositionMarketsForNetworks } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
-import { ALL_SUPPORTED_NETWORKS, SupportedNetworks } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, type PositionMarketOracleInput } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
 import type { Market, MarketPosition } from '@/utils/types';

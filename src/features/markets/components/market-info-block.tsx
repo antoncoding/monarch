@@ -40,7 +40,6 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
           ) : (
             <OracleVendorBadge
               showText
-              oracleData={market.oracle?.data}
               oracleAddress={market.oracleAddress}
               chainId={market.morphoBlue.chain.id}
               useTooltip={false}
@@ -119,7 +118,6 @@ export function MarketInfoBlockCompact({ market, amount, className }: MarketInfo
       ) : (
         <OracleVendorBadge
           showText
-          oracleData={market.oracle?.data}
           oracleAddress={market.oracleAddress}
           useTooltip={false}
           chainId={market.morphoBlue.chain.id}

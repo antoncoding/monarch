@@ -1,66 +1,3 @@
-export const feedFieldsFragment = `
-  fragment FeedFields on OracleFeed {
-    address
-    chain {
-      id
-    }
-    description
-    id
-    pair
-    vendor
-  }
-`;
-
-export const oraclesQuery = `
-  query getOracles($first: Int, $skip: Int, $where: OraclesFilters) {
-    oracles(first: $first, skip: $skip, where: $where) {
-      items {
-        address
-        chain {
-          id
-        }
-        data {
-          ... on MorphoChainlinkOracleData {
-            baseFeedOne {
-              ...FeedFields
-            }
-            baseFeedTwo {
-              ...FeedFields
-            }
-            quoteFeedOne {
-              ...FeedFields
-            }
-            quoteFeedTwo {
-              ...FeedFields
-            }
-          }
-          ... on MorphoChainlinkOracleV2Data {
-            baseFeedOne {
-              ...FeedFields
-            }
-            baseFeedTwo {
-              ...FeedFields
-            }
-            quoteFeedOne {
-              ...FeedFields
-            }
-            quoteFeedTwo {
-              ...FeedFields
-            }
-          }
-        }
-      }
-      pageInfo {
-        countTotal
-        count
-        limit
-        skip
-      }
-    }
-  }
-  ${feedFieldsFragment}
-`;
-
 const commonMarketFields = `
 lltv
 uniqueKey
@@ -358,21 +295,6 @@ export const marketHistoricalDataQuery = `
   }
 `;
 
-export const userRebalancerInfoQuery = `
-  query UserRebalancerInfo($id: String!) {
-    user(id: $id) {
-      rebalancer
-      marketCaps (where: {cap_gt: 0}) {
-        marketId
-        cap
-      }
-      transactions {
-        transactionHash
-      }
-    }
-  }
-`;
-
 export const userTransactionsQuery = `
   query getUserTransactions($where: TransactionFilters, $first: Int, $skip: Int) {
     transactions(where: $where, first: $first, skip: $skip) {
@@ -556,49 +478,6 @@ export const marketBorrowersQuery = `
         count
         limit
         skip
-      }
-    }
-  }
-`;
-
-export const vaultV2Query = `
-  query VaultV2($address: String!, $chainId: Int!) {
-    vaultV2ByAddress(address: $address, chainId: $chainId) {
-      id
-      address
-      name
-      symbol
-      avgApy
-      asset {
-        id
-        address
-        symbol
-        name
-        decimals
-      }
-      curator {
-        address
-      }
-      owner {
-        address
-      }
-      allocators {
-        allocator {
-          address
-        }
-      }
-      caps {
-        items {
-          id
-          idData
-          absoluteCap
-          relativeCap
-        }
-      }
-      adapters {
-        items {
-          address
-        }
       }
     }
   }

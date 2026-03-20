@@ -5,11 +5,9 @@ import { MarketOracleFeedInfo } from '@/features/markets/components/oracle';
 import { Tooltip } from '@/components/ui/tooltip';
 import { useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { getOracleType, getOracleTypeDescription, OracleType } from '@/utils/oracle';
-import type { MorphoChainlinkOracleData } from '@/utils/types';
 import { MetaOracleInfo } from './MetaOracleInfo';
 
 type OracleTypeInfoProps = {
-  oracleData: MorphoChainlinkOracleData | null | undefined;
   oracleAddress: string;
   chainId: number;
   showCustom?: boolean;
@@ -17,9 +15,9 @@ type OracleTypeInfoProps = {
   variant?: 'summary' | 'detail';
 };
 
-export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showCustom, useBadge, variant }: OracleTypeInfoProps) {
+export function OracleTypeInfo({ oracleAddress, chainId, showCustom, useBadge, variant }: OracleTypeInfoProps) {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
-  const oracleType = getOracleType(oracleData, oracleAddress, chainId, oracleMetadataMap);
+  const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
   const typeDescription = getOracleTypeDescription(oracleType);
 
   return (
@@ -49,10 +47,6 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showCustom,
 
       {oracleType === OracleType.Standard ? (
         <MarketOracleFeedInfo
-          baseFeedOne={oracleData?.baseFeedOne}
-          baseFeedTwo={oracleData?.baseFeedTwo}
-          quoteFeedOne={oracleData?.quoteFeedOne}
-          quoteFeedTwo={oracleData?.quoteFeedTwo}
           chainId={chainId}
           oracleAddress={oracleAddress}
         />

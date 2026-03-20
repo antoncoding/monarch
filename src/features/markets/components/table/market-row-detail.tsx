@@ -6,7 +6,6 @@ import { formatReadable } from '@/utils/balance';
 import type { Market } from '@/utils/types';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
-  const oracleData = market.oracle ? market.oracle.data : null;
   const warningsWithDetail = useMarketWarnings(market);
 
   return (
@@ -18,7 +17,6 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
 
         {/* contains: Oracle Info:    Standard (Custom...etc) */}
         <OracleTypeInfo
-          oracleData={oracleData}
           oracleAddress={market.oracleAddress}
           chainId={market.morphoBlue.chain.id}
         />

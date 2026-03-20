@@ -1,22 +1,21 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
+import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { OracleVendorIcons, PriceFeedVendors, type FeedData, type FeedFreshnessStatus } from '@/utils/oracle';
-import type { OracleFeed } from '@/utils/types';
+import { OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type CompoundFeedTooltipProps = {
-  feed: OracleFeed;
-  feedData?: FeedData | null;
+  feed: EnrichedFeed;
   chainId: number;
   feedFreshness?: FeedFreshnessStatus;
 };
 
-export function CompoundFeedTooltip({ feed, feedData, chainId, feedFreshness }: CompoundFeedTooltipProps) {
-  const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
-  const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
+export function CompoundFeedTooltip({ feed, chainId, feedFreshness }: CompoundFeedTooltipProps) {
+  const baseAsset = feed.pair[0] ?? 'Unknown';
+  const quoteAsset = feed.pair[1] ?? 'Unknown';
 
   const compoundLogo = OracleVendorIcons[PriceFeedVendors.Compound];
 
@@ -45,9 +44,9 @@ export function CompoundFeedTooltip({ feed, feedData, chainId, feedFreshness }: 
       </div>
 
       {/* Feed description if available */}
-      {feedData?.description && (
+      {feed.description && (
         <div className="rounded-sm border border-blue-200/30 bg-blue-50 p-3 dark:border-blue-600/20 dark:bg-blue-900/20">
-          <div className="font-zen text-xs text-blue-700 dark:text-blue-400">{feedData.description}</div>
+          <div className="font-zen text-xs text-blue-700 dark:text-blue-400">{feed.description}</div>
         </div>
       )}
 

@@ -4,16 +4,15 @@ import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
 import { Badge } from '@/components/ui/badge';
 import { useGlobalModal } from '@/contexts/GlobalModalContext';
+import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { getChainlinkFeedUrl, OracleVendorIcons, PriceFeedVendors, type FeedData, type FeedFreshnessStatus } from '@/utils/oracle';
-import type { OracleFeed } from '@/utils/types';
+import { getChainlinkFeedUrl, OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
 import { ChainlinkRiskTiersModal } from './ChainlinkRiskTiersModal';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type ChainlinkFeedTooltipProps = {
-  feed: OracleFeed;
-  feedData?: FeedData | null;
+  feed: EnrichedFeed;
   chainId: number;
   feedFreshness?: FeedFreshnessStatus;
 };
@@ -38,16 +37,16 @@ function getRiskTierBadge(category: string) {
   );
 }
 
-export function ChainlinkFeedTooltip({ feed, feedData, chainId, feedFreshness }: ChainlinkFeedTooltipProps) {
+export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: ChainlinkFeedTooltipProps) {
   const { toggleModal, closeModal } = useGlobalModal();
-  const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
-  const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
+  const baseAsset = feed.pair[0] ?? 'Unknown';
+  const quoteAsset = feed.pair[1] ?? 'Unknown';
 
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Chainlink];
 
-  const chainlinkUrl = feedData?.ens ? getChainlinkFeedUrl(chainId, feedData.ens) : '';
+  const chainlinkUrl = feed.ens ? getChainlinkFeedUrl(chainId, feed.ens) : '';
 
-  const hasDetails = feedData?.heartbeat != null || feedData?.tier != null || feedData?.deviationThreshold != null;
+  const hasDetails = feed.heartbeat != null || feed.tier != null || feed.deviationThreshold != null;
 
   return (
     <div className="flex w-fit max-w-[22rem] flex-col gap-3">
@@ -76,17 +75,17 @@ export function ChainlinkFeedTooltip({ feed, feedData, chainId, feedFreshness }:
       {/* Chainlink Specific Data */}
       {hasDetails && (
         <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          {feedData?.heartbeat != null && (
+          {feed.heartbeat != null && (
             <div className="flex justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Heartbeat:</span>
-              <span className="font-medium">{feedData.heartbeat}s</span>
+              <span className="font-medium">{feed.heartbeat}s</span>
             </div>
           )}
-          {feedData?.tier != null && (
+          {feed.tier != null && (
             <div className="flex items-center justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Risk Tier:</span>
               <div className="flex items-center gap-1">
-                {getRiskTierBadge(feedData.tier)}
+                {getRiskTierBadge(feed.tier)}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -107,10 +106,10 @@ export function ChainlinkFeedTooltip({ feed, feedData, chainId, feedFreshness }:
               </div>
             </div>
           )}
-          {feedData?.deviationThreshold != null && (
+          {feed.deviationThreshold != null && (
             <div className="flex justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Deviation Threshold:</span>
-              <span className="font-medium">{feedData.deviationThreshold}%</span>
+              <span className="font-medium">{feed.deviationThreshold}%</span>
             </div>
           )}
         </div>

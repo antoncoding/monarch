@@ -13,7 +13,9 @@ import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks
  * 1. Oracles scanner fetches from provider APIs (Chainlink, Redstone, etc.)
  * 2. Scanner publishes enriched data to GitHub Gist
  * 3. This hook fetches directly from the centralized Gist
- * 4. Components use getOracleFromMetadata() + getFeedFromOracleData() to access data
+ * 4. Components read the scanner-native shapes directly via
+ *    getOracleFromMetadata(), getStandardOracleDataFromMetadata(), and
+ *    getMetaOracleDataFromMetadata()
  */
 
 export type OracleFeedProvider = string | null;
@@ -68,24 +70,40 @@ export type MetaOracleOutputData = {
   };
 };
 
-export type OracleOutput = {
+export type NonStandardOracleOutputData = {
+  reason: string;
+};
+
+type OracleOutputBase = {
   address: string;
   chainId: number;
-  type: 'standard' | 'custom' | 'unknown' | 'meta';
   verifiedByFactory: boolean;
   isUpgradable: boolean;
+  lastUpdated: string;
+  lastScannedAt: string;
   proxy: {
     isProxy: boolean;
     proxyType?: string;
     implementation?: string;
   };
-  data: OracleOutputData | MetaOracleOutputData;
-  lastScannedAt: string;
 };
 
-export function isMetaOracleData(data: OracleOutputData | MetaOracleOutputData): data is MetaOracleOutputData {
-  return 'oracleSources' in data;
-}
+export type StandardOracleOutput = OracleOutputBase & {
+  type: 'standard';
+  data: OracleOutputData;
+};
+
+export type MetaOracleOutput = OracleOutputBase & {
+  type: 'meta';
+  data: MetaOracleOutputData;
+};
+
+export type NonStandardOracleOutput = OracleOutputBase & {
+  type: 'custom' | 'unknown';
+  data: NonStandardOracleOutputData;
+};
+
+export type OracleOutput = StandardOracleOutput | MetaOracleOutput | NonStandardOracleOutput;
 
 export type OracleMetadataFile = {
   version: string;
@@ -193,24 +211,32 @@ export function getOracleFromMetadata(
   return metadataRecord[key];
 }
 
-/**
- * Get feed info by address from an oracle's data
- * Includes null guards for malformed external data
- */
-export function getFeedFromOracleData(oracleData: OracleOutputData | undefined, feedAddress: string): EnrichedFeed | null {
-  if (!oracleData || !feedAddress) return null;
+export function getStandardOracleDataFromMetadata(
+  metadataRecord: OracleMetadataRecord | OracleMetadataMap | undefined,
+  oracleAddress: string | undefined,
+  chainId?: number,
+): OracleOutputData | undefined {
+  const oracle = getOracleFromMetadata(metadataRecord, oracleAddress, chainId);
 
-  const lowerFeed = feedAddress.toLowerCase();
-  const feeds = [oracleData.baseFeedOne, oracleData.baseFeedTwo, oracleData.quoteFeedOne, oracleData.quoteFeedTwo];
-
-  for (const feed of feeds) {
-    // Null guard: ensure feed exists and has a valid address string
-    if (feed && typeof feed.address === 'string' && feed.address && feed.address.toLowerCase() === lowerFeed) {
-      return feed;
-    }
+  if (!oracle || oracle.type !== 'standard') {
+    return undefined;
   }
 
-  return null;
+  return oracle.data;
+}
+
+export function getMetaOracleDataFromMetadata(
+  metadataRecord: OracleMetadataRecord | OracleMetadataMap | undefined,
+  oracleAddress: string | undefined,
+  chainId?: number,
+): MetaOracleOutputData | undefined {
+  const oracle = getOracleFromMetadata(metadataRecord, oracleAddress, chainId);
+
+  if (!oracle || oracle.type !== 'meta') {
+    return undefined;
+  }
+
+  return oracle.data;
 }
 
 /**

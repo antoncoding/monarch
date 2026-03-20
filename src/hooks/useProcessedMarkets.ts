@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
-import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -34,7 +33,7 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
 };
 
 /**
- * Processes raw markets data with blacklist filtering and oracle enrichment.
+ * Processes raw markets data with blacklist filtering.
  *
  * It provides the foundation data that other hooks can build upon.
  *
@@ -56,13 +55,12 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
 export const useProcessedMarkets = () => {
   const { data: rawMarketsFromQuery, isLoading, isRefetching, error, refetch } = useMarketsQuery();
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
-  const { getOracleData } = useOracleDataQuery();
   const { showUnwhitelistedMarkets } = useAppSettings();
 
   // Get blacklisted keys (memoized to prevent infinite loops)
   const allBlacklistedMarketKeys = useMemo(() => getAllBlacklistedKeys(), [customBlacklistedMarkets, getAllBlacklistedKeys]);
 
-  // Process markets: blacklist filter + oracle enrichment
+  // Process markets: blacklist filter + force-unwhitelisted overrides
   const processedData = useMemo(() => {
     if (!rawMarketsFromQuery) {
       return {
@@ -78,14 +76,12 @@ export const useProcessedMarkets = () => {
     // Apply blacklist filter
     const blacklistFiltered = rawMarketsUnfiltered.filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
 
-    // Enrich with oracle data and apply force-unwhitelisted overrides
+    // Apply force-unwhitelisted overrides after blacklist filtering
     const enriched = blacklistFiltered.map((market) => {
-      const oracleData = getOracleData(market.oracleAddress, market.morphoBlue.chain.id);
       const shouldForceUnwhitelist = isForceUnwhitelisted(market.uniqueKey);
 
       return {
         ...market,
-        ...(oracleData && { oracle: { data: oracleData } }),
         ...(shouldForceUnwhitelist && { whitelisted: false }),
       };
     });
@@ -101,7 +97,7 @@ export const useProcessedMarkets = () => {
       allMarkets,
       whitelistedMarkets,
     };
-  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, getOracleData]);
+  }, [rawMarketsFromQuery, allBlacklistedMarketKeys]);
 
   // Build token list for USD fallbacks only when needed
   const tokensForUsdFallback = useMemo<TokenPriceInput[]>(() => {

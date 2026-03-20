@@ -4,13 +4,7 @@ import { type Address, zeroAddress } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
 import { formatOraclePrice, type FeedUpdateKind } from '@/utils/oracle';
-import {
-  isMetaOracleData,
-  useOracleMetadata,
-  type EnrichedFeed,
-  type OracleMetadataRecord,
-  type OracleOutputData,
-} from '@/hooks/useOracleMetadata';
+import { useOracleMetadata, type EnrichedFeed, type OracleMetadataRecord, type OracleOutputData } from '@/hooks/useOracleMetadata';
 import type { SupportedNetworks } from '@/utils/networks';
 
 const MAX_MULTICALL_FEEDS_PER_BATCH = 1000;
@@ -84,15 +78,15 @@ function getFeedMetadataSnapshot(metadataRecord: OracleMetadataRecord | undefine
   const hintByAddress: Record<string, FeedSemanticHints> = {};
 
   for (const oracle of Object.values(metadataRecord)) {
-    if (!oracle?.data) continue;
-
-    if (isMetaOracleData(oracle.data)) {
+    if (oracle?.type === 'meta') {
       addStandardOracleFeeds(feedSet, hintByAddress, oracle.data.oracleSources.primary);
       addStandardOracleFeeds(feedSet, hintByAddress, oracle.data.oracleSources.backup);
       continue;
     }
 
-    addStandardOracleFeeds(feedSet, hintByAddress, oracle.data);
+    if (oracle?.type === 'standard') {
+      addStandardOracleFeeds(feedSet, hintByAddress, oracle.data);
+    }
   }
 
   return {
@@ -196,7 +190,7 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
 
           const updatedAtSeconds = updatedAt > 0n ? Number(updatedAt) : null;
           const normalizedPrice = formatOraclePrice(answer, decimals);
-          const isDerivedCandidate = hintByAddress[feedAddress]?.derivedCandidate === true;
+          const isDerivedCandidate = hintByAddress[feedAddress.toLowerCase()]?.derivedCandidate === true;
           const updateKind: FeedUpdateKind =
             isDerivedCandidate && updatedAtSeconds != null && updatedAtSeconds === queryBlockTimestamp ? 'derived' : 'reported';
 

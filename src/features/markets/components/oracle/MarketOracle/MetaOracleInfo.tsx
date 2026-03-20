@@ -1,9 +1,8 @@
 'use client';
 
 import { useFeedLastUpdatedByChain, type FeedSnapshotByAddress } from '@/hooks/useFeedLastUpdatedByChain';
-import { useOracleMetadata, getOracleFromMetadata, isMetaOracleData, type OracleOutputData } from '@/hooks/useOracleMetadata';
+import { getMetaOracleDataFromMetadata, type OracleOutputData, useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { AddressIdentity } from '@/components/shared/address-identity';
-import type { OracleFeed } from '@/utils/types';
 import { formatOracleDuration } from '@/utils/oracle';
 import { FeedEntry } from './FeedEntry';
 import { VaultEntry } from './VaultEntry';
@@ -52,18 +51,11 @@ function OracleFeedSection({
               )}
               {activeFeeds.map((enrichedFeed) => {
                 if (!enrichedFeed) return null;
-                const oracleFeed: OracleFeed = {
-                  address: enrichedFeed.address,
-                  chain: { id: chainId },
-                  id: enrichedFeed.address,
-                  pair: enrichedFeed.pair.length === 2 ? [enrichedFeed.pair[0], enrichedFeed.pair[1]] : null,
-                };
                 return (
                   <FeedEntry
                     key={enrichedFeed.address}
-                    feed={oracleFeed}
+                    feed={enrichedFeed}
                     chainId={chainId}
-                    enrichedFeed={enrichedFeed}
                     feedSnapshotsByAddress={feedSnapshotsByAddress}
                   />
                 );
@@ -80,10 +72,8 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
   const { data: feedSnapshotsByAddress } = useFeedLastUpdatedByChain(chainId);
 
-  const oracleMetadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
-  if (!oracleMetadata?.data || !isMetaOracleData(oracleMetadata.data)) return null;
-
-  const metaData = oracleMetadata.data;
+  const metaData = getMetaOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
+  if (!metaData) return null;
   const isPrimaryActive = metaData.currentOracle?.toLowerCase() === metaData.primaryOracle?.toLowerCase();
 
   if (variant === 'detail') {

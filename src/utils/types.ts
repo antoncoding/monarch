@@ -68,24 +68,6 @@ export type WhitelistMarketResponse = {
   };
 };
 
-export type OracleFeedsInfo = {
-  baseFeedOneAddress: string;
-  baseFeedOneDescription: string | null;
-  baseFeedTwoAddress: string;
-  baseFeedTwoDescription: string | null;
-  quoteFeedOneAddress: string;
-  quoteFeedOneDescription: string | null;
-  quoteFeedTwoAddress: string;
-  quoteFeedTwoDescription: string | null;
-  baseVault: string;
-  baseVaultDescription: string | null;
-  baseVaultVendor: string | null;
-  quoteVault: string;
-  quoteVaultDescription: string | null;
-  quoteVaultVendor: string | null;
-  __typename: string;
-};
-
 export type MarketWarning = {
   type: string;
   level: string;
@@ -252,47 +234,6 @@ export type GroupedPosition = {
   allWarnings: WarningWithDetail[];
 };
 
-export type OracleFeed = {
-  address: string;
-  chain: {
-    id: number;
-  };
-  id: string;
-  pair: string[] | null;
-};
-
-export type MorphoChainlinkOracleData = {
-  baseFeedOne: OracleFeed | null;
-  baseFeedTwo: OracleFeed | null;
-  quoteFeedOne: OracleFeed | null;
-  quoteFeedTwo: OracleFeed | null;
-};
-
-// Oracle item from Morpho API oracles query
-export type OracleItem = {
-  address: string;
-  chain: {
-    id: number;
-  };
-  data: MorphoChainlinkOracleData | null;
-};
-
-// Oracles query response from Morpho API
-export type OraclesQueryResponse = {
-  data: {
-    oracles: {
-      items: OracleItem[];
-      pageInfo: {
-        countTotal: number;
-        count: number;
-        limit: number;
-        skip: number;
-      };
-    };
-  };
-  errors?: { message: string }[];
-};
-
 export type Market = {
   id: string;
   lltv: string;
@@ -345,9 +286,6 @@ export type Market = {
   }[];
   hasUSDPrice: boolean;
   warnings: MarketWarning[];
-  oracle?: {
-    data: MorphoChainlinkOracleData;
-  };
 };
 
 export type TimeseriesDataPoint = {

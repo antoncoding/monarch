@@ -3,24 +3,15 @@ import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
-import type { Address } from 'viem';
 import type { FeedSnapshotByAddress } from '@/hooks/useFeedLastUpdatedByChain';
+import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import {
-  getFeedFromOracleData,
-  getOracleFromMetadata,
-  isMetaOracleData,
-  type EnrichedFeed,
-  type OracleMetadataRecord,
-} from '@/hooks/useOracleMetadata';
-import {
-  detectFeedVendor,
   detectFeedVendorFromMetadata,
   getFeedFreshnessStatus,
   getTruncatedAssetName,
   OracleVendorIcons,
   PriceFeedVendors,
 } from '@/utils/oracle';
-import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
 import { CompoundFeedTooltip } from './CompoundFeedTooltip';
 import { GeneralFeedTooltip } from './GeneralFeedTooltip';
@@ -30,50 +21,19 @@ import { API3FeedTooltip } from './API3FeedTooltip';
 import { UnknownFeedTooltip } from './UnknownFeedTooltip';
 
 type FeedEntryProps = {
-  feed: OracleFeed | null;
+  feed: EnrichedFeed | null;
   chainId: number;
-  oracleAddress?: string;
-  oracleMetadataMap?: OracleMetadataRecord;
-  enrichedFeed?: EnrichedFeed;
   feedSnapshotsByAddress?: FeedSnapshotByAddress;
 };
 
-export function FeedEntry({
-  feed,
-  chainId,
-  oracleAddress,
-  oracleMetadataMap,
-  enrichedFeed,
-  feedSnapshotsByAddress,
-}: FeedEntryProps): JSX.Element | null {
-  // Use metadata-based detection when available, fallback to legacy
+export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryProps): JSX.Element | null {
   const feedVendorResult = useMemo(() => {
-    if (!feed?.address) return null;
-
-    // Use pre-enriched feed directly when provided (e.g. from meta oracle scanner data)
-    if (enrichedFeed) {
-      return detectFeedVendorFromMetadata(enrichedFeed);
-    }
-
-    // Try metadata-based detection first
-    if (oracleMetadataMap && oracleAddress) {
-      const oracleMetadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
-      if (oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data)) {
-        const found = getFeedFromOracleData(oracleMetadata.data, feed.address);
-        if (found) {
-          return detectFeedVendorFromMetadata(found);
-        }
-      }
-    }
-
-    // Fallback to legacy detection (will return Unknown without static data)
-    return detectFeedVendor(feed.address as Address, chainId);
-  }, [feed?.address, chainId, oracleAddress, oracleMetadataMap, enrichedFeed]);
+    return detectFeedVendorFromMetadata(feed);
+  }, [feed]);
 
   if (!feed) return null;
-  if (!feedVendorResult) return null;
 
-  const { vendor, data, assetPair } = feedVendorResult;
+  const { vendor, assetPair } = feedVendorResult;
   const { baseAsset, quoteAsset } = {
     baseAsset: getTruncatedAssetName(assetPair.baseAsset),
     quoteAsset: getTruncatedAssetName(assetPair.quoteAsset),
@@ -86,7 +46,7 @@ export function FeedEntry({
   const hasKnownVendorIcon = vendor !== PriceFeedVendors.Unknown && Boolean(vendorIcon);
   const feedAddressKey = feed.address.toLowerCase();
   const snapshot = feedSnapshotsByAddress?.[feedAddressKey];
-  const freshness = getFeedFreshnessStatus(snapshot?.updatedAt ?? null, data?.heartbeat, {
+  const freshness = getFeedFreshnessStatus(snapshot?.updatedAt ?? null, feed.heartbeat, {
     updateKind: snapshot?.updateKind,
     normalizedPrice: snapshot?.normalizedPrice,
   });
@@ -97,7 +57,6 @@ export function FeedEntry({
         return (
           <ChainlinkFeedTooltip
             feed={feed}
-            feedData={data}
             chainId={chainId}
             feedFreshness={freshness}
           />
@@ -107,7 +66,6 @@ export function FeedEntry({
         return (
           <CompoundFeedTooltip
             feed={feed}
-            feedData={data}
             chainId={chainId}
             feedFreshness={freshness}
           />
@@ -117,7 +75,6 @@ export function FeedEntry({
         return (
           <RedstoneFeedTooltip
             feed={feed}
-            feedData={data}
             chainId={chainId}
             feedFreshness={freshness}
           />
@@ -127,7 +84,6 @@ export function FeedEntry({
         return (
           <PendleFeedTooltip
             feed={feed}
-            feedData={data}
             chainId={chainId}
             feedFreshness={freshness}
           />
@@ -137,7 +93,6 @@ export function FeedEntry({
         return (
           <API3FeedTooltip
             feed={feed}
-            feedData={data}
             chainId={chainId}
             feedFreshness={freshness}
           />
@@ -149,18 +104,16 @@ export function FeedEntry({
         return (
           <GeneralFeedTooltip
             feed={feed}
-            feedData={data}
             chainId={chainId}
             feedFreshness={freshness}
           />
         );
 
       case PriceFeedVendors.Unknown:
-        if (data) {
+        if (feed.provider || feed.description || feed.pair.length === 2) {
           return (
             <GeneralFeedTooltip
               feed={feed}
-              feedData={data}
               chainId={chainId}
               feedFreshness={freshness}
             />

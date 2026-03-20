@@ -6,7 +6,7 @@
  */
 
 import { LOCKED_MARKET_APY_THRESHOLD } from '@/constants/markets';
-import { type OracleMetadataRecord, getOracleFromMetadata, isMetaOracleData } from '@/hooks/useOracleMetadata';
+import { type OracleMetadataRecord, getMetaOracleDataFromMetadata, getStandardOracleDataFromMetadata } from '@/hooks/useOracleMetadata';
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import { parsePriceFeedVendors, parseMetaOracleVendors, type PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
@@ -101,23 +101,22 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMeta
     return () => true;
   }
   return (market) => {
-    const oracleType = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id, oracleMetadataMap);
+    const chainId = market.morphoBlue.chain.id;
+    const oracleType = getOracleType(market.oracleAddress, chainId, oracleMetadataMap);
 
     if (oracleType === OracleType.Meta) {
-      const metadata = getOracleFromMetadata(oracleMetadataMap, market.oracleAddress, market.morphoBlue.chain.id);
-      if (metadata?.data && isMetaOracleData(metadata.data)) {
-        const info = parseMetaOracleVendors(metadata.data);
+      const metadata = getMetaOracleDataFromMetadata(oracleMetadataMap, market.oracleAddress, chainId);
+      if (metadata) {
+        const info = parseMetaOracleVendors(metadata);
         return !info.hasUnknown;
       }
       return false;
     }
 
-    if (!market.oracle) return false;
+    const standardOracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, market.oracleAddress, chainId);
+    if (!standardOracleData) return false;
 
-    const info = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id, {
-      metadataMap: oracleMetadataMap,
-      oracleAddress: market.oracleAddress,
-    });
+    const info = parsePriceFeedVendors(standardOracleData);
     const isCustom = oracleType === OracleType.Custom;
     const isUnknown = isCustom || (info?.hasUnknown ?? false);
 
@@ -174,11 +173,9 @@ export const createOracleFilter = (selectedOracles: PriceFeedVendors[], oracleMe
     return () => true;
   }
   return (market) => {
-    if (!market.oracle) return false;
-    const marketOracles = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id, {
-      metadataMap: oracleMetadataMap,
-      oracleAddress: market.oracleAddress,
-    }).vendors;
+    const marketOracles = parsePriceFeedVendors(
+      getStandardOracleDataFromMetadata(oracleMetadataMap, market.oracleAddress, market.morphoBlue.chain.id),
+    ).vendors;
     return marketOracles.some((oracle) => selectedOracles.includes(oracle));
   };
 };
@@ -243,10 +240,9 @@ export const createSearchFilter = (searchQuery: string, oracleMetadataMap?: Orac
   }
   const lowercaseQuery = searchQuery.toLowerCase().trim();
   return (market) => {
-    const { vendors } = parsePriceFeedVendors(market.oracle?.data, market.morphoBlue.chain.id, {
-      metadataMap: oracleMetadataMap,
-      oracleAddress: market.oracleAddress,
-    });
+    const { vendors } = parsePriceFeedVendors(
+      getStandardOracleDataFromMetadata(oracleMetadataMap, market.oracleAddress, market.morphoBlue.chain.id),
+    );
     const vendorsName = vendors.join(',');
     return (
       market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||

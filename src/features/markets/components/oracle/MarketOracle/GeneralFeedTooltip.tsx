@@ -1,25 +1,23 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
+import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { mapProviderToVendor, OracleVendorIcons, PriceFeedVendors, type FeedData, type FeedFreshnessStatus } from '@/utils/oracle';
-import type { OracleFeed } from '@/utils/types';
-import type { OracleFeedProvider } from '@/hooks/useOracleMetadata';
+import { mapProviderToVendor, OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type GeneralFeedTooltipProps = {
-  feed: OracleFeed;
-  feedData?: FeedData | null;
+  feed: EnrichedFeed;
   chainId: number;
   feedFreshness?: FeedFreshnessStatus;
 };
 
-export function GeneralFeedTooltip({ feed, feedData, chainId, feedFreshness }: GeneralFeedTooltipProps) {
-  const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
-  const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
+export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeedTooltipProps) {
+  const baseAsset = feed.pair[0] ?? 'Unknown';
+  const quoteAsset = feed.pair[1] ?? 'Unknown';
 
-  const vendor = feedData?.vendor ? mapProviderToVendor(feedData.vendor as OracleFeedProvider) : PriceFeedVendors.Unknown;
+  const vendor = feed.provider ? mapProviderToVendor(feed.provider) : PriceFeedVendors.Unknown;
   const vendorIcon = OracleVendorIcons[vendor] || OracleVendorIcons[PriceFeedVendors.Unknown];
 
   return (
@@ -30,13 +28,13 @@ export function GeneralFeedTooltip({ feed, feedData, chainId, feedFreshness }: G
           <div className="flex-shrink-0">
             <Image
               src={vendorIcon}
-              alt={feedData?.vendor ?? 'Unknown'}
+              alt={feed.provider ?? 'Unknown'}
               width={16}
               height={16}
             />
           </div>
         )}
-        <div className="font-zen font-bold">{feedData?.vendor ?? 'Price'} Feed</div>
+        <div className="font-zen font-bold">{feed.provider ?? 'Price'} Feed</div>
       </div>
 
       {/* Feed pair name */}
@@ -47,9 +45,9 @@ export function GeneralFeedTooltip({ feed, feedData, chainId, feedFreshness }: G
       </div>
 
       {/* Description */}
-      {feedData?.description && (
+      {feed.description && (
         <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          <div className="font-zen text-xs text-gray-600 dark:text-gray-400">{feedData.description}</div>
+          <div className="font-zen text-xs text-gray-600 dark:text-gray-400">{feed.description}</div>
         </div>
       )}
 
