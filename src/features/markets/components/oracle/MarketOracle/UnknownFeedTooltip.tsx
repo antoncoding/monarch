@@ -2,12 +2,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
+import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import type { OracleFeed } from '@/utils/types';
 
 type UnknownFeedTooltipProps = {
-  feed: OracleFeed;
+  feed: EnrichedFeed;
   chainId: number;
 };
 

@@ -81,7 +81,6 @@ RootLayout
     liquidityAssets, liquidityUsd;
     utilization;
   };
-  oracle?: { data: MorphoChainlinkOracleData };
 }
 ```
 
@@ -118,9 +117,25 @@ GroupedPosition {  // Grouped by loan asset
 
 ### Oracle
 ```typescript
-MorphoChainlinkOracleData {
-  baseFeedOne, baseFeedTwo: OracleFeed;   // Base token feeds
-  quoteFeedOne, quoteFeedTwo: OracleFeed; // Quote token feeds
+StandardOracleOutput {
+  address: string;
+  chainId: number;
+  type: 'standard';
+  data: OracleOutputData; // { baseFeedOne, baseFeedTwo, quoteFeedOne, quoteFeedTwo, baseVault, quoteVault }
+}
+
+MetaOracleOutput {
+  address: string;
+  chainId: number;
+  type: 'meta';
+  data: MetaOracleOutputData; // { primaryOracle, backupOracle, currentOracle, oracleSources, ... }
+}
+
+NonStandardOracleOutput {
+  address: string;
+  chainId: number;
+  type: 'custom' | 'unknown';
+  data: { reason: string };
 }
 ```
 
@@ -167,9 +182,6 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 ### Static Data (Build-time or cached)
 | Data Type | Source | Location |
 |-----------|--------|----------|
-| Oracle definitions | Pre-generated | `/src/constants/oracle/oracle-cache.json` |
-| Chainlink feeds | Pre-generated | `/src/constants/oracle/chainlink/` |
-| Redstone feeds | Pre-generated | `/src/constants/oracle/redstone/` |
 | Network configs | Hardcoded | `/src/utils/networks.ts` |
 | Default blacklist | Hardcoded | `/src/constants/markets/blacklisted.ts` |
 
@@ -185,7 +197,7 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 | Vault detail/settings metadata | Monarch GraphQL + narrow RPC fallback | 30s | `useVaultV2Data` |
 | Vault allocations | On-chain multicall | 30s | `useAllocationsQuery` |
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
-| Oracle prices | Morpho API | 5 min | `useOracleDataQuery` |
+| Oracle metadata | Scanner Gist | 30 min | `useOracleMetadata` / `useAllOracleMetadata` |
 | Merkl rewards | Merkl API | On demand | `useMerklCampaignsQuery` |
 | Market liquidations | Morpho API/Subgraph | 5 min stale | `useMarketLiquidations` |
 
@@ -193,7 +205,7 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 
 **Market Data Flow:**
 ```
-Raw API fetch → Blacklist filtering → Oracle enrichment →
+Raw API fetch → Blacklist filtering →
 Split: allMarkets vs whitelistedMarkets
 ```
 
@@ -263,7 +275,6 @@ All hooks in `/src/hooks/queries/` follow React Query patterns:
 | `useMarketsQuery` | `['markets']` | 5 min | 5 min | Yes |
 | `useMarketMetricsQuery` | `['market-metrics', ...]` | 5 min | 5 min | No |
 | `useTokensQuery` | `['tokens']` | 5 min | 5 min | Yes |
-| `useOracleDataQuery` | `['oracle-data']` | 5 min | 5 min | Yes |
 | `useUserBalancesQuery` | `['user-balances', addr, networks]` | 30s | - | Yes |
 | `useUserVaultsV2Query` | `['user-vaults-v2', addr]` | 60s | - | Yes |
 | `useVaultV2Data` | `['vault-v2-data', addr, chainId]` | 30s | - | No |
@@ -309,7 +320,7 @@ Fallback Strategy:
    ↓
 2. Parallel queries start:
    - usePublicClient() for on-chain reads
-   - useOracleDataQuery() for oracle enrichment
+   - useOracleMetadata() for oracle classification and feed details
    ↓
 3. Market fetch:
    a. Try on-chain snapshot (viem multicall)
@@ -317,7 +328,9 @@ Fallback Strategy:
    c. Fallback to Subgraph
    d. Merge snapshot with API state
    ↓
-4. Oracle enrichment via useMemo()
+4. Oracle metadata resolves separately by `chainId + oracleAddress`
+   - Standard/meta oracle UI reads scanner-native `OracleOutputData` / `MetaOracleOutputData`
+   - No Morpho API oracle feed enrichment or local feed-shape conversion
    ↓
 5. Return { data: enrichedMarket, isLoading, error }
 ```
@@ -328,7 +341,7 @@ Fallback Strategy:
 2. **Parallel Execution**: `Promise.all()` for multi-network
 3. **Graceful Degradation**: Partial data > Error
 4. **Two-Phase Market**: On-chain snapshot + API state
-5. **Hybrid Caching**: Static JSON + dynamic API (oracles)
+5. **Hybrid Reads**: Scanner metadata for oracle structure + live RPC/API for market state
 
 ---
 

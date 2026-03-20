@@ -3,28 +3,27 @@ import Link from 'next/link';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
 import { useGlobalModal } from '@/contexts/GlobalModalContext';
+import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { OracleVendorIcons, PriceFeedVendors, type FeedData, type FeedFreshnessStatus } from '@/utils/oracle';
-import type { OracleFeed } from '@/utils/types';
+import { OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 import { RedstoneTypesModal } from './RedstoneTypesModal';
 
 type RedstoneFeedTooltipProps = {
-  feed: OracleFeed;
-  feedData?: FeedData | null;
+  feed: EnrichedFeed;
   chainId: number;
   feedFreshness?: FeedFreshnessStatus;
 };
 
-export function RedstoneFeedTooltip({ feed, feedData, chainId, feedFreshness }: RedstoneFeedTooltipProps) {
+export function RedstoneFeedTooltip({ feed, chainId, feedFreshness }: RedstoneFeedTooltipProps) {
   const { toggleModal, closeModal } = useGlobalModal();
-  const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
-  const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
+  const baseAsset = feed.pair[0] ?? 'Unknown';
+  const quoteAsset = feed.pair[1] ?? 'Unknown';
 
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Redstone];
 
-  const hasDetails = feedData?.feedType != null || feedData?.heartbeat != null || feedData?.deviationThreshold != null;
+  const hasDetails = feed.feedType != null || feed.heartbeat != null || feed.deviationThreshold != null;
 
   return (
     <div className="flex w-fit max-w-[22rem] flex-col gap-3">
@@ -53,11 +52,11 @@ export function RedstoneFeedTooltip({ feed, feedData, chainId, feedFreshness }: 
       {/* Redstone Specific Data */}
       {hasDetails && (
         <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          {feedData?.feedType != null && (
+          {feed.feedType != null && (
             <div className="flex items-center justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Type:</span>
               <div className="flex items-center gap-1">
-                <span className="font-medium">{feedData.feedType === 'fundamental' ? 'Fundamental' : 'Standard'}</span>
+                <span className="font-medium">{feed.feedType === 'fundamental' ? 'Fundamental' : 'Standard'}</span>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -78,16 +77,16 @@ export function RedstoneFeedTooltip({ feed, feedData, chainId, feedFreshness }: 
               </div>
             </div>
           )}
-          {feedData?.heartbeat != null && (
+          {feed.heartbeat != null && (
             <div className="flex justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Heartbeat:</span>
-              <span className="font-medium">{feedData.heartbeat}s</span>
+              <span className="font-medium">{feed.heartbeat}s</span>
             </div>
           )}
-          {feedData?.deviationThreshold != null && (
+          {feed.deviationThreshold != null && (
             <div className="flex justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Deviation Threshold:</span>
-              <span className="font-medium">{feedData.deviationThreshold}%</span>
+              <span className="font-medium">{feed.deviationThreshold}%</span>
             </div>
           )}
         </div>

@@ -1,35 +1,26 @@
 'use client';
 
 import { useFeedLastUpdatedByChain } from '@/hooks/useFeedLastUpdatedByChain';
-import { useOracleMetadata, getOracleFromMetadata, isMetaOracleData } from '@/hooks/useOracleMetadata';
-import type { OracleFeed } from '@/utils/types';
+import { getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { FeedEntry } from './FeedEntry';
 import { VaultEntry } from './VaultEntry';
 
 type MarketOracleFeedInfoProps = {
-  baseFeedOne: OracleFeed | null | undefined;
-  baseFeedTwo: OracleFeed | null | undefined;
-  quoteFeedOne: OracleFeed | null | undefined;
-  quoteFeedTwo: OracleFeed | null | undefined;
   chainId: number;
   oracleAddress?: string;
 };
 
-export function MarketOracleFeedInfo({
-  baseFeedOne,
-  baseFeedTwo,
-  quoteFeedOne,
-  quoteFeedTwo,
-  chainId,
-  oracleAddress,
-}: MarketOracleFeedInfoProps): JSX.Element {
+export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFeedInfoProps): JSX.Element {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
   const { data: feedSnapshotsByAddress } = useFeedLastUpdatedByChain(chainId);
 
-  const oracleMetadata = oracleMetadataMap && oracleAddress ? getOracleFromMetadata(oracleMetadataMap, oracleAddress) : undefined;
-  const oracleData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
+  const oracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
   const baseVault = oracleData?.baseVault ?? null;
   const quoteVault = oracleData?.quoteVault ?? null;
+  const baseFeedOne = oracleData?.baseFeedOne ?? null;
+  const baseFeedTwo = oracleData?.baseFeedTwo ?? null;
+  const quoteFeedOne = oracleData?.quoteFeedOne ?? null;
+  const quoteFeedTwo = oracleData?.quoteFeedTwo ?? null;
 
   const hasAnyFeed = baseFeedOne || baseFeedTwo || quoteFeedOne || quoteFeedTwo;
   const hasAnyVault = baseVault || quoteVault;
@@ -54,8 +45,6 @@ export function MarketOracleFeedInfo({
               <FeedEntry
                 feed={baseFeedOne}
                 chainId={chainId}
-                oracleAddress={oracleAddress}
-                oracleMetadataMap={oracleMetadataMap}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
               />
             )}
@@ -63,8 +52,6 @@ export function MarketOracleFeedInfo({
               <FeedEntry
                 feed={baseFeedTwo}
                 chainId={chainId}
-                oracleAddress={oracleAddress}
-                oracleMetadataMap={oracleMetadataMap}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
               />
             )}
@@ -86,8 +73,6 @@ export function MarketOracleFeedInfo({
               <FeedEntry
                 feed={quoteFeedOne}
                 chainId={chainId}
-                oracleAddress={oracleAddress}
-                oracleMetadataMap={oracleMetadataMap}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
               />
             )}
@@ -95,8 +80,6 @@ export function MarketOracleFeedInfo({
               <FeedEntry
                 feed={quoteFeedTwo}
                 chainId={chainId}
-                oracleAddress={oracleAddress}
-                oracleMetadataMap={oracleMetadataMap}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
               />
             )}

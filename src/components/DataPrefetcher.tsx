@@ -4,13 +4,11 @@ import { usePathname } from 'next/navigation';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMerklCampaignsQuery } from '@/hooks/queries/useMerklCampaignsQuery';
-import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
 
 function DataPrefetcherContent() {
   useMarketsQuery();
   useTokensQuery();
   useMerklCampaignsQuery();
-  useOracleDataQuery();
 
   return null;
 }

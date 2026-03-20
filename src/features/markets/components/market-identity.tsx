@@ -178,7 +178,6 @@ export function MarketIdentity({
           {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}%</span>}
           {showOracle && (
             <OracleVendorBadge
-              oracleData={market.oracle?.data}
               oracleAddress={market.oracleAddress}
               chainId={chainId}
               useTooltip
@@ -218,7 +217,6 @@ export function MarketIdentity({
         {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
         {showOracle && (
           <OracleVendorBadge
-            oracleData={market.oracle?.data}
             oracleAddress={market.oracleAddress}
             chainId={chainId}
             useTooltip
@@ -260,7 +258,6 @@ export function MarketIdentity({
           {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
           {showOracle && (
             <OracleVendorBadge
-              oracleData={market.oracle?.data}
               oracleAddress={market.oracleAddress}
               chainId={chainId}
               useTooltip
@@ -294,7 +291,6 @@ export function MarketIdentity({
           {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
           {showOracle && (
             <OracleVendorBadge
-              oracleData={market.oracle?.data}
               oracleAddress={market.oracleAddress}
               chainId={chainId}
               useTooltip
@@ -331,7 +327,6 @@ export function MarketIdentity({
         {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
         {showOracle && (
           <OracleVendorBadge
-            oracleData={market.oracle?.data}
             oracleAddress={market.oracleAddress}
             chainId={chainId}
             useTooltip
@@ -362,7 +357,6 @@ export function MarketIdentity({
         {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
         {showOracle && (
           <OracleVendorBadge
-            oracleData={market.oracle?.data}
             oracleAddress={market.oracleAddress}
             chainId={chainId}
             useTooltip

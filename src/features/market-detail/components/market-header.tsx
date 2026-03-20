@@ -756,7 +756,6 @@ export function MarketHeader({
                       </div>
 
                       <OracleTypeInfo
-                        oracleData={market.oracle?.data}
                         oracleAddress={market.oracleAddress}
                         chainId={market.morphoBlue.chain.id}
                         useBadge

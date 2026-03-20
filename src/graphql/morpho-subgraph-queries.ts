@@ -242,26 +242,6 @@ export const marketLiquidationsAndBadDebtQuery = `
 `;
 // --- End Query ---
 
-// --- Query to check which markets have had at least one liquidation ---
-export const subgraphMarketsWithLiquidationCheckQuery = `
-  query getSubgraphMarketsWithLiquidationCheck(
-    $first: Int,
-    $where: Market_filter,
-  ) {
-    markets(
-      first: $first,
-      where: $where,
-      orderBy: totalValueLockedUSD,
-      orderDirection: desc,
-    ) {
-      id # Market ID (uniqueKey)
-      liquidates(first: 1) { # Fetch only one to check existence
-        id
-      }
-    }
-  }
-`;
-
 // --- Query for User Position Market IDs ---
 export const subgraphUserPositionMarketsQuery = `
   query GetUserPositionMarkets($userId: ID!) {
@@ -413,26 +393,6 @@ export const getSubgraphUserTransactionsQuery = (useMarketFilter: boolean) => {
   }
 `;
 };
-
-export const marketPositionsQuery = `
-  query getMarketPositions($market: String!, $minShares: BigInt!, $first: Int!, $skip: Int!) {
-    positions(
-      where: {
-        shares_gt: $minShares
-        market: $market
-      }
-      orderBy: shares
-      orderDirection: desc
-      first: $first
-      skip: $skip
-    ) {
-      shares
-      account {
-        id
-      }
-    }
-  }
-`;
 
 // Query for market suppliers (positions with side: SUPPLIER, isCollateral: false)
 export const marketSuppliersQuery = `

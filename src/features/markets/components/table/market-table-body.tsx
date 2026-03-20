@@ -148,7 +148,6 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
               >
                 <div className="flex justify-center">
                   <OracleVendorBadge
-                    oracleData={item.oracle?.data}
                     oracleAddress={item.oracleAddress}
                     chainId={item.morphoBlue.chain.id}
                   />

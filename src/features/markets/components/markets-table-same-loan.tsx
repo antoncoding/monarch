@@ -15,7 +15,7 @@ import { TrustedByCell } from '@/features/autovault/components/trusted-vault-bad
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useModal } from '@/hooks/useModal';
-import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
+import { getStandardOracleDataFromMetadata, useAllOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -455,10 +455,9 @@ export function MarketsTableWithSameLoanAsset({
 
     markets.forEach((m) => {
       if (!m?.market?.morphoBlue?.chain?.id) return;
-      const vendorInfo = parsePriceFeedVendors(m.market.oracle?.data, m.market.morphoBlue.chain.id, {
-        metadataMap: oracleMetadataMap,
-        oracleAddress: m.market.oracleAddress,
-      });
+      const vendorInfo = parsePriceFeedVendors(
+        getStandardOracleDataFromMetadata(oracleMetadataMap, m.market.oracleAddress, m.market.morphoBlue.chain.id),
+      );
       if (vendorInfo?.coreVendors) {
         vendorInfo.coreVendors.forEach((vendor) => oracleSet.add(vendor));
       }

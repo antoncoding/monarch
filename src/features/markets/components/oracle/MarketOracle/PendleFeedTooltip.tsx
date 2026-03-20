@@ -2,15 +2,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
+import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { OracleVendorIcons, PriceFeedVendors, type FeedData, type FeedFreshnessStatus } from '@/utils/oracle';
-import type { OracleFeed } from '@/utils/types';
+import { OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type PendleFeedTooltipProps = {
-  feed: OracleFeed;
-  feedData?: FeedData | null;
+  feed: EnrichedFeed;
   chainId: number;
   feedFreshness?: FeedFreshnessStatus;
 };
@@ -22,10 +21,10 @@ function formatDiscountPerYear(raw: string): string {
   return `${percent.toFixed(2)}%`;
 }
 
-export function PendleFeedTooltip({ feed, feedData, chainId, feedFreshness }: PendleFeedTooltipProps) {
-  const baseAsset = feed.pair?.[0] ?? feedData?.pair[0] ?? 'Unknown';
-  const quoteAsset = feed.pair?.[1] ?? feedData?.pair[1] ?? 'Unknown';
-  const pendleFeedKind = feedData?.pendleFeedKind;
+export function PendleFeedTooltip({ feed, chainId, feedFreshness }: PendleFeedTooltipProps) {
+  const baseAsset = feed.pair[0] ?? 'Unknown';
+  const quoteAsset = feed.pair[1] ?? 'Unknown';
+  const pendleFeedKind = feed.pendleFeedKind;
   const isLinearDiscount = pendleFeedKind?.toLowerCase() === 'lineardiscount';
   const typeLabel = isLinearDiscount ? 'Linear Discount' : pendleFeedKind;
 
@@ -56,7 +55,7 @@ export function PendleFeedTooltip({ feed, feedData, chainId, feedFreshness }: Pe
       </div>
 
       {/* Pendle Specific Data */}
-      {(typeLabel != null || feedData?.baseDiscountPerYear != null) && (
+      {(typeLabel != null || feed.baseDiscountPerYear != null) && (
         <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
           {typeLabel != null && (
             <div className="flex justify-between font-zen text-sm">
@@ -64,10 +63,10 @@ export function PendleFeedTooltip({ feed, feedData, chainId, feedFreshness }: Pe
               <span className="font-medium">{typeLabel}</span>
             </div>
           )}
-          {feedData?.baseDiscountPerYear != null && (
+          {feed.baseDiscountPerYear != null && (
             <div className="flex justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Base Discount:</span>
-              <span className="font-medium">{formatDiscountPerYear(feedData.baseDiscountPerYear)}</span>
+              <span className="font-medium">{formatDiscountPerYear(feed.baseDiscountPerYear)}</span>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import { getOracleFromMetadata, isMetaOracleData, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
+import { getMetaOracleDataFromMetadata, getStandardOracleDataFromMetadata, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
 import type { Market, MarketWarning } from '@/utils/types';
 import { monarchWhitelistedMarkets, getMarketOverrideWarnings } from './markets';
 import { getOracleType, OracleType, parsePriceFeedVendors, parseMetaOracleVendors, checkFeedsPath, checkEnrichedFeedsPath } from './oracle';
@@ -175,14 +175,14 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
   }
 
   // Append our own oracle warnings
-  const oracleType = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id, oracleMetadataMap);
+  const chainId = market.morphoBlue.chain.id;
+  const oracleType = getOracleType(market.oracleAddress, chainId, oracleMetadataMap);
   if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
 
   // if any of the feeds are not null but also not recognized, return appropriate feed warning
-  if (oracleType === OracleType.Standard && market.oracle?.data) {
-    const metadataOptions = oracleMetadataMap ? { metadataMap: oracleMetadataMap, oracleAddress: market.oracleAddress } : undefined;
-
-    const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id, metadataOptions);
+  const standardOracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, market.oracleAddress, chainId);
+  if (oracleType === OracleType.Standard && standardOracleData) {
+    const vendorInfo = parsePriceFeedVendors(standardOracleData);
 
     // Completely unknown feeds get the stronger warning
     if (vendorInfo.hasCompletelyUnknown) {
@@ -196,13 +196,7 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
 
     // Check if oracle feeds can produce a valid price path
     if (market.collateralAsset?.symbol && market.loanAsset?.symbol) {
-      const feedsPathResult = checkFeedsPath(
-        market.oracle.data,
-        market.morphoBlue.chain.id,
-        market.collateralAsset.symbol,
-        market.loanAsset.symbol,
-        metadataOptions,
-      );
+      const feedsPathResult = checkFeedsPath(standardOracleData, market.collateralAsset.symbol, market.loanAsset.symbol);
 
       if (feedsPathResult.hasUnknownFeed) {
         // only append this error if it doesn't already have "UNRECOGNIZED_FEEDS"
@@ -220,18 +214,18 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
 
   // Meta oracles: run vendor + feed path checks on both primary and backup oracle feeds
   if (oracleType === OracleType.Meta && oracleMetadataMap) {
-    const metadata = getOracleFromMetadata(oracleMetadataMap, market.oracleAddress);
-    if (metadata?.data && isMetaOracleData(metadata.data)) {
-      const vendorInfo = parseMetaOracleVendors(metadata.data);
+    const metadata = getMetaOracleDataFromMetadata(oracleMetadataMap, market.oracleAddress, chainId);
+    if (metadata) {
+      const vendorInfo = parseMetaOracleVendors(metadata);
       if (vendorInfo.hasCompletelyUnknown) result.push(UNRECOGNIZED_FEEDS);
       if (vendorInfo.hasTaggedUnknown) result.push(UNRECOGNIZED_FEEDS_TAGGED);
 
       if (market.collateralAsset?.symbol && market.loanAsset?.symbol) {
-        const primaryResult = metadata.data.oracleSources.primary
-          ? checkEnrichedFeedsPath(metadata.data.oracleSources.primary, market.collateralAsset.symbol, market.loanAsset.symbol)
+        const primaryResult = metadata.oracleSources.primary
+          ? checkEnrichedFeedsPath(metadata.oracleSources.primary, market.collateralAsset.symbol, market.loanAsset.symbol)
           : { isValid: true };
-        const backupResult = metadata.data.oracleSources.backup
-          ? checkEnrichedFeedsPath(metadata.data.oracleSources.backup, market.collateralAsset.symbol, market.loanAsset.symbol)
+        const backupResult = metadata.oracleSources.backup
+          ? checkEnrichedFeedsPath(metadata.oracleSources.backup, market.collateralAsset.symbol, market.loanAsset.symbol)
           : { isValid: true };
 
         const hasUnknown = primaryResult.hasUnknownFeed || backupResult.hasUnknownFeed;

@@ -12,11 +12,9 @@ import {
   parseMetaOracleVendors,
   parsePriceFeedVendors,
 } from '@/utils/oracle';
-import { getOracleFromMetadata, isMetaOracleData, useOracleMetadata } from '@/hooks/useOracleMetadata';
-import type { MorphoChainlinkOracleData } from '@/utils/types';
+import { getMetaOracleDataFromMetadata, getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
 
 type OracleVendorBadgeProps = {
-  oracleData: MorphoChainlinkOracleData | null | undefined;
   chainId: number;
   oracleAddress?: string;
   useTooltip?: boolean;
@@ -38,59 +36,49 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
     />
   );
 
-/**
- * IoWarningOutline: Unknown Oracles
- * IoHelpCircleOutline: For unknown feeds
- */
-
-function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
+function OracleVendorBadge({ chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const standardOracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
+  const metaOracleData = getMetaOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
 
-  const oracleType = getOracleType(oracleData, oracleAddress, chainId, oracleMetadataMap);
+  const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
   const isCustom = oracleType === OracleType.Custom;
   const isMeta = oracleType === OracleType.Meta;
 
-  // Check if this is a vault-only oracle (no feeds, only vault conversion)
-  const oracleMetadata = oracleMetadataMap && oracleAddress ? getOracleFromMetadata(oracleMetadataMap, oracleAddress) : undefined;
-  const oracleMetadataData = oracleMetadata?.data && !isMetaOracleData(oracleMetadata.data) ? oracleMetadata.data : undefined;
   const isVaultOnly =
     oracleType === OracleType.Standard &&
-    !oracleMetadataData?.baseFeedOne &&
-    !oracleMetadataData?.baseFeedTwo &&
-    !oracleMetadataData?.quoteFeedOne &&
-    !oracleMetadataData?.quoteFeedTwo &&
-    (oracleMetadataData?.baseVault || oracleMetadataData?.quoteVault);
+    !standardOracleData?.baseFeedOne &&
+    !standardOracleData?.baseFeedTwo &&
+    !standardOracleData?.quoteFeedOne &&
+    !standardOracleData?.quoteFeedTwo &&
+    (standardOracleData?.baseVault || standardOracleData?.quoteVault);
 
-  const vendorInfo = (() => {
-    if (isMeta && oracleMetadataMap && oracleAddress) {
-      const metadata = getOracleFromMetadata(oracleMetadataMap, oracleAddress);
-      if (metadata?.data && isMetaOracleData(metadata.data)) {
-        return parseMetaOracleVendors(metadata.data);
-      }
-    }
-    return parsePriceFeedVendors(oracleData, chainId, {
-      metadataMap: oracleMetadataMap,
-      oracleAddress,
-    });
-  })();
-  const { coreVendors, taggedVendors, hasCompletelyUnknown, hasTaggedUnknown, vendors, hasUnknown } = vendorInfo;
+  const vendorInfo = isMeta && metaOracleData ? parseMetaOracleVendors(metaOracleData) : parsePriceFeedVendors(standardOracleData);
+  const { coreVendors, taggedVendors, hasCompletelyUnknown, hasTaggedUnknown } = vendorInfo;
+  const hasUnknownFeed = hasCompletelyUnknown || hasTaggedUnknown;
+  const displayNames = hasUnknownFeed ? [...coreVendors, ...taggedVendors, 'Unverified'] : [...coreVendors, ...taggedVendors];
+  const showTaggedFallbackIcon = !isCustom && !isVaultOnly && coreVendors.length === 0 && taggedVendors.length > 0;
+  const showGenericFallbackIcon = !isCustom && !isVaultOnly && coreVendors.length === 0 && taggedVendors.length === 0;
 
   const content = (
     <div className="flex items-center space-x-1 rounded p-1">
-      {showText && <span className="mr-1 text-xs font-medium">{hasUnknown ? 'Unknown' : vendors.join(', ')}</span>}
+      {showText && <span className="mr-1 text-xs font-medium">{displayNames.join(', ') || 'Oracle'}</span>}
       {isCustom ? (
         <IoWarningOutline
           className="text-secondary"
           size={16}
         />
       ) : isVaultOnly ? (
-        // Vault-only oracle - show checkmark icon
         <IoCheckmarkCircleOutline
           className="text-secondary"
           size={16}
         />
-      ) : hasCompletelyUnknown || hasTaggedUnknown ? (
-        // Show core vendor icons plus question mark for any unknown types
+      ) : showTaggedFallbackIcon || showGenericFallbackIcon ? (
+        <IoHelpCircleOutline
+          className="text-secondary"
+          size={18}
+        />
+      ) : hasUnknownFeed ? (
         <>
           {coreVendors.map((vendor, index) => (
             <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>
@@ -101,7 +89,6 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
           />
         </>
       ) : (
-        // Only core vendors, show their icons
         coreVendors.map((vendor, index) => <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>)
       )}
     </div>
@@ -118,7 +105,6 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
         );
       }
 
-      // Vault-only oracle - special case
       if (isVaultOnly) {
         return (
           <div className="flex flex-col gap-1">
@@ -129,40 +115,28 @@ function OracleVendorBadge({ oracleData, chainId, oracleAddress, showText = fals
       }
 
       const oracleLabel = isMeta ? 'Meta Oracle' : 'Standard Oracle';
+      const allKnownVendors = [...coreVendors, ...taggedVendors];
 
-      if (hasCompletelyUnknown || hasTaggedUnknown) {
-        let description = '';
-        const parts = [];
-
-        if (coreVendors.length > 0) {
-          parts.push(`${coreVendors.join(', ')}`);
-        }
-
-        if (taggedVendors.length > 0) {
-          parts.push(`${taggedVendors.join(', ')} (third-party)`);
-        }
-
-        if (hasCompletelyUnknown) {
-          const unknownCount = 1; // Simplified for now
-          parts.push(`${unknownCount} unrecognized feed${unknownCount > 1 ? 's' : ''}`);
-        }
-
-        description = `Uses feeds from: ${parts.join(', ')}.`;
-
+      if (showGenericFallbackIcon && !hasUnknownFeed) {
         return (
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium text-primary font-zen">{oracleLabel}</p>
-            <p className="text-xs text-secondary font-zen">{description}</p>
+            <p className="text-xs text-secondary font-zen">Vendor classification is not available in oracle metadata.</p>
           </div>
         );
       }
 
-      // All core vendors - clean case
-      const allVendors = [...coreVendors, ...taggedVendors];
+      const feedSummary =
+        allKnownVendors.length > 0
+          ? hasUnknownFeed
+            ? `${allKnownVendors.join(', ')} and unverified feeds`
+            : allKnownVendors.join(', ')
+          : 'unverified or unclassified feeds';
+
       return (
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-primary font-zen">{oracleLabel}</p>
-          <p className="text-xs text-secondary font-zen">Uses feeds from {allVendors.join(', ')}.</p>
+          <p className="text-xs text-secondary font-zen">Uses feeds from {feedSummary}.</p>
         </div>
       );
     };
