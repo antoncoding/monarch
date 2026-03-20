@@ -10,6 +10,8 @@ Always consult these docs for detailed information:
 
 - **@docs/TECHNICAL_OVERVIEW.md** - Architecture, data flow, tech stack, state management
 - **Skills** - Domain-specific patterns (see below)
+- Please follow instruction in @RTK.md when using shell commands
+
 
 ---
 
