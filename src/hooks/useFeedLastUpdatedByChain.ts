@@ -4,12 +4,7 @@ import { type Address, zeroAddress } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
 import { formatOraclePrice, type FeedUpdateKind } from '@/utils/oracle';
-import {
-  useOracleMetadata,
-  type EnrichedFeed,
-  type OracleMetadataRecord,
-  type OracleOutputData,
-} from '@/hooks/useOracleMetadata';
+import { useOracleMetadata, type EnrichedFeed, type OracleMetadataRecord, type OracleOutputData } from '@/hooks/useOracleMetadata';
 import type { SupportedNetworks } from '@/utils/networks';
 
 const MAX_MULTICALL_FEEDS_PER_BATCH = 1000;

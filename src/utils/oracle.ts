@@ -170,11 +170,7 @@ export function getOracleTypeDescription(oracleType: OracleType): string {
   return 'Custom Oracle';
 }
 
-export function getOracleType(
-  oracleAddress?: string,
-  chainId?: number,
-  metadataMap?: OracleMetadataRecord,
-) {
+export function getOracleType(oracleAddress?: string, chainId?: number, metadataMap?: OracleMetadataRecord) {
   if (metadataMap && oracleAddress) {
     const metadata = getOracleFromMetadata(metadataMap, oracleAddress, chainId);
     if (metadata?.type === 'meta') return OracleType.Meta;
@@ -361,7 +357,11 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
   };
 }
 
-export function checkFeedsPath(oracleData: OracleOutputData | null | undefined, collateralSymbol: string, loanSymbol: string): CheckFeedsPathResult {
+export function checkFeedsPath(
+  oracleData: OracleOutputData | null | undefined,
+  collateralSymbol: string,
+  loanSymbol: string,
+): CheckFeedsPathResult {
   if (!oracleData) {
     return { isValid: false, missingPath: 'No oracle data provided' };
   }
