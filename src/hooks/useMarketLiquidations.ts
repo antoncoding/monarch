@@ -4,6 +4,7 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchEnvioMarketLiquidations } from '@/data-sources/envio/market-detail';
 import { fetchMorphoMarketLiquidations } from '@/data-sources/morpho-api/market-liquidations';
 import { fetchSubgraphMarketLiquidations } from '@/data-sources/subgraph/market-liquidations';
+import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketLiquidationTransaction, PaginatedMarketLiquidations } from '@/utils/types';
 
@@ -18,7 +19,6 @@ const paginateLiquidations = (
   return {
     items,
     totalCount: liquidations.length,
-    hasNextPage: liquidations.length > sliceEnd,
   };
 };
 
@@ -42,32 +42,30 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
       }
 
       const targetSkip = (targetPage - 1) * pageSize;
-      let liquidations: PaginatedMarketLiquidations | null = null;
 
-      try {
-        liquidations = await fetchEnvioMarketLiquidations(marketId, Number(network), pageSize, targetSkip);
-      } catch (envioError) {
-        console.error('Failed to fetch liquidations via Envio:', envioError);
-      }
-
-      if (!liquidations && supportsMorphoApi(network)) {
-        try {
-          liquidations = paginateLiquidations(await fetchMorphoMarketLiquidations(marketId), pageSize, targetSkip);
-        } catch (morphoError) {
-          console.error('Failed to fetch liquidations via Morpho API:', morphoError);
-        }
-      }
-
-      if (!liquidations) {
-        try {
-          liquidations = paginateLiquidations(await fetchSubgraphMarketLiquidations(marketId, network), pageSize, targetSkip);
-        } catch (subgraphError) {
-          console.error('Failed to fetch liquidations via Subgraph:', subgraphError);
-          liquidations = null;
-        }
-      }
-
-      return liquidations;
+      return runMarketDetailFallback({
+        dataLabel: 'liquidations',
+        marketId,
+        network,
+        attempts: [
+          {
+            provider: 'envio',
+            fetch: () => fetchEnvioMarketLiquidations(marketId, Number(network), pageSize, targetSkip),
+          },
+          ...(supportsMorphoApi(network)
+            ? [
+                {
+                  provider: 'morpho-api' as const,
+                  fetch: async () => paginateLiquidations(await fetchMorphoMarketLiquidations(marketId), pageSize, targetSkip),
+                },
+              ]
+            : []),
+          {
+            provider: 'subgraph',
+            fetch: async () => paginateLiquidations(await fetchSubgraphMarketLiquidations(marketId, network), pageSize, targetSkip),
+          },
+        ],
+      });
     },
     [marketId, network, pageSize],
   );

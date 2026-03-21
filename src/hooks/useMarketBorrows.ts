@@ -4,6 +4,7 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchEnvioMarketBorrows } from '@/data-sources/envio/market-detail';
 import { fetchMorphoMarketBorrows } from '@/data-sources/morpho-api/market-borrows';
 import { fetchSubgraphMarketBorrows } from '@/data-sources/subgraph/market-borrows';
+import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 
@@ -38,32 +39,30 @@ export const useMarketBorrows = (
       }
 
       const targetSkip = (targetPage - 1) * pageSize;
-      let result: PaginatedMarketActivityTransactions | null = null;
 
-      try {
-        result = await fetchEnvioMarketBorrows(marketId, Number(network), minAssets, pageSize, targetSkip);
-      } catch (envioError) {
-        console.error('Failed to fetch borrows via Envio:', envioError);
-      }
-
-      if (!result && supportsMorphoApi(network)) {
-        try {
-          result = await fetchMorphoMarketBorrows(marketId, minAssets, pageSize, targetSkip);
-        } catch (morphoError) {
-          console.error('Failed to fetch borrows via Morpho API:', morphoError);
-        }
-      }
-
-      if (!result) {
-        try {
-          result = await fetchSubgraphMarketBorrows(marketId, loanAssetId, network, minAssets, pageSize, targetSkip);
-        } catch (subgraphError) {
-          console.error('Failed to fetch borrows via Subgraph:', subgraphError);
-          throw subgraphError;
-        }
-      }
-
-      return result;
+      return runMarketDetailFallback({
+        dataLabel: 'borrow and repay activity',
+        marketId,
+        network,
+        attempts: [
+          {
+            provider: 'envio',
+            fetch: () => fetchEnvioMarketBorrows(marketId, Number(network), minAssets, pageSize, targetSkip),
+          },
+          ...(supportsMorphoApi(network)
+            ? [
+                {
+                  provider: 'morpho-api' as const,
+                  fetch: () => fetchMorphoMarketBorrows(marketId, minAssets, pageSize, targetSkip),
+                },
+              ]
+            : []),
+          {
+            provider: 'subgraph',
+            fetch: () => fetchSubgraphMarketBorrows(marketId, loanAssetId, network, minAssets, pageSize, targetSkip),
+          },
+        ],
+      });
     },
     [marketId, loanAssetId, network, minAssets, pageSize],
   );

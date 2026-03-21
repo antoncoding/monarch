@@ -40,6 +40,12 @@ type EnvioBorrowerRow = {
   collateral: string;
 };
 
+type CachedBorrowerPosition = {
+  userAddress: string;
+  borrowShares: string;
+  collateral: string;
+};
+
 type EnvioGraphqlResponse<T> = {
   data?: T;
 };
@@ -84,7 +90,7 @@ type EnvioLiquidationsPageResponse = EnvioGraphqlResponse<{
 }>;
 
 const suppliersCache = new Map<string, CacheEntry<MarketSupplier[]>>();
-const borrowersCache = new Map<string, CacheEntry<MarketBorrower[]>>();
+const borrowersCache = new Map<string, CacheEntry<CachedBorrowerPosition[]>>();
 
 const toCacheKey = (parts: Array<string | number>): string => parts.join(':');
 
@@ -117,10 +123,11 @@ const paginateWindowedItems = <T>(items: T[], pageSize: number, skip: number) =>
   const sliceEnd = skip + pageSize;
   const pageItems = items.slice(skip, sliceEnd);
   const hasNextPage = items.length > sliceEnd;
+  const totalCount = skip >= items.length ? items.length : Math.max(items.length, skip + pageItems.length + Number(hasNextPage));
 
   return {
     items: pageItems,
-    totalCount: Math.max(items.length, skip + pageItems.length + Number(hasNextPage)),
+    totalCount,
     hasNextPage,
   };
 };
@@ -181,6 +188,14 @@ const convertBorrowSharesToAssets = (borrowShares: string, marketState: BorrowSh
   return convertSharesToAssets(BigInt(borrowShares), BigInt(marketState.borrowAssets), BigInt(marketState.borrowShares)).toString();
 };
 
+const mapCachedBorrowers = (positions: CachedBorrowerPosition[], marketState: BorrowSharePriceState): MarketBorrower[] => {
+  return positions.map((position) => ({
+    userAddress: position.userAddress,
+    borrowAssets: convertBorrowSharesToAssets(position.borrowShares, marketState),
+    collateral: position.collateral,
+  }));
+};
+
 const fetchEnvioSuppliersAll = async (marketId: string, chainId: number, minShares: string): Promise<MarketSupplier[]> => {
   const cacheKey = toCacheKey(['suppliers', chainId, marketId.toLowerCase(), minShares]);
 
@@ -213,8 +228,7 @@ const fetchEnvioBorrowersAll = async (
   marketId: string,
   chainId: number,
   minShares: string,
-  marketState: BorrowSharePriceState,
-): Promise<MarketBorrower[]> => {
+): Promise<CachedBorrowerPosition[]> => {
   const cacheKey = toCacheKey(['borrowers', chainId, marketId.toLowerCase(), minShares]);
 
   return getCachedOrLoad({
@@ -234,7 +248,7 @@ const fetchEnvioBorrowersAll = async (
 
           return (response.data?.Position ?? []).map((position) => ({
             userAddress: position.user,
-            borrowAssets: convertBorrowSharesToAssets(position.borrowShares, marketState),
+            borrowShares: position.borrowShares,
             collateral: position.collateral,
           }));
         },
@@ -283,12 +297,17 @@ const fetchEnvioBorrowRepayWindow = async (
   return [...borrows, ...repays].sort(sortActivityTransactions);
 };
 
-const fetchEnvioLiquidationsWindow = async (marketId: string, chainId: number, limit: number): Promise<MarketLiquidationTransaction[]> => {
+const fetchEnvioLiquidationsWindow = async (
+  marketId: string,
+  chainId: number,
+  offset: number,
+  limit: number,
+): Promise<MarketLiquidationTransaction[]> => {
   const response = await envioGraphqlFetcher<EnvioLiquidationsPageResponse>(envioLiquidationsPageQuery, {
     chainId,
     marketId,
     limit,
-    offset: 0,
+    offset,
   });
 
   return (response.data?.Morpho_Liquidate ?? []).map((event) => ({
@@ -320,7 +339,7 @@ export const fetchEnvioMarketBorrowers = async (
   first = 10,
   skip = 0,
 ): Promise<PaginatedMarketBorrowers> => {
-  return paginateItems(await fetchEnvioBorrowersAll(marketId, chainId, minShares, marketState), first, skip);
+  return paginateItems(mapCachedBorrowers(await fetchEnvioBorrowersAll(marketId, chainId, minShares), marketState), first, skip);
 };
 
 export const fetchEnvioMarketSupplies = async (
@@ -349,5 +368,5 @@ export const fetchEnvioMarketLiquidations = async (
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketLiquidations> => {
-  return paginateWindowedItems(await fetchEnvioLiquidationsWindow(marketId, chainId, skip + first + 1), first, skip);
+  return paginateWindowedItems(await fetchEnvioLiquidationsWindow(marketId, chainId, skip, first + 1), first, skip);
 };

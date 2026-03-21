@@ -24,8 +24,8 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
 
   const liquidations = paginatedData?.items ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;
-  const hasNextPage = paginatedData?.hasNextPage ?? false;
-  const totalPages = totalCount > 0 ? Math.max(Math.ceil(totalCount / pageSize), currentPage + Number(hasNextPage)) : 0;
+  const hasNextPage = paginatedData?.hasNextPage;
+  const totalPages = hasNextPage === undefined ? (totalCount > 0 ? Math.ceil(totalCount / pageSize) : 0) : undefined;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -165,7 +165,8 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
           pageSize={pageSize}
           onPageChange={handlePageChange}
           isLoading={isFetching}
-          showEntryCount={false}
+          showEntryCount={hasNextPage === undefined}
+          hasNextPage={hasNextPage}
         />
       )}
     </div>

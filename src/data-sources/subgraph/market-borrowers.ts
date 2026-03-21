@@ -1,5 +1,6 @@
 import { marketBorrowersQuery } from '@/graphql/morpho-subgraph-queries';
 import type { SupportedNetworks } from '@/utils/networks';
+import { convertSharesToAssets } from '@/utils/positions';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import type { MarketBorrower, PaginatedMarketBorrowers } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers';
@@ -99,12 +100,7 @@ export const fetchSubgraphMarketBorrowers = async (
         // Convert borrow shares to borrow assets
         // borrowAssets = (shares * totalBorrow) / totalBorrowShares
         const shares = BigInt(position.shares);
-        let borrowAssets = '0';
-
-        if (totalBorrowShares > 0n) {
-          const assets = (shares * totalBorrow) / totalBorrowShares;
-          borrowAssets = assets.toString();
-        }
+        const borrowAssets = convertSharesToAssets(shares, totalBorrow, totalBorrowShares).toString();
 
         // Get collateral balance from nested positions (should be exactly 1)
         const collateralBalance = position.account.positions[0]?.balance ?? '0';

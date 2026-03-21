@@ -10,12 +10,13 @@ import { cn } from '@/utils';
 
 type TablePaginationProps = {
   currentPage: number;
-  totalPages: number;
+  totalPages?: number;
   totalEntries: number;
   pageSize: number;
   onPageChange: (page: number) => void;
   isLoading?: boolean;
   showEntryCount?: boolean;
+  hasNextPage?: boolean;
 };
 
 type PaginationToken = number | 'ellipsis';
@@ -28,12 +29,15 @@ export function TablePagination({
   onPageChange,
   isLoading = false,
   showEntryCount = true,
+  hasNextPage,
 }: TablePaginationProps) {
   const [jumpPage, setJumpPage] = useState('');
   const [isJumpOpen, setIsJumpOpen] = useState(false);
+  const isOpenEnded = hasNextPage !== undefined && totalPages === undefined;
+  const effectiveTotalPages = isOpenEnded ? currentPage + Number(hasNextPage) : totalPages ?? 0;
 
   // Early return after all hooks
-  if (totalPages === 0) {
+  if (effectiveTotalPages === 0) {
     return null;
   }
 
@@ -42,7 +46,7 @@ export function TablePagination({
 
   const handleJumpToPage = () => {
     const page = Number.parseInt(jumpPage, 10);
-    if (page >= 1 && page <= totalPages) {
+    if (page >= 1 && page <= effectiveTotalPages) {
       onPageChange(page);
       setJumpPage('');
       setIsJumpOpen(false);
@@ -57,24 +61,48 @@ export function TablePagination({
 
   // Generate fixed-length page numbers to keep controls spatially stable.
   const getPageNumbers = (): PaginationToken[] => {
+    if (isOpenEnded) {
+      const pages: PaginationToken[] = [];
+
+      if (currentPage > 1) {
+        pages.push(currentPage - 1);
+      }
+
+      pages.push(currentPage);
+
+      if (hasNextPage) {
+        pages.push(currentPage + 1);
+      }
+
+      return pages;
+    }
+
     const pages: PaginationToken[] = [];
 
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
+    if (effectiveTotalPages <= 7) {
+      for (let i = 1; i <= effectiveTotalPages; i++) {
         pages.push(i);
       }
       return pages;
     }
 
     if (currentPage <= 4) {
-      return [1, 2, 3, 4, 5, 'ellipsis', totalPages];
+      return [1, 2, 3, 4, 5, 'ellipsis', effectiveTotalPages];
     }
 
-    if (currentPage >= totalPages - 3) {
-      return [1, 'ellipsis', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    if (currentPage >= effectiveTotalPages - 3) {
+      return [
+        1,
+        'ellipsis',
+        effectiveTotalPages - 4,
+        effectiveTotalPages - 3,
+        effectiveTotalPages - 2,
+        effectiveTotalPages - 1,
+        effectiveTotalPages,
+      ];
     }
 
-    return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+    return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', effectiveTotalPages];
   };
 
   const getItemKey = (page: PaginationToken, idx: number) => {
@@ -86,7 +114,7 @@ export function TablePagination({
 
   const pageNumbers = getPageNumbers();
 
-  const paginationControlWidthClass = totalPages > 1000 ? 'w-10 text-xs' : 'w-8 text-sm';
+  const paginationControlWidthClass = effectiveTotalPages > 1000 ? 'w-10 text-xs' : 'w-8 text-sm';
 
   return (
     <div className="mt-6 flex flex-col items-center justify-center gap-3 font-zen">
@@ -136,7 +164,7 @@ export function TablePagination({
         <Button
           variant="ghost"
           size="icon"
-          disabled={currentPage === totalPages || isLoading}
+          disabled={(isOpenEnded ? !hasNextPage : currentPage === effectiveTotalPages) || isLoading}
           onClick={() => onPageChange(currentPage + 1)}
           className="h-8 w-8 font-zen !font-normal"
         >
@@ -144,7 +172,7 @@ export function TablePagination({
         </Button>
 
         {/* Jump to page - only show if more than 10 pages */}
-        {totalPages > 10 && (
+        {!isOpenEnded && effectiveTotalPages > 10 && (
           <div className="ml-1">
             <Popover
               open={isJumpOpen}
@@ -154,7 +182,7 @@ export function TablePagination({
                 content={
                   <TooltipContent
                     title="Jump to page"
-                    detail={`Go to a specific page (1-${totalPages})`}
+                    detail={`Go to a specific page (1-${effectiveTotalPages})`}
                     icon={<FiSearch />}
                   />
                 }
@@ -179,7 +207,7 @@ export function TablePagination({
                       size="sm"
                       type="number"
                       min={1}
-                      max={totalPages}
+                      max={effectiveTotalPages}
                       value={jumpPage}
                       onChange={(e) => setJumpPage(e.target.value)}
                       onKeyPress={handleKeyPress}

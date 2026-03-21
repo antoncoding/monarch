@@ -6,6 +6,7 @@ import morphoABI from '@/abis/morpho';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import { getMorphoAddress } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
+import { convertSharesToAssets } from '@/utils/positions';
 
 // ── Types ──
 
@@ -133,7 +134,7 @@ export function usePublicAllocatorLiveData(
       const totalBorrowAssets = marketData[2];
 
       // Convert supply shares to assets
-      const vaultSupplyAssets = totalSupplyShares > 0n ? (supplyShares * totalSupplyAssets) / totalSupplyShares : 0n;
+      const vaultSupplyAssets = convertSharesToAssets(supplyShares, totalSupplyAssets, totalSupplyShares);
 
       // Market liquidity = total supply - total borrow
       const marketLiquidity = totalSupplyAssets - totalBorrowAssets;
