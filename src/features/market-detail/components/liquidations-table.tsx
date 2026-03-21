@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import moment from 'moment';
 import { type Address, formatUnits } from 'viem';
@@ -20,19 +20,21 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  const { data: liquidations, isLoading, error } = useMarketLiquidations(market?.uniqueKey, chainId);
+  const {
+    data: paginatedData,
+    isLoading,
+    isFetching,
+    error,
+  } = useMarketLiquidations(market?.uniqueKey, chainId, currentPage, pageSize);
 
-  const totalCount = (liquidations ?? []).length;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const liquidations = paginatedData?.items ?? [];
+  const totalCount = paginatedData?.totalCount ?? 0;
+  const hasNextPage = paginatedData?.hasNextPage ?? false;
+  const totalPages = totalCount > 0 ? Math.max(Math.ceil(totalCount / pageSize), currentPage + Number(hasNextPage)) : 0;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
-  const paginatedLiquidations = useMemo(() => {
-    const sliced = (liquidations ?? []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
-    return sliced;
-  }, [currentPage, liquidations, pageSize]);
 
   const tableKey = `liquidations-table-${currentPage}`;
 
@@ -46,7 +48,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
 
       <div className="relative">
         {/* Loading overlay */}
-        {isLoading && (
+        {isFetching && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-surface/80 backdrop-blur-sm">
             <Spinner size={24} />
           </div>
@@ -68,7 +70,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact">
-              {paginatedLiquidations.length === 0 && !isLoading ? (
+              {liquidations.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}
@@ -78,7 +80,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
+                liquidations.map((liquidation: MarketLiquidationTransaction) => {
                   const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
                   const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
 
@@ -167,7 +169,8 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
           totalEntries={totalCount}
           pageSize={pageSize}
           onPageChange={handlePageChange}
-          isLoading={isLoading}
+          isLoading={isFetching}
+          showEntryCount={false}
         />
       )}
     </div>

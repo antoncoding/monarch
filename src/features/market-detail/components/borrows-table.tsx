@@ -38,7 +38,8 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
 
   const borrows = paginatedData?.items ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const hasNextPage = paginatedData?.hasNextPage ?? false;
+  const totalPages = totalCount > 0 ? Math.max(Math.ceil(totalCount / pageSize), currentPage + Number(hasNextPage)) : 0;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -166,6 +167,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
           pageSize={pageSize}
           onPageChange={handlePageChange}
           isLoading={isFetching}
+          showEntryCount={false}
         />
       )}
     </div>
