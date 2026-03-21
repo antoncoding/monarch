@@ -761,6 +761,7 @@ export function MarketsTableWithSameLoanAsset({
 
       {/* Pagination */}
       <TablePagination
+        mode="fixed"
         totalPages={totalPages}
         totalEntries={processedMarkets.length}
         currentPage={safePage}

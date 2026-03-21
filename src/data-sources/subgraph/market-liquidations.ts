@@ -1,8 +1,7 @@
-import { marketLiquidationsAndBadDebtQuery } from '@/graphql/morpho-subgraph-queries';
+import { marketLiquidationBadDebtQuery, marketLiquidationsPageQuery } from '@/graphql/morpho-subgraph-queries';
 import type { SupportedNetworks } from '@/utils/networks';
-import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import type { MarketLiquidationTransaction } from '@/utils/types'; // Import simplified type
-import { subgraphGraphqlFetcher } from './fetchers';
+import type { MarketLiquidationTransaction, PaginatedMarketLiquidations } from '@/utils/types';
+import { requireSubgraphUrl, subgraphGraphqlFetcher } from './fetchers';
 
 // Types specific to the Subgraph response items
 type SubgraphLiquidateItem = {
@@ -27,53 +26,87 @@ type SubgraphBadDebtItem = {
 type SubgraphLiquidationsResponse = {
   data?: {
     liquidates?: SubgraphLiquidateItem[];
+  };
+};
+
+type SubgraphLiquidationBadDebtResponse = {
+  data?: {
     badDebtRealizations?: SubgraphBadDebtItem[];
   };
 };
 
 /**
  * Fetches market liquidation activities from the Subgraph.
- * Combines liquidation events with associated bad debt realizations.
+ * Fetches only the requested liquidation page and then resolves bad debt for those page rows.
  * @param marketId The ID of the market.
  * @param network The blockchain network.
- * @returns A promise resolving to an array of simplified MarketLiquidationTransaction objects.
+ * @returns A promise resolving to paginated MarketLiquidationTransaction objects.
  */
 export const fetchSubgraphMarketLiquidations = async (
   marketId: string,
   network: SupportedNetworks,
-): Promise<MarketLiquidationTransaction[]> => {
-  const subgraphUrl = getSubgraphUrl(network);
-  if (!subgraphUrl) {
-    console.warn(`No Subgraph URL configured for network: ${network}. Returning empty results.`);
-    return [];
-  }
+  first = 8,
+  skip = 0,
+): Promise<PaginatedMarketLiquidations> => {
+  const subgraphUrl = requireSubgraphUrl(network);
 
-  const variables = { marketId };
+  const variables = {
+    marketId,
+    first: first + 1,
+    skip,
+  };
 
   try {
-    const result = await subgraphGraphqlFetcher<SubgraphLiquidationsResponse>(subgraphUrl, marketLiquidationsAndBadDebtQuery, variables);
+    const result = await subgraphGraphqlFetcher<SubgraphLiquidationsResponse>(subgraphUrl, marketLiquidationsPageQuery, variables);
+    if (!result.data) {
+      throw Object.assign(new Error(`Subgraph returned no liquidation data for market ${marketId} on network ${network}`), {
+        source: 'subgraph' as const,
+        network,
+      });
+    }
 
     const liquidates = result.data?.liquidates ?? [];
-    const badDebtItems = result.data?.badDebtRealizations ?? [];
+    const hasNextPage = liquidates.length > first;
+    const pageLiquidations = liquidates.slice(0, first);
+    const liquidationIds = pageLiquidations.map((liquidation) => liquidation.id);
+    const badDebtResult =
+      liquidationIds.length === 0
+        ? null
+        : await subgraphGraphqlFetcher<SubgraphLiquidationBadDebtResponse>(subgraphUrl, marketLiquidationBadDebtQuery, {
+            liquidationIds,
+          });
+
+    if (badDebtResult && !badDebtResult.data) {
+      throw Object.assign(new Error(`Subgraph returned no bad debt data for market ${marketId} on network ${network}`), {
+        source: 'subgraph' as const,
+        network,
+      });
+    }
+
+    const badDebtItems = badDebtResult?.data?.badDebtRealizations ?? [];
 
     // Create a map for quick lookup of bad debt by liquidation ID
     const badDebtMap = new Map<string, string>();
-    badDebtItems.forEach((item) => {
+    for (const item of badDebtItems) {
       badDebtMap.set(item.liquidation.id, item.badDebt);
-    });
+    }
 
     // Map liquidations, adding bad debt information
-    return liquidates.map((liq) => ({
+    const items: MarketLiquidationTransaction[] = pageLiquidations.map((liq) => ({
       type: 'MarketLiquidation',
       hash: liq.hash,
       timestamp: typeof liq.timestamp === 'string' ? Number.parseInt(liq.timestamp, 10) : liq.timestamp,
-      // Subgraph query doesn't provide liquidator, use empty string or default
       liquidator: liq.liquidator.id,
-      repaidAssets: liq.repaid, // Loan asset repaid
-      seizedAssets: liq.amount, // Collateral seized
-      // Fetch bad debt from the map using the liquidate event ID
-      badDebtAssets: badDebtMap.get(liq.id) ?? '0', // Default to '0' if no bad debt entry
+      repaidAssets: liq.repaid,
+      seizedAssets: liq.amount,
+      badDebtAssets: badDebtMap.get(liq.id) ?? '0',
     }));
+
+    return {
+      items,
+      totalCount: skip + items.length + Number(hasNextPage),
+      hasNextPage,
+    };
   } catch (error) {
     console.error(`Error fetching or processing Subgraph market liquidations for ${marketId}:`, error);
     if (error instanceof Error) {

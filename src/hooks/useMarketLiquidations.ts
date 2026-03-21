@@ -6,21 +6,7 @@ import { fetchMorphoMarketLiquidations } from '@/data-sources/morpho-api/market-
 import { fetchSubgraphMarketLiquidations } from '@/data-sources/subgraph/market-liquidations';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
-import type { MarketLiquidationTransaction, PaginatedMarketLiquidations } from '@/utils/types';
-
-const paginateLiquidations = (
-  liquidations: MarketLiquidationTransaction[],
-  pageSize: number,
-  skip: number,
-): PaginatedMarketLiquidations => {
-  const sliceEnd = skip + pageSize;
-  const items = liquidations.slice(skip, sliceEnd);
-
-  return {
-    items,
-    totalCount: liquidations.length,
-  };
-};
+import type { PaginatedMarketLiquidations } from '@/utils/types';
 
 /**
  * Hook to fetch liquidations for a specific market, using Envio as the primary source
@@ -56,13 +42,13 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
             ? [
                 {
                   provider: 'morpho-api' as const,
-                  fetch: async () => paginateLiquidations(await fetchMorphoMarketLiquidations(marketId), pageSize, targetSkip),
+                  fetch: () => fetchMorphoMarketLiquidations(marketId, pageSize, targetSkip),
                 },
               ]
             : []),
           {
             provider: 'subgraph',
-            fetch: async () => paginateLiquidations(await fetchSubgraphMarketLiquidations(marketId, network), pageSize, targetSkip),
+            fetch: () => fetchSubgraphMarketLiquidations(marketId, network, pageSize, targetSkip),
           },
         ],
       });
@@ -75,7 +61,7 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
     queryFn: async () => queryFn(page),
     enabled: !!marketId && !!network,
     staleTime: 1000 * 60 * 5, // 5 minutes, liquidations are less frequent
-    placeholderData: (previousData) => previousData ?? null,
+    placeholderData: () => null,
     retry: 1,
   });
 

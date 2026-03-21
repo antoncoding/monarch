@@ -8,35 +8,49 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils';
 
-type TablePaginationProps = {
+type TablePaginationBaseProps = {
   currentPage: number;
-  totalPages?: number;
   totalEntries: number;
   pageSize: number;
   onPageChange: (page: number) => void;
   isLoading?: boolean;
   showEntryCount?: boolean;
-  hasNextPage?: boolean;
 };
+
+type FixedPaginationProps = {
+  mode: 'fixed';
+  totalPages: number;
+};
+
+type OpenPaginationProps = {
+  mode: 'open';
+  hasNextPage: boolean;
+};
+
+type TablePaginationProps = TablePaginationBaseProps & (FixedPaginationProps | OpenPaginationProps);
 
 type PaginationToken = number | 'ellipsis';
 
 export function TablePagination({
   currentPage,
-  totalPages,
   totalEntries,
   pageSize,
   onPageChange,
   isLoading = false,
   showEntryCount = true,
-  hasNextPage,
+  ...paginationProps
 }: TablePaginationProps) {
   const [jumpPage, setJumpPage] = useState('');
   const [isJumpOpen, setIsJumpOpen] = useState(false);
-  const isOpenEnded = hasNextPage !== undefined && totalPages === undefined;
-  const effectiveTotalPages = isOpenEnded ? currentPage + Number(hasNextPage) : totalPages ?? 0;
+  const isOpenEnded = paginationProps.mode === 'open';
+  const hasNextPage = isOpenEnded ? (paginationProps.hasNextPage ?? false) : false;
+  const effectiveTotalPages = isOpenEnded ? currentPage + Number(hasNextPage) : paginationProps.totalPages;
 
   // Early return after all hooks
+  if (isOpenEnded && currentPage === 1 && !hasNextPage && totalEntries === 0) {
+    return null;
+  }
+
   if (effectiveTotalPages === 0) {
     return null;
   }

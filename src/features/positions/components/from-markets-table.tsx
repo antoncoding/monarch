@@ -169,6 +169,7 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
 
           {totalPages > 1 && (
             <TablePagination
+              mode="fixed"
               currentPage={currentPage}
               totalPages={totalPages}
               totalEntries={positions.length}

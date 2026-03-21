@@ -383,6 +383,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
       {/* Pagination */}
       {!loading && totalPages > 1 && (
         <TablePagination
+          mode="fixed"
           currentPage={currentPage}
           totalPages={totalPages}
           totalEntries={totalEntries}

@@ -1,9 +1,8 @@
 import { marketBorrowersQuery } from '@/graphql/morpho-subgraph-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import { convertSharesToAssets } from '@/utils/positions';
-import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import type { MarketBorrower, PaginatedMarketBorrowers } from '@/utils/types';
-import { subgraphGraphqlFetcher } from './fetchers';
+import { requireSubgraphUrl, subgraphGraphqlFetcher } from './fetchers';
 
 // Type for the Subgraph response
 type SubgraphBorrowerItem = {
@@ -59,11 +58,7 @@ export const fetchSubgraphMarketBorrowers = async (
   pageSize = 10,
   skip = 0,
 ): Promise<PaginatedMarketBorrowers> => {
-  const subgraphUrl = getSubgraphUrl(network);
-  if (!subgraphUrl) {
-    console.warn(`No Subgraph URL configured for network: ${network}. Returning empty results.`);
-    return { items: [], totalCount: 0 };
-  }
+  const subgraphUrl = requireSubgraphUrl(network);
 
   const cacheKey = getCacheKey(marketId, network, minShares);
   const now = Date.now();
@@ -73,9 +68,7 @@ export const fetchSubgraphMarketBorrowers = async (
   let allMappedItems: MarketBorrower[];
 
   if (cached && now - cached.timestamp < CACHE_TTL) {
-    // Use cached data
     allMappedItems = cached.data;
-    console.log(`Using cached borrowers data for ${marketId} (${allMappedItems.length} items)`);
   } else {
     // Fetch fresh data - always fetch top 1000 items (subgraph limit)
     const variables = {
@@ -87,6 +80,12 @@ export const fetchSubgraphMarketBorrowers = async (
 
     try {
       const result = await subgraphGraphqlFetcher<SubgraphBorrowersResponse>(subgraphUrl, marketBorrowersQuery, variables);
+      if (!result.data) {
+        throw Object.assign(new Error(`Subgraph returned no borrower data for market ${marketId} on network ${network}`), {
+          source: 'subgraph' as const,
+          network,
+        });
+      }
 
       const positions = result.data?.positions ?? [];
       const market = result.data?.market;
@@ -118,7 +117,6 @@ export const fetchSubgraphMarketBorrowers = async (
         timestamp: now,
       });
 
-      console.log(`Fetched and cached ${allMappedItems.length} borrowers for ${marketId}`);
     } catch (error) {
       console.error(`Error fetching or processing Subgraph market borrowers for ${marketId}:`, error);
       if (error instanceof Error) {

@@ -163,6 +163,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
 
       {totalCount > 0 && (
         <TablePagination
+          mode="fixed"
           currentPage={currentPage}
           totalPages={totalPages}
           totalEntries={totalCount}

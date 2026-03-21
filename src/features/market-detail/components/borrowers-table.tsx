@@ -352,6 +352,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
 
       {totalCount > 0 && (
         <TablePagination
+          mode="fixed"
           currentPage={currentPage}
           totalPages={totalPages}
           totalEntries={totalCount}

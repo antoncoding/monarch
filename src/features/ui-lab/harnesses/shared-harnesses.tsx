@@ -320,6 +320,7 @@ export function TablePaginationHarness(): JSX.Element {
 
   return (
     <TablePagination
+      mode="fixed"
       currentPage={page}
       totalPages={totalPages}
       totalEntries={totalEntries}

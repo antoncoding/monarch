@@ -368,5 +368,5 @@ export const fetchEnvioMarketLiquidations = async (
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketLiquidations> => {
-  return paginateWindowedItems(await fetchEnvioLiquidationsWindow(marketId, chainId, skip, first + 1), first, skip);
+  return paginateWindowedItems(await fetchEnvioLiquidationsWindow(marketId, chainId, skip, first + 1), first, 0);
 };

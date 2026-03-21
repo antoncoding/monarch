@@ -72,7 +72,7 @@ export const useMarketSupplies = (
     queryFn: async () => queryFn(page),
     enabled: !!marketId && !!loanAssetId && !!network,
     staleTime: 1000 * 60 * 5, // 5 minutes - keep cached data fresh longer
-    placeholderData: (previousData) => previousData ?? null,
+    placeholderData: () => null,
     retry: 1,
   });
 
