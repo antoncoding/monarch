@@ -216,10 +216,11 @@ export const marketBorrowsRepaysQuery = `
 // --- End Query ---
 
 // --- Query for Market Liquidations and Bad Debt ---
-export const marketLiquidationsAndBadDebtQuery = `
-  query getMarketLiquidations($marketId: Bytes!) {
+export const marketLiquidationsPageQuery = `
+  query getMarketLiquidationsPage($marketId: Bytes!, $first: Int!, $skip: Int!) {
     liquidates(
-      first: 1000,
+      first: $first,
+      skip: $skip,
       where: { market: $marketId },
       orderBy: timestamp,
       orderDirection: desc
@@ -231,9 +232,13 @@ export const marketLiquidationsAndBadDebtQuery = `
       amount
       liquidator { id }
     }
+  }
+`;
+
+export const marketLiquidationBadDebtQuery = `
+  query getMarketLiquidationBadDebt($liquidationIds: [String!]!) {
     badDebtRealizations(
-      first: 1000,
-      where: { market: $marketId }
+      where: { liquidation_in: $liquidationIds }
     ) {
       badDebt
       liquidation { id }

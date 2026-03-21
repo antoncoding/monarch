@@ -1,8 +1,7 @@
 import { marketBorrowsRepaysQuery } from '@/graphql/morpho-subgraph-queries';
 import type { SupportedNetworks } from '@/utils/networks';
-import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import type { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types'; // Import shared type
-import { subgraphGraphqlFetcher } from './fetchers';
+import { requireSubgraphUrl, subgraphGraphqlFetcher } from './fetchers';
 
 // Types specific to the Subgraph response for this query
 type SubgraphBorrowRepayItem = {
@@ -23,10 +22,9 @@ type SubgraphBorrowsRepaysResponse = {
 
 /**
  * Fetches market borrow/repay activities from the Subgraph.
- * NOTE: Because borrows and repays are fetched separately and merged client-side,
- * we cannot do proper server-side pagination. Instead, we fetch a large batch (200 items)
- * from both sources, merge and sort them, then apply client-side pagination.
- * This ensures correct ordering and prevents skipped items.
+ * Because borrows and repays are fetched separately and merged client-side,
+ * we fetch the requested prefix window from both streams, merge them, and then
+ * derive the requested page plus `hasNextPage`.
  * @param marketId The ID of the market.
  * @param loanAssetId The address of the loan asset.
  * @param network The blockchain network.
@@ -43,13 +41,9 @@ export const fetchSubgraphMarketBorrows = async (
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketActivityTransactions> => {
-  const subgraphUrl = getSubgraphUrl(network);
-  if (!subgraphUrl) {
-    console.warn(`No Subgraph URL configured for network: ${network}. Returning empty results.`);
-    return { items: [], totalCount: 0 };
-  }
+  const subgraphUrl = requireSubgraphUrl(network);
 
-  const fetchBatchSize = 200;
+  const fetchBatchSize = skip + first + 1;
 
   const variables = {
     marketId,
@@ -61,6 +55,12 @@ export const fetchSubgraphMarketBorrows = async (
 
   try {
     const result = await subgraphGraphqlFetcher<SubgraphBorrowsRepaysResponse>(subgraphUrl, marketBorrowsRepaysQuery, variables);
+    if (!result.data) {
+      throw Object.assign(new Error(`Subgraph returned no borrow activity data for market ${marketId} on network ${network}`), {
+        source: 'subgraph' as const,
+        network,
+      });
+    }
 
     const borrows = result.data?.borrows ?? [];
     const repays = result.data?.repays ?? [];
@@ -88,11 +88,13 @@ export const fetchSubgraphMarketBorrows = async (
     const startIndex = skip;
     const endIndex = skip + first;
     const items = combined.slice(startIndex, endIndex);
-    const totalCount = combined.length;
+    const hasNextPage = combined.length > endIndex;
+    const totalCount = skip >= combined.length ? combined.length : Math.max(combined.length, skip + items.length + Number(hasNextPage));
 
     return {
       items,
       totalCount,
+      hasNextPage,
     };
   } catch (error) {
     console.error(`Error fetching or processing Subgraph market borrows for ${marketId}:`, error);

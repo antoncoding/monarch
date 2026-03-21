@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatUnits, type Address, type PublicClient } from 'viem';
 import morphoABI from '@/abis/morpho';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
+import { convertSharesToAssets } from '@/utils/positions';
 import { getMorphoAddress } from '@/utils/morpho';
 import { fetchBlocksWithTimestamps, type BlockWithTimestamp } from '@/utils/blockEstimation';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -96,7 +97,7 @@ async function fetchBlockData(
         const supplyShares = positionData[0];
 
         // Convert shares to assets
-        const supplyAssets = blockTotalSupplyShares > 0n ? (supplyShares * blockTotalSupplyAssets) / blockTotalSupplyShares : 0n;
+        const supplyAssets = convertSharesToAssets(supplyShares, blockTotalSupplyAssets, blockTotalSupplyShares);
 
         dataPoint[supplier.address] = Number(formatUnits(supplyAssets, loanAssetDecimals));
       } else {
@@ -129,7 +130,7 @@ export function useHistoricalSupplierPositions(
   // Get top suppliers by current supply shares
   const topSuppliers: SupplierInfo[] = (suppliers ?? []).slice(0, TOP_SUPPLIERS_LIMIT).map((s) => {
     const shares = BigInt(s.supplyShares);
-    const assets = totalSupplyShares > 0n ? (shares * totalSupplyAssets) / totalSupplyShares : 0n;
+    const assets = convertSharesToAssets(shares, totalSupplyAssets, totalSupplyShares);
     return {
       address: s.userAddress,
       currentSupply: assets,

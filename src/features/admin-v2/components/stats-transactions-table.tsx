@@ -394,6 +394,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
             </Table>
             <div className="p-4">
               <TablePagination
+                mode="fixed"
                 totalPages={totalPages}
                 totalEntries={sortedData.length}
                 currentPage={currentPage}

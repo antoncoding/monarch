@@ -55,7 +55,11 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
   const { showDeveloperOptions } = useAppSettings();
   const { borrowerTableColumnVisibility, setBorrowerTableColumnVisibility } = useMarketDetailPreferences();
 
-  const { data: paginatedData, isLoading, isFetching } = useMarketBorrowers(market?.uniqueKey, chainId, minShares, currentPage, pageSize);
+  const {
+    data: paginatedData,
+    isLoading,
+    isFetching,
+  } = useMarketBorrowers(market?.uniqueKey, chainId, market.state, minShares, currentPage, pageSize);
 
   const borrowers = paginatedData?.items ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;
@@ -348,6 +352,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
 
       {totalCount > 0 && (
         <TablePagination
+          mode="fixed"
           currentPage={currentPage}
           totalPages={totalPages}
           totalEntries={totalCount}

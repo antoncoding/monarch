@@ -257,6 +257,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
             </Table>
             <div className="p-4">
               <TablePagination
+                mode="fixed"
                 totalPages={totalPages}
                 totalEntries={sortedData.length}
                 currentPage={currentPage}

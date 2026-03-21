@@ -340,6 +340,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
       </TableContainerWithHeader>
       {!loading && !isEmpty && markets.length > 0 && (
         <TablePagination
+          mode="fixed"
           totalPages={totalPages}
           totalEntries={markets.length}
           currentPage={currentPage}

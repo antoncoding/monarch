@@ -1,15 +1,35 @@
 import { useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchEnvioMarketBorrowers } from '@/data-sources/envio/market-detail';
 import { fetchMorphoMarketBorrowers } from '@/data-sources/morpho-api/market-borrowers';
 import { fetchSubgraphMarketBorrowers } from '@/data-sources/subgraph/market-borrowers';
+import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
-import type { PaginatedMarketBorrowers } from '@/utils/types';
+import type { Market, PaginatedMarketBorrowers } from '@/utils/types';
+
+const buildMarketBorrowersKey = ({
+  marketId,
+  network,
+  marketState,
+  minShares,
+  page,
+  pageSize,
+}: {
+  marketId: string | undefined;
+  network: SupportedNetworks | undefined;
+  marketState: Pick<Market['state'], 'borrowAssets' | 'borrowShares'> | undefined;
+  minShares: string;
+  page: number;
+  pageSize: number;
+}) => {
+  return ['marketBorrowers', marketId, network, marketState?.borrowAssets, marketState?.borrowShares, minShares, page, pageSize] as const;
+};
 
 /**
  * Hook to fetch current borrowers (positions) for a specific market,
- * using the appropriate data source based on the network.
- * Supports pagination with server-side pagination for Morpho API.
+ * using Envio as the primary source with existing sources as fallback.
+ * Preserves exact total counts via the shared Envio scan/cache layer.
  * Returns borrowers sorted by borrow shares (descending).
  *
  * @param marketId The ID of the market (e.g., 0x...).
@@ -22,6 +42,7 @@ import type { PaginatedMarketBorrowers } from '@/utils/types';
 export const useMarketBorrowers = (
   marketId: string | undefined,
   network: SupportedNetworks | undefined,
+  marketState: Pick<Market['state'], 'borrowAssets' | 'borrowShares'> | undefined,
   minShares = '1',
   page = 1,
   pageSize = 10,
@@ -31,47 +52,54 @@ export const useMarketBorrowers = (
   // Always filter out zero positions by ensuring minShares >= 1
   const effectiveMinShares = !minShares || minShares === '0' || minShares === '' ? '1' : minShares;
 
-  const queryKey = ['marketBorrowers', marketId, network, effectiveMinShares, page, pageSize];
+  const queryKey = buildMarketBorrowersKey({
+    marketId,
+    network,
+    marketState,
+    minShares: effectiveMinShares,
+    page,
+    pageSize,
+  });
 
   const queryFn = useCallback(
     async (targetPage: number): Promise<PaginatedMarketBorrowers | null> => {
-      if (!marketId || !network) {
+      if (!marketId || !network || !marketState) {
         return null;
       }
 
       const targetSkip = (targetPage - 1) * pageSize;
-      let result: PaginatedMarketBorrowers | null = null;
 
-      // Try Morpho API first if supported
-      if (supportsMorphoApi(network)) {
-        try {
-          console.log(`Attempting to fetch borrowers via Morpho API for ${marketId} (page ${targetPage})`);
-          result = await fetchMorphoMarketBorrowers(marketId, Number(network), effectiveMinShares, pageSize, targetSkip);
-        } catch (morphoError) {
-          console.error('Failed to fetch borrowers via Morpho API:', morphoError);
-        }
-      }
-
-      // Fallback to Subgraph if Morpho API failed or not supported
-      if (!result) {
-        try {
-          console.log(`Attempting to fetch borrowers via Subgraph for ${marketId} (page ${targetPage})`);
-          result = await fetchSubgraphMarketBorrowers(marketId, network, effectiveMinShares, pageSize, targetSkip);
-        } catch (subgraphError) {
-          console.error('Failed to fetch borrowers via Subgraph:', subgraphError);
-          throw subgraphError;
-        }
-      }
-
-      return result;
+      return runMarketDetailFallback({
+        dataLabel: 'borrowers',
+        marketId,
+        network,
+        attempts: [
+          {
+            provider: 'envio',
+            fetch: () => fetchEnvioMarketBorrowers(marketId, Number(network), marketState, effectiveMinShares, pageSize, targetSkip),
+          },
+          ...(supportsMorphoApi(network)
+            ? [
+                {
+                  provider: 'morpho-api' as const,
+                  fetch: () => fetchMorphoMarketBorrowers(marketId, Number(network), effectiveMinShares, pageSize, targetSkip),
+                },
+              ]
+            : []),
+          {
+            provider: 'subgraph',
+            fetch: () => fetchSubgraphMarketBorrowers(marketId, network, effectiveMinShares, pageSize, targetSkip),
+          },
+        ],
+      });
     },
-    [marketId, network, effectiveMinShares, pageSize],
+    [marketId, network, marketState, effectiveMinShares, pageSize],
   );
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<PaginatedMarketBorrowers | null>({
     queryKey: queryKey,
     queryFn: async () => queryFn(page),
-    enabled: !!marketId && !!network,
+    enabled: !!marketId && !!network && !!marketState,
     staleTime: 1000 * 60 * 2, // 2 minutes - positions change more frequently than historical data
     placeholderData: (previousData) => previousData ?? null,
     retry: 1,
@@ -79,12 +107,19 @@ export const useMarketBorrowers = (
 
   // Prefetch adjacent pages for faster navigation
   useEffect(() => {
-    if (!marketId || !network || !data) return;
+    if (!marketId || !network || !marketState || !data) return;
 
     const totalPages = data.totalCount > 0 ? Math.ceil(data.totalCount / pageSize) : 0;
 
     if (page > 1) {
-      const prevPageKey = ['marketBorrowers', marketId, network, effectiveMinShares, page - 1, pageSize];
+      const prevPageKey = buildMarketBorrowersKey({
+        marketId,
+        network,
+        marketState,
+        minShares: effectiveMinShares,
+        page: page - 1,
+        pageSize,
+      });
       void queryClient.prefetchQuery({
         queryKey: prevPageKey,
         queryFn: async () => queryFn(page - 1),
@@ -93,14 +128,21 @@ export const useMarketBorrowers = (
     }
 
     if (page < totalPages) {
-      const nextPageKey = ['marketBorrowers', marketId, network, effectiveMinShares, page + 1, pageSize];
+      const nextPageKey = buildMarketBorrowersKey({
+        marketId,
+        network,
+        marketState,
+        minShares: effectiveMinShares,
+        page: page + 1,
+        pageSize,
+      });
       void queryClient.prefetchQuery({
         queryKey: nextPageKey,
         queryFn: async () => queryFn(page + 1),
         staleTime: 1000 * 60 * 2,
       });
     }
-  }, [page, data, queryClient, queryFn, marketId, network, effectiveMinShares, pageSize]);
+  }, [page, data, queryClient, queryFn, marketId, network, marketState, effectiveMinShares, pageSize]);
 
   return {
     data: data,

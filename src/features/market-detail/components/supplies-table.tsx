@@ -37,7 +37,10 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
 
   const supplies = paginatedData?.items ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const hasNextPage = paginatedData?.hasNextPage;
+  const fixedTotalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 0;
+  const paginationModeProps =
+    hasNextPage === undefined ? { mode: 'fixed' as const, totalPages: fixedTotalPages } : { mode: 'open' as const, hasNextPage };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -155,12 +158,13 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
 
       {totalCount > 0 && (
         <TablePagination
+          {...paginationModeProps}
           currentPage={currentPage}
-          totalPages={totalPages}
           totalEntries={totalCount}
           pageSize={pageSize}
           onPageChange={handlePageChange}
           isLoading={isFetching}
+          showEntryCount={hasNextPage === undefined}
         />
       )}
     </div>

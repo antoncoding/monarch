@@ -360,6 +360,7 @@ export type MarketActivityTransaction = {
 export type PaginatedMarketActivityTransactions = {
   items: MarketActivityTransaction[];
   totalCount: number;
+  hasNextPage?: boolean;
 };
 
 export type MarketLiquidationTransaction = {
@@ -370,6 +371,12 @@ export type MarketLiquidationTransaction = {
   repaidAssets: string;
   seizedAssets: string;
   badDebtAssets: string;
+};
+
+export type PaginatedMarketLiquidations = {
+  items: MarketLiquidationTransaction[];
+  totalCount: number;
+  hasNextPage?: boolean;
 };
 
 export type MarketSupplier = {

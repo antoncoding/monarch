@@ -313,6 +313,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
             </Table>
             <div className="p-4">
               <TablePagination
+                mode="fixed"
                 totalPages={totalPages}
                 totalEntries={sortedData.length}
                 currentPage={currentPage}

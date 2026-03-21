@@ -1,3 +1,22 @@
+import type { SupportedNetworks } from '@/utils/networks';
+import { getSubgraphUrl } from '@/utils/subgraph-urls';
+
+const createSubgraphProviderError = (network: SupportedNetworks, message: string): Error => {
+  return Object.assign(new Error(message), {
+    source: 'subgraph' as const,
+    network,
+  });
+};
+
+export const requireSubgraphUrl = (network: SupportedNetworks): string => {
+  const subgraphUrl = getSubgraphUrl(network);
+  if (subgraphUrl) {
+    return subgraphUrl;
+  }
+
+  throw createSubgraphProviderError(network, `No Subgraph URL configured for network ${network}`);
+};
+
 export const subgraphGraphqlFetcher = async <T extends object>(
   apiUrl: string, // Subgraph URL can vary
   query: string,

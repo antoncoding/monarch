@@ -1,15 +1,17 @@
 import { useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchEnvioMarketBorrows } from '@/data-sources/envio/market-detail';
 import { fetchMorphoMarketBorrows } from '@/data-sources/morpho-api/market-borrows';
 import { fetchSubgraphMarketBorrows } from '@/data-sources/subgraph/market-borrows';
+import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 
 /**
  * Hook to fetch borrow and repay activities for a specific market's loan asset,
- * using the appropriate data source based on the network.
- * Supports pagination with server-side pagination for Morpho API and client-side for Subgraph.
+ * using Envio as the primary source with existing sources as fallback.
+ * Envio only loads the current page window instead of scanning the full event history.
  * @param marketId The ID or unique key of the market.
  * @param loanAssetId The address of the loan asset for the market.
  * @param network The blockchain network.
@@ -37,30 +39,30 @@ export const useMarketBorrows = (
       }
 
       const targetSkip = (targetPage - 1) * pageSize;
-      let result: PaginatedMarketActivityTransactions | null = null;
 
-      // Try Morpho API first if supported
-      if (supportsMorphoApi(network)) {
-        try {
-          console.log(`Attempting to fetch borrows via Morpho API for ${marketId} (page ${targetPage})`);
-          result = await fetchMorphoMarketBorrows(marketId, minAssets, pageSize, targetSkip);
-        } catch (morphoError) {
-          console.error('Failed to fetch borrows via Morpho API:', morphoError);
-        }
-      }
-
-      // Fallback to Subgraph if Morpho API failed or not supported
-      if (!result) {
-        try {
-          console.log(`Attempting to fetch borrows via Subgraph for ${marketId} (page ${targetPage})`);
-          result = await fetchSubgraphMarketBorrows(marketId, loanAssetId, network, minAssets, pageSize, targetSkip);
-        } catch (subgraphError) {
-          console.error('Failed to fetch borrows via Subgraph:', subgraphError);
-          throw subgraphError;
-        }
-      }
-
-      return result;
+      return runMarketDetailFallback({
+        dataLabel: 'borrow and repay activity',
+        marketId,
+        network,
+        attempts: [
+          {
+            provider: 'envio',
+            fetch: () => fetchEnvioMarketBorrows(marketId, Number(network), minAssets, pageSize, targetSkip),
+          },
+          ...(supportsMorphoApi(network)
+            ? [
+                {
+                  provider: 'morpho-api' as const,
+                  fetch: () => fetchMorphoMarketBorrows(marketId, minAssets, pageSize, targetSkip),
+                },
+              ]
+            : []),
+          {
+            provider: 'subgraph',
+            fetch: () => fetchSubgraphMarketBorrows(marketId, loanAssetId, network, minAssets, pageSize, targetSkip),
+          },
+        ],
+      });
     },
     [marketId, loanAssetId, network, minAssets, pageSize],
   );
@@ -70,15 +72,13 @@ export const useMarketBorrows = (
     queryFn: async () => queryFn(page),
     enabled: !!marketId && !!loanAssetId && !!network,
     staleTime: 1000 * 60 * 5, // 5 minutes - keep cached data fresh longer
-    placeholderData: (previousData) => previousData ?? null,
+    placeholderData: () => null,
     retry: 1,
   });
 
   // Prefetch adjacent pages for faster navigation
   useEffect(() => {
     if (!marketId || !loanAssetId || !network || !data) return;
-
-    const totalPages = data.totalCount > 0 ? Math.ceil(data.totalCount / pageSize) : 0;
 
     if (page > 1) {
       const prevPageKey = ['marketBorrows', marketId, loanAssetId, network, minAssets, page - 1, pageSize];
@@ -89,7 +89,9 @@ export const useMarketBorrows = (
       });
     }
 
-    if (page < totalPages) {
+    const hasNextPage = data.hasNextPage ?? (data.totalCount > 0 && page < Math.ceil(data.totalCount / pageSize));
+
+    if (hasNextPage) {
       const nextPageKey = ['marketBorrows', marketId, loanAssetId, network, minAssets, page + 1, pageSize];
       void queryClient.prefetchQuery({
         queryKey: nextPageKey,
