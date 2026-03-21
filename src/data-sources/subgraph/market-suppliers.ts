@@ -91,7 +91,6 @@ export const fetchSubgraphMarketSuppliers = async (
         data: allMappedItems,
         timestamp: now,
       });
-
     } catch (error) {
       console.error(`Error fetching or processing Subgraph market suppliers for ${marketId}:`, error);
       if (error instanceof Error) {

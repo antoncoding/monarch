@@ -31,11 +31,7 @@ type MorphoAPILiquidationsResponse = {
  * @param marketId The unique key or ID of the market.
  * @returns A promise resolving to paginated unified MarketLiquidationTransaction objects.
  */
-export const fetchMorphoMarketLiquidations = async (
-  marketId: string,
-  first = 8,
-  skip = 0,
-): Promise<PaginatedMarketLiquidations> => {
+export const fetchMorphoMarketLiquidations = async (marketId: string, first = 8, skip = 0): Promise<PaginatedMarketLiquidations> => {
   const variables = {
     uniqueKey: marketId,
     first,

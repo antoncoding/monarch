@@ -224,11 +224,7 @@ const fetchEnvioSuppliersAll = async (marketId: string, chainId: number, minShar
   });
 };
 
-const fetchEnvioBorrowersAll = async (
-  marketId: string,
-  chainId: number,
-  minShares: string,
-): Promise<CachedBorrowerPosition[]> => {
+const fetchEnvioBorrowersAll = async (marketId: string, chainId: number, minShares: string): Promise<CachedBorrowerPosition[]> => {
   const cacheKey = toCacheKey(['borrowers', chainId, marketId.toLowerCase(), minShares]);
 
   return getCachedOrLoad({

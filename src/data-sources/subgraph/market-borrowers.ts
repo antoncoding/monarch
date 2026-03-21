@@ -116,7 +116,6 @@ export const fetchSubgraphMarketBorrowers = async (
         data: allMappedItems,
         timestamp: now,
       });
-
     } catch (error) {
       console.error(`Error fetching or processing Subgraph market borrowers for ${marketId}:`, error);
       if (error instanceof Error) {

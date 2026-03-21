@@ -23,16 +23,7 @@ const buildMarketBorrowersKey = ({
   page: number;
   pageSize: number;
 }) => {
-  return [
-    'marketBorrowers',
-    marketId,
-    network,
-    marketState?.borrowAssets,
-    marketState?.borrowShares,
-    minShares,
-    page,
-    pageSize,
-  ] as const;
+  return ['marketBorrowers', marketId, network, marketState?.borrowAssets, marketState?.borrowShares, minShares, page, pageSize] as const;
 };
 
 /**

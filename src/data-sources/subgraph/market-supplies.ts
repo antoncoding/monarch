@@ -90,8 +90,7 @@ export const fetchSubgraphMarketSupplies = async (
     const endIndex = skip + first;
     const items = combined.slice(startIndex, endIndex);
     const hasNextPage = combined.length > endIndex;
-    const totalCount =
-      skip >= combined.length ? combined.length : Math.max(combined.length, skip + items.length + Number(hasNextPage));
+    const totalCount = skip >= combined.length ? combined.length : Math.max(combined.length, skip + items.length + Number(hasNextPage));
 
     return {
       items,
