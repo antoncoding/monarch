@@ -127,11 +127,7 @@ const paginateWindowedItems = <T>(items: T[], pageSize: number, skip: number) =>
 
 const toTimestamp = (value: string): number => Number.parseInt(value, 10);
 
-const scanAllPages = async <T>({
-  fetchPage,
-}: {
-  fetchPage: (offset: number, limit: number) => Promise<T[]>;
-}): Promise<T[]> => {
+const scanAllPages = async <T>({ fetchPage }: { fetchPage: (offset: number, limit: number) => Promise<T[]> }): Promise<T[]> => {
   const items: T[] = [];
   let offset = 0;
 
@@ -171,10 +167,7 @@ const sortActivityTransactions = (left: MarketActivityTransaction, right: Market
   return right.hash.localeCompare(left.hash);
 };
 
-const mapEnvioActivityRows = (
-  rows: EnvioActivityEventRow[],
-  type: MarketActivityTransaction['type'],
-): MarketActivityTransaction[] => {
+const mapEnvioActivityRows = (rows: EnvioActivityEventRow[], type: MarketActivityTransaction['type']): MarketActivityTransaction[] => {
   return rows.map((event) => ({
     type,
     hash: event.txHash,

@@ -31,12 +31,7 @@ const paginateLiquidations = (
  * @param pageSize Number of items per page (defaults to 8).
  * @returns Paginated liquidation transactions for the market.
  */
-export const useMarketLiquidations = (
-  marketId: string | undefined,
-  network: SupportedNetworks | undefined,
-  page = 1,
-  pageSize = 8,
-) => {
+export const useMarketLiquidations = (marketId: string | undefined, network: SupportedNetworks | undefined, page = 1, pageSize = 8) => {
   const queryClient = useQueryClient();
   const queryKey = ['marketLiquidations', marketId, network, page, pageSize];
 

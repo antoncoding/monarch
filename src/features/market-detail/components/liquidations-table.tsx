@@ -20,12 +20,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  const {
-    data: paginatedData,
-    isLoading,
-    isFetching,
-    error,
-  } = useMarketLiquidations(market?.uniqueKey, chainId, currentPage, pageSize);
+  const { data: paginatedData, isLoading, isFetching, error } = useMarketLiquidations(market?.uniqueKey, chainId, currentPage, pageSize);
 
   const liquidations = paginatedData?.items ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;
