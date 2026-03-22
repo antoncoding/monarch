@@ -80,6 +80,18 @@ export const marketOverrideRules: MarketOverrideRule[] = [
       },
     ],
   },
+  {
+    marketIds: ['0xd9e34b1eed46d123ac1b69b224de1881dbc88798bc7b70f504920f62f58f28cc'],
+    warnings: [
+      {
+        code: 'wstusr_usr_exploit',
+        level: 'alert',
+        description:
+          'wstUSR was affected by the recent USR exploit, and this market relies on a hardcoded oracle. Supplying to this market carries elevated risk and may result in losses.',
+        category: 'general',
+      },
+    ],
+  },
 ];
 
 // Helper functions to query the override rules
