@@ -1,4 +1,3 @@
-import { envioGraphqlFetcher } from './fetchers';
 import {
   envioBorrowersPageQuery,
   envioBorrowRepayPageQuery,
@@ -18,8 +17,9 @@ import type {
   PaginatedMarketLiquidations,
   PaginatedMarketSuppliers,
 } from '@/utils/types';
+import { monarchGraphqlFetcher } from './fetchers';
 
-const ENVIO_SCAN_BATCH_SIZE = 1000;
+const MONARCH_SCAN_BATCH_SIZE = 1000;
 const PARTICIPANT_CACHE_TTL_MS = 2 * 60 * 1000;
 
 type CacheEntry<T> = {
@@ -29,12 +29,12 @@ type CacheEntry<T> = {
 
 type BorrowSharePriceState = Pick<Market['state'], 'borrowAssets' | 'borrowShares'>;
 
-type EnvioSupplierRow = {
+type MonarchSupplierRow = {
   user: string;
   supplyShares: string;
 };
 
-type EnvioBorrowerRow = {
+type MonarchBorrowerRow = {
   user: string;
   borrowShares: string;
   collateral: string;
@@ -46,36 +46,36 @@ type CachedBorrowerPosition = {
   collateral: string;
 };
 
-type EnvioGraphqlResponse<T> = {
+type MonarchGraphqlResponse<T> = {
   data?: T;
 };
 
-type EnvioSuppliersPageResponse = EnvioGraphqlResponse<{
-  Position: EnvioSupplierRow[];
+type MonarchSuppliersPageResponse = MonarchGraphqlResponse<{
+  Position: MonarchSupplierRow[];
 }>;
 
-type EnvioBorrowersPageResponse = EnvioGraphqlResponse<{
-  Position: EnvioBorrowerRow[];
+type MonarchBorrowersPageResponse = MonarchGraphqlResponse<{
+  Position: MonarchBorrowerRow[];
 }>;
 
-type EnvioActivityEventRow = {
+type MonarchActivityEventRow = {
   txHash: string;
   timestamp: string;
   assets: string;
   onBehalf: string;
 };
 
-type EnvioSupplyWithdrawPageResponse = EnvioGraphqlResponse<{
-  supplies: EnvioActivityEventRow[];
-  withdraws: EnvioActivityEventRow[];
+type MonarchSupplyWithdrawPageResponse = MonarchGraphqlResponse<{
+  supplies: MonarchActivityEventRow[];
+  withdraws: MonarchActivityEventRow[];
 }>;
 
-type EnvioBorrowRepayPageResponse = EnvioGraphqlResponse<{
-  borrows: EnvioActivityEventRow[];
-  repays: EnvioActivityEventRow[];
+type MonarchBorrowRepayPageResponse = MonarchGraphqlResponse<{
+  borrows: MonarchActivityEventRow[];
+  repays: MonarchActivityEventRow[];
 }>;
 
-type EnvioLiquidationRow = {
+type MonarchLiquidationRow = {
   txHash: string;
   timestamp: string;
   caller: string;
@@ -85,8 +85,8 @@ type EnvioLiquidationRow = {
   badDebtAssets: string;
 };
 
-type EnvioLiquidationsPageResponse = EnvioGraphqlResponse<{
-  Morpho_Liquidate: EnvioLiquidationRow[];
+type MonarchLiquidationsPageResponse = MonarchGraphqlResponse<{
+  Morpho_Liquidate: MonarchLiquidationRow[];
 }>;
 
 const suppliersCache = new Map<string, CacheEntry<MarketSupplier[]>>();
@@ -139,10 +139,10 @@ const scanAllPages = async <T>({ fetchPage }: { fetchPage: (offset: number, limi
   let offset = 0;
 
   while (true) {
-    const pageItems = await fetchPage(offset, ENVIO_SCAN_BATCH_SIZE);
+    const pageItems = await fetchPage(offset, MONARCH_SCAN_BATCH_SIZE);
     items.push(...pageItems);
 
-    if (pageItems.length < ENVIO_SCAN_BATCH_SIZE) {
+    if (pageItems.length < MONARCH_SCAN_BATCH_SIZE) {
       return items;
     }
 
@@ -174,7 +174,7 @@ const sortActivityTransactions = (left: MarketActivityTransaction, right: Market
   return right.hash.localeCompare(left.hash);
 };
 
-const mapEnvioActivityRows = (rows: EnvioActivityEventRow[], type: MarketActivityTransaction['type']): MarketActivityTransaction[] => {
+const mapMonarchActivityRows = (rows: MonarchActivityEventRow[], type: MarketActivityTransaction['type']): MarketActivityTransaction[] => {
   return rows.map((event) => ({
     type,
     hash: event.txHash,
@@ -196,7 +196,7 @@ const mapCachedBorrowers = (positions: CachedBorrowerPosition[], marketState: Bo
   }));
 };
 
-const fetchEnvioSuppliersAll = async (marketId: string, chainId: number, minShares: string): Promise<MarketSupplier[]> => {
+const fetchMonarchSuppliersAll = async (marketId: string, chainId: number, minShares: string): Promise<MarketSupplier[]> => {
   const cacheKey = toCacheKey(['suppliers', chainId, marketId.toLowerCase(), minShares]);
 
   return getCachedOrLoad({
@@ -206,7 +206,7 @@ const fetchEnvioSuppliersAll = async (marketId: string, chainId: number, minShar
     loader: async () => {
       return scanAllPages({
         fetchPage: async (offset, limit) => {
-          const response = await envioGraphqlFetcher<EnvioSuppliersPageResponse>(envioSuppliersPageQuery, {
+          const response = await monarchGraphqlFetcher<MonarchSuppliersPageResponse>(envioSuppliersPageQuery, {
             chainId,
             marketId,
             minShares,
@@ -224,7 +224,7 @@ const fetchEnvioSuppliersAll = async (marketId: string, chainId: number, minShar
   });
 };
 
-const fetchEnvioBorrowersAll = async (marketId: string, chainId: number, minShares: string): Promise<CachedBorrowerPosition[]> => {
+const fetchMonarchBorrowersAll = async (marketId: string, chainId: number, minShares: string): Promise<CachedBorrowerPosition[]> => {
   const cacheKey = toCacheKey(['borrowers', chainId, marketId.toLowerCase(), minShares]);
 
   return getCachedOrLoad({
@@ -234,7 +234,7 @@ const fetchEnvioBorrowersAll = async (marketId: string, chainId: number, minShar
     loader: async () => {
       return scanAllPages({
         fetchPage: async (offset, limit) => {
-          const response = await envioGraphqlFetcher<EnvioBorrowersPageResponse>(envioBorrowersPageQuery, {
+          const response = await monarchGraphqlFetcher<MonarchBorrowersPageResponse>(envioBorrowersPageQuery, {
             chainId,
             marketId,
             minShares,
@@ -253,13 +253,13 @@ const fetchEnvioBorrowersAll = async (marketId: string, chainId: number, minShar
   });
 };
 
-const fetchEnvioSupplyWithdrawWindow = async (
+const fetchMonarchSupplyWithdrawWindow = async (
   marketId: string,
   chainId: number,
   minAssets: string,
   limit: number,
 ): Promise<MarketActivityTransaction[]> => {
-  const response = await envioGraphqlFetcher<EnvioSupplyWithdrawPageResponse>(envioSupplyWithdrawPageQuery, {
+  const response = await monarchGraphqlFetcher<MonarchSupplyWithdrawPageResponse>(envioSupplyWithdrawPageQuery, {
     chainId,
     marketId,
     minAssets,
@@ -267,19 +267,19 @@ const fetchEnvioSupplyWithdrawWindow = async (
     offset: 0,
   });
 
-  const supplies = mapEnvioActivityRows(response.data?.supplies ?? [], 'MarketSupply');
-  const withdraws = mapEnvioActivityRows(response.data?.withdraws ?? [], 'MarketWithdraw');
+  const supplies = mapMonarchActivityRows(response.data?.supplies ?? [], 'MarketSupply');
+  const withdraws = mapMonarchActivityRows(response.data?.withdraws ?? [], 'MarketWithdraw');
 
   return [...supplies, ...withdraws].sort(sortActivityTransactions);
 };
 
-const fetchEnvioBorrowRepayWindow = async (
+const fetchMonarchBorrowRepayWindow = async (
   marketId: string,
   chainId: number,
   minAssets: string,
   limit: number,
 ): Promise<MarketActivityTransaction[]> => {
-  const response = await envioGraphqlFetcher<EnvioBorrowRepayPageResponse>(envioBorrowRepayPageQuery, {
+  const response = await monarchGraphqlFetcher<MonarchBorrowRepayPageResponse>(envioBorrowRepayPageQuery, {
     chainId,
     marketId,
     minAssets,
@@ -287,19 +287,19 @@ const fetchEnvioBorrowRepayWindow = async (
     offset: 0,
   });
 
-  const borrows = mapEnvioActivityRows(response.data?.borrows ?? [], 'MarketBorrow');
-  const repays = mapEnvioActivityRows(response.data?.repays ?? [], 'MarketRepay');
+  const borrows = mapMonarchActivityRows(response.data?.borrows ?? [], 'MarketBorrow');
+  const repays = mapMonarchActivityRows(response.data?.repays ?? [], 'MarketRepay');
 
   return [...borrows, ...repays].sort(sortActivityTransactions);
 };
 
-const fetchEnvioLiquidationsWindow = async (
+const fetchMonarchLiquidationsWindow = async (
   marketId: string,
   chainId: number,
   offset: number,
   limit: number,
 ): Promise<MarketLiquidationTransaction[]> => {
-  const response = await envioGraphqlFetcher<EnvioLiquidationsPageResponse>(envioLiquidationsPageQuery, {
+  const response = await monarchGraphqlFetcher<MonarchLiquidationsPageResponse>(envioLiquidationsPageQuery, {
     chainId,
     marketId,
     limit,
@@ -317,17 +317,17 @@ const fetchEnvioLiquidationsWindow = async (
   }));
 };
 
-export const fetchEnvioMarketSuppliers = async (
+export const fetchMonarchMarketSuppliers = async (
   marketId: string,
   chainId: number,
   minShares = '0',
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketSuppliers> => {
-  return paginateItems(await fetchEnvioSuppliersAll(marketId, chainId, minShares), first, skip);
+  return paginateItems(await fetchMonarchSuppliersAll(marketId, chainId, minShares), first, skip);
 };
 
-export const fetchEnvioMarketBorrowers = async (
+export const fetchMonarchMarketBorrowers = async (
   marketId: string,
   chainId: number,
   marketState: BorrowSharePriceState,
@@ -335,34 +335,34 @@ export const fetchEnvioMarketBorrowers = async (
   first = 10,
   skip = 0,
 ): Promise<PaginatedMarketBorrowers> => {
-  return paginateItems(mapCachedBorrowers(await fetchEnvioBorrowersAll(marketId, chainId, minShares), marketState), first, skip);
+  return paginateItems(mapCachedBorrowers(await fetchMonarchBorrowersAll(marketId, chainId, minShares), marketState), first, skip);
 };
 
-export const fetchEnvioMarketSupplies = async (
+export const fetchMonarchMarketSupplies = async (
   marketId: string,
   chainId: number,
   minAssets = '0',
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketActivityTransactions> => {
-  return paginateWindowedItems(await fetchEnvioSupplyWithdrawWindow(marketId, chainId, minAssets, skip + first + 1), first, skip);
+  return paginateWindowedItems(await fetchMonarchSupplyWithdrawWindow(marketId, chainId, minAssets, skip + first + 1), first, skip);
 };
 
-export const fetchEnvioMarketBorrows = async (
+export const fetchMonarchMarketBorrows = async (
   marketId: string,
   chainId: number,
   minAssets = '0',
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketActivityTransactions> => {
-  return paginateWindowedItems(await fetchEnvioBorrowRepayWindow(marketId, chainId, minAssets, skip + first + 1), first, skip);
+  return paginateWindowedItems(await fetchMonarchBorrowRepayWindow(marketId, chainId, minAssets, skip + first + 1), first, skip);
 };
 
-export const fetchEnvioMarketLiquidations = async (
+export const fetchMonarchMarketLiquidations = async (
   marketId: string,
   chainId: number,
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketLiquidations> => {
-  return paginateWindowedItems(await fetchEnvioLiquidationsWindow(marketId, chainId, skip, first + 1), first, 0);
+  return paginateWindowedItems(await fetchMonarchLiquidationsWindow(marketId, chainId, skip, first + 1), first, 0);
 };

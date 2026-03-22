@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchEnvioMarketBorrowers } from '@/data-sources/envio/market-detail';
+import { fetchMonarchMarketBorrowers } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketBorrowers } from '@/data-sources/morpho-api/market-borrowers';
 import { fetchSubgraphMarketBorrowers } from '@/data-sources/subgraph/market-borrowers';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
@@ -28,8 +28,8 @@ const buildMarketBorrowersKey = ({
 
 /**
  * Hook to fetch current borrowers (positions) for a specific market,
- * using Envio as the primary source with existing sources as fallback.
- * Preserves exact total counts via the shared Envio scan/cache layer.
+ * using Monarch API as the primary source with existing sources as fallback.
+ * Preserves exact total counts via the shared Monarch scan/cache layer.
  * Returns borrowers sorted by borrow shares (descending).
  *
  * @param marketId The ID of the market (e.g., 0x...).
@@ -75,8 +75,8 @@ export const useMarketBorrowers = (
         network,
         attempts: [
           {
-            provider: 'envio',
-            fetch: () => fetchEnvioMarketBorrowers(marketId, Number(network), marketState, effectiveMinShares, pageSize, targetSkip),
+            provider: 'monarch-api',
+            fetch: () => fetchMonarchMarketBorrowers(marketId, Number(network), marketState, effectiveMinShares, pageSize, targetSkip),
           },
           ...(supportsMorphoApi(network)
             ? [

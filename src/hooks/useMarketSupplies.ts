@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchEnvioMarketSupplies } from '@/data-sources/envio/market-detail';
+import { fetchMonarchMarketSupplies } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketSupplies } from '@/data-sources/morpho-api/market-supplies';
 import { fetchSubgraphMarketSupplies } from '@/data-sources/subgraph/market-supplies';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
@@ -10,8 +10,8 @@ import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 
 /**
  * Hook to fetch supply and withdraw activities for a specific market's loan asset,
- * using Envio as the primary source with existing sources as fallback.
- * Envio only loads the current page window instead of scanning the full event history.
+ * using Monarch API as the primary source with existing sources as fallback.
+ * Monarch API only loads the current page window instead of scanning the full event history.
  * @param marketId The ID of the market (e.g., 0x...).
  * @param loanAssetId The address of the loan asset for the market.
  * @param network The blockchain network.
@@ -46,8 +46,8 @@ export const useMarketSupplies = (
         network,
         attempts: [
           {
-            provider: 'envio',
-            fetch: () => fetchEnvioMarketSupplies(marketId, Number(network), minAssets, pageSize, targetSkip),
+            provider: 'monarch-api',
+            fetch: () => fetchMonarchMarketSupplies(marketId, Number(network), minAssets, pageSize, targetSkip),
           },
           ...(supportsMorphoApi(network)
             ? [

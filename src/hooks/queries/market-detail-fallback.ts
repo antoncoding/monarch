@@ -1,6 +1,6 @@
 import type { SupportedNetworks } from '@/utils/networks';
 
-export type MarketDetailProvider = 'envio' | 'morpho-api' | 'subgraph';
+export type MarketDetailProvider = 'monarch-api' | 'morpho-api' | 'subgraph';
 
 type ProviderAttempt<T> = {
   provider: MarketDetailProvider;

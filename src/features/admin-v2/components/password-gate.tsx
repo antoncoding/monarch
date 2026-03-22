@@ -47,7 +47,7 @@ export function PasswordGate({ children }: PasswordGateProps) {
         <CardBody className="p-6">
           <div className="mb-6 text-center">
             <h1 className="font-zen text-xl">Stats V2 (Experimental)</h1>
-            <p className="mt-2 text-sm text-secondary">This page uses an experimental API that may be reverted due to cost concerns.</p>
+            <p className="mt-2 text-sm text-secondary">This page uses the experimental shared Monarch API and may be reverted if costs become too high.</p>
           </div>
 
           <form onSubmit={handleSubmit}>

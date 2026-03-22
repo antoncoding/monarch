@@ -1,5 +1,18 @@
 export { monarchGraphqlFetcher } from './fetchers';
 export {
+  fetchMonarchMarketBorrowers,
+  fetchMonarchMarketBorrows,
+  fetchMonarchMarketLiquidations,
+  fetchMonarchMarketSuppliers,
+  fetchMonarchMarketSupplies,
+} from './market-detail';
+export {
+  fetchMonarchTransactions,
+  type MonarchSupplyTransaction,
+  type MonarchWithdrawTransaction,
+  type TimeRange,
+} from './transactions';
+export {
   fetchMonarchVaultDetails,
   fetchUserVaultV2DetailsAllNetworks,
   type VaultAdapterDetails,

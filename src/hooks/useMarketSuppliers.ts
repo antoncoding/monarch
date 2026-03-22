@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchEnvioMarketSuppliers } from '@/data-sources/envio/market-detail';
+import { fetchMonarchMarketSuppliers } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketSuppliers } from '@/data-sources/morpho-api/market-suppliers';
 import { fetchSubgraphMarketSuppliers } from '@/data-sources/subgraph/market-suppliers';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
@@ -10,8 +10,8 @@ import type { PaginatedMarketSuppliers } from '@/utils/types';
 
 /**
  * Hook to fetch current suppliers (positions) for a specific market,
- * using Envio as the primary source with existing sources as fallback.
- * Preserves exact total counts via the shared Envio scan/cache layer.
+ * using Monarch API as the primary source with existing sources as fallback.
+ * Preserves exact total counts via the shared Monarch scan/cache layer.
  * Returns suppliers sorted by supply shares (descending).
  *
  * @param marketId The ID of the market (e.g., 0x...).
@@ -49,8 +49,8 @@ export const useMarketSuppliers = (
         network,
         attempts: [
           {
-            provider: 'envio',
-            fetch: () => fetchEnvioMarketSuppliers(marketId, Number(network), effectiveMinShares, pageSize, targetSkip),
+            provider: 'monarch-api',
+            fetch: () => fetchMonarchMarketSuppliers(marketId, Number(network), effectiveMinShares, pageSize, targetSkip),
           },
           ...(supportsMorphoApi(network)
             ? [

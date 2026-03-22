@@ -6,7 +6,7 @@ import {
   type MonarchSupplyTransaction,
   type MonarchWithdrawTransaction,
   type TimeRange,
-} from '@/data-sources/monarch-indexer';
+} from '@/data-sources/monarch-api';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import type { Market } from '@/utils/types';
@@ -85,7 +85,7 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
     };
   }, [timeframe]);
 
-  // Fetch transactions (auth via httpOnly cookie)
+  // Fetch transactions from the shared Monarch API GraphQL endpoint
   const {
     data: rawTransactions,
     isLoading: txLoading,

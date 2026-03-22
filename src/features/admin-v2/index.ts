@@ -1,7 +1,7 @@
 /**
  * Admin V2 Feature
  *
- * Experimental cross-chain stats dashboard that uses the monarch indexer API.
+ * Experimental cross-chain stats dashboard that uses the shared Monarch API.
  *
  * NOTE: This feature is experimental and may be removed if the API costs
  * prove too high. The original /admin/stats page should remain as a fallback.

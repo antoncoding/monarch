@@ -1,13 +1,14 @@
 /**
- * Monarch Indexer Transactions
+ * Monarch API Transactions
  *
- * Fetches Monarch supply/withdraw transactions across all chains.
- * Auth is handled via httpOnly cookie.
+ * Fetches Monarch supply and withdraw transactions across all chains through the
+ * shared Monarch GraphQL endpoint.
+ *
  * Uses separate pagination for supplies and withdraws to ensure complete data.
  * Freezes endTimestamp at fetch start to ensure consistent pagination.
  */
 
-import { monarchIndexerFetcher } from './fetchers';
+import { monarchGraphqlFetcher } from './fetchers';
 
 export type MonarchSupplyTransaction = {
   txHash: string;
@@ -51,7 +52,7 @@ type FrozenTimeRange = {
 
 const MAX_PAGES = 50;
 
-async function fetchSuppliesPage(timeRange: FrozenTimeRange, limit: number, offset: number): Promise<MonarchSupplyTransaction[]> {
+const fetchSuppliesPage = async (timeRange: FrozenTimeRange, limit: number, offset: number): Promise<MonarchSupplyTransaction[]> => {
   const query = `
     query MonarchSupplies($startTimestamp: numeric!, $endTimestamp: numeric!, $limit: Int!, $offset: Int!) {
       Morpho_Supply(
@@ -68,11 +69,11 @@ async function fetchSuppliesPage(timeRange: FrozenTimeRange, limit: number, offs
     offset,
   };
 
-  const response = await monarchIndexerFetcher<SuppliesResponse>(query, variables);
+  const response = await monarchGraphqlFetcher<SuppliesResponse>(query, variables);
   return response.data.Morpho_Supply ?? [];
-}
+};
 
-async function fetchWithdrawsPage(timeRange: FrozenTimeRange, limit: number, offset: number): Promise<MonarchWithdrawTransaction[]> {
+const fetchWithdrawsPage = async (timeRange: FrozenTimeRange, limit: number, offset: number): Promise<MonarchWithdrawTransaction[]> => {
   const query = `
     query MonarchWithdraws($startTimestamp: numeric!, $endTimestamp: numeric!, $limit: Int!, $offset: Int!) {
       Morpho_Withdraw(
@@ -89,30 +90,27 @@ async function fetchWithdrawsPage(timeRange: FrozenTimeRange, limit: number, off
     offset,
   };
 
-  const response = await monarchIndexerFetcher<WithdrawsResponse>(query, variables);
+  const response = await monarchGraphqlFetcher<WithdrawsResponse>(query, variables);
   return response.data.Morpho_Withdraw ?? [];
-}
+};
 
 /**
  * Fetches all supply and withdraw transactions with independent pagination.
  * Each collection is fetched completely before returning.
  * Freezes endTimestamp at start to ensure consistent results during pagination.
  */
-export async function fetchMonarchTransactions(
+export const fetchMonarchTransactions = async (
   timeRange: TimeRange,
   limit = 1000,
 ): Promise<{
   supplies: MonarchSupplyTransaction[];
   withdraws: MonarchWithdrawTransaction[];
-}> {
-  // Freeze the end timestamp at function start to ensure consistent pagination
-  // This prevents skipped/duplicate data if new transactions arrive during fetching
+}> => {
   const frozenTimeRange: FrozenTimeRange = {
     startTimestamp: timeRange.startTimestamp,
     endTimestamp: timeRange.endTimestamp ?? Math.floor(Date.now() / 1000),
   };
 
-  // Fetch supplies with independent pagination
   const allSupplies: MonarchSupplyTransaction[] = [];
   let suppliesOffset = 0;
   for (let page = 0; page < MAX_PAGES; page++) {
@@ -122,7 +120,6 @@ export async function fetchMonarchTransactions(
     suppliesOffset += limit;
   }
 
-  // Fetch withdraws with independent pagination
   const allWithdraws: MonarchWithdrawTransaction[] = [];
   let withdrawsOffset = 0;
   for (let page = 0; page < MAX_PAGES; page++) {
@@ -133,4 +130,4 @@ export async function fetchMonarchTransactions(
   }
 
   return { supplies: allSupplies, withdraws: allWithdraws };
-}
+};
