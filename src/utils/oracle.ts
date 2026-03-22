@@ -18,6 +18,7 @@ import {
   type OracleMetadataRecord,
   type OracleOutputData,
 } from '@/hooks/useOracleMetadata';
+import { formatSimple } from './balance';
 import { SupportedNetworks } from './networks';
 
 type VendorInfo = {
@@ -494,11 +495,16 @@ export function formatOracleTimestampCompact(seconds: number): string {
 }
 
 /**
- * Format raw feed answer using feed decimals into a compact plain decimal value.
+ * Format raw feed answer using the shared simple-number display style.
  */
-export function formatOraclePrice(answerRaw: bigint, decimals: number, maxFractionDigits = 8): string {
+export function formatOraclePrice(answerRaw: bigint, decimals: number): string {
   const safeDecimals = Number.isFinite(decimals) ? Math.max(0, Math.min(36, Math.floor(decimals))) : 8;
   const raw = formatUnits(answerRaw, safeDecimals);
+  const numericValue = Number(raw);
+
+  if (Number.isFinite(numericValue)) {
+    return formatSimple(numericValue);
+  }
 
   if (!raw.includes('.')) return raw;
 
@@ -506,7 +512,7 @@ export function formatOraclePrice(answerRaw: bigint, decimals: number, maxFracti
   const trimmedFraction = fractionPart.replace(/0+$/, '');
   if (!trimmedFraction) return integerPart;
 
-  const cappedFraction = trimmedFraction.slice(0, maxFractionDigits).replace(/0+$/, '');
+  const cappedFraction = trimmedFraction.slice(0, 4).replace(/0+$/, '');
   return cappedFraction ? `${integerPart}.${cappedFraction}` : integerPart;
 }
 
