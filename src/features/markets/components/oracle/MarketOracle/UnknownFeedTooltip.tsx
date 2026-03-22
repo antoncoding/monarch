@@ -5,13 +5,16 @@ import type { Address } from 'viem';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
+import type { FeedFreshnessStatus } from '@/utils/oracle';
+import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type UnknownFeedTooltipProps = {
   feed: EnrichedFeed;
   chainId: number;
+  feedFreshness?: FeedFreshnessStatus;
 };
 
-export function UnknownFeedTooltip({ feed, chainId }: UnknownFeedTooltipProps) {
+export function UnknownFeedTooltip({ feed, chainId, feedFreshness }: UnknownFeedTooltipProps) {
   return (
     <div className="flex w-fit max-w-[22rem] flex-col gap-3">
       {/* Header with icon and title */}
@@ -25,6 +28,8 @@ export function UnknownFeedTooltip({ feed, chainId }: UnknownFeedTooltipProps) {
 
       {/* Description */}
       <div className="font-zen text-sm text-gray-600 dark:text-gray-400">This oracle uses an unrecognized price feed contract.</div>
+
+      <FeedFreshnessSection feedFreshness={feedFreshness} />
 
       {/* External Links */}
       <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">

@@ -1,4 +1,7 @@
 import { useMemo } from 'react';
+import type { Address } from 'viem';
+import { useReadContracts } from 'wagmi';
+import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
@@ -7,6 +10,7 @@ import type { FeedSnapshotByAddress } from '@/hooks/useFeedLastUpdatedByChain';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import {
   detectFeedVendorFromMetadata,
+  formatOraclePrice,
   getFeedFreshnessStatus,
   getTruncatedAssetName,
   OracleVendorIcons,
@@ -31,6 +35,44 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
     return detectFeedVendorFromMetadata(feed);
   }, [feed]);
 
+  const directReadContracts = useMemo(() => {
+    if (!feed?.address) return [];
+
+    const address = feed.address as Address;
+
+    return [
+      {
+        address,
+        abi: chainlinkAggregatorV3Abi,
+        functionName: 'latestAnswer' as const,
+        chainId,
+      },
+      {
+        address,
+        abi: chainlinkAggregatorV3Abi,
+        functionName: 'latestTimestamp' as const,
+        chainId,
+      },
+      {
+        address,
+        abi: chainlinkAggregatorV3Abi,
+        functionName: 'decimals' as const,
+        chainId,
+      },
+    ];
+  }, [chainId, feed?.address]);
+
+  const { data: directReadResults } = useReadContracts({
+    contracts: directReadContracts,
+    allowFailure: true,
+    query: {
+      enabled: directReadContracts.length > 0,
+      staleTime: 60_000,
+      refetchInterval: 60_000,
+      refetchOnWindowFocus: false,
+    },
+  });
+
   if (!feed) return null;
 
   const { vendor, assetPair } = feedVendorResult;
@@ -46,9 +88,22 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
   const hasKnownVendorIcon = vendor !== PriceFeedVendors.Unknown && Boolean(vendorIcon);
   const feedAddressKey = feed.address.toLowerCase();
   const snapshot = feedSnapshotsByAddress?.[feedAddressKey];
-  const freshness = getFeedFreshnessStatus(snapshot?.updatedAt ?? null, feed.heartbeat, {
+  const directAnswer =
+    directReadResults?.[0]?.status === 'success' && typeof directReadResults[0].result === 'bigint' ? directReadResults[0].result : null;
+  const directTimestamp =
+    directReadResults?.[1]?.status === 'success' && typeof directReadResults[1].result === 'bigint' && directReadResults[1].result > 0n
+      ? Number(directReadResults[1].result)
+      : null;
+  const directDecimals =
+    directReadResults?.[2]?.status === 'success' && Number.isFinite(Number(directReadResults[2].result))
+      ? Number(directReadResults[2].result)
+      : (feed.decimals ?? null);
+  const directNormalizedPrice =
+    directAnswer != null && directDecimals != null ? formatOraclePrice(directAnswer, directDecimals) : (snapshot?.normalizedPrice ?? null);
+
+  const freshness = getFeedFreshnessStatus(directTimestamp ?? snapshot?.updatedAt ?? null, feed.heartbeat, {
     updateKind: snapshot?.updateKind,
-    normalizedPrice: snapshot?.normalizedPrice,
+    normalizedPrice: directNormalizedPrice,
   });
 
   const getTooltipContent = () => {
@@ -123,6 +178,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
           <UnknownFeedTooltip
             feed={feed}
             chainId={chainId}
+            feedFreshness={freshness}
           />
         );
 
@@ -131,6 +187,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
           <UnknownFeedTooltip
             feed={feed}
             chainId={chainId}
+            feedFreshness={freshness}
           />
         );
     }
@@ -139,7 +196,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
   return (
     <Tooltip
       content={getTooltipContent()}
-      className="w-fit max-w-[calc(100vw-2rem)]"
+      className="min-w-[12rem] max-w-[calc(100vw-2rem)] [&>div]:!w-full [&>div]:min-w-[12rem] [&>div]:gap-4"
     >
       <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80 gap-1">
         {showAssetPair ? (

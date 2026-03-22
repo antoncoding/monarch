@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/utils/components';
-import { formatOracleDuration, formatOracleTimestamp, type FeedFreshnessStatus } from '@/utils/oracle';
+import { formatOracleDuration, type FeedFreshnessStatus } from '@/utils/oracle';
 
 type FeedFreshnessSectionProps = {
   feedFreshness?: FeedFreshnessStatus;
@@ -10,39 +10,32 @@ type FeedFreshnessSectionProps = {
 export function FeedFreshnessSection({ feedFreshness, className }: FeedFreshnessSectionProps) {
   if (!feedFreshness) return null;
 
-  const updatedAt = feedFreshness.updatedAt;
   const normalizedPrice = feedFreshness.normalizedPrice;
-  const hasTimestamp = updatedAt != null;
+  const ageSeconds = feedFreshness.ageSeconds;
   const hasPrice = normalizedPrice != null;
+  const hasAge = ageSeconds != null;
   const isDerived = feedFreshness.updateKind === 'derived';
-  if (!hasTimestamp && !hasPrice && !isDerived) return null;
+  if (!hasAge && !hasPrice && !isDerived) return null;
 
   return (
-    <div className={cn('space-y-1 border-t border-gray-200/30 pt-2 dark:border-gray-600/20', className)}>
+    <div className={cn('space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20', className)}>
       {normalizedPrice != null && (
-        <div className="flex items-center justify-between gap-1">
-          <span className="font-zen text-xs text-gray-600 dark:text-gray-400">Price:</span>
-          <span className="font-zen text-xs font-medium">{normalizedPrice}</span>
+        <div className="flex items-center justify-between font-zen text-sm">
+          <span className="text-gray-600 dark:text-gray-400">Feed Price:</span>
+          <span className="font-medium tabular-nums">{normalizedPrice}</span>
         </div>
       )}
 
-      {updatedAt != null && (
-        <div className="flex items-center justify-between gap-1">
-          <span className="font-zen text-xs text-gray-600 dark:text-gray-400">Last Updated:</span>
-          <span className="whitespace-nowrap text-right font-zen text-xs font-medium">{formatOracleTimestamp(updatedAt)}</span>
-        </div>
-      )}
-
-      {feedFreshness.ageSeconds != null && (
-        <div className="flex items-center justify-between gap-1">
-          <span className="font-zen text-xs text-gray-600 dark:text-gray-400">Age:</span>
-          <span className="text-right font-zen text-xs font-medium">{formatOracleDuration(feedFreshness.ageSeconds)} ago</span>
+      {ageSeconds != null && (
+        <div className="flex items-center justify-between font-zen text-sm">
+          <span className="text-gray-600 dark:text-gray-400">Age:</span>
+          <span className="font-medium">{formatOracleDuration(ageSeconds)} ago</span>
         </div>
       )}
 
       {isDerived && (
-        <div className="flex items-center justify-between gap-1">
-          <span className="font-zen text-xs text-gray-600 dark:text-gray-400">Mode:</span>
+        <div className="flex items-center justify-between font-zen text-sm">
+          <span className="text-gray-600 dark:text-gray-400">Mode:</span>
           <Badge
             variant="primary"
             size="sm"
@@ -54,9 +47,9 @@ export function FeedFreshnessSection({ feedFreshness, className }: FeedFreshness
       )}
 
       {feedFreshness.isStale && (
-        <div className="flex items-center justify-between gap-1">
-          <span className="font-zen text-xs text-gray-600 dark:text-gray-400">Status:</span>
-          <span className="text-right font-zen text-xs font-medium text-yellow-700 dark:text-yellow-300">Stale</span>
+        <div className="flex items-center justify-between font-zen text-sm">
+          <span className="text-gray-600 dark:text-gray-400">Status:</span>
+          <span className="font-medium text-yellow-700 dark:text-yellow-300">Stale</span>
         </div>
       )}
     </div>

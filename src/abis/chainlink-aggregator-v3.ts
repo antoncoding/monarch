@@ -3,6 +3,20 @@ import type { Abi } from 'viem';
 export const chainlinkAggregatorV3Abi = [
   {
     inputs: [],
+    name: 'latestAnswer',
+    outputs: [{ internalType: 'int256', name: '', type: 'int256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'latestTimestamp',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
     name: 'latestRoundData',
     outputs: [
       { internalType: 'uint80', name: 'roundId', type: 'uint80' },
