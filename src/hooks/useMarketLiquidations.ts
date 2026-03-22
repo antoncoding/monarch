@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchEnvioMarketLiquidations } from '@/data-sources/envio/market-detail';
+import { fetchMonarchMarketLiquidations } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketLiquidations } from '@/data-sources/morpho-api/market-liquidations';
 import { fetchSubgraphMarketLiquidations } from '@/data-sources/subgraph/market-liquidations';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
@@ -9,7 +9,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketLiquidations } from '@/utils/types';
 
 /**
- * Hook to fetch liquidations for a specific market, using Envio as the primary source
+ * Hook to fetch liquidations for a specific market, using Monarch API as the primary source
  * with existing sources as fallback.
  * @param marketId The ID or unique key of the market.
  * @param network The blockchain network.
@@ -35,8 +35,8 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
         network,
         attempts: [
           {
-            provider: 'envio',
-            fetch: () => fetchEnvioMarketLiquidations(marketId, Number(network), pageSize, targetSkip),
+            provider: 'monarch-api',
+            fetch: () => fetchMonarchMarketLiquidations(marketId, Number(network), pageSize, targetSkip),
           },
           ...(supportsMorphoApi(network)
             ? [

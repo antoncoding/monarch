@@ -8,7 +8,7 @@ import { create } from 'zustand';
  * 2. Password is sent to /api/admin/auth for server-side validation
  * 3. Server validates against ADMIN_V2_PASSWORD_HASH env var
  * 4. If valid, server sets httpOnly cookie (not accessible via JS)
- * 5. Subsequent API requests include cookie automatically
+ * 5. Cookie-backed session gates access to the dashboard UI
  *
  * No sensitive data is stored client-side.
  * Set ADMIN_V2_PASSWORD_HASH in your .env file.

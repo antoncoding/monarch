@@ -174,6 +174,11 @@ Autovault metadata: Monarch GraphQL (https://api.monarchlend.xyz/graphql)
                    ↓ (if indexer lag / API failure)
                    Narrow on-chain RPC fallback
 
+Market detail participants/activity + admin stats transactions:
+                    Monarch GraphQL (https://api.monarchlend.xyz/graphql)
+                    ↓ (for market-detail fallback only)
+                    Morpho API / Subgraph
+
 Market metrics: Monarch metrics API via `/api/monarch/metrics`
 ```
 
@@ -195,11 +200,13 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
 | User autovault metadata | Monarch GraphQL + on-chain enrichment | 60s | `useUserVaultsV2Query` |
 | Vault detail/settings metadata | Monarch GraphQL + narrow RPC fallback | 30s | `useVaultV2Data` |
+| Market detail participants/activity | Monarch GraphQL + Morpho API/Subgraph fallback | 2-5 min stale | `useMarketSuppliers` / `useMarketBorrowers` / `useMarketSupplies` / `useMarketBorrows` |
 | Vault allocations | On-chain multicall | 30s | `useAllocationsQuery` |
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
 | Oracle metadata | Scanner Gist | 30 min | `useOracleMetadata` / `useAllOracleMetadata` |
 | Merkl rewards | Merkl API | On demand | `useMerklCampaignsQuery` |
-| Market liquidations | Morpho API/Subgraph | 5 min stale | `useMarketLiquidations` |
+| Market liquidations | Monarch GraphQL + Morpho API/Subgraph fallback | 5 min stale | `useMarketLiquidations` |
+| Admin stats transactions | Monarch GraphQL | 2 min stale | `useMonarchTransactions` |
 
 ### Data Flow Patterns
 
@@ -306,7 +313,7 @@ Fallback Strategy:
 **Monarch GraphQL** (`/src/data-sources/monarch-api/fetchers.ts`):
 - Endpoint: `NEXT_PUBLIC_MONARCH_API_NEW`
 - Browser fetch with `NEXT_PUBLIC_MONARCH_API_KEY`
-- Used as the primary read path for autovault V2 metadata
+- Used as the primary read path for autovault V2 metadata, market-detail reads, and admin transaction reads
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
 - Configurable URL per network
@@ -351,7 +358,7 @@ Fallback Strategy:
 | Service | Endpoint | Purpose |
 |---------|----------|---------|
 | Morpho API | `https://blue-api.morpho.org/graphql` | Markets, vaults, positions |
-| Monarch GraphQL | `https://api.monarchlend.xyz/graphql` | Autovault metadata, adapters, caps |
+| Monarch GraphQL | `https://api.monarchlend.xyz/graphql` | Autovault metadata, market detail/activity, admin transactions |
 | Monarch Metrics | `/api/monarch/metrics` → external Monarch metrics API | Market metrics and admin stats |
 | The Graph | Per-chain subgraph URLs | Fallback data, suppliers, borrowers |
 | Merkl API | `https://api.merkl.xyz` | Reward campaigns |
