@@ -1,36 +1,53 @@
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchMonarchUserTransactions } from '@/data-sources/monarch-api/user-transactions';
 import { fetchMorphoTransactions } from '@/data-sources/morpho-api/transactions';
 import { fetchSubgraphTransactions } from '@/data-sources/subgraph/transactions';
 import { isSupportedChain } from '@/utils/networks';
 import type { UserTransaction } from '@/utils/types';
+import {
+  compareUserTransactions,
+  emptyTransactionResponse,
+  type TransactionFilters,
+  type TransactionResponse,
+} from '@/utils/user-transactions';
 
-/**
- * Filters for fetching user transactions.
- * Requires a single chainId - for multi-chain queries, use useUserTransactionsQuery with paginate: true.
- */
-export type TransactionFilters = {
-  userAddress: string[];
-  chainId: number;
-  marketUniqueKeys?: string[];
-  timestampGte?: number;
-  timestampLte?: number;
-  skip?: number;
-  first?: number;
-  hash?: string;
-  assetIds?: string[];
+const MAX_FALLBACK_PAGES = 50;
+
+const canUseMonarchTransactions = (filters: TransactionFilters): boolean => {
+  return !filters.assetIds?.length;
 };
 
-export type TransactionResponse = {
-  items: UserTransaction[];
-  pageInfo: {
-    count: number;
-    countTotal: number;
-  };
-  error: string | null;
+const fetchFallbackUserTransactions = async (filters: TransactionFilters): Promise<TransactionResponse> => {
+  const { chainId } = filters;
+
+  if (!supportsMorphoApi(chainId) && filters.userAddress.length !== 1) {
+    const errorMsg = 'Subgraph data source requires exactly one user address.';
+    console.error(errorMsg);
+    return emptyTransactionResponse(errorMsg);
+  }
+
+  if (supportsMorphoApi(chainId)) {
+    try {
+      const response = await fetchMorphoTransactions(filters);
+      if (!response.error) {
+        return response;
+      }
+    } catch (morphoError) {
+      console.warn(`Morpho API failed for chain ${chainId}, falling back to Subgraph:`, morphoError);
+    }
+  }
+
+  try {
+    return await fetchSubgraphTransactions(filters, chainId);
+  } catch (subgraphError) {
+    const errorMsg = `Failed to fetch transactions: ${(subgraphError as Error)?.message ?? 'Unknown error'}`;
+    console.error(errorMsg);
+    return emptyTransactionResponse(errorMsg);
+  }
 };
 
 /**
- * Fetches user transactions for a SINGLE chain from Morpho API or Subgraph.
+ * Fetches user transactions for a SINGLE chain from Monarch, Morpho API, or Subgraph.
  * For multi-chain queries, use useUserTransactionsQuery with paginate: true.
  *
  * @param filters - Transaction filters (chainId is required)
@@ -39,51 +56,84 @@ export type TransactionResponse = {
 export async function fetchUserTransactions(filters: TransactionFilters): Promise<TransactionResponse> {
   const { chainId } = filters;
 
-  // Validate chainId
+  if (filters.userAddress.length === 0) {
+    return emptyTransactionResponse();
+  }
+
   if (!isSupportedChain(chainId)) {
     console.warn(`Unsupported chain: ${chainId}`);
-    return {
-      items: [],
-      pageInfo: { count: 0, countTotal: 0 },
-      error: `Unsupported chain: ${chainId}`,
-    };
+    return emptyTransactionResponse(`Unsupported chain: ${chainId}`);
   }
 
-  // Check subgraph user address limitation
-  if (!supportsMorphoApi(chainId) && filters.userAddress.length !== 1) {
-    const errorMsg = 'Subgraph data source requires exactly one user address.';
-    console.error(errorMsg);
-    return {
-      items: [],
-      pageInfo: { count: 0, countTotal: 0 },
-      error: errorMsg,
-    };
-  }
-
-  // Try Morpho API first if supported
-  if (supportsMorphoApi(chainId)) {
+  if (canUseMonarchTransactions(filters)) {
     try {
-      const response = await fetchMorphoTransactions(filters);
+      const response = await fetchMonarchUserTransactions(filters);
       if (!response.error) {
         return response;
       }
-      // Morpho API returned an error, fall through to Subgraph
-    } catch (morphoError) {
-      console.warn(`Morpho API failed for chain ${chainId}, falling back to Subgraph:`, morphoError);
-      // Fall through to Subgraph
+    } catch (monarchError) {
+      console.warn(`Monarch API failed for chain ${chainId}, falling back to Morpho/Subgraph:`, monarchError);
     }
   }
 
-  // Fallback to Subgraph
-  try {
-    return await fetchSubgraphTransactions(filters, chainId);
-  } catch (subgraphError) {
-    const errorMsg = `Failed to fetch transactions: ${(subgraphError as Error)?.message ?? 'Unknown error'}`;
-    console.error(errorMsg);
-    return {
-      items: [],
-      pageInfo: { count: 0, countTotal: 0 },
-      error: errorMsg,
-    };
+  return fetchFallbackUserTransactions(filters);
+}
+
+export async function fetchAllUserTransactions(filters: TransactionFilters, pageSize = 1000): Promise<TransactionResponse> {
+  const { chainId } = filters;
+
+  if (filters.userAddress.length === 0) {
+    return emptyTransactionResponse();
   }
+
+  if (!isSupportedChain(chainId)) {
+    console.warn(`Unsupported chain: ${chainId}`);
+    return emptyTransactionResponse(`Unsupported chain: ${chainId}`);
+  }
+
+  if (canUseMonarchTransactions(filters)) {
+    try {
+      const response = await fetchMonarchUserTransactions({
+        ...filters,
+        first: undefined,
+        skip: 0,
+      });
+      if (!response.error) {
+        return response;
+      }
+    } catch (monarchError) {
+      console.warn(`Monarch API failed for chain ${chainId}, falling back to Morpho/Subgraph:`, monarchError);
+    }
+  }
+
+  const allItems: UserTransaction[] = [];
+
+  for (let page = 0; page < MAX_FALLBACK_PAGES; page++) {
+    const response = await fetchFallbackUserTransactions({
+      ...filters,
+      first: pageSize,
+      skip: page * pageSize,
+    });
+
+    if (response.error && response.items.length === 0) {
+      return response;
+    }
+
+    allItems.push(...response.items);
+
+    if (response.items.length < pageSize) {
+      break;
+    }
+  }
+
+  allItems.sort(compareUserTransactions);
+
+  return {
+    items: allItems,
+    pageInfo: {
+      count: allItems.length,
+      countTotal: allItems.length,
+    },
+    error: null,
+  };
 }

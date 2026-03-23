@@ -1,11 +1,8 @@
 /**
- * Monarch API Transactions
+ * Monarch admin/time-range transactions.
  *
- * Fetches Monarch supply and withdraw transactions across all chains through the
- * shared Monarch GraphQL endpoint.
- *
- * Uses separate pagination for supplies and withdraws to ensure complete data.
- * Freezes endTimestamp at fetch start to ensure consistent pagination.
+ * This file is intentionally scoped to the Monarch dashboard feed.
+ * User-history fetch/normalize logic lives in `user-transactions.ts`.
  */
 
 import { monarchGraphqlFetcher } from './fetchers';

@@ -195,8 +195,9 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 |-----------|--------|---------|------------|
 | Markets list | Morpho API/Subgraph | 5 min stale | `useMarketsQuery` |
 | Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
-| Market state (APY, utilization) | Morpho API | 30s stale | `useMarketData` |
-| User positions | Morpho API + on-chain | 5 min | `useUserPositions` |
+| Market state (APY, utilization) | RPC snapshot + Morpho API/Subgraph | 30s stale | `useMarketData` |
+| User positions | Monarch position discovery + on-chain snapshots + market registry from `useProcessedMarkets` | 5 min | `useUserPositions` |
+| User transaction history | Monarch GraphQL → Morpho API → Subgraph (`assetIds` queries still skip Monarch) | 60s | `useUserTransactionsQuery` |
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
 | User autovault metadata | Monarch GraphQL + on-chain enrichment | 60s | `useUserVaultsV2Query` |
 | Vault detail/settings metadata | Monarch GraphQL + narrow RPC fallback | 30s | `useVaultV2Data` |
@@ -204,9 +205,66 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 | Vault allocations | On-chain multicall | 30s | `useAllocationsQuery` |
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
 | Oracle metadata | Scanner Gist | 30 min | `useOracleMetadata` / `useAllOracleMetadata` |
-| Merkl rewards | Merkl API | On demand | `useMerklCampaignsQuery` |
+| User rewards and distributions | Morpho rewards REST + Merkl API | 30s | `useUserRewardsQuery` |
+| Reward campaigns | Merkl API | 5 min stale | `useMerklCampaignsQuery` |
 | Market liquidations | Monarch GraphQL + Morpho API/Subgraph fallback | 5 min stale | `useMarketLiquidations` |
-| Admin stats transactions | Monarch GraphQL | 2 min stale | `useMonarchTransactions` |
+| Admin stats transactions | Monarch GraphQL + market registry/token price enrichment | 2 min stale | `useMonarchTransactions` |
+
+### Data Hook Responsibility Matrix
+
+This is the migration checklist for the Monarch API (Envio GraphQL endpoint). "Full Monarch support" here means the feature would still work if Morpho API and subgraph reads were unavailable.
+
+Hooks omitted from this matrix are local-state hooks or pure view/composition helpers that do not own remote transport reads.
+
+#### Core Markets And Positions
+
+| Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
+|---------------|----------------|-------------|----------------------------------|
+| `useMarketsQuery` | Global market registry used across the app | Morpho API first per chain, then subgraph | Monarch market registry and market detail parity |
+| `useProcessedMarkets` | Blacklist/filtering layer on top of market registry, plus USD backfill | `useMarketsQuery` + `useTokenPrices` | Inherits `useMarketsQuery`; also needs a Monarch-native token price source if we want to remove Morpho price reads |
+| `useMarketData` | Single-market detail shell with freshest live state | RPC snapshot + Morpho API, then subgraph | Monarch single-market metadata/detail path |
+| `useMarketHistoricalData` | Historical market chart series | Morpho historical API, then subgraph | Monarch historical market snapshots/timeseries |
+| `useTokenPrices` | Token USD price lookup and peg fallback used by markets/admin stats | Morpho price API + major price fallback | Monarch price endpoint or another canonical replacement |
+| `useUserPositions` | Discover all markets where a user has positions, then attach live balances | Monarch batched `Position` discovery + RPC snapshots/oracle reads + market metadata from `useProcessedMarkets`; Morpho/Subgraph fallback for discovery | Monarch market registry/detail if position objects should no longer depend on Morpho/Subgraph market metadata |
+| `useUserPosition` | Single-market user position | RPC snapshot first; if snapshot unavailable, Monarch position state when local market exists; then Morpho/Subgraph fallback | Same market-registry/detail gap as `useUserPositions` |
+| `useUserTransactionsQuery` / `fetchUserTransactions` | User history across one or many chains | Monarch user-event tables first; fallback Morpho API, then subgraph; `assetIds` filter still bypasses Monarch | Asset-address filtered history support to fully back reports and any asset-scoped history views |
+| `useUserPositionsSummaryData` | Portfolio earnings summary for active positions | `useUserPositions` + `useUserTransactionsQuery` + RPC block/snapshot helpers | Inherits the remaining `useUserPositions` and `useUserTransactionsQuery` gaps |
+| `usePositionReport` | Asset-scoped earnings/report generation | `fetchUserTransactions(assetIds=...)` + RPC block/snapshot helpers | Still blocked on Monarch support for `assetIds`-scoped user history |
+| `usePositionHistoryChart` | Derive chart points for one asset/market group | Pure derivation from transactions + snapshots already fetched elsewhere | No backend gap; inherits upstream history/snapshot gaps |
+
+#### Market Detail And Admin Reads
+
+| Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
+|---------------|----------------|-------------|----------------------------------|
+| `useMarketSuppliers` / `useMarketBorrowers` | Paginated open positions on one market | Monarch first, then Morpho API, then subgraph | Already Monarch-first; no new Envio schema gap identified |
+| `useAllMarketSuppliers` / `useAllMarketBorrowers` | Non-paginated top positions for concentration charts | Monarch first, then Morpho API, then subgraph | Already Monarch-first; no new Envio schema gap identified |
+| `useMarketSupplies` / `useMarketBorrows` | Paginated supply/withdraw and borrow/repay activity | Monarch first, then Morpho API, then subgraph | Already Monarch-first; no new Envio schema gap identified |
+| `useMarketLiquidations` | Paginated liquidations | Monarch first, then Morpho API, then subgraph | Already Monarch-first; no new Envio schema gap identified |
+| `useMonarchTransactions` | Admin stats feed and aggregated flow dashboards | Monarch transactions + `useProcessedMarkets` + `useTokenPrices` | If admin stats should be fully independent, Monarch also needs market registry/metadata and a non-Morpho price source |
+
+#### Vaults And Allocators
+
+| Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
+|---------------|----------------|-------------|----------------------------------|
+| `useUserVaultsV2Query` | User vault list with optional balance, TVL, and yield enrichment | Monarch vault metadata + RPC balances/totalAssets + RPC 4626 yield snapshots | Already off Morpho for yield; no new Envio schema gap identified |
+| `useVaultV2Data` | Vault detail/settings metadata for a single vault | Monarch vault detail first, narrow RPC fallback if metadata unavailable | Already aligned with Monarch-first design |
+| `useAllMorphoVaultsQuery` | Global whitelisted vault registry | Morpho API only | Monarch/public vault registry parity |
+| `usePublicAllocatorVaults` | Public allocator config for supplying vaults in a market | Morpho API only | Monarch/public allocator config endpoint parity |
+| `useAllocationsQuery` | Live vault `allocation(capId)` values | Pure RPC multicall | No Envio gap |
+| `usePublicAllocatorLiveData` | Live flow caps, vault supply, and liquidity for allocator UX | Pure RPC multicall | No Envio gap |
+| `useVaultHistoricalApy` / `use4626VaultAPR` | Historical 4626 yield and expected carry calculations | Pure RPC share-price snapshots + RPC Morpho market reads | No Envio gap |
+
+#### RPC Helpers And External Reads
+
+| Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
+|---------------|----------------|-------------|----------------------------------|
+| `useCurrentBlocks` / `useBlockTimestamps` / `usePositionSnapshots` / `useFreshMarketsState` / `useHistoricalSupplierPositions` | Block, snapshot, and live-state helpers used by positions/charts | Pure RPC reads via viem/wagmi | No Envio gap |
+| `useUserBalancesQuery` | ERC20 wallet balances across chains | Pure RPC multicall via wagmi | No Envio gap |
+| `useTokensQuery` | Token metadata lookup for app UI | Local token registry + Pendle assets API | Not part of Monarch migration |
+| `useOracleMetadata` / `useAllOracleMetadata` | Oracle classification and feed metadata | Scanner gist JSON | Not part of Monarch migration |
+| `useMarketMetricsQuery` | Enhanced market metrics, flows, trending, scores | Monarch metrics API via `/api/monarch/metrics` | Already Monarch-backed |
+| `useUserRewardsQuery` | Claimable rewards and distributions | Morpho rewards REST + Merkl API | Outside Monarch/Envio scope today |
+| `useMerklCampaignsQuery` / `useMerklHoldIncentivesQuery` | Campaign and HOLD incentive enrichment | Merkl API + hardcoded opportunity mapping | Outside Monarch/Envio scope today |
 
 ### Data Flow Patterns
 
@@ -218,9 +276,9 @@ Split: allMarkets vs whitelistedMarkets
 
 **Position Data Flow:**
 ```
-1. Fetch market keys from API (which markets user has positions in)
-2. Fetch on-chain snapshots per market (usePositionSnapshots)
-3. Combine with market metadata
+1. Discover market keys via Monarch batched `Position` reads when possible; fall back to Morpho API/Subgraph
+2. Fetch on-chain snapshots per market (`usePositionSnapshots`)
+3. Combine live balances with market metadata from `useProcessedMarkets`
 4. Group by loan asset
 5. Calculate earnings
 ```

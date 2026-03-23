@@ -39,20 +39,14 @@ export const useAllMarketBorrowers = (
       if (!marketId || !network || !marketState) return null;
 
       try {
-        const monarchResult = await fetchMonarchMarketBorrowers(marketId, Number(network), marketState, '1', TOP_POSITIONS_LIMIT, 0);
-        if (monarchResult.items.length > 0) {
-          return monarchResult;
-        }
+        return await fetchMonarchMarketBorrowers(marketId, Number(network), marketState, '1', TOP_POSITIONS_LIMIT, 0);
       } catch {
         // Continue to fallback providers.
       }
 
       if (supportsMorphoApi(network)) {
         try {
-          const morphoResult = await fetchMorphoMarketBorrowers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
-          if (morphoResult.items.length > 0) {
-            return morphoResult;
-          }
+          return await fetchMorphoMarketBorrowers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
         } catch {
           // Continue to subgraph fallback.
         }
@@ -83,20 +77,14 @@ export const useAllMarketSuppliers = (marketId: string | undefined, network: Sup
       if (!marketId || !network) return null;
 
       try {
-        const monarchResult = await fetchMonarchMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
-        if (monarchResult.items.length > 0) {
-          return monarchResult;
-        }
+        return await fetchMonarchMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
       } catch {
         // Continue to fallback providers.
       }
 
       if (supportsMorphoApi(network)) {
         try {
-          const morphoResult = await fetchMorphoMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
-          if (morphoResult.items.length > 0) {
-            return morphoResult;
-          }
+          return await fetchMorphoMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
         } catch {
           // Continue to subgraph fallback.
         }

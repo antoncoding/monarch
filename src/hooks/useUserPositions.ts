@@ -127,10 +127,7 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
   const networksToFetch = chainIds ?? ALL_SUPPORTED_NETWORKS;
 
   try {
-    const monarchPositionMarkets = await fetchMonarchUserPositionMarketsForNetworks(user, networksToFetch);
-    if (monarchPositionMarkets.length > 0) {
-      return monarchPositionMarkets;
-    }
+    return await fetchMonarchUserPositionMarketsForNetworks(user, networksToFetch);
   } catch (error) {
     console.error('[Positions] Failed batched Monarch position lookup, falling back to Morpho/subgraph strategy:', error);
   }

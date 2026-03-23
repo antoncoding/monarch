@@ -2,18 +2,57 @@ import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchMonarchUserPositionStateForMarket } from '@/data-sources/monarch-api';
 import { fetchMorphoUserPositionForMarket } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/positions';
 import type { SupportedNetworks } from '@/utils/networks';
-import { fetchPositionSnapshot } from '@/utils/positions';
+import { convertSharesToAssets, fetchPositionSnapshot } from '@/utils/positions';
 import type { MarketPosition } from '@/utils/types';
 import { useProcessedMarkets } from './useProcessedMarkets';
+
+type SnapshotState = NonNullable<Awaited<ReturnType<typeof fetchPositionSnapshot>>>;
+
+const buildPositionStateFromSnapshot = (snapshot: SnapshotState): MarketPosition['state'] => ({
+  supplyAssets: snapshot.supplyAssets.toString(),
+  supplyShares: snapshot.supplyShares.toString(),
+  borrowAssets: snapshot.borrowAssets.toString(),
+  borrowShares: snapshot.borrowShares.toString(),
+  collateral: snapshot.collateral,
+});
+
+const buildPositionFromLiveMarket = (
+  market: MarketPosition['market'],
+  state: Pick<MarketPosition['state'], 'supplyShares' | 'borrowShares' | 'collateral'>,
+): MarketPosition => {
+  const supplyAssets = convertSharesToAssets(
+    BigInt(state.supplyShares),
+    BigInt(market.state.supplyAssets),
+    BigInt(market.state.supplyShares),
+  ).toString();
+  const borrowAssets = convertSharesToAssets(
+    BigInt(state.borrowShares),
+    BigInt(market.state.borrowAssets),
+    BigInt(market.state.borrowShares),
+  ).toString();
+
+  return {
+    market,
+    state: {
+      supplyShares: state.supplyShares,
+      supplyAssets,
+      borrowShares: state.borrowShares,
+      borrowAssets,
+      collateral: state.collateral,
+    },
+  };
+};
 
 /**
  * Hook to fetch a user's position in a specific market.
  *
  * Prioritizes the latest on-chain snapshot via `fetchPositionSnapshot`.
- * Falls back to the configured data source (Morpho API or Subgraph) if the snapshot is unavailable.
+ * If the snapshot is unavailable and local market metadata is present, it tries Monarch position state first,
+ * then falls back to Morpho API or Subgraph for full market-backed reconstruction.
  *
  * @param user The user's address.
  * @param chainId The network ID.
@@ -45,7 +84,8 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
         return null;
       }
 
-      // 1. Try fetching the on-chain snapshot first
+      const localMarket = markets?.find((m) => m.uniqueKey.toLowerCase() === marketKey.toLowerCase());
+
       console.log(`Attempting fetchPositionSnapshot for ${user} on market ${marketKey}`);
       let snapshot = null;
       try {
@@ -59,22 +99,11 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
       let finalPosition: MarketPosition | null = null;
 
       if (snapshot) {
-        // Snapshot succeeded, try to use local market data first
-        const market = markets?.find((m) => m.uniqueKey.toLowerCase() === marketKey.toLowerCase());
-
-        if (market) {
-          // Local market data found, construct position directly
+        if (localMarket) {
           console.log(`Found local market data for ${marketKey}, constructing position from snapshot.`);
           finalPosition = {
-            market: market,
-            state: {
-              // Add state from snapshot
-              supplyAssets: snapshot.supplyAssets.toString(),
-              supplyShares: snapshot.supplyShares.toString(),
-              borrowAssets: snapshot.borrowAssets.toString(),
-              borrowShares: snapshot.borrowShares.toString(),
-              collateral: snapshot.collateral,
-            },
+            market: localMarket,
+            state: buildPositionStateFromSnapshot(snapshot),
           };
         } else {
           // Local market data NOT found, need to fetch from fallback to get structure
@@ -107,13 +136,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
             // Fallback succeeded, combine with snapshot state
             finalPosition = {
               ...fallbackPosition,
-              state: {
-                supplyAssets: snapshot.supplyAssets.toString(),
-                supplyShares: snapshot.supplyShares.toString(),
-                borrowAssets: snapshot.borrowAssets.toString(),
-                borrowShares: snapshot.borrowShares.toString(),
-                collateral: snapshot.collateral,
-              },
+              state: buildPositionStateFromSnapshot(snapshot),
             };
           } else {
             // Fallback failed even though snapshot existed
@@ -122,7 +145,20 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
           }
         }
       } else {
-        // Snapshot failed, rely entirely on the fallback data source
+        if (localMarket) {
+          try {
+            console.log(`Attempting to fetch position via Monarch for ${marketKey}`);
+            const monarchPositionState = await fetchMonarchUserPositionStateForMarket(marketKey, user, chainId);
+            return monarchPositionState ? buildPositionFromLiveMarket(localMarket, monarchPositionState) : null;
+          } catch (monarchError) {
+            console.error('Failed to fetch position via Monarch:', monarchError);
+          }
+        }
+
+        if (finalPosition) {
+          return finalPosition;
+        }
+
         console.log(`Snapshot failed for ${marketKey}, fetching from fallback source.`);
 
         // Try Morpho API first if supported

@@ -1,4 +1,4 @@
-import { envioUserPositionsPageQuery } from '@/graphql/envio-queries';
+import { envioUserPositionForMarketQuery, envioUserPositionsPageQuery } from '@/graphql/envio-queries';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { monarchGraphqlFetcher } from './fetchers';
 
@@ -19,6 +19,12 @@ type MonarchUserPositionsPageResponse = {
   data?: {
     Position?: MonarchUserPositionRow[];
   };
+};
+
+export type MonarchUserPositionState = {
+  supplyShares: string;
+  borrowShares: string;
+  collateral: string;
 };
 
 const MONARCH_POSITION_MARKETS_PAGE_SIZE = 500;
@@ -76,4 +82,32 @@ export const fetchMonarchUserPositionMarketsForNetworks = async (
   }
 
   return Array.from(positionMarkets.values());
+};
+
+export const fetchMonarchUserPositionStateForMarket = async (
+  marketUniqueKey: string,
+  userAddress: string,
+  network: SupportedNetworks,
+): Promise<MonarchUserPositionState | null> => {
+  const response = await monarchGraphqlFetcher<MonarchUserPositionsPageResponse>(envioUserPositionForMarketQuery, {
+    user: userAddress.toLowerCase(),
+    chainId: network,
+    marketId: marketUniqueKey,
+  });
+
+  const position = response.data?.Position?.[0];
+
+  if (!position) {
+    return null;
+  }
+
+  if (!isNonZero(position.supplyShares) && !isNonZero(position.borrowShares) && !isNonZero(position.collateral)) {
+    return null;
+  }
+
+  return {
+    supplyShares: position.supplyShares,
+    borrowShares: position.borrowShares,
+    collateral: position.collateral,
+  };
 };
