@@ -97,7 +97,7 @@ function BorrowersPieTooltip({
 }
 
 export function BorrowersPieChart({ chainId, market, oraclePrice }: BorrowersPieChartProps) {
-  const { data: borrowers, isLoading, totalCount } = useAllMarketBorrowers(market.uniqueKey, chainId);
+  const { data: borrowers, isLoading, totalCount } = useAllMarketBorrowers(market.uniqueKey, chainId, market.state);
   const { getVaultByAddress } = useVaultRegistry();
   const [expandedOther, setExpandedOther] = useState(false);
   const chartColors = useChartColors();

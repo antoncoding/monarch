@@ -35,6 +35,26 @@ export const envioBorrowersPageQuery = `
   }
 `;
 
+export const envioUserPositionsPageQuery = `
+  query EnvioUserPositionsPage($user: String!, $chainIds: [Int!], $limit: Int!, $offset: Int!) {
+    Position(
+      where: {
+        user: { _eq: $user }
+        chainId: { _in: $chainIds }
+      }
+      limit: $limit
+      offset: $offset
+      order_by: [{ chainId: asc }, { marketId: asc }]
+    ) {
+      marketId
+      chainId
+      supplyShares
+      borrowShares
+      collateral
+    }
+  }
+`;
+
 export const envioSupplyWithdrawPageQuery = `
   query EnvioSupplyWithdrawPage($chainId: Int!, $marketId: String!, $minAssets: numeric!, $limit: Int!, $offset: Int!) {
     supplies: Morpho_Supply(

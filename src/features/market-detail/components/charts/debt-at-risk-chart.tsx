@@ -57,7 +57,7 @@ function DebtAtRiskTooltip({
 }
 
 export function DebtAtRiskChart({ chainId, market, oraclePrice }: DebtAtRiskChartProps) {
-  const { data: borrowers, isLoading } = useAllMarketBorrowers(market.uniqueKey, chainId);
+  const { data: borrowers, isLoading } = useAllMarketBorrowers(market.uniqueKey, chainId, market.state);
   const chartColors = useChartColors();
 
   const lltv = useMemo(() => {

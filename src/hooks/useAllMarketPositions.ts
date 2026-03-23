@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchMonarchMarketBorrowers, fetchMonarchMarketSuppliers } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketBorrowers } from '@/data-sources/morpho-api/market-borrowers';
 import { fetchMorphoMarketSuppliers } from '@/data-sources/morpho-api/market-suppliers';
 import { fetchSubgraphMarketBorrowers } from '@/data-sources/subgraph/market-borrowers';
 import { fetchSubgraphMarketSuppliers } from '@/data-sources/subgraph/market-suppliers';
 import type { SupportedNetworks } from '@/utils/networks';
-import type { MarketBorrower, MarketSupplier } from '@/utils/types';
+import type { Market, MarketBorrower, MarketSupplier } from '@/utils/types';
 
 const TOP_POSITIONS_LIMIT = 1000;
 
@@ -27,31 +28,39 @@ type UseAllSuppliersResult = {
  * Fetches top borrowers for chart aggregation (non-paginated).
  * Retrieves up to 1000 positions sorted by borrow shares descending.
  */
-export const useAllMarketBorrowers = (marketId: string | undefined, network: SupportedNetworks | undefined): UseAllBorrowersResult => {
+export const useAllMarketBorrowers = (
+  marketId: string | undefined,
+  network: SupportedNetworks | undefined,
+  marketState: Pick<Market['state'], 'borrowAssets' | 'borrowShares'> | undefined,
+): UseAllBorrowersResult => {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['allMarketBorrowers', marketId, network],
+    queryKey: ['allMarketBorrowers', marketId, network, marketState?.borrowAssets, marketState?.borrowShares],
     queryFn: async () => {
-      if (!marketId || !network) return null;
+      if (!marketId || !network || !marketState) return null;
 
-      let result = null;
+      try {
+        const monarchResult = await fetchMonarchMarketBorrowers(marketId, Number(network), marketState, '1', TOP_POSITIONS_LIMIT, 0);
+        if (monarchResult.items.length > 0) {
+          return monarchResult;
+        }
+      } catch {
+        // Continue to fallback providers.
+      }
 
-      // Try Morpho API first
       if (supportsMorphoApi(network)) {
         try {
-          result = await fetchMorphoMarketBorrowers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
+          const morphoResult = await fetchMorphoMarketBorrowers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
+          if (morphoResult.items.length > 0) {
+            return morphoResult;
+          }
         } catch {
-          // Morpho API failed, will fall back to subgraph
+          // Continue to subgraph fallback.
         }
       }
 
-      // Fallback to Subgraph if Morpho API failed or returned empty
-      if (!result || result.items?.length === 0) {
-        result = await fetchSubgraphMarketBorrowers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
-      }
-
-      return result;
+      return fetchSubgraphMarketBorrowers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
     },
-    enabled: !!marketId && !!network,
+    enabled: !!marketId && !!network && !!marketState,
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
@@ -73,23 +82,27 @@ export const useAllMarketSuppliers = (marketId: string | undefined, network: Sup
     queryFn: async () => {
       if (!marketId || !network) return null;
 
-      let result = null;
+      try {
+        const monarchResult = await fetchMonarchMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
+        if (monarchResult.items.length > 0) {
+          return monarchResult;
+        }
+      } catch {
+        // Continue to fallback providers.
+      }
 
-      // Try Morpho API first
       if (supportsMorphoApi(network)) {
         try {
-          result = await fetchMorphoMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
+          const morphoResult = await fetchMorphoMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
+          if (morphoResult.items.length > 0) {
+            return morphoResult;
+          }
         } catch {
-          // Morpho API failed, will fall back to subgraph
+          // Continue to subgraph fallback.
         }
       }
 
-      // Fallback to Subgraph if Morpho API failed or returned empty
-      if (!result || result.items?.length === 0) {
-        result = await fetchSubgraphMarketSuppliers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
-      }
-
-      return result;
+      return fetchSubgraphMarketSuppliers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
     },
     enabled: !!marketId && !!network,
     staleTime: 1000 * 60 * 2, // 2 minutes

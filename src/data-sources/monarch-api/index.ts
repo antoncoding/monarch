@@ -1,4 +1,5 @@
 export { monarchGraphqlFetcher } from './fetchers';
+export { fetchMonarchUserPositionMarketsForNetworks } from './positions';
 export {
   fetchMonarchMarketBorrowers,
   fetchMonarchMarketBorrows,

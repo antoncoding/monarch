@@ -1,19 +1,18 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Address, Hex } from 'viem';
-import { erc4626Abi } from '@/abis/erc4626';
 import morphoAbi from '@/abis/morpho';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { computeAnnualizedApyFromGrowth, computeExpectedNetCarryApy } from '@/hooks/leverage/math';
-import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import { getMorphoAddress } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import type { Market } from '@/utils/types';
+import { fetchVaultYieldSnapshots } from '@/utils/vaultYield';
+import { getVaultReadKey } from '@/utils/vaultAllocation';
 
 const DEFAULT_LOOKBACK_DAYS = 3;
 const BORROW_INDEX_SCALE = 10n ** 18n;
-const SECONDS_PER_DAY = 24 * 60 * 60;
 
 type Use4626VaultAPRParams = {
   market: Market;
@@ -83,91 +82,76 @@ export function use4626VaultAPR({
         };
       }
 
-      const client = getClient(chainId, customRpcUrl);
-      const currentBlock = await client.getBlockNumber();
-      const currentBlockData = await client.getBlock({ blockNumber: currentBlock });
-      const currentTimestamp = Number(currentBlockData.timestamp);
+      const vaultYieldSnapshots = await fetchVaultYieldSnapshots({
+        vaults: [{ address: vaultAddress, networkId: chainId }],
+        lookbackDays,
+        customRpcUrls: { [chainId]: customRpcUrl },
+        throwOnFailure: true,
+      });
+      const vaultYieldSnapshot = vaultYieldSnapshots.get(getVaultReadKey(vaultAddress, chainId)) ?? null;
 
-      const targetTimestamp = currentTimestamp - lookbackDays * SECONDS_PER_DAY;
-      // WHY: estimate a historical block close to the target window, then annualize using real block timestamps.
-      const estimatedPastBlock = estimateBlockAtTimestamp(chainId, targetTimestamp, Number(currentBlock), currentTimestamp);
-      const pastBlockData = await client.getBlock({ blockNumber: BigInt(estimatedPastBlock) });
-      const pastTimestamp = Number(pastBlockData.timestamp);
-      const periodSeconds = currentTimestamp - pastTimestamp;
-
-      if (periodSeconds <= 0) {
+      if (!vaultYieldSnapshot?.currentBlock || !vaultYieldSnapshot.pastBlock || !vaultYieldSnapshot.periodSeconds) {
         return {
-          vaultApy3d: null,
+          vaultApy3d: vaultYieldSnapshot?.vaultApy ?? null,
           borrowApy3d: null,
-          sharePriceNow: null,
-          periodSeconds: null,
+          sharePriceNow: vaultYieldSnapshot?.sharePriceNow ?? null,
+          periodSeconds: vaultYieldSnapshot?.periodSeconds ?? null,
         };
       }
 
+      const client = getClient(chainId, customRpcUrl);
       const morphoAddress = getMorphoAddress(chainId);
-      const contracts = [
-        {
-          address: vaultAddress,
-          abi: erc4626Abi,
-          functionName: 'previewRedeem' as const,
-          args: [oneShareUnit] as const,
-        },
-        {
-          address: morphoAddress as Address,
-          abi: morphoAbi,
-          functionName: 'market' as const,
-          args: [market.uniqueKey as Hex] as const,
-        },
-      ] as const;
-
-      const currentResults = await client.multicall({
-        contracts,
+      const currentMarketResults = await client.multicall({
+        contracts: [
+          {
+            address: morphoAddress as Address,
+            abi: morphoAbi,
+            functionName: 'market' as const,
+            args: [market.uniqueKey as Hex] as const,
+          },
+        ],
         allowFailure: true,
+        blockNumber: vaultYieldSnapshot.currentBlock,
       });
 
-      let pastResults: typeof currentResults | null = null;
+      let pastMarketResults: typeof currentMarketResults | null = null;
       try {
-        pastResults = await client.multicall({
-          contracts,
+        pastMarketResults = await client.multicall({
+          contracts: [
+            {
+              address: morphoAddress as Address,
+              abi: morphoAbi,
+              functionName: 'market' as const,
+              args: [market.uniqueKey as Hex] as const,
+            },
+          ],
           allowFailure: true,
-          blockNumber: BigInt(estimatedPastBlock),
+          blockNumber: vaultYieldSnapshot.pastBlock,
         });
       } catch {
         // Some RPCs are non-archive and cannot serve historical eth_call at past blocks.
-        pastResults = null;
+        pastMarketResults = null;
       }
 
-      const currentSharePrice =
-        currentResults[0].status === 'success' && typeof currentResults[0].result === 'bigint' ? currentResults[0].result : null;
-      const currentBorrowIndex = currentResults[1].status === 'success' ? readBorrowIndex(asBigIntArray(currentResults[1].result)) : null;
-
-      const pastSharePrice =
-        pastResults?.[0]?.status === 'success' && typeof pastResults[0].result === 'bigint' ? pastResults[0].result : null;
-      const pastBorrowIndex = pastResults?.[1]?.status === 'success' ? readBorrowIndex(asBigIntArray(pastResults[1].result)) : null;
-
-      const vaultApy3d =
-        currentSharePrice && pastSharePrice
-          ? computeAnnualizedApyFromGrowth({
-              currentValue: currentSharePrice,
-              pastValue: pastSharePrice,
-              periodSeconds,
-            })
-          : null;
+      const currentBorrowIndex =
+        currentMarketResults[0].status === 'success' ? readBorrowIndex(asBigIntArray(currentMarketResults[0].result)) : null;
+      const pastBorrowIndex =
+        pastMarketResults?.[0]?.status === 'success' ? readBorrowIndex(asBigIntArray(pastMarketResults[0].result)) : null;
 
       const borrowApy3d =
         currentBorrowIndex && pastBorrowIndex
           ? computeAnnualizedApyFromGrowth({
               currentValue: currentBorrowIndex,
               pastValue: pastBorrowIndex,
-              periodSeconds,
+              periodSeconds: vaultYieldSnapshot.periodSeconds,
             })
           : null;
 
       return {
-        vaultApy3d,
+        vaultApy3d: vaultYieldSnapshot.vaultApy,
         borrowApy3d,
-        sharePriceNow: currentSharePrice,
-        periodSeconds,
+        sharePriceNow: vaultYieldSnapshot.sharePriceNow,
+        periodSeconds: vaultYieldSnapshot.periodSeconds,
       };
     },
   });
