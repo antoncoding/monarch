@@ -81,7 +81,7 @@ export function SuppliedMorphoBlueGroupedTable({
     all: 'All',
   };
 
-  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(positions), [positions]);
+  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(positions, actualBlockData), [positions, actualBlockData]);
   const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
 
   const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);

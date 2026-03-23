@@ -60,6 +60,8 @@ export type BorrowPositionRow = {
   isActiveDebt: boolean;
 };
 
+const ONE_YEAR_IN_SECONDS = 86_400 * 365;
+
 function normalizeOraclePriceResult(value: unknown): string | null {
   if (typeof value === 'bigint' || typeof value === 'number' || typeof value === 'string') {
     return value.toString();
@@ -377,35 +379,47 @@ export function getGroupedEarnings(groupedPosition: GroupedPosition): bigint {
 }
 
 /**
- * Get weighted actual APY for a group of positions
- * Weighted by capital-time contribution from each position (avgCapital * effectiveTime)
+ * Get grouped actual APY for a group of positions.
+ * Aggregate earnings and capital-time first, then annualize once at the group level.
  *
  * @param groupedPosition - The grouped position
- * @returns The weighted actual APY as a number
+ * @param chainBlockData - Period start block/timestamp keyed by chain ID
+ * @param endTimestamp - Period end timestamp
+ * @returns The grouped actual APY as a number
  */
-export function getGroupedActualApy(groupedPosition: GroupedPosition): number {
-  let totalWeightedApy = 0;
+export function getGroupedActualApy(
+  groupedPosition: GroupedPosition,
+  chainBlockData: Record<number, { block: number; timestamp: number }>,
+  endTimestamp: number = Math.floor(Date.now() / 1000),
+): number {
+  const startTimestamp = chainBlockData[groupedPosition.chainId]?.timestamp;
+  if (!startTimestamp || endTimestamp <= startTimestamp) return 0;
+
+  const fullWindowSeconds = endTimestamp - startTimestamp;
+  let totalEarned = 0n;
   let totalCapitalTime = 0n;
 
   for (const position of groupedPosition.markets) {
     const avgCapital = BigInt(position.avgCapital ?? '0');
     const effectiveTime = BigInt(Math.max(0, position.effectiveTime ?? 0));
-    if (avgCapital <= 0n || effectiveTime <= 0n) continue;
-    if (!Number.isFinite(position.actualApy)) continue;
-
     const capitalTime = avgCapital * effectiveTime;
-    const capitalTimeAsNumber = Number(capitalTime);
-    if (!Number.isFinite(capitalTimeAsNumber) || capitalTimeAsNumber <= 0) continue;
+    if (capitalTime <= 0n) continue;
 
-    totalWeightedApy += capitalTimeAsNumber * position.actualApy;
+    totalEarned += BigInt(position.earned ?? '0');
     totalCapitalTime += capitalTime;
   }
 
-  if (totalCapitalTime <= 0n) return 0;
-  const totalCapitalTimeAsNumber = Number(totalCapitalTime);
-  if (!Number.isFinite(totalCapitalTimeAsNumber) || totalCapitalTimeAsNumber <= 0) return 0;
+  if (totalCapitalTime <= 0n || totalEarned <= 0n) return 0;
 
-  return totalWeightedApy / totalCapitalTimeAsNumber;
+  const averageCapital = totalCapitalTime / BigInt(fullWindowSeconds);
+  if (averageCapital <= 0n) return 0;
+
+  const earnedAsNumber = Number(formatUnits(totalEarned, groupedPosition.loanAssetDecimals));
+  const averageCapitalAsNumber = Number(formatUnits(averageCapital, groupedPosition.loanAssetDecimals));
+  if (!Number.isFinite(earnedAsNumber) || !Number.isFinite(averageCapitalAsNumber) || averageCapitalAsNumber <= 0) return 0;
+
+  const periods = ONE_YEAR_IN_SECONDS / fullWindowSeconds;
+  return (earnedAsNumber / averageCapitalAsNumber + 1) ** periods - 1;
 }
 
 /**
@@ -414,7 +428,10 @@ export function getGroupedActualApy(groupedPosition: GroupedPosition): number {
  * @param positions - Array of positions with earnings
  * @returns Array of grouped positions
  */
-export function groupPositionsByLoanAsset(positions: MarketPositionWithEarnings[]): GroupedPosition[] {
+export function groupPositionsByLoanAsset(
+  positions: MarketPositionWithEarnings[],
+  chainBlockData: Record<number, { block: number; timestamp: number }>,
+): GroupedPosition[] {
   return positions
     .filter((position) => BigInt(position.state.supplyShares) > 0)
     .reduce((acc: GroupedPosition[], position) => {
@@ -481,7 +498,7 @@ export function groupPositionsByLoanAsset(positions: MarketPositionWithEarnings[
         groupedPosition.totalWeightedApy = 0; // Avoid division by zero
       }
       // Calculate weighted actual APY across markets
-      groupedPosition.actualApy = getGroupedActualApy(groupedPosition);
+      groupedPosition.actualApy = getGroupedActualApy(groupedPosition, chainBlockData);
       return groupedPosition;
     })
     .sort((a, b) => b.totalSupply - a.totalSupply);

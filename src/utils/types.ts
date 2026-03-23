@@ -216,7 +216,7 @@ export type GroupedPosition = {
   loanAssetSymbol: string;
   totalSupply: number;
   totalWeightedApy: number;
-  actualApy: number; // Weighted historical APY across all markets
+  actualApy: number; // Grouped historical APY across all markets
 
   earned?: PositionEarnings;
 

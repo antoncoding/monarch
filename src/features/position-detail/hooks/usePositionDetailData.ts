@@ -37,9 +37,9 @@ export function usePositionDetailData({
   // Group all positions across all chains
   const allPositions = useMemo(() => {
     if (!positions) return [];
-    const grouped = groupPositionsByLoanAsset(positions);
+    const grouped = groupPositionsByLoanAsset(positions, actualBlockData);
     return processCollaterals(grouped);
-  }, [positions]);
+  }, [positions, actualBlockData]);
 
   // Find current position from the all-chains result
   const currentPosition = useMemo(() => {
