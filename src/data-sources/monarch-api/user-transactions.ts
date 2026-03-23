@@ -1,11 +1,12 @@
 import { buildEnvioUserTransactionsPageQuery } from '@/graphql/envio-queries';
 import { type UserTransaction, UserTxTypes } from '@/utils/types';
-import type { TransactionFilters, TransactionResponse } from '@/utils/user-transactions';
+import { emptyTransactionResponse, type TransactionFilters, type TransactionResponse } from '@/utils/user-transactions';
 import { dedupeUserTransactions, sortUserTransactions } from '@/utils/user-transactions';
 import { monarchGraphqlFetcher } from './fetchers';
 
 const MAX_PAGES = 50;
 const MONARCH_USER_TRANSACTIONS_BATCH_SIZE = 500;
+const MONARCH_USER_TRANSACTIONS_TIMEOUT_MS = 15_000;
 
 type MonarchUserActivityRow = {
   id: string;
@@ -85,6 +86,30 @@ const shouldContinuePaging = (response: MonarchUserTransactionsPageResponse, lim
   );
 };
 
+const fetchMonarchUserTransactionsPage = async (
+  query: string,
+  variables: Record<string, unknown>,
+): Promise<MonarchUserTransactionsPageResponse> => {
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => {
+    controller.abort();
+  }, MONARCH_USER_TRANSACTIONS_TIMEOUT_MS);
+
+  try {
+    return await monarchGraphqlFetcher<MonarchUserTransactionsPageResponse>(query, variables, {
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Monarch user transaction request timed out after ${MONARCH_USER_TRANSACTIONS_TIMEOUT_MS}ms`);
+    }
+
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeoutId);
+  }
+};
+
 const getUserAddressVariants = (userAddresses: string[]): string[] => {
   const variants = new Set<string>();
 
@@ -133,7 +158,7 @@ export const fetchMonarchUserTransactions = async (filters: TransactionFilters):
   for (let page = 0; page < MAX_PAGES; page++) {
     variables.offset = page * MONARCH_USER_TRANSACTIONS_BATCH_SIZE;
 
-    const response = await monarchGraphqlFetcher<MonarchUserTransactionsPageResponse>(query, variables);
+    const response = await fetchMonarchUserTransactionsPage(query, variables);
     const data = response.data;
 
     allTransactions.push(
@@ -146,8 +171,13 @@ export const fetchMonarchUserTransactions = async (filters: TransactionFilters):
       ...mapLiquidationRows(data?.liquidations),
     );
 
-    if (!shouldContinuePaging(response, MONARCH_USER_TRANSACTIONS_BATCH_SIZE)) {
+    const hasNextPage = shouldContinuePaging(response, MONARCH_USER_TRANSACTIONS_BATCH_SIZE);
+    if (!hasNextPage) {
       break;
+    }
+
+    if (page === MAX_PAGES - 1) {
+      return emptyTransactionResponse('Monarch user transaction history exceeded the safe pagination limit');
     }
   }
 

@@ -92,7 +92,7 @@ export const fetchMonarchUserPositionStateForMarket = async (
   const response = await monarchGraphqlFetcher<MonarchUserPositionsPageResponse>(envioUserPositionForMarketQuery, {
     user: userAddress.toLowerCase(),
     chainId: network,
-    marketId: marketUniqueKey,
+    marketId: marketUniqueKey.toLowerCase(),
   });
 
   const position = response.data?.Position?.[0];

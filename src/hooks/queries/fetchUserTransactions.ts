@@ -12,28 +12,27 @@ import {
 } from '@/utils/user-transactions';
 
 const MAX_FALLBACK_PAGES = 50;
+const FALLBACK_PARALLEL_PAGE_BATCH_SIZE = 5;
+
+type FallbackTransactionsSource = 'morpho' | 'subgraph';
 
 const canUseMonarchTransactions = (filters: TransactionFilters): boolean => {
   return !filters.assetIds?.length;
 };
 
-const fetchFallbackUserTransactions = async (filters: TransactionFilters): Promise<TransactionResponse> => {
+const fetchFallbackTransactionsFromSource = async (
+  source: FallbackTransactionsSource,
+  filters: TransactionFilters,
+): Promise<TransactionResponse> => {
   const { chainId } = filters;
 
-  if (!supportsMorphoApi(chainId) && filters.userAddress.length !== 1) {
-    const errorMsg = 'Subgraph data source requires exactly one user address.';
-    console.error(errorMsg);
-    return emptyTransactionResponse(errorMsg);
-  }
-
-  if (supportsMorphoApi(chainId)) {
+  if (source === 'morpho') {
     try {
-      const response = await fetchMorphoTransactions(filters);
-      if (!response.error) {
-        return response;
-      }
+      return await fetchMorphoTransactions(filters);
     } catch (morphoError) {
-      console.warn(`Morpho API failed for chain ${chainId}, falling back to Subgraph:`, morphoError);
+      const errorMsg = `Failed to fetch transactions from Morpho API: ${(morphoError as Error)?.message ?? 'Unknown error'}`;
+      console.warn(`Morpho API failed for chain ${chainId}:`, morphoError);
+      return emptyTransactionResponse(errorMsg);
     }
   }
 
@@ -44,6 +43,42 @@ const fetchFallbackUserTransactions = async (filters: TransactionFilters): Promi
     console.error(errorMsg);
     return emptyTransactionResponse(errorMsg);
   }
+};
+
+const selectFallbackUserTransactionsSource = async (
+  filters: TransactionFilters,
+): Promise<{ source: FallbackTransactionsSource | null; response: TransactionResponse }> => {
+  const { chainId } = filters;
+
+  if (supportsMorphoApi(chainId)) {
+    const morphoResponse = await fetchFallbackTransactionsFromSource('morpho', filters);
+    if (!morphoResponse.error) {
+      return {
+        source: 'morpho',
+        response: morphoResponse,
+      };
+    }
+  }
+
+  if (filters.userAddress.length !== 1) {
+    const errorMsg = 'Subgraph data source requires exactly one user address.';
+    console.error(errorMsg);
+    return {
+      source: null,
+      response: emptyTransactionResponse(errorMsg),
+    };
+  }
+
+  const subgraphResponse = await fetchFallbackTransactionsFromSource('subgraph', filters);
+  return {
+    source: subgraphResponse.error ? null : 'subgraph',
+    response: subgraphResponse,
+  };
+};
+
+const fetchFallbackUserTransactions = async (filters: TransactionFilters): Promise<TransactionResponse> => {
+  const { response } = await selectFallbackUserTransactionsSource(filters);
+  return response;
 };
 
 /**
@@ -111,22 +146,77 @@ export async function fetchAllUserTransactions(filters: TransactionFilters, page
   }
 
   const allItems: UserTransaction[] = [];
+  const firstPageFilters: TransactionFilters = {
+    ...frozenFilters,
+    first: pageSize,
+    skip: 0,
+  };
+  const { source, response: firstPage } = await selectFallbackUserTransactionsSource(firstPageFilters);
 
-  for (let page = 0; page < MAX_FALLBACK_PAGES; page++) {
-    const response = await fetchFallbackUserTransactions({
+  if (!source || (firstPage.error && firstPage.items.length === 0)) {
+    return firstPage;
+  }
+
+  allItems.push(...firstPage.items);
+
+  if (source === 'morpho') {
+    const totalPages = Math.ceil(firstPage.pageInfo.countTotal / pageSize);
+    if (totalPages > MAX_FALLBACK_PAGES) {
+      return emptyTransactionResponse(`Fallback transaction history exceeded the safe pagination limit (${totalPages} pages)`);
+    }
+
+    for (let startPage = 1; startPage < totalPages; startPage += FALLBACK_PARALLEL_PAGE_BATCH_SIZE) {
+      const endPage = Math.min(startPage + FALLBACK_PARALLEL_PAGE_BATCH_SIZE, totalPages);
+      const batchPages = Array.from({ length: endPage - startPage }, (_, index) => startPage + index);
+      const batchResponses = await Promise.all(
+        batchPages.map((page) =>
+          fetchFallbackTransactionsFromSource(source, {
+            ...frozenFilters,
+            first: pageSize,
+            skip: page * pageSize,
+          }),
+        ),
+      );
+
+      const failedResponse = batchResponses.find((response) => response.error);
+      if (failedResponse) {
+        return emptyTransactionResponse(failedResponse.error);
+      }
+
+      allItems.push(...batchResponses.flatMap((response) => response.items));
+    }
+
+    allItems.sort(compareUserTransactions);
+
+    return {
+      items: allItems,
+      pageInfo: {
+        count: allItems.length,
+        countTotal: firstPage.pageInfo.countTotal,
+      },
+      error: null,
+    };
+  }
+
+  for (let page = 1; page < MAX_FALLBACK_PAGES; page++) {
+    const response = await fetchFallbackTransactionsFromSource(source, {
       ...frozenFilters,
       first: pageSize,
       skip: page * pageSize,
     });
 
-    if (response.error && response.items.length === 0) {
-      return response;
+    if (response.error) {
+      return emptyTransactionResponse(response.error);
     }
 
     allItems.push(...response.items);
 
     if (response.items.length < pageSize) {
       break;
+    }
+
+    if (page === MAX_FALLBACK_PAGES - 1) {
+      return emptyTransactionResponse('Fallback transaction history exceeded the safe pagination limit');
     }
   }
 
@@ -136,7 +226,7 @@ export async function fetchAllUserTransactions(filters: TransactionFilters, page
     items: allItems,
     pageInfo: {
       count: allItems.length,
-      countTotal: allItems.length,
+      countTotal: source === 'subgraph' ? allItems.length : firstPage.pageInfo.countTotal,
     },
     error: null,
   };
