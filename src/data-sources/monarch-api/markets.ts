@@ -3,8 +3,9 @@ import { formatUnits, type Address, zeroAddress } from 'viem';
 import { buildEnvioMarketsPageQuery } from '@/graphql/envio-queries';
 import { getMorphoAddress } from '@/utils/morpho';
 import { isSupportedChain, type SupportedNetworks } from '@/utils/networks';
-import { blacklistTokens, findToken } from '@/utils/tokens';
-import type { Market, MarketWarning, TokenInfo } from '@/utils/types';
+import { blacklistTokens, infoToKey } from '@/utils/tokens';
+import { resolveTokenInfos, type ResolvedTokenInfo, type TokenAddressInput } from '@/utils/tokenMetadata';
+import type { Market, MarketWarning } from '@/utils/types';
 import { UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
 import { monarchGraphqlFetcher } from './fetchers';
 
@@ -37,42 +38,6 @@ const MONARCH_MARKETS_TIMEOUT_MS = 15_000;
 const MONARCH_MARKETS_ZERO_ADDRESS = zeroAddress.toLowerCase();
 
 const normalizeAddress = (value: string): string => value.toLowerCase();
-
-const formatUnknownTokenLabel = (address: string): string => {
-  const normalizedAddress = normalizeAddress(address);
-  return `${normalizedAddress.slice(0, 6)}...${normalizedAddress.slice(-4)}`;
-};
-
-const toTokenInfo = (address: string, chainId: SupportedNetworks): { token: TokenInfo; isRecognized: boolean } => {
-  const normalizedAddress = normalizeAddress(address);
-  const knownToken = findToken(normalizedAddress, chainId);
-
-  if (!knownToken) {
-    const fallbackLabel = formatUnknownTokenLabel(normalizedAddress);
-
-    return {
-      token: {
-        id: normalizedAddress,
-        address: normalizedAddress,
-        symbol: fallbackLabel,
-        name: normalizedAddress,
-        decimals: 18,
-      },
-      isRecognized: false,
-    };
-  }
-
-  return {
-    token: {
-      id: normalizedAddress,
-      address: normalizedAddress,
-      symbol: knownToken.symbol,
-      name: knownToken.symbol,
-      decimals: knownToken.decimals,
-    },
-    isRecognized: true,
-  };
-};
 
 const toMarketWarnings = (loanAssetRecognized: boolean, collateralAssetRecognized: boolean): MarketWarning[] => {
   const warnings: MarketWarning[] = [];
@@ -136,7 +101,31 @@ const toMarketState = (market: MonarchMarketRow) => {
   };
 };
 
-const mapMonarchMarketToMarket = (market: MonarchMarketRow): Market | null => {
+const getMarketTokenInputs = (markets: MonarchMarketRow[]): TokenAddressInput[] => {
+  const tokens: TokenAddressInput[] = [];
+
+  for (const market of markets) {
+    if (!isSupportedChain(market.chainId)) {
+      continue;
+    }
+
+    const chainId = market.chainId as SupportedNetworks;
+    tokens.push(
+      {
+        address: normalizeAddress(market.loanToken),
+        chainId,
+      },
+      {
+        address: normalizeAddress(market.collateralToken),
+        chainId,
+      },
+    );
+  }
+
+  return tokens;
+};
+
+const mapMonarchMarketToMarket = (market: MonarchMarketRow, tokenInfos: Map<string, ResolvedTokenInfo>): Market | null => {
   if (!isSupportedChain(market.chainId)) {
     return null;
   }
@@ -149,8 +138,13 @@ const mapMonarchMarketToMarket = (market: MonarchMarketRow): Market | null => {
     return null;
   }
 
-  const { token: loanAsset, isRecognized: loanAssetRecognized } = toTokenInfo(loanAssetAddress, chainId);
-  const { token: collateralAsset, isRecognized: collateralAssetRecognized } = toTokenInfo(collateralAssetAddress, chainId);
+  const loanAsset = tokenInfos.get(infoToKey(loanAssetAddress, chainId));
+  const collateralAsset = tokenInfos.get(infoToKey(collateralAssetAddress, chainId));
+
+  if (!loanAsset || !collateralAsset) {
+    console.warn(`Skipping Monarch market ${market.marketId} on chain ${chainId}: token decimals could not be resolved.`);
+    return null;
+  }
 
   return {
     id: normalizeAddress(market.marketId),
@@ -166,15 +160,15 @@ const mapMonarchMarketToMarket = (market: MonarchMarketRow): Market | null => {
         id: chainId,
       },
     },
-    loanAsset,
-    collateralAsset,
+    loanAsset: loanAsset.token,
+    collateralAsset: collateralAsset.token,
     state: toMarketState(market),
     realizedBadDebt: {
       underlying: '0',
     },
     supplyingVaults: [],
     hasUSDPrice: false,
-    warnings: toMarketWarnings(loanAssetRecognized, collateralAssetRecognized),
+    warnings: toMarketWarnings(loanAsset.isRecognized, collateralAsset.isRecognized),
   };
 };
 
@@ -230,5 +224,7 @@ export const fetchMonarchMarkets = async (network?: SupportedNetworks): Promise<
     offset += rows.length;
   }
 
-  return allRows.map(mapMonarchMarketToMarket).filter((market): market is Market => market !== null);
+  const tokenInfos = await resolveTokenInfos(getMarketTokenInputs(allRows));
+
+  return allRows.map((market) => mapMonarchMarketToMarket(market, tokenInfos)).filter((market): market is Market => market !== null);
 };
