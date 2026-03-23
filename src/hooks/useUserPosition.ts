@@ -155,10 +155,6 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
           }
         }
 
-        if (finalPosition) {
-          return finalPosition;
-        }
-
         console.log(`Snapshot failed for ${marketKey}, fetching from fallback source.`);
 
         // Try Morpho API first if supported

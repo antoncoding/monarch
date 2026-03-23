@@ -32,6 +32,8 @@ import type { SupportedNetworks } from '@/utils/networks';
 
 const PAGE_SIZE = 10;
 
+const getChainScopedMarketKey = (chainId: number, uniqueKey: string): string => `${chainId}:${uniqueKey.toLowerCase()}`;
+
 type HistoryTabProps = {
   groupedPosition: GroupedPosition;
   chainId: SupportedNetworks;
@@ -77,7 +79,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
     const nextMap = new Map<string, Market>();
 
     for (const position of groupedPosition.markets) {
-      nextMap.set(position.market.uniqueKey.toLowerCase(), position.market);
+      nextMap.set(getChainScopedMarketKey(position.market.morphoBlue.chain.id, position.market.uniqueKey), position.market);
     }
 
     return nextMap;
@@ -312,7 +314,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
               history.map((tx, index) => {
                 if (!tx.data.market) return null;
 
-                const market = marketMap.get(tx.data.market.uniqueKey.toLowerCase());
+                const market = marketMap.get(getChainScopedMarketKey(chainId, tx.data.market.uniqueKey));
                 if (!market) return null;
 
                 const isSupply = tx.type === UserTxTypes.MarketSupply;

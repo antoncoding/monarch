@@ -419,7 +419,13 @@ export function getGroupedActualApy(
   if (!Number.isFinite(earnedAsNumber) || !Number.isFinite(averageCapitalAsNumber) || averageCapitalAsNumber <= 0) return 0;
 
   const periods = ONE_YEAR_IN_SECONDS / fullWindowSeconds;
-  return (earnedAsNumber / averageCapitalAsNumber + 1) ** periods - 1;
+  const base = earnedAsNumber / averageCapitalAsNumber + 1;
+
+  if (!Number.isFinite(periods) || periods <= 0 || periods > 1_000_000) return 0;
+  if (!Number.isFinite(base) || base <= 0) return 0;
+
+  const annualized = base ** periods - 1;
+  return Number.isFinite(annualized) ? annualized : 0;
 }
 
 /**
