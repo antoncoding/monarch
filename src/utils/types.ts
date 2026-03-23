@@ -41,6 +41,7 @@ export enum UserTxTypes {
 }
 
 export type UserTransaction = {
+  id?: string;
   hash: string;
   timestamp: number;
   type: UserTxTypes;

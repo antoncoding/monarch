@@ -1,13 +1,14 @@
 import { buildEnvioUserTransactionsPageQuery } from '@/graphql/envio-queries';
 import { type UserTransaction, UserTxTypes } from '@/utils/types';
 import type { TransactionFilters, TransactionResponse } from '@/utils/user-transactions';
-import { compareUserTransactions } from '@/utils/user-transactions';
+import { dedupeUserTransactions, sortUserTransactions } from '@/utils/user-transactions';
 import { monarchGraphqlFetcher } from './fetchers';
 
 const MAX_PAGES = 50;
 const MONARCH_USER_TRANSACTIONS_BATCH_SIZE = 500;
 
 type MonarchUserActivityRow = {
+  id: string;
   txHash: string;
   timestamp: string | number;
   market_id: string;
@@ -16,6 +17,7 @@ type MonarchUserActivityRow = {
 };
 
 type MonarchUserLiquidationRow = {
+  id: string;
   txHash: string;
   timestamp: string | number;
   market_id: string;
@@ -40,6 +42,7 @@ const toTimestamp = (value: string | number): number => {
 
 const mapActivityRows = (rows: MonarchUserActivityRow[] | undefined, type: UserTxTypes, sharesFallback = '0'): UserTransaction[] => {
   return (rows ?? []).map((row) => ({
+    id: row.id,
     hash: row.txHash,
     timestamp: toTimestamp(row.timestamp),
     type,
@@ -56,6 +59,7 @@ const mapActivityRows = (rows: MonarchUserActivityRow[] | undefined, type: UserT
 
 const mapLiquidationRows = (rows: MonarchUserLiquidationRow[] | undefined): UserTransaction[] => {
   return (rows ?? []).map((row) => ({
+    id: row.id,
     hash: row.txHash,
     timestamp: toTimestamp(row.timestamp),
     type: UserTxTypes.MarketLiquidation,
@@ -97,17 +101,19 @@ const getUserAddressVariants = (userAddresses: string[]): string[] => {
 };
 
 export const fetchMonarchUserTransactions = async (filters: TransactionFilters): Promise<TransactionResponse> => {
+  const effectiveTimestampLte = filters.timestampLte ?? Math.floor(Date.now() / 1000);
   const query = buildEnvioUserTransactionsPageQuery({
     useHashFilter: Boolean(filters.hash),
     useMarketFilter: Boolean(filters.marketUniqueKeys?.length),
     useTimestampGte: filters.timestampGte !== undefined && filters.timestampGte !== null,
-    useTimestampLte: filters.timestampLte !== undefined && filters.timestampLte !== null,
+    useTimestampLte: true,
   });
   const variables: Record<string, unknown> = {
     chainId: filters.chainId,
     userAddresses: getUserAddressVariants(filters.userAddress),
     limit: MONARCH_USER_TRANSACTIONS_BATCH_SIZE,
     offset: 0,
+    timestampLte: effectiveTimestampLte,
   };
 
   if (filters.marketUniqueKeys?.length) {
@@ -116,10 +122,6 @@ export const fetchMonarchUserTransactions = async (filters: TransactionFilters):
 
   if (filters.timestampGte !== undefined && filters.timestampGte !== null) {
     variables.timestampGte = filters.timestampGte;
-  }
-
-  if (filters.timestampLte !== undefined && filters.timestampLte !== null) {
-    variables.timestampLte = filters.timestampLte;
   }
 
   if (filters.hash) {
@@ -149,17 +151,17 @@ export const fetchMonarchUserTransactions = async (filters: TransactionFilters):
     }
   }
 
-  allTransactions.sort(compareUserTransactions);
+  const dedupedTransactions = sortUserTransactions(dedupeUserTransactions(allTransactions));
 
   const skip = filters.skip ?? 0;
-  const first = filters.first ?? allTransactions.length;
-  const items = allTransactions.slice(skip, skip + first);
+  const first = filters.first ?? dedupedTransactions.length;
+  const items = dedupedTransactions.slice(skip, skip + first);
 
   return {
     items,
     pageInfo: {
       count: items.length,
-      countTotal: allTransactions.length,
+      countTotal: dedupedTransactions.length,
     },
     error: null,
   };

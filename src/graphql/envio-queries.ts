@@ -137,8 +137,9 @@ export const buildEnvioUserTransactionsPageQuery = ({
         where: { ${buildWhere('onBehalf')} }
         limit: $limit
         offset: $offset
-        order_by: [{ timestamp: desc }, { txHash: desc }]
+        order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
       ) {
+        id
         txHash
         timestamp
         market_id
@@ -149,8 +150,9 @@ export const buildEnvioUserTransactionsPageQuery = ({
         where: { ${buildWhere('onBehalf')} }
         limit: $limit
         offset: $offset
-        order_by: [{ timestamp: desc }, { txHash: desc }]
+        order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
       ) {
+        id
         txHash
         timestamp
         market_id
@@ -161,8 +163,9 @@ export const buildEnvioUserTransactionsPageQuery = ({
         where: { ${buildWhere('onBehalf')} }
         limit: $limit
         offset: $offset
-        order_by: [{ timestamp: desc }, { txHash: desc }]
+        order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
       ) {
+        id
         txHash
         timestamp
         market_id
@@ -173,8 +176,9 @@ export const buildEnvioUserTransactionsPageQuery = ({
         where: { ${buildWhere('onBehalf')} }
         limit: $limit
         offset: $offset
-        order_by: [{ timestamp: desc }, { txHash: desc }]
+        order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
       ) {
+        id
         txHash
         timestamp
         market_id
@@ -185,8 +189,9 @@ export const buildEnvioUserTransactionsPageQuery = ({
         where: { ${buildWhere('onBehalf')} }
         limit: $limit
         offset: $offset
-        order_by: [{ timestamp: desc }, { txHash: desc }]
+        order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
       ) {
+        id
         txHash
         timestamp
         market_id
@@ -196,8 +201,9 @@ export const buildEnvioUserTransactionsPageQuery = ({
         where: { ${buildWhere('onBehalf')} }
         limit: $limit
         offset: $offset
-        order_by: [{ timestamp: desc }, { txHash: desc }]
+        order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
       ) {
+        id
         txHash
         timestamp
         market_id
@@ -207,8 +213,9 @@ export const buildEnvioUserTransactionsPageQuery = ({
         where: { ${buildWhere('borrower')} }
         limit: $limit
         offset: $offset
-        order_by: [{ timestamp: desc }, { txHash: desc }]
+        order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
       ) {
+        id
         txHash
         timestamp
         market_id

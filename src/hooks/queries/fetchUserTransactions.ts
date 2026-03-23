@@ -80,9 +80,13 @@ export async function fetchUserTransactions(filters: TransactionFilters): Promis
 }
 
 export async function fetchAllUserTransactions(filters: TransactionFilters, pageSize = 1000): Promise<TransactionResponse> {
+  const frozenFilters: TransactionFilters = {
+    ...filters,
+    timestampLte: filters.timestampLte ?? Math.floor(Date.now() / 1000),
+  };
   const { chainId } = filters;
 
-  if (filters.userAddress.length === 0) {
+  if (frozenFilters.userAddress.length === 0) {
     return emptyTransactionResponse();
   }
 
@@ -91,10 +95,10 @@ export async function fetchAllUserTransactions(filters: TransactionFilters, page
     return emptyTransactionResponse(`Unsupported chain: ${chainId}`);
   }
 
-  if (canUseMonarchTransactions(filters)) {
+  if (canUseMonarchTransactions(frozenFilters)) {
     try {
       const response = await fetchMonarchUserTransactions({
-        ...filters,
+        ...frozenFilters,
         first: undefined,
         skip: 0,
       });
@@ -110,7 +114,7 @@ export async function fetchAllUserTransactions(filters: TransactionFilters, page
 
   for (let page = 0; page < MAX_FALLBACK_PAGES; page++) {
     const response = await fetchFallbackUserTransactions({
-      ...filters,
+      ...frozenFilters,
       first: pageSize,
       skip: page * pageSize,
     });

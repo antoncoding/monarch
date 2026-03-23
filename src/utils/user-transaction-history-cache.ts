@@ -3,6 +3,7 @@ import morphoAbi from '@/abis/morpho';
 import { getMorphoAddress } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { type UserTransaction, UserTxTypes } from '@/utils/types';
+import { getUserTransactionIdentity, getUserTransactionMergeKey, sortUserTransactions } from '@/utils/user-transactions';
 
 const CACHE_KEY = 'monarch_cache_userTransactionHistory_v1';
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -29,13 +30,6 @@ type CachedUserTransactionEntry = {
 };
 
 const normalizeAddress = (address: string): Address => address.toLowerCase() as Address;
-
-const getTransactionDedupKey = (transaction: UserTransaction): string => {
-  const marketKey = transaction.data?.market?.uniqueKey?.toLowerCase() ?? '';
-  const assets = transaction.data?.assets ?? '0';
-  const shares = transaction.data?.shares ?? '0';
-  return `${transaction.hash.toLowerCase()}:${transaction.type}:${marketKey}:${assets}:${shares}`;
-};
 
 const getCacheEntryDedupKey = (entry: CachedUserTransactionEntry): string =>
   `${entry.chainId}:${entry.userAddress}:${entry.tx.hash.toLowerCase()}:${entry.logIndex}`;
@@ -158,6 +152,7 @@ export function cacheUserTransactionHistoryFromReceipt({
         expiresAt,
         logIndex: log.logIndex ?? index,
         tx: {
+          id: `${chainId}:${txHash.toLowerCase()}:${log.logIndex ?? index}`,
           hash: txHash,
           timestamp,
           type: txType,
@@ -213,7 +208,7 @@ export function mergeUserTransactionsWithRecentCache({
 
   const normalizedUser = normalizeAddress(userAddress);
   const chainIdSet = new Set(chainIds);
-  const apiHashes = new Set(apiTransactions.map((tx) => tx.hash.toLowerCase()));
+  const apiTransactionKeys = new Set(apiTransactions.map(getUserTransactionMergeKey));
 
   const activeEntries = getActiveCacheEntries();
   if (activeEntries.length === 0) {
@@ -225,7 +220,7 @@ export function mergeUserTransactionsWithRecentCache({
       if (entry.userAddress !== normalizedUser || !chainIdSet.has(entry.chainId)) {
         return false;
       }
-      return !apiHashes.has(entry.tx.hash.toLowerCase());
+      return !apiTransactionKeys.has(getUserTransactionMergeKey(entry.tx));
     })
     .map((entry) => entry.tx);
 
@@ -237,14 +232,13 @@ export function mergeUserTransactionsWithRecentCache({
   const seen = new Set<string>();
 
   for (const tx of [...apiTransactions, ...cachedTransactions]) {
-    const key = getTransactionDedupKey(tx);
+    const key = getUserTransactionIdentity(tx);
     if (seen.has(key)) continue;
     seen.add(key);
     deduped.push(tx);
   }
 
-  deduped.sort((a, b) => b.timestamp - a.timestamp);
-  return deduped;
+  return sortUserTransactions(deduped);
 }
 
 export function reconcileUserTransactionHistoryCache({
@@ -262,7 +256,7 @@ export function reconcileUserTransactionHistoryCache({
 
   const normalizedUser = normalizeAddress(userAddress);
   const chainIdSet = new Set(chainIds);
-  const apiHashes = new Set(apiTransactions.map((tx) => tx.hash.toLowerCase()));
+  const apiTransactionKeys = new Set(apiTransactions.map(getUserTransactionMergeKey));
 
   const activeEntries = readAndPruneCacheEntries();
   if (activeEntries.length === 0) return;
@@ -271,7 +265,7 @@ export function reconcileUserTransactionHistoryCache({
     const isRelevantEntry = entry.userAddress === normalizedUser && chainIdSet.has(entry.chainId);
     if (!isRelevantEntry) return true;
 
-    const shouldKeep = !apiHashes.has(entry.tx.hash.toLowerCase());
+    const shouldKeep = !apiTransactionKeys.has(getUserTransactionMergeKey(entry.tx));
     return shouldKeep;
   });
 

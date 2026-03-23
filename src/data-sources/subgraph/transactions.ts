@@ -32,6 +32,7 @@ const transformSubgraphTransactions = (
   subgraphData.deposits.forEach((tx: SubgraphDepositTx) => {
     const type = tx.isCollateral ? UserTxTypes.MarketSupplyCollateral : UserTxTypes.MarketSupply;
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: type,
@@ -49,6 +50,7 @@ const transformSubgraphTransactions = (
   subgraphData.withdraws.forEach((tx: SubgraphWithdrawTx) => {
     const type = tx.isCollateral ? UserTxTypes.MarketWithdrawCollateral : UserTxTypes.MarketWithdraw;
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: type,
@@ -65,6 +67,7 @@ const transformSubgraphTransactions = (
 
   subgraphData.borrows.forEach((tx: SubgraphBorrowTx) => {
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketBorrow,
@@ -81,6 +84,7 @@ const transformSubgraphTransactions = (
 
   subgraphData.repays.forEach((tx: SubgraphRepayTx) => {
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketRepay,
@@ -97,6 +101,7 @@ const transformSubgraphTransactions = (
 
   subgraphData.liquidations.forEach((tx: SubgraphLiquidationTx) => {
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketLiquidation,
