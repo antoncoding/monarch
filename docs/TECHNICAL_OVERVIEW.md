@@ -193,7 +193,7 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 ### Dynamic Data (Runtime fetched)
 | Data Type | Source | Refresh | Query Hook |
 |-----------|--------|---------|------------|
-| Markets list | Morpho API/Subgraph | 5 min stale | `useMarketsQuery` |
+| Markets list | Morpho API → Monarch API → Subgraph | 5 min stale | `useMarketsQuery` |
 | Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
 | Market state (APY, utilization) | RPC snapshot + Morpho API/Subgraph | 30s stale | `useMarketData` |
 | User positions | Monarch position discovery + on-chain snapshots + market registry from `useProcessedMarkets` | 5 min | `useUserPositions` |
@@ -220,7 +220,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 
 | Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
 |---------------|----------------|-------------|----------------------------------|
-| `useMarketsQuery` | Global market registry used across the app | Morpho API first per chain, then subgraph | Monarch market registry and market detail parity |
+| `useMarketsQuery` | Global market registry used across the app | Morpho API first per chain, then Monarch API, then subgraph | Monarch single-market detail parity |
 | `useProcessedMarkets` | Blacklist/filtering layer on top of market registry, plus USD backfill | `useMarketsQuery` + `useTokenPrices` | Inherits `useMarketsQuery`; also needs a Monarch-native token price source if we want to remove Morpho price reads |
 | `useMarketData` | Single-market detail shell with freshest live state | RPC snapshot + Morpho API, then subgraph | Monarch single-market metadata/detail path |
 | `useMarketHistoricalData` | Historical market chart series | Morpho historical API, then subgraph | Monarch historical market snapshots/timeseries |
