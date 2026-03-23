@@ -88,9 +88,11 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
   const totalEntries = filteredHistory.length;
   const totalPages = Math.ceil(totalEntries / PAGE_SIZE);
   const history = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const safeTotalPages = Math.max(1, totalPages);
+    const safePage = Math.max(1, Math.min(currentPage, safeTotalPages));
+    const startIndex = (safePage - 1) * PAGE_SIZE;
     return filteredHistory.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [currentPage, filteredHistory]);
+  }, [currentPage, filteredHistory, totalPages]);
 
   const maxDate = useMemo(() => now(getLocalTimeZone()), []);
 
