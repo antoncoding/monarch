@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
@@ -15,7 +16,8 @@ const toError = (error: unknown): Error => {
  *
  * Data fetching strategy:
  * - Tries Morpho API first (if supported)
- * - Falls back to Subgraph if API fails
+ * - Falls back to Monarch API if Morpho fails
+ * - Falls back to Subgraph if Monarch fails or Morpho is unsupported
  * - Combines markets from all networks
  * - Applies basic filtering (required fields, supported chains)
  *
@@ -41,19 +43,30 @@ export const useMarketsQuery = () => {
       const results = await Promise.allSettled(
         ALL_SUPPORTED_NETWORKS.map(async (network) => {
           let networkMarkets: Market[] = [];
+          let tryMonarch = false;
           let trySubgraph = !supportsMorphoApi(network);
 
           // Try Morpho API first if supported
           if (!trySubgraph) {
             try {
               networkMarkets = await fetchMorphoMarkets(network);
-            } catch {
-              trySubgraph = true;
-              // Continue to Subgraph fallback
+            } catch (error) {
+              console.warn(`Morpho markets failed for network ${network}, falling back to Monarch API.`, error);
+              tryMonarch = true;
             }
           }
 
-          // If Morpho API failed or not supported, try Subgraph
+          // If Morpho API failed, try Monarch before Subgraph
+          if (tryMonarch) {
+            try {
+              networkMarkets = await fetchMonarchMarkets(network);
+            } catch (error) {
+              console.warn(`Monarch markets failed for network ${network}, falling back to Subgraph.`, error);
+              trySubgraph = true;
+            }
+          }
+
+          // If Morpho is unsupported or Monarch fallback failed, try Subgraph
           if (trySubgraph) {
             networkMarkets = await fetchSubgraphMarkets(network);
           }

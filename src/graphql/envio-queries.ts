@@ -74,6 +74,43 @@ export const envioUserPositionForMarketQuery = `
   }
 `;
 
+export const buildEnvioMarketsPageQuery = ({ useChainIdFilter }: { useChainIdFilter: boolean }): string => {
+  const variableDeclarations = ['$limit: Int!', '$offset: Int!', '$zeroAddress: String!'];
+  const whereClauses = ['collateralToken: { _neq: $zeroAddress }', 'irm: { _neq: $zeroAddress }'];
+
+  if (useChainIdFilter) {
+    variableDeclarations.push('$chainId: Int!');
+    whereClauses.push('chainId: { _eq: $chainId }');
+  }
+
+  return `
+    query EnvioMarketsPage(${variableDeclarations.join(', ')}) {
+      Market(
+        where: { ${whereClauses.join(' ')} }
+        limit: $limit
+        offset: $offset
+        order_by: [{ chainId: asc }, { marketId: asc }]
+      ) {
+        chainId
+        marketId
+        loanToken
+        collateralToken
+        oracle
+        irm
+        lltv
+        totalSupplyAssets
+        totalBorrowAssets
+        totalSupplyShares
+        totalBorrowShares
+        collateralAssets
+        lastUpdate
+        fee
+        rateAtTarget
+      }
+    }
+  `;
+};
+
 export const buildEnvioUserTransactionsPageQuery = ({
   useHashFilter,
   useMarketFilter,
