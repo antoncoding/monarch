@@ -1,5 +1,5 @@
 import { userTransactionsQuery } from '@/graphql/morpho-api-queries';
-import type { TransactionFilters, TransactionResponse } from '@/hooks/queries/fetchUserTransactions';
+import type { TransactionFilters, TransactionResponse } from '@/utils/user-transactions';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Define the expected shape of the GraphQL response for transactions

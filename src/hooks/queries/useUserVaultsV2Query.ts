@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import { fetchMorphoVaultApys } from '@/data-sources/morpho-api/vaults';
 import { fetchUserVaultV2DetailsAllNetworks, type UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import { fetchUserVaultShares, fetchVaultTotalAssets, getVaultReadKey } from '@/utils/vaultAllocation';
+import { fetchVaultYieldSnapshots, type VaultYieldSnapshot } from '@/utils/vaultYield';
 
 type UseUserVaultsV2Options = {
   includeApy?: boolean;
@@ -34,15 +34,15 @@ async function fetchAndProcessVaults({
     return [];
   }
 
-  const [avgApyByVault, shareBalances, totalAssetsByVault] = await Promise.all([
+  const [yieldSnapshotsByVault, shareBalances, totalAssetsByVault] = await Promise.all([
     includeApy
-      ? fetchMorphoVaultApys(
-          validVaults.map((vault) => ({
-            address: vault.address,
+      ? fetchVaultYieldSnapshots({
+          vaults: validVaults.map((vault) => ({
+            address: vault.address as Address,
             networkId: vault.networkId,
           })),
-        )
-      : Promise.resolve(new Map<string, number>()),
+        })
+      : Promise.resolve(new Map<string, VaultYieldSnapshot>()),
     includeBalances
       ? fetchUserVaultShares(
           validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })),
@@ -61,7 +61,7 @@ async function fetchAndProcessVaults({
     return {
       ...vault,
       adapter: vault.adapters[0] as Address | undefined,
-      avgApy: avgApyByVault.get(vaultKey),
+      avgApy: yieldSnapshotsByVault.get(vaultKey)?.vaultApy ?? undefined,
       balance: includeBalances ? (shareBalances.has(vaultKey) ? shareBalances.get(vaultKey) : undefined) : undefined,
       totalAssets: totalAssetsByVault.get(vaultKey),
     };
@@ -73,7 +73,7 @@ async function fetchAndProcessVaults({
  *
  * Data fetching strategy:
  * - Fetches cross-chain vault details from Monarch API
- * - Optionally enriches current APY from batched Morpho API vault rates
+ * - Optionally enriches current APY from batched RPC share-price yield snapshots
  * - Optionally enriches user's share balances via multicall
  * - Optionally enriches vault total assets via multicall
  * - Returns complete vault data with optional on-chain enrichments

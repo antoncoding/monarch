@@ -92,7 +92,7 @@ function MarketContent() {
     data: borrowersData,
     isLoading: borrowersLoading,
     totalCount: borrowersTotalCount,
-  } = useAllMarketBorrowers(market?.uniqueKey, network);
+  } = useAllMarketBorrowers(market?.uniqueKey, network, market?.state);
   const {
     data: suppliersData,
     isLoading: suppliersLoading,

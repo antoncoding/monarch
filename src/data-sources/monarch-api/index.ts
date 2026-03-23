@@ -1,5 +1,11 @@
 export { monarchGraphqlFetcher } from './fetchers';
 export {
+  fetchMonarchUserPositionMarketsForNetworks,
+  fetchMonarchUserPositionStateForMarket,
+  type MonarchUserPositionState,
+} from './positions';
+export { fetchMonarchUserTransactions } from './user-transactions';
+export {
   fetchMonarchMarketBorrowers,
   fetchMonarchMarketBorrows,
   fetchMonarchMarketLiquidations,

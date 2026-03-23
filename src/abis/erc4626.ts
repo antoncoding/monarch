@@ -7,6 +7,13 @@ import type { Abi } from 'viem';
 export const erc4626Abi = [
   {
     inputs: [],
+    name: 'decimals',
+    outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
     name: 'asset',
     outputs: [{ internalType: 'address', name: '', type: 'address' }],
     stateMutability: 'view',

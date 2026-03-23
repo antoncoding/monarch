@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { now, getLocalTimeZone, type ZonedDateTime } from '@internationalized/date';
 import moment from 'moment';
 import { formatUnits } from 'viem';
@@ -20,7 +20,6 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
-import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -33,6 +32,8 @@ import type { SupportedNetworks } from '@/utils/networks';
 
 const PAGE_SIZE = 10;
 
+const getChainScopedMarketKey = (chainId: number, uniqueKey: string): string => `${chainId}:${uniqueKey.toLowerCase()}`;
+
 type HistoryTabProps = {
   groupedPosition: GroupedPosition;
   chainId: SupportedNetworks;
@@ -43,7 +44,6 @@ type HistoryTabProps = {
 };
 
 export function HistoryTab({ groupedPosition, chainId, userAddress, transactions, snapshotsByChain, actualBlockData }: HistoryTabProps) {
-  const { allMarkets, loading: loadingMarkets } = useProcessedMarkets();
   const toast = useStyledToast();
 
   const [startDate, setStartDate] = useState<ZonedDateTime | null>(null);
@@ -65,22 +65,42 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
   } = useUserTransactionsQuery({
     filters: {
       userAddress: [userAddress],
-      first: PAGE_SIZE,
-      skip: (currentPage - 1) * PAGE_SIZE,
       marketUniqueKeys: marketIdFilter,
-      chainId: chainId,
+      chainId,
       timestampGte: startDate ? Math.floor(startDate.toDate().getTime() / 1000) : undefined,
       timestampLte: endDate ? Math.floor(endDate.toDate().getTime() / 1000) : undefined,
     },
-    enabled: allMarkets.length > 0,
+    paginate: true,
+    enabled: marketIdFilter.length > 0,
   });
 
-  const loading = loadingHistory || loadingMarkets;
-  const history = data?.items ?? [];
-  const totalPages = data ? Math.ceil(data.pageInfo.countTotal / PAGE_SIZE) : 0;
-  const totalEntries = data?.pageInfo.countTotal ?? 0;
+  const loading = loadingHistory;
+  const marketMap = useMemo(() => {
+    const nextMap = new Map<string, Market>();
+
+    for (const position of groupedPosition.markets) {
+      nextMap.set(getChainScopedMarketKey(position.market.morphoBlue.chain.id, position.market.uniqueKey), position.market);
+    }
+
+    return nextMap;
+  }, [groupedPosition.markets]);
+  const filteredHistory = data?.items ?? [];
+  const totalEntries = filteredHistory.length;
+  const totalPages = Math.ceil(totalEntries / PAGE_SIZE);
+  const history = useMemo(() => {
+    const safeTotalPages = Math.max(1, totalPages);
+    const safePage = Math.max(1, Math.min(currentPage, safeTotalPages));
+    const startIndex = (safePage - 1) * PAGE_SIZE;
+    return filteredHistory.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [currentPage, filteredHistory, totalPages]);
 
   const maxDate = useMemo(() => now(getLocalTimeZone()), []);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleStartDateChange = (date: ZonedDateTime) => {
     if (endDate && date > endDate) setEndDate(date);
@@ -296,7 +316,7 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
               history.map((tx, index) => {
                 if (!tx.data.market) return null;
 
-                const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market | undefined;
+                const market = marketMap.get(getChainScopedMarketKey(chainId, tx.data.market.uniqueKey));
                 if (!market) return null;
 
                 const isSupply = tx.type === UserTxTypes.MarketSupply;

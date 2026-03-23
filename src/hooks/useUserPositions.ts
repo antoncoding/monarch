@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
 import { fetchMorphoUserPositionMarkets, fetchMorphoUserPositionMarketsForNetworks } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
@@ -124,6 +125,13 @@ const appendFulfilledPositionMarkets = (
 // Fetches market keys ONLY from API/Subgraph sources
 const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarket[]> => {
   const networksToFetch = chainIds ?? ALL_SUPPORTED_NETWORKS;
+
+  try {
+    return await fetchMonarchUserPositionMarketsForNetworks(user, networksToFetch);
+  } catch (error) {
+    console.error('[Positions] Failed batched Monarch position lookup, falling back to Morpho/subgraph strategy:', error);
+  }
+
   const morphoApiNetworks = networksToFetch.filter((network) => supportsMorphoApi(network));
   const fallbackNetworks = networksToFetch.filter((network) => !supportsMorphoApi(network));
   const sourcePositionMarkets: PositionMarket[] = [];

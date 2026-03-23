@@ -1,8 +1,9 @@
 import { getSubgraphUserTransactionsQuery } from '@/graphql/morpho-subgraph-queries';
-import type { TransactionFilters, TransactionResponse } from '@/hooks/queries/fetchUserTransactions';
+import type { TransactionFilters, TransactionResponse } from '@/utils/user-transactions';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import { type UserTransaction, UserTxTypes } from '@/utils/types';
+import { sortUserTransactions } from '@/utils/user-transactions';
 import type {
   SubgraphAccountData,
   SubgraphBorrowTx,
@@ -31,6 +32,7 @@ const transformSubgraphTransactions = (
   subgraphData.deposits.forEach((tx: SubgraphDepositTx) => {
     const type = tx.isCollateral ? UserTxTypes.MarketSupplyCollateral : UserTxTypes.MarketSupply;
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: type,
@@ -48,6 +50,7 @@ const transformSubgraphTransactions = (
   subgraphData.withdraws.forEach((tx: SubgraphWithdrawTx) => {
     const type = tx.isCollateral ? UserTxTypes.MarketWithdrawCollateral : UserTxTypes.MarketWithdraw;
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: type,
@@ -64,6 +67,7 @@ const transformSubgraphTransactions = (
 
   subgraphData.borrows.forEach((tx: SubgraphBorrowTx) => {
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketBorrow,
@@ -80,6 +84,7 @@ const transformSubgraphTransactions = (
 
   subgraphData.repays.forEach((tx: SubgraphRepayTx) => {
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketRepay,
@@ -96,6 +101,7 @@ const transformSubgraphTransactions = (
 
   subgraphData.liquidations.forEach((tx: SubgraphLiquidationTx) => {
     allTransactions.push({
+      id: tx.id,
       hash: tx.hash,
       timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketLiquidation,
@@ -110,7 +116,7 @@ const transformSubgraphTransactions = (
     });
   });
 
-  allTransactions.sort((a, b) => b.timestamp - a.timestamp);
+  sortUserTransactions(allTransactions);
 
   // No client-side filtering needed - filtering is done at GraphQL level via market_in
   const count = allTransactions.length;

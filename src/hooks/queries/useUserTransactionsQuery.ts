@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchUserTransactions, type TransactionFilters, type TransactionResponse } from './fetchUserTransactions';
+import { fetchAllUserTransactions, fetchUserTransactions } from './fetchUserTransactions';
 import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
-import type { UserTransaction } from '@/utils/types';
+import { compareUserTransactions, type TransactionFilters, type TransactionResponse } from '@/utils/user-transactions';
 
 /**
  * Filter options for the hook.
@@ -27,13 +27,13 @@ type UseUserTransactionsQueryOptions = {
 };
 
 /**
- * Fetches user transactions from Morpho API or Subgraph using React Query.
+ * Fetches user transactions from Monarch, Morpho API, or Subgraph using React Query.
  *
  * Data fetching strategy:
  * - For non-paginated queries: requires single chainId, fetches with skip/first
  * - For paginated queries: can use multiple chainIds, fetches ALL data in parallel
- * - Tries Morpho API first (if supported for the network)
- * - Falls back to Subgraph if API fails or not supported
+ * - Tries Monarch first when the requested filters are supported by Envio
+ * - Falls back to Morpho API and then Subgraph when Monarch is empty, unsupported, or fails
  */
 export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOptions) => {
   const { filters, enabled = true, paginate = false, pageSize = 1000 } = options;
@@ -56,45 +56,21 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
     ],
     queryFn: async () => {
       if (paginate) {
-        // Paginate mode: fetch ALL transactions, supports multi-chain
         const chainIds = filters.chainIds ?? (filters.chainId ? [filters.chainId] : ALL_SUPPORTED_NETWORKS);
-
-        // Helper to fetch all pages for one chain
-        const fetchAllForChain = async (chainId: number): Promise<UserTransaction[]> => {
-          const items: UserTransaction[] = [];
-          let skip = 0;
-          let hasMore = true;
-
-          while (hasMore) {
-            const response = await fetchUserTransactions({
-              ...filters,
-              chainId,
-              first: pageSize,
-              skip,
-            });
-
-            items.push(...response.items);
-            skip += response.items.length;
-
-            // Stop if we got fewer items than requested (last page)
-            hasMore = response.items.length >= pageSize;
-
-            // Safety: max 50 pages per chain to prevent infinite loops
-            if (skip >= 50 * pageSize) {
-              console.warn(`Transaction pagination limit reached for chain ${chainId} (50 pages)`);
-              break;
-            }
-          }
-
-          return items;
-        };
-
-        // Fetch ALL chains IN PARALLEL
-        const results = await Promise.all(chainIds.map(fetchAllForChain));
-        const allItems = results.flat();
-
-        // Sort combined results by timestamp (descending)
-        allItems.sort((a, b) => b.timestamp - a.timestamp);
+        const results = await Promise.all(
+          chainIds.map((chainId) =>
+            fetchAllUserTransactions(
+              {
+                ...filters,
+                chainId,
+              },
+              pageSize,
+            ),
+          ),
+        );
+        const allItems = results.flatMap((result) => result.items);
+        allItems.sort(compareUserTransactions);
+        const error = results.find((result) => result.error)?.error ?? null;
 
         return {
           items: allItems,
@@ -102,7 +78,7 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
             count: allItems.length,
             countTotal: allItems.length,
           },
-          error: null,
+          error,
         };
       }
 
@@ -112,7 +88,7 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
       }
 
       // Simple case: fetch once with limit
-      return await fetchUserTransactions({
+      return fetchUserTransactions({
         ...filters,
         chainId: filters.chainId,
         first: filters.first ?? pageSize,
