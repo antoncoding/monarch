@@ -16,16 +16,21 @@ export const monarchGraphqlFetcher = async <T extends Record<string, unknown>>(
   variables: GraphQLVariables = {},
   options: MonarchGraphqlFetcherOptions = {},
 ): Promise<T> => {
-  if (!MONARCH_GRAPHQL_API_ENDPOINT || !MONARCH_GRAPHQL_API_KEY) {
+  if (!MONARCH_GRAPHQL_API_ENDPOINT) {
     throw new Error('Monarch GraphQL client not configured');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (MONARCH_GRAPHQL_API_KEY) {
+    headers.Authorization = `Bearer ${MONARCH_GRAPHQL_API_KEY}`;
   }
 
   const response = await fetch(MONARCH_GRAPHQL_API_ENDPOINT, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${MONARCH_GRAPHQL_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       query,
       variables,

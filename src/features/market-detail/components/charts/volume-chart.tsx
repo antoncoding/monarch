@@ -50,7 +50,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   const setVolumeView = useMarketDetailChartState((s) => s.setVolumeView);
   const chartColors = useChartColors();
 
-  const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
+  const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange, volumeView === 'USD');
 
   const [visibleLines, setVisibleLines] = useState({
     supply: true,

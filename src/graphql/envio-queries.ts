@@ -74,6 +74,44 @@ export const envioUserPositionForMarketQuery = `
   }
 `;
 
+const buildEnvioMarketSnapshotsQuery = ({
+  operationName,
+  rootField,
+}: {
+  operationName: 'EnvioMarketHourlySnapshots' | 'EnvioMarketDailySnapshots';
+  rootField: 'MarketHourlySnapshot' | 'MarketDailySnapshot';
+}) => `
+  query ${operationName}($chainId: Int!, $marketId: String!, $startTimestamp: numeric!, $endTimestamp: numeric!, $limit: Int!) {
+    ${rootField}(
+      where: {
+        chainId: { _eq: $chainId }
+        marketId: { _eq: $marketId }
+        timestamp: { _gte: $startTimestamp, _lte: $endTimestamp }
+      }
+      order_by: [{ timestamp: asc }]
+      limit: $limit
+    ) {
+      timestamp
+      totalSupplyAssets
+      totalBorrowAssets
+      supplyRateApr
+      borrowRateApr
+      rateAtTargetApr
+      utilization
+    }
+  }
+`;
+
+export const envioMarketHourlySnapshotsQuery = buildEnvioMarketSnapshotsQuery({
+  operationName: 'EnvioMarketHourlySnapshots',
+  rootField: 'MarketHourlySnapshot',
+});
+
+export const envioMarketDailySnapshotsQuery = buildEnvioMarketSnapshotsQuery({
+  operationName: 'EnvioMarketDailySnapshots',
+  rootField: 'MarketDailySnapshot',
+});
+
 export const buildEnvioMarketsPageQuery = ({ useChainIdFilter }: { useChainIdFilter: boolean }): string => {
   const variableDeclarations = ['$limit: Int!', '$offset: Int!', '$zeroAddress: String!'];
   const whereClauses = ['collateralToken: { _neq: $zeroAddress }', 'irm: { _neq: $zeroAddress }'];
