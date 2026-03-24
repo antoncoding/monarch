@@ -21,8 +21,7 @@ import {
   chartTooltipCursor,
   chartLegendStyle,
 } from './chart-utils';
-import type { Market } from '@/utils/types';
-import type { TimeseriesDataPoint } from '@/utils/types';
+import type { AssetTimeseriesDataPoint, Market } from '@/utils/types';
 
 type VolumeChartProps = {
   marketId: string;
@@ -45,9 +44,7 @@ function formatNetChangePercentage(value: number): string {
 function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
-  const volumeView = useMarketDetailChartState((s) => s.volumeView);
   const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
-  const setVolumeView = useMarketDetailChartState((s) => s.setVolumeView);
   const chartColors = useChartColors();
 
   const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
@@ -58,49 +55,31 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     liquidity: true,
   });
 
-  const formatYAxis = (value: number) => {
-    if (volumeView === 'USD') {
-      return `$${formatReadable(value)}`;
-    }
-    return formatReadable(value);
-  };
+  const formatYAxis = (value: number) => formatReadable(value);
 
-  const convertValue = (raw: number | bigint | null): number => {
-    const value = raw ?? 0;
-    if (volumeView === 'USD') {
-      return Number(value);
-    }
-    return Number(formatUnits(BigInt(value), market.loanAsset.decimals));
+  const convertValue = (raw: bigint | null): number => {
+    return Number(formatUnits(raw ?? 0n, market.loanAsset.decimals));
   };
 
   const chartData = useMemo(() => {
     if (!historicalData?.volumes) {
-      // Only show current state point in Asset mode (no USD values from market.state)
-      if (volumeView === 'Asset') {
-        return [
-          {
-            x: moment().unix(),
-            supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
-            borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
-            liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
-          },
-        ];
-      }
-      return [];
+      return [
+        {
+          x: moment().unix(),
+          supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
+          borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
+          liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
+        },
+      ];
     }
 
-    const supplyData = volumeView === 'USD' ? historicalData.volumes.supplyAssetsUsd : historicalData.volumes.supplyAssets;
-    const borrowData = volumeView === 'USD' ? historicalData.volumes.borrowAssetsUsd : historicalData.volumes.borrowAssets;
-    const liquidityData = volumeView === 'USD' ? historicalData.volumes.liquidityAssetsUsd : historicalData.volumes.liquidityAssets;
+    const supplyData = historicalData.volumes.supplyAssets;
+    const borrowData = historicalData.volumes.borrowAssets;
+    const liquidityData = historicalData.volumes.liquidityAssets;
 
     const historicalPoints = supplyData
-      .map((point: TimeseriesDataPoint, index: number) => {
+      .map((point: AssetTimeseriesDataPoint, index: number) => {
         if (point.y === null || borrowData[index]?.y === null || liquidityData[index]?.y === null) {
-          return null;
-        }
-
-        const supplyUsdValue = historicalData.volumes.supplyAssetsUsd[index]?.y;
-        if (supplyUsdValue !== null && supplyUsdValue >= 100_000_000_000) {
           return null;
         }
 
@@ -113,21 +92,16 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
       })
       .filter((point): point is NonNullable<typeof point> => point !== null);
 
-    // Only add "now" point in Asset mode (we don't have USD values from market.state)
-    if (volumeView === 'Asset') {
-      const nowPoint = {
-        x: moment().unix(),
-        supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
-        borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
-        liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
-      };
-      return [...historicalPoints, nowPoint];
-    }
+    const nowPoint = {
+      x: moment().unix(),
+      supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
+      borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
+      liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
+    };
 
-    return historicalPoints;
+    return [...historicalPoints, nowPoint];
   }, [
     historicalData?.volumes,
-    volumeView,
     market.loanAsset.decimals,
     market.state.supplyAssets,
     market.state.borrowAssets,
@@ -136,7 +110,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
 
   const formatValue = (value: number) => {
     const formattedValue = formatReadable(value);
-    return volumeView === 'USD' ? `$${formattedValue}` : `${formattedValue} ${market.loanAsset.symbol}`;
+    return `${formattedValue} ${market.loanAsset.symbol}`;
   };
 
   const STATE_KEY_MAP = {
@@ -151,23 +125,19 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     const currentRaw = market.state[stateKey] ?? 0;
     const current = Number(formatUnits(BigInt(currentRaw), market.loanAsset.decimals));
 
-    // Always use asset data for net change calculation (consistent units with current)
     const assetData = historicalData?.volumes[`${type}Assets`];
     if (!assetData || assetData.length === 0) return { current, netChangePercentage: 0, average: 0 };
 
-    const validAssetData = assetData.filter((point: TimeseriesDataPoint) => point.y !== null);
+    const validAssetData = assetData.filter((point: AssetTimeseriesDataPoint) => point.y !== null);
     if (validAssetData.length === 0) return { current, netChangePercentage: 0, average: 0 };
 
-    // Net change percentage: compare asset-to-asset for consistent units
     const startAsset = Number(formatUnits(BigInt(validAssetData[0].y ?? 0), market.loanAsset.decimals));
     const netChangePercentage = startAsset !== 0 ? ((current - startAsset) / startAsset) * 100 : 0;
 
-    // Average: use selected view data (USD or Asset) for display
-    const displayData = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : assetData;
-    const validDisplayData = displayData?.filter((point: TimeseriesDataPoint) => point.y !== null) ?? [];
+    const validDisplayData = assetData.filter((point: AssetTimeseriesDataPoint) => point.y !== null);
     const average =
       validDisplayData.length > 0
-        ? validDisplayData.reduce((acc: number, point: TimeseriesDataPoint) => acc + convertValue(point.y), 0) / validDisplayData.length
+        ? validDisplayData.reduce((acc: number, point: AssetTimeseriesDataPoint) => acc + convertValue(point.y), 0) / validDisplayData.length
         : 0;
 
     return { current, netChangePercentage, average };
@@ -229,18 +199,6 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
 
         {/* Controls */}
         <div className="flex gap-2">
-          <Select
-            value={volumeView}
-            onValueChange={(value) => setVolumeView(value as 'USD' | 'Asset')}
-          >
-            <SelectTrigger className="h-8 w-auto min-w-[80px] px-3 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="USD">USD</SelectItem>
-              <SelectItem value="Asset">{market.loanAsset.symbol}</SelectItem>
-            </SelectContent>
-          </Select>
           <Select
             value={selectedTimeframe}
             onValueChange={(value) => setTimeframe(value as '1d' | '7d' | '30d' | '3m' | '6m')}

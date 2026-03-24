@@ -51,14 +51,23 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
     return supplyApy
       .map((point: TimeseriesDataPoint, index: number) => {
-        // Skip data points with null values
-        if (point.y === null || borrowApy[index]?.y === null || apyAtTarget[index]?.y === null) {
+        const borrowValue = borrowApy[index]?.y;
+        const targetValue = apyAtTarget[index]?.y;
+
+        if (
+          point.y === null ||
+          borrowValue == null ||
+          targetValue == null ||
+          !Number.isFinite(point.y) ||
+          !Number.isFinite(borrowValue) ||
+          !Number.isFinite(targetValue)
+        ) {
           return null;
         }
 
         const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
-        const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y ?? 0) : (borrowApy[index]?.y ?? 0);
-        const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y ?? 0) : (apyAtTarget[index]?.y ?? 0);
+        const borrowVal = isAprDisplay ? convertApyToApr(borrowValue) : borrowValue;
+        const targetVal = isAprDisplay ? convertApyToApr(targetValue) : targetValue;
 
         return {
           x: point.x,
@@ -76,9 +85,20 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
   const getAverage = (data: TimeseriesDataPoint[] | undefined) => {
     if (!data || data.length === 0) return 0;
-    const validPoints = data.filter((point) => point.y !== null);
-    if (validPoints.length === 0) return 0;
-    return validPoints.reduce((sum, point) => sum + point.y, 0) / validPoints.length;
+
+    let total = 0;
+    let count = 0;
+
+    for (const point of data) {
+      if (point.y === null || !Number.isFinite(point.y)) {
+        continue;
+      }
+
+      total += point.y;
+      count += 1;
+    }
+
+    return count === 0 ? 0 : total / count;
   };
 
   const currentSupplyRate = toDisplayRate(market.state.supplyApy);

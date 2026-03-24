@@ -74,6 +74,62 @@ export const envioUserPositionForMarketQuery = `
   }
 `;
 
+const envioMarketSelection = `
+  chainId
+  marketId
+  loanToken
+  collateralToken
+  oracle
+  irm
+  lltv
+  totalSupplyAssets
+  totalBorrowAssets
+  totalSupplyShares
+  totalBorrowShares
+  collateralAssets
+  lastUpdate
+  fee
+  rateAtTarget
+`;
+
+const buildEnvioMarketSnapshotsQuery = ({
+  operationName,
+  rootField,
+}: {
+  operationName: 'EnvioMarketHourlySnapshots' | 'EnvioMarketDailySnapshots';
+  rootField: 'MarketHourlySnapshot' | 'MarketDailySnapshot';
+}) => `
+  query ${operationName}($chainId: Int!, $marketId: String!, $startTimestamp: numeric!, $endTimestamp: numeric!, $limit: Int!) {
+    ${rootField}(
+      where: {
+        chainId: { _eq: $chainId }
+        marketId: { _eq: $marketId }
+        timestamp: { _gte: $startTimestamp, _lte: $endTimestamp }
+      }
+      order_by: [{ timestamp: asc }]
+      limit: $limit
+    ) {
+      timestamp
+      totalSupplyAssets
+      totalBorrowAssets
+      supplyRateApr
+      borrowRateApr
+      rateAtTargetApr
+      utilization
+    }
+  }
+`;
+
+export const envioMarketHourlySnapshotsQuery = buildEnvioMarketSnapshotsQuery({
+  operationName: 'EnvioMarketHourlySnapshots',
+  rootField: 'MarketHourlySnapshot',
+});
+
+export const envioMarketDailySnapshotsQuery = buildEnvioMarketSnapshotsQuery({
+  operationName: 'EnvioMarketDailySnapshots',
+  rootField: 'MarketDailySnapshot',
+});
+
 export const buildEnvioMarketsPageQuery = ({ useChainIdFilter }: { useChainIdFilter: boolean }): string => {
   const variableDeclarations = ['$limit: Int!', '$offset: Int!', '$zeroAddress: String!'];
   const whereClauses = ['collateralToken: { _neq: $zeroAddress }', 'irm: { _neq: $zeroAddress }'];
@@ -91,25 +147,27 @@ export const buildEnvioMarketsPageQuery = ({ useChainIdFilter }: { useChainIdFil
         offset: $offset
         order_by: [{ chainId: asc }, { marketId: asc }]
       ) {
-        chainId
-        marketId
-        loanToken
-        collateralToken
-        oracle
-        irm
-        lltv
-        totalSupplyAssets
-        totalBorrowAssets
-        totalSupplyShares
-        totalBorrowShares
-        collateralAssets
-        lastUpdate
-        fee
-        rateAtTarget
+        ${envioMarketSelection}
       }
     }
   `;
 };
+
+export const envioMarketByIdQuery = `
+  query EnvioMarketById($chainId: Int!, $marketId: String!, $zeroAddress: String!) {
+    Market(
+      where: {
+        chainId: { _eq: $chainId }
+        marketId: { _eq: $marketId }
+        collateralToken: { _neq: $zeroAddress }
+        irm: { _neq: $zeroAddress }
+      }
+      limit: 1
+    ) {
+      ${envioMarketSelection}
+    }
+  }
+`;
 
 export const buildEnvioUserTransactionsPageQuery = ({
   useHashFilter,

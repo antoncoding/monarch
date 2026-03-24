@@ -1,6 +1,6 @@
 import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
 import { formatUnits, type Address, zeroAddress } from 'viem';
-import { buildEnvioMarketsPageQuery } from '@/graphql/envio-queries';
+import { buildEnvioMarketsPageQuery, envioMarketByIdQuery } from '@/graphql/envio-queries';
 import { getMorphoAddress } from '@/utils/morpho';
 import { isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import { blacklistTokens, infoToKey } from '@/utils/tokens';
@@ -195,6 +195,16 @@ const fetchMonarchMarketsPage = async (query: string, variables: Record<string, 
   }
 };
 
+const mapMonarchMarketRows = async (rows: MonarchMarketRow[]): Promise<Market[]> => {
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const tokenInfos = await resolveTokenInfos(getMarketTokenInputs(rows));
+
+  return rows.map((market) => mapMonarchMarketToMarket(market, tokenInfos)).filter((market): market is Market => market !== null);
+};
+
 // If `network` is omitted, this fetches the merged multi-chain market registry in one query path.
 export const fetchMonarchMarkets = async (network?: SupportedNetworks): Promise<Market[]> => {
   const query = buildEnvioMarketsPageQuery({
@@ -224,7 +234,16 @@ export const fetchMonarchMarkets = async (network?: SupportedNetworks): Promise<
     offset += rows.length;
   }
 
-  const tokenInfos = await resolveTokenInfos(getMarketTokenInputs(allRows));
+  return mapMonarchMarketRows(allRows);
+};
 
-  return allRows.map((market) => mapMonarchMarketToMarket(market, tokenInfos)).filter((market): market is Market => market !== null);
+export const fetchMonarchMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
+  const rows = await fetchMonarchMarketsPage(envioMarketByIdQuery, {
+    chainId: network,
+    marketId: normalizeAddress(uniqueKey),
+    zeroAddress: MONARCH_MARKETS_ZERO_ADDRESS,
+  });
+
+  const [market] = await mapMonarchMarketRows(rows);
+  return market ?? null;
 };

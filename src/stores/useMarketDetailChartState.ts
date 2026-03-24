@@ -77,12 +77,10 @@ const calculateTimeRange = (timeframe: ChartTimeframe): TimeseriesOptions => {
 type ChartState = {
   selectedTimeframe: ChartTimeframe;
   selectedTimeRange: TimeseriesOptions;
-  volumeView: 'USD' | 'Asset';
 };
 
 type ChartActions = {
   setTimeframe: (timeframe: ChartTimeframe) => void;
-  setVolumeView: (view: 'USD' | 'Asset') => void;
 };
 
 type MarketDetailChartStore = ChartState & ChartActions;
@@ -95,7 +93,6 @@ export const useMarketDetailChartState = create<MarketDetailChartStore>((set) =>
   // Default state
   selectedTimeframe: '7d',
   selectedTimeRange: calculateTimeRange('7d'),
-  volumeView: 'Asset',
 
   // Actions
   setTimeframe: (timeframe) => {
@@ -103,9 +100,5 @@ export const useMarketDetailChartState = create<MarketDetailChartStore>((set) =>
       selectedTimeframe: timeframe,
       selectedTimeRange: calculateTimeRange(timeframe),
     });
-  },
-
-  setVolumeView: (view) => {
-    set({ volumeView: view });
   },
 }));

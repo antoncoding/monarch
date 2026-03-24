@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchMonarchMarketHistoricalData } from '@/data-sources/monarch-api/historical';
 import { fetchMorphoMarketHistoricalData, type HistoricalDataSuccessResult } from '@/data-sources/morpho-api/historical';
 import { fetchSubgraphMarketHistoricalData } from '@/data-sources/subgraph/historical';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -26,7 +27,18 @@ export const useMarketHistoricalData = (
 
       let historicalData: HistoricalDataSuccessResult | null = null;
 
-      // Try Morpho API first if supported
+      try {
+        console.log(`Attempting to fetch historical data via Monarch API for ${uniqueKey}`);
+        historicalData = await fetchMonarchMarketHistoricalData(uniqueKey, network, options);
+      } catch (monarchError) {
+        console.error('Failed to fetch historical data via Monarch API:', monarchError);
+      }
+
+      if (historicalData) {
+        return historicalData;
+      }
+
+      // Try Morpho API next if supported
       if (supportsMorphoApi(network)) {
         try {
           console.log(`Attempting to fetch historical data via Morpho API for ${uniqueKey}`);

@@ -1,11 +1,94 @@
 import { useQuery } from '@tanstack/react-query';
+import type { PublicClient } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchMonarchMarket } from '@/data-sources/monarch-api';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import type { SupportedNetworks } from '@/utils/networks';
-import { fetchMarketSnapshot } from '@/utils/positions';
+import { fetchMarketSnapshot, type MarketSnapshot } from '@/utils/positions';
 import type { Market } from '@/utils/types';
+
+const mergeMonarchStateIntoMarket = (marketShell: Market, monarchMarket: Market): Market => ({
+  ...marketShell,
+  state: {
+    ...marketShell.state,
+    borrowAssets: monarchMarket.state.borrowAssets,
+    supplyAssets: monarchMarket.state.supplyAssets,
+    borrowShares: monarchMarket.state.borrowShares,
+    supplyShares: monarchMarket.state.supplyShares,
+    liquidityAssets: monarchMarket.state.liquidityAssets,
+    collateralAssets: monarchMarket.state.collateralAssets,
+    utilization: monarchMarket.state.utilization,
+    supplyApy: monarchMarket.state.supplyApy,
+    borrowApy: monarchMarket.state.borrowApy,
+    fee: monarchMarket.state.fee,
+    timestamp: monarchMarket.state.timestamp,
+    apyAtTarget: monarchMarket.state.apyAtTarget,
+    rateAtTarget: monarchMarket.state.rateAtTarget,
+  },
+});
+
+const mergeSnapshotIntoMarket = (market: Market, snapshot: MarketSnapshot): Market => ({
+  ...market,
+  state: {
+    ...market.state,
+    supplyAssets: snapshot.totalSupplyAssets,
+    supplyShares: snapshot.totalSupplyShares,
+    borrowAssets: snapshot.totalBorrowAssets,
+    borrowShares: snapshot.totalBorrowShares,
+    liquidityAssets: snapshot.liquidityAssets,
+  },
+});
+
+const fetchRpcMarketSnapshot = async (
+  uniqueKey: string,
+  network: SupportedNetworks,
+  publicClient: PublicClient,
+): Promise<MarketSnapshot | null> => {
+  console.log(`Attempting fetchMarketSnapshot for market ${uniqueKey}`);
+
+  try {
+    const snapshot = await fetchMarketSnapshot(uniqueKey, network, publicClient);
+    console.log(`Market state (from RPC) result for ${uniqueKey}:`, snapshot ? 'Exists' : 'Null');
+    return snapshot;
+  } catch (snapshotError) {
+    console.error(`Error fetching market snapshot for ${uniqueKey}:`, snapshotError);
+    return null;
+  }
+};
+
+const fetchFallbackMarketShell = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
+  if (supportsMorphoApi(network)) {
+    try {
+      console.log(`Attempting to fetch market shell via Morpho API for ${uniqueKey}`);
+      const morphoMarket = await fetchMorphoMarket(uniqueKey, network);
+      if (morphoMarket) {
+        return morphoMarket;
+      }
+    } catch (morphoError) {
+      console.error('Failed to fetch market shell via Morpho API:', morphoError);
+    }
+  }
+
+  try {
+    console.log(`Attempting to fetch market shell via Subgraph for ${uniqueKey}`);
+    return await fetchSubgraphMarket(uniqueKey, network);
+  } catch (subgraphError) {
+    console.error('Failed to fetch market shell via Subgraph:', subgraphError);
+    return null;
+  }
+};
+
+const fetchMonarchMarketState = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
+  try {
+    console.log(`Attempting to fetch market state via Monarch API for ${uniqueKey}`);
+    return await fetchMonarchMarket(uniqueKey, network);
+  } catch (monarchError) {
+    console.error('Failed to fetch market state via Monarch API:', monarchError);
+    return null;
+  }
+};
 
 export const useMarketData = (uniqueKey: string | undefined, network: SupportedNetworks | undefined) => {
   const queryKey = ['marketData', uniqueKey, network];
@@ -25,63 +108,28 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
         return null;
       }
 
-      // 1. Try fetching the on-chain market snapshot first
-      console.log(`Attempting fetchMarketSnapshot for market ${uniqueKey}`);
-      let snapshot = null;
-      try {
-        snapshot = await fetchMarketSnapshot(uniqueKey, network, publicClient);
-        console.log(`Market state (from RPC) result for ${uniqueKey}:`, snapshot ? 'Exists' : 'Null');
-      } catch (snapshotError) {
-        console.error(`Error fetching market snapshot for ${uniqueKey}:`, snapshotError);
-        // Snapshot fetch failed, will proceed to fallback fetch
+      const [snapshot, monarchMarket, fallbackMarketShell] = await Promise.all([
+        fetchRpcMarketSnapshot(uniqueKey, network, publicClient),
+        fetchMonarchMarketState(uniqueKey, network),
+        fetchFallbackMarketShell(uniqueKey, network),
+      ]);
+
+      let finalMarket = fallbackMarketShell;
+
+      // Preserve shell-only metadata such as whitelist and supplying vaults until Monarch exposes parity.
+      if (fallbackMarketShell && monarchMarket) {
+        finalMarket = mergeMonarchStateIntoMarket(fallbackMarketShell, monarchMarket);
+      } else if (monarchMarket) {
+        finalMarket = monarchMarket;
       }
 
-      let finalMarket: Market | null = null;
-
-      // 2. Try Morpho API first if supported, then fallback to Subgraph
-      try {
-        if (supportsMorphoApi(network)) {
-          console.log(`Attempting to fetch market data via Morpho API for ${uniqueKey}`);
-          finalMarket = await fetchMorphoMarket(uniqueKey, network);
-        }
-      } catch (morphoError) {
-        console.error('Failed to fetch market data via Morpho API:', morphoError);
-        // Continue to Subgraph fallback
-      }
-
-      // 3. If Morpho API failed or not supported, try Subgraph
-      if (!finalMarket) {
-        try {
-          console.log(`Attempting to fetch market data via Subgraph for ${uniqueKey}`);
-          finalMarket = await fetchSubgraphMarket(uniqueKey, network);
-        } catch (subgraphError) {
-          console.error('Failed to fetch market data via Subgraph:', subgraphError);
-          finalMarket = null;
-        }
-      }
-
-      // 4. If we have both snapshot and market data, override the state fields with snapshot
       if (snapshot && finalMarket) {
-        console.log(`Found market snapshot for ${uniqueKey}, overriding state with on-chain data.`);
-        finalMarket = {
-          ...finalMarket,
-          state: {
-            ...finalMarket.state,
-            // Override with on-chain snapshot data
-            supplyAssets: snapshot.totalSupplyAssets,
-            supplyShares: snapshot.totalSupplyShares,
-            borrowAssets: snapshot.totalBorrowAssets,
-            borrowShares: snapshot.totalBorrowShares,
-            liquidityAssets: snapshot.liquidityAssets,
-          },
-        };
+        console.log(`Found market snapshot for ${uniqueKey}, overriding live balances with on-chain data.`);
+        finalMarket = mergeSnapshotIntoMarket(finalMarket, snapshot);
       } else if (!finalMarket) {
-        // Both data sources failed
-        console.error(`Failed to fetch market data for ${uniqueKey} via both Morpho API and Subgraph.`);
-        finalMarket = null;
+        console.error(`Failed to fetch market data for ${uniqueKey} via Monarch, Morpho API, and Subgraph.`);
       } else if (!snapshot) {
-        // Snapshot failed but data source succeeded - just use data source
-        console.warn(`Market snapshot failed for ${uniqueKey}, using data source only.`);
+        console.warn(`Market snapshot failed for ${uniqueKey}, using indexed market state only.`);
       }
 
       console.log(`Final market data for ${uniqueKey}:`, finalMarket ? 'Found' : 'Not Found');

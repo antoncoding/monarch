@@ -1,6 +1,6 @@
 import { marketHistoricalDataQuery } from '@/graphql/morpho-api-queries';
 import type { SupportedNetworks } from '@/utils/networks';
-import type { Market, MarketRates, MarketVolumes, TimeseriesOptions, TimeseriesDataPoint } from '@/utils/types';
+import type { Market, MarketRates, MarketVolumes, TimeseriesOptions } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Adjust the response structure type: historicalState contains rates/volumes directly
@@ -22,6 +22,43 @@ export type HistoricalDataSuccessResult = {
   volumes: MarketVolumes;
 };
 // --- End Types ---
+
+const sortByTimestamp = (left: { x: number }, right: { x: number }): number => left.x - right.x;
+
+type RawTimeseriesPoint = {
+  x: number;
+  y: unknown;
+};
+
+const normalizeAssetPointValue = (value: unknown): bigint | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'bigint') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      return BigInt(value);
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof value === 'number' && Number.isSafeInteger(value)) {
+    return BigInt(value);
+  }
+
+  return null;
+};
+
+const normalizeAssetSeries = (series: RawTimeseriesPoint[] | undefined) =>
+  (series ?? []).map((point) => ({
+    x: point.x,
+    y: normalizeAssetPointValue(point.y),
+  }));
 
 // Fetcher for historical market data from Morpho API
 export const fetchMorphoMarketHistoricalData = async (
@@ -63,15 +100,14 @@ export const fetchMorphoMarketHistoricalData = async (
       supplyAssetsUsd: historicalState.supplyAssetsUsd ?? [],
       borrowAssetsUsd: historicalState.borrowAssetsUsd ?? [],
       liquidityAssetsUsd: historicalState.liquidityAssetsUsd ?? [],
-      supplyAssets: historicalState.supplyAssets ?? [],
-      borrowAssets: historicalState.borrowAssets ?? [],
-      liquidityAssets: historicalState.liquidityAssets ?? [],
+      supplyAssets: normalizeAssetSeries(historicalState.supplyAssets),
+      borrowAssets: normalizeAssetSeries(historicalState.borrowAssets),
+      liquidityAssets: normalizeAssetSeries(historicalState.liquidityAssets),
     };
 
     // Sort each timeseries array by timestamp (x-axis) ascending
-    const sortByTimestamp = (a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x;
-    Object.values(rates).forEach((arr) => arr.sort(sortByTimestamp));
-    Object.values(volumes).forEach((arr) => arr.sort(sortByTimestamp));
+    Object.values(rates).forEach((series) => series.sort(sortByTimestamp));
+    Object.values(volumes).forEach((series) => series.sort(sortByTimestamp));
 
     return { rates, volumes };
   } catch (error) {
