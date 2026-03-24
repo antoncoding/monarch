@@ -29,9 +29,12 @@ const MONARCH_HISTORICAL_TIMEOUT_MS = 10_000;
 
 const sortByTimestamp = (left: TimeseriesDataPoint, right: TimeseriesDataPoint): number => left.x - right.x;
 
-const parseIntegerValue = (value: string): number | null => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+const parseIntegerValue = (value: string): bigint | null => {
+  try {
+    return BigInt(value);
+  } catch {
+    return null;
+  }
 };
 
 const parseWadDecimal = (value: string): number | null => {
@@ -138,7 +141,7 @@ export const fetchMonarchMarketHistoricalData = async (
 
   const variables = {
     chainId,
-    marketId,
+    marketId: marketId.toLowerCase(),
     startTimestamp: String(options.startTimestamp),
     endTimestamp: String(options.endTimestamp),
     limit: MONARCH_HISTORICAL_PAGE_LIMIT,

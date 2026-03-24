@@ -291,7 +291,7 @@ export type Market = {
 
 export type TimeseriesDataPoint = {
   x: number;
-  y: number;
+  y: number | bigint | null;
 };
 
 export type TimeseriesOptions = {

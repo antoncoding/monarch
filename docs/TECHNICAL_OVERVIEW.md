@@ -206,7 +206,7 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 | Markets list | Morpho API → Monarch API → Subgraph | 5 min stale | `useMarketsQuery` |
 | Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
 | Market state (APY, utilization, balances) | Monarch market state + Morpho/Subgraph shell + RPC snapshot | 30s stale | `useMarketData` |
-| Market historical chart series | Monarch GraphQL → Morpho API → Subgraph (USD backfill only when needed) | 5 min stale | `useMarketHistoricalData` |
+| Market historical chart series | Monarch GraphQL → Morpho API → Subgraph | 5 min stale | `useMarketHistoricalData` |
 | User positions | Monarch position discovery + on-chain snapshots + market registry from `useProcessedMarkets` | 5 min | `useUserPositions` |
 | User transaction history | Monarch GraphQL → Morpho API → Subgraph (`assetIds` queries still skip Monarch) | 60s | `useUserTransactionsQuery` |
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
@@ -234,7 +234,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `useMarketsQuery` | Global market registry used across the app | Morpho API first per chain, then Monarch API, then subgraph | Rolling daily/weekly/monthly APYs plus whitelist/supplying-vault metadata parity if we ever want Monarch-first registry reads |
 | `useProcessedMarkets` | Blacklist/filtering layer on top of market registry, plus USD backfill | `useMarketsQuery` + `useTokenPrices` | Inherits `useMarketsQuery`; also needs a Monarch-native token price source if we want to remove Morpho price reads |
 | `useMarketData` | Single-market detail shell with freshest live state | Monarch live-state overlay on Morpho/Subgraph shell, then RPC snapshot override | Whitelist, supplying-vault, and rolling-APY metadata parity if we want to remove the shell fallback entirely |
-| `useMarketHistoricalData` | Historical market chart series | Monarch historical snapshots first; Morpho API/Subgraph only for fallback and optional USD backfill | USD snapshot parity if we want to remove Morpho/Subgraph backfill entirely |
+| `useMarketHistoricalData` | Historical market chart series | Monarch historical snapshots first; Morpho API/Subgraph only for fallback | Already aligned for the current asset-only market charts |
 | `useTokenPrices` | Token USD price lookup and peg fallback used by markets/admin stats | Morpho price API + major price fallback | Intentionally Morpho/major-price backed today |
 | `useUserPositions` | Discover all markets where a user has positions, then attach live balances | Monarch batched `Position` discovery + RPC snapshots/oracle reads + market metadata from `useProcessedMarkets`; Morpho/Subgraph fallback for discovery | Monarch market registry/detail if position objects should no longer depend on Morpho/Subgraph market metadata |
 | `useUserPosition` | Single-market user position | RPC snapshot first; if snapshot unavailable, Monarch position state when local market exists; then Morpho/Subgraph fallback | Same market-registry/detail gap as `useUserPositions` |

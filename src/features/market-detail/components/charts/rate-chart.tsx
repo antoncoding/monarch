@@ -29,6 +29,8 @@ type RateChartProps = {
   market: Market;
 };
 
+const isFiniteSeriesNumber = (value: TimeseriesDataPoint['y']): value is number => typeof value === 'number' && Number.isFinite(value);
+
 function RateChart({ marketId, chainId, market }: RateChartProps) {
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
@@ -51,14 +53,16 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
     return supplyApy
       .map((point: TimeseriesDataPoint, index: number) => {
-        // Skip data points with null values
-        if (point.y === null || borrowApy[index]?.y === null || apyAtTarget[index]?.y === null) {
+        const borrowValue = borrowApy[index]?.y;
+        const targetValue = apyAtTarget[index]?.y;
+
+        if (!isFiniteSeriesNumber(point.y) || !isFiniteSeriesNumber(borrowValue) || !isFiniteSeriesNumber(targetValue)) {
           return null;
         }
 
         const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
-        const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y ?? 0) : (borrowApy[index]?.y ?? 0);
-        const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y ?? 0) : (apyAtTarget[index]?.y ?? 0);
+        const borrowVal = isAprDisplay ? convertApyToApr(borrowValue) : borrowValue;
+        const targetVal = isAprDisplay ? convertApyToApr(targetValue) : targetValue;
 
         return {
           x: point.x,
@@ -76,7 +80,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
   const getAverage = (data: TimeseriesDataPoint[] | undefined) => {
     if (!data || data.length === 0) return 0;
-    const validPoints = data.filter((point) => point.y !== null);
+    const validPoints = data.filter((point): point is TimeseriesDataPoint & { y: number } => isFiniteSeriesNumber(point.y));
     if (validPoints.length === 0) return 0;
     return validPoints.reduce((sum, point) => sum + point.y, 0) / validPoints.length;
   };
