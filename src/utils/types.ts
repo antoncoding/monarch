@@ -289,10 +289,13 @@ export type Market = {
   warnings: MarketWarning[];
 };
 
-export type TimeseriesDataPoint = {
+export type TimeseriesDataPoint<T = number | null> = {
   x: number;
-  y: number | bigint | null;
+  y: T;
 };
+
+export type NumericTimeseriesDataPoint = TimeseriesDataPoint<number | null>;
+export type AssetTimeseriesDataPoint = TimeseriesDataPoint<bigint | null>;
 
 export type TimeseriesOptions = {
   startTimestamp: number;
@@ -301,19 +304,19 @@ export type TimeseriesOptions = {
 };
 
 export type MarketRates = {
-  supplyApy: TimeseriesDataPoint[];
-  borrowApy: TimeseriesDataPoint[];
-  apyAtTarget: TimeseriesDataPoint[];
-  utilization: TimeseriesDataPoint[];
+  supplyApy: NumericTimeseriesDataPoint[];
+  borrowApy: NumericTimeseriesDataPoint[];
+  apyAtTarget: NumericTimeseriesDataPoint[];
+  utilization: NumericTimeseriesDataPoint[];
 };
 
 export type MarketVolumes = {
-  supplyAssetsUsd: TimeseriesDataPoint[];
-  borrowAssetsUsd: TimeseriesDataPoint[];
-  liquidityAssetsUsd: TimeseriesDataPoint[];
-  supplyAssets: TimeseriesDataPoint[];
-  borrowAssets: TimeseriesDataPoint[];
-  liquidityAssets: TimeseriesDataPoint[];
+  supplyAssetsUsd: NumericTimeseriesDataPoint[];
+  borrowAssetsUsd: NumericTimeseriesDataPoint[];
+  liquidityAssetsUsd: NumericTimeseriesDataPoint[];
+  supplyAssets: AssetTimeseriesDataPoint[];
+  borrowAssets: AssetTimeseriesDataPoint[];
+  liquidityAssets: AssetTimeseriesDataPoint[];
 };
 
 export type HistoricalData = {

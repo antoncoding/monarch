@@ -1,7 +1,7 @@
 import { marketHourlySnapshotsQuery } from '@/graphql/morpho-subgraph-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import type { TimeseriesOptions, TimeseriesDataPoint, MarketRates, MarketVolumes } from '@/utils/types';
+import type { AssetTimeseriesDataPoint, MarketRates, MarketVolumes, NumericTimeseriesDataPoint, TimeseriesOptions } from '@/utils/types';
 import type { HistoricalDataSuccessResult } from '../morpho-api/historical';
 import { subgraphGraphqlFetcher } from './fetchers';
 
@@ -41,19 +41,20 @@ type SubgraphMarketHourlySnapshotQueryResponse = {
 const transformSubgraphSnapshotsToHistoricalResult = (
   snapshots: SubgraphMarketHourlySnapshot[], // Expect non-empty array here
 ): HistoricalDataSuccessResult => {
+  const sortByTimestamp = (left: { x: number }, right: { x: number }): number => left.x - right.x;
   const rates: MarketRates = {
-    supplyApy: [] as TimeseriesDataPoint[],
-    borrowApy: [] as TimeseriesDataPoint[],
-    apyAtTarget: [] as TimeseriesDataPoint[],
-    utilization: [] as TimeseriesDataPoint[],
+    supplyApy: [] as NumericTimeseriesDataPoint[],
+    borrowApy: [] as NumericTimeseriesDataPoint[],
+    apyAtTarget: [] as NumericTimeseriesDataPoint[],
+    utilization: [] as NumericTimeseriesDataPoint[],
   };
   const volumes: MarketVolumes = {
-    supplyAssetsUsd: [] as TimeseriesDataPoint[],
-    borrowAssetsUsd: [] as TimeseriesDataPoint[],
-    liquidityAssetsUsd: [] as TimeseriesDataPoint[],
-    supplyAssets: [] as TimeseriesDataPoint[],
-    borrowAssets: [] as TimeseriesDataPoint[],
-    liquidityAssets: [] as TimeseriesDataPoint[],
+    supplyAssetsUsd: [] as NumericTimeseriesDataPoint[],
+    borrowAssetsUsd: [] as NumericTimeseriesDataPoint[],
+    liquidityAssetsUsd: [] as NumericTimeseriesDataPoint[],
+    supplyAssets: [] as AssetTimeseriesDataPoint[],
+    borrowAssets: [] as AssetTimeseriesDataPoint[],
+    liquidityAssets: [] as AssetTimeseriesDataPoint[],
   };
 
   // No need to check for !snapshots here, handled by caller
@@ -90,14 +91,14 @@ const transformSubgraphSnapshotsToHistoricalResult = (
     volumes.borrowAssetsUsd.push({ x: timestamp, y: 0 });
     volumes.liquidityAssetsUsd.push({ x: timestamp, y: 0 });
 
-    volumes.supplyAssets.push({ x: timestamp, y: Number(supplyNative) });
-    volumes.borrowAssets.push({ x: timestamp, y: Number(borrowNative) });
-    volumes.liquidityAssets.push({ x: timestamp, y: Number(liquidityNative) });
+    volumes.supplyAssets.push({ x: timestamp, y: supplyNative });
+    volumes.borrowAssets.push({ x: timestamp, y: borrowNative });
+    volumes.liquidityAssets.push({ x: timestamp, y: liquidityNative });
   });
 
   // Sort data by timestamp
-  Object.values(rates).forEach((arr: TimeseriesDataPoint[]) => arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x));
-  Object.values(volumes).forEach((arr: TimeseriesDataPoint[]) => arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x));
+  Object.values(rates).forEach((series) => series.sort(sortByTimestamp));
+  Object.values(volumes).forEach((series) => series.sort(sortByTimestamp));
 
   return { rates, volumes };
 };

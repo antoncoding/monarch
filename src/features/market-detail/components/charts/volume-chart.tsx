@@ -21,8 +21,7 @@ import {
   chartTooltipCursor,
   chartLegendStyle,
 } from './chart-utils';
-import type { Market } from '@/utils/types';
-import type { TimeseriesDataPoint } from '@/utils/types';
+import type { AssetTimeseriesDataPoint, Market } from '@/utils/types';
 
 type VolumeChartProps = {
   marketId: string;
@@ -58,8 +57,8 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
 
   const formatYAxis = (value: number) => formatReadable(value);
 
-  const convertValue = (raw: number | bigint | null): number => {
-    return Number(formatUnits(BigInt(raw ?? 0), market.loanAsset.decimals));
+  const convertValue = (raw: bigint | null): number => {
+    return Number(formatUnits(raw ?? 0n, market.loanAsset.decimals));
   };
 
   const chartData = useMemo(() => {
@@ -79,7 +78,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     const liquidityData = historicalData.volumes.liquidityAssets;
 
     const historicalPoints = supplyData
-      .map((point: TimeseriesDataPoint, index: number) => {
+      .map((point: AssetTimeseriesDataPoint, index: number) => {
         if (point.y === null || borrowData[index]?.y === null || liquidityData[index]?.y === null) {
           return null;
         }
@@ -129,16 +128,16 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     const assetData = historicalData?.volumes[`${type}Assets`];
     if (!assetData || assetData.length === 0) return { current, netChangePercentage: 0, average: 0 };
 
-    const validAssetData = assetData.filter((point: TimeseriesDataPoint) => point.y !== null);
+    const validAssetData = assetData.filter((point: AssetTimeseriesDataPoint) => point.y !== null);
     if (validAssetData.length === 0) return { current, netChangePercentage: 0, average: 0 };
 
     const startAsset = Number(formatUnits(BigInt(validAssetData[0].y ?? 0), market.loanAsset.decimals));
     const netChangePercentage = startAsset !== 0 ? ((current - startAsset) / startAsset) * 100 : 0;
 
-    const validDisplayData = assetData.filter((point: TimeseriesDataPoint) => point.y !== null);
+    const validDisplayData = assetData.filter((point: AssetTimeseriesDataPoint) => point.y !== null);
     const average =
       validDisplayData.length > 0
-        ? validDisplayData.reduce((acc: number, point: TimeseriesDataPoint) => acc + convertValue(point.y), 0) / validDisplayData.length
+        ? validDisplayData.reduce((acc: number, point: AssetTimeseriesDataPoint) => acc + convertValue(point.y), 0) / validDisplayData.length
         : 0;
 
     return { current, netChangePercentage, average };

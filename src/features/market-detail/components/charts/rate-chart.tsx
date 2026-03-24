@@ -29,8 +29,6 @@ type RateChartProps = {
   market: Market;
 };
 
-const isFiniteSeriesNumber = (value: TimeseriesDataPoint['y']): value is number => typeof value === 'number' && Number.isFinite(value);
-
 function RateChart({ marketId, chainId, market }: RateChartProps) {
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
@@ -56,7 +54,14 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
         const borrowValue = borrowApy[index]?.y;
         const targetValue = apyAtTarget[index]?.y;
 
-        if (!isFiniteSeriesNumber(point.y) || !isFiniteSeriesNumber(borrowValue) || !isFiniteSeriesNumber(targetValue)) {
+        if (
+          point.y === null ||
+          borrowValue == null ||
+          targetValue == null ||
+          !Number.isFinite(point.y) ||
+          !Number.isFinite(borrowValue) ||
+          !Number.isFinite(targetValue)
+        ) {
           return null;
         }
 
@@ -80,9 +85,20 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
   const getAverage = (data: TimeseriesDataPoint[] | undefined) => {
     if (!data || data.length === 0) return 0;
-    const validPoints = data.filter((point): point is TimeseriesDataPoint & { y: number } => isFiniteSeriesNumber(point.y));
-    if (validPoints.length === 0) return 0;
-    return validPoints.reduce((sum, point) => sum + point.y, 0) / validPoints.length;
+
+    let total = 0;
+    let count = 0;
+
+    for (const point of data) {
+      if (point.y === null || !Number.isFinite(point.y)) {
+        continue;
+      }
+
+      total += point.y;
+      count += 1;
+    }
+
+    return count === 0 ? 0 : total / count;
   };
 
   const currentSupplyRate = toDisplayRate(market.state.supplyApy);

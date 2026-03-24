@@ -1,7 +1,7 @@
 import { formatUnits } from 'viem';
 import { envioMarketDailySnapshotsQuery, envioMarketHourlySnapshotsQuery } from '@/graphql/envio-queries';
 import { convertAprToApy } from '@/utils/rateMath';
-import type { MarketRates, MarketVolumes, TimeseriesDataPoint, TimeseriesOptions } from '@/utils/types';
+import type { MarketRates, MarketVolumes, TimeseriesOptions } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { HistoricalDataSuccessResult } from '../morpho-api/historical';
 import { monarchGraphqlFetcher } from './fetchers';
@@ -27,7 +27,7 @@ const WAD_DECIMALS = 18;
 const MONARCH_HISTORICAL_PAGE_LIMIT = 1_000;
 const MONARCH_HISTORICAL_TIMEOUT_MS = 10_000;
 
-const sortByTimestamp = (left: TimeseriesDataPoint, right: TimeseriesDataPoint): number => left.x - right.x;
+const sortByTimestamp = (left: { x: number }, right: { x: number }): number => left.x - right.x;
 
 const parseIntegerValue = (value: string): bigint | null => {
   try {
