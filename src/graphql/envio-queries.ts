@@ -74,6 +74,24 @@ export const envioUserPositionForMarketQuery = `
   }
 `;
 
+const envioMarketSelection = `
+  chainId
+  marketId
+  loanToken
+  collateralToken
+  oracle
+  irm
+  lltv
+  totalSupplyAssets
+  totalBorrowAssets
+  totalSupplyShares
+  totalBorrowShares
+  collateralAssets
+  lastUpdate
+  fee
+  rateAtTarget
+`;
+
 const buildEnvioMarketSnapshotsQuery = ({
   operationName,
   rootField,
@@ -129,25 +147,27 @@ export const buildEnvioMarketsPageQuery = ({ useChainIdFilter }: { useChainIdFil
         offset: $offset
         order_by: [{ chainId: asc }, { marketId: asc }]
       ) {
-        chainId
-        marketId
-        loanToken
-        collateralToken
-        oracle
-        irm
-        lltv
-        totalSupplyAssets
-        totalBorrowAssets
-        totalSupplyShares
-        totalBorrowShares
-        collateralAssets
-        lastUpdate
-        fee
-        rateAtTarget
+        ${envioMarketSelection}
       }
     }
   `;
 };
+
+export const envioMarketByIdQuery = `
+  query EnvioMarketById($chainId: Int!, $marketId: String!, $zeroAddress: String!) {
+    Market(
+      where: {
+        chainId: { _eq: $chainId }
+        marketId: { _eq: $marketId }
+        collateralToken: { _neq: $zeroAddress }
+        irm: { _neq: $zeroAddress }
+      }
+      limit: 1
+    ) {
+      ${envioMarketSelection}
+    }
+  }
+`;
 
 export const buildEnvioUserTransactionsPageQuery = ({
   useHashFilter,
