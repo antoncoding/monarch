@@ -596,7 +596,7 @@ const supportedTokens = [
   {
     symbol: 'wUSDL',
     img: require('../imgs/tokens/wusdl.webp') as string,
-    decimals: 6,
+    decimals: 18,
     networks: [{ chain: mainnet, address: '0x7751E2F4b8ae93EF6B79d86419d42FE3295A4559' }],
     peg: TokenPeg.USD,
   },
