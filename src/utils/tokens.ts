@@ -274,7 +274,7 @@ const supportedTokens = [
     peg: TokenPeg.ETH,
   },
   {
-    symbol: 'WMATIC',
+    symbol: 'WPOL',
     img: require('../imgs/tokens/wpol.webp') as string,
     decimals: 18,
     networks: [{ chain: polygon, address: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270' }],
@@ -596,7 +596,7 @@ const supportedTokens = [
   {
     symbol: 'wUSDL',
     img: require('../imgs/tokens/wusdl.webp') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [{ chain: mainnet, address: '0x7751E2F4b8ae93EF6B79d86419d42FE3295A4559' }],
     peg: TokenPeg.USD,
   },
@@ -634,7 +634,7 @@ const supportedTokens = [
     ],
   },
   {
-    symbol: 'FNX',
+    symbol: 'FXN',
     img: require('../imgs/tokens/fx.webp') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0x365accfca291e7d3914637abf1f7635db165bb09' }],
