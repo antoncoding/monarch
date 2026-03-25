@@ -65,6 +65,7 @@ export const blacklistedMarkets = [
   '0x1dca6989b0d2b0a546530b3a739e91402eee2e1536a2d3ded4f5ce589a9cd1c2', //
   '0xfdb8221edcae73f73485d55c30e706906114bc2ff4634870c5c57e8fb83eae6a', // USDC / K on arbitrum
   '0x0f9563442d64ab3bd3bcb27058db0b0d4046a4c46f0acd811dacae9551d2b129', // sdeUSD / USDC market from Elixir affected by incident
+  '0xfd3e5c20340aeba93f78f7dc4657dc1e11b553c68c545acc836321a14b47e457', // wUSDL/wstETH, decimal changed.
 ];
 
 // Market specially whitelisted by Monarch, lowercase
