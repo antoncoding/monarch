@@ -1,4 +1,4 @@
-import { zeroAddress } from 'viem';
+import { isAddress, zeroAddress } from 'viem';
 import { blacklistTokens } from '@/utils/tokens';
 
 const ZERO_ADDRESS = zeroAddress.toLowerCase();
@@ -23,6 +23,7 @@ export const parseNumericThreshold = (rawValue: string | undefined | null): numb
 };
 
 const normalizeAddress = (value: string | undefined | null): string => value?.toLowerCase() ?? '';
+const isValidRegistryAddress = (value: string): boolean => value.length > 0 && isAddress(value);
 
 export const isBlockedMarketToken = (address: string | undefined | null): boolean => {
   const normalized = normalizeAddress(address);
@@ -42,7 +43,7 @@ export const isMarketRegistryEntryAllowed = ({
   const normalizedCollateralAsset = normalizeAddress(collateralAssetAddress);
   const normalizedIrm = normalizeAddress(irmAddress);
 
-  if (!normalizedLoanAsset || !normalizedCollateralAsset || !normalizedIrm) {
+  if (!isValidRegistryAddress(normalizedLoanAsset) || !isValidRegistryAddress(normalizedCollateralAsset) || !isValidRegistryAddress(normalizedIrm)) {
     return false;
   }
 

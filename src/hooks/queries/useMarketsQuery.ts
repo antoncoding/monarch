@@ -78,26 +78,31 @@ export const useMarketsQuery = () => {
         fetchErrors.push(monarchError);
       }
 
-      const fallbackNetworks = Array.from(missingNetworks);
-      const results = await Promise.allSettled(
-        fallbackNetworks.map(async (network) => {
-          if (supportsMorphoApi(network)) {
-            try {
+      const fetchFallbackMarketsForNetwork = async (network: SupportedNetworks): Promise<{ network: SupportedNetworks; markets: Market[] }> => {
+        if (supportsMorphoApi(network)) {
+          try {
+            const morphoMarkets = await fetchMorphoMarkets(network);
+            if (morphoMarkets.length > 0) {
               return {
                 network,
-                markets: await fetchMorphoMarkets(network),
+                markets: morphoMarkets,
               };
-            } catch (error) {
-              console.warn(`Morpho markets failed for network ${network}, falling back to Subgraph.`, error);
             }
-          }
 
-          return {
-            network,
-            markets: await fetchSubgraphMarkets(network),
-          };
-        }),
-      );
+            console.warn(`Morpho markets returned empty for network ${network}, falling back to Subgraph.`);
+          } catch (error) {
+            console.warn(`Morpho markets failed for network ${network}, falling back to Subgraph.`, error);
+          }
+        }
+
+        return {
+          network,
+          markets: await fetchSubgraphMarkets(network),
+        };
+      };
+
+      const fallbackNetworks = Array.from(missingNetworks);
+      const results = await Promise.allSettled(fallbackNetworks.map((network) => fetchFallbackMarketsForNetwork(network)));
 
       results.forEach((result, index) => {
         if (result.status === 'fulfilled') {

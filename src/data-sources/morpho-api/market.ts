@@ -84,7 +84,7 @@ const filterRegistryMarkets = (markets: Market[]): Market[] =>
   );
 
 // Fetcher for market details from Morpho API
-export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market> => {
+export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
   const response = await morphoGraphqlFetcher<MarketGraphQLResponse>(marketDetailQuery, {
     uniqueKey,
     chainId: network,
@@ -92,7 +92,10 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
   if (!response || !response.data || !response.data.marketByUniqueKey) {
     throw new Error('Market data not found in Morpho API response');
   }
-  return processMarketData(response.data.marketByUniqueKey);
+
+  const market = processMarketData(response.data.marketByUniqueKey);
+
+  return filterRegistryMarkets([market])[0] ?? null;
 };
 
 const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
