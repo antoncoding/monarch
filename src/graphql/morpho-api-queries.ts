@@ -147,12 +147,6 @@ export const marketsQuery = `
       timestamp
       apyAtTarget
       rateAtTarget
-      dailySupplyApy
-      dailyBorrowApy
-      weeklySupplyApy
-      weeklyBorrowApy
-      monthlySupplyApy
-      monthlyBorrowApy
     }
     warnings {
       type

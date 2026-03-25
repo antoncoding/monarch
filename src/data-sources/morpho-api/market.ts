@@ -1,14 +1,27 @@
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
+import { isMarketRegistryEntryAllowed } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
-import { blacklistTokens } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 import { type Address, zeroAddress } from 'viem';
 
 // API response type - matches the new Morpho API shape where oracleAddress is nested
-type MorphoApiMarket = Omit<Market, 'oracleAddress' | 'whitelisted'> & {
+type MorphoApiMarketState = Omit<
+  Market['state'],
+  'dailySupplyApy' | 'dailyBorrowApy' | 'weeklySupplyApy' | 'weeklyBorrowApy' | 'monthlySupplyApy' | 'monthlyBorrowApy'
+> &
+  Partial<
+    Pick<
+      Market['state'],
+      'dailySupplyApy' | 'dailyBorrowApy' | 'weeklySupplyApy' | 'weeklyBorrowApy' | 'monthlySupplyApy' | 'monthlyBorrowApy'
+    >
+  >;
+
+type MorphoApiMarket = Omit<Market, 'oracleAddress' | 'whitelisted' | 'state' | 'supplyingVaults'> & {
   oracle: { address: string } | null;
   listed: boolean;
+  state: MorphoApiMarketState;
+  supplyingVaults?: { address: string }[];
 };
 
 type MarketGraphQLResponse = {
@@ -42,17 +55,36 @@ const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
 
 // Transform API response to internal Market type
 const processMarketData = (market: MorphoApiMarket): Market => {
-  const { oracle, listed, ...rest } = market;
+  const { oracle, listed, state, supplyingVaults, ...rest } = market;
   return {
     ...rest,
     oracleAddress: (oracle?.address ?? zeroAddress) as Address,
     whitelisted: listed,
     hasUSDPrice: true,
+    supplyingVaults: supplyingVaults ?? [],
+    state: {
+      ...state,
+      dailySupplyApy: state.dailySupplyApy ?? null,
+      dailyBorrowApy: state.dailyBorrowApy ?? null,
+      weeklySupplyApy: state.weeklySupplyApy ?? null,
+      weeklyBorrowApy: state.weeklyBorrowApy ?? null,
+      monthlySupplyApy: state.monthlySupplyApy ?? null,
+      monthlyBorrowApy: state.monthlyBorrowApy ?? null,
+    },
   };
 };
 
+const filterRegistryMarkets = (markets: Market[]): Market[] =>
+  markets.filter((market) =>
+    isMarketRegistryEntryAllowed({
+      loanAssetAddress: market.loanAsset?.address,
+      collateralAssetAddress: market.collateralAsset?.address,
+      irmAddress: market.irmAddress,
+    }),
+  );
+
 // Fetcher for market details from Morpho API
-export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market> => {
+export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
   const response = await morphoGraphqlFetcher<MarketGraphQLResponse>(marketDetailQuery, {
     uniqueKey,
     chainId: network,
@@ -60,7 +92,10 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
   if (!response || !response.data || !response.data.marketByUniqueKey) {
     throw new Error('Market data not found in Morpho API response');
   }
-  return processMarketData(response.data.marketByUniqueKey);
+
+  const market = processMarketData(response.data.marketByUniqueKey);
+
+  return filterRegistryMarkets([market])[0] ?? null;
 };
 
 const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
@@ -107,11 +142,7 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
 
   if (firstPageCount === 0 && totalCount > 0) {
     console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
-    return allMarkets.filter(
-      (market) =>
-        !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
-        !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
-    );
+    return filterRegistryMarkets(allMarkets);
   }
 
   const remainingOffsets: number[] = [];
@@ -139,10 +170,5 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
     });
   }
 
-  // final filter: remove scam markets
-  return allMarkets.filter(
-    (market) =>
-      !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
-      !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
-  );
+  return filterRegistryMarkets(allMarkets);
 };

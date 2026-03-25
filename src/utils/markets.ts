@@ -1,3 +1,8 @@
+import { isAddress, zeroAddress } from 'viem';
+import { blacklistTokens } from '@/utils/tokens';
+
+const ZERO_ADDRESS = zeroAddress.toLowerCase();
+
 /**
  * Parse and normalize a numeric threshold value from user input.
  * - Empty string or "0" → 0 (no threshold)
@@ -15,6 +20,42 @@ export const parseNumericThreshold = (rawValue: string | undefined | null): numb
   }
 
   return Math.max(parsed, 0);
+};
+
+const normalizeAddress = (value: string | undefined | null): string => value?.toLowerCase() ?? '';
+const isValidRegistryAddress = (value: string): boolean => value.length > 0 && isAddress(value);
+
+export const isBlockedMarketToken = (address: string | undefined | null): boolean => {
+  const normalized = normalizeAddress(address);
+  return normalized.length > 0 && blacklistTokens.includes(normalized);
+};
+
+export const isMarketRegistryEntryAllowed = ({
+  loanAssetAddress,
+  collateralAssetAddress,
+  irmAddress,
+}: {
+  loanAssetAddress: string | undefined | null;
+  collateralAssetAddress: string | undefined | null;
+  irmAddress: string | undefined | null;
+}): boolean => {
+  const normalizedLoanAsset = normalizeAddress(loanAssetAddress);
+  const normalizedCollateralAsset = normalizeAddress(collateralAssetAddress);
+  const normalizedIrm = normalizeAddress(irmAddress);
+
+  if (!isValidRegistryAddress(normalizedLoanAsset) || !isValidRegistryAddress(normalizedCollateralAsset) || !isValidRegistryAddress(normalizedIrm)) {
+    return false;
+  }
+
+  if (normalizedCollateralAsset === ZERO_ADDRESS || normalizedIrm === ZERO_ADDRESS) {
+    return false;
+  }
+
+  if (isBlockedMarketToken(normalizedLoanAsset) || isBlockedMarketToken(normalizedCollateralAsset)) {
+    return false;
+  }
+
+  return true;
 };
 
 // Blacklisted markets by uniqueKey

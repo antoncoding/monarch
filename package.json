@@ -14,6 +14,7 @@
     "stylelint": "stylelint '**/*.css' --fix",
     "stylelint:check": "stylelint '**/*.css'",
     "test:coverage:open": "pnpm test:coverage && open coverage/lcov-report/index.html",
+    "tokens:verify-metadata": "tsx scripts/verify-token-metadata.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

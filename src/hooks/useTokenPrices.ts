@@ -20,6 +20,7 @@ export const tokenPriceKeys = {
 
 type UseTokenPricesReturn = {
   prices: Map<string, number>;
+  directPriceKeys: Set<string>;
   isLoading: boolean;
   error: Error | null;
 };
@@ -173,8 +174,13 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
     return resolvedPrices;
   }, [prices, stableTokens, tokensWithPegRefs, majorPrices]);
 
+  const directPriceKeys = useMemo(() => {
+    return new Set((prices ?? new Map<string, number>()).keys());
+  }, [prices]);
+
   return {
     prices: pricesWithFallback,
+    directPriceKeys,
     isLoading,
     error: error ?? null,
   };

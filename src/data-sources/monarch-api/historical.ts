@@ -147,19 +147,14 @@ export const fetchMonarchMarketHistoricalData = async (
     limit: MONARCH_HISTORICAL_PAGE_LIMIT,
   };
 
-  const query =
-    options.interval === 'HOUR'
-      ? envioMarketHourlySnapshotsQuery
-      : envioMarketDailySnapshotsQuery;
+  const query = options.interval === 'HOUR' ? envioMarketHourlySnapshotsQuery : envioMarketDailySnapshotsQuery;
 
   try {
     const response = await monarchGraphqlFetcher<MonarchHistoricalSnapshotsResponse>(query, variables, {
       signal: controller.signal,
     });
     const snapshots =
-      options.interval === 'HOUR'
-        ? (response.data?.MarketHourlySnapshot ?? [])
-        : (response.data?.MarketDailySnapshot ?? []);
+      options.interval === 'HOUR' ? (response.data?.MarketHourlySnapshot ?? []) : (response.data?.MarketDailySnapshot ?? []);
 
     return transformSnapshotsToHistoricalResult(snapshots);
   } catch (error) {
