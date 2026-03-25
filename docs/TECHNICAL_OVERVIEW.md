@@ -203,7 +203,7 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 ### Dynamic Data (Runtime fetched)
 | Data Type | Source | Refresh | Query Hook |
 |-----------|--------|---------|------------|
-| Markets list | Morpho API → Monarch API → Subgraph | 5 min stale | `useMarketsQuery` |
+| Markets list | Monarch multi-chain → Morpho per chain → Subgraph per chain | 5 min stale | `useMarketsQuery` |
 | Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
 | Market state (APY, utilization, balances) | Monarch market state + Morpho/Subgraph shell + RPC snapshot | 30s stale | `useMarketData` |
 | Market historical chart series | Monarch GraphQL → Morpho API → Subgraph | 5 min stale | `useMarketHistoricalData` |
@@ -231,8 +231,8 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 
 | Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
 |---------------|----------------|-------------|----------------------------------|
-| `useMarketsQuery` | Global market registry used across the app | Morpho API first per chain, then Monarch API, then subgraph | Rolling daily/weekly/monthly APYs plus whitelist/supplying-vault metadata parity if we ever want Monarch-first registry reads |
-| `useProcessedMarkets` | Blacklist/filtering layer on top of market registry, plus USD backfill | `useMarketsQuery` + `useTokenPrices` | Inherits `useMarketsQuery`; also needs a Monarch-native token price source if we want to remove Morpho price reads |
+| `useMarketsQuery` | Global market registry used across the app | Monarch multi-chain first, then Morpho per chain, then subgraph per chain | Optional metadata parity from Morpho plus any non-core enrichment we may keep outside the primary registry |
+| `useProcessedMarkets` | Blacklist/filtering layer on top of market registry, plus RPC historical-rate enrichment and USD backfill | `useMarketsQuery` + RPC/archive snapshots + `useTokenPrices` | Inherits `useMarketsQuery`; also needs a Monarch-native token price source if we want to remove Morpho price reads |
 | `useMarketData` | Single-market detail shell with freshest live state | Monarch live-state overlay on Morpho/Subgraph shell, then RPC snapshot override | Whitelist, supplying-vault, and rolling-APY metadata parity if we want to remove the shell fallback entirely |
 | `useMarketHistoricalData` | Historical market chart series | Monarch historical snapshots first; Morpho API/Subgraph only for fallback | Already aligned for the current asset-only market charts |
 | `useTokenPrices` | Token USD price lookup and peg fallback used by markets/admin stats | Morpho price API + major price fallback | Intentionally Morpho/major-price backed today |
@@ -367,9 +367,10 @@ supportsMorphoApi(network) returns true for:
 - Mainnet, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
 
 Fallback Strategy:
-1. IF supportsMorphoApi(network) → Try Morpho API
-2. IF API fails OR unsupported → Try Subgraph
-3. Each network fails independently (partial data OK)
+1. `useMarketsQuery` tries one shared Monarch market-registry read first
+2. Any chain missing from that result falls back independently to Morpho API when supported
+3. If Morpho fails or is unsupported, that chain falls back to Subgraph
+4. Each network still fails independently (partial data OK)
 ```
 
 ### GraphQL Fetchers
@@ -414,7 +415,7 @@ Fallback Strategy:
 
 ### Key Patterns
 
-1. **Feature-Scoped Priority**: Monarch-first for market detail/history/activity, Morpho-first for the global market registry, Subgraph last
+1. **Feature-Scoped Priority**: Monarch-first for market detail/history/activity and the global market registry core shell, Morpho/Subgraph fallback last
 2. **Parallel Execution**: `Promise.all()` for multi-network
 3. **Graceful Degradation**: Partial data > Error
 4. **Three-Phase Market Detail**: Monarch live state + fallback shell + RPC snapshot

@@ -1,20 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePublicClient } from 'wagmi';
-import morphoABI from '@/abis/morpho';
-import { getMorphoAddress } from '@/utils/morpho';
+import { fetchMarketsSnapshots } from '@/utils/positions';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
 const REFRESH_INTERVAL = 15_000; // 15 seconds
-
-type MarketSnapshot = {
-  totalSupplyAssets: string;
-  totalSupplyShares: string;
-  totalBorrowAssets: string;
-  totalBorrowShares: string;
-  liquidityAssets: string;
-};
 
 /**
  * Hook to fetch fresh market states using multicall.
@@ -68,47 +59,12 @@ export const useFreshMarketsState = (
       }
 
       console.log(`Reading fresh state for ${markets.length} markets from chain...`);
-
-      // Create multicall contracts for all markets
-      const contracts = markets.map((market) => ({
-        address: getMorphoAddress(effectiveChainId) as `0x${string}`,
-        abi: morphoABI,
-        functionName: 'market' as const,
-        args: [market.uniqueKey as `0x${string}`],
-      }));
-
-      // Use multicall to batch all market queries into a single RPC call
-      const results = await publicClient.multicall({
-        contracts,
-        allowFailure: true,
-      });
-
+      const snapshotsMap = await fetchMarketsSnapshots(
+        markets.map((market) => market.uniqueKey),
+        effectiveChainId,
+        publicClient,
+      );
       console.log(`complete reading ${markets.length} market states`);
-
-      // Process results into snapshots map
-      const snapshotsMap = new Map<string, MarketSnapshot>();
-
-      results.forEach((result, index) => {
-        const market = markets[index];
-        if (result.status === 'success' && result.result) {
-          const data = result.result as readonly bigint[];
-          const totalSupplyAssets = data[0];
-          const totalSupplyShares = data[1];
-          const totalBorrowAssets = data[2];
-          const totalBorrowShares = data[3];
-          const liquidityAssets = totalSupplyAssets - totalBorrowAssets;
-
-          snapshotsMap.set(market.uniqueKey, {
-            totalSupplyAssets: totalSupplyAssets.toString(),
-            totalSupplyShares: totalSupplyShares.toString(),
-            totalBorrowAssets: totalBorrowAssets.toString(),
-            totalBorrowShares: totalBorrowShares.toString(),
-            liquidityAssets: liquidityAssets.toString(),
-          });
-        } else {
-          console.warn(`Failed to fetch snapshot for market ${market.uniqueKey}`);
-        }
-      });
 
       return snapshotsMap;
     },
@@ -137,7 +93,7 @@ export const useFreshMarketsState = (
     if (!snapshots) return markets;
 
     return markets.map((market) => {
-      const snapshot = snapshots.get(market.uniqueKey);
+      const snapshot = snapshots.get(market.uniqueKey.toLowerCase());
       if (!snapshot) return market;
 
       return {

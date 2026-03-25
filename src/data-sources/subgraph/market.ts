@@ -1,6 +1,7 @@
 import type { Address } from 'viem';
 import { marketQuery as subgraphMarketQuery, marketsQuery as subgraphMarketsQuery } from '@/graphql/morpho-subgraph-queries'; // Assuming query is here
 import { formatBalance } from '@/utils/balance';
+import { isMarketRegistryEntryAllowed } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { SubgraphMarket, SubgraphMarketQueryResponse, SubgraphMarketsQueryResponse, SubgraphToken } from '@/utils/subgraph-types';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
@@ -33,7 +34,7 @@ const transformSubgraphMarketToMarket = (
   subgraphMarket: Partial<SubgraphMarket>,
   network: SupportedNetworks,
   majorPrices: MajorPrices,
-): Market => {
+): Market | null => {
   const marketId = subgraphMarket.id ?? '';
   const lltv = subgraphMarket.lltv ?? '0';
   const irmAddress = subgraphMarket.irm ?? '0x';
@@ -64,6 +65,16 @@ const transformSubgraphMarketToMarket = (
 
   const loanAsset = mapToken(subgraphMarket.borrowedToken);
   const collateralAsset = mapToken(subgraphMarket.inputToken);
+
+  if (
+    !isMarketRegistryEntryAllowed({
+      loanAssetAddress: loanAsset.address,
+      collateralAssetAddress: collateralAsset.address,
+      irmAddress,
+    })
+  ) {
+    return null;
+  }
 
   const chainId = network;
 
@@ -273,5 +284,7 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
   }
 
   const majorPrices = await majorPricesPromise;
-  return allMarkets.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
+  return allMarkets
+    .map((market) => transformSubgraphMarketToMarket(market, network, majorPrices))
+    .filter((market): market is Market => market !== null);
 };

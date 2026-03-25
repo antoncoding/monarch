@@ -21,6 +21,9 @@ export type MarketSnapshot = {
   liquidityAssets: string;
 };
 
+const MARKET_SNAPSHOT_BATCH_SIZE = 200;
+const MARKET_SNAPSHOT_PARALLEL_BATCHES = 4;
+
 // Types for contract responses
 type Position = {
   supplyShares: bigint;
@@ -324,38 +327,93 @@ export async function fetchMarketSnapshot(
   client: PublicClient,
   blockNumber?: number,
 ): Promise<MarketSnapshot | null> {
+  const snapshots = await fetchMarketsSnapshots([marketId], chainId, client, blockNumber);
+  return snapshots.get(marketId.toLowerCase()) ?? null;
+}
+
+export async function fetchMarketsSnapshots(
+  marketIds: string[],
+  chainId: number,
+  client: PublicClient,
+  blockNumber?: number,
+): Promise<Map<string, MarketSnapshot>> {
+  const snapshots = new Map<string, MarketSnapshot>();
+
+  if (marketIds.length === 0) {
+    return snapshots;
+  }
+
   try {
     const isLatest = blockNumber === undefined;
+    const morphoAddress = getMorphoAddress(chainId as SupportedNetworks);
 
-    // Get the market data
-    const marketArray = (await client.readContract({
-      address: getMorphoAddress(chainId as SupportedNetworks),
-      abi: morphoABI,
-      functionName: 'market',
-      args: [marketId as `0x${string}`],
-      blockNumber: isLatest ? undefined : BigInt(blockNumber),
-    })) as readonly bigint[];
+    for (
+      let waveStart = 0;
+      waveStart < marketIds.length;
+      waveStart += MARKET_SNAPSHOT_BATCH_SIZE * MARKET_SNAPSHOT_PARALLEL_BATCHES
+    ) {
+      const waveChunks: string[][] = [];
 
-    // Convert array to market object
-    const market = arrayToMarket(marketArray);
+      for (let chunkIndex = 0; chunkIndex < MARKET_SNAPSHOT_PARALLEL_BATCHES; chunkIndex += 1) {
+        const chunkStart = waveStart + chunkIndex * MARKET_SNAPSHOT_BATCH_SIZE;
+        if (chunkStart >= marketIds.length) {
+          break;
+        }
 
-    const liquidityAssets = market.totalSupplyAssets - market.totalBorrowAssets;
+        waveChunks.push(marketIds.slice(chunkStart, chunkStart + MARKET_SNAPSHOT_BATCH_SIZE));
+      }
 
-    return {
-      totalSupplyAssets: market.totalSupplyAssets.toString(),
-      totalSupplyShares: market.totalSupplyShares.toString(),
-      totalBorrowAssets: market.totalBorrowAssets.toString(),
-      totalBorrowShares: market.totalBorrowShares.toString(),
-      liquidityAssets: liquidityAssets.toString(),
-    };
+      const waveResults = await Promise.all(
+        waveChunks.map((marketChunk) =>
+          client.multicall({
+            contracts: marketChunk.map((currentMarketId) => ({
+              address: morphoAddress as `0x${string}`,
+              abi: morphoABI,
+              functionName: 'market' as const,
+              args: [currentMarketId as `0x${string}`],
+            })),
+            allowFailure: true,
+            blockNumber: isLatest ? undefined : BigInt(blockNumber),
+          }),
+        ),
+      );
+
+      waveResults.forEach((results, waveIndex) => {
+        const marketChunk = waveChunks[waveIndex] ?? [];
+
+        results.forEach((result, resultIndex) => {
+          if (result.status !== 'success' || !result.result) {
+            return;
+          }
+
+          const marketId = marketChunk[resultIndex];
+          if (!marketId) {
+            return;
+          }
+
+          const market = arrayToMarket(result.result as readonly bigint[]);
+          const liquidityAssets = market.totalSupplyAssets - market.totalBorrowAssets;
+
+          snapshots.set(marketId.toLowerCase(), {
+            totalSupplyAssets: market.totalSupplyAssets.toString(),
+            totalSupplyShares: market.totalSupplyShares.toString(),
+            totalBorrowAssets: market.totalBorrowAssets.toString(),
+            totalBorrowShares: market.totalBorrowShares.toString(),
+            liquidityAssets: liquidityAssets.toString(),
+          });
+        });
+      });
+    }
+
+    return snapshots;
   } catch (error) {
     console.error('Error reading market:', {
-      marketId,
+      marketIds,
       chainId,
       blockNumber,
       error,
     });
-    return null;
+    return snapshots;
   }
 }
 

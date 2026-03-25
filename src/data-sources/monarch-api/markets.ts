@@ -1,9 +1,10 @@
 import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
 import { formatUnits, type Address, zeroAddress } from 'viem';
 import { buildEnvioMarketsPageQuery, envioMarketByIdQuery } from '@/graphql/envio-queries';
+import { isMarketRegistryEntryAllowed } from '@/utils/markets';
 import { getMorphoAddress } from '@/utils/morpho';
 import { isSupportedChain, type SupportedNetworks } from '@/utils/networks';
-import { blacklistTokens, infoToKey } from '@/utils/tokens';
+import { infoToKey } from '@/utils/tokens';
 import { resolveTokenInfos, type ResolvedTokenInfo, type TokenAddressInput } from '@/utils/tokenMetadata';
 import type { Market, MarketWarning } from '@/utils/types';
 import { UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
@@ -134,7 +135,13 @@ const mapMonarchMarketToMarket = (market: MonarchMarketRow, tokenInfos: Map<stri
   const loanAssetAddress = normalizeAddress(market.loanToken);
   const collateralAssetAddress = normalizeAddress(market.collateralToken);
 
-  if (blacklistTokens.includes(loanAssetAddress) || blacklistTokens.includes(collateralAssetAddress)) {
+  if (
+    !isMarketRegistryEntryAllowed({
+      loanAssetAddress,
+      collateralAssetAddress,
+      irmAddress: market.irm,
+    })
+  ) {
     return null;
   }
 
