@@ -98,10 +98,7 @@ const computeRealizedRate = ({
   });
 };
 
-export async function fetchMarketRateEnrichment(
-  markets: Market[],
-  customRpcUrls: CustomRpcUrls = {},
-): Promise<MarketRateEnrichmentMap> {
+export async function fetchMarketRateEnrichment(markets: Market[], customRpcUrls: CustomRpcUrls = {}): Promise<MarketRateEnrichmentMap> {
   const enrichments = new Map<string, MarketRateEnrichment>();
 
   if (markets.length === 0) {

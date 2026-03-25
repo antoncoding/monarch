@@ -112,10 +112,12 @@ export const useMarketsQuery = () => {
 
       const combinedMarkets = Array.from(marketsByChain.values()).flat();
       const dedupedMarkets = Array.from(
-        combinedMarkets.reduce((acc, market) => {
-          acc.set(`${market.morphoBlue.chain.id}-${market.uniqueKey.toLowerCase()}`, market);
-          return acc;
-        }, new Map<string, Market>()).values(),
+        combinedMarkets
+          .reduce((acc, market) => {
+            acc.set(`${market.morphoBlue.chain.id}-${market.uniqueKey.toLowerCase()}`, market);
+            return acc;
+          }, new Map<string, Market>())
+          .values(),
       );
 
       // Apply basic filtering

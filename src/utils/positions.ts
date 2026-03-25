@@ -347,11 +347,7 @@ export async function fetchMarketsSnapshots(
     const isLatest = blockNumber === undefined;
     const morphoAddress = getMorphoAddress(chainId as SupportedNetworks);
 
-    for (
-      let waveStart = 0;
-      waveStart < marketIds.length;
-      waveStart += MARKET_SNAPSHOT_BATCH_SIZE * MARKET_SNAPSHOT_PARALLEL_BATCHES
-    ) {
+    for (let waveStart = 0; waveStart < marketIds.length; waveStart += MARKET_SNAPSHOT_BATCH_SIZE * MARKET_SNAPSHOT_PARALLEL_BATCHES) {
       const waveChunks: string[][] = [];
 
       for (let chunkIndex = 0; chunkIndex < MARKET_SNAPSHOT_PARALLEL_BATCHES; chunkIndex += 1) {

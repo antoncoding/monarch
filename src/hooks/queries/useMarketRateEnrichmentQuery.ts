@@ -1,11 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
-import {
-  fetchMarketRateEnrichment,
-  getMarketRateEnrichmentKey,
-  type MarketRateEnrichmentMap,
-} from '@/utils/market-rate-enrichment';
+import { fetchMarketRateEnrichment, getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
 import type { Market } from '@/utils/types';
 
 const EMPTY_ENRICHMENT_MAP: MarketRateEnrichmentMap = new Map();
@@ -14,10 +10,7 @@ export const useMarketRateEnrichmentQuery = (markets: Market[]) => {
   const { customRpcUrls, rpcConfigVersion } = useCustomRpcContext();
 
   const marketIdentity = useMemo(
-    () =>
-      markets
-        .map((market) => getMarketRateEnrichmentKey(market.uniqueKey, market.morphoBlue.chain.id))
-        .sort(),
+    () => markets.map((market) => getMarketRateEnrichmentKey(market.uniqueKey, market.morphoBlue.chain.id)).sort(),
     [markets],
   );
 
