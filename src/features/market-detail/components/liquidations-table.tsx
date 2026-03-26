@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
 import { formatSimple } from '@/utils/balance';
 import type { Market, MarketLiquidationTransaction } from '@/utils/types';
@@ -36,22 +37,23 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   const tableKey = `liquidations-table-${currentPage}`;
 
   if (error) {
-    return <p className="text-danger">Error loading liquidations: {error instanceof Error ? error.message : 'Unknown error'}</p>;
+    return (
+      <TableContainerWithHeader title="Liquidations">
+        <div className="p-6 text-danger">Error loading liquidations: {error instanceof Error ? error.message : 'Unknown error'}</div>
+      </TableContainerWithHeader>
+    );
   }
 
   return (
     <div>
-      <h4 className="mb-4 text-lg text-secondary">Liquidations</h4>
+      <TableContainerWithHeader title="Liquidations">
+        <div className="relative">
+          {isFetching && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-surface/80 backdrop-blur-sm">
+              <Spinner size={24} />
+            </div>
+          )}
 
-      <div className="relative">
-        {/* Loading overlay */}
-        {isFetching && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-surface/80 backdrop-blur-sm">
-            <Spinner size={24} />
-          </div>
-        )}
-
-        <div className="bg-surface shadow-sm rounded overflow-hidden">
           <Table
             key={tableKey}
             aria-label="Liquidations history"
@@ -157,7 +159,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
             </TableBody>
           </Table>
         </div>
-      </div>
+      </TableContainerWithHeader>
 
       {totalCount > 0 && (
         <TablePagination

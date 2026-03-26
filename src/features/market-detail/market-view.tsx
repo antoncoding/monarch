@@ -2,9 +2,11 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
+import { RiSparklingFill } from 'react-icons/ri';
 import { parseUnits, formatUnits, type Address, encodeFunctionData } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
+import ButtonGroup, { type ButtonOption } from '@/components/ui/button-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
@@ -12,7 +14,7 @@ import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
-import { useMarketDetailPreferences, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
+import { useMarketDetailPreferences, type MarketDetailActivitiesView, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
 import useUserPosition from '@/hooks/useUserPosition';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -27,6 +29,7 @@ import TransactionFiltersModal from '@/features/market-detail/components/filters
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketLiquiditySourcing } from '@/hooks/useMarketLiquiditySourcing';
 import { useAllMarketBorrowers, useAllMarketSuppliers } from '@/hooks/useAllMarketPositions';
+import { ProActivitiesTable } from './components/pro-activities-table';
 import { MarketHeader } from './components/market-header';
 import { TokenIcon } from '@/components/shared/token-icon';
 import RateChart from './components/charts/rate-chart';
@@ -36,7 +39,24 @@ import { SuppliersPieChart } from './components/charts/suppliers-pie-chart';
 import { BorrowersPieChart } from './components/charts/borrowers-pie-chart';
 import { DebtAtRiskChart } from './components/charts/debt-at-risk-chart';
 import { ConcentrationChart } from './components/charts/concentration-chart';
-import { useChartColors } from '@/constants/chartColors';
+import { MONARCH_PRIMARY, useChartColors } from '@/constants/chartColors';
+
+const ACTIVITIES_VIEW_OPTIONS: ButtonOption[] = [
+  { key: 'basic', label: 'Basic', value: 'basic' },
+  {
+    key: 'pro',
+    label: (
+      <span className="inline-flex items-center gap-1">
+        <span>Pro</span>
+        <RiSparklingFill
+          className="h-3 w-3"
+          color={MONARCH_PRIMARY}
+        />
+      </span>
+    ),
+    value: 'pro',
+  },
+];
 
 function MarketContent() {
   // 1. Get URL params first
@@ -48,7 +68,9 @@ function MarketContent() {
   // 3. Consolidated state
   const { open: openModal } = useModal();
   const selectedTab = useMarketDetailPreferences((s) => s.selectedTab);
+  const activitiesView = useMarketDetailPreferences((s) => s.activitiesView);
   const setSelectedTab = useMarketDetailPreferences((s) => s.setSelectedTab);
+  const setActivitiesView = useMarketDetailPreferences((s) => s.setActivitiesView);
   const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
   const [showSupplierFiltersModal, setShowSupplierFiltersModal] = useState(false);
   const [minSupplierShares, setMinSupplierShares] = useState('');
@@ -437,20 +459,40 @@ function MarketContent() {
           </TabsContent>
 
           <TabsContent value="activities">
-            <SuppliesTable
-              chainId={network}
-              market={market}
-              minAssets={scaledMinSupplyAmount}
-              onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
-            />
-            <div className="mt-6">
-              <BorrowsTable
-                chainId={network}
-                market={market}
-                minAssets={scaledMinBorrowAmount}
-                onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
+            <div className="mb-4 flex justify-end">
+              <ButtonGroup
+                options={ACTIVITIES_VIEW_OPTIONS}
+                value={activitiesView}
+                onChange={(value) => setActivitiesView(value as MarketDetailActivitiesView)}
+                size="sm"
               />
             </div>
+
+            {activitiesView === 'basic' ? (
+              <>
+                <SuppliesTable
+                  chainId={network}
+                  market={market}
+                  minAssets={scaledMinSupplyAmount}
+                  onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
+                />
+                <div className="mt-6">
+                  <BorrowsTable
+                    chainId={network}
+                    market={market}
+                    minAssets={scaledMinBorrowAmount}
+                    onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
+                  />
+                </div>
+              </>
+            ) : (
+              <ProActivitiesTable
+                chainId={network}
+                market={market}
+                onSwitchToBasic={() => setActivitiesView('basic')}
+              />
+            )}
+
             <div className="mt-6">
               <LiquidationsTable
                 chainId={network}

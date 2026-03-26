@@ -13,6 +13,7 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import useMarketSupplies from '@/hooks/useMarketSupplies';
 import { formatSimple } from '@/utils/balance';
@@ -48,46 +49,44 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
 
   const hasActiveFilter = minAssets !== '0';
   const tableKey = `supplies-table-${currentPage}`;
+  const headerActions = (
+    <Tooltip
+      content={
+        <TooltipContent
+          title="Filters"
+          detail="Filter transactions by minimum amount"
+          icon={<GoFilter size={14} />}
+        />
+      }
+    >
+      <Button
+        variant="ghost"
+        size="sm"
+        className="min-w-0 px-2 text-secondary"
+        aria-label="Transaction filters"
+        onClick={onOpenFiltersModal}
+      >
+        <GoFilter
+          size={14}
+          style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }}
+        />
+      </Button>
+    </Tooltip>
+  );
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h4 className="text-lg text-secondary">Supply & Withdraw</h4>
-        <div className="flex items-center gap-2">
-          <Tooltip
-            content={
-              <TooltipContent
-                title="Filters"
-                detail="Filter transactions by minimum amount"
-                icon={<GoFilter size={14} />}
-              />
-            }
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              className="min-w-0 px-2 text-secondary"
-              aria-label="Transaction filters"
-              onClick={onOpenFiltersModal}
-            >
-              <GoFilter
-                size={14}
-                style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }}
-              />
-            </Button>
-          </Tooltip>
-        </div>
-      </div>
+      <TableContainerWithHeader
+        title="Supply & Withdraw"
+        actions={headerActions}
+      >
+        <div className="relative">
+          {isFetching && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-surface/80 backdrop-blur-sm">
+              <Spinner size={24} />
+            </div>
+          )}
 
-      <div className="relative">
-        {/* Loading overlay */}
-        {isFetching && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-surface/80 backdrop-blur-sm">
-            <Spinner size={24} />
-          </div>
-        )}
-
-        <div className="bg-surface shadow-sm rounded overflow-hidden">
           <Table
             key={tableKey}
             aria-label="Supply and withdraw activities"
@@ -154,7 +153,7 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
             </TableBody>
           </Table>
         </div>
-      </div>
+      </TableContainerWithHeader>
 
       {totalCount > 0 && (
         <TablePagination
