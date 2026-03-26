@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { monarchGraphqlFetcher } from '@/data-sources/monarch-api/fetchers';
 import { useMarketPreferences, type CustomTagConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
 
 // Re-export types for convenience
@@ -60,6 +61,12 @@ export type MarketMetricsResponse = {
   markets: MarketMetrics[];
 };
 
+type MarketLiquidationPresenceResponse = {
+  data?: {
+    Morpho_Liquidate?: Array<{ id: string }>;
+  };
+};
+
 // Composite key for market lookup
 export const getMetricsKey = (chainId: number, uniqueKey: string): string => `${chainId}-${uniqueKey.toLowerCase()}`;
 
@@ -71,6 +78,20 @@ type MarketMetricsParams = {
 };
 
 const PAGE_SIZE = 1000;
+const MARKET_LIQUIDATION_PRESENCE_QUERY = `
+  query MarketLiquidationPresence($chainId: Int!, $marketId: String!) {
+    Morpho_Liquidate(
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+      }
+      limit: 1
+      order_by: [{ timestamp: desc }, { id: desc }]
+    ) {
+      id
+    }
+  }
+`;
 
 const fetchMarketMetricsPage = async (params: MarketMetricsParams, limit: number, offset: number): Promise<MarketMetricsResponse> => {
   const searchParams = new URLSearchParams();
@@ -131,6 +152,15 @@ const fetchAllMarketMetrics = async (params: MarketMetricsParams): Promise<Marke
   };
 };
 
+const fetchMarketLiquidationPresence = async (chainId: number, marketId: string): Promise<boolean> => {
+  const response = await monarchGraphqlFetcher<MarketLiquidationPresenceResponse>(MARKET_LIQUIDATION_PRESENCE_QUERY, {
+    chainId,
+    marketId: marketId.toLowerCase(),
+  });
+
+  return (response.data?.Morpho_Liquidate?.length ?? 0) > 0;
+};
+
 /**
  * Fetches enhanced market metrics from the Monarch monitoring API.
  * Pre-fetched and cached for 5 minutes.
@@ -151,6 +181,16 @@ export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
     staleTime: 5 * 60 * 1000, // 5 minutes - matches API update frequency
     refetchInterval: 5 * 60 * 1000, // Match staleTime - no point refetching more often
     refetchOnWindowFocus: false, // Don't refetch on focus since data is slow-changing
+    enabled,
+  });
+};
+
+export const useMarketLiquidationPresence = (chainId: number, uniqueKey: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['market-liquidation-presence', chainId, uniqueKey.toLowerCase()],
+    queryFn: () => fetchMarketLiquidationPresence(chainId, uniqueKey),
+    staleTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
     enabled,
   });
 };
@@ -286,11 +326,9 @@ export const useTrendingMarketKeys = useOfficialTrendingMarketKeys;
  * Returns whether a market has ever been liquidated.
  */
 export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean => {
-  const { metricsMap } = useMarketMetricsMap();
+  const { metricsMap, isLoading: isMetricsLoading } = useMarketMetricsMap();
+  const metrics = metricsMap.get(getMetricsKey(chainId, uniqueKey));
+  const { data: hasLiquidationPresence = false } = useMarketLiquidationPresence(chainId, uniqueKey, !metrics?.everLiquidated && !isMetricsLoading);
 
-  return useMemo(() => {
-    const key = `${chainId}-${uniqueKey.toLowerCase()}`;
-    const metrics = metricsMap.get(key);
-    return metrics?.everLiquidated ?? false;
-  }, [metricsMap, chainId, uniqueKey]);
+  return Boolean(metrics?.everLiquidated) || hasLiquidationPresence;
 };

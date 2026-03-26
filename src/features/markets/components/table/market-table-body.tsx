@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoStarFill, GoStar } from 'react-icons/go';
+import { PulseLoader } from 'react-spinners';
 import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
@@ -9,6 +10,7 @@ import { MarketRiskIndicators } from '@/features/markets/components/market-risk-
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -28,9 +30,28 @@ type MarketTableBodyProps = {
 export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
+  const { isRateEnrichmentLoading } = useProcessedMarkets();
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
+
+  const renderHistoricalRateCell = (value: number | null) => {
+    if (value != null) {
+      return <RateFormatted value={value} />;
+    }
+
+    if (isRateEnrichmentLoading) {
+      return (
+        <PulseLoader
+          size={4}
+          color="#f45f2d"
+          margin={3}
+        />
+      );
+    }
+
+    return '—';
+  };
 
   // Calculate colspan for expanded row based on visible columns
   const visibleColumnsCount =
@@ -250,7 +271,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">{item.state.dailySupplyApy != null ? <RateFormatted value={item.state.dailySupplyApy} /> : '—'}</p>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.dailySupplyApy)}</div>
                 </TableCell>
               )}
               {columnVisibility.dailyBorrowAPY && (
@@ -259,7 +280,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">{item.state.dailyBorrowApy != null ? <RateFormatted value={item.state.dailyBorrowApy} /> : '—'}</p>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.dailyBorrowApy)}</div>
                 </TableCell>
               )}
               {columnVisibility.weeklySupplyAPY && (
@@ -268,9 +289,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">
-                    {item.state.weeklySupplyApy != null ? <RateFormatted value={item.state.weeklySupplyApy} /> : '—'}
-                  </p>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.weeklySupplyApy)}</div>
                 </TableCell>
               )}
               {columnVisibility.weeklyBorrowAPY && (
@@ -279,9 +298,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">
-                    {item.state.weeklyBorrowApy != null ? <RateFormatted value={item.state.weeklyBorrowApy} /> : '—'}
-                  </p>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.weeklyBorrowApy)}</div>
                 </TableCell>
               )}
               {columnVisibility.monthlySupplyAPY && (
@@ -290,9 +307,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">
-                    {item.state.monthlySupplyApy != null ? <RateFormatted value={item.state.monthlySupplyApy} /> : '—'}
-                  </p>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.monthlySupplyApy)}</div>
                 </TableCell>
               )}
               {columnVisibility.monthlyBorrowAPY && (
@@ -301,9 +316,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">
-                    {item.state.monthlyBorrowApy != null ? <RateFormatted value={item.state.monthlyBorrowApy} /> : '—'}
-                  </p>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.monthlyBorrowApy)}</div>
                 </TableCell>
               )}
               <TableCell style={{ minWidth: '90px' }}>
