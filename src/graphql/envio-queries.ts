@@ -411,3 +411,276 @@ export const envioLiquidationsPageQuery = `
     }
   }
 `;
+
+const marketTxContextFields = `
+      id
+      chainId
+      timestamp
+      txHash
+      vaultTxType
+      hasVaultUserDeposit
+      hasVaultUserWithdraw
+      hasVaultRebalance
+      morphoSupplies {
+        market_id
+        assets
+        onBehalf
+        caller
+        isMonarch
+      }
+      morphoWithdraws {
+        market_id
+        assets
+        onBehalf
+        caller
+        receiver
+        isMonarch
+      }
+      morphoBorrows {
+        market_id
+        assets
+        onBehalf
+        caller
+        receiver
+        isMonarch
+      }
+      morphoRepays {
+        market_id
+        assets
+        onBehalf
+        caller
+        isMonarch
+      }
+      morphoSupplyCollaterals {
+        market_id
+        assets
+        onBehalf
+        caller
+        isMonarch
+      }
+      morphoWithdrawCollaterals {
+        market_id
+        assets
+        onBehalf
+        caller
+        receiver
+        isMonarch
+      }
+      vaultDeposits {
+        id
+        vault_id
+        onBehalf
+        sender
+        assets
+        shares
+        isMonarch
+      }
+      vaultWithdrawals {
+        id
+        vault_id
+        onBehalf
+        sender
+        receiver
+        assets
+        shares
+        isMonarch
+      }
+      vaultAllocations {
+        id
+        vault_id
+        sender
+        assets
+        change
+        isMonarch
+      }
+      vaultDeallocations {
+        id
+        vault_id
+        sender
+        assets
+        change
+        isMonarch
+      }
+      vaultForceDeallocations {
+        id
+        vault_id
+        onBehalf
+        sender
+        assets
+        penaltyAssets
+        isMonarch
+      }
+      legacyVaultDeposits {
+        id
+        vaultAddress
+        owner
+        sender
+        assets
+        shares
+        isMonarch
+      }
+      legacyVaultWithdrawals {
+        id
+        vaultAddress
+        owner
+        sender
+        receiver
+        assets
+        shares
+        isMonarch
+      }
+      legacyVaultReallocateSupplies {
+        id
+        vaultAddress
+        market_id
+        suppliedAssets
+        suppliedShares
+        caller
+        isMonarch
+      }
+      legacyVaultReallocateWithdrawals {
+        id
+        vaultAddress
+        market_id
+        withdrawnAssets
+        withdrawnShares
+        caller
+        isMonarch
+      }
+`;
+
+export const envioMarketTxContextSeedsQuery = `
+  query EnvioMarketTxContextSeedsPage($chainId: Int!, $marketId: String!, $limit: Int!, $offset: Int!) {
+    supplies: Morpho_Supply(
+      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      txContext {
+        id
+        txHash
+        timestamp
+      }
+    }
+    withdraws: Morpho_Withdraw(
+      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      txContext {
+        id
+        txHash
+        timestamp
+      }
+    }
+    borrows: Morpho_Borrow(
+      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      txContext {
+        id
+        txHash
+        timestamp
+      }
+    }
+    repays: Morpho_Repay(
+      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      txContext {
+        id
+        txHash
+        timestamp
+      }
+    }
+    supplyCollaterals: Morpho_SupplyCollateral(
+      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      txContext {
+        id
+        txHash
+        timestamp
+      }
+    }
+    withdrawCollaterals: Morpho_WithdrawCollateral(
+      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      txContext {
+        id
+        txHash
+        timestamp
+      }
+    }
+    legacyReallocateSupplies: MetaMorphoVault_ReallocateSupply(
+      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      txContext {
+        id
+        txHash
+        timestamp
+      }
+    }
+    legacyReallocateWithdrawals: MetaMorphoVault_ReallocateWithdraw(
+      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      txContext {
+        id
+        txHash
+        timestamp
+      }
+    }
+  }
+`;
+
+export const envioMarketTxContextsByIdsQuery = `
+  query EnvioMarketTxContextsByIds($ids: [String!]!) {
+    TxContext(
+      where: { id: { _in: $ids } }
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+${marketTxContextFields}
+    }
+  }
+`;

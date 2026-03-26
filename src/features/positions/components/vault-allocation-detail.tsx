@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Address } from 'viem';
 import { motion } from 'framer-motion';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Spinner } from '@/components/ui/spinner';
@@ -19,6 +20,7 @@ type VaultAllocationDetailProps = {
 
 export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
   const { short: rateLabel } = useRateLabel();
+  const title = 'Market Allocations';
 
   // Fetch actual allocations - useVaultAllocations pulls caps internally
   const { marketAllocations, loading } = useVaultAllocations({
@@ -45,9 +47,11 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
         transition={{ duration: 0.2 }}
         className="overflow-hidden"
       >
-        <div className="bg-surface bg-opacity-20 flex items-center justify-center p-4">
-          <Spinner size={24} />
-        </div>
+        <TableContainerWithHeader title={title}>
+          <div className="flex items-center justify-center p-6">
+            <Spinner size={24} />
+          </div>
+        </TableContainerWithHeader>
       </motion.div>
     );
   }
@@ -61,9 +65,9 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
         transition={{ duration: 0.2 }}
         className="overflow-hidden"
       >
-        <div className="bg-surface bg-opacity-20 p-4 text-center text-sm text-secondary">
-          No market allocations configured for this vault.
-        </div>
+        <TableContainerWithHeader title={title}>
+          <div className="p-6 text-center text-sm text-secondary">No market allocations configured for this vault.</div>
+        </TableContainerWithHeader>
       </motion.div>
     );
   }
@@ -76,7 +80,7 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
       transition={{ duration: 0.2 }}
       className="overflow-hidden"
     >
-      <div className="bg-surface bg-opacity-20">
+      <TableContainerWithHeader title={title}>
         <Table className="no-hover-effect w-full font-zen">
           <TableHeader>
             <TableRow>
@@ -89,10 +93,7 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
           </TableHeader>
           <TableBody className="text-xs">
             {marketAllocations.map((allocation) => {
-              // Calculate allocated amount
               const allocatedAmount = Number(formatBalance(allocation.allocation, vaultAssetDecimals));
-
-              // Calculate percentage
               const percentage =
                 totalAllocation > 0n ? (allocatedAmount / Number(formatBalance(totalAllocation, vaultAssetDecimals))) * 100 : 0;
 
@@ -101,7 +102,6 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
                   key={allocation.market.uniqueKey}
                   className="gap-1"
                 >
-                  {/* Market */}
                   <TableCell
                     data-label="Market"
                     className="align-middle p-4"
@@ -117,7 +117,6 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
                     />
                   </TableCell>
 
-                  {/* APY/APR */}
                   <TableCell
                     data-label={rateLabel}
                     className="text-center"
@@ -125,7 +124,6 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
                     <APYCell market={allocation.market} />
                   </TableCell>
 
-                  {/* Allocation */}
                   <TableCell
                     data-label="Allocation"
                     className="align-middle"
@@ -137,7 +135,6 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
                     />
                   </TableCell>
 
-                  {/* Risk Tiers */}
                   <TableCell
                     data-label="Risk Tiers"
                     className="text-center align-middle"
@@ -149,7 +146,6 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
                     />
                   </TableCell>
 
-                  {/* Actions */}
                   <TableCell
                     data-label="Actions"
                     className="justify-end px-4 py-3"
@@ -170,7 +166,7 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
             })}
           </TableBody>
         </Table>
-      </div>
+      </TableContainerWithHeader>
     </motion.div>
   );
 }

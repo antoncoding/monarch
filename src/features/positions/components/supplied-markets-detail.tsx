@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
@@ -130,8 +131,7 @@ export function SuppliedMarketsDetail({ groupedPosition, transactions, snapshots
       transition={{ duration: 0.2 }}
       className="overflow-hidden"
     >
-      <div className="bg-surface bg-opacity-20">
-        {/* Position History Chart with synchronized pie */}
+      <div className="space-y-4">
         <UserPositionsChart
           variant="grouped"
           groupedPosition={groupedPosition}
@@ -140,28 +140,29 @@ export function SuppliedMarketsDetail({ groupedPosition, transactions, snapshots
           chainBlockData={chainBlockData}
         />
 
-        {/* Markets Table - Always visible */}
-        <Table className="no-hover-effect w-full font-zen">
-          <TableHeader className="">
-            <TableRow>
-              <TableHead>Market</TableHead>
-              <TableHead>{rateLabel}</TableHead>
-              <TableHead>Allocation</TableHead>
-              <TableHead>Risk Tiers</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="text-xs">
-            {sortedMarkets.map((position) => (
-              <MarketRow
-                key={position.market.uniqueKey}
-                position={position}
-                totalSupply={totalSupply}
-                rateLabel={rateLabel}
-              />
-            ))}
-          </TableBody>
-        </Table>
+        <TableContainerWithHeader title="Underlying Markets">
+          <Table className="no-hover-effect w-full font-zen">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Market</TableHead>
+                <TableHead>{rateLabel}</TableHead>
+                <TableHead>Allocation</TableHead>
+                <TableHead>Risk Tiers</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="text-xs">
+              {sortedMarkets.map((position) => (
+                <MarketRow
+                  key={position.market.uniqueKey}
+                  position={position}
+                  totalSupply={totalSupply}
+                  rateLabel={rateLabel}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainerWithHeader>
       </div>
     </motion.div>
   );

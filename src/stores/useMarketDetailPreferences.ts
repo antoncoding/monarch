@@ -6,14 +6,17 @@ import {
 } from '@/features/market-detail/components/borrower-table-column-visibility';
 
 type MarketDetailTab = 'trend' | 'activities' | 'positions' | 'analysis';
+type MarketDetailActivitiesView = 'basic' | 'pro';
 
 type MarketDetailPreferencesState = {
   selectedTab: MarketDetailTab;
+  activitiesView: MarketDetailActivitiesView;
   borrowerTableColumnVisibility: BorrowerTableColumnVisibility;
 };
 
 type MarketDetailPreferencesActions = {
   setSelectedTab: (tab: MarketDetailTab) => void;
+  setActivitiesView: (view: MarketDetailActivitiesView) => void;
   setBorrowerTableColumnVisibility: (
     visibilityOrUpdater: BorrowerTableColumnVisibility | ((prev: BorrowerTableColumnVisibility) => BorrowerTableColumnVisibility),
   ) => void;
@@ -26,8 +29,10 @@ export const useMarketDetailPreferences = create<MarketDetailPreferencesStore>()
   persist(
     (set) => ({
       selectedTab: 'trend',
+      activitiesView: 'basic',
       borrowerTableColumnVisibility: DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY,
       setSelectedTab: (tab) => set({ selectedTab: tab }),
+      setActivitiesView: (view) => set({ activitiesView: view }),
       setBorrowerTableColumnVisibility: (visibilityOrUpdater) =>
         set((state) => ({
           borrowerTableColumnVisibility:
@@ -37,21 +42,23 @@ export const useMarketDetailPreferences = create<MarketDetailPreferencesStore>()
     }),
     {
       name: 'monarch_store_marketDetailPreferences',
-      version: 2,
+      version: 3,
       migrate: (state, version) => {
         if (!state || typeof state !== 'object') {
           return {
             selectedTab: 'trend',
+            activitiesView: 'basic',
             borrowerTableColumnVisibility: DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY,
           } as MarketDetailPreferencesState;
         }
 
         const persisted = state as Partial<MarketDetailPreferencesState>;
 
-        if (version < 2) {
+        if (version < 3) {
           return {
             ...persisted,
             selectedTab: persisted.selectedTab ?? 'trend',
+            activitiesView: persisted.activitiesView ?? 'basic',
             borrowerTableColumnVisibility: {
               ...DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY,
               ...(persisted.borrowerTableColumnVisibility ?? {}),
@@ -62,6 +69,7 @@ export const useMarketDetailPreferences = create<MarketDetailPreferencesStore>()
         return {
           ...persisted,
           selectedTab: persisted.selectedTab ?? 'trend',
+          activitiesView: persisted.activitiesView ?? 'basic',
           borrowerTableColumnVisibility: {
             ...DEFAULT_BORROWER_TABLE_COLUMN_VISIBILITY,
             ...(persisted.borrowerTableColumnVisibility ?? {}),
@@ -72,4 +80,4 @@ export const useMarketDetailPreferences = create<MarketDetailPreferencesStore>()
   ),
 );
 
-export type { MarketDetailTab };
+export type { MarketDetailActivitiesView, MarketDetailTab };

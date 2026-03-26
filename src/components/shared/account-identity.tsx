@@ -19,6 +19,8 @@ import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
 import type { Address } from 'viem';
 
+const ACCOUNT_IDENTITY_LABEL_MAX_WIDTH_CLASS = 'max-w-[22rem]';
+
 type AccountIdentityProps = {
   address: Address;
   chainId: number;
@@ -96,11 +98,25 @@ export function AccountIdentity({
     }
   }, [address, toast]);
 
+  const labelClasses = clsx('min-w-0 truncate', ACCOUNT_IDENTITY_LABEL_MAX_WIDTH_CLASS);
+
   // Badge variant - minimal inline badge (no avatar)
   if (variant === 'badge') {
     const content = (
       <>
-        {vaultName ? <span className="font-zen">{vaultName}</span> : <Name address={address as `0x${string}`} />}
+        {vaultName ? (
+          <span
+            className={clsx('font-zen', labelClasses)}
+            title={vaultName}
+          >
+            {vaultName}
+          </span>
+        ) : (
+          <Name
+            address={address as `0x${string}`}
+            className={labelClasses}
+          />
+        )}
         {linkTo === 'explorer' && <ExternalLinkIcon className="h-3 w-3" />}
         {showCopy && (
           <LuCopy
@@ -180,8 +196,20 @@ export function AccountIdentity({
           address={address}
           size={16}
         />
-        <span className="text-xs">
-          {vaultName ? <span className="font-zen">{vaultName}</span> : <Name address={address as `0x${string}`} />}
+        <span className="min-w-0 text-xs">
+          {vaultName ? (
+            <span
+              className={clsx('block font-zen', labelClasses)}
+              title={vaultName}
+            >
+              {vaultName}
+            </span>
+          ) : (
+            <Name
+              address={address as `0x${string}`}
+              className={clsx('block', labelClasses)}
+            />
+          )}
         </span>
         {linkTo === 'explorer' && <ExternalLinkIcon className="h-3 w-3" />}
         {showCopy && (
@@ -301,7 +329,14 @@ export function AccountIdentity({
 
       {/* Vault name badge (if it's a vault) */}
       {vaultName && (
-        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">{vaultName}</span>
+        <span className="inline-flex min-w-0 items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">
+          <span
+            className={labelClasses}
+            title={vaultName}
+          >
+            {vaultName}
+          </span>
+        </span>
       )}
 
       {/* Explorer link */}

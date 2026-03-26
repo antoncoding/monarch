@@ -14,6 +14,13 @@ export {
   fetchMonarchMarketSupplies,
 } from './market-detail';
 export {
+  fetchMonarchMarketTxContexts,
+  type MarketProActivity,
+  type MarketProActivityKind,
+  type MarketProActivityLeg,
+  type PaginatedMarketProActivities,
+} from './market-tx-contexts';
+export {
   fetchMonarchTransactions,
   type MonarchSupplyTransaction,
   type MonarchWithdrawTransaction,
