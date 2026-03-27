@@ -6,6 +6,7 @@ const MONARCH_MARKET_TX_CONTEXTS_TIMEOUT_MS = 15_000;
 const MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_FLOOR = 24;
 const MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_MULTIPLIER = 4;
 const MARKET_TX_CONTEXT_DISCOVERY_EXTRA_ROUNDS = 2;
+const MARKET_TX_CONTEXT_DISCOVERY_MAX_ROUNDS = 128;
 
 type MorphoMarketLegKind = 'supply' | 'withdraw' | 'borrow' | 'repay' | 'supplyCollateral' | 'withdrawCollateral';
 type VaultLegKind = 'vaultDeposit' | 'vaultWithdraw';
@@ -169,6 +170,29 @@ type MarketTxContextSeed = {
   contextId: string;
   hash: string;
   timestamp: number;
+};
+
+const MARKET_TX_CONTEXT_SEED_SOURCES = [
+  'supplies',
+  'withdraws',
+  'borrows',
+  'repays',
+  'supplyCollaterals',
+  'withdrawCollaterals',
+  'legacyReallocateSupplies',
+  'legacyReallocateWithdrawals',
+] as const;
+
+type MarketTxContextSeedSource = (typeof MARKET_TX_CONTEXT_SEED_SOURCES)[number];
+
+type MarketTxContextSeedFrontier = {
+  hash: string;
+  timestamp: number;
+};
+
+type MarketTxContextSeedSourceState = {
+  exhausted: boolean;
+  frontier: MarketTxContextSeedFrontier | null;
 };
 
 export type MarketProActivityKind =
@@ -859,17 +883,49 @@ const compareMarketTxContextSeeds = (left: MarketTxContextSeed, right: MarketTxC
   return right.contextId.localeCompare(left.contextId);
 };
 
+const compareMarketProActivities = (left: MarketProActivity, right: MarketProActivity): number => {
+  if (left.timestamp !== right.timestamp) {
+    return right.timestamp > left.timestamp ? 1 : -1;
+  }
+
+  const hashCompare = right.hash.localeCompare(left.hash);
+  if (hashCompare !== 0) {
+    return hashCompare;
+  }
+
+  return right.id.localeCompare(left.id);
+};
+
+const isSeedFrontierAtOrOlderThanCutoff = (
+  frontier: MarketTxContextSeedFrontier | null,
+  cutoff: MarketTxContextSeed,
+): boolean => {
+  if (!frontier) {
+    return true;
+  }
+
+  if (frontier.timestamp !== cutoff.timestamp) {
+    return frontier.timestamp < cutoff.timestamp;
+  }
+
+  return frontier.hash.localeCompare(cutoff.hash) <= 0;
+};
+
+const getSeedRowsBySource = (
+  response: MonarchMarketTxContextSeedsPageResponse,
+): Record<MarketTxContextSeedSource, MonarchMarketTxContextSeedRow[]> => ({
+  supplies: response.data?.supplies ?? [],
+  withdraws: response.data?.withdraws ?? [],
+  borrows: response.data?.borrows ?? [],
+  repays: response.data?.repays ?? [],
+  supplyCollaterals: response.data?.supplyCollaterals ?? [],
+  withdrawCollaterals: response.data?.withdrawCollaterals ?? [],
+  legacyReallocateSupplies: response.data?.legacyReallocateSupplies ?? [],
+  legacyReallocateWithdrawals: response.data?.legacyReallocateWithdrawals ?? [],
+});
+
 const extractMarketTxContextSeeds = (response: MonarchMarketTxContextSeedsPageResponse): MarketTxContextSeed[] => {
-  const seedRows = [
-    ...(response.data?.supplies ?? []),
-    ...(response.data?.withdraws ?? []),
-    ...(response.data?.borrows ?? []),
-    ...(response.data?.repays ?? []),
-    ...(response.data?.supplyCollaterals ?? []),
-    ...(response.data?.withdrawCollaterals ?? []),
-    ...(response.data?.legacyReallocateSupplies ?? []),
-    ...(response.data?.legacyReallocateWithdrawals ?? []),
-  ];
+  const seedRows = Object.values(getSeedRowsBySource(response)).flat();
 
   return seedRows.flatMap((row) => {
     if (!row.txContext?.id) {
@@ -887,16 +943,7 @@ const extractMarketTxContextSeeds = (response: MonarchMarketTxContextSeedsPageRe
 };
 
 const getSeedPageHasMore = (response: MonarchMarketTxContextSeedsPageResponse, batchSize: number): boolean => {
-  const counts = [
-    response.data?.supplies?.length ?? 0,
-    response.data?.withdraws?.length ?? 0,
-    response.data?.borrows?.length ?? 0,
-    response.data?.repays?.length ?? 0,
-    response.data?.supplyCollaterals?.length ?? 0,
-    response.data?.withdrawCollaterals?.length ?? 0,
-    response.data?.legacyReallocateSupplies?.length ?? 0,
-    response.data?.legacyReallocateWithdrawals?.length ?? 0,
-  ];
+  const counts = Object.values(getSeedRowsBySource(response)).map((rows) => rows.length);
 
   return counts.some((count) => count === batchSize);
 };
@@ -977,11 +1024,23 @@ const discoverMarketTxContextSeeds = async (
   maxRounds: number,
 ): Promise<{ orderedSeeds: MarketTxContextSeed[]; hasMore: boolean }> => {
   const seedsById = new Map<string, MarketTxContextSeed>();
+  const sourceStates = Object.fromEntries(
+    MARKET_TX_CONTEXT_SEED_SOURCES.map((source) => [
+      source,
+      {
+        exhausted: false,
+        frontier: null,
+      } satisfies MarketTxContextSeedSourceState,
+    ]),
+  ) as Record<MarketTxContextSeedSource, MarketTxContextSeedSourceState>;
   let offset = 0;
   let hasMore = false;
+  let orderedSeeds: MarketTxContextSeed[] = [];
+  let isTargetCovered = false;
 
   for (let round = 0; round < maxRounds; round += 1) {
     const response = await fetchMarketTxContextSeedsPage(marketId, chainId, batchSize, offset);
+    const sourceRows = getSeedRowsBySource(response);
     const pageSeeds = extractMarketTxContextSeeds(response);
 
     for (const seed of pageSeeds) {
@@ -990,17 +1049,45 @@ const discoverMarketTxContextSeeds = async (
       }
     }
 
-    hasMore = getSeedPageHasMore(response, batchSize);
+    for (const source of MARKET_TX_CONTEXT_SEED_SOURCES) {
+      const rows = sourceRows[source];
+      const lastRow = rows.at(-1);
 
-    if (seedsById.size >= targetCount || !hasMore) {
+      if (lastRow) {
+        sourceStates[source].frontier = {
+          hash: lastRow.txHash,
+          timestamp: toTimestamp(lastRow.timestamp),
+        };
+      }
+
+      if (rows.length < batchSize) {
+        sourceStates[source].exhausted = true;
+      }
+    }
+
+    hasMore = getSeedPageHasMore(response, batchSize);
+    orderedSeeds = [...seedsById.values()].sort(compareMarketTxContextSeeds);
+    const cutoffSeed = orderedSeeds[targetCount - 1];
+    isTargetCovered =
+      cutoffSeed !== undefined &&
+      MARKET_TX_CONTEXT_SEED_SOURCES.every((source) => {
+        const sourceState = sourceStates[source];
+        return sourceState.exhausted || isSeedFrontierAtOrOlderThanCutoff(sourceState.frontier, cutoffSeed);
+      });
+
+    if ((orderedSeeds.length >= targetCount && isTargetCovered) || !hasMore) {
       break;
     }
 
     offset += batchSize;
   }
 
+  if (hasMore && (orderedSeeds.length < targetCount || !isTargetCovered)) {
+    throw new Error('Monarch market pro activity discovery could not prove complete page ordering for the requested window');
+  }
+
   return {
-    orderedSeeds: [...seedsById.values()].sort(compareMarketTxContextSeeds),
+    orderedSeeds,
     hasMore,
   };
 };
@@ -1013,26 +1100,17 @@ export const fetchMonarchMarketTxContexts = async (
 ): Promise<PaginatedMarketProActivities> => {
   const targetCount = skip + first + 1;
   const batchSize = Math.max(MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_FLOOR, first * MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_MULTIPLIER);
-  const maxRounds = Math.max(3, Math.ceil(targetCount / batchSize) + MARKET_TX_CONTEXT_DISCOVERY_EXTRA_ROUNDS);
-  const { orderedSeeds, hasMore: discoveryHasMore } = await discoverMarketTxContextSeeds(
-    marketId,
-    chainId,
-    targetCount,
-    batchSize,
-    maxRounds,
+  const maxRounds = Math.min(
+    MARKET_TX_CONTEXT_DISCOVERY_MAX_ROUNDS,
+    Math.max(3, Math.ceil(targetCount / batchSize) * MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_MULTIPLIER + MARKET_TX_CONTEXT_DISCOVERY_EXTRA_ROUNDS),
   );
+  const { orderedSeeds, hasMore: discoveryHasMore } = await discoverMarketTxContextSeeds(marketId, chainId, targetCount, batchSize, maxRounds);
   const targetSeedWindow = orderedSeeds.slice(0, targetCount);
   const hydratedContexts = await fetchMarketTxContextsByIds(targetSeedWindow.map((seed) => seed.contextId));
-  const normalizedById = new Map(
-    hydratedContexts
-      .map((context) => normalizeTxContext(context, marketId))
-      .filter((context): context is MarketProActivity => context !== null)
-      .map((context) => [context.id, context] as const),
-  );
-  const orderedActivities = targetSeedWindow.flatMap((seed) => {
-    const activity = normalizedById.get(seed.contextId);
-    return activity ? [activity] : [];
-  });
+  const orderedActivities = hydratedContexts
+    .map((context) => normalizeTxContext(context, marketId))
+    .filter((context): context is MarketProActivity => context !== null)
+    .sort(compareMarketProActivities);
   const pageItems = orderedActivities.slice(skip, skip + first);
   const hasNextPage = orderedActivities.length > skip + first || discoveryHasMore;
   const totalCount = skip + pageItems.length + Number(hasNextPage);
