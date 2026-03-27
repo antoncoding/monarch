@@ -42,7 +42,7 @@ export type MorphoWhitelistStatusRefresh = {
   statuses: MorphoWhitelistStatus[];
 };
 
-const MORPHO_WHITELIST_PAGE_SIZE = 500;
+const MORPHO_WHITELIST_PAGE_SIZE = 1_000;
 const MORPHO_WHITELIST_TIMEOUT_MS = 15_000;
 const MORPHO_WHITELIST_PAGE_BATCH_SIZE = 4;
 
