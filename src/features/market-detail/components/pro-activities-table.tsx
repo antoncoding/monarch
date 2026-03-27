@@ -774,7 +774,9 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
 
                         <TableCell className="px-4 py-3 text-right">{renderRowFlow(activity)}</TableCell>
 
-                        <TableCell className="px-4 py-3 text-sm whitespace-nowrap text-gray-500">{formatActivityTime(activity.timestamp)}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm whitespace-nowrap text-gray-500">
+                          {formatActivityTime(activity.timestamp)}
+                        </TableCell>
 
                         <TableCell
                           className="px-4 py-3 text-right"

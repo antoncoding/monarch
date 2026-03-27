@@ -33,7 +33,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   // Get trusted vaults directly from store (no prop drilling!)
   const { vaults: trustedVaults } = useTrustedVaults();
 
-  const markets = useFilteredMarkets();
+  const { markets, isLoading: filteredMarketsLoading, isWhitelistUnavailable } = useFilteredMarkets();
   const isEmpty = !rawMarkets;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
@@ -83,11 +83,12 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   const currentEntries = markets.slice(indexOfFirstEntry, indexOfLastEntry);
 
   const totalPages = Math.ceil(markets.length / entriesPerPage);
+  const shouldUseFullWidthState = loading || filteredMarketsLoading || isEmpty || markets.length === 0;
 
   const containerClassName = [
     'flex flex-col gap-2 pb-4',
-    loading ? 'w-full' : (className ?? 'w-full'),
-    loading || isEmpty || markets.length === 0 ? 'items-center' : '',
+    shouldUseFullWidthState ? 'w-full' : (className ?? 'w-full'),
+    shouldUseFullWidthState ? 'items-center' : '',
   ]
     .filter((value): value is string => Boolean(value))
     .join(' ');
@@ -130,7 +131,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
         }
         className="w-full"
       >
-        {loading ? (
+        {loading || filteredMarketsLoading ? (
           <LoadingScreen
             message="Loading Morpho Blue Markets..."
             className="min-h-[300px] w-full px-4"
@@ -141,9 +142,13 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
           </div>
         ) : markets.length === 0 ? (
           <EmptyScreen
-            message="No markets found with the current filters"
-            hint={getEmptyStateHint()}
-            className="min-h-[300px] container px-[4%]"
+            message={isWhitelistUnavailable ? 'Morpho whitelist data is unavailable' : 'No markets found with the current filters'}
+            hint={
+              isWhitelistUnavailable
+                ? "Hidden unwhitelisted markets is enabled, but Monarch couldn't confirm Morpho whitelist status right now. Try refreshing or temporarily showing unwhitelisted markets."
+                : getEmptyStateHint()
+            }
+            className="min-h-[300px] w-full px-[4%]"
           />
         ) : (
           <Table className={tableClassNames}>

@@ -5,7 +5,6 @@ irmAddress
 oracle {
   address
 }
-listed
 morphoBlue {
   id
   address
@@ -103,7 +102,6 @@ export const marketsQuery = `
     oracle {
       address
     }
-    listed
     morphoBlue {
       address
       chain {
@@ -151,6 +149,25 @@ export const marketsQuery = `
     warnings {
       type
       level
+    }
+  }
+`;
+
+export const marketsWhitelistStatusQuery = `
+  query getMarketsWhitelistStatus($first: Int, $skip: Int, $where: MarketFilters) {
+    markets(first: $first, skip: $skip, where: $where) {
+      items {
+        uniqueKey
+        listed
+        morphoBlue {
+          chain {
+            id
+          }
+        }
+      }
+      pageInfo {
+        countTotal
+      }
     }
   }
 `;

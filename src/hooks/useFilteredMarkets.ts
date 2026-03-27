@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
+import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -12,8 +13,15 @@ import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
 import type { Market } from '@/utils/types';
 
-export const useFilteredMarkets = (): Market[] => {
+type UseFilteredMarketsResult = {
+  markets: Market[];
+  isLoading: boolean;
+  isWhitelistUnavailable: boolean;
+};
+
+export const useFilteredMarkets = (): UseFilteredMarketsResult => {
   const { allMarkets, whitelistedMarkets } = useProcessedMarkets();
+  const { whitelistLookup, isLoading: whitelistLoading, isFetching: whitelistFetching } = useMorphoWhitelistStatusQuery();
   const { data: oracleMetadataMap } = useAllOracleMetadata();
   const filters = useMarketsFilters();
   const preferences = useMarketPreferences();
@@ -22,8 +30,13 @@ export const useFilteredMarkets = (): Market[] => {
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys();
   const customTagKeys = useCustomTagMarketKeys();
+  const shouldBlockWhitelistedFiltering = !showUnwhitelistedMarkets && whitelistLookup.size === 0;
 
-  return useMemo(() => {
+  const markets = useMemo(() => {
+    if (shouldBlockWhitelistedFiltering) {
+      return [];
+    }
+
     let markets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
     if (markets.length === 0) return [];
 
@@ -138,6 +151,7 @@ export const useFilteredMarkets = (): Market[] => {
   }, [
     allMarkets,
     whitelistedMarkets,
+    shouldBlockWhitelistedFiltering,
     showUnwhitelistedMarkets,
     filters,
     preferences,
@@ -147,4 +161,10 @@ export const useFilteredMarkets = (): Market[] => {
     customTagKeys,
     oracleMetadataMap,
   ]);
+
+  return {
+    markets,
+    isLoading: shouldBlockWhitelistedFiltering && (whitelistLoading || whitelistFetching),
+    isWhitelistUnavailable: shouldBlockWhitelistedFiltering && !whitelistLoading && !whitelistFetching,
+  };
 };

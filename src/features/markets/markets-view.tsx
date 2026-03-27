@@ -4,6 +4,7 @@ import type { Chain } from 'viem';
 
 import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
+import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
@@ -20,6 +21,7 @@ export default function Markets() {
 
   // Data fetching with React Query
   const { data: rawMarkets, isLoading: loading, refetch } = useMarketsQuery();
+  const { markets, isLoading: filteredMarketsLoading, isWhitelistUnavailable } = useFilteredMarkets();
 
   const filters = useMarketsFilters();
 
@@ -46,8 +48,10 @@ export default function Markets() {
 
   // Effective table view mode - always compact on mobile
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
-  const isLoadingTableState = loading;
-  const shouldUseFullWidthTableLayout = isLoadingTableState || effectiveTableViewMode === 'compact';
+  const isLoadingTableState = loading || filteredMarketsLoading;
+  const isTableFallbackState = !rawMarkets || markets.length === 0 || isWhitelistUnavailable;
+  const shouldUseFullWidthTableLayout =
+    isLoadingTableState || isTableFallbackState || effectiveTableViewMode === 'compact';
 
   // Compute unique collaterals and loan assets for filter dropdowns
   useEffect(() => {

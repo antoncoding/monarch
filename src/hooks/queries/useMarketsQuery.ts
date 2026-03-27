@@ -3,36 +3,13 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
+import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
 const toError = (error: unknown): Error => {
   if (error instanceof Error) return error;
   return new Error(String(error));
-};
-
-const getMarketIdentityKey = (market: Pick<Market, 'uniqueKey' | 'morphoBlue'>): string =>
-  `${market.morphoBlue.chain.id}-${market.uniqueKey.toLowerCase()}`;
-
-const buildWhitelistLookup = (markets: Market[]): Map<string, boolean> => {
-  return markets.reduce((lookup, market) => {
-    lookup.set(getMarketIdentityKey(market), market.whitelisted);
-    return lookup;
-  }, new Map<string, boolean>());
-};
-
-const mergeWhitelistFlags = (baseMarkets: Market[], whitelistLookup: Map<string, boolean>): Market[] => {
-  return baseMarkets.map((market) => {
-    const whitelisted = whitelistLookup.get(getMarketIdentityKey(market));
-    if (whitelisted === undefined || whitelisted === market.whitelisted) {
-      return market;
-    }
-
-    return {
-      ...market,
-      whitelisted,
-    };
-  });
 };
 
 /**
@@ -96,29 +73,6 @@ export const useMarketsQuery = () => {
         for (const [network, markets] of monarchMarketsByChain.entries()) {
           setMarketsForChain(network, markets);
         }
-
-        // Restore Morpho `listed` as the whitelist source for chains where Morpho API is supported.
-        const monarchNetworksWithMorphoSupport = Array.from(monarchMarketsByChain.keys()).filter((network) => supportsMorphoApi(network));
-        const whitelistSettledResults = await Promise.allSettled(
-          monarchNetworksWithMorphoSupport.map((network) => fetchMorphoMarkets(network).then((markets) => ({ network, markets }))),
-        );
-
-        whitelistSettledResults.forEach((result, index) => {
-          const network = monarchNetworksWithMorphoSupport[index];
-
-          if (result.status === 'rejected') {
-            console.warn(`Morpho whitelist refresh failed for network ${network}; keeping existing whitelist flags.`, result.reason);
-            return;
-          }
-
-          const currentMarkets = marketsByChain.get(network);
-          if (!currentMarkets || currentMarkets.length === 0) {
-            return;
-          }
-
-          const whitelistLookup = buildWhitelistLookup(result.value.markets);
-          marketsByChain.set(network, mergeWhitelistFlags(currentMarkets, whitelistLookup));
-        });
       } catch (error) {
         const monarchError = toError(error);
         console.warn('Monarch multi-chain markets fetch failed. Falling back per chain to Morpho/Subgraph.', monarchError);
@@ -168,7 +122,7 @@ export const useMarketsQuery = () => {
       const dedupedMarkets = Array.from(
         combinedMarkets
           .reduce((acc, market) => {
-            acc.set(`${market.morphoBlue.chain.id}-${market.uniqueKey.toLowerCase()}`, market);
+            acc.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
             return acc;
           }, new Map<string, Market>())
           .values(),

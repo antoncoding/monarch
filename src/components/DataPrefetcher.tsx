@@ -2,10 +2,12 @@
 
 import { usePathname } from 'next/navigation';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMerklCampaignsQuery } from '@/hooks/queries/useMerklCampaignsQuery';
 
 function DataPrefetcherContent() {
+  useMorphoWhitelistStatusQuery();
   useMarketsQuery();
   useTokensQuery();
   useMerklCampaignsQuery();

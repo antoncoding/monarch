@@ -19,7 +19,6 @@ type MorphoApiMarketState = Omit<
 
 type MorphoApiMarket = Omit<Market, 'oracleAddress' | 'whitelisted' | 'state' | 'supplyingVaults'> & {
   oracle: { address: string } | null;
-  listed: boolean;
   state: MorphoApiMarketState;
   supplyingVaults?: { address: string }[];
 };
@@ -55,11 +54,12 @@ const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
 
 // Transform API response to internal Market type
 const processMarketData = (market: MorphoApiMarket): Market => {
-  const { oracle, listed, state, supplyingVaults, ...rest } = market;
+  const { oracle, state, supplyingVaults, ...rest } = market;
   return {
     ...rest,
     oracleAddress: (oracle?.address ?? zeroAddress) as Address,
-    whitelisted: listed,
+    // Whitelist status is now overlaid by the dedicated whitelist-status hook.
+    whitelisted: false,
     hasUSDPrice: true,
     supplyingVaults: supplyingVaults ?? [],
     state: {

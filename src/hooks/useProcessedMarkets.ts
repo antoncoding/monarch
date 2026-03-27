@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
+import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { useMarketRateEnrichmentQuery } from '@/hooks/queries/useMarketRateEnrichmentQuery';
+import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { getMarketIdentityKey } from '@/utils/market-identity';
 import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
 import { isForceUnwhitelisted } from '@/utils/markets';
-import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { formatBalance } from '@/utils/balance';
 import type { TokenPriceInput } from '@/data-sources/morpho-api/prices';
 import type { Market } from '@/utils/types';
@@ -63,6 +65,7 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
  */
 export const useProcessedMarkets = () => {
   const { data: rawMarketsFromQuery, isLoading, isRefetching, error, refetch } = useMarketsQuery();
+  const { whitelistLookup } = useMorphoWhitelistStatusQuery();
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
   const { showUnwhitelistedMarkets } = useAppSettings();
 
@@ -79,8 +82,21 @@ export const useProcessedMarkets = () => {
       };
     }
 
+    const withMergedWhitelistFlags = rawMarketsFromQuery.map((market) => {
+      const cachedWhitelisted = whitelistLookup.get(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey));
+
+      if (cachedWhitelisted === undefined || cachedWhitelisted === market.whitelisted) {
+        return market;
+      }
+
+      return {
+        ...market,
+        whitelisted: cachedWhitelisted,
+      };
+    });
+
     // rawMarketsUnfiltered: before blacklist (for blacklist management modal)
-    const rawMarketsUnfiltered = rawMarketsFromQuery;
+    const rawMarketsUnfiltered = withMergedWhitelistFlags;
 
     // Apply blacklist filter
     const blacklistFiltered = rawMarketsUnfiltered.filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
@@ -106,7 +122,7 @@ export const useProcessedMarkets = () => {
       allMarkets,
       whitelistedMarkets,
     };
-  }, [rawMarketsFromQuery, allBlacklistedMarketKeys]);
+  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup]);
 
   const {
     data: marketRateEnrichments = EMPTY_RATE_ENRICHMENTS,
