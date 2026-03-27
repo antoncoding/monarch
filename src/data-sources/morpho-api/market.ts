@@ -59,7 +59,7 @@ const processMarketData = (market: MorphoApiMarket): Market => {
     ...rest,
     oracleAddress: (oracle?.address ?? zeroAddress) as Address,
     // Whitelist status is now overlaid by the dedicated whitelist-status hook.
-    whitelisted: true,
+    whitelisted: false,
     hasUSDPrice: true,
     supplyingVaults: supplyingVaults ?? [],
     state: {
