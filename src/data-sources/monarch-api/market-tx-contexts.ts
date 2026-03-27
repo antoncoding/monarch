@@ -1,12 +1,8 @@
 import { isAddress } from 'viem';
-import { envioMarketTxContextSeedsQuery, envioMarketTxContextsByIdsQuery } from '@/graphql/envio-queries';
+import { envioMarketTxContextsPageQuery, envioMarketTxContextsPageWithinSnapshotQuery } from '@/graphql/envio-queries';
 import { monarchGraphqlFetcher } from './fetchers';
 
 const MONARCH_MARKET_TX_CONTEXTS_TIMEOUT_MS = 15_000;
-const MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_FLOOR = 24;
-const MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_MULTIPLIER = 4;
-const MARKET_TX_CONTEXT_DISCOVERY_EXTRA_ROUNDS = 2;
-const MARKET_TX_CONTEXT_DISCOVERY_MAX_ROUNDS = 128;
 
 type MorphoMarketLegKind = 'supply' | 'withdraw' | 'borrow' | 'repay' | 'supplyCollateral' | 'withdrawCollateral';
 type VaultLegKind = 'vaultDeposit' | 'vaultWithdraw';
@@ -134,65 +130,26 @@ type MonarchTxContextRow = {
   legacyVaultReallocateWithdrawals: MonarchLegacyVaultReallocateWithdrawRow[];
 };
 
-type MonarchTxContextRefRow = {
-  id: string;
-  txHash: string;
-  timestamp: string | number;
-};
-
-type MonarchMarketTxContextSeedRow = {
-  id: string;
-  txHash: string;
-  timestamp: string | number;
-  txContext?: MonarchTxContextRefRow | null;
-};
-
-type MonarchMarketTxContextSeedsPageResponse = {
-  data?: {
-    supplies?: MonarchMarketTxContextSeedRow[];
-    withdraws?: MonarchMarketTxContextSeedRow[];
-    borrows?: MonarchMarketTxContextSeedRow[];
-    repays?: MonarchMarketTxContextSeedRow[];
-    supplyCollaterals?: MonarchMarketTxContextSeedRow[];
-    withdrawCollaterals?: MonarchMarketTxContextSeedRow[];
-    legacyReallocateSupplies?: MonarchMarketTxContextSeedRow[];
-    legacyReallocateWithdrawals?: MonarchMarketTxContextSeedRow[];
-  };
-};
-
 type MonarchMarketTxContextsPageResponse = {
   data?: {
-    TxContext?: MonarchTxContextRow[];
+    MarketTxContext?: MonarchMarketTxContextRow[];
   };
 };
 
-type MarketTxContextSeed = {
+type MonarchMarketTxContextRow = {
+  id: string;
+  chainId: number;
+  market_id: string;
+  timestamp: string | number;
+  txHash: string;
+  txContext_id: string;
+  txContext?: MonarchTxContextRow | null;
+};
+
+export type MarketTxContextCursor = {
+  timestamp: number;
+  hash: string;
   contextId: string;
-  hash: string;
-  timestamp: number;
-};
-
-const MARKET_TX_CONTEXT_SEED_SOURCES = [
-  'supplies',
-  'withdraws',
-  'borrows',
-  'repays',
-  'supplyCollaterals',
-  'withdrawCollaterals',
-  'legacyReallocateSupplies',
-  'legacyReallocateWithdrawals',
-] as const;
-
-type MarketTxContextSeedSource = (typeof MARKET_TX_CONTEXT_SEED_SOURCES)[number];
-
-type MarketTxContextSeedFrontier = {
-  hash: string;
-  timestamp: number;
-};
-
-type MarketTxContextSeedSourceState = {
-  exhausted: boolean;
-  frontier: MarketTxContextSeedFrontier | null;
 };
 
 export type MarketProActivityKind =
@@ -870,124 +827,13 @@ const normalizeTxContext = (context: MonarchTxContextRow, marketId: string): Mar
   };
 };
 
-const compareMarketTxContextSeeds = (left: MarketTxContextSeed, right: MarketTxContextSeed): number => {
-  if (left.timestamp !== right.timestamp) {
-    return right.timestamp > left.timestamp ? 1 : -1;
-  }
-
-  const hashCompare = right.hash.localeCompare(left.hash);
-  if (hashCompare !== 0) {
-    return hashCompare;
-  }
-
-  return right.contextId.localeCompare(left.contextId);
-};
-
-const compareMarketProActivities = (left: MarketProActivity, right: MarketProActivity): number => {
-  if (left.timestamp !== right.timestamp) {
-    return right.timestamp > left.timestamp ? 1 : -1;
-  }
-
-  const hashCompare = right.hash.localeCompare(left.hash);
-  if (hashCompare !== 0) {
-    return hashCompare;
-  }
-
-  return right.id.localeCompare(left.id);
-};
-
-const isSeedFrontierAtOrOlderThanCutoff = (
-  frontier: MarketTxContextSeedFrontier | null,
-  cutoff: MarketTxContextSeed,
-): boolean => {
-  if (!frontier) {
-    return true;
-  }
-
-  if (frontier.timestamp !== cutoff.timestamp) {
-    return frontier.timestamp < cutoff.timestamp;
-  }
-
-  return frontier.hash.localeCompare(cutoff.hash) <= 0;
-};
-
-const getSeedRowsBySource = (
-  response: MonarchMarketTxContextSeedsPageResponse,
-): Record<MarketTxContextSeedSource, MonarchMarketTxContextSeedRow[]> => ({
-  supplies: response.data?.supplies ?? [],
-  withdraws: response.data?.withdraws ?? [],
-  borrows: response.data?.borrows ?? [],
-  repays: response.data?.repays ?? [],
-  supplyCollaterals: response.data?.supplyCollaterals ?? [],
-  withdrawCollaterals: response.data?.withdrawCollaterals ?? [],
-  legacyReallocateSupplies: response.data?.legacyReallocateSupplies ?? [],
-  legacyReallocateWithdrawals: response.data?.legacyReallocateWithdrawals ?? [],
-});
-
-const extractMarketTxContextSeeds = (response: MonarchMarketTxContextSeedsPageResponse): MarketTxContextSeed[] => {
-  const seedRows = Object.values(getSeedRowsBySource(response)).flat();
-
-  return seedRows.flatMap((row) => {
-    if (!row.txContext?.id) {
-      return [];
-    }
-
-    return [
-      {
-        contextId: row.txContext.id,
-        hash: row.txContext.txHash,
-        timestamp: toTimestamp(row.txContext.timestamp),
-      },
-    ];
-  });
-};
-
-const getSeedPageHasMore = (response: MonarchMarketTxContextSeedsPageResponse, batchSize: number): boolean => {
-  const counts = Object.values(getSeedRowsBySource(response)).map((rows) => rows.length);
-
-  return counts.some((count) => count === batchSize);
-};
-
-const fetchMarketTxContextSeedsPage = async (
+const fetchMarketTxContextsPage = async (
   marketId: string,
   chainId: number,
   limit: number,
   offset: number,
-): Promise<MonarchMarketTxContextSeedsPageResponse> => {
-  const controller = new AbortController();
-  const timeoutId = globalThis.setTimeout(() => {
-    controller.abort();
-  }, MONARCH_MARKET_TX_CONTEXTS_TIMEOUT_MS);
-
-  try {
-    return await monarchGraphqlFetcher<MonarchMarketTxContextSeedsPageResponse>(
-      envioMarketTxContextSeedsQuery,
-      {
-        chainId,
-        marketId,
-        limit,
-        offset,
-      },
-      {
-        signal: controller.signal,
-      },
-    );
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Monarch market pro activity request timed out after ${MONARCH_MARKET_TX_CONTEXTS_TIMEOUT_MS}ms`);
-    }
-
-    throw error;
-  } finally {
-    globalThis.clearTimeout(timeoutId);
-  }
-};
-
-const fetchMarketTxContextsByIds = async (ids: string[]): Promise<MonarchTxContextRow[]> => {
-  if (ids.length === 0) {
-    return [];
-  }
-
+  ceiling?: MarketTxContextCursor,
+): Promise<MonarchMarketTxContextRow[]> => {
   const controller = new AbortController();
   const timeoutId = globalThis.setTimeout(() => {
     controller.abort();
@@ -995,16 +841,29 @@ const fetchMarketTxContextsByIds = async (ids: string[]): Promise<MonarchTxConte
 
   try {
     const response = await monarchGraphqlFetcher<MonarchMarketTxContextsPageResponse>(
-      envioMarketTxContextsByIdsQuery,
-      {
-        ids,
-      },
+      ceiling ? envioMarketTxContextsPageWithinSnapshotQuery : envioMarketTxContextsPageQuery,
+      ceiling
+        ? {
+            chainId,
+            marketId,
+            limit,
+            offset,
+            ceilingTimestamp: ceiling.timestamp.toString(),
+            ceilingTxHash: ceiling.hash,
+            ceilingContextId: ceiling.contextId,
+          }
+        : {
+            chainId,
+            marketId,
+            limit,
+            offset,
+          },
       {
         signal: controller.signal,
       },
     );
 
-    return response.data?.TxContext ?? [];
+    return response.data?.MarketTxContext ?? [];
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`Monarch market pro activity request timed out after ${MONARCH_MARKET_TX_CONTEXTS_TIMEOUT_MS}ms`);
@@ -1016,80 +875,38 @@ const fetchMarketTxContextsByIds = async (ids: string[]): Promise<MonarchTxConte
   }
 };
 
-const discoverMarketTxContextSeeds = async (
-  marketId: string,
-  chainId: number,
-  targetCount: number,
-  batchSize: number,
-  maxRounds: number,
-): Promise<{ orderedSeeds: MarketTxContextSeed[]; hasMore: boolean }> => {
-  const seedsById = new Map<string, MarketTxContextSeed>();
-  const sourceStates = Object.fromEntries(
-    MARKET_TX_CONTEXT_SEED_SOURCES.map((source) => [
-      source,
-      {
-        exhausted: false,
-        frontier: null,
-      } satisfies MarketTxContextSeedSourceState,
-    ]),
-  ) as Record<MarketTxContextSeedSource, MarketTxContextSeedSourceState>;
-  let offset = 0;
-  let hasMore = false;
-  let orderedSeeds: MarketTxContextSeed[] = [];
-  let isTargetCovered = false;
-
-  for (let round = 0; round < maxRounds; round += 1) {
-    const response = await fetchMarketTxContextSeedsPage(marketId, chainId, batchSize, offset);
-    const sourceRows = getSeedRowsBySource(response);
-    const pageSeeds = extractMarketTxContextSeeds(response);
-
-    for (const seed of pageSeeds) {
-      if (!seedsById.has(seed.contextId)) {
-        seedsById.set(seed.contextId, seed);
-      }
-    }
-
-    for (const source of MARKET_TX_CONTEXT_SEED_SOURCES) {
-      const rows = sourceRows[source];
-      const lastRow = rows.at(-1);
-
-      if (lastRow) {
-        sourceStates[source].frontier = {
-          hash: lastRow.txHash,
-          timestamp: toTimestamp(lastRow.timestamp),
-        };
-      }
-
-      if (rows.length < batchSize) {
-        sourceStates[source].exhausted = true;
-      }
-    }
-
-    hasMore = getSeedPageHasMore(response, batchSize);
-    orderedSeeds = [...seedsById.values()].sort(compareMarketTxContextSeeds);
-    const cutoffSeed = orderedSeeds[targetCount - 1];
-    isTargetCovered =
-      cutoffSeed !== undefined &&
-      MARKET_TX_CONTEXT_SEED_SOURCES.every((source) => {
-        const sourceState = sourceStates[source];
-        return sourceState.exhausted || isSeedFrontierAtOrOlderThanCutoff(sourceState.frontier, cutoffSeed);
-      });
-
-    if ((orderedSeeds.length >= targetCount && isTargetCovered) || !hasMore) {
-      break;
-    }
-
-    offset += batchSize;
+const normalizeMarketTxContextRow = (row: MonarchMarketTxContextRow, marketId: string, chainId: number): MarketProActivity => {
+  if (row.chainId !== chainId) {
+    throw new Error(`Monarch market pro activity row chain mismatch for ${row.id}`);
   }
 
-  if (hasMore && (orderedSeeds.length < targetCount || !isTargetCovered)) {
-    throw new Error('Monarch market pro activity discovery could not prove complete page ordering for the requested window');
+  if (!sameMarket(row.market_id, marketId)) {
+    throw new Error(`Monarch market pro activity row market mismatch for ${row.id}`);
   }
 
-  return {
-    orderedSeeds,
-    hasMore,
-  };
+  if (!row.txContext) {
+    throw new Error(`Monarch market pro activity row is missing txContext metadata for ${row.id}`);
+  }
+
+  if (row.txContext.chainId !== chainId) {
+    throw new Error(`Monarch market pro activity txContext chain mismatch for ${row.id}`);
+  }
+
+  if (row.txContext.txHash.toLowerCase() !== row.txHash.toLowerCase()) {
+    throw new Error(`Monarch market pro activity tx hash mismatch for ${row.id}`);
+  }
+
+  if (toTimestamp(row.txContext.timestamp) !== toTimestamp(row.timestamp)) {
+    throw new Error(`Monarch market pro activity timestamp mismatch for ${row.id}`);
+  }
+
+  const activity = normalizeTxContext(row.txContext, marketId);
+
+  if (!activity) {
+    throw new Error(`Monarch market pro activity row could not be normalized for ${row.id}`);
+  }
+
+  return activity;
 };
 
 export const fetchMonarchMarketTxContexts = async (
@@ -1097,22 +914,11 @@ export const fetchMonarchMarketTxContexts = async (
   chainId: number,
   first = 8,
   skip = 0,
+  ceiling?: MarketTxContextCursor,
 ): Promise<PaginatedMarketProActivities> => {
-  const targetCount = skip + first + 1;
-  const batchSize = Math.max(MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_FLOOR, first * MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_MULTIPLIER);
-  const maxRounds = Math.min(
-    MARKET_TX_CONTEXT_DISCOVERY_MAX_ROUNDS,
-    Math.max(3, Math.ceil(targetCount / batchSize) * MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_MULTIPLIER + MARKET_TX_CONTEXT_DISCOVERY_EXTRA_ROUNDS),
-  );
-  const { orderedSeeds, hasMore: discoveryHasMore } = await discoverMarketTxContextSeeds(marketId, chainId, targetCount, batchSize, maxRounds);
-  const targetSeedWindow = orderedSeeds.slice(0, targetCount);
-  const hydratedContexts = await fetchMarketTxContextsByIds(targetSeedWindow.map((seed) => seed.contextId));
-  const orderedActivities = hydratedContexts
-    .map((context) => normalizeTxContext(context, marketId))
-    .filter((context): context is MarketProActivity => context !== null)
-    .sort(compareMarketProActivities);
-  const pageItems = orderedActivities.slice(skip, skip + first);
-  const hasNextPage = orderedActivities.length > skip + first || discoveryHasMore;
+  const rows = await fetchMarketTxContextsPage(marketId, chainId, first + 1, skip, ceiling);
+  const pageItems = rows.slice(0, first).map((row) => normalizeMarketTxContextRow(row, marketId, chainId));
+  const hasNextPage = rows.length > first;
   const totalCount = skip + pageItems.length + Number(hasNextPage);
 
   return {
