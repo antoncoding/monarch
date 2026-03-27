@@ -17,7 +17,7 @@ import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip } from '@/components/ui/tooltip';
-import { type MarketProActivityKind, type MarketProActivityLeg } from '@/data-sources/monarch-api';
+import type { MarketProActivityKind, MarketProActivityLeg } from '@/data-sources/monarch-api';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { useMarketTxContexts } from '@/hooks/useMarketTxContexts';
@@ -97,7 +97,12 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { allMarkets } = useProcessedMarkets();
 
-  const { data, isLoading, isFetching, error, refetch } = useMarketTxContexts(market.uniqueKey, market.morphoBlue.chain.id, currentPage, PAGE_SIZE);
+  const { data, isLoading, isFetching, error, refetch } = useMarketTxContexts(
+    market.uniqueKey,
+    market.morphoBlue.chain.id,
+    currentPage,
+    PAGE_SIZE,
+  );
 
   const activities = data?.items ?? [];
   const totalCount = data?.totalCount ?? 0;
@@ -168,7 +173,10 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
   };
 
   const getMarketFlowEntries = (activity: (typeof activities)[number]): MarketFlowEntry[] => {
-    const flowMap = new Map<string, { marketId: string; direction: MarketFlowDirection; amount: bigint; assetType: 'loan' | 'collateral' }>();
+    const flowMap = new Map<
+      string,
+      { marketId: string; direction: MarketFlowDirection; amount: bigint; assetType: 'loan' | 'collateral' }
+    >();
 
     for (const leg of activity.legs) {
       if (!leg.marketId || !isMorphoMarketLoanFlowLeg(leg)) {
@@ -258,10 +266,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
     return flows;
   };
 
-  const getSupportingVaultLeg = (
-    activity: (typeof activities)[number],
-    leg: MarketProActivityLeg,
-  ): MarketProActivityLeg | undefined => {
+  const getSupportingVaultLeg = (activity: (typeof activities)[number], leg: MarketProActivityLeg): MarketProActivityLeg | undefined => {
     const supportingKind = leg.kind === 'supply' ? 'vaultDeposit' : leg.kind === 'withdraw' ? 'vaultWithdraw' : null;
     if (!supportingKind) {
       return undefined;
@@ -283,16 +288,13 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
     );
   };
 
-  const getProcessedEventActorAddress = (
-    activity: (typeof activities)[number],
-    leg: MarketProActivityLeg,
-  ): Address | undefined => {
+  const getProcessedEventActorAddress = (activity: (typeof activities)[number], leg: MarketProActivityLeg): Address | undefined => {
     const supportingVaultLeg = getSupportingVaultLeg(activity, leg);
     if (supportingVaultLeg) {
       const vaultActor =
         leg.kind === 'withdraw'
-          ? supportingVaultLeg.positionAddress ?? supportingVaultLeg.receiverAddress ?? supportingVaultLeg.actorAddress
-          : supportingVaultLeg.positionAddress ?? supportingVaultLeg.actorAddress;
+          ? (supportingVaultLeg.positionAddress ?? supportingVaultLeg.receiverAddress ?? supportingVaultLeg.actorAddress)
+          : (supportingVaultLeg.positionAddress ?? supportingVaultLeg.actorAddress);
 
       return vaultActor as Address | undefined;
     }
@@ -300,10 +302,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
     return (leg.positionAddress ?? leg.receiverAddress ?? leg.actorAddress) as Address | undefined;
   };
 
-  const getProcessedEventIntermediaryAddress = (
-    activity: (typeof activities)[number],
-    leg: MarketProActivityLeg,
-  ): Address | undefined => {
+  const getProcessedEventIntermediaryAddress = (activity: (typeof activities)[number], leg: MarketProActivityLeg): Address | undefined => {
     const actorAddress = getProcessedEventActorAddress(activity, leg);
     const supportingVaultLeg = getSupportingVaultLeg(activity, leg);
     const intermediaryAddress = supportingVaultLeg?.vaultAddress ?? leg.vaultAddress;
@@ -315,10 +314,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
     return intermediaryAddress as Address;
   };
 
-  const hasMatchingLegacyReallocateLeg = (
-    eventLegs: MarketProActivityLeg[],
-    leg: MarketProActivityLeg,
-  ): boolean => {
+  const hasMatchingLegacyReallocateLeg = (eventLegs: MarketProActivityLeg[], leg: MarketProActivityLeg): boolean => {
     if (leg.kind !== 'supply' && leg.kind !== 'withdraw') {
       return false;
     }
@@ -352,11 +348,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
     }
 
     if (leg.isCurrentMarket) {
-      return (
-        <Fragment key={key}>
-          {renderCurrentMarketTag()}
-        </Fragment>
-      );
+      return <Fragment key={key}>{renderCurrentMarketTag()}</Fragment>;
     }
 
     return (
@@ -489,7 +481,9 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
               className="flex items-center justify-between gap-3 rounded-sm bg-surface px-3 py-2"
             >
               <div className="min-w-0">{renderFlowMarketLabel(entry, `${prefix}-${entry.marketId}`)}</div>
-              <span className={`shrink-0 text-sm font-medium tabular-nums ${direction === 'in' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              <span
+                className={`shrink-0 text-sm font-medium tabular-nums ${direction === 'in' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+              >
                 {direction === 'in' ? '+' : '-'}
                 {formatFlowAmount(entry)}
               </span>
@@ -770,9 +764,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           ) : null}
                         </TableCell>
 
-                        <TableCell className="px-4 py-3 text-right">
-                          {renderRowFlow(activity)}
-                        </TableCell>
+                        <TableCell className="px-4 py-3 text-right">{renderRowFlow(activity)}</TableCell>
 
                         <TableCell className="px-4 py-3 text-sm text-gray-500">{moment.unix(activity.timestamp).fromNow()}</TableCell>
 

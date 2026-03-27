@@ -328,7 +328,11 @@ export const useTrendingMarketKeys = useOfficialTrendingMarketKeys;
 export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean => {
   const { metricsMap, isLoading: isMetricsLoading } = useMarketMetricsMap();
   const metrics = metricsMap.get(getMetricsKey(chainId, uniqueKey));
-  const { data: hasLiquidationPresence = false } = useMarketLiquidationPresence(chainId, uniqueKey, !metrics?.everLiquidated && !isMetricsLoading);
+  const { data: hasLiquidationPresence = false } = useMarketLiquidationPresence(
+    chainId,
+    uniqueKey,
+    !metrics?.everLiquidated && !isMetricsLoading,
+  );
 
   return Boolean(metrics?.everLiquidated) || hasLiquidationPresence;
 };

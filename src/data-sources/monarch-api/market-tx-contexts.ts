@@ -242,8 +242,7 @@ const isMorphoMarketLegKind = (kind: MarketProActivityLegKind): kind is MorphoMa
 
 const isSupplyLikeLeg = (leg: MarketProActivityLeg): boolean => leg.kind === 'supply' || leg.kind === 'legacyVaultReallocateSupply';
 
-const isWithdrawLikeLeg = (leg: MarketProActivityLeg): boolean =>
-  leg.kind === 'withdraw' || leg.kind === 'legacyVaultReallocateWithdraw';
+const isWithdrawLikeLeg = (leg: MarketProActivityLeg): boolean => leg.kind === 'withdraw' || leg.kind === 'legacyVaultReallocateWithdraw';
 
 const hasDistinctMarketPair = (fromMarketIds: Set<string>, toMarketIds: Set<string>): boolean => {
   for (const fromMarketId of fromMarketIds) {
@@ -353,10 +352,7 @@ const mapMorphoLegs = (
   }));
 };
 
-const mapVaultDepositLegs = (
-  rows: MonarchVaultDepositRow[] | undefined,
-  source: 'vault-v2' | 'legacy-vault',
-): MarketProActivityLeg[] => {
+const mapVaultDepositLegs = (rows: MonarchVaultDepositRow[] | undefined, source: 'vault-v2' | 'legacy-vault'): MarketProActivityLeg[] => {
   return (rows ?? []).map((row) => ({
     id: row.id,
     kind: 'vaultDeposit',
@@ -371,10 +367,7 @@ const mapVaultDepositLegs = (
   }));
 };
 
-const mapVaultWithdrawLegs = (
-  rows: MonarchVaultWithdrawRow[] | undefined,
-  source: 'vault-v2' | 'legacy-vault',
-): MarketProActivityLeg[] => {
+const mapVaultWithdrawLegs = (rows: MonarchVaultWithdrawRow[] | undefined, source: 'vault-v2' | 'legacy-vault'): MarketProActivityLeg[] => {
   return (rows ?? []).map((row) => ({
     id: row.id,
     kind: 'vaultWithdraw',
@@ -534,11 +527,7 @@ const selectPrimaryLegForKind = (
   return undefined;
 };
 
-const deriveKind = (
-  context: MonarchTxContextRow,
-  currentMarketLegs: MarketProActivityLeg[],
-  isMonarch: boolean,
-): MarketProActivityKind => {
+const deriveKind = (context: MonarchTxContextRow, currentMarketLegs: MarketProActivityLeg[], isMonarch: boolean): MarketProActivityKind => {
   const isVaultUserDepositContext = context.hasVaultUserDeposit || context.vaultTxType === 'user_deposit';
   const isVaultUserWithdrawContext = context.hasVaultUserWithdraw || context.vaultTxType === 'user_withdraw';
   const isVaultRebalanceContext = isTrueVaultRebalanceContext(context);
@@ -585,7 +574,13 @@ const deriveKind = (
     return 'vaultDeposit';
   }
 
-  if (isVaultUserWithdrawContext && !isVaultUserDepositContext && !isVaultRebalanceContext && currentActionKinds.size === 1 && hasWithdraw) {
+  if (
+    isVaultUserWithdrawContext &&
+    !isVaultUserDepositContext &&
+    !isVaultRebalanceContext &&
+    currentActionKinds.size === 1 &&
+    hasWithdraw
+  ) {
     return 'vaultWithdraw';
   }
 
@@ -701,11 +696,19 @@ const deriveVaultAddress = (
   const isVaultUserWithdrawContext = context.hasVaultUserWithdraw || context.vaultTxType === 'user_withdraw';
 
   if (kind === 'vaultDeposit' && isVaultUserDepositContext) {
-    return selectPrimaryLegForKind(kind, currentMarketLegs)?.positionAddress ?? currentMarketLegs[0]?.positionAddress ?? currentMarketLegs[0]?.actorAddress;
+    return (
+      selectPrimaryLegForKind(kind, currentMarketLegs)?.positionAddress ??
+      currentMarketLegs[0]?.positionAddress ??
+      currentMarketLegs[0]?.actorAddress
+    );
   }
 
   if (kind === 'vaultWithdraw' && isVaultUserWithdrawContext) {
-    return selectPrimaryLegForKind(kind, currentMarketLegs)?.positionAddress ?? currentMarketLegs[0]?.positionAddress ?? currentMarketLegs[0]?.actorAddress;
+    return (
+      selectPrimaryLegForKind(kind, currentMarketLegs)?.positionAddress ??
+      currentMarketLegs[0]?.positionAddress ??
+      currentMarketLegs[0]?.actorAddress
+    );
   }
 
   return undefined;
@@ -724,22 +727,30 @@ const derivePrimaryImpact = (
 
   if (kind === 'vaultDeposit' || kind === 'directSupply') {
     const amount = sumAssets(supplyLegs);
-    return amount > 0n ? { amount: amount.toString(), amountAssetType: 'loan', primaryLegKind: 'supply' } : { amount: null, amountAssetType: null, primaryLegKind: null };
+    return amount > 0n
+      ? { amount: amount.toString(), amountAssetType: 'loan', primaryLegKind: 'supply' }
+      : { amount: null, amountAssetType: null, primaryLegKind: null };
   }
 
   if (kind === 'vaultWithdraw' || kind === 'directWithdraw') {
     const amount = sumAssets(withdrawLegs);
-    return amount > 0n ? { amount: amount.toString(), amountAssetType: 'loan', primaryLegKind: 'withdraw' } : { amount: null, amountAssetType: null, primaryLegKind: null };
+    return amount > 0n
+      ? { amount: amount.toString(), amountAssetType: 'loan', primaryLegKind: 'withdraw' }
+      : { amount: null, amountAssetType: null, primaryLegKind: null };
   }
 
   if (kind === 'directBorrow') {
     const amount = sumAssets(borrowLegs);
-    return amount > 0n ? { amount: amount.toString(), amountAssetType: 'loan', primaryLegKind: 'borrow' } : { amount: null, amountAssetType: null, primaryLegKind: null };
+    return amount > 0n
+      ? { amount: amount.toString(), amountAssetType: 'loan', primaryLegKind: 'borrow' }
+      : { amount: null, amountAssetType: null, primaryLegKind: null };
   }
 
   if (kind === 'directRepay') {
     const amount = sumAssets(repayLegs);
-    return amount > 0n ? { amount: amount.toString(), amountAssetType: 'loan', primaryLegKind: 'repay' } : { amount: null, amountAssetType: null, primaryLegKind: null };
+    return amount > 0n
+      ? { amount: amount.toString(), amountAssetType: 'loan', primaryLegKind: 'repay' }
+      : { amount: null, amountAssetType: null, primaryLegKind: null };
   }
 
   if (kind === 'vaultRebalance' || kind === 'monarchTx') {
@@ -1003,7 +1014,13 @@ export const fetchMonarchMarketTxContexts = async (
   const targetCount = skip + first + 1;
   const batchSize = Math.max(MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_FLOOR, first * MARKET_TX_CONTEXT_DISCOVERY_BATCH_SIZE_MULTIPLIER);
   const maxRounds = Math.max(3, Math.ceil(targetCount / batchSize) + MARKET_TX_CONTEXT_DISCOVERY_EXTRA_ROUNDS);
-  const { orderedSeeds, hasMore: discoveryHasMore } = await discoverMarketTxContextSeeds(marketId, chainId, targetCount, batchSize, maxRounds);
+  const { orderedSeeds, hasMore: discoveryHasMore } = await discoverMarketTxContextSeeds(
+    marketId,
+    chainId,
+    targetCount,
+    batchSize,
+    maxRounds,
+  );
   const targetSeedWindow = orderedSeeds.slice(0, targetCount);
   const hydratedContexts = await fetchMarketTxContextsByIds(targetSeedWindow.map((seed) => seed.contextId));
   const normalizedById = new Map(

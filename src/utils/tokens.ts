@@ -962,7 +962,11 @@ const isWrappedNativeToken = (address: string, chainId: number) => {
 };
 
 // Scam tokens
-const blacklistTokens = ['0xda1c2c3c8fad503662e41e324fc644dc2c5e0ccd', '0x8413d2a624a9fa8b6d3ec7b22cf7f62e55d6bc83'];
+const blacklistTokens = [
+  '0xda1c2c3c8fad503662e41e324fc644dc2c5e0ccd',
+  '0x8413d2a624a9fa8b6d3ec7b22cf7f62e55d6bc83',
+  '0x4bcaf180df5b13c0441fe41a66e9638a2a410c6d',
+];
 
 export {
   supportedTokens,
