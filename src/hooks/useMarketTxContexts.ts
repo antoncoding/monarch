@@ -74,7 +74,7 @@ export const useMarketTxContexts = (marketId: string | undefined, network: Suppo
   const data = page === 1 ? snapshotQuery.data : pageQuery.data;
   const isLoading = page === 1 ? snapshotQuery.isLoading : snapshotQuery.isLoading || pageQuery.isLoading;
   const isFetching = page === 1 ? snapshotQuery.isFetching : snapshotQuery.isFetching || pageQuery.isFetching;
-  const error = page === 1 ? snapshotQuery.error : snapshotQuery.error ?? pageQuery.error;
+  const error = page === 1 ? snapshotQuery.error : (snapshotQuery.error ?? pageQuery.error);
   const refetch = page === 1 ? snapshotQuery.refetch : pageQuery.refetch;
 
   useEffect(() => {
