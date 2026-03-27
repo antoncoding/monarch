@@ -5,7 +5,6 @@ irmAddress
 oracle {
   address
 }
-listed
 morphoBlue {
   id
   address
@@ -103,7 +102,6 @@ export const marketsQuery = `
     oracle {
       address
     }
-    listed
     morphoBlue {
       address
       chain {
