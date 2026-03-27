@@ -155,6 +155,25 @@ export const marketsQuery = `
   }
 `;
 
+export const marketsWhitelistStatusQuery = `
+  query getMarketsWhitelistStatus($first: Int, $skip: Int, $where: MarketFilters) {
+    markets(first: $first, skip: $skip, where: $where) {
+      items {
+        uniqueKey
+        listed
+        morphoBlue {
+          chain {
+            id
+          }
+        }
+      }
+      pageInfo {
+        countTotal
+      }
+    }
+  }
+`;
+
 export const userPositionsQuery = `
   query getUserMarketPositions($address: String!, $chainId: Int) {
     userByAddress(address: $address, chainId: $chainId) {
