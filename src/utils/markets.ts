@@ -43,7 +43,11 @@ export const isMarketRegistryEntryAllowed = ({
   const normalizedCollateralAsset = normalizeAddress(collateralAssetAddress);
   const normalizedIrm = normalizeAddress(irmAddress);
 
-  if (!isValidRegistryAddress(normalizedLoanAsset) || !isValidRegistryAddress(normalizedCollateralAsset) || !isValidRegistryAddress(normalizedIrm)) {
+  if (
+    !isValidRegistryAddress(normalizedLoanAsset) ||
+    !isValidRegistryAddress(normalizedCollateralAsset) ||
+    !isValidRegistryAddress(normalizedIrm)
+  ) {
     return false;
   }
 

@@ -3,12 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchMonarchMarketTxContexts, type PaginatedMarketProActivities } from '@/data-sources/monarch-api';
 import type { SupportedNetworks } from '@/utils/networks';
 
-export const useMarketTxContexts = (
-  marketId: string | undefined,
-  network: SupportedNetworks | undefined,
-  page = 1,
-  pageSize = 8,
-) => {
+export const useMarketTxContexts = (marketId: string | undefined, network: SupportedNetworks | undefined, page = 1, pageSize = 8) => {
   const queryClient = useQueryClient();
 
   const queryKey = ['marketTxContexts', marketId, network, page, pageSize];
