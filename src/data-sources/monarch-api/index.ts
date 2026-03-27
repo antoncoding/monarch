@@ -18,6 +18,7 @@ export {
   type MarketProActivity,
   type MarketProActivityKind,
   type MarketProActivityLeg,
+  type MarketTxContextCursor,
   type PaginatedMarketProActivities,
 } from './market-tx-contexts';
 export {

@@ -80,6 +80,11 @@ const formatAmount = (amount: string, decimals: number): string => {
   return formatSimple(Number(formatUnits(BigInt(amount), decimals)));
 };
 
+const formatActivityTime = (timestamp: number): string => {
+  const activityTime = moment.unix(timestamp).utc();
+  return activityTime.format('YYYY-MM-DD HH:mm:ss [UTC]');
+};
+
 const getMarketMapKey = (marketId: string): string => marketId.toLowerCase();
 const isSameMarketId = (left: string, right: string): boolean => getMarketMapKey(left) === getMarketMapKey(right);
 const sameAddress = (left: string | undefined, right: string | undefined): boolean =>
@@ -422,7 +427,6 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                       chainId={chainId}
                       variant="badge"
                       linkTo="profile"
-                      showActions={false}
                     />
                   ) : null}
                   {intermediaryAddress ? (
@@ -433,7 +437,6 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                         chainId={chainId}
                         variant="badge"
                         linkTo="profile"
-                        showActions={false}
                       />
                     </>
                   ) : null}
@@ -670,16 +673,16 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
 
           <Table
             aria-label="Advanced market activity"
-            className="responsive w-full min-w-[1080px] table-fixed"
+            className="responsive w-full min-w-[1200px] table-fixed"
           >
             <TableHeader>
               <TableRow className="text-secondary">
-                <TableHead className="w-[20%] px-4 py-3 text-left">ACCOUNT</TableHead>
-                <TableHead className="w-[16%] px-4 py-3 text-left">ACTION</TableHead>
+                <TableHead className="w-[18%] px-4 py-3 text-left">ACCOUNT</TableHead>
+                <TableHead className="w-[14%] px-4 py-3 text-left">ACTION</TableHead>
                 <TableHead className="w-[18%] px-4 py-3 text-left">INTERMEDIARY</TableHead>
-                <TableHead className="w-[22%] px-4 py-3 text-right">FLOW</TableHead>
-                <TableHead className="w-[12%] px-4 py-3 text-left">TIME</TableHead>
-                <TableHead className="w-[12%] px-4 py-3 text-right">TRANSACTION</TableHead>
+                <TableHead className="w-[18%] px-4 py-3 text-right">NET FLOW</TableHead>
+                <TableHead className="w-[18%] px-4 py-3 text-left whitespace-nowrap">TIME</TableHead>
+                <TableHead className="w-[14%] px-4 py-3 text-right">TRANSACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact text-sm">
@@ -730,7 +733,10 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           }
                         }}
                       >
-                        <TableCell className="px-4 py-3">
+                        <TableCell
+                          className="px-4 py-3"
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           {!activity.isMonarch && activity.actorAddress ? (
                             <AccountIdentity
                               address={activity.actorAddress as Address}
@@ -752,21 +758,23 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           </Badge>
                         </TableCell>
 
-                        <TableCell className="px-4 py-3">
+                        <TableCell
+                          className="px-4 py-3"
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           {intermediaryAddress ? (
                             <AccountIdentity
                               address={intermediaryAddress}
                               chainId={chainId}
                               variant="compact"
                               linkTo="profile"
-                              showActions={false}
                             />
                           ) : null}
                         </TableCell>
 
                         <TableCell className="px-4 py-3 text-right">{renderRowFlow(activity)}</TableCell>
 
-                        <TableCell className="px-4 py-3 text-sm text-gray-500">{moment.unix(activity.timestamp).fromNow()}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm whitespace-nowrap text-gray-500">{formatActivityTime(activity.timestamp)}</TableCell>
 
                         <TableCell
                           className="px-4 py-3 text-right"

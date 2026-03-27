@@ -549,138 +549,71 @@ const marketTxContextFields = `
       }
 `;
 
-export const envioMarketTxContextSeedsQuery = `
-  query EnvioMarketTxContextSeedsPage($chainId: Int!, $marketId: String!, $limit: Int!, $offset: Int!) {
-    supplies: Morpho_Supply(
+export const envioMarketTxContextsPageQuery = `
+  query EnvioMarketTxContextsPage($chainId: Int!, $marketId: String!, $limit: Int!, $offset: Int!) {
+    MarketTxContext(
       where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
+      order_by: [{ timestamp: desc }, { txHash: desc }, { txContext_id: desc }]
       limit: $limit
       offset: $offset
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
     ) {
       id
-      txHash
+      chainId
+      market_id
       timestamp
-      txContext {
-        id
-        txHash
-        timestamp
-      }
-    }
-    withdraws: Morpho_Withdraw(
-      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
-      limit: $limit
-      offset: $offset
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
-    ) {
-      id
       txHash
-      timestamp
+      txContext_id
       txContext {
-        id
-        txHash
-        timestamp
-      }
-    }
-    borrows: Morpho_Borrow(
-      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
-      limit: $limit
-      offset: $offset
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
-    ) {
-      id
-      txHash
-      timestamp
-      txContext {
-        id
-        txHash
-        timestamp
-      }
-    }
-    repays: Morpho_Repay(
-      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
-      limit: $limit
-      offset: $offset
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
-    ) {
-      id
-      txHash
-      timestamp
-      txContext {
-        id
-        txHash
-        timestamp
-      }
-    }
-    supplyCollaterals: Morpho_SupplyCollateral(
-      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
-      limit: $limit
-      offset: $offset
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
-    ) {
-      id
-      txHash
-      timestamp
-      txContext {
-        id
-        txHash
-        timestamp
-      }
-    }
-    withdrawCollaterals: Morpho_WithdrawCollateral(
-      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
-      limit: $limit
-      offset: $offset
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
-    ) {
-      id
-      txHash
-      timestamp
-      txContext {
-        id
-        txHash
-        timestamp
-      }
-    }
-    legacyReallocateSupplies: MetaMorphoVault_ReallocateSupply(
-      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
-      limit: $limit
-      offset: $offset
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
-    ) {
-      id
-      txHash
-      timestamp
-      txContext {
-        id
-        txHash
-        timestamp
-      }
-    }
-    legacyReallocateWithdrawals: MetaMorphoVault_ReallocateWithdraw(
-      where: { chainId: { _eq: $chainId }, market_id: { _eq: $marketId } }
-      limit: $limit
-      offset: $offset
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
-    ) {
-      id
-      txHash
-      timestamp
-      txContext {
-        id
-        txHash
-        timestamp
+${marketTxContextFields}
       }
     }
   }
 `;
 
-export const envioMarketTxContextsByIdsQuery = `
-  query EnvioMarketTxContextsByIds($ids: [String!]!) {
-    TxContext(
-      where: { id: { _in: $ids } }
-      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+export const envioMarketTxContextsPageWithinSnapshotQuery = `
+  query EnvioMarketTxContextsPageWithinSnapshot(
+    $chainId: Int!
+    $marketId: String!
+    $limit: Int!
+    $offset: Int!
+    $ceilingTimestamp: numeric!
+    $ceilingTxHash: String!
+    $ceilingContextId: String!
+  ) {
+    MarketTxContext(
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+        _or: [
+          { timestamp: { _lt: $ceilingTimestamp } }
+          {
+            _and: [
+              { timestamp: { _eq: $ceilingTimestamp } }
+              { txHash: { _lt: $ceilingTxHash } }
+            ]
+          }
+          {
+            _and: [
+              { timestamp: { _eq: $ceilingTimestamp } }
+              { txHash: { _eq: $ceilingTxHash } }
+              { txContext_id: { _lte: $ceilingContextId } }
+            ]
+          }
+        ]
+      }
+      order_by: [{ timestamp: desc }, { txHash: desc }, { txContext_id: desc }]
+      limit: $limit
+      offset: $offset
     ) {
+      id
+      chainId
+      market_id
+      timestamp
+      txHash
+      txContext_id
+      txContext {
 ${marketTxContextFields}
+      }
     }
   }
 `;
