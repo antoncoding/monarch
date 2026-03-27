@@ -427,7 +427,6 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                       chainId={chainId}
                       variant="badge"
                       linkTo="profile"
-                      showActions={false}
                     />
                   ) : null}
                   {intermediaryAddress ? (
@@ -438,7 +437,6 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                         chainId={chainId}
                         variant="badge"
                         linkTo="profile"
-                        showActions={false}
                       />
                     </>
                   ) : null}
@@ -735,7 +733,10 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           }
                         }}
                       >
-                        <TableCell className="px-4 py-3">
+                        <TableCell
+                          className="px-4 py-3"
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           {!activity.isMonarch && activity.actorAddress ? (
                             <AccountIdentity
                               address={activity.actorAddress as Address}
@@ -757,14 +758,16 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           </Badge>
                         </TableCell>
 
-                        <TableCell className="px-4 py-3">
+                        <TableCell
+                          className="px-4 py-3"
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           {intermediaryAddress ? (
                             <AccountIdentity
                               address={intermediaryAddress}
                               chainId={chainId}
                               variant="compact"
                               linkTo="profile"
-                              showActions={false}
                             />
                           ) : null}
                         </TableCell>
