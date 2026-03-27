@@ -1,8 +1,9 @@
 import { supportsMorphoApi } from '@/config/dataSources';
+import { fetchMonarchAdaptersByAddress, isRecognizedMorphoMarketAdapterType } from '@/data-sources/monarch-api/vaults';
 import { fetchMonarchUserTransactions } from '@/data-sources/monarch-api/user-transactions';
 import { fetchMorphoTransactions } from '@/data-sources/morpho-api/transactions';
 import { fetchSubgraphTransactions } from '@/data-sources/subgraph/transactions';
-import { isSupportedChain } from '@/utils/networks';
+import { isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import type { UserTransaction } from '@/utils/types';
 import {
   compareUserTransactions,
@@ -18,6 +19,33 @@ type FallbackTransactionsSource = 'morpho' | 'subgraph';
 
 const canUseMonarchTransactions = (filters: TransactionFilters): boolean => {
   return !filters.assetIds?.length;
+};
+
+const shouldFallbackOnEmptyMonarchHistory = async (filters: TransactionFilters): Promise<boolean> => {
+  if (!isSupportedChain(filters.chainId) || filters.userAddress.length === 0) {
+    return false;
+  }
+
+  const normalizedAddresses = Array.from(new Set(filters.userAddress.map((address) => address.toLowerCase()).filter(Boolean)));
+  if (normalizedAddresses.length === 0) {
+    return false;
+  }
+
+  try {
+    const adapterDetails = await fetchMonarchAdaptersByAddress(normalizedAddresses, filters.chainId as SupportedNetworks);
+    if (adapterDetails.length === 0) {
+      return false;
+    }
+
+    return normalizedAddresses.every((address) =>
+      adapterDetails.some(
+        (adapterDetail) => adapterDetail.address === address && isRecognizedMorphoMarketAdapterType(adapterDetail.adapterType),
+      ),
+    );
+  } catch (adapterLookupError) {
+    console.warn(`Failed to resolve adapter metadata for chain ${filters.chainId}:`, adapterLookupError);
+    return false;
+  }
 };
 
 const fetchFallbackTransactionsFromSource = async (
@@ -103,7 +131,8 @@ export async function fetchUserTransactions(filters: TransactionFilters): Promis
   if (canUseMonarchTransactions(filters)) {
     try {
       const response = await fetchMonarchUserTransactions(filters);
-      if (!response.error) {
+      const shouldFallbackOnEmpty = !response.error && response.items.length === 0 && (await shouldFallbackOnEmptyMonarchHistory(filters));
+      if (!response.error && !shouldFallbackOnEmpty) {
         return response;
       }
     } catch (monarchError) {
@@ -137,7 +166,9 @@ export async function fetchAllUserTransactions(filters: TransactionFilters, page
         first: undefined,
         skip: 0,
       });
-      if (!response.error) {
+      const shouldFallbackOnEmpty =
+        !response.error && response.items.length === 0 && (await shouldFallbackOnEmptyMonarchHistory(frozenFilters));
+      if (!response.error && !shouldFallbackOnEmpty) {
         return response;
       }
     } catch (monarchError) {

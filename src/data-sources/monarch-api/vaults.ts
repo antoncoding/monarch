@@ -17,6 +17,12 @@ export type VaultAdapterDetails = {
   factoryAddress: string;
 };
 
+export const MORPHO_MARKET_ADAPTER_TYPES = ['MorphoMarketV1AdapterV2', 'MorphoMarketV1Adapter'] as const;
+
+export const isRecognizedMorphoMarketAdapterType = (adapterType: string | null | undefined): boolean => {
+  return MORPHO_MARKET_ADAPTER_TYPES.some((candidate) => candidate === adapterType);
+};
+
 export type VaultV2Details = {
   id: string;
   address: string;
@@ -97,6 +103,12 @@ type MonarchVaultDetailResponse = {
   data?: {
     Adapter?: MonarchAdapterRecord[];
     Vault?: MonarchVault[];
+  };
+};
+
+type MonarchAdapterLookupResponse = {
+  data?: {
+    Adapter?: MonarchAdapterRecord[];
   };
 };
 
@@ -206,6 +218,18 @@ const vaultByAddressQuery = `
   }
 `;
 
+const adaptersByAddressQuery = `
+  query MonarchAdaptersByAddress($adapterAddresses: [String!]!, $chainId: Int!) {
+    Adapter(where: { adapterAddress: { _in: $adapterAddresses }, chainId: { _eq: $chainId } }, order_by: [{ createdAt: desc }]) {
+      adapterAddress
+      adapterType
+      chainId
+      factoryAddress
+      vaultAddress
+    }
+  }
+`;
+
 export const fetchUserVaultV2DetailsAllNetworks = async (owner: string): Promise<UserVaultV2[]> => {
   const response = await monarchGraphqlFetcher<MonarchVaultsResponse>(userVaultsQuery, {
     owner: owner.toLowerCase(),
@@ -234,4 +258,30 @@ export const fetchMonarchVaultDetails = async (vaultAddress: string, chainId: Su
     .filter((adapter) => activeAdapterAddresses.has(adapter.address));
 
   return transformVault(vault, adapterDetails);
+};
+
+export const fetchMonarchAdaptersByAddress = async (
+  adapterAddresses: string[],
+  chainId: SupportedNetworks,
+): Promise<VaultAdapterDetails[]> => {
+  const normalizedAddresses = Array.from(new Set(adapterAddresses.map((address) => normalizeAddress(address)).filter(Boolean)));
+  if (normalizedAddresses.length === 0) {
+    return [];
+  }
+
+  const response = await monarchGraphqlFetcher<MonarchAdapterLookupResponse>(adaptersByAddressQuery, {
+    adapterAddresses: normalizedAddresses,
+    chainId,
+  });
+
+  const seenAddresses = new Set<string>();
+
+  return (response.data?.Adapter ?? []).map(transformAdapterRecord).filter((adapter) => {
+    if (seenAddresses.has(adapter.address)) {
+      return false;
+    }
+
+    seenAddresses.add(adapter.address);
+    return true;
+  });
 };

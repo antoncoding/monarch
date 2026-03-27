@@ -1,3 +1,4 @@
+import { getAddress, isAddress } from 'viem';
 import { buildEnvioUserTransactionsPageQuery } from '@/graphql/envio-queries';
 import { type UserTransaction, UserTxTypes } from '@/utils/types';
 import { emptyTransactionResponse, type TransactionFilters, type TransactionResponse } from '@/utils/user-transactions';
@@ -120,6 +121,10 @@ const getUserAddressVariants = (userAddresses: string[]): string[] => {
 
     variants.add(address);
     variants.add(address.toLowerCase());
+
+    if (isAddress(address)) {
+      variants.add(getAddress(address));
+    }
   }
 
   return Array.from(variants);
