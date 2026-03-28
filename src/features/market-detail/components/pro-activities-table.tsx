@@ -90,6 +90,7 @@ const isSameMarketId = (left: string, right: string): boolean => getMarketMapKey
 const sameAddress = (left: string | undefined, right: string | undefined): boolean =>
   left !== undefined && right !== undefined && left.toLowerCase() === right.toLowerCase();
 const isRebalanceLikeKind = (kind: MarketProActivityKind): boolean => kind === 'vaultRebalance' || kind === 'monarchTx';
+const isSimpleMonarchAccountResolvedKind = (kind: MarketProActivityKind): boolean => kind === 'directSupply' || kind === 'directWithdraw';
 
 type ProActivitiesTableProps = {
   chainId: number;
@@ -522,6 +523,18 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
     return activity.vaultAddress as Address;
   };
 
+  const getDisplayActorAddress = (activity: (typeof activities)[number]): Address | undefined => {
+    if (!activity.actorAddress) {
+      return undefined;
+    }
+
+    if (!activity.isMonarch || isSimpleMonarchAccountResolvedKind(activity.kind)) {
+      return activity.actorAddress as Address;
+    }
+
+    return undefined;
+  };
+
   const renderRowFlow = (activity: (typeof activities)[number]): ReactNode => {
     const rowLoanFlows = getRowLoanFlows(activity);
     if (rowLoanFlows.length === 0) {
@@ -712,6 +725,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                   const activityMeta = activityKindMeta[activity.kind];
                   const detailRowId = `${activity.id}-detail`;
                   const isExpanded = expandedRows.has(activity.id);
+                  const displayActorAddress = getDisplayActorAddress(activity);
                   const intermediaryAddress = getIntermediaryAddress(activity);
 
                   return (
@@ -737,9 +751,9 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           className="px-4 py-3"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          {!activity.isMonarch && activity.actorAddress ? (
+                          {displayActorAddress ? (
                             <AccountIdentity
-                              address={activity.actorAddress as Address}
+                              address={displayActorAddress}
                               chainId={chainId}
                               variant="compact"
                               linkTo="profile"

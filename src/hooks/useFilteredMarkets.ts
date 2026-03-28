@@ -37,10 +37,10 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
       return [];
     }
 
-    let markets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
-    if (markets.length === 0) return [];
+    let filteredMarkets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
+    if (filteredMarkets.length === 0) return [];
 
-    markets = filterMarkets(markets, {
+    filteredMarkets = filterMarkets(filteredMarkets, {
       selectedNetwork: filters.selectedNetwork,
       showUnknownTokens: preferences.includeUnknownTokens,
       showUnknownOracle: preferences.showUnknownOracle,
@@ -69,7 +69,7 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
 
     if (preferences.trustedVaultsOnly) {
       const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
-      markets = markets.filter((market) => {
+      filteredMarkets = filteredMarkets.filter((market) => {
         if (!market.supplyingVaults?.length) return false;
         const chainId = market.morphoBlue.chain.id;
         return market.supplyingVaults.some((vault) => {
@@ -81,7 +81,7 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
 
     // Official trending filter (backend-computed)
     if (filters.trendingMode && officialTrendingKeys.size > 0) {
-      markets = markets.filter((market) => {
+      filteredMarkets = filteredMarkets.filter((market) => {
         const key = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
         return officialTrendingKeys.has(key);
       });
@@ -89,7 +89,7 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
 
     // Custom tag filter (user-defined)
     if (filters.customTagMode && customTagKeys.size > 0) {
-      markets = markets.filter((market) => {
+      filteredMarkets = filteredMarkets.filter((market) => {
         const key = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
         return customTagKeys.has(key);
       });
@@ -98,17 +98,17 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
     // Starred markets filter
     if (filters.starredOnly && preferences.starredMarkets.length > 0) {
       const starredSet = new Set(preferences.starredMarkets);
-      markets = markets.filter((market) => starredSet.has(market.uniqueKey));
+      filteredMarkets = filteredMarkets.filter((market) => starredSet.has(market.uniqueKey));
     }
 
     if (preferences.sortColumn === SortColumn.Starred) {
-      return sortMarkets(markets, createStarredSort(preferences.starredMarkets), 1);
+      return sortMarkets(filteredMarkets, createStarredSort(preferences.starredMarkets), 1);
     }
 
     if (preferences.sortColumn === SortColumn.TrustedBy) {
       const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
       return sortMarkets(
-        markets,
+        filteredMarkets,
         (a, b) => {
           const aHasTrusted =
             a.supplyingVaults?.some((v) => v.address && trustedVaultKeys.has(getVaultKey(v.address, a.morphoBlue.chain.id))) ?? false;
@@ -144,10 +144,10 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
 
     const propertyPath = sortPropertyMap[preferences.sortColumn];
     if (propertyPath) {
-      return sortMarkets(markets, createPropertySort(propertyPath), preferences.sortDirection as 1 | -1);
+      return sortMarkets(filteredMarkets, createPropertySort(propertyPath), preferences.sortDirection as 1 | -1);
     }
 
-    return markets;
+    return filteredMarkets;
   }, [
     allMarkets,
     whitelistedMarkets,
