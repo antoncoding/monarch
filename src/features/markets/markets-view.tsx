@@ -50,8 +50,7 @@ export default function Markets() {
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
   const isLoadingTableState = loading || filteredMarketsLoading;
   const isTableFallbackState = !rawMarkets || markets.length === 0 || isWhitelistUnavailable;
-  const shouldUseFullWidthTableLayout =
-    isLoadingTableState || isTableFallbackState || effectiveTableViewMode === 'compact';
+  const shouldUseFullWidthTableLayout = isLoadingTableState || isTableFallbackState || effectiveTableViewMode === 'compact';
 
   // Compute unique collaterals and loan assets for filter dropdowns
   useEffect(() => {
