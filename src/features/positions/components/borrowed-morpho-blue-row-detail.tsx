@@ -1,10 +1,12 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
+import { PulseLoader } from 'react-spinners';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import {
   computeLiquidationOraclePrice,
   computeLtv,
@@ -16,6 +18,7 @@ import {
   getLTVProgressColor,
   isInfiniteLtv,
 } from '@/modals/borrow/components/helpers';
+import { getMarketIdentityKey } from '@/utils/market-identity';
 import type { BorrowPositionRow } from '@/utils/positions';
 
 type BorrowedMorphoBlueRowDetailProps = {
@@ -120,10 +123,49 @@ function MetricRow({
   );
 }
 
+function renderHistoricalRateValue(value: number | null | undefined, isRateEnrichmentLoading: boolean): ReactNode {
+  if (value != null) {
+    return <RateFormatted value={value} />;
+  }
+
+  if (isRateEnrichmentLoading) {
+    return (
+      <PulseLoader
+        size={4}
+        color="#f45f2d"
+        margin={3}
+      />
+    );
+  }
+
+  return '—';
+}
+
 export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetailProps) {
-  const { currentLtvLabel, displayLtv, liquidationOraclePrice, lltv, lltvLabel, ltvWidth, oraclePrice } = deriveBorrowPositionMetrics(row);
-  const currentPrice = formatBorrowPositionPrice(row, oraclePrice);
-  const liquidationPrice = liquidationOraclePrice == null ? '—' : formatBorrowPositionPrice(row, liquidationOraclePrice);
+  const { allMarkets, isRateEnrichmentLoading } = useProcessedMarkets();
+  const marketIdentityKey = useMemo(
+    () => getMarketIdentityKey(row.market.morphoBlue.chain.id, row.market.uniqueKey),
+    [row.market.morphoBlue.chain.id, row.market.uniqueKey],
+  );
+  const liveMarket = useMemo(
+    () => allMarkets.find((market) => getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey) === marketIdentityKey),
+    [allMarkets, marketIdentityKey],
+  );
+  const resolvedRow = useMemo(
+    () =>
+      liveMarket
+        ? {
+            ...row,
+            market: liveMarket,
+          }
+        : row,
+    [liveMarket, row],
+  );
+
+  const { currentLtvLabel, displayLtv, liquidationOraclePrice, lltv, lltvLabel, ltvWidth, oraclePrice } =
+    deriveBorrowPositionMetrics(resolvedRow);
+  const currentPrice = formatBorrowPositionPrice(resolvedRow, oraclePrice);
+  const liquidationPrice = liquidationOraclePrice == null ? '—' : formatBorrowPositionPrice(resolvedRow, liquidationOraclePrice);
   const priceMove =
     liquidationOraclePrice == null
       ? null
@@ -172,11 +214,11 @@ export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetail
             <p className="mb-3 font-monospace text-[10px] uppercase tracking-[0.14em] text-secondary">Borrow Rates</p>
             <MetricRow
               label="1 Day"
-              value={row.market.state.dailyBorrowApy == null ? '—' : <RateFormatted value={row.market.state.dailyBorrowApy} />}
+              value={renderHistoricalRateValue(resolvedRow.market.state.dailyBorrowApy, isRateEnrichmentLoading)}
             />
             <MetricRow
               label="7 Days"
-              value={row.market.state.weeklyBorrowApy == null ? '—' : <RateFormatted value={row.market.state.weeklyBorrowApy} />}
+              value={renderHistoricalRateValue(resolvedRow.market.state.weeklyBorrowApy, isRateEnrichmentLoading)}
             />
           </section>
 
