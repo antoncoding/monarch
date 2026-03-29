@@ -7,6 +7,9 @@ import { morphoGraphqlFetcher } from './fetchers';
 type MorphoWhitelistMarket = {
   uniqueKey: string;
   listed: boolean;
+  supplyingVaults?: {
+    address: string | null;
+  }[];
   morphoBlue: {
     chain: {
       id: number;
@@ -27,7 +30,7 @@ type MorphoWhitelistStatusResponse = {
 };
 
 type MorphoWhitelistStatusPage = {
-  items: MorphoWhitelistStatus[];
+  items: MorphoMarketMetadata[];
   totalCount: number;
 };
 
@@ -37,18 +40,48 @@ export type MorphoWhitelistStatus = {
   listed: boolean;
 };
 
+export type MorphoMarketMetadata = MorphoWhitelistStatus & {
+  supplyingVaults: {
+    address: string;
+  }[];
+};
+
 export type MorphoWhitelistStatusRefresh = {
   network: SupportedNetworks;
   statuses: MorphoWhitelistStatus[];
 };
 
-const MORPHO_WHITELIST_PAGE_SIZE = 1_000;
+export type MorphoMarketMetadataRefresh = {
+  network: SupportedNetworks;
+  metadata: MorphoMarketMetadata[];
+};
+
+// The combined `listed + supplyingVaults` markets query costs 1095 complexity per row on Morpho API.
+// Keep a small buffer below the 1,000,000 complexity cap to avoid provider-side 500/403 failures.
+const MORPHO_WHITELIST_PAGE_SIZE = 900;
 const MORPHO_WHITELIST_TIMEOUT_MS = 15_000;
 const MORPHO_WHITELIST_PAGE_BATCH_SIZE = 4;
 
 const MORPHO_SUPPORTED_NETWORKS = ALL_SUPPORTED_NETWORKS.filter((network) => supportsMorphoApi(network));
 
-const fetchMorphoWhitelistStatusPage = async (
+const normalizeSupplyingVaults = (supplyingVaults: MorphoWhitelistMarket['supplyingVaults']): MorphoMarketMetadata['supplyingVaults'] => {
+  const uniqueVaults = new Set<string>();
+  const normalizedVaults: MorphoMarketMetadata['supplyingVaults'] = [];
+
+  supplyingVaults?.forEach((vault) => {
+    const address = vault.address?.toLowerCase();
+    if (!address || uniqueVaults.has(address)) {
+      return;
+    }
+
+    uniqueVaults.add(address);
+    normalizedVaults.push({ address });
+  });
+
+  return normalizedVaults;
+};
+
+const fetchMorphoMarketMetadataPage = async (
   network: SupportedNetworks,
   skip: number,
   pageSize: number,
@@ -77,18 +110,19 @@ const fetchMorphoWhitelistStatusPage = async (
       chainId: market.morphoBlue.chain.id,
       uniqueKey: market.uniqueKey,
       listed: market.listed,
+      supplyingVaults: normalizeSupplyingVaults(market.supplyingVaults),
     })),
     totalCount: response.data.markets.pageInfo.countTotal,
   };
 };
 
-const fetchMorphoWhitelistStatusesForNetwork = async (network: SupportedNetworks): Promise<MorphoWhitelistStatus[]> => {
-  const firstPage = await fetchMorphoWhitelistStatusPage(network, 0, MORPHO_WHITELIST_PAGE_SIZE);
+const fetchMorphoMarketMetadataForNetwork = async (network: SupportedNetworks): Promise<MorphoMarketMetadata[]> => {
+  const firstPage = await fetchMorphoMarketMetadataPage(network, 0, MORPHO_WHITELIST_PAGE_SIZE);
   if (!firstPage) {
     throw new Error(`[WhitelistStatus] Failed to fetch first page for network ${network}.`);
   }
 
-  const allStatuses = [...firstPage.items];
+  const allMetadata = [...firstPage.items];
   const firstPageCount = firstPage.items.length;
   const totalCount = firstPage.totalCount;
 
@@ -104,7 +138,7 @@ const fetchMorphoWhitelistStatusesForNetwork = async (network: SupportedNetworks
   for (let index = 0; index < remainingOffsets.length; index += MORPHO_WHITELIST_PAGE_BATCH_SIZE) {
     const offsetBatch = remainingOffsets.slice(index, index + MORPHO_WHITELIST_PAGE_BATCH_SIZE);
     const settledPages = await Promise.allSettled(
-      offsetBatch.map((skip) => fetchMorphoWhitelistStatusPage(network, skip, MORPHO_WHITELIST_PAGE_SIZE)),
+      offsetBatch.map((skip) => fetchMorphoMarketMetadataPage(network, skip, MORPHO_WHITELIST_PAGE_SIZE)),
     );
 
     for (const settledPage of settledPages) {
@@ -115,27 +149,27 @@ const fetchMorphoWhitelistStatusesForNetwork = async (network: SupportedNetworks
         throw new Error(`[WhitelistStatus] Failed to fetch one of the paginated whitelist pages for network ${network}.`);
       }
 
-      allStatuses.push(...settledPage.value.items);
+      allMetadata.push(...settledPage.value.items);
     }
   }
 
-  if (allStatuses.length < totalCount) {
+  if (allMetadata.length < totalCount) {
     throw new Error(
-      `[WhitelistStatus] Incomplete whitelist dataset for network ${network}: fetched ${allStatuses.length} of ${totalCount}.`,
+      `[WhitelistStatus] Incomplete whitelist dataset for network ${network}: fetched ${allMetadata.length} of ${totalCount}.`,
     );
   }
 
-  return allStatuses;
+  return allMetadata;
 };
 
-export const fetchAllMorphoWhitelistStatuses = async (): Promise<MorphoWhitelistStatusRefresh[]> => {
+export const fetchAllMorphoMarketMetadata = async (): Promise<MorphoMarketMetadataRefresh[]> => {
   const settledResults = await Promise.allSettled(
     MORPHO_SUPPORTED_NETWORKS.map(async (network) => ({
       network,
-      statuses: await fetchMorphoWhitelistStatusesForNetwork(network),
+      metadata: await fetchMorphoMarketMetadataForNetwork(network),
     })),
   );
-  const successfulRefreshes: MorphoWhitelistStatusRefresh[] = [];
+  const successfulRefreshes: MorphoMarketMetadataRefresh[] = [];
 
   for (const settledResult of settledResults) {
     if (settledResult.status === 'rejected') {
@@ -143,14 +177,14 @@ export const fetchAllMorphoWhitelistStatuses = async (): Promise<MorphoWhitelist
       continue;
     }
 
-    const statusByKey = new Map<string, MorphoWhitelistStatus>();
-    for (const status of settledResult.value.statuses) {
-      statusByKey.set(getMarketIdentityKey(status.chainId, status.uniqueKey), status);
+    const metadataByKey = new Map<string, MorphoMarketMetadata>();
+    for (const metadata of settledResult.value.metadata) {
+      metadataByKey.set(getMarketIdentityKey(metadata.chainId, metadata.uniqueKey), metadata);
     }
 
     successfulRefreshes.push({
       network: settledResult.value.network,
-      statuses: Array.from(statusByKey.values()),
+      metadata: Array.from(metadataByKey.values()),
     });
   }
 

@@ -159,6 +159,9 @@ export const marketsWhitelistStatusQuery = `
       items {
         uniqueKey
         listed
+        supplyingVaults {
+          address
+        }
         morphoBlue {
           chain {
             id

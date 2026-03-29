@@ -15,6 +15,26 @@ import type { Market } from '@/utils/types';
 
 const EMPTY_RATE_ENRICHMENTS: MarketRateEnrichmentMap = new Map();
 
+const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market['supplyingVaults']): boolean => {
+  const currentVaults = current ?? [];
+  const nextVaults = next ?? [];
+
+  if (currentVaults.length !== nextVaults.length) {
+    return false;
+  }
+
+  for (let index = 0; index < currentVaults.length; index += 1) {
+    const currentAddress = currentVaults[index]?.address?.toLowerCase();
+    const nextAddress = nextVaults[index]?.address?.toLowerCase();
+
+    if (currentAddress !== nextAddress) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 const hasPositiveAssets = (value?: string): boolean => {
   if (!value) return false;
   try {
@@ -65,7 +85,7 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
  */
 export const useProcessedMarkets = () => {
   const { data: rawMarketsFromQuery, isLoading, isRefetching, error, refetch } = useMarketsQuery();
-  const { whitelistLookup } = useMorphoWhitelistStatusQuery();
+  const { whitelistLookup, supplyingVaultsLookup } = useMorphoWhitelistStatusQuery();
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
   const { showUnwhitelistedMarkets } = useAppSettings();
 
@@ -82,21 +102,26 @@ export const useProcessedMarkets = () => {
       };
     }
 
-    const withMergedWhitelistFlags = rawMarketsFromQuery.map((market) => {
-      const cachedWhitelisted = whitelistLookup.get(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey));
+    const withMergedMorphoMetadata = rawMarketsFromQuery.map((market) => {
+      const marketIdentityKey = getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey);
+      const cachedWhitelisted = whitelistLookup.get(marketIdentityKey);
+      const cachedSupplyingVaults = supplyingVaultsLookup.get(marketIdentityKey);
+      const nextWhitelisted = cachedWhitelisted ?? market.whitelisted;
+      const nextSupplyingVaults = cachedSupplyingVaults ?? market.supplyingVaults;
 
-      if (cachedWhitelisted === undefined || cachedWhitelisted === market.whitelisted) {
+      if (nextWhitelisted === market.whitelisted && hasSameSupplyingVaults(market.supplyingVaults, nextSupplyingVaults)) {
         return market;
       }
 
       return {
         ...market,
-        whitelisted: cachedWhitelisted,
+        whitelisted: nextWhitelisted,
+        supplyingVaults: nextSupplyingVaults,
       };
     });
 
     // rawMarketsUnfiltered: before blacklist (for blacklist management modal)
-    const rawMarketsUnfiltered = withMergedWhitelistFlags;
+    const rawMarketsUnfiltered = withMergedMorphoMetadata;
 
     // Apply blacklist filter
     const blacklistFiltered = rawMarketsUnfiltered.filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
@@ -122,7 +147,7 @@ export const useProcessedMarkets = () => {
       allMarkets,
       whitelistedMarkets,
     };
-  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup]);
+  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup]);
 
   const {
     data: marketRateEnrichments = EMPTY_RATE_ENRICHMENTS,
