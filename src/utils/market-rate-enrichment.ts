@@ -1,3 +1,4 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { computeAnnualizedApyFromGrowth } from '@/hooks/leverage/math';
 import { fetchBlocksWithTimestamps } from '@/utils/blockEstimation';
 import { type MarketSnapshot, fetchMarketsSnapshots } from '@/utils/positions';
@@ -8,6 +9,9 @@ import type { Market } from '@/utils/types';
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
 const SHARE_PRICE_SCALE = 10n ** 18n;
+const MAX_WINDOW_EDGE_STALENESS_RATIO = 1;
+const MAX_WINDOW_PERIOD_DRIFT_RATIO = 0.5;
+const MIN_WINDOW_EDGE_STALENESS_SECONDS = 60;
 
 const LOOKBACK_WINDOWS = [
   {
@@ -35,16 +39,95 @@ export type MarketRateEnrichment = Pick<
   'dailySupplyApy' | 'dailyBorrowApy' | 'weeklySupplyApy' | 'weeklyBorrowApy' | 'monthlySupplyApy' | 'monthlyBorrowApy'
 >;
 
-export type MarketRateEnrichmentMap = Map<string, MarketRateEnrichment>;
+export type HistoricalRateField = keyof MarketRateEnrichment;
 
-const buildNullEnrichment = (): MarketRateEnrichment => ({
-  dailySupplyApy: null,
-  dailyBorrowApy: null,
-  weeklySupplyApy: null,
-  weeklyBorrowApy: null,
-  monthlySupplyApy: null,
-  monthlyBorrowApy: null,
+export type HistoricalRateStatus = 'ready' | 'stale' | 'unavailable';
+
+export type HistoricalRateReason =
+  | 'missing_snapshot'
+  | 'missing_share_price'
+  | 'current_outside_window'
+  | 'past_outside_window'
+  | 'window_mismatch'
+  | 'fetch_failed';
+
+export type HistoricalRateMetadata = {
+  status: HistoricalRateStatus;
+  reason: HistoricalRateReason | null;
+  requestedPeriodSeconds: number;
+  actualPeriodSeconds: number | null;
+  currentLastUpdate: number | null;
+  pastLastUpdate: number | null;
+};
+
+export type MarketRateMetadata = Record<HistoricalRateField, HistoricalRateMetadata>;
+
+export type MarketRateEnrichmentResult = {
+  values: MarketRateEnrichment;
+  metadata: MarketRateMetadata;
+};
+
+export type MarketRateEnrichmentMap = Map<string, MarketRateEnrichmentResult>;
+
+const buildHistoricalRateMetadata = ({
+  status,
+  reason = null,
+  requestedPeriodSeconds,
+  actualPeriodSeconds = null,
+  currentLastUpdate = null,
+  pastLastUpdate = null,
+}: {
+  status: HistoricalRateStatus;
+  reason?: HistoricalRateReason | null;
+  requestedPeriodSeconds: number;
+  actualPeriodSeconds?: number | null;
+  currentLastUpdate?: number | null;
+  pastLastUpdate?: number | null;
+}): HistoricalRateMetadata => ({
+  status,
+  reason,
+  requestedPeriodSeconds,
+  actualPeriodSeconds,
+  currentLastUpdate,
+  pastLastUpdate,
 });
+
+const buildEmptyEnrichment = (reason: HistoricalRateReason = 'missing_snapshot'): MarketRateEnrichmentResult =>
+  LOOKBACK_WINDOWS.reduce<MarketRateEnrichmentResult>(
+    (acc, window) => {
+      acc.values[window.supplyField] = null;
+      acc.values[window.borrowField] = null;
+      acc.metadata[window.supplyField] = buildHistoricalRateMetadata({
+        status: 'unavailable',
+        reason,
+        requestedPeriodSeconds: window.seconds,
+      });
+      acc.metadata[window.borrowField] = buildHistoricalRateMetadata({
+        status: 'unavailable',
+        reason,
+        requestedPeriodSeconds: window.seconds,
+      });
+      return acc;
+    },
+    {
+      values: {
+        dailySupplyApy: null,
+        dailyBorrowApy: null,
+        weeklySupplyApy: null,
+        weeklyBorrowApy: null,
+        monthlySupplyApy: null,
+        monthlyBorrowApy: null,
+      },
+      metadata: {
+        dailySupplyApy: buildHistoricalRateMetadata({ status: 'unavailable', reason, requestedPeriodSeconds: SECONDS_PER_DAY }),
+        dailyBorrowApy: buildHistoricalRateMetadata({ status: 'unavailable', reason, requestedPeriodSeconds: SECONDS_PER_DAY }),
+        weeklySupplyApy: buildHistoricalRateMetadata({ status: 'unavailable', reason, requestedPeriodSeconds: 7 * SECONDS_PER_DAY }),
+        weeklyBorrowApy: buildHistoricalRateMetadata({ status: 'unavailable', reason, requestedPeriodSeconds: 7 * SECONDS_PER_DAY }),
+        monthlySupplyApy: buildHistoricalRateMetadata({ status: 'unavailable', reason, requestedPeriodSeconds: 30 * SECONDS_PER_DAY }),
+        monthlyBorrowApy: buildHistoricalRateMetadata({ status: 'unavailable', reason, requestedPeriodSeconds: 30 * SECONDS_PER_DAY }),
+      },
+    },
+  );
 
 export const getMarketRateEnrichmentKey = (marketId: string, chainId: number): string => `${chainId}-${marketId.toLowerCase()}`;
 
@@ -57,25 +140,93 @@ const computeSharePrice = (assets: string, shares: string): bigint | null => {
       return null;
     }
 
-    return (assetAmount * SHARE_PRICE_SCALE) / shareAmount;
+    return SharesMath.toAssets(SHARE_PRICE_SCALE, assetAmount, shareAmount, 'Down');
   } catch {
     return null;
   }
+};
+
+const getAllowedBoundaryStalenessSeconds = (periodSeconds: number): number => {
+  if (periodSeconds <= 0) {
+    return 0;
+  }
+
+  return Math.max(MIN_WINDOW_EDGE_STALENESS_SECONDS, Math.floor(periodSeconds * MAX_WINDOW_EDGE_STALENESS_RATIO));
+};
+
+const getMaxAllowedPeriodDriftSeconds = (periodSeconds: number): number => {
+  if (periodSeconds <= 0) {
+    return 0;
+  }
+
+  return Math.max(MIN_WINDOW_EDGE_STALENESS_SECONDS, Math.floor(periodSeconds * MAX_WINDOW_PERIOD_DRIFT_RATIO));
 };
 
 const computeRealizedRate = ({
   currentSnapshot,
   pastSnapshot,
   periodSeconds,
+  currentBoundaryTimestamp,
+  pastBoundaryTimestamp,
   side,
 }: {
   currentSnapshot: MarketSnapshot | undefined;
   pastSnapshot: MarketSnapshot | undefined;
   periodSeconds: number;
+  currentBoundaryTimestamp: number;
+  pastBoundaryTimestamp: number;
   side: 'supply' | 'borrow';
-}): number | null => {
+}): { value: number | null; metadata: HistoricalRateMetadata } => {
+  const baseMetadata = {
+    requestedPeriodSeconds: periodSeconds,
+    currentLastUpdate: currentSnapshot?.lastUpdate ?? null,
+    pastLastUpdate: pastSnapshot?.lastUpdate ?? null,
+  };
+
   if (!currentSnapshot || !pastSnapshot || periodSeconds <= 0) {
-    return null;
+    return {
+      value: null,
+      metadata: buildHistoricalRateMetadata({
+        ...baseMetadata,
+        status: 'unavailable',
+        reason: 'missing_snapshot',
+      }),
+    };
+  }
+
+  const allowedBoundaryStalenessSeconds = getAllowedBoundaryStalenessSeconds(periodSeconds);
+  const currentBoundaryStaleness = currentBoundaryTimestamp - currentSnapshot.lastUpdate;
+  const pastBoundaryStaleness = pastBoundaryTimestamp - pastSnapshot.lastUpdate;
+
+  if (
+    currentBoundaryStaleness < 0 ||
+    pastBoundaryStaleness < 0 ||
+    currentBoundaryStaleness > allowedBoundaryStalenessSeconds ||
+    pastBoundaryStaleness > allowedBoundaryStalenessSeconds
+  ) {
+    return {
+      value: null,
+      metadata: buildHistoricalRateMetadata({
+        ...baseMetadata,
+        status: 'stale',
+        reason: currentBoundaryStaleness > allowedBoundaryStalenessSeconds ? 'current_outside_window' : 'past_outside_window',
+      }),
+    };
+  }
+
+  const actualPeriodSeconds = currentSnapshot.lastUpdate - pastSnapshot.lastUpdate;
+  const maxAllowedPeriodDriftSeconds = getMaxAllowedPeriodDriftSeconds(periodSeconds);
+
+  if (actualPeriodSeconds <= 0 || Math.abs(actualPeriodSeconds - periodSeconds) > maxAllowedPeriodDriftSeconds) {
+    return {
+      value: null,
+      metadata: buildHistoricalRateMetadata({
+        ...baseMetadata,
+        status: 'stale',
+        reason: 'window_mismatch',
+        actualPeriodSeconds,
+      }),
+    };
   }
 
   const currentSharePrice =
@@ -88,18 +239,33 @@ const computeRealizedRate = ({
       : computeSharePrice(pastSnapshot.totalBorrowAssets, pastSnapshot.totalBorrowShares);
 
   if (!currentSharePrice || !pastSharePrice) {
-    return null;
+    return {
+      value: null,
+      metadata: buildHistoricalRateMetadata({
+        ...baseMetadata,
+        status: 'unavailable',
+        reason: 'missing_share_price',
+        actualPeriodSeconds,
+      }),
+    };
   }
 
-  return computeAnnualizedApyFromGrowth({
-    currentValue: currentSharePrice,
-    pastValue: pastSharePrice,
-    periodSeconds,
-  });
+  return {
+    value: computeAnnualizedApyFromGrowth({
+      currentValue: currentSharePrice,
+      pastValue: pastSharePrice,
+      periodSeconds: actualPeriodSeconds,
+    }),
+    metadata: buildHistoricalRateMetadata({
+      ...baseMetadata,
+      status: 'ready',
+      actualPeriodSeconds,
+    }),
+  };
 };
 
 export async function fetchMarketRateEnrichment(markets: Market[], customRpcUrls: CustomRpcUrls = {}): Promise<MarketRateEnrichmentMap> {
-  const enrichments = new Map<string, MarketRateEnrichment>();
+  const enrichments = new Map<string, MarketRateEnrichmentResult>();
 
   if (markets.length === 0) {
     return enrichments;
@@ -141,33 +307,49 @@ export async function fetchMarketRateEnrichment(markets: Market[], customRpcUrls
         ]);
 
         for (const market of chainMarkets) {
-          const enrichment = buildNullEnrichment();
+          const enrichment = buildEmptyEnrichment();
           const marketKey = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
           const currentSnapshot = currentSnapshots.get(market.uniqueKey.toLowerCase());
 
           LOOKBACK_WINDOWS.forEach((window, index) => {
             const pastBlock = blocksWithTimestamps[index];
             const pastSnapshot = pastSnapshots[index]?.get(market.uniqueKey.toLowerCase());
-            const periodSeconds = pastBlock ? currentTimestamp - pastBlock.timestamp : 0;
+            if (!pastBlock) {
+              return;
+            }
 
-            enrichment[window.supplyField] = computeRealizedRate({
+            const periodSeconds = currentTimestamp - pastBlock.timestamp;
+
+            const supplyResult = computeRealizedRate({
               currentSnapshot,
               pastSnapshot,
               periodSeconds,
+              currentBoundaryTimestamp: currentTimestamp,
+              pastBoundaryTimestamp: pastBlock.timestamp,
               side: 'supply',
             });
-            enrichment[window.borrowField] = computeRealizedRate({
+            const borrowResult = computeRealizedRate({
               currentSnapshot,
               pastSnapshot,
               periodSeconds,
+              currentBoundaryTimestamp: currentTimestamp,
+              pastBoundaryTimestamp: pastBlock.timestamp,
               side: 'borrow',
             });
+
+            enrichment.values[window.supplyField] = supplyResult.value;
+            enrichment.values[window.borrowField] = borrowResult.value;
+            enrichment.metadata[window.supplyField] = supplyResult.metadata;
+            enrichment.metadata[window.borrowField] = borrowResult.metadata;
           });
 
           enrichments.set(marketKey, enrichment);
         }
       } catch (error) {
         console.warn(`[market-rate-enrichment] Failed to compute historical rates for chain ${chainId}:`, error);
+        chainMarkets.forEach((market) => {
+          enrichments.set(getMarketRateEnrichmentKey(market.uniqueKey, chainId), buildEmptyEnrichment('fetch_failed'));
+        });
       }
     }),
   );

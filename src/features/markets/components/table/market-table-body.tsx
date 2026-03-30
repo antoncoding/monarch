@@ -2,6 +2,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { PulseLoader } from 'react-spinners';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
@@ -14,6 +16,7 @@ import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { getMarketRateEnrichmentKey, type HistoricalRateField, type HistoricalRateMetadata } from '@/utils/market-rate-enrichment';
 import type { Market } from '@/utils/types';
 import { APYCell } from '../apy-breakdown-tooltip';
 import { MarketActionsDropdown } from '../market-actions-dropdown';
@@ -30,12 +33,108 @@ type MarketTableBodyProps = {
 export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
-  const { isRateEnrichmentLoading } = useProcessedMarkets();
+  const { isRateEnrichmentLoading, marketRateEnrichments } = useProcessedMarkets();
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
-  const renderHistoricalRateCell = (value: number | null) => {
+  const formatElapsed = (timestamp: number): string => {
+    const diffSeconds = Math.max(0, Math.floor(Date.now() / 1000) - timestamp);
+
+    if (diffSeconds < 60) return `${diffSeconds}s ago`;
+    if (diffSeconds < 60 * 60) return `${Math.floor(diffSeconds / 60)}m ago`;
+    if (diffSeconds < 24 * 60 * 60) return `${Math.floor(diffSeconds / (60 * 60))}h ago`;
+
+    const days = Math.floor(diffSeconds / (24 * 60 * 60));
+    if (days < 7) return `${days}d ago`;
+
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `${weeks}w ago`;
+
+    return new Date(timestamp * 1000).toLocaleDateString();
+  };
+
+  const formatLookback = (seconds: number): string => {
+    if (seconds === 24 * 60 * 60) return '24h';
+    if (seconds === 7 * 24 * 60 * 60) return '7d';
+    if (seconds === 30 * 24 * 60 * 60) return '30d';
+
+    const days = Math.round(seconds / (24 * 60 * 60));
+    return `${days}d`;
+  };
+
+  const formatDuration = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 60 * 60) return `${Math.round(seconds / 60)}m`;
+    if (seconds < 24 * 60 * 60) return `${Math.round(seconds / (60 * 60))}h`;
+
+    const days = seconds / (24 * 60 * 60);
+    if (days < 14) return `${Math.round(days)}d`;
+
+    return `${(days / 7).toFixed(1)}w`;
+  };
+
+  const formatExactTimestamp = (timestamp: number): string =>
+    new Date(timestamp * 1000).toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+  const getHistoricalRateTooltip = (metadata: HistoricalRateMetadata) => {
+    const lookback = formatLookback(metadata.requestedPeriodSeconds);
+    const currentLastUpdate = metadata.currentLastUpdate;
+    const pastLastUpdate = metadata.pastLastUpdate;
+    const isMarketNotCreated = currentLastUpdate === 0 || pastLastUpdate === 0;
+    const secondaryDetail =
+      currentLastUpdate == null || currentLastUpdate <= 0
+        ? undefined
+        : `Last market update: ${formatExactTimestamp(currentLastUpdate)} (${formatElapsed(currentLastUpdate)})`;
+
+    if (isMarketNotCreated) {
+      return {
+        title: `${lookback} rate unavailable`,
+        detail: `Market was not created at the start of the ${lookback} window.`,
+        secondaryDetail,
+      };
+    }
+
+    if (metadata.reason === 'past_outside_window') {
+      return {
+        title: `${lookback} rate unavailable`,
+        detail: `No update near the start of the ${lookback} window.`,
+        secondaryDetail,
+      };
+    }
+
+    if (metadata.reason === 'current_outside_window') {
+      return {
+        title: `${lookback} rate unavailable`,
+        detail: `No recent update in this market.`,
+        secondaryDetail,
+      };
+    }
+
+    if (metadata.reason === 'window_mismatch') {
+      return {
+        title: `${lookback} rate unavailable`,
+        detail:
+          metadata.actualPeriodSeconds == null ? `Stored accrual span does not match ${lookback}.` : `Accrual span is ${formatDuration(metadata.actualPeriodSeconds)}.`,
+        secondaryDetail,
+      };
+    }
+
+    return {
+      title: `${lookback} rate unavailable`,
+      detail: 'Historical rate data is unavailable for this market.',
+      secondaryDetail,
+    };
+  };
+
+  const renderHistoricalRateCell = (market: Market, field: HistoricalRateField) => {
+    const value = market.state[field];
     if (value != null) {
       return <RateFormatted value={value} />;
     }
@@ -47,6 +146,27 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
           color="#f45f2d"
           margin={3}
         />
+      );
+    }
+
+    const metadata = marketRateEnrichments.get(getMarketRateEnrichmentKey(market.uniqueKey, market.morphoBlue.chain.id))?.metadata[field];
+
+    if (metadata?.status === 'stale') {
+      const tooltip = getHistoricalRateTooltip(metadata);
+
+      return (
+        <Tooltip
+          content={
+            <TooltipContent
+              title={tooltip.title}
+              detail={tooltip.detail}
+              secondaryDetail={tooltip.secondaryDetail}
+              className="max-w-xs"
+            />
+          }
+        >
+          <span className="cursor-help text-secondary/60 underline decoration-dotted underline-offset-2">—</span>
+        </Tooltip>
       );
     }
 
@@ -271,7 +391,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.dailySupplyApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'dailySupplyApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.dailyBorrowAPY && (
@@ -280,7 +400,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.dailyBorrowApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'dailyBorrowApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.weeklySupplyAPY && (
@@ -289,7 +409,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.weeklySupplyApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'weeklySupplyApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.weeklyBorrowAPY && (
@@ -298,7 +418,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.weeklyBorrowApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'weeklyBorrowApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.monthlySupplyAPY && (
@@ -307,7 +427,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.monthlySupplyApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'monthlySupplyApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.monthlyBorrowAPY && (
@@ -316,7 +436,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.monthlyBorrowApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'monthlyBorrowApy')}</div>
                 </TableCell>
               )}
               <TableCell style={{ minWidth: '90px' }}>
