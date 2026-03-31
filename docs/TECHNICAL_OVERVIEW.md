@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Monarch is a client-side DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Base, Polygon, Arbitrum, Unichain, HyperEVM, Monad) and presents markets, vaults, and user positions in a unified interface. The app is **fully client-side** with no backend database—all user preferences persist in localStorage.
+Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Base, Polygon, Arbitrum, Unichain, HyperEVM, Monad) and presents markets, vaults, and user positions in a unified interface. The app has **no backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads such as unresolved token metadata.
 
 **Key Architectural Decisions:**
 - Next.js 15 App Router with React 18
@@ -10,6 +10,7 @@ Monarch is a client-side DeFi dashboard for the Morpho Blue lending protocol. It
 - Zustand for client state, React Query for server state
 - All user data in localStorage (no backend DB)
 - Multi-chain support with custom RPC override capability
+- Historical rolling market rates assume archive-capable RPCs on every supported chain
 
 ---
 
@@ -204,6 +205,7 @@ Market metrics: Monarch metrics API via `/api/monarch/metrics`
 | Data Type | Source | Refresh | Query Hook |
 |-----------|--------|---------|------------|
 | Markets list | Monarch multi-chain → Morpho per chain → Subgraph per chain | 5 min stale | `useMarketsQuery` |
+| Rolling market `24h/7d/30d` rates | Morpho API rolling fields → archive RPC snapshots + Morpho SDK math fallback | 15 min stale | `useMarketRateEnrichmentQuery` |
 | Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
 | Market state (APY, utilization, balances) | Monarch market state + Morpho/Subgraph shell + RPC snapshot | 30s stale | `useMarketData` |
 | Market historical chart series | Monarch GraphQL → Morpho API → Subgraph | 5 min stale | `useMarketHistoricalData` |

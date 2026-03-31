@@ -12,7 +12,6 @@ const MAX_TARGET_LTV_BPS = BPS_SCALE - 1n;
 const COMPACT_AMOUNT_LOCALE = 'en-US';
 const COMPACT_AMOUNT_MIN_THRESHOLD = 0.000001;
 const APY_RATIO_SCALE = 1_000_000_000n;
-const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 const UNSIGNED_INTEGER_REGEX = /^\d+$/;
 
 const minBigInt = (a: bigint, b: bigint): bigint => (a < b ? a : b);
@@ -240,26 +239,6 @@ export const computeDeleverageProjectedPosition = ({
     previewDebtRepaid,
     maxWithdrawCollateral,
   };
-};
-
-export const computeAnnualizedApyFromGrowth = ({
-  currentValue,
-  pastValue,
-  periodSeconds,
-}: {
-  currentValue: bigint;
-  pastValue: bigint;
-  periodSeconds: number;
-}): number | null => {
-  if (currentValue <= 0n || pastValue <= 0n || periodSeconds <= 0) return null;
-
-  const growthRatio = toScaledRatio(currentValue, pastValue);
-  if (growthRatio == null || growthRatio <= 0) return null;
-
-  const annualizationFactor = SECONDS_PER_YEAR / periodSeconds;
-  const annualizedApy = growthRatio ** annualizationFactor - 1;
-
-  return Number.isFinite(annualizedApy) ? annualizedApy : null;
 };
 
 export const convertVaultSharesToUnderlyingAssets = ({

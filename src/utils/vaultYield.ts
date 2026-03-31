@@ -1,6 +1,6 @@
 import type { Address } from 'viem';
 import { erc4626Abi } from '@/abis/erc4626';
-import { computeAnnualizedApyFromGrowth } from '@/hooks/leverage/math';
+import { computeAnnualizedApyFromGrowth } from '@/utils/rateMath';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
