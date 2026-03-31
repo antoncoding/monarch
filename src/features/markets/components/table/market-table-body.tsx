@@ -31,7 +31,7 @@ type MarketTableBodyProps = {
 export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
-  const { isRateEnrichmentLoading } = useProcessedMarkets();
+  const { rateEnrichmentPendingChainIds } = useProcessedMarkets();
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -42,7 +42,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
       return <RateFormatted value={value} />;
     }
 
-    if (isRateEnrichmentLoading) {
+    if (rateEnrichmentPendingChainIds.has(market.morphoBlue.chain.id)) {
       return (
         <PulseLoader
           size={4}
