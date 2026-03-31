@@ -90,6 +90,7 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
 export function getChainlinkFeedUrl(chainId: number, ens: string): string {
   const networkPaths: Partial<Record<SupportedNetworks, string>> = {
     [SupportedNetworks.Mainnet]: 'ethereum/mainnet',
+    [SupportedNetworks.Optimism]: 'optimism/mainnet',
     [SupportedNetworks.Base]: 'base/base',
     [SupportedNetworks.Polygon]: 'polygon/mainnet',
     [SupportedNetworks.Arbitrum]: 'arbitrum/mainnet',

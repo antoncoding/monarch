@@ -7,7 +7,7 @@ type VaultAddressByNetwork = {
 };
 
 // Constants for Morpho vault fetching
-const MORPHO_SUPPORTED_CHAIN_IDS = [1, 8453, 999, 137, 42_161, 130];
+const MORPHO_SUPPORTED_CHAIN_IDS = [1, 10, 8453, 999, 137, 42_161, 130];
 const MAX_VAULTS_LIMIT = 500;
 
 // Type for vault from Morpho API

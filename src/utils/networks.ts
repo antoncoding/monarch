@@ -1,5 +1,5 @@
 import { type Address, type Chain, defineChain } from 'viem';
-import { arbitrum, base, mainnet, polygon, unichain, monad, hyperEvm as hyperEvmOld } from 'viem/chains';
+import { arbitrum, base, mainnet, monad, optimism, polygon, unichain, hyperEvm as hyperEvmOld } from 'viem/chains';
 import { v2AgentsBase } from './monarch-agent';
 import type { AgentMetadata } from './types';
 
@@ -29,6 +29,7 @@ const getRpcUrl = (specificRpcUrl: string | undefined, alchemySubdomain: string)
 
 export enum SupportedNetworks {
   Mainnet = 1,
+  Optimism = 10,
   Base = 8453,
   Polygon = 137,
   Unichain = 130,
@@ -39,6 +40,7 @@ export enum SupportedNetworks {
 
 export const ALL_SUPPORTED_NETWORKS = [
   SupportedNetworks.Mainnet,
+  SupportedNetworks.Optimism,
   SupportedNetworks.Base,
   SupportedNetworks.Polygon,
   SupportedNetworks.Unichain,
@@ -96,6 +98,17 @@ export const networks: NetworkConfig[] = [
     maxBlockDelay: 0,
     explorerUrl: 'https://etherscan.io',
     wrappedNativeToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  },
+  {
+    network: SupportedNetworks.Optimism,
+    logo: require('../imgs/chains/op.svg') as string,
+    name: 'Optimism',
+    chain: optimism,
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_OPTIMISM_RPC, 'opt-mainnet'),
+    blocktime: 2,
+    maxBlockDelay: 10,
+    explorerUrl: 'https://optimistic.etherscan.io/',
+    wrappedNativeToken: '0x4200000000000000000000000000000000000006',
   },
   {
     network: SupportedNetworks.Base,
