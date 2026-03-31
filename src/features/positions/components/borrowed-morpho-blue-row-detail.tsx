@@ -123,12 +123,12 @@ function MetricRow({
   );
 }
 
-function renderHistoricalRateValue(value: number | null | undefined, isRateEnrichmentLoading: boolean): ReactNode {
+function renderHistoricalRateValue(value: number | null | undefined, isRateEnrichmentPending: boolean): ReactNode {
   if (value != null) {
     return <RateFormatted value={value} />;
   }
 
-  if (isRateEnrichmentLoading) {
+  if (isRateEnrichmentPending) {
     return (
       <PulseLoader
         size={4}
@@ -142,7 +142,7 @@ function renderHistoricalRateValue(value: number | null | undefined, isRateEnric
 }
 
 export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetailProps) {
-  const { allMarkets, isRateEnrichmentLoading } = useProcessedMarkets();
+  const { allMarkets, rateEnrichmentPendingChainIds } = useProcessedMarkets();
   const marketIdentityKey = useMemo(
     () => getMarketIdentityKey(row.market.morphoBlue.chain.id, row.market.uniqueKey),
     [row.market.morphoBlue.chain.id, row.market.uniqueKey],
@@ -161,6 +161,7 @@ export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetail
         : row,
     [liveMarket, row],
   );
+  const isRateEnrichmentPending = rateEnrichmentPendingChainIds.has(resolvedRow.market.morphoBlue.chain.id);
 
   const { currentLtvLabel, displayLtv, liquidationOraclePrice, lltv, lltvLabel, ltvWidth, oraclePrice } =
     deriveBorrowPositionMetrics(resolvedRow);
@@ -214,11 +215,11 @@ export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetail
             <p className="mb-3 font-monospace text-[10px] uppercase tracking-[0.14em] text-secondary">Borrow Rates</p>
             <MetricRow
               label="1 Day"
-              value={renderHistoricalRateValue(resolvedRow.market.state.dailyBorrowApy, isRateEnrichmentLoading)}
+              value={renderHistoricalRateValue(resolvedRow.market.state.dailyBorrowApy, isRateEnrichmentPending)}
             />
             <MetricRow
               label="7 Days"
-              value={renderHistoricalRateValue(resolvedRow.market.state.weeklyBorrowApy, isRateEnrichmentLoading)}
+              value={renderHistoricalRateValue(resolvedRow.market.state.weeklyBorrowApy, isRateEnrichmentPending)}
             />
           </section>
 

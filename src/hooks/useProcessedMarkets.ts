@@ -152,13 +152,17 @@ export const useProcessedMarkets = () => {
 
   const {
     data: marketRateEnrichments = EMPTY_RATE_ENRICHMENTS,
+    pendingChainIds: rateEnrichmentPendingChainIds,
     isLoading: isRateEnrichmentQueryLoading,
     isFetching: isRateEnrichmentFetching,
     isRefetching: isRateEnrichmentRefetching,
   } = useMarketRateEnrichmentQuery(processedData.allMarkets);
 
   const isRateEnrichmentLoading =
-    processedData.allMarkets.length > 0 && marketRateEnrichments.size === 0 && (isRateEnrichmentQueryLoading || isRateEnrichmentFetching);
+    processedData.allMarkets.length > 0 &&
+    marketRateEnrichments.size === 0 &&
+    rateEnrichmentPendingChainIds.size > 0 &&
+    (isRateEnrichmentQueryLoading || isRateEnrichmentFetching);
 
   const allMarketsWithRates = useMemo<Market[]>(() => {
     if (!processedData.allMarkets.length || marketRateEnrichments.size === 0) {
@@ -300,6 +304,7 @@ export const useProcessedMarkets = () => {
     whitelistedMarkets: whitelistedMarketsWithUsd,
     markets, // Computed from setting (backward compatible with old context)
     isRateEnrichmentLoading,
+    rateEnrichmentPendingChainIds,
     loading: isLoading,
     isRefetching: isRefetching || isRateEnrichmentRefetching,
     error,
