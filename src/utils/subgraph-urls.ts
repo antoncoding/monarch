@@ -15,6 +15,10 @@ const mainnetSubgraphUrl = apiKey
   ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/8Lz789DP5VKLXumTMTgygjU2xtuzx8AhbaacgN5PYCAs`
   : undefined;
 
+const optimismSubgraphUrl = apiKey
+  ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/5y8d3K3vVCR7r5YwANGCjupLc3hUge54XvhYMEq3Jmq1`
+  : undefined;
+
 const polygonSubgraphUrl = apiKey
   ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/EhFokmwryNs7qbvostceRqVdjc3petuD13mmdUiMBw8Y`
   : undefined;
@@ -32,6 +36,7 @@ const arbitrumSubgraph = apiKey
 export const SUBGRAPH_URLS: Partial<Record<SupportedNetworks, string>> = {
   [SupportedNetworks.Base]: baseSubgraphUrl,
   [SupportedNetworks.Mainnet]: mainnetSubgraphUrl,
+  [SupportedNetworks.Optimism]: optimismSubgraphUrl,
   [SupportedNetworks.Polygon]: polygonSubgraphUrl,
   [SupportedNetworks.Unichain]: unichainSubgraphUrl,
   [SupportedNetworks.Arbitrum]: arbitrumSubgraph,

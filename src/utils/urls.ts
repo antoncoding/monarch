@@ -7,18 +7,10 @@ export const URLS = {
   MORPHO_REWARDS_API: 'https://rewards.morpho.org/v1',
 } as const;
 
-export const MONARCH_AGENT_URLS: Record<SupportedNetworks, string> = {
+export const MONARCH_AGENT_URLS: Partial<Record<SupportedNetworks, string>> = {
   [SupportedNetworks.Base]: 'https://api.studio.thegraph.com/query/110397/monarch-agent-base/version/latest',
   [SupportedNetworks.Polygon]: 'https://api.studio.thegraph.com/query/110397/monarch-agent-polygon/version/latest',
-} as Record<SupportedNetworks, string>;
+};
 
 // Helper function to get URL by chainId, returns undefined if not supported
-export const getMonarchAgentUrl = (chainId: number): string | undefined => {
-  if (chainId === SupportedNetworks.Base) {
-    return MONARCH_AGENT_URLS[SupportedNetworks.Base];
-  }
-  if (chainId === SupportedNetworks.Polygon) {
-    return MONARCH_AGENT_URLS[SupportedNetworks.Polygon];
-  }
-  return undefined;
-};
+export const getMonarchAgentUrl = (chainId: number): string | undefined => MONARCH_AGENT_URLS[chainId as SupportedNetworks];

@@ -6,6 +6,7 @@ import { SupportedNetworks } from '@/utils/networks';
 export const supportsMorphoApi = (network: SupportedNetworks): boolean => {
   switch (network) {
     case SupportedNetworks.Mainnet:
+    case SupportedNetworks.Optimism:
     case SupportedNetworks.Base:
     case SupportedNetworks.Unichain:
     case SupportedNetworks.Polygon:

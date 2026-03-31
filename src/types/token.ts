@@ -19,6 +19,7 @@ export type NetworkToken = {
 /** Canonical token addresses used for deterministic route checks. */
 export const WETH_BY_CHAIN: Partial<Record<SupportedNetworks, Address>> = {
   [SupportedNetworks.Mainnet]: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  [SupportedNetworks.Optimism]: '0x4200000000000000000000000000000000000006',
   [SupportedNetworks.Base]: '0x4200000000000000000000000000000000000006',
   [SupportedNetworks.Polygon]: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
   [SupportedNetworks.Unichain]: '0x4200000000000000000000000000000000000006',

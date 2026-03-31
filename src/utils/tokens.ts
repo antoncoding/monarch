@@ -1,4 +1,4 @@
-import { type Chain, base, mainnet, polygon, unichain, arbitrum, monad } from 'viem/chains';
+import { type Chain, base, mainnet, polygon, unichain, arbitrum, optimism, monad } from 'viem/chains';
 import { getWrappedNativeToken, hyperEvm } from './networks';
 
 export type TokenSource = 'local' | 'external' | 'unknown';
@@ -56,6 +56,7 @@ const supportedTokens = [
       { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
       { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
       { chain: polygon, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' },
+      { chain: optimism, address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85' },
       {
         chain: unichain,
         address: '0x078d782b760474a361dda0af3839290b0ef57ad6',
@@ -262,6 +263,10 @@ const supportedTokens = [
         address: '0x4200000000000000000000000000000000000006',
       },
       {
+        chain: optimism,
+        address: '0x4200000000000000000000000000000000000006',
+      },
+      {
         chain: arbitrum,
         address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
       },
@@ -308,7 +313,10 @@ const supportedTokens = [
       { chain: base, address: '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452' },
       {
         chain: arbitrum,
-        address: '0x5979D7b546E38E414F7E9822514be443A4800529',
+        address: '0x5979D7b546E38E414F7E9822514be443A4800529'
+      },
+      {
+        chain: optimism, address: '0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb'
       },
       { chain: monad, address: '0x10Aeaf63194db8d453d4D85a06E5eFE1dd0b5417' },
       {
@@ -362,6 +370,7 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
       { chain: polygon, address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6' },
+      { chain: optimism, address: '0x68f180fcCe6836688e9084f035309E29Bf0A2095' },
       {
         chain: unichain,
         address: '0x927B51f251480a681271180DA4de28D44EC4AfB8',
@@ -605,6 +614,13 @@ const supportedTokens = [
     img: require('../imgs/tokens/susdd.svg') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0xC5d6A7B61d18AfA11435a889557b068BB9f29930' }],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'sUSDC',
+    img: require('../imgs/tokens/susdc.svg') as string,
+    decimals: 18,
+    networks: [{ chain: optimism, address: '0xCF9326e24EBfFBEF22ce1050007A43A3c0B6DB55' }],
     peg: TokenPeg.USD,
   },
   {

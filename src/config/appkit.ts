@@ -4,9 +4,20 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { createStorage, type Storage } from 'wagmi';
 import localStorage from 'local-storage-fallback';
 import { createAppKit } from '@reown/appkit/react';
-import { arbitrum, base, mainnet, polygon, type AppKitNetwork } from '@reown/appkit/networks';
-import { monad, unichain } from 'wagmi/chains';
-import { hyperEvm } from '@/utils/networks';
+import type { AppKitNetwork } from '@reown/appkit/networks';
+import { arbitrum, base, mainnet, monad, optimism, polygon, unichain } from 'wagmi/chains';
+import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
+
+type ChainWithRpcUrls = {
+  rpcUrls: {
+    default: {
+      http: readonly string[];
+    };
+    public?: {
+      http: readonly string[];
+    };
+  };
+};
 
 // Get project ID from environment
 const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? '';
@@ -18,16 +29,42 @@ if (!projectId) {
   throw new Error('NEXT_PUBLIC_REOWN_PROJECT_ID is not set');
 }
 
-// Cast custom chains to AppKitNetwork for type compatibility
-const customUnichain = unichain as unknown as AppKitNetwork;
-const customMonad = monad as unknown as AppKitNetwork;
-const customHyperEvm = hyperEvm as unknown as AppKitNetwork;
+const withAppKitRpc = <T extends ChainWithRpcUrls>(chain: T, rpcUrl: string): AppKitNetwork =>
+  ({
+    ...chain,
+    rpcUrls: {
+      ...chain.rpcUrls,
+      default: {
+        ...chain.rpcUrls.default,
+        http: [rpcUrl],
+      },
+      public: {
+        ...(chain.rpcUrls.public ?? chain.rpcUrls.default),
+        http: [rpcUrl],
+      },
+    },
+  }) as unknown as AppKitNetwork;
+
+const customMainnet = withAppKitRpc(mainnet, getDefaultRPC(SupportedNetworks.Mainnet));
+const customOptimism = withAppKitRpc(optimism, getDefaultRPC(SupportedNetworks.Optimism));
+const customBase = withAppKitRpc(base, getDefaultRPC(SupportedNetworks.Base));
+const customPolygon = withAppKitRpc(polygon, getDefaultRPC(SupportedNetworks.Polygon));
+const customArbitrum = withAppKitRpc(arbitrum, getDefaultRPC(SupportedNetworks.Arbitrum));
+const customUnichain = withAppKitRpc(unichain, getDefaultRPC(SupportedNetworks.Unichain));
+const customMonad = withAppKitRpc(monad, getDefaultRPC(SupportedNetworks.Monad));
+const customHyperEvm = withAppKitRpc(hyperEvm, getDefaultRPC(SupportedNetworks.HyperEVM));
 
 // Define networks for AppKit (non-empty tuple type required)
-export const networks = [mainnet, base, polygon, arbitrum, customUnichain, customHyperEvm, customMonad] as [
-  AppKitNetwork,
-  ...AppKitNetwork[],
-];
+export const networks = [
+  customMainnet,
+  customOptimism,
+  customBase,
+  customPolygon,
+  customArbitrum,
+  customUnichain,
+  customHyperEvm,
+  customMonad,
+] as [AppKitNetwork, ...AppKitNetwork[]];
 
 // Metadata for the app
 const metadata = {

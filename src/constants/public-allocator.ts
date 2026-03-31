@@ -2,6 +2,7 @@ import { SupportedNetworks } from '@/utils/networks';
 
 export const PUBLIC_ALLOCATOR_ADDRESSES: Partial<Record<SupportedNetworks, `0x${string}`>> = {
   [SupportedNetworks.Mainnet]: '0xfd32fA2ca22c76dD6E550706Ad913FC6CE91c75D',
+  [SupportedNetworks.Optimism]: '0x0d68a97324E602E02799CD83B42D337207B40658',
   [SupportedNetworks.Base]: '0xA090dD1a701408Df1d4d0B85b716c87565f90467',
   [SupportedNetworks.Polygon]: '0xfac15aff53ADd2ff80C2962127C434E8615Df0d3',
   [SupportedNetworks.Unichain]: '0xB0c9a107fA17c779B3378210A7a593e88938C7C9',

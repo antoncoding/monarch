@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi';
-import { arbitrum, base, mainnet, monad, polygon, unichain } from 'wagmi/chains';
+import { arbitrum, base, mainnet, monad, optimism, polygon, unichain } from 'wagmi/chains';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
 
@@ -10,6 +10,7 @@ import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
 export function createWagmiConfig(customRpcUrls: CustomRpcUrls = {}) {
   // Use custom RPC URLs if provided, otherwise fall back to defaults
   const rpcMainnet = customRpcUrls[SupportedNetworks.Mainnet] ?? getDefaultRPC(SupportedNetworks.Mainnet);
+  const rpcOptimism = customRpcUrls[SupportedNetworks.Optimism] ?? getDefaultRPC(SupportedNetworks.Optimism);
   const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? getDefaultRPC(SupportedNetworks.Base);
   const rpcPolygon = customRpcUrls[SupportedNetworks.Polygon] ?? getDefaultRPC(SupportedNetworks.Polygon);
   const rpcUnichain = customRpcUrls[SupportedNetworks.Unichain] ?? getDefaultRPC(SupportedNetworks.Unichain);
@@ -19,9 +20,10 @@ export function createWagmiConfig(customRpcUrls: CustomRpcUrls = {}) {
 
   return createConfig({
     ssr: true,
-    chains: [mainnet, base, polygon, unichain, arbitrum, hyperEvm, monad],
+    chains: [mainnet, optimism, base, polygon, unichain, arbitrum, hyperEvm, monad],
     transports: {
       [mainnet.id]: http(rpcMainnet),
+      [optimism.id]: http(rpcOptimism),
       [base.id]: http(rpcBase),
       [polygon.id]: http(rpcPolygon),
       [unichain.id]: http(rpcUnichain),

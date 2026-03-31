@@ -9,6 +9,8 @@ export const getMorphoAddress = (chain: SupportedNetworks) => {
   switch (chain) {
     case SupportedNetworks.Mainnet:
       return '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb';
+    case SupportedNetworks.Optimism:
+      return '0xce95AfbB8EA029495c66020883F87aaE8864AF92';
     case SupportedNetworks.Base:
       return '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb';
     case SupportedNetworks.Polygon:
@@ -30,6 +32,8 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
   switch (chain) {
     case SupportedNetworks.Mainnet:
       return '0x4095F064B8d3c3548A3bebfd0Bbfd04750E30077';
+    case SupportedNetworks.Optimism:
+      return '0x5738366B9348f22607294007e75114922dF2a16A' // ChainAgnosticBundlerV2 we deployed
     case SupportedNetworks.Base:
       // ChainAgnosticBundlerV2
       return '0x23055618898e202386e6c13955a58D3C68200BFB';
@@ -51,6 +55,8 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
 export const getIRMTitle = (address: string) => {
   switch (address.toLowerCase()) {
     case '0x870ac11d48b15db9a138cf899d20f13f79ba00bc':
+      return 'Adaptive Curve';
+    case '0x8cd70a8f399428456b29546bc5dbe10ab6a06ef6': // on optimism
       return 'Adaptive Curve';
     case '0x46415998764c29ab2a25cbea6254146d50d22687': // on base
       return 'Adaptive Curve';

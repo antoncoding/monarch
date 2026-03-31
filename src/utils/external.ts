@@ -37,6 +37,8 @@ const getChainNameForMerkl = (chainId: number): string => {
   switch (chainId) {
     case SupportedNetworks.Mainnet:
       return 'ethereum';
+    case SupportedNetworks.Optimism:
+      return 'optimism';
     case SupportedNetworks.Base:
       return 'base';
     case SupportedNetworks.Polygon:
