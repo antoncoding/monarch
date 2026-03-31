@@ -313,10 +313,11 @@ const supportedTokens = [
       { chain: base, address: '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452' },
       {
         chain: arbitrum,
-        address: '0x5979D7b546E38E414F7E9822514be443A4800529'
+        address: '0x5979D7b546E38E414F7E9822514be443A4800529',
       },
       {
-        chain: optimism, address: '0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb'
+        chain: optimism,
+        address: '0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb',
       },
       { chain: monad, address: '0x10Aeaf63194db8d453d4D85a06E5eFE1dd0b5417' },
       {

@@ -33,7 +33,7 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
     case SupportedNetworks.Mainnet:
       return '0x4095F064B8d3c3548A3bebfd0Bbfd04750E30077';
     case SupportedNetworks.Optimism:
-      return '0x5738366B9348f22607294007e75114922dF2a16A' // ChainAgnosticBundlerV2 we deployed
+      return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     case SupportedNetworks.Base:
       // ChainAgnosticBundlerV2
       return '0x23055618898e202386e6c13955a58D3C68200BFB';
