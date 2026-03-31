@@ -14,6 +14,7 @@ import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import type { MarketRateEnrichment } from '@/utils/market-rate-enrichment';
 import type { Market } from '@/utils/types';
 import { APYCell } from '../apy-breakdown-tooltip';
 import { MarketActionsDropdown } from '../market-actions-dropdown';
@@ -35,7 +36,8 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
-  const renderHistoricalRateCell = (value: number | null) => {
+  const renderHistoricalRateCell = (market: Market, field: keyof MarketRateEnrichment) => {
+    const value = market.state[field];
     if (value != null) {
       return <RateFormatted value={value} />;
     }
@@ -271,7 +273,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.dailySupplyApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'dailySupplyApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.dailyBorrowAPY && (
@@ -280,7 +282,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.dailyBorrowApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'dailyBorrowApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.weeklySupplyAPY && (
@@ -289,7 +291,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.weeklySupplyApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'weeklySupplyApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.weeklyBorrowAPY && (
@@ -298,7 +300,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.weeklyBorrowApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'weeklyBorrowApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.monthlySupplyAPY && (
@@ -307,7 +309,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.monthlySupplyApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'monthlySupplyApy')}</div>
                 </TableCell>
               )}
               {columnVisibility.monthlyBorrowAPY && (
@@ -316,7 +318,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item.state.monthlyBorrowApy)}</div>
+                  <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'monthlyBorrowApy')}</div>
                 </TableCell>
               )}
               <TableCell style={{ minWidth: '90px' }}>

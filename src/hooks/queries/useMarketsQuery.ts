@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
@@ -33,8 +34,11 @@ const toError = (error: unknown): Error => {
  * ```
  */
 export const useMarketsQuery = () => {
+  const { customRpcUrls } = useCustomRpcContext();
+  const rpcIdentity = Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right));
+
   return useQuery({
-    queryKey: ['markets'],
+    queryKey: ['markets', rpcIdentity],
     queryFn: async () => {
       const fetchErrors: Error[] = [];
       const marketsByChain = new Map<SupportedNetworks, Market[]>();
@@ -67,7 +71,7 @@ export const useMarketsQuery = () => {
       };
 
       try {
-        const monarchMarkets = await fetchMonarchMarkets();
+        const monarchMarkets = await fetchMonarchMarkets(undefined, customRpcUrls);
         const monarchMarketsByChain = partitionMarketsByChain(monarchMarkets);
 
         for (const [network, markets] of monarchMarketsByChain.entries()) {

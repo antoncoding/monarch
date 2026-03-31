@@ -1,4 +1,5 @@
 import { erc20Abi, parseAbi, type Address, type Hex } from 'viem';
+import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import type { SupportedNetworks } from './networks';
 import { getClient } from './rpc';
 import { findToken, infoToKey } from './tokens';
@@ -18,6 +19,8 @@ export type OnchainTokenMetadata = {
   decimals?: number;
   symbol?: string;
 };
+
+export type SerializedResolvedTokenInfos = Record<string, ResolvedTokenInfo>;
 
 const TOKEN_METADATA_BATCH_SIZE = 200;
 const erc20SymbolBytes32Abi = parseAbi(['function symbol() view returns (bytes32)']);
@@ -91,12 +94,21 @@ const getOrCreateTokenMetadata = (metadataByToken: Map<string, OnchainTokenMetad
   return metadata;
 };
 
-export const fetchOnchainTokenMetadataMap = async (tokens: TokenAddressInput[]): Promise<Map<string, OnchainTokenMetadata>> => {
+export const serializeResolvedTokenInfos = (resolvedTokenInfos: Map<string, ResolvedTokenInfo>): SerializedResolvedTokenInfos =>
+  Object.fromEntries(resolvedTokenInfos);
+
+export const deserializeResolvedTokenInfos = (value: SerializedResolvedTokenInfos): Map<string, ResolvedTokenInfo> =>
+  new Map(Object.entries(value));
+
+export const fetchOnchainTokenMetadataMap = async (
+  tokens: TokenAddressInput[],
+  customRpcUrls: CustomRpcUrls = {},
+): Promise<Map<string, OnchainTokenMetadata>> => {
   const uniqueTokens = dedupeTokenInputs(tokens);
   const metadataByToken = new Map<string, OnchainTokenMetadata>();
 
   for (const [chainId, tokensForChain] of groupTokenInputsByChain(uniqueTokens)) {
-    const client = getClient(chainId);
+    const client = getClient(chainId, customRpcUrls[chainId]);
 
     for (let start = 0; start < tokensForChain.length; start += TOKEN_METADATA_BATCH_SIZE) {
       const tokenBatch = tokensForChain.slice(start, start + TOKEN_METADATA_BATCH_SIZE);
@@ -175,7 +187,10 @@ export const fetchOnchainTokenMetadataMap = async (tokens: TokenAddressInput[]):
   return metadataByToken;
 };
 
-export const fetchTokenDecimalsMap = async (tokens: TokenAddressInput[]): Promise<Map<string, number>> => {
+export const fetchTokenDecimalsMap = async (
+  tokens: TokenAddressInput[],
+  customRpcUrls: CustomRpcUrls = {},
+): Promise<Map<string, number>> => {
   const uniqueTokens = dedupeTokenInputs(tokens);
   const decimalsByToken = new Map<string, number>();
   const unresolvedTokens: TokenAddressInput[] = [];
@@ -191,7 +206,7 @@ export const fetchTokenDecimalsMap = async (tokens: TokenAddressInput[]): Promis
     unresolvedTokens.push(token);
   }
 
-  const onchainMetadataByToken = await fetchOnchainTokenMetadataMap(unresolvedTokens);
+  const onchainMetadataByToken = await fetchOnchainTokenMetadataMap(unresolvedTokens, customRpcUrls);
 
   for (const token of unresolvedTokens) {
     const decimals = onchainMetadataByToken.get(infoToKey(token.address, token.chainId))?.decimals;
@@ -203,11 +218,81 @@ export const fetchTokenDecimalsMap = async (tokens: TokenAddressInput[]): Promis
   return decimalsByToken;
 };
 
-export const resolveTokenInfos = async (tokens: TokenAddressInput[]): Promise<Map<string, ResolvedTokenInfo>> => {
+export const resolveUnknownTokenInfosOnchain = async (
+  tokens: TokenAddressInput[],
+  customRpcUrls: CustomRpcUrls = {},
+): Promise<Map<string, ResolvedTokenInfo>> => {
+  const uniqueTokens = dedupeTokenInputs(tokens);
+  const resolvedTokenInfos = new Map<string, ResolvedTokenInfo>();
+  const onchainMetadataByToken = await fetchOnchainTokenMetadataMap(uniqueTokens, customRpcUrls);
+
+  for (const token of uniqueTokens) {
+    const key = infoToKey(token.address, token.chainId);
+    const onchainMetadata = onchainMetadataByToken.get(key);
+    const resolvedDecimals = onchainMetadata?.decimals;
+
+    if (resolvedDecimals === undefined) {
+      continue;
+    }
+
+    const resolvedSymbol = onchainMetadata?.symbol ?? formatUnknownTokenLabel(token.address);
+    resolvedTokenInfos.set(key, {
+      token: {
+        id: token.address,
+        address: token.address,
+        symbol: resolvedSymbol,
+        name: resolvedSymbol,
+        decimals: resolvedDecimals,
+      },
+      isRecognized: false,
+    });
+  }
+
+  return resolvedTokenInfos;
+};
+
+const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInput[]): Promise<Map<string, ResolvedTokenInfo>> => {
+  const response = await fetch('/api/token-metadata', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ tokens }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch token metadata: ${response.status}`);
+  }
+
+  const data = (await response.json()) as { tokens?: SerializedResolvedTokenInfos };
+  return deserializeResolvedTokenInfos(data.tokens ?? {});
+};
+
+export const resolveTokenInfos = async (
+  tokens: TokenAddressInput[],
+  customRpcUrls: CustomRpcUrls = {},
+): Promise<Map<string, ResolvedTokenInfo>> => {
   const uniqueTokens = dedupeTokenInputs(tokens);
   const resolvedTokenInfos = new Map<string, ResolvedTokenInfo>();
   const unresolvedTokens = uniqueTokens.filter((token) => !findToken(token.address, token.chainId));
-  const onchainMetadataByToken = await fetchOnchainTokenMetadataMap(unresolvedTokens);
+  const serverResolvedTokens = unresolvedTokens.filter((token) => !customRpcUrls[token.chainId]);
+  const clientResolvedTokens = unresolvedTokens.filter((token) => Boolean(customRpcUrls[token.chainId]));
+  const [serverResolvedTokenInfos, clientResolvedTokenInfos] = await Promise.all([
+    serverResolvedTokens.length === 0
+      ? Promise.resolve(new Map<string, ResolvedTokenInfo>())
+      : typeof window === 'undefined'
+        ? resolveUnknownTokenInfosOnchain(serverResolvedTokens, customRpcUrls)
+        : fetchResolvedUnknownTokenInfosFromServer(serverResolvedTokens).catch(() =>
+            resolveUnknownTokenInfosOnchain(serverResolvedTokens, customRpcUrls),
+          ),
+    clientResolvedTokens.length === 0
+      ? Promise.resolve(new Map<string, ResolvedTokenInfo>())
+      : resolveUnknownTokenInfosOnchain(clientResolvedTokens, customRpcUrls),
+  ]);
+  const unresolvedTokenInfos = new Map<string, ResolvedTokenInfo>([
+    ...serverResolvedTokenInfos.entries(),
+    ...clientResolvedTokenInfos.entries(),
+  ]);
 
   for (const token of uniqueTokens) {
     const key = infoToKey(token.address, token.chainId);
@@ -227,23 +312,10 @@ export const resolveTokenInfos = async (tokens: TokenAddressInput[]): Promise<Ma
       continue;
     }
 
-    const onchainMetadata = onchainMetadataByToken.get(key);
-    const resolvedDecimals = onchainMetadata?.decimals;
-    if (resolvedDecimals === undefined) {
-      continue;
+    const resolvedUnknownToken = unresolvedTokenInfos.get(key);
+    if (resolvedUnknownToken) {
+      resolvedTokenInfos.set(key, resolvedUnknownToken);
     }
-
-    const resolvedSymbol = onchainMetadata?.symbol ?? formatUnknownTokenLabel(token.address);
-    resolvedTokenInfos.set(key, {
-      token: {
-        id: token.address,
-        address: token.address,
-        symbol: resolvedSymbol,
-        name: resolvedSymbol,
-        decimals: resolvedDecimals,
-      },
-      isRecognized: false,
-    });
   }
 
   return resolvedTokenInfos;

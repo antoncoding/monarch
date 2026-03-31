@@ -1,3 +1,13 @@
+const APY_RATIO_SCALE = 1_000_000_000n;
+const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+
+export const toScaledRatio = (numerator: bigint, denominator: bigint): number | null => {
+  if (denominator <= 0n) return null;
+  const scaledRatio = (numerator * APY_RATIO_SCALE) / denominator;
+  const ratio = Number(scaledRatio) / Number(APY_RATIO_SCALE);
+  return Number.isFinite(ratio) ? ratio : null;
+};
+
 /**
  * Converts APY (Annual Percentage Yield) to APR (Annual Percentage Rate)
  * using continuous compounding formula: APR = ln(1 + APY)
@@ -73,4 +83,24 @@ export function toApyFromDisplayRate(rate: number, isAprDisplay: boolean): numbe
  */
 export function formatRateAsPercentage(rate: number, precision = 2): string {
   return `${(rate * 100).toFixed(precision)}%`;
+}
+
+export function computeAnnualizedApyFromGrowth({
+  currentValue,
+  pastValue,
+  periodSeconds,
+}: {
+  currentValue: bigint;
+  pastValue: bigint;
+  periodSeconds: number;
+}): number | null {
+  if (currentValue <= 0n || pastValue <= 0n || periodSeconds <= 0) return null;
+
+  const growthRatio = toScaledRatio(currentValue, pastValue);
+  if (growthRatio == null || growthRatio <= 0) return null;
+
+  const annualizationFactor = SECONDS_PER_YEAR / periodSeconds;
+  const annualizedApy = growthRatio ** annualizationFactor - 1;
+
+  return Number.isFinite(annualizedApy) ? annualizedApy : null;
 }

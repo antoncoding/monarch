@@ -1,15 +1,26 @@
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { Spinner } from '@/components/ui/spinner';
 import { useChartColors } from '@/constants/chartColors';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatChartTime } from '@/utils/chart';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
-import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
+import { TIMEFRAME_CONFIG, useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
+import {
+  fetchMarketRateEnrichment,
+  fetchRealizedMarketWindowRates,
+  getMarketRateEnrichmentKey,
+  getWindowRatesFromEnrichment,
+  ROLLING_RATE_WINDOW_SECONDS,
+  type WindowRealizedRates,
+} from '@/utils/market-rate-enrichment';
+import type { SupportedNetworks } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';
 import {
   TIMEFRAME_LABELS,
@@ -33,11 +44,40 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
   const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
+  const { customRpcUrls } = useCustomRpcContext();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const chartColors = useChartColors();
+  const realizedWindowSeconds = TIMEFRAME_CONFIG[selectedTimeframe].durationSeconds;
+  const rateChainId = chainId as SupportedNetworks;
+  const customRpcUrl = customRpcUrls[rateChainId];
 
   const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
+  const { data: realizedRates, isLoading: isRealizedRatesLoading } = useQuery<WindowRealizedRates>({
+    queryKey: ['market-realized-window-rates', chainId, market.uniqueKey, realizedWindowSeconds, customRpcUrl ?? null],
+    queryFn: async () => {
+      if (ROLLING_RATE_WINDOW_SECONDS.includes(realizedWindowSeconds)) {
+        const enrichments = await fetchMarketRateEnrichment([market], {
+          ...(customRpcUrl ? { [rateChainId]: customRpcUrl } : {}),
+        });
+        return getWindowRatesFromEnrichment(enrichments.get(getMarketRateEnrichmentKey(market.uniqueKey, chainId)), realizedWindowSeconds);
+      }
+
+      const ratesByMarket = await fetchRealizedMarketWindowRates([market], [realizedWindowSeconds], {
+        ...(customRpcUrl ? { [rateChainId]: customRpcUrl } : {}),
+      });
+      return (
+        ratesByMarket.get(getMarketRateEnrichmentKey(market.uniqueKey, chainId))?.get(realizedWindowSeconds) ?? {
+          supplyApy: null,
+          borrowApy: null,
+        }
+      );
+    },
+    enabled: Boolean(market.uniqueKey && chainId && realizedWindowSeconds > 0),
+    staleTime: 15 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   const [visibleLines, setVisibleLines] = useState({
     supplyApy: true,
@@ -83,33 +123,12 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
 
   const toDisplayRate = (apy: number) => (isAprDisplay ? convertApyToApr(apy) : apy);
 
-  const getAverage = (data: TimeseriesDataPoint[] | undefined) => {
-    if (!data || data.length === 0) return 0;
-
-    let total = 0;
-    let count = 0;
-
-    for (const point of data) {
-      if (point.y === null || !Number.isFinite(point.y)) {
-        continue;
-      }
-
-      total += point.y;
-      count += 1;
-    }
-
-    return count === 0 ? 0 : total / count;
-  };
-
   const currentSupplyRate = toDisplayRate(market.state.supplyApy);
   const currentBorrowRate = toDisplayRate(market.state.borrowApy);
   const currentApyAtTarget = toDisplayRate(market.state.apyAtTarget);
   const currentUtilization = market.state.utilization;
-
-  const avgSupplyRate = toDisplayRate(getAverage(historicalData?.rates?.supplyApy));
-  const avgBorrowRate = toDisplayRate(getAverage(historicalData?.rates?.borrowApy));
-  const avgApyAtTarget = toDisplayRate(getAverage(historicalData?.rates?.apyAtTarget));
-  const avgUtilization = getAverage(historicalData?.rates?.utilization);
+  const realizedSupplyRate = realizedRates?.supplyApy != null ? toDisplayRate(realizedRates.supplyApy) : null;
+  const realizedBorrowRate = realizedRates?.borrowApy != null ? toDisplayRate(realizedRates.borrowApy) : null;
 
   const legendHandlers = createLegendClickHandler({ visibleLines, setVisibleLines });
 
@@ -257,30 +276,22 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
         )}
       </div>
 
-      {/* Footer: Historical Averages */}
+      {/* Footer: Realized Window Rates */}
       <div className="border-t border-border px-6 py-4">
-        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{TIMEFRAME_LABELS[selectedTimeframe]} Averages</h4>
-        {isLoading ? (
+        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{TIMEFRAME_LABELS[selectedTimeframe]} Realized</h4>
+        {isRealizedRatesLoading ? (
           <div className="flex h-8 items-center justify-center">
             <Spinner size={16} />
           </div>
         ) : (
           <div className="flex flex-wrap gap-x-8 gap-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-secondary">Utilization</span>
-              <span className="tabular-nums text-sm">{formatPercentage(avgUtilization)}</span>
-            </div>
-            <div className="flex items-center gap-2">
               <span className="text-sm text-secondary">Supply {rateLabel}</span>
-              <span className="tabular-nums text-sm">{formatPercentage(avgSupplyRate)}</span>
+              <span className="tabular-nums text-sm">{realizedSupplyRate == null ? '—' : formatPercentage(realizedSupplyRate)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-secondary">Borrow {rateLabel}</span>
-              <span className="tabular-nums text-sm">{formatPercentage(avgBorrowRate)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-secondary">Rate at Target</span>
-              <span className="tabular-nums text-sm">{formatPercentage(avgApyAtTarget)}</span>
+              <span className="tabular-nums text-sm">{realizedBorrowRate == null ? '—' : formatPercentage(realizedBorrowRate)}</span>
             </div>
           </div>
         )}

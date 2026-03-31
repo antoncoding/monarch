@@ -19,6 +19,8 @@ export type MarketSnapshot = {
   totalBorrowAssets: string;
   totalBorrowShares: string;
   liquidityAssets: string;
+  lastUpdate: number;
+  fee: string;
 };
 
 const MARKET_SNAPSHOT_BATCH_SIZE = 200;
@@ -396,6 +398,8 @@ export async function fetchMarketsSnapshots(
             totalBorrowAssets: market.totalBorrowAssets.toString(),
             totalBorrowShares: market.totalBorrowShares.toString(),
             liquidityAssets: liquidityAssets.toString(),
+            lastUpdate: Number(market.lastUpdate),
+            fee: market.fee.toString(),
           });
         });
       });
