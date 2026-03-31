@@ -72,7 +72,7 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
  * 1. Get raw markets from React Query
  * 2. Merge whitelist and supplying-vault metadata
  * 3. Apply blacklist and force-unwhitelisted overrides
- * 4. Enrich optional historical market rates via RPC/archive-node snapshots
+ * 4. Enrich optional historical market rates via Morpho historical list fields
  * 5. Backfill USD values when direct prices are available
  *
  * @returns Processed markets with loading states
