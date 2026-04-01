@@ -283,14 +283,6 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       }
     }
 
-    console.debug('[smart-rebalance] plan calculation start', {
-      calcId: id,
-      chainId: groupedPosition.chainId,
-      selectedMarketKeys: [...smartSelectedMarketKeys].sort(),
-      candidateMarketCount: smartPlannerEligibleMarketsRef.current.length,
-      constraintCount: Object.keys(constraints).length,
-    });
-
     void calculateSmartRebalancePlan({
       groupedPosition,
       chainId: groupedPosition.chainId as SupportedNetworks,
@@ -299,29 +291,11 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       constraints,
     })
       .then((plan) => {
-        if (id !== calcIdRef.current) {
-          console.debug('[smart-rebalance] plan calculation ignored stale success', {
-            calcId: id,
-            latestCalcId: calcIdRef.current,
-          });
-          return;
-        }
-        console.debug('[smart-rebalance] plan calculation success', {
-          calcId: id,
-          hasPlan: plan !== null,
-          totalMoved: plan?.totalMoved.toString() ?? '0',
-          deltaCount: plan?.deltas.length ?? 0,
-        });
+        if (id !== calcIdRef.current) return;
         setSmartPlan(plan);
       })
       .catch((error: unknown) => {
-        if (id !== calcIdRef.current) {
-          console.debug('[smart-rebalance] plan calculation ignored stale error', {
-            calcId: id,
-            latestCalcId: calcIdRef.current,
-          });
-          return;
-        }
+        if (id !== calcIdRef.current) return;
         setSmartPlan(null);
         const message = error instanceof Error ? error.message : 'Failed to calculate smart rebalance plan.';
         console.error('[smart-rebalance] plan calculation failed', {
@@ -333,16 +307,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         setSmartCalculationError(message);
       })
       .finally(() => {
-        if (id !== calcIdRef.current) {
-          console.debug('[smart-rebalance] plan calculation skipped stale finalize', {
-            calcId: id,
-            latestCalcId: calcIdRef.current,
-          });
-          return;
-        }
-        console.debug('[smart-rebalance] plan calculation finalize', {
-          calcId: id,
-        });
+        if (id !== calcIdRef.current) return;
         setIsSmartCalculating(false);
       });
   }, [

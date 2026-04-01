@@ -178,11 +178,6 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         return prev;
       }
 
-      console.debug('[EditCaps] syncing initial market caps', {
-        previousSize: prev.size,
-        nextSize: initialMarketCaps.size,
-      });
-
       return initialMarketCaps;
     });
   }, [initialMarketCaps]);
