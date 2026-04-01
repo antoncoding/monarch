@@ -63,16 +63,6 @@ const MORPHO_WHITELIST_TIMEOUT_MS = 15_000;
 const MORPHO_WHITELIST_PAGE_BATCH_SIZE = 4;
 
 const MORPHO_SUPPORTED_NETWORKS = ALL_SUPPORTED_NETWORKS.filter((network) => supportsMorphoApi(network));
-const SHOULD_LOG_MORPHO_MARKET_METADATA = process.env.NODE_ENV !== 'production';
-
-const logMorphoMarketMetadata = (message: string, details?: Record<string, unknown>) => {
-  if (!SHOULD_LOG_MORPHO_MARKET_METADATA) return;
-  if (details) {
-    console.info(`[MorphoMarketMetadata] ${message}`, details);
-    return;
-  }
-  console.info(`[MorphoMarketMetadata] ${message}`);
-};
 
 const normalizeSupplyingVaults = (supplyingVaults: MorphoWhitelistMarket['supplyingVaults']): MorphoMarketMetadata['supplyingVaults'] => {
   const uniqueVaults = new Set<string>();
@@ -96,12 +86,6 @@ const fetchMorphoMarketMetadataPage = async (
   skip: number,
   pageSize: number,
 ): Promise<MorphoWhitelistStatusPage | null> => {
-  logMorphoMarketMetadata('Requesting Morpho listed + supplyingVaults page', {
-    chainId: network,
-    skip,
-    pageSize,
-  });
-
   const response = await morphoGraphqlFetcher<MorphoWhitelistStatusResponse>(
     marketsWhitelistStatusQuery,
     {
@@ -121,13 +105,6 @@ const fetchMorphoMarketMetadataPage = async (
     return null;
   }
 
-  logMorphoMarketMetadata('Received Morpho listed + supplyingVaults page', {
-    chainId: network,
-    skip,
-    itemCount: response.data.markets.items.length,
-    totalCount: response.data.markets.pageInfo.countTotal,
-  });
-
   return {
     items: response.data.markets.items.map((market) => ({
       chainId: market.morphoBlue.chain.id,
@@ -140,11 +117,6 @@ const fetchMorphoMarketMetadataPage = async (
 };
 
 const fetchMorphoMarketMetadataForNetwork = async (network: SupportedNetworks): Promise<MorphoMarketMetadata[]> => {
-  logMorphoMarketMetadata('Starting Morpho listed + supplyingVaults fetch for chain', {
-    chainId: network,
-    pageSize: MORPHO_WHITELIST_PAGE_SIZE,
-  });
-
   const firstPage = await fetchMorphoMarketMetadataPage(network, 0, MORPHO_WHITELIST_PAGE_SIZE);
   if (!firstPage) {
     throw new Error(`[WhitelistStatus] Failed to fetch first page for network ${network}.`);
@@ -187,20 +159,10 @@ const fetchMorphoMarketMetadataForNetwork = async (network: SupportedNetworks): 
     );
   }
 
-  logMorphoMarketMetadata('Completed Morpho listed + supplyingVaults fetch for chain', {
-    chainId: network,
-    marketCount: allMetadata.length,
-    totalCount,
-  });
-
   return allMetadata;
 };
 
 export const fetchAllMorphoMarketMetadata = async (): Promise<MorphoMarketMetadataRefresh[]> => {
-  logMorphoMarketMetadata('Refreshing Morpho listed + supplyingVaults metadata for supported chains', {
-    chainIds: MORPHO_SUPPORTED_NETWORKS,
-  });
-
   const settledResults = await Promise.allSettled(
     MORPHO_SUPPORTED_NETWORKS.map(async (network) => ({
       network,
@@ -225,10 +187,6 @@ export const fetchAllMorphoMarketMetadata = async (): Promise<MorphoMarketMetada
       metadata: Array.from(metadataByKey.values()),
     });
   }
-
-  logMorphoMarketMetadata('Finished Morpho listed + supplyingVaults metadata refresh', {
-    successfulChains: successfulRefreshes.map(({ network }) => network),
-  });
 
   return successfulRefreshes;
 };
