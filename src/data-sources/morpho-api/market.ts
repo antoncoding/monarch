@@ -31,23 +31,10 @@ type MarketGraphQLResponse = {
   errors?: { message: string }[];
 };
 
-// Define response type for multiple markets with pageInfo
 type MarketsGraphQLResponse = {
   data?: {
     markets?: {
       items?: MorphoApiMarket[];
-      pageInfo?: {
-        countTotal: number;
-      };
-    };
-  };
-  errors?: { message: string }[];
-};
-
-type MarketKeysGraphQLResponse = {
-  data?: {
-    markets?: {
-      items?: { uniqueKey?: string }[];
       pageInfo?: {
         countTotal: number;
       };
@@ -64,20 +51,6 @@ type MorphoMarketsPage = {
 const MORPHO_MARKETS_PAGE_SIZE = 500;
 const MORPHO_MARKETS_TIMEOUT_MS = 20_000;
 const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
-const MORPHO_MARKET_DETAIL_BATCH_SIZE = 10;
-
-const morphoMarketKeysQuery = `
-  query getMarketKeys($first: Int, $skip: Int, $where: MarketFilters) {
-    markets(first: $first, skip: $skip, where: $where) {
-      items {
-        uniqueKey
-      }
-      pageInfo {
-        countTotal
-      }
-    }
-  }
-`;
 
 const computeApyAtTarget = (market: MorphoApiMarket, state: MorphoApiMarketState): number => {
   if (state.apyAtTarget != null) {
@@ -161,95 +134,33 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
   return filterRegistryMarkets([market])[0] ?? null;
 };
 
-const getMorphoMarketPageVariables = (network: SupportedNetworks, skip: number, pageSize: number) => ({
-  first: pageSize,
-  skip,
-  where: {
-    chainId_in: [network],
-  },
-});
-
-const fetchMorphoMarketKeysPage = async (network: SupportedNetworks, skip: number, pageSize: number) => {
-  const response = await morphoGraphqlFetcher<MarketKeysGraphQLResponse>(
-    morphoMarketKeysQuery,
-    getMorphoMarketPageVariables(network, skip, pageSize),
+const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
+  const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(
+    marketsQuery,
+    {
+      first: pageSize,
+      skip,
+      where: {
+        chainId_in: [network],
+      },
+    },
     {
       timeoutMs: MORPHO_MARKETS_TIMEOUT_MS,
     },
   );
 
   if (!response?.data?.markets?.pageInfo) {
-    throw new Error(`Morpho market-keys response missing pageInfo for network ${network} at skip ${skip}.`);
+    throw new Error(`Morpho markets response missing pageInfo for network ${network} at skip ${skip}.`);
   }
 
   if (!Array.isArray(response.data.markets.items)) {
-    throw new Error(`Morpho market-keys response missing items for network ${network} at skip ${skip}.`);
+    console.warn(`[Markets] Skipping failed page at skip=${skip} for network ${network}`);
+    return null;
   }
 
   return {
-    keys: response.data.markets.items.map((item) => item.uniqueKey).filter((key): key is string => Boolean(key)),
+    items: response.data.markets.items.map(processMarketData),
     totalCount: response.data.markets.pageInfo.countTotal,
-  };
-};
-
-const hydrateMorphoMarkets = async (uniqueKeys: string[], network: SupportedNetworks): Promise<Market[]> => {
-  const markets: Market[] = [];
-
-  for (let index = 0; index < uniqueKeys.length; index += MORPHO_MARKET_DETAIL_BATCH_SIZE) {
-    const keyBatch = uniqueKeys.slice(index, index + MORPHO_MARKET_DETAIL_BATCH_SIZE);
-    const settledMarkets = await Promise.allSettled(keyBatch.map((uniqueKey) => fetchMorphoMarket(uniqueKey, network)));
-
-    settledMarkets.forEach((settledMarket, batchIndex) => {
-      const uniqueKey = keyBatch[batchIndex];
-
-      if (settledMarket.status === 'rejected') {
-        console.warn(`Skipping malformed Morpho market ${uniqueKey} on network ${network}.`, settledMarket.reason);
-        return;
-      }
-
-      if (settledMarket.value) {
-        markets.push(settledMarket.value);
-      }
-    });
-  }
-
-  return markets;
-};
-
-const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage> => {
-  const variables = {
-    ...getMorphoMarketPageVariables(network, skip, pageSize),
-  };
-
-  try {
-    const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(marketsQuery, variables, {
-      timeoutMs: MORPHO_MARKETS_TIMEOUT_MS,
-    });
-
-    if (!response?.data?.markets?.pageInfo) {
-      throw new Error(`Morpho markets response missing pageInfo for network ${network} at skip ${skip}.`);
-    }
-
-    if (!Array.isArray(response.data.markets.items)) {
-      throw new Error(`Morpho markets response missing items for network ${network} at skip ${skip}.`);
-    }
-
-    const { items: pageItems, pageInfo } = response.data.markets;
-
-    return {
-      items: pageItems.map(processMarketData),
-      totalCount: pageInfo.countTotal,
-    };
-  } catch (error) {
-    console.warn(`Morpho markets page hydration failed for network ${network} at skip ${skip}, retrying per market.`, error);
-  }
-
-  const keyPage = await fetchMorphoMarketKeysPage(network, skip, pageSize);
-  const items = await hydrateMorphoMarkets(keyPage.keys, network);
-
-  return {
-    items,
-    totalCount: keyPage.totalCount,
   };
 };
 
@@ -259,13 +170,21 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
   const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 
   const firstPage = await fetchMorphoMarketsPage(network, 0, pageSize);
+  if (!firstPage) {
+    return [];
+  }
+
   allMarkets.push(...firstPage.items);
 
+  const firstPageCount = firstPage.items.length;
   const totalCount = firstPage.totalCount;
-  const nextOffsetStart = Math.min(pageSize, totalCount);
+  if (firstPageCount === 0 && totalCount > 0) {
+    console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
+    return filterRegistryMarkets(allMarkets);
+  }
 
   const remainingOffsets: number[] = [];
-  for (let nextSkip = nextOffsetStart; nextSkip < totalCount; nextSkip += pageSize) {
+  for (let nextSkip = firstPageCount; nextSkip < totalCount; nextSkip += pageSize) {
     remainingOffsets.push(nextSkip);
   }
 
@@ -279,7 +198,9 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
       if (settledPage.status === 'rejected') {
         throw settledPage.reason;
       }
-      successfulPages.push(settledPage.value);
+      if (settledPage.value) {
+        successfulPages.push(settledPage.value);
+      }
     }
 
     successfulPages.forEach((page) => {
