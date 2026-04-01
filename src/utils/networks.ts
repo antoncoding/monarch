@@ -1,5 +1,15 @@
 import { type Address, type Chain, defineChain } from 'viem';
-import { arbitrum, base, mainnet, monad, optimism, polygon, unichain, hyperEvm as hyperEvmOld } from 'viem/chains';
+import {
+  arbitrum,
+  base,
+  etherlink as etherlinkChain,
+  mainnet,
+  monad,
+  optimism,
+  polygon,
+  unichain,
+  hyperEvm as hyperEvmOld,
+} from 'viem/chains';
 import { v2AgentsBase } from './monarch-agent';
 import type { AgentMetadata } from './types';
 
@@ -13,10 +23,10 @@ const _apiKey = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
  * - If NEXT_PUBLIC_RPC_PRIORITY === 'ALCHEMY': Use Alchemy first, fall back to specific RPC
  * - Otherwise (default): Use specific network RPC first, fall back to Alchemy
  */
-const getRpcUrl = (specificRpcUrl: string | undefined, alchemySubdomain: string): string => {
+const getRpcUrl = (specificRpcUrl: string | undefined, alchemySubdomain?: string): string => {
   // Sanitize empty strings to undefined for correct fallback behavior
   const targetRpc = specificRpcUrl || undefined;
-  const alchemyUrl = alchemyKey ? `https://${alchemySubdomain}.g.alchemy.com/v2/${alchemyKey}` : undefined;
+  const alchemyUrl = alchemyKey && alchemySubdomain ? `https://${alchemySubdomain}.g.alchemy.com/v2/${alchemyKey}` : undefined;
 
   if (rpcPriority === 'ALCHEMY') {
     // Prioritize Alchemy when explicitly set
@@ -34,6 +44,7 @@ export enum SupportedNetworks {
   Polygon = 137,
   Unichain = 130,
   Arbitrum = 42_161,
+  Etherlink = 42_793,
   HyperEVM = 999,
   Monad = 143,
 }
@@ -45,6 +56,7 @@ export const ALL_SUPPORTED_NETWORKS = [
   SupportedNetworks.Polygon,
   SupportedNetworks.Unichain,
   SupportedNetworks.Arbitrum,
+  SupportedNetworks.Etherlink,
   SupportedNetworks.HyperEVM,
   SupportedNetworks.Monad,
 ];
@@ -160,6 +172,18 @@ export const networks: NetworkConfig[] = [
     maxBlockDelay: 2,
     explorerUrl: 'https://arbiscan.io',
     wrappedNativeToken: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
+  },
+  {
+    network: SupportedNetworks.Etherlink,
+    chain: etherlinkChain,
+    logo: require('../imgs/chains/etherlink.svg') as string,
+    name: 'Etherlink',
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ETHERLINK_RPC),
+    blocktime: 4.83,
+    maxBlockDelay: 10,
+    explorerUrl: 'https://explorer.etherlink.com',
+    nativeTokenSymbol: 'XTZ',
+    wrappedNativeToken: '0xc9B53AB2679f573e480d01e0f49e2B5CFB7a3EAb',
   },
   {
     network: SupportedNetworks.HyperEVM,

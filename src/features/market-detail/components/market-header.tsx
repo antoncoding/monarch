@@ -34,7 +34,7 @@ import { convertApyToApr } from '@/utils/rateMath';
 import { formatReadable } from '@/utils/balance';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
-import { getMarketURL } from '@/utils/external';
+import { getMarketURL, supportsMorphoAppLinks } from '@/utils/external';
 import type { Market, MarketPosition, WarningWithDetail } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
 import { getRiskLevel, countWarningsByLevel, type RiskLevel } from '@/utils/warnings';
@@ -630,12 +630,14 @@ export function MarketHeader({
                       Accrue Interest
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem
-                    onClick={() => window.open(getMarketURL(resolvedMarketId, network), '_blank')}
-                    startContent={<FiExternalLink className="h-4 w-4" />}
-                  >
-                    View on Morpho
-                  </DropdownMenuItem>
+                  {supportsMorphoAppLinks(network) && (
+                    <DropdownMenuItem
+                      onClick={() => window.open(getMarketURL(resolvedMarketId, network), '_blank')}
+                      startContent={<FiExternalLink className="h-4 w-4" />}
+                    >
+                      View on Morpho
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
