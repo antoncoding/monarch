@@ -33,6 +33,26 @@ type MarketCapInfo = {
   existingCapId?: string;
 };
 
+function areMarketCapsEqual(left: Map<string, MarketCapInfo>, right: Map<string, MarketCapInfo>): boolean {
+  if (left.size !== right.size) return false;
+
+  for (const [key, leftValue] of left.entries()) {
+    const rightValue = right.get(key);
+    if (!rightValue) return false;
+
+    if (
+      leftValue.market.uniqueKey !== rightValue.market.uniqueKey ||
+      leftValue.relativeCap !== rightValue.relativeCap ||
+      leftValue.absoluteCap !== rightValue.absoluteCap ||
+      leftValue.existingCapId !== rightValue.existingCapId
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdating, adapterAddress, onBack, onSave }: EditCapsProps) {
   const [marketCaps, setMarketCaps] = useState<Map<string, MarketCapInfo>>(new Map());
   const [removedMarketIds, setRemovedMarketIds] = useState<Set<string>>(new Set());
@@ -77,12 +97,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
     return markets.filter((m) => m.loanAsset.address.toLowerCase() === vaultAsset.toLowerCase() && m.morphoBlue.chain.id === chainId);
   }, [markets, vaultAsset, chainId]);
 
-  // Initialize from existing caps (only on first load, not after user edits)
-  useEffect(() => {
-    // Don't reset state if user has made edits - prevents losing work on background refetch
-    if (hasUserEditsRef.current) return;
-    if (availableMarkets.length === 0) return;
-
+  const initialMarketCaps = useMemo(() => {
     const marketCapsMap = new Map<string, MarketCapInfo>();
     for (const cap of existingCaps?.marketCaps ?? []) {
       const parsed = parseCapIdParams(cap.idParams);
@@ -105,8 +120,22 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         });
       }
     }
-    setMarketCaps(marketCapsMap);
+    return marketCapsMap;
   }, [availableMarkets, existingCaps, vaultAssetDecimals]);
+
+  // Initialize from existing caps (only on first load, not after user edits)
+  useEffect(() => {
+    // Don't reset state if user has made edits - prevents losing work on background refetch
+    if (hasUserEditsRef.current) return;
+
+    setMarketCaps((prev) => {
+      if (areMarketCapsEqual(prev, initialMarketCaps)) {
+        return prev;
+      }
+
+      return initialMarketCaps;
+    });
+  }, [initialMarketCaps]);
 
   const handleAddMarkets = useCallback((newMarkets: Market[]) => {
     hasUserEditsRef.current = true;
