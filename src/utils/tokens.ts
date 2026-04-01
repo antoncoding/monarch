@@ -1,4 +1,4 @@
-import { type Chain, base, mainnet, polygon, unichain, arbitrum, optimism, monad } from 'viem/chains';
+import { type Chain, arbitrum, base, etherlink, mainnet, monad, optimism, polygon, unichain } from 'viem/chains';
 import { getWrappedNativeToken, hyperEvm } from './networks';
 
 export type TokenSource = 'local' | 'external' | 'unknown';
@@ -65,6 +65,7 @@ const supportedTokens = [
         chain: arbitrum,
         address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
       },
+      { chain: etherlink, address: '0x796Ea11Fa2dD751eD01b53C372fFDB4AAa8f00F9' },
       {
         chain: hyperEvm,
         address: '0xb88339cb7199b77e23db6e890353e22632ba630f',
@@ -270,6 +271,7 @@ const supportedTokens = [
         chain: arbitrum,
         address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
       },
+      { chain: etherlink, address: '0xfc24f770F94edBca6D6f885E12d4317320BcB401' },
       // wrapped eth on polygon, defined here as it will not be interpreted as "WETH Contract"
       // which is determined by isWETH function
       // This is solely for displaying and linking to eth.
@@ -283,6 +285,12 @@ const supportedTokens = [
     img: require('../imgs/tokens/wpol.webp') as string,
     decimals: 18,
     networks: [{ chain: polygon, address: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270' }],
+  },
+  {
+    symbol: 'WXTZ',
+    img: undefined,
+    decimals: 18,
+    networks: [{ chain: etherlink, address: '0xc9B53AB2679f573e480d01e0f49e2B5CFB7a3EAb' }],
   },
   {
     symbol: 'sDAI',
@@ -358,6 +366,12 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0xCE8e559Ac89c2bDC97Bdb5F58705c54dB9cB77dC' }],
   },
   {
+    symbol: 'xU3O8',
+    img: undefined,
+    decimals: 18,
+    networks: [{ chain: etherlink, address: '0x79052Ab3C166D4899a1e0DD033aC3b379AF0B1fD' }],
+  },
+  {
     symbol: 'osETH',
     img: require('../imgs/tokens/oseth.png') as string,
     decimals: 18,
@@ -372,6 +386,7 @@ const supportedTokens = [
       { chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
       { chain: polygon, address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6' },
       { chain: optimism, address: '0x68f180fcCe6836688e9084f035309E29Bf0A2095' },
+      { chain: etherlink, address: '0xbFc94CD2B1E55999Cfc7347a9313e88702B83d0F' },
       {
         chain: unichain,
         address: '0x927B51f251480a681271180DA4de28D44EC4AfB8',
@@ -393,6 +408,42 @@ const supportedTokens = [
       { chain: base, address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' },
     ],
     peg: TokenPeg.BTC,
+  },
+  {
+    symbol: 'mBASIS',
+    img: require('../imgs/tokens/mbasis.png') as string,
+    decimals: 18,
+    networks: [{ chain: etherlink, address: '0x2247B5A46BB79421a314aB0f0b67fFd11dd37Ee4' }],
+    protocol: {
+      name: 'Midas',
+    },
+  },
+  {
+    symbol: 'xU3O8',
+    img: require('../imgs/tokens/xu3o8.png') as string,
+    decimals: 18,
+    networks: [{ chain: etherlink, address: '0x79052ab3c166d4899a1e0dd033ac3b379af0b1fd' }],
+    protocol: {
+      name: 'Midas',
+    },
+  },
+  {
+    symbol: 'mMEV',
+    img: require('../imgs/tokens/mmev.svg') as string,
+    decimals: 18,
+    networks: [{ chain: etherlink, address: '0x5542F82389b76C23f5848268893234d8A63fd5c8' }],
+    protocol: {
+      name: 'Midas',
+    },
+  },
+  {
+    symbol: 'mTBILL',
+    img: require('../imgs/tokens/mtbill.png') as string,
+    decimals: 18,
+    networks: [{ chain: etherlink, address: '0xDD629E5241CbC5919847783e6C96B2De4754e438' }],
+    protocol: {
+      name: 'Midas',
+    },
   },
   {
     symbol: 'tBTC',
