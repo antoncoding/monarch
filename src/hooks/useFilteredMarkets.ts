@@ -20,11 +20,11 @@ type UseFilteredMarketsResult = {
 };
 
 export const useFilteredMarkets = (): UseFilteredMarketsResult => {
+  const preferences = useMarketPreferences();
   const { allMarkets, whitelistedMarkets } = useProcessedMarkets();
   const { whitelistLookup, isLoading: whitelistLoading, isFetching: whitelistFetching } = useMorphoWhitelistStatusQuery();
   const { data: oracleMetadataMap } = useAllOracleMetadata();
   const filters = useMarketsFilters();
-  const preferences = useMarketPreferences();
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();

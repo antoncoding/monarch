@@ -278,7 +278,7 @@ function MarketRow({
           style={{ minWidth: '110px' }}
         >
           <p className="text-sm">
-            {market.state.apyAtTarget
+            {market.state.apyAtTarget != null
               ? `${((isAprDisplay ? convertApyToApr(market.state.apyAtTarget) : market.state.apyAtTarget) * 100).toFixed(2)}%`
               : '—'}
           </p>

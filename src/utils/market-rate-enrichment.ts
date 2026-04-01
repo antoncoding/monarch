@@ -1,5 +1,6 @@
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoMarket, fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
+import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
+import { fetchMorphoMarketRateEnrichments, getMorphoMarketRateFieldsKey } from '@/data-sources/morpho-api/market-rate-fields';
 import { MarketUtils, SharesMath } from '@morpho-org/blue-sdk';
 import type { Address } from 'viem';
 import { morphoIrmAbi } from '@/abis/morpho-irm';
@@ -33,8 +34,6 @@ const LOOKBACK_WINDOWS = [
   },
 ] as const;
 
-type LookbackWindow = (typeof LOOKBACK_WINDOWS)[number];
-
 export type RateEnrichmentMarketInput = Pick<Market, 'uniqueKey' | 'lltv' | 'irmAddress' | 'oracleAddress'> & {
   loanAsset: Pick<Market['loanAsset'], 'address'>;
   collateralAsset: Pick<Market['collateralAsset'], 'address'>;
@@ -64,13 +63,22 @@ export type MarketWindowRatesMap = Map<string, MarketWindowRates>;
 
 export type MarketRateEnrichment = Pick<
   Market['state'],
-  'dailySupplyApy' | 'dailyBorrowApy' | 'weeklySupplyApy' | 'weeklyBorrowApy' | 'monthlySupplyApy' | 'monthlyBorrowApy'
+  | 'apyAtTarget'
+  | 'rateAtTarget'
+  | 'dailySupplyApy'
+  | 'dailyBorrowApy'
+  | 'weeklySupplyApy'
+  | 'weeklyBorrowApy'
+  | 'monthlySupplyApy'
+  | 'monthlyBorrowApy'
 >;
 
 export type MarketRateEnrichmentMap = Map<string, MarketRateEnrichment>;
 export const ROLLING_RATE_WINDOW_SECONDS = LOOKBACK_WINDOWS.map((window) => window.seconds);
 
 const buildEmptyEnrichment = (): MarketRateEnrichment => ({
+  apyAtTarget: 0,
+  rateAtTarget: '0',
   dailySupplyApy: null,
   dailyBorrowApy: null,
   weeklySupplyApy: null,
@@ -191,24 +199,9 @@ const computeWindowRates = (startState: BoundaryState, endState: BoundaryState):
   };
 };
 
-const mergeMarketRateEnrichment = (primary: MarketRateEnrichment, fallback: MarketRateEnrichment): MarketRateEnrichment => ({
-  dailySupplyApy: primary.dailySupplyApy ?? fallback.dailySupplyApy,
-  dailyBorrowApy: primary.dailyBorrowApy ?? fallback.dailyBorrowApy,
-  weeklySupplyApy: primary.weeklySupplyApy ?? fallback.weeklySupplyApy,
-  weeklyBorrowApy: primary.weeklyBorrowApy ?? fallback.weeklyBorrowApy,
-  monthlySupplyApy: primary.monthlySupplyApy ?? fallback.monthlySupplyApy,
-  monthlyBorrowApy: primary.monthlyBorrowApy ?? fallback.monthlyBorrowApy,
-});
-
-const hasMissingRateFields = (enrichment: MarketRateEnrichment): boolean =>
-  enrichment.dailySupplyApy == null ||
-  enrichment.dailyBorrowApy == null ||
-  enrichment.weeklySupplyApy == null ||
-  enrichment.weeklyBorrowApy == null ||
-  enrichment.monthlySupplyApy == null ||
-  enrichment.monthlyBorrowApy == null;
-
 const buildApiEnrichmentFromMarket = (market: Market): MarketRateEnrichment => ({
+  apyAtTarget: market.state.apyAtTarget,
+  rateAtTarget: market.state.rateAtTarget,
   dailySupplyApy: market.state.dailySupplyApy ?? null,
   dailyBorrowApy: market.state.dailyBorrowApy ?? null,
   weeklySupplyApy: market.state.weeklySupplyApy ?? null,
@@ -217,37 +210,62 @@ const buildApiEnrichmentFromMarket = (market: Market): MarketRateEnrichment => (
   monthlyBorrowApy: market.state.monthlyBorrowApy ?? null,
 });
 
+type MorphoRateFetchResult = {
+  enrichments: Map<string, MarketRateEnrichment>;
+  failed: boolean;
+};
+
 const fetchMorphoRateMarketsByKey = async (
   chainMarkets: RateEnrichmentMarketInput[],
   chainId: SupportedNetworks,
-): Promise<Map<string, MarketRateEnrichment>> => {
+): Promise<MorphoRateFetchResult> => {
   if (!supportsMorphoApi(chainId)) {
-    return new Map();
+    return {
+      enrichments: new Map(),
+      failed: false,
+    };
   }
 
   try {
     if (chainMarkets.length === 1) {
       const morphoMarket = await fetchMorphoMarket(chainMarkets[0].uniqueKey, chainId);
       if (!morphoMarket) {
-        return new Map();
+        return {
+          enrichments: new Map(),
+          failed: false,
+        };
       }
 
-      return new Map([[getMarketRateEnrichmentKey(morphoMarket.uniqueKey, chainId), buildApiEnrichmentFromMarket(morphoMarket)]]);
+      return {
+        enrichments: new Map([[getMarketRateEnrichmentKey(morphoMarket.uniqueKey, chainId), buildApiEnrichmentFromMarket(morphoMarket)]]),
+        failed: false,
+      };
     }
+    const morphoEnrichments = await fetchMorphoMarketRateEnrichments(chainId);
+    return {
+      enrichments: chainMarkets.reduce((acc, market) => {
+        const enrichment = morphoEnrichments.get(getMorphoMarketRateFieldsKey(chainId, market.uniqueKey));
+        if (!enrichment) {
+          return acc;
+        }
 
-    const morphoMarkets = await fetchMorphoMarkets(chainId);
-    return morphoMarkets.reduce((acc, market) => {
-      acc.set(getMarketRateEnrichmentKey(market.uniqueKey, chainId), buildApiEnrichmentFromMarket(market));
-      return acc;
-    }, new Map<string, MarketRateEnrichment>());
+        acc.set(getMarketRateEnrichmentKey(market.uniqueKey, chainId), enrichment);
+        return acc;
+      }, new Map<string, MarketRateEnrichment>()),
+      failed: false,
+    };
   } catch (error) {
     console.warn(`[market-rate-enrichment] Failed to fetch Morpho rolling rates for chain ${chainId}:`, error);
-    return new Map();
+    return {
+      enrichments: new Map(),
+      failed: true,
+    };
   }
 };
 
 const fetchBoundaryBorrowRates = async (
   markets: RateEnrichmentMarketInput[],
+  chainId: SupportedNetworks,
   snapshots: Map<string, MarketSnapshot>,
   client: ReturnType<typeof getClient>,
   blockNumber: number,
@@ -348,7 +366,7 @@ const fetchBoundaryStatesAtBlock = async (
     client,
     blockNumber,
   );
-  const borrowRates = await fetchBoundaryBorrowRates(markets, snapshots, client, blockNumber);
+  const borrowRates = await fetchBoundaryBorrowRates(markets, chainId, snapshots, client, blockNumber);
   const boundaryStates = new Map<string, BoundaryState>();
 
   markets.forEach((market) => {
@@ -484,46 +502,42 @@ export async function fetchMarketRateEnrichment(
   }, new Map<SupportedNetworks, RateEnrichmentMarketInput[]>());
 
   for (const [chainId, chainMarkets] of marketsByChain.entries()) {
-    const morphoEnrichmentsByKey = await fetchMorphoRateMarketsByKey(chainMarkets, chainId);
-    const fallbackMarkets: RateEnrichmentMarketInput[] = [];
+    const { enrichments: morphoEnrichmentsByKey, failed: morphoRateFetchFailed } = await fetchMorphoRateMarketsByKey(chainMarkets, chainId);
 
     chainMarkets.forEach((market) => {
       const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
       const morphoEnrichment = morphoEnrichmentsByKey.get(key) ?? buildEmptyEnrichment();
       enrichments.set(key, morphoEnrichment);
-
-      if (hasMissingRateFields(morphoEnrichment)) {
-        fallbackMarkets.push(market);
-      }
     });
 
-    if (fallbackMarkets.length === 0) {
-      continue;
+    if (morphoRateFetchFailed) {
+      const windowRates = await fetchRealizedMarketWindowRates(
+        chainMarkets,
+        LOOKBACK_WINDOWS.map((window) => window.seconds),
+        customRpcUrls,
+      );
+
+      chainMarkets.forEach((market) => {
+        const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
+        const ratesByWindow = windowRates.get(key);
+
+        if (!ratesByWindow) {
+          return;
+        }
+
+        const fallbackEnrichment = LOOKBACK_WINDOWS.reduce<MarketRateEnrichment>((acc, window) => {
+          const windowRatesEntry = ratesByWindow.get(window.seconds);
+          acc[window.supplyField] = windowRatesEntry?.supplyApy ?? null;
+          acc[window.borrowField] = windowRatesEntry?.borrowApy ?? null;
+          return acc;
+        }, buildEmptyEnrichment());
+
+        enrichments.set(key, {
+          ...enrichments.get(key),
+          ...fallbackEnrichment,
+        });
+      });
     }
-
-    const windowRates = await fetchRealizedMarketWindowRates(
-      fallbackMarkets,
-      LOOKBACK_WINDOWS.map((window) => window.seconds),
-      customRpcUrls,
-    );
-
-    fallbackMarkets.forEach((market) => {
-      const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
-      const ratesByWindow = windowRates.get(key);
-
-      if (!ratesByWindow) {
-        return;
-      }
-
-      const fallbackEnrichment = LOOKBACK_WINDOWS.reduce<MarketRateEnrichment>((acc, window: LookbackWindow) => {
-        const windowRatesEntry = ratesByWindow.get(window.seconds);
-        acc[window.supplyField] = windowRatesEntry?.supplyApy ?? null;
-        acc[window.borrowField] = windowRatesEntry?.borrowApy ?? null;
-        return acc;
-      }, buildEmptyEnrichment());
-
-      enrichments.set(key, mergeMarketRateEnrichment(enrichments.get(key) ?? buildEmptyEnrichment(), fallbackEnrichment));
-    });
   }
 
   return enrichments;

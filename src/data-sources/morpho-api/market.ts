@@ -1,3 +1,4 @@
+import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
 import { isMarketRegistryEntryAllowed } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -30,7 +31,6 @@ type MarketGraphQLResponse = {
   errors?: { message: string }[];
 };
 
-// Define response type for multiple markets with pageInfo
 type MarketsGraphQLResponse = {
   data?: {
     markets?: {
@@ -52,6 +52,41 @@ const MORPHO_MARKETS_PAGE_SIZE = 500;
 const MORPHO_MARKETS_TIMEOUT_MS = 20_000;
 const MORPHO_MARKETS_PAGE_BATCH_SIZE = 4;
 
+const computeApyAtTarget = (market: MorphoApiMarket, state: MorphoApiMarketState): number => {
+  if (state.apyAtTarget != null) {
+    return state.apyAtTarget;
+  }
+
+  if (state.rateAtTarget == null) {
+    return 0;
+  }
+
+  try {
+    const params = new BlueMarketParams({
+      loanToken: market.loanAsset.address as Address,
+      collateralToken: market.collateralAsset.address as Address,
+      oracle: (market.oracle?.address ?? zeroAddress) as Address,
+      irm: market.irmAddress as Address,
+      lltv: BigInt(market.lltv),
+    });
+    const blueMarket = new BlueMarket({
+      params,
+      totalSupplyAssets: BigInt(state.supplyAssets),
+      totalBorrowAssets: BigInt(state.borrowAssets),
+      totalSupplyShares: BigInt(state.supplyShares),
+      totalBorrowShares: BigInt(state.borrowShares),
+      lastUpdate: BigInt(state.timestamp),
+      fee: BigInt(Math.floor(state.fee * 1e18)),
+      rateAtTarget: BigInt(state.rateAtTarget),
+    });
+
+    return blueMarket.apyAtTarget ?? 0;
+  } catch (error) {
+    console.warn(`Failed to derive target APY for Morpho market ${market.uniqueKey}.`, error);
+    return 0;
+  }
+};
+
 // Transform API response to internal Market type
 const processMarketData = (market: MorphoApiMarket): Market => {
   const { oracle, state, supplyingVaults, ...rest } = market;
@@ -70,6 +105,7 @@ const processMarketData = (market: MorphoApiMarket): Market => {
       weeklyBorrowApy: state.weeklyBorrowApy ?? null,
       monthlySupplyApy: state.monthlySupplyApy ?? null,
       monthlyBorrowApy: state.monthlyBorrowApy ?? null,
+      apyAtTarget: computeApyAtTarget(market, state),
     },
   };
 };
@@ -99,28 +135,32 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
 };
 
 const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, pageSize: number): Promise<MorphoMarketsPage | null> => {
-  const variables = {
-    first: pageSize,
-    skip,
-    where: {
-      chainId_in: [network],
+  const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(
+    marketsQuery,
+    {
+      first: pageSize,
+      skip,
+      where: {
+        chainId_in: [network],
+      },
     },
-  };
+    {
+      timeoutMs: MORPHO_MARKETS_TIMEOUT_MS,
+    },
+  );
 
-  const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(marketsQuery, variables, {
-    timeoutMs: MORPHO_MARKETS_TIMEOUT_MS,
-  });
+  if (!response?.data?.markets?.pageInfo) {
+    throw new Error(`Morpho markets response missing pageInfo for network ${network} at skip ${skip}.`);
+  }
 
-  if (!response || !response.data?.markets?.items || !response.data.markets.pageInfo) {
+  if (!Array.isArray(response.data.markets.items)) {
     console.warn(`[Markets] Skipping failed page at skip=${skip} for network ${network}`);
     return null;
   }
 
-  const { items, pageInfo } = response.data.markets;
-
   return {
-    items: items.map(processMarketData),
-    totalCount: pageInfo.countTotal,
+    items: response.data.markets.items.map(processMarketData),
+    totalCount: response.data.markets.pageInfo.countTotal,
   };
 };
 
@@ -130,7 +170,6 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
   const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 
   const firstPage = await fetchMorphoMarketsPage(network, 0, pageSize);
-
   if (!firstPage) {
     return [];
   }
@@ -139,7 +178,6 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
 
   const firstPageCount = firstPage.items.length;
   const totalCount = firstPage.totalCount;
-
   if (firstPageCount === 0 && totalCount > 0) {
     console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
     return filterRegistryMarkets(allMarkets);

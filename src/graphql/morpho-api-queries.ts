@@ -181,6 +181,29 @@ export const marketsWhitelistStatusQuery = `
   }
 `;
 
+export const marketsRateFieldsQuery = `
+  query getMarketsRateFields($first: Int, $skip: Int, $where: MarketFilters) {
+    markets(first: $first, skip: $skip, where: $where) {
+      items {
+        uniqueKey
+        state {
+          apyAtTarget
+          rateAtTarget
+          dailySupplyApy
+          dailyBorrowApy
+          weeklySupplyApy
+          weeklyBorrowApy
+          monthlySupplyApy
+          monthlyBorrowApy
+        }
+      }
+      pageInfo {
+        countTotal
+      }
+    }
+  }
+`;
+
 export const userPositionsQuery = `
   query getUserMarketPositions($address: String!, $chainId: Int) {
     userByAddress(address: $address, chainId: $chainId) {

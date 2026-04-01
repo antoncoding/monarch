@@ -1,12 +1,7 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
-import {
-  fetchMarketRateEnrichment,
-  getMarketRateEnrichmentKey,
-  type MarketRateEnrichment,
-  type MarketRateEnrichmentMap,
-} from '@/utils/market-rate-enrichment';
+import { fetchMarketRateEnrichment, getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
@@ -48,7 +43,7 @@ export const useMarketRateEnrichmentQuery = (markets: Market[]) => {
       return EMPTY_ENRICHMENT_MAP;
     }
 
-    const merged = new Map<string, MarketRateEnrichment>();
+    const merged = new Map(EMPTY_ENRICHMENT_MAP);
 
     enrichmentQueries.forEach((query) => {
       if (!query.data) {

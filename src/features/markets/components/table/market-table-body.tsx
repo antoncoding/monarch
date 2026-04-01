@@ -28,6 +28,8 @@ type MarketTableBodyProps = {
   trustedVaultMap: Map<string, TrustedVault>;
 };
 
+type HistoricalRateField = Exclude<keyof MarketRateEnrichment, 'apyAtTarget' | 'rateAtTarget'>;
+
 export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
@@ -36,7 +38,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
-  const renderHistoricalRateCell = (market: Market, field: keyof MarketRateEnrichment) => {
+  const renderHistoricalRateCell = (market: Market, field: HistoricalRateField) => {
     const value = market.state[field];
     if (value != null) {
       return <RateFormatted value={value} />;
@@ -255,7 +257,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">{item.state.apyAtTarget ? <RateFormatted value={item.state.apyAtTarget} /> : '—'}</p>
+                  <p className="text-sm">{item.state.apyAtTarget != null ? <RateFormatted value={item.state.apyAtTarget} /> : '—'}</p>
                 </TableCell>
               )}
               {columnVisibility.utilizationRate && (
