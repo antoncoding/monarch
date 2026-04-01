@@ -1,5 +1,5 @@
 import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
-import { marketDetailQuery, marketsQuery, marketsRateFieldsQuery } from '@/graphql/morpho-api-queries';
+import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
 import { isMarketRegistryEntryAllowed } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
@@ -48,31 +48,6 @@ type MarketKeysGraphQLResponse = {
   data?: {
     markets?: {
       items?: { uniqueKey?: string }[];
-      pageInfo?: {
-        countTotal: number;
-      };
-    };
-  };
-  errors?: { message: string }[];
-};
-
-type MarketsRateFieldsGraphQLResponse = {
-  data?: {
-    markets?: {
-      items?: {
-        uniqueKey?: string;
-        state?: Pick<
-          Market['state'],
-          | 'apyAtTarget'
-          | 'rateAtTarget'
-          | 'dailySupplyApy'
-          | 'dailyBorrowApy'
-          | 'weeklySupplyApy'
-          | 'weeklyBorrowApy'
-          | 'monthlySupplyApy'
-          | 'monthlyBorrowApy'
-        >;
-      }[];
       pageInfo?: {
         countTotal: number;
       };
@@ -184,86 +159,6 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
   const market = processMarketData(response.data.marketByUniqueKey);
 
   return filterRegistryMarkets([market])[0] ?? null;
-};
-
-export const fetchMorphoMarketRateEnrichments = async (
-  network: SupportedNetworks,
-): Promise<
-  Map<
-    string,
-    Pick<
-      Market['state'],
-      | 'apyAtTarget'
-      | 'rateAtTarget'
-      | 'dailySupplyApy'
-      | 'dailyBorrowApy'
-      | 'weeklySupplyApy'
-      | 'weeklyBorrowApy'
-      | 'monthlySupplyApy'
-      | 'monthlyBorrowApy'
-    >
-  >
-> => {
-  const enrichments = new Map<
-    string,
-    Pick<
-      Market['state'],
-      | 'apyAtTarget'
-      | 'rateAtTarget'
-      | 'dailySupplyApy'
-      | 'dailyBorrowApy'
-      | 'weeklySupplyApy'
-      | 'weeklyBorrowApy'
-      | 'monthlySupplyApy'
-      | 'monthlyBorrowApy'
-    >
-  >();
-  let skip = 0;
-
-  while (true) {
-    const response = await morphoGraphqlFetcher<MarketsRateFieldsGraphQLResponse>(
-      marketsRateFieldsQuery,
-      getMorphoMarketPageVariables(network, skip, MORPHO_MARKETS_PAGE_SIZE),
-      {
-        timeoutMs: MORPHO_MARKETS_TIMEOUT_MS,
-      },
-    );
-
-    if (!response?.data?.markets?.pageInfo) {
-      throw new Error(`Morpho rate-fields response missing pageInfo for network ${network} at skip ${skip}.`);
-    }
-
-    if (!Array.isArray(response.data.markets.items)) {
-      throw new Error(`Morpho rate-fields response missing items for network ${network} at skip ${skip}.`);
-    }
-
-    const items = response.data.markets.items;
-
-    items.forEach((item) => {
-      if (!item.uniqueKey || !item.state) {
-        return;
-      }
-
-      enrichments.set(item.uniqueKey.toLowerCase(), {
-        apyAtTarget: item.state.apyAtTarget ?? 0,
-        rateAtTarget: item.state.rateAtTarget ?? '0',
-        dailySupplyApy: item.state.dailySupplyApy ?? null,
-        dailyBorrowApy: item.state.dailyBorrowApy ?? null,
-        weeklySupplyApy: item.state.weeklySupplyApy ?? null,
-        weeklyBorrowApy: item.state.weeklyBorrowApy ?? null,
-        monthlySupplyApy: item.state.monthlySupplyApy ?? null,
-        monthlyBorrowApy: item.state.monthlyBorrowApy ?? null,
-      });
-    });
-
-    if (items.length < MORPHO_MARKETS_PAGE_SIZE) {
-      break;
-    }
-
-    skip += items.length;
-  }
-
-  return enrichments;
 };
 
 const getMorphoMarketPageVariables = (network: SupportedNetworks, skip: number, pageSize: number) => ({

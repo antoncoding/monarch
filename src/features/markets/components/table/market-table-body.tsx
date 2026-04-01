@@ -28,22 +28,17 @@ type MarketTableBodyProps = {
   trustedVaultMap: Map<string, TrustedVault>;
 };
 
+type HistoricalRateField = Exclude<keyof MarketRateEnrichment, 'apyAtTarget' | 'rateAtTarget'>;
+
 export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
-  const shouldIncludeRateEnrichment =
-    columnVisibility.dailySupplyAPY ||
-    columnVisibility.dailyBorrowAPY ||
-    columnVisibility.weeklySupplyAPY ||
-    columnVisibility.weeklyBorrowAPY ||
-    columnVisibility.monthlySupplyAPY ||
-    columnVisibility.monthlyBorrowAPY;
-  const { rateEnrichmentPendingChainIds } = useProcessedMarkets({ includeRateEnrichment: shouldIncludeRateEnrichment });
+  const { rateEnrichmentPendingChainIds } = useProcessedMarkets();
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
-  const renderHistoricalRateCell = (market: Market, field: keyof MarketRateEnrichment) => {
+  const renderHistoricalRateCell = (market: Market, field: HistoricalRateField) => {
     const value = market.state[field];
     if (value != null) {
       return <RateFormatted value={value} />;

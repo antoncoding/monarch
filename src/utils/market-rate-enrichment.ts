@@ -1,5 +1,6 @@
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoMarket, fetchMorphoMarketRateEnrichments } from '@/data-sources/morpho-api/market';
+import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
+import { fetchMorphoMarketRateEnrichments, getMorphoMarketRateFieldsKey } from '@/data-sources/morpho-api/market-rate-fields';
 import { MarketUtils, SharesMath } from '@morpho-org/blue-sdk';
 import type { Address } from 'viem';
 import { morphoIrmAbi } from '@/abis/morpho-irm';
@@ -64,13 +65,22 @@ export type MarketWindowRatesMap = Map<string, MarketWindowRates>;
 
 export type MarketRateEnrichment = Pick<
   Market['state'],
-  'dailySupplyApy' | 'dailyBorrowApy' | 'weeklySupplyApy' | 'weeklyBorrowApy' | 'monthlySupplyApy' | 'monthlyBorrowApy'
+  | 'apyAtTarget'
+  | 'rateAtTarget'
+  | 'dailySupplyApy'
+  | 'dailyBorrowApy'
+  | 'weeklySupplyApy'
+  | 'weeklyBorrowApy'
+  | 'monthlySupplyApy'
+  | 'monthlyBorrowApy'
 >;
 
 export type MarketRateEnrichmentMap = Map<string, MarketRateEnrichment>;
 export const ROLLING_RATE_WINDOW_SECONDS = LOOKBACK_WINDOWS.map((window) => window.seconds);
 
 const buildEmptyEnrichment = (): MarketRateEnrichment => ({
+  apyAtTarget: 0,
+  rateAtTarget: '0',
   dailySupplyApy: null,
   dailyBorrowApy: null,
   weeklySupplyApy: null,
@@ -192,6 +202,8 @@ const computeWindowRates = (startState: BoundaryState, endState: BoundaryState):
 };
 
 const mergeMarketRateEnrichment = (primary: MarketRateEnrichment, fallback: MarketRateEnrichment): MarketRateEnrichment => ({
+  apyAtTarget: primary.apyAtTarget ?? fallback.apyAtTarget,
+  rateAtTarget: primary.rateAtTarget || fallback.rateAtTarget,
   dailySupplyApy: primary.dailySupplyApy ?? fallback.dailySupplyApy,
   dailyBorrowApy: primary.dailyBorrowApy ?? fallback.dailyBorrowApy,
   weeklySupplyApy: primary.weeklySupplyApy ?? fallback.weeklySupplyApy,
@@ -209,6 +221,8 @@ const hasMissingRateFields = (enrichment: MarketRateEnrichment): boolean =>
   enrichment.monthlyBorrowApy == null;
 
 const buildApiEnrichmentFromMarket = (market: Market): MarketRateEnrichment => ({
+  apyAtTarget: market.state.apyAtTarget,
+  rateAtTarget: market.state.rateAtTarget,
   dailySupplyApy: market.state.dailySupplyApy ?? null,
   dailyBorrowApy: market.state.dailyBorrowApy ?? null,
   weeklySupplyApy: market.state.weeklySupplyApy ?? null,
@@ -237,7 +251,7 @@ const fetchMorphoRateMarketsByKey = async (
 
     const morphoEnrichments = await fetchMorphoMarketRateEnrichments(chainId);
     return chainMarkets.reduce((acc, market) => {
-      const enrichment = morphoEnrichments.get(market.uniqueKey.toLowerCase());
+      const enrichment = morphoEnrichments.get(getMorphoMarketRateFieldsKey(chainId, market.uniqueKey));
       if (!enrichment) {
         return acc;
       }
