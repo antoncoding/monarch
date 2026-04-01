@@ -33,39 +33,6 @@ type MarketCapInfo = {
   existingCapId?: string;
 };
 
-function normalizeAddress(value: string | null | undefined): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  if (trimmed === '') return null;
-  return trimmed.toLowerCase();
-}
-
-function parseBigIntOrFallback(value: string | null | undefined, fallback: bigint, context: string): bigint {
-  if (value == null || value === '') return fallback;
-
-  try {
-    return BigInt(value);
-  } catch (error) {
-    console.error('[EditCaps] invalid bigint value', {
-      context,
-      value,
-      error,
-    });
-    return fallback;
-  }
-}
-
-function hasCompleteEditableMarketMetadata(market: Market): boolean {
-  return (
-    normalizeAddress(market.loanAsset?.address) !== null &&
-    normalizeAddress(market.collateralAsset?.address) !== null &&
-    normalizeAddress(market.oracleAddress) !== null &&
-    normalizeAddress(market.irmAddress) !== null &&
-    market.lltv !== undefined &&
-    market.lltv !== ''
-  );
-}
-
 function areMarketCapsEqual(left: Map<string, MarketCapInfo>, right: Map<string, MarketCapInfo>): boolean {
   if (left.size !== right.size) return false;
 
@@ -126,12 +93,8 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
 
   // Filter available markets for adding
   const availableMarkets = useMemo(() => {
-    const normalizedVaultAsset = normalizeAddress(vaultAsset);
-    if (!markets || !normalizedVaultAsset) return [];
-
-    return markets.filter((market) => {
-      return normalizeAddress(market.loanAsset?.address) === normalizedVaultAsset && market.morphoBlue.chain.id === chainId;
-    });
+    if (!markets || !vaultAsset) return [];
+    return markets.filter((m) => m.loanAsset.address.toLowerCase() === vaultAsset.toLowerCase() && m.morphoBlue.chain.id === chainId);
   }, [markets, vaultAsset, chainId]);
 
   const initialMarketCaps = useMemo(() => {
@@ -140,18 +103,10 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
       const parsed = parseCapIdParams(cap.idParams);
       const market = availableMarkets.find((m) => m.uniqueKey.toLowerCase() === parsed.marketId?.toLowerCase());
       if (market) {
-        if (!hasCompleteEditableMarketMetadata(market)) {
-          console.error('[EditCaps] skipping market cap with incomplete market metadata', {
-            marketUniqueKey: market.uniqueKey,
-            capId: cap.capId,
-          });
-          continue;
-        }
-
-        const relativeCapBigInt = parseBigIntOrFallback(cap.relativeCap, 0n, `market:${cap.capId}:relativeCap`);
+        const relativeCapBigInt = BigInt(cap.relativeCap);
         const relativeCap = (Number(relativeCapBigInt) / 1e16).toString();
 
-        const absoluteCapBigInt = parseBigIntOrFallback(cap.absoluteCap, maxUint128, `market:${cap.capId}:absoluteCap`);
+        const absoluteCapBigInt = BigInt(cap.absoluteCap);
         const absoluteCap =
           absoluteCapBigInt === 0n || absoluteCapBigInt >= maxUint128
             ? ''
@@ -183,23 +138,10 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
   }, [initialMarketCaps]);
 
   const handleAddMarkets = useCallback((newMarkets: Market[]) => {
-    const validMarkets = newMarkets.filter(hasCompleteEditableMarketMetadata);
-    const skippedCount = newMarkets.length - validMarkets.length;
-
-    if (skippedCount > 0) {
-      console.error('[EditCaps] skipped markets with incomplete metadata while adding caps', {
-        skippedCount,
-        skippedMarketKeys: newMarkets.filter((market) => !hasCompleteEditableMarketMetadata(market)).map((market) => market.uniqueKey),
-      });
-      toast.error('Some selected markets are missing metadata and could not be added to caps.');
-    }
-
-    if (validMarkets.length === 0) return;
-
     hasUserEditsRef.current = true;
     setMarketCaps((prev) => {
       const next = new Map(prev);
-      for (const market of validMarkets) {
+      for (const market of newMarkets) {
         next.set(market.uniqueKey.toLowerCase(), {
           market,
           relativeCap: '100',
@@ -267,14 +209,8 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         return parsed.marketId?.toLowerCase() === info.market.uniqueKey.toLowerCase();
       });
       if (!existing) return false;
-      const existingRelative = (
-        Number(parseBigIntOrFallback(existing.relativeCap, 0n, `market:${existing.capId}:relativeCap:compare`)) / 1e16
-      ).toString();
-      const existingAbsoluteBigInt = parseBigIntOrFallback(
-        existing.absoluteCap,
-        maxUint128,
-        `market:${existing.capId}:absoluteCap:compare`,
-      );
+      const existingRelative = (Number(BigInt(existing.relativeCap)) / 1e16).toString();
+      const existingAbsoluteBigInt = BigInt(existing.absoluteCap);
       const existingAbsolute =
         existingAbsoluteBigInt === 0n || existingAbsoluteBigInt >= maxUint128
           ? ''
@@ -302,12 +238,8 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
     const targetRelativeCap = parseUnits('100', 16);
     const targetAbsoluteCap = maxUint128;
 
-    const currentRelativeCap = existingCaps?.adapterCap
-      ? parseBigIntOrFallback(existingCaps.adapterCap.relativeCap, 0n, `adapter:${existingCaps.adapterCap.capId}:relativeCap`)
-      : 0n;
-    const currentAbsoluteCap = existingCaps?.adapterCap
-      ? parseBigIntOrFallback(existingCaps.adapterCap.absoluteCap, 0n, `adapter:${existingCaps.adapterCap.capId}:absoluteCap`)
-      : 0n;
+    const currentRelativeCap = existingCaps?.adapterCap ? BigInt(existingCaps.adapterCap.relativeCap) : 0n;
+    const currentAbsoluteCap = existingCaps?.adapterCap ? BigInt(existingCaps.adapterCap.absoluteCap) : 0n;
 
     // Only update if not already at target values
     if (currentRelativeCap !== targetRelativeCap || currentAbsoluteCap !== targetAbsoluteCap) {
@@ -327,16 +259,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
     const activeCollaterals = new Set<string>();
     for (const [key, info] of marketCaps.entries()) {
       if (!removedMarketIds.has(key)) {
-        const collateralAddress = normalizeAddress(info.market.collateralAsset?.address);
-        if (!collateralAddress) {
-          console.error('[EditCaps] cannot save caps for market with missing collateral address', {
-            marketUniqueKey: info.market.uniqueKey,
-          });
-          toast.error('Unable to save caps because one market is missing collateral metadata.');
-          return;
-        }
-
-        activeCollaterals.add(collateralAddress);
+        activeCollaterals.add(info.market.collateralAsset.address.toLowerCase());
       }
     }
 
@@ -347,8 +270,8 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         return parsed.collateralToken?.toLowerCase() === collateralAddr;
       });
 
-      const oldRelativeCap = existing ? parseBigIntOrFallback(existing.relativeCap, 0n, `collateral:${existing.capId}:relativeCap`) : 0n;
-      const oldAbsoluteCap = existing ? parseBigIntOrFallback(existing.absoluteCap, 0n, `collateral:${existing.capId}:absoluteCap`) : 0n;
+      const oldRelativeCap = existing ? BigInt(existing.relativeCap) : 0n;
+      const oldAbsoluteCap = existing ? BigInt(existing.absoluteCap) : 0n;
 
       if (oldRelativeCap !== targetRelativeCap || oldAbsoluteCap !== targetAbsoluteCap) {
         const { params, id } = getCollateralCapId(collateralAddr as Address);
@@ -368,8 +291,8 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
       const parsed = parseCapIdParams(cap.idParams);
       const addr = parsed.collateralToken?.toLowerCase();
       if (addr && !activeCollaterals.has(addr)) {
-        const oldRelativeCap = parseBigIntOrFallback(cap.relativeCap, 0n, `collateral:${cap.capId}:relativeCap:remove`);
-        const oldAbsoluteCap = parseBigIntOrFallback(cap.absoluteCap, 0n, `collateral:${cap.capId}:absoluteCap:remove`);
+        const oldRelativeCap = BigInt(cap.relativeCap);
+        const oldAbsoluteCap = BigInt(cap.absoluteCap);
 
         if (oldRelativeCap !== 0n || oldAbsoluteCap !== 0n) {
           const { params, id } = getCollateralCapId(addr as Address);
@@ -415,24 +338,11 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         return parsed.marketId?.toLowerCase() === info.market.uniqueKey.toLowerCase();
       });
 
-      const oldRelativeCap = existingCap
-        ? parseBigIntOrFallback(existingCap.relativeCap, 0n, `market:${existingCap.capId}:relativeCap:save`)
-        : 0n;
-      const oldAbsoluteCap = existingCap
-        ? parseBigIntOrFallback(existingCap.absoluteCap, 0n, `market:${existingCap.capId}:absoluteCap:save`)
-        : 0n;
+      const oldRelativeCap = existingCap ? BigInt(existingCap.relativeCap) : 0n;
+      const oldAbsoluteCap = existingCap ? BigInt(existingCap.absoluteCap) : 0n;
 
       // Only include if changed
       if (oldRelativeCap !== newRelativeCapBigInt || oldAbsoluteCap !== newAbsoluteCapBigInt) {
-        if (!hasCompleteEditableMarketMetadata(info.market)) {
-          console.error('[EditCaps] cannot save cap for market with incomplete metadata', {
-            marketUniqueKey: info.market.uniqueKey,
-            capId: existingCap?.capId,
-          });
-          toast.error('Unable to save caps because one market is missing required metadata.');
-          return;
-        }
-
         const marketParams = {
           loanToken: info.market.loanAsset.address as Address,
           collateralToken: info.market.collateralAsset.address as Address,
@@ -528,16 +438,8 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
             );
           }
 
-          const relativeCapBigInt = parseBigIntOrFallback(
-            existingCaps.adapterCap!.relativeCap,
-            0n,
-            `adapter:${existingCaps.adapterCap!.capId}:relativeCap:warning`,
-          );
-          const absoluteCapBigInt = parseBigIntOrFallback(
-            existingCaps.adapterCap!.absoluteCap,
-            0n,
-            `adapter:${existingCaps.adapterCap!.capId}:absoluteCap:warning`,
-          );
+          const relativeCapBigInt = BigInt(existingCaps.adapterCap!.relativeCap);
+          const absoluteCapBigInt = BigInt(existingCaps.adapterCap!.absoluteCap);
           const isFullyAuthorized = relativeCapBigInt >= parseUnits('100', 16) && absoluteCapBigInt >= maxUint128;
 
           if (!isFullyAuthorized) {
@@ -580,8 +482,8 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
 
             <MarketCapsTable
               markets={Array.from(marketCaps.values()).map((info) => {
-                const collateralAddr = normalizeAddress(info.market.collateralAsset?.address);
-                const collateralInfo = collateralAddr ? collateralCapMap.get(collateralAddr) : undefined;
+                const collateralAddr = info.market.collateralAsset.address.toLowerCase();
+                const collateralInfo = collateralCapMap.get(collateralAddr);
                 return {
                   market: info.market,
                   relativeCap: info.relativeCap,

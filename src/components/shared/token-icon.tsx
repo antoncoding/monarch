@@ -38,11 +38,10 @@ export function TokenIcon({
 
   // If we have a token with an image, use that
   if (token?.img) {
-    const tokenImg = token.img;
-    const renderImage = () => (
+    const img = (
       <Image
         className="rounded-full"
-        src={tokenImg}
+        src={token.img}
         alt={token.symbol}
         width={width}
         height={height}
@@ -50,7 +49,6 @@ export function TokenIcon({
         unoptimized
       />
     );
-    const triggerImage = renderImage();
 
     const title = customTooltipTitle ?? token.symbol;
 
@@ -65,16 +63,14 @@ export function TokenIcon({
     const secondaryDetail = customTooltipDetail && showTokenSource ? tokenSource : undefined;
 
     if (disableTooltip) {
-      return triggerImage;
+      return img;
     }
 
     return (
       <Tooltip
         content={
           <TooltipContent
-            // Render a fresh image instance for tooltip content.
-            // Reusing one Next Image element in both positions can loop through merged refs.
-            icon={renderImage()}
+            icon={img}
             title={title}
             detail={detail}
             secondaryDetail={secondaryDetail}
@@ -84,7 +80,7 @@ export function TokenIcon({
           />
         }
       >
-        {triggerImage}
+        {img}
       </Tooltip>
     );
   }
