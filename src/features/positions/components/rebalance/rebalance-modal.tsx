@@ -91,6 +91,32 @@ function parseMaxAllocationInput(raw: string): number | null {
   return parsed;
 }
 
+function getSmartPlannerMarketSignature(market: Market): string {
+  return [
+    market.uniqueKey,
+    market.loanAsset.address.toLowerCase(),
+    market.collateralAsset.address.toLowerCase(),
+    market.oracleAddress?.toLowerCase() ?? '',
+    market.irmAddress?.toLowerCase() ?? '',
+    market.lltv ?? '',
+    market.state.rateAtTarget,
+  ].join(':');
+}
+
+function getSmartPlannerConstraintSignature(constraints: Record<string, number>): string {
+  return Object.entries(constraints)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}:${value}`)
+    .join('|');
+}
+
+function getSmartPlannerGroupedPositionSignature(groupedPosition: GroupedPosition): string {
+  return groupedPosition.markets
+    .map((position) => `${position.market.uniqueKey}:${position.state.supplyAssets}:${position.state.supplyShares}`)
+    .sort()
+    .join('|');
+}
+
 type PreviewRow = {
   id: string;
   label: ReactNode;
@@ -137,6 +163,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   const calcIdRef = useRef(0);
   const wasOpenRef = useRef(false);
   const syncIndicatorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const smartPlannerEligibleMarketsRef = useRef<Market[]>([]);
 
   const toast = useStyledToast();
   const { isAprDisplay, rebalanceDefaultMode } = useAppSettings();
@@ -174,6 +201,21 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       (market) => market.loanAsset.address === groupedPosition.loanAssetAddress && market.morphoBlue.chain.id === groupedPosition.chainId,
     );
   }, [markets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
+
+  const smartPlannerEligibleMarketsSignature = useMemo(
+    () => eligibleMarkets.map(getSmartPlannerMarketSignature).sort().join('|'),
+    [eligibleMarkets],
+  );
+  const smartPlannerSelectedMarketsSignature = useMemo(() => [...smartSelectedMarketKeys].sort().join('|'), [smartSelectedMarketKeys]);
+  const smartPlannerConstraintSignature = useMemo(
+    () => getSmartPlannerConstraintSignature(debouncedSmartMaxAllocationBps),
+    [debouncedSmartMaxAllocationBps],
+  );
+  const smartPlannerGroupedPositionSignature = useMemo(() => getSmartPlannerGroupedPositionSignature(groupedPosition), [groupedPosition]);
+
+  useEffect(() => {
+    smartPlannerEligibleMarketsRef.current = eligibleMarkets;
+  }, [eligibleMarkets, smartPlannerEligibleMarketsSignature]);
 
   const currentSupplyByMarket = useMemo(
     () => new Map(groupedPosition.markets.map((position) => [position.market.uniqueKey, BigInt(position.state.supplyAssets)])),
@@ -241,28 +283,79 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       }
     }
 
+    console.debug('[smart-rebalance] plan calculation start', {
+      calcId: id,
+      chainId: groupedPosition.chainId,
+      selectedMarketKeys: [...smartSelectedMarketKeys].sort(),
+      candidateMarketCount: smartPlannerEligibleMarketsRef.current.length,
+      constraintCount: Object.keys(constraints).length,
+    });
+
     void calculateSmartRebalancePlan({
       groupedPosition,
       chainId: groupedPosition.chainId as SupportedNetworks,
-      candidateMarkets: eligibleMarkets,
+      candidateMarkets: smartPlannerEligibleMarketsRef.current,
       includedMarketKeys: smartSelectedMarketKeys,
       constraints,
     })
       .then((plan) => {
-        if (id !== calcIdRef.current) return;
+        if (id !== calcIdRef.current) {
+          console.debug('[smart-rebalance] plan calculation ignored stale success', {
+            calcId: id,
+            latestCalcId: calcIdRef.current,
+          });
+          return;
+        }
+        console.debug('[smart-rebalance] plan calculation success', {
+          calcId: id,
+          hasPlan: plan !== null,
+          totalMoved: plan?.totalMoved.toString() ?? '0',
+          deltaCount: plan?.deltas.length ?? 0,
+        });
         setSmartPlan(plan);
       })
       .catch((error: unknown) => {
-        if (id !== calcIdRef.current) return;
+        if (id !== calcIdRef.current) {
+          console.debug('[smart-rebalance] plan calculation ignored stale error', {
+            calcId: id,
+            latestCalcId: calcIdRef.current,
+          });
+          return;
+        }
         setSmartPlan(null);
         const message = error instanceof Error ? error.message : 'Failed to calculate smart rebalance plan.';
+        console.error('[smart-rebalance] plan calculation failed', {
+          calcId: id,
+          chainId: groupedPosition.chainId,
+          message,
+          error,
+        });
         setSmartCalculationError(message);
       })
       .finally(() => {
-        if (id !== calcIdRef.current) return;
+        if (id !== calcIdRef.current) {
+          console.debug('[smart-rebalance] plan calculation skipped stale finalize', {
+            calcId: id,
+            latestCalcId: calcIdRef.current,
+          });
+          return;
+        }
+        console.debug('[smart-rebalance] plan calculation finalize', {
+          calcId: id,
+        });
         setIsSmartCalculating(false);
       });
-  }, [debouncedSmartMaxAllocationBps, eligibleMarkets, groupedPosition, isOpen, mode, smartSelectedMarketKeys]);
+  }, [
+    debouncedSmartMaxAllocationBps,
+    groupedPosition,
+    isOpen,
+    mode,
+    smartPlannerConstraintSignature,
+    smartPlannerEligibleMarketsSignature,
+    smartPlannerGroupedPositionSignature,
+    smartPlannerSelectedMarketsSignature,
+    smartSelectedMarketKeys,
+  ]);
 
   const fmtAmount = useCallback(
     (value: bigint) => `${formatReadable(formatBalance(value, groupedPosition.loanAssetDecimals))} ${groupedPosition.loanAssetSymbol}`,
