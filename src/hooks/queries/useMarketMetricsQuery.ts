@@ -210,7 +210,6 @@ export const useMarketMetricsMap = (params: MarketMetricsParams = {}) => {
       const key = getMetricsKey(market.chainId, market.marketUniqueKey);
       map.set(key, market);
     }
-    console.log('[Metrics] Loaded', map.size, 'of', data.total, 'markets');
 
     return map;
   }, [data?.markets, data?.total]);

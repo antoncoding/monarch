@@ -96,8 +96,8 @@ export function getMorphoGenesisDate(chainId: number): Date {
       return new Date('2023-12-28T09:09:23.000Z');
     case SupportedNetworks.Base:
       return new Date('2024-05-03T13:40:43.000Z');
-      case SupportedNetworks.Optimism:
-        return new Date('2026-01-17T06:39:15.000Z');
+    case SupportedNetworks.Optimism:
+      return new Date('2026-01-17T06:39:15.000Z');
     case SupportedNetworks.Polygon:
       return new Date('2025-01-20T02:03:12.000Z');
     case SupportedNetworks.Unichain:

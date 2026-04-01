@@ -15,6 +15,7 @@ import type { Market } from '@/utils/types';
 const SECONDS_PER_DAY = 24 * 60 * 60;
 const BORROW_RATE_BATCH_SIZE = 100;
 const BORROW_RATE_PARALLEL_BATCHES = 2;
+const SHOULD_LOG_MARKET_RATE_ENRICHMENT = process.env.NODE_ENV !== 'production';
 
 const LOOKBACK_WINDOWS = [
   {
@@ -33,8 +34,6 @@ const LOOKBACK_WINDOWS = [
     borrowField: 'monthlyBorrowApy',
   },
 ] as const;
-
-type LookbackWindow = (typeof LOOKBACK_WINDOWS)[number];
 
 export type RateEnrichmentMarketInput = Pick<Market, 'uniqueKey' | 'lltv' | 'irmAddress' | 'oracleAddress'> & {
   loanAsset: Pick<Market['loanAsset'], 'address'>;
@@ -77,6 +76,15 @@ export type MarketRateEnrichment = Pick<
 
 export type MarketRateEnrichmentMap = Map<string, MarketRateEnrichment>;
 export const ROLLING_RATE_WINDOW_SECONDS = LOOKBACK_WINDOWS.map((window) => window.seconds);
+
+const logMarketRateEnrichment = (message: string, details?: Record<string, unknown>) => {
+  if (!SHOULD_LOG_MARKET_RATE_ENRICHMENT) return;
+  if (details) {
+    console.info(`[MarketRateEnrichment] ${message}`, details);
+    return;
+  }
+  console.info(`[MarketRateEnrichment] ${message}`);
+};
 
 const buildEmptyEnrichment = (): MarketRateEnrichment => ({
   apyAtTarget: 0,
@@ -201,25 +209,6 @@ const computeWindowRates = (startState: BoundaryState, endState: BoundaryState):
   };
 };
 
-const mergeMarketRateEnrichment = (primary: MarketRateEnrichment, fallback: MarketRateEnrichment): MarketRateEnrichment => ({
-  apyAtTarget: primary.apyAtTarget ?? fallback.apyAtTarget,
-  rateAtTarget: primary.rateAtTarget || fallback.rateAtTarget,
-  dailySupplyApy: primary.dailySupplyApy ?? fallback.dailySupplyApy,
-  dailyBorrowApy: primary.dailyBorrowApy ?? fallback.dailyBorrowApy,
-  weeklySupplyApy: primary.weeklySupplyApy ?? fallback.weeklySupplyApy,
-  weeklyBorrowApy: primary.weeklyBorrowApy ?? fallback.weeklyBorrowApy,
-  monthlySupplyApy: primary.monthlySupplyApy ?? fallback.monthlySupplyApy,
-  monthlyBorrowApy: primary.monthlyBorrowApy ?? fallback.monthlyBorrowApy,
-});
-
-const hasMissingRateFields = (enrichment: MarketRateEnrichment): boolean =>
-  enrichment.dailySupplyApy == null ||
-  enrichment.dailyBorrowApy == null ||
-  enrichment.weeklySupplyApy == null ||
-  enrichment.weeklyBorrowApy == null ||
-  enrichment.monthlySupplyApy == null ||
-  enrichment.monthlyBorrowApy == null;
-
 const buildApiEnrichmentFromMarket = (market: Market): MarketRateEnrichment => ({
   apyAtTarget: market.state.apyAtTarget,
   rateAtTarget: market.state.rateAtTarget,
@@ -231,42 +220,74 @@ const buildApiEnrichmentFromMarket = (market: Market): MarketRateEnrichment => (
   monthlyBorrowApy: market.state.monthlyBorrowApy ?? null,
 });
 
+type MorphoRateFetchResult = {
+  enrichments: Map<string, MarketRateEnrichment>;
+  failed: boolean;
+};
+
 const fetchMorphoRateMarketsByKey = async (
   chainMarkets: RateEnrichmentMarketInput[],
   chainId: SupportedNetworks,
-): Promise<Map<string, MarketRateEnrichment>> => {
+): Promise<MorphoRateFetchResult> => {
   if (!supportsMorphoApi(chainId)) {
-    return new Map();
+    return {
+      enrichments: new Map(),
+      failed: false,
+    };
   }
 
   try {
     if (chainMarkets.length === 1) {
+      logMarketRateEnrichment('Fetching Morpho historical-rate + target-rate enrichment via market detail', {
+        chainId,
+        marketCount: 1,
+        marketUniqueKey: chainMarkets[0].uniqueKey,
+        purpose: 'single-market enrichment payload',
+      });
       const morphoMarket = await fetchMorphoMarket(chainMarkets[0].uniqueKey, chainId);
       if (!morphoMarket) {
-        return new Map();
+        return {
+          enrichments: new Map(),
+          failed: false,
+        };
       }
 
-      return new Map([[getMarketRateEnrichmentKey(morphoMarket.uniqueKey, chainId), buildApiEnrichmentFromMarket(morphoMarket)]]);
+      return {
+        enrichments: new Map([[getMarketRateEnrichmentKey(morphoMarket.uniqueKey, chainId), buildApiEnrichmentFromMarket(morphoMarket)]]),
+        failed: false,
+      };
     }
 
+    logMarketRateEnrichment('Fetching Morpho historical-rate + target-rate enrichment via batched rate-fields query', {
+      chainId,
+      marketCount: chainMarkets.length,
+      purpose: 'daily/weekly/monthly APY + target rate/APY',
+    });
     const morphoEnrichments = await fetchMorphoMarketRateEnrichments(chainId);
-    return chainMarkets.reduce((acc, market) => {
-      const enrichment = morphoEnrichments.get(getMorphoMarketRateFieldsKey(chainId, market.uniqueKey));
-      if (!enrichment) {
-        return acc;
-      }
+    return {
+      enrichments: chainMarkets.reduce((acc, market) => {
+        const enrichment = morphoEnrichments.get(getMorphoMarketRateFieldsKey(chainId, market.uniqueKey));
+        if (!enrichment) {
+          return acc;
+        }
 
-      acc.set(getMarketRateEnrichmentKey(market.uniqueKey, chainId), enrichment);
-      return acc;
-    }, new Map<string, MarketRateEnrichment>());
+        acc.set(getMarketRateEnrichmentKey(market.uniqueKey, chainId), enrichment);
+        return acc;
+      }, new Map<string, MarketRateEnrichment>()),
+      failed: false,
+    };
   } catch (error) {
     console.warn(`[market-rate-enrichment] Failed to fetch Morpho rolling rates for chain ${chainId}:`, error);
-    return new Map();
+    return {
+      enrichments: new Map(),
+      failed: true,
+    };
   }
 };
 
 const fetchBoundaryBorrowRates = async (
   markets: RateEnrichmentMarketInput[],
+  chainId: SupportedNetworks,
   snapshots: Map<string, MarketSnapshot>,
   client: ReturnType<typeof getClient>,
   blockNumber: number,
@@ -310,6 +331,15 @@ const fetchBoundaryBorrowRates = async (
   if (marketContracts.length === 0) {
     return borrowRates;
   }
+
+  logMarketRateEnrichment('Using RPC multicalls for IRM borrowRateView boundary rates', {
+    chainId,
+    blockNumber,
+    marketCount: marketContracts.length,
+    batchSize: BORROW_RATE_BATCH_SIZE,
+    parallelBatches: BORROW_RATE_PARALLEL_BATCHES,
+    rpcPurpose: 'historical APY fallback',
+  });
 
   for (let waveStart = 0; waveStart < marketContracts.length; waveStart += BORROW_RATE_BATCH_SIZE * BORROW_RATE_PARALLEL_BATCHES) {
     const waveChunks: (typeof marketContracts)[] = [];
@@ -361,13 +391,21 @@ const fetchBoundaryStatesAtBlock = async (
   blockNumber: number,
   blockTimestamp: number,
 ): Promise<Map<string, BoundaryState>> => {
+  logMarketRateEnrichment('Using RPC multicalls for Morpho market() snapshots at boundary block', {
+    chainId,
+    blockNumber,
+    blockTimestamp,
+    marketCount: markets.length,
+    rpcPurpose: 'historical APY fallback',
+  });
+
   const snapshots = await fetchMarketsSnapshots(
     markets.map((market) => market.uniqueKey),
     chainId,
     client,
     blockNumber,
   );
-  const borrowRates = await fetchBoundaryBorrowRates(markets, snapshots, client, blockNumber);
+  const borrowRates = await fetchBoundaryBorrowRates(markets, chainId, snapshots, client, blockNumber);
   const boundaryStates = new Map<string, BoundaryState>();
 
   markets.forEach((market) => {
@@ -429,6 +467,13 @@ export async function fetchRealizedMarketWindowRates(
       });
 
       try {
+        logMarketRateEnrichment('Falling back to RPC for historical APY calculation', {
+          chainId,
+          marketCount: chainMarkets.length,
+          windowsInSeconds: uniqueWindows,
+          rpcPurpose: 'derive daily/weekly/monthly APY from indexed state snapshots',
+        });
+
         const latestBlockNumber = Number(await client.getBlockNumber());
         const latestBlock = await client.getBlock({ blockNumber: BigInt(latestBlockNumber) });
         const latestTimestamp = Number(latestBlock.timestamp);
@@ -475,6 +520,11 @@ export async function fetchRealizedMarketWindowRates(
             marketRates.set(windowSeconds, computeWindowRates(startState, latestState));
           });
         });
+
+        logMarketRateEnrichment('Completed RPC historical APY fallback for chain', {
+          chainId,
+          marketCount: chainMarkets.length,
+        });
       } catch (error) {
         console.warn(`[market-rate-enrichment] Failed to calculate realized rates for chain ${chainId}:`, error);
       }
@@ -503,45 +553,75 @@ export async function fetchMarketRateEnrichment(
   }, new Map<SupportedNetworks, RateEnrichmentMarketInput[]>());
 
   for (const [chainId, chainMarkets] of marketsByChain.entries()) {
-    const morphoEnrichmentsByKey = await fetchMorphoRateMarketsByKey(chainMarkets, chainId);
-    const fallbackMarkets: RateEnrichmentMarketInput[] = [];
+    logMarketRateEnrichment('Starting market rate enrichment for chain', {
+      chainId,
+      marketCount: chainMarkets.length,
+      includes: [
+        'apyAtTarget',
+        'rateAtTarget',
+        'dailySupplyApy',
+        'dailyBorrowApy',
+        'weeklySupplyApy',
+        'weeklyBorrowApy',
+        'monthlySupplyApy',
+        'monthlyBorrowApy',
+      ],
+    });
+
+    const { enrichments: morphoEnrichmentsByKey, failed: morphoRateFetchFailed } = await fetchMorphoRateMarketsByKey(chainMarkets, chainId);
 
     chainMarkets.forEach((market) => {
       const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
       const morphoEnrichment = morphoEnrichmentsByKey.get(key) ?? buildEmptyEnrichment();
       enrichments.set(key, morphoEnrichment);
-
-      if (hasMissingRateFields(morphoEnrichment)) {
-        fallbackMarkets.push(market);
-      }
     });
 
-    if (fallbackMarkets.length === 0) {
+    if (morphoRateFetchFailed) {
+      logMarketRateEnrichment('Morpho rate fetch failed; scheduling RPC fallback for chain', {
+        chainId,
+        fallbackMarketCount: chainMarkets.length,
+        totalMarketCount: chainMarkets.length,
+        rpcReason: 'Morpho rate-fields request failed or was unavailable',
+      });
+
+      const windowRates = await fetchRealizedMarketWindowRates(
+        chainMarkets,
+        LOOKBACK_WINDOWS.map((window) => window.seconds),
+        customRpcUrls,
+      );
+
+      chainMarkets.forEach((market) => {
+        const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
+        const ratesByWindow = windowRates.get(key);
+
+        if (!ratesByWindow) {
+          return;
+        }
+
+        const fallbackEnrichment = LOOKBACK_WINDOWS.reduce<MarketRateEnrichment>((acc, window) => {
+          const windowRatesEntry = ratesByWindow.get(window.seconds);
+          acc[window.supplyField] = windowRatesEntry?.supplyApy ?? null;
+          acc[window.borrowField] = windowRatesEntry?.borrowApy ?? null;
+          return acc;
+        }, buildEmptyEnrichment());
+
+        enrichments.set(key, {
+          ...enrichments.get(key),
+          ...fallbackEnrichment,
+        });
+      });
+
+      logMarketRateEnrichment('Completed market rate enrichment with RPC fallback merge', {
+        chainId,
+        marketCount: chainMarkets.length,
+        fallbackMarketCount: chainMarkets.length,
+      });
       continue;
     }
 
-    const windowRates = await fetchRealizedMarketWindowRates(
-      fallbackMarkets,
-      LOOKBACK_WINDOWS.map((window) => window.seconds),
-      customRpcUrls,
-    );
-
-    fallbackMarkets.forEach((market) => {
-      const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
-      const ratesByWindow = windowRates.get(key);
-
-      if (!ratesByWindow) {
-        return;
-      }
-
-      const fallbackEnrichment = LOOKBACK_WINDOWS.reduce<MarketRateEnrichment>((acc, window: LookbackWindow) => {
-        const windowRatesEntry = ratesByWindow.get(window.seconds);
-        acc[window.supplyField] = windowRatesEntry?.supplyApy ?? null;
-        acc[window.borrowField] = windowRatesEntry?.borrowApy ?? null;
-        return acc;
-      }, buildEmptyEnrichment());
-
-      enrichments.set(key, mergeMarketRateEnrichment(enrichments.get(key) ?? buildEmptyEnrichment(), fallbackEnrichment));
+    logMarketRateEnrichment('Completed market rate enrichment from Morpho only', {
+      chainId,
+      marketCount: chainMarkets.length,
     });
   }
 

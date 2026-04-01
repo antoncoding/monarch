@@ -32,6 +32,7 @@ type MarketsRateFieldsGraphQLResponse = {
 
 const MORPHO_RATE_FIELDS_PAGE_SIZE = 500;
 const MORPHO_RATE_FIELDS_TIMEOUT_MS = 20_000;
+const SHOULD_LOG_MORPHO_RATE_FIELDS = process.env.NODE_ENV !== 'production';
 
 const getMorphoRateFieldsKey = (network: SupportedNetworks, uniqueKey: string): string => `${network}:${uniqueKey.toLowerCase()}`;
 
@@ -48,11 +49,41 @@ const toMorphoRateFields = (state: Partial<MorphoRateFields> | undefined): Morph
 
 export const getMorphoMarketRateFieldsKey = getMorphoRateFieldsKey;
 
+const logMorphoRateFields = (message: string, details?: Record<string, unknown>) => {
+  if (!SHOULD_LOG_MORPHO_RATE_FIELDS) return;
+  if (details) {
+    console.info(`[MorphoRateFields] ${message}`, details);
+    return;
+  }
+  console.info(`[MorphoRateFields] ${message}`);
+};
+
 export const fetchMorphoMarketRateEnrichments = async (network: SupportedNetworks): Promise<Map<string, MorphoRateFields>> => {
   const enrichments = new Map<string, MorphoRateFields>();
   let skip = 0;
 
+  logMorphoRateFields('Starting Morpho rate-fields fetch for chain', {
+    chainId: network,
+    fields: [
+      'apyAtTarget',
+      'rateAtTarget',
+      'dailySupplyApy',
+      'dailyBorrowApy',
+      'weeklySupplyApy',
+      'weeklyBorrowApy',
+      'monthlySupplyApy',
+      'monthlyBorrowApy',
+    ],
+    pageSize: MORPHO_RATE_FIELDS_PAGE_SIZE,
+  });
+
   while (true) {
+    logMorphoRateFields('Requesting Morpho rate-fields page', {
+      chainId: network,
+      skip,
+      pageSize: MORPHO_RATE_FIELDS_PAGE_SIZE,
+    });
+
     const response = await morphoGraphqlFetcher<MarketsRateFieldsGraphQLResponse>(
       marketsRateFieldsQuery,
       {
@@ -77,6 +108,13 @@ export const fetchMorphoMarketRateEnrichments = async (network: SupportedNetwork
 
     const { items, pageInfo } = response.data.markets;
 
+    logMorphoRateFields('Received Morpho rate-fields page', {
+      chainId: network,
+      skip,
+      itemCount: items.length,
+      totalCount: pageInfo.countTotal,
+    });
+
     items.forEach((item) => {
       if (!item.uniqueKey || !item.state) {
         return;
@@ -91,6 +129,11 @@ export const fetchMorphoMarketRateEnrichments = async (network: SupportedNetwork
 
     skip += items.length;
   }
+
+  logMorphoRateFields('Completed Morpho rate-fields fetch for chain', {
+    chainId: network,
+    marketCount: enrichments.size,
+  });
 
   return enrichments;
 };
