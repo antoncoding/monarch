@@ -1,5 +1,5 @@
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoMarket, fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
+import { fetchMorphoMarket, fetchMorphoMarketRateEnrichments } from '@/data-sources/morpho-api/market';
 import { MarketUtils, SharesMath } from '@morpho-org/blue-sdk';
 import type { Address } from 'viem';
 import { morphoIrmAbi } from '@/abis/morpho-irm';
@@ -235,9 +235,14 @@ const fetchMorphoRateMarketsByKey = async (
       return new Map([[getMarketRateEnrichmentKey(morphoMarket.uniqueKey, chainId), buildApiEnrichmentFromMarket(morphoMarket)]]);
     }
 
-    const morphoMarkets = await fetchMorphoMarkets(chainId);
-    return morphoMarkets.reduce((acc, market) => {
-      acc.set(getMarketRateEnrichmentKey(market.uniqueKey, chainId), buildApiEnrichmentFromMarket(market));
+    const morphoEnrichments = await fetchMorphoMarketRateEnrichments(chainId);
+    return chainMarkets.reduce((acc, market) => {
+      const enrichment = morphoEnrichments.get(market.uniqueKey.toLowerCase());
+      if (!enrichment) {
+        return acc;
+      }
+
+      acc.set(getMarketRateEnrichmentKey(market.uniqueKey, chainId), enrichment);
       return acc;
     }, new Map<string, MarketRateEnrichment>());
   } catch (error) {

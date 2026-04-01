@@ -63,6 +63,10 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
   return formatBalance(assets, decimals) * price;
 };
 
+type UseProcessedMarketsOptions = {
+  includeRateEnrichment?: boolean;
+};
+
 /**
  * Processes raw markets data with blacklist filtering.
  *
@@ -84,7 +88,7 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
  * const { rawMarketsUnfiltered } = useProcessedMarkets(); // For blacklist modal
  * ```
  */
-export const useProcessedMarkets = () => {
+export const useProcessedMarkets = ({ includeRateEnrichment = false }: UseProcessedMarketsOptions = {}) => {
   const { data: rawMarketsFromQuery, isLoading, isRefetching, error, refetch } = useMarketsQuery();
   const { whitelistLookup, supplyingVaultsLookup } = useMorphoWhitelistStatusQuery();
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
@@ -156,9 +160,10 @@ export const useProcessedMarkets = () => {
     isLoading: isRateEnrichmentQueryLoading,
     isFetching: isRateEnrichmentFetching,
     isRefetching: isRateEnrichmentRefetching,
-  } = useMarketRateEnrichmentQuery(processedData.allMarkets);
+  } = useMarketRateEnrichmentQuery(includeRateEnrichment ? processedData.allMarkets : []);
 
   const isRateEnrichmentLoading =
+    includeRateEnrichment &&
     processedData.allMarkets.length > 0 &&
     marketRateEnrichments.size === 0 &&
     rateEnrichmentPendingChainIds.size > 0 &&

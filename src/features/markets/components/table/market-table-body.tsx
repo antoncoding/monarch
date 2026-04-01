@@ -31,7 +31,14 @@ type MarketTableBodyProps = {
 export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
-  const { rateEnrichmentPendingChainIds } = useProcessedMarkets();
+  const shouldIncludeRateEnrichment =
+    columnVisibility.dailySupplyAPY ||
+    columnVisibility.dailyBorrowAPY ||
+    columnVisibility.weeklySupplyAPY ||
+    columnVisibility.weeklyBorrowAPY ||
+    columnVisibility.monthlySupplyAPY ||
+    columnVisibility.monthlyBorrowAPY;
+  const { rateEnrichmentPendingChainIds } = useProcessedMarkets({ includeRateEnrichment: shouldIncludeRateEnrichment });
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -255,7 +262,7 @@ export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowI
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">{item.state.apyAtTarget ? <RateFormatted value={item.state.apyAtTarget} /> : '—'}</p>
+                  <p className="text-sm">{item.state.apyAtTarget != null ? <RateFormatted value={item.state.apyAtTarget} /> : '—'}</p>
                 </TableCell>
               )}
               {columnVisibility.utilizationRate && (

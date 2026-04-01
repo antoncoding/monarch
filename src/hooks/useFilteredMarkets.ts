@@ -20,11 +20,25 @@ type UseFilteredMarketsResult = {
 };
 
 export const useFilteredMarkets = (): UseFilteredMarketsResult => {
-  const { allMarkets, whitelistedMarkets } = useProcessedMarkets();
+  const preferences = useMarketPreferences();
+  const shouldIncludeRateEnrichment =
+    preferences.columnVisibility.dailySupplyAPY ||
+    preferences.columnVisibility.dailyBorrowAPY ||
+    preferences.columnVisibility.weeklySupplyAPY ||
+    preferences.columnVisibility.weeklyBorrowAPY ||
+    preferences.columnVisibility.monthlySupplyAPY ||
+    preferences.columnVisibility.monthlyBorrowAPY ||
+    preferences.sortColumn === SortColumn.DailySupplyAPY ||
+    preferences.sortColumn === SortColumn.DailyBorrowAPY ||
+    preferences.sortColumn === SortColumn.WeeklySupplyAPY ||
+    preferences.sortColumn === SortColumn.WeeklyBorrowAPY ||
+    preferences.sortColumn === SortColumn.MonthlySupplyAPY ||
+    preferences.sortColumn === SortColumn.MonthlyBorrowAPY;
+
+  const { allMarkets, whitelistedMarkets } = useProcessedMarkets({ includeRateEnrichment: shouldIncludeRateEnrichment });
   const { whitelistLookup, isLoading: whitelistLoading, isFetching: whitelistFetching } = useMorphoWhitelistStatusQuery();
   const { data: oracleMetadataMap } = useAllOracleMetadata();
   const filters = useMarketsFilters();
-  const preferences = useMarketPreferences();
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();
