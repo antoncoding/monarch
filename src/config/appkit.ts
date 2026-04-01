@@ -5,6 +5,7 @@ import { createStorage, type Storage } from 'wagmi';
 import localStorage from 'local-storage-fallback';
 import { createAppKit } from '@reown/appkit/react';
 import type { AppKitNetwork } from '@reown/appkit/networks';
+import { etherlink } from 'viem/chains';
 import { arbitrum, base, mainnet, monad, optimism, polygon, unichain } from 'wagmi/chains';
 import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
 
@@ -51,6 +52,7 @@ const customBase = withAppKitRpc(base, getDefaultRPC(SupportedNetworks.Base));
 const customPolygon = withAppKitRpc(polygon, getDefaultRPC(SupportedNetworks.Polygon));
 const customArbitrum = withAppKitRpc(arbitrum, getDefaultRPC(SupportedNetworks.Arbitrum));
 const customUnichain = withAppKitRpc(unichain, getDefaultRPC(SupportedNetworks.Unichain));
+const customEtherlink = withAppKitRpc(etherlink, getDefaultRPC(SupportedNetworks.Etherlink));
 const customMonad = withAppKitRpc(monad, getDefaultRPC(SupportedNetworks.Monad));
 const customHyperEvm = withAppKitRpc(hyperEvm, getDefaultRPC(SupportedNetworks.HyperEVM));
 
@@ -62,6 +64,7 @@ export const networks = [
   customPolygon,
   customArbitrum,
   customUnichain,
+  customEtherlink,
   customHyperEvm,
   customMonad,
 ] as [AppKitNetwork, ...AppKitNetwork[]];
