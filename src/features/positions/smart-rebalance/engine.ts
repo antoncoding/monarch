@@ -1,5 +1,12 @@
 import type { Market as BlueMarket } from '@morpho-org/blue-sdk';
-import type { SmartRebalanceConstraintMap, SmartRebalanceDelta, SmartRebalanceEngineInput, SmartRebalanceEngineOutput } from './types';
+import type {
+  SmartRebalanceConstraintMap,
+  SmartRebalanceConstraintViolation,
+  SmartRebalanceConstraintViolationReason,
+  SmartRebalanceDelta,
+  SmartRebalanceEngineInput,
+  SmartRebalanceEngineOutput,
+} from './types';
 
 const MAX_CHUNKS = 100n;
 const APY_SCALE = 1_000_000_000_000n;
@@ -79,11 +86,13 @@ type CleanStateResult = {
   maxAllocationMap: Map<string, bigint | undefined>;
   allocations: Map<string, bigint>;
   marketMap: Map<string, BlueMarket>;
+  lockedAmountMap: Map<string, bigint>;
 };
 
 type ChunkAllocationState = {
   allocations: Map<string, bigint>;
   marketMap: Map<string, BlueMarket>;
+  unallocatedAmount: bigint;
 };
 
 function cleanStates(
@@ -96,6 +105,7 @@ function cleanStates(
   const maxAllocationMap = new Map<string, bigint | undefined>();
   const allocations = new Map<string, bigint>();
   const marketMap = new Map<string, BlueMarket>();
+  const lockedAmountMap = new Map<string, bigint>();
 
   let runningPrincipal = principal;
 
@@ -109,6 +119,7 @@ function cleanStates(
     movableKeys.push(entry.uniqueKey);
     allocations.set(entry.uniqueKey, lockedAmount);
     marketMap.set(entry.uniqueKey, marketAfter);
+    lockedAmountMap.set(entry.uniqueKey, lockedAmount);
     runningPrincipal += withdrawnAmount;
   }
 
@@ -118,6 +129,7 @@ function cleanStates(
     maxAllocationMap,
     allocations,
     marketMap,
+    lockedAmountMap,
   };
 }
 
@@ -197,13 +209,18 @@ function calculateAllocation(
   marketMap: Map<string, BlueMarket>,
   maxAllocationMap: Map<string, bigint | undefined>,
 ): ChunkAllocationState {
+  let unallocatedAmount = 0n;
+
   for (const chunk of chunks) {
     let remainingChunk = chunk;
     if (remainingChunk <= 0n) continue;
 
     while (remainingChunk > 0n) {
       const best = findBestSupplyTarget(remainingChunk, movableKeys, uniqueKeys, allocations, marketMap, maxAllocationMap);
-      if (!best) break;
+      if (!best) {
+        unallocatedAmount += remainingChunk;
+        break;
+      }
 
       allocations.set(best.uniqueKey, (allocations.get(best.uniqueKey) ?? 0n) + best.amount);
       marketMap.set(best.uniqueKey, best.marketAfter);
@@ -214,6 +231,7 @@ function calculateAllocation(
   return {
     allocations,
     marketMap,
+    unallocatedAmount,
   };
 }
 
@@ -248,6 +266,82 @@ function sumTotalMoved(deltas: SmartRebalanceDelta[]): bigint {
   }, 0n);
 }
 
+function hasExplicitMaxAllocationConstraint(
+  entries: SmartRebalanceEngineInput['entries'],
+  constraints: SmartRebalanceConstraintMap | undefined,
+): boolean {
+  return entries.some((entry) => {
+    const maxAllocationBps = clampBps(constraints?.[entry.uniqueKey]?.maxAllocationBps);
+    return maxAllocationBps !== undefined && maxAllocationBps < 10_000;
+  });
+}
+
+function buildDiagnostics({
+  entries,
+  constraints,
+  totalPool,
+  allocations,
+  maxAllocationMap,
+  lockedAmountMap,
+  unallocatedAmount,
+}: {
+  entries: SmartRebalanceEngineInput['entries'];
+  constraints: SmartRebalanceConstraintMap | undefined;
+  totalPool: bigint;
+  allocations: Map<string, bigint>;
+  maxAllocationMap: Map<string, bigint | undefined>;
+  lockedAmountMap: Map<string, bigint>;
+  unallocatedAmount: bigint;
+}): SmartRebalanceEngineOutput['diagnostics'] {
+  const hasUnboundedSelectedMarket = entries.some((entry) => maxAllocationMap.get(entry.uniqueKey) === undefined);
+  const totalSelectedCapacity = hasUnboundedSelectedMarket
+    ? null
+    : entries.reduce((sum, entry) => sum + (maxAllocationMap.get(entry.uniqueKey) ?? 0n), 0n);
+  const selectedCapacityShortfall =
+    totalSelectedCapacity !== null && totalSelectedCapacity < totalPool ? totalPool - totalSelectedCapacity : 0n;
+
+  const constraintViolations: SmartRebalanceConstraintViolation[] = [];
+
+  for (const entry of entries) {
+    const maxAllocationBps = clampBps(constraints?.[entry.uniqueKey]?.maxAllocationBps);
+    if (maxAllocationBps === undefined || maxAllocationBps >= 10_000) continue;
+
+    const maxAllowedAmount = maxAllocationMap.get(entry.uniqueKey);
+    if (maxAllowedAmount === undefined) continue;
+
+    const targetAmount = allocations.get(entry.uniqueKey) ?? entry.currentSupply;
+    if (targetAmount <= maxAllowedAmount) continue;
+
+    const lockedAmount = lockedAmountMap.get(entry.uniqueKey) ?? 0n;
+    const requiredReduction = entry.currentSupply > maxAllowedAmount ? entry.currentSupply - maxAllowedAmount : 0n;
+
+    let reason: SmartRebalanceConstraintViolationReason = 'unknown';
+    if (requiredReduction > entry.maxWithdrawable) {
+      reason = 'locked-liquidity';
+    } else if (selectedCapacityShortfall > 0n || unallocatedAmount > 0n) {
+      reason = 'selected-capacity';
+    }
+
+    constraintViolations.push({
+      uniqueKey: entry.uniqueKey,
+      collateralSymbol: entry.market.collateralAsset?.symbol ?? 'N/A',
+      maxAllocationBps,
+      currentAmount: entry.currentSupply,
+      targetAmount,
+      maxAllowedAmount,
+      excessAmount: targetAmount - maxAllowedAmount,
+      maxWithdrawable: entry.maxWithdrawable,
+      lockedAmount,
+      reason,
+    });
+  }
+
+  return {
+    constraintViolations,
+    unallocatedAmount,
+  };
+}
+
 /**
  * Pure smart-rebalance optimizer.
  *
@@ -269,6 +363,7 @@ export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceE
   if (totalPool <= 0n) return null;
 
   const uniqueKeys = entries.map((entry) => entry.uniqueKey);
+  const hasExplicitConstraints = hasExplicitMaxAllocationConstraint(entries, constraints);
 
   // 1. Simulate extra liquidity and start state:
   //    - attempt best-effort withdrawal from each selected market
@@ -293,6 +388,15 @@ export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceE
       currentWeightedApy: objectiveToWeightedApy(currentObjective, totalPool),
       projectedWeightedApy: objectiveToWeightedApy(projectedObjective, totalPool),
       totalMoved: sumTotalMoved(deltas),
+      diagnostics: buildDiagnostics({
+        entries,
+        constraints,
+        totalPool,
+        allocations: cleaned.allocations,
+        maxAllocationMap: cleaned.maxAllocationMap,
+        lockedAmountMap: cleaned.lockedAmountMap,
+        unallocatedAmount: 0n,
+      }),
     };
   }
 
@@ -319,8 +423,9 @@ export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceE
   );
   const projectedObjective = computeObjective(uniqueKeys, allocated.allocations, allocated.marketMap);
 
-  // Reliability guard: never return a plan that is worse than the current weighted objective.
-  if (projectedObjective < currentObjective) {
+  // Reliability guard: for unconstrained auto-optimization, never return a plan that is worse than the current weighted objective.
+  // Explicit max-allocation caps are user intent and should still produce the best feasible constrained plan even if the weighted rate falls.
+  if (!hasExplicitConstraints && projectedObjective < currentObjective) {
     const noOpAllocations = new Map(entries.map((entry) => [entry.uniqueKey, entry.currentSupply]));
     const noOpMarkets = new Map(entries.map((entry) => [entry.uniqueKey, entry.baselineMarket]));
     const noOpDeltas = buildDeltas(entries, noOpAllocations, noOpMarkets);
@@ -335,6 +440,15 @@ export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceE
       currentWeightedApy: objectiveToWeightedApy(currentObjective, totalPool),
       projectedWeightedApy: objectiveToWeightedApy(currentObjective, totalPool),
       totalMoved: 0n,
+      diagnostics: buildDiagnostics({
+        entries,
+        constraints,
+        totalPool,
+        allocations: noOpAllocations,
+        maxAllocationMap: cleaned.maxAllocationMap,
+        lockedAmountMap: cleaned.lockedAmountMap,
+        unallocatedAmount: 0n,
+      }),
     };
   }
 
@@ -350,6 +464,15 @@ export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceE
     currentWeightedApy: objectiveToWeightedApy(currentObjective, totalPool),
     projectedWeightedApy: objectiveToWeightedApy(projectedObjective, totalPool),
     totalMoved,
+    diagnostics: buildDiagnostics({
+      entries,
+      constraints,
+      totalPool,
+      allocations: allocated.allocations,
+      maxAllocationMap: cleaned.maxAllocationMap,
+      lockedAmountMap: cleaned.lockedAmountMap,
+      unallocatedAmount: allocated.unallocatedAmount,
+    }),
   };
 }
 

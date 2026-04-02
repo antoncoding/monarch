@@ -25,6 +25,26 @@ export type SmartRebalanceConstraintMap = Record<
   }
 >;
 
+export type SmartRebalanceConstraintViolationReason = 'locked-liquidity' | 'selected-capacity' | 'unknown';
+
+export type SmartRebalanceConstraintViolation = {
+  uniqueKey: string;
+  collateralSymbol: string;
+  maxAllocationBps: number;
+  currentAmount: bigint;
+  targetAmount: bigint;
+  maxAllowedAmount: bigint;
+  excessAmount: bigint;
+  maxWithdrawable: bigint;
+  lockedAmount: bigint;
+  reason: SmartRebalanceConstraintViolationReason;
+};
+
+export type SmartRebalanceDiagnostics = {
+  constraintViolations: SmartRebalanceConstraintViolation[];
+  unallocatedAmount: bigint;
+};
+
 export type SmartRebalanceEngineInput = {
   entries: SmartRebalanceEngineEntry[];
   constraints?: SmartRebalanceConstraintMap;
@@ -51,4 +71,5 @@ export type SmartRebalanceEngineOutput = {
   currentWeightedApy: number;
   projectedWeightedApy: number;
   totalMoved: bigint;
+  diagnostics: SmartRebalanceDiagnostics;
 };
