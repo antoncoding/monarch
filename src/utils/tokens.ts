@@ -366,12 +366,6 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0xCE8e559Ac89c2bDC97Bdb5F58705c54dB9cB77dC' }],
   },
   {
-    symbol: 'xU3O8',
-    img: undefined,
-    decimals: 18,
-    networks: [{ chain: etherlink, address: '0x79052Ab3C166D4899a1e0DD033aC3b379AF0B1fD' }],
-  },
-  {
     symbol: 'osETH',
     img: require('../imgs/tokens/oseth.png') as string,
     decimals: 18,
