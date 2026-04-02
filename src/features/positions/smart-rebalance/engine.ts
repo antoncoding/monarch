@@ -283,7 +283,6 @@ function buildDiagnostics({
   allocations,
   maxAllocationMap,
   lockedAmountMap,
-  objectiveGuardTriggered,
   unallocatedAmount,
 }: {
   entries: SmartRebalanceEngineInput['entries'];
@@ -292,7 +291,6 @@ function buildDiagnostics({
   allocations: Map<string, bigint>;
   maxAllocationMap: Map<string, bigint | undefined>;
   lockedAmountMap: Map<string, bigint>;
-  objectiveGuardTriggered: boolean;
   unallocatedAmount: bigint;
 }): SmartRebalanceEngineOutput['diagnostics'] {
   const hasUnboundedSelectedMarket = entries.some((entry) => maxAllocationMap.get(entry.uniqueKey) === undefined);
@@ -340,8 +338,6 @@ function buildDiagnostics({
 
   return {
     constraintViolations,
-    objectiveGuardTriggered,
-    selectedCapacityShortfall,
     unallocatedAmount,
   };
 }
@@ -399,7 +395,6 @@ export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceE
         allocations: cleaned.allocations,
         maxAllocationMap: cleaned.maxAllocationMap,
         lockedAmountMap: cleaned.lockedAmountMap,
-        objectiveGuardTriggered: false,
         unallocatedAmount: 0n,
       }),
     };
@@ -452,7 +447,6 @@ export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceE
         allocations: noOpAllocations,
         maxAllocationMap: cleaned.maxAllocationMap,
         lockedAmountMap: cleaned.lockedAmountMap,
-        objectiveGuardTriggered: true,
         unallocatedAmount: 0n,
       }),
     };
@@ -477,7 +471,6 @@ export function planRebalance(input: SmartRebalanceEngineInput): SmartRebalanceE
       allocations: allocated.allocations,
       maxAllocationMap: cleaned.maxAllocationMap,
       lockedAmountMap: cleaned.lockedAmountMap,
-      objectiveGuardTriggered: false,
       unallocatedAmount: allocated.unallocatedAmount,
     }),
   };

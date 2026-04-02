@@ -42,8 +42,6 @@ export type SmartRebalanceConstraintViolation = {
 
 export type SmartRebalanceDiagnostics = {
   constraintViolations: SmartRebalanceConstraintViolation[];
-  objectiveGuardTriggered: boolean;
-  selectedCapacityShortfall: bigint;
   unallocatedAmount: bigint;
 };
 

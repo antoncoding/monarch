@@ -157,28 +157,14 @@ function getSmartConstraintWarning(plan: SmartRebalancePlan | null): { title: st
 
   const reasons = new Set(violations.map((violation) => violation.reason));
 
-  if (reasons.size === 1 && reasons.has('locked-liquidity')) {
-    return {
-      title: 'Some max-allocation limits could not be met with current withdrawable liquidity.',
-      detail:
-        'One or more positions cannot be reduced far enough right now. Raise the cap on the flagged market or wait for more liquidity before retrying.',
-    };
-  }
-
-  if (reasons.size === 1 && reasons.has('selected-capacity')) {
-    return {
-      title: 'Your selected max-allocation limits leave too little room for the full balance.',
-      detail:
-        plan?.diagnostics.unallocatedAmount && plan.diagnostics.unallocatedAmount > 0n
-          ? 'Raise one or more caps or add more destination markets. Any excess amount beyond the selected room will remain in the wallet.'
-          : 'Raise one or more caps or add more destination markets before retrying.',
-    };
+  if (!reasons.has('locked-liquidity')) {
+    return null;
   }
 
   return {
     title: 'Some max-allocation limits could not be fully satisfied.',
     detail:
-      'One or more positions could not be reduced far enough because of current withdrawable liquidity or selected capacity. Check the console for per-market details.',
+      'One or more positions could not be reduced far enough because of current withdrawable liquidity. Check the console for per-market details.',
   };
 }
 
@@ -332,17 +318,13 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       .then((plan) => {
         if (id !== calcIdRef.current) return;
 
-        if (plan && plan.diagnostics.constraintViolations.length > 0) {
+        if (plan && (plan.diagnostics.constraintViolations.length > 0 || plan.diagnostics.unallocatedAmount > 0n)) {
           console.warn('[smart-rebalance] unmet max-allocation constraints', {
             calcId: id,
             chainId: groupedPosition.chainId,
             loanAssetSymbol: groupedPosition.loanAssetSymbol,
             totalPool: formatAmountForSmartConstraintLog(plan.totalPool, groupedPosition.loanAssetDecimals),
             totalMoved: formatAmountForSmartConstraintLog(plan.totalMoved, groupedPosition.loanAssetDecimals),
-            selectedCapacityShortfall: formatAmountForSmartConstraintLog(
-              plan.diagnostics.selectedCapacityShortfall,
-              groupedPosition.loanAssetDecimals,
-            ),
             unallocatedAmount: formatAmountForSmartConstraintLog(plan.diagnostics.unallocatedAmount, groupedPosition.loanAssetDecimals),
             violations: plan.diagnostics.constraintViolations.map((violation) => ({
               uniqueKey: violation.uniqueKey,
@@ -403,9 +385,14 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   const smartCurrentWeightedRate = isAprDisplay ? smartCurrentWeightedApr : smartCurrentWeightedApy;
   const smartProjectedWeightedRate = isAprDisplay ? smartProjectedWeightedApr : smartProjectedWeightedApy;
   const smartWeightedRateDiff = smartProjectedWeightedRate - smartCurrentWeightedRate;
+  const smartNetWithdrawal = smartPlan?.diagnostics.unallocatedAmount ?? 0n;
   const smartCapitalMovedPreview = useMemo(
     () => formatTokenAmountPreview(smartTotalMoved, groupedPosition.loanAssetDecimals),
     [groupedPosition.loanAssetDecimals, smartTotalMoved],
+  );
+  const smartNetWithdrawalPreview = useMemo(
+    () => formatTokenAmountPreview(smartNetWithdrawal, groupedPosition.loanAssetDecimals),
+    [groupedPosition.loanAssetDecimals, smartNetWithdrawal],
   );
   const smartFeePreview = useMemo(
     () => (smartFeeAmount == null ? null : formatTokenAmountPreview(smartFeeAmount, groupedPosition.loanAssetDecimals)),
@@ -443,6 +430,14 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         label: 'Capital Moved',
         value: fmtAmount(smartTotalMoved),
       });
+      if (smartNetWithdrawal > 0n) {
+        items.push({
+          id: 'net-withdrawal',
+          label: 'Net Withdrawal',
+          value: fmtAmount(smartNetWithdrawal),
+          detail: 'returned to wallet',
+        });
+      }
       if (smartFeePreview != null) {
         items.push({
           id: 'fee',
@@ -462,6 +457,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     estimatedDailyEarningsUsd,
     smartFeePreview,
     smartFeeSummaryDetail,
+    smartNetWithdrawal,
     smartPlan,
     smartProjectedWeightedRate,
     smartTotalMoved,
@@ -910,6 +906,30 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       ),
     });
 
+    if (smartNetWithdrawal > 0n) {
+      rows.push({
+        id: 'net-withdrawal',
+        label: 'Net Withdrawal',
+        value: (
+          <span className="tabular-nums inline-flex items-center gap-1.5">
+            <Tooltip
+              content={`${smartNetWithdrawalPreview.full} ${groupedPosition.loanAssetSymbol} returned to wallet`}
+              className={INLINE_VALUE_TOOLTIP_CLASS_NAME}
+            >
+              <span className="cursor-help border-b border-dotted border-white/40">{smartNetWithdrawalPreview.compact}</span>
+            </Tooltip>
+            <TokenIcon
+              address={groupedPosition.loanAssetAddress as `0x${string}`}
+              chainId={groupedPosition.chainId}
+              symbol={groupedPosition.loanAssetSymbol}
+              width={14}
+              height={14}
+            />
+          </span>
+        ),
+      });
+    }
+
     return rows;
   }, [
     estimatedDailyEarningsUsd,
@@ -919,8 +939,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     rateLabel,
     smartCapitalMovedPreview,
     smartCurrentWeightedRate,
+    smartNetWithdrawal,
+    smartNetWithdrawalPreview,
     smartProjectedWeightedRate,
-    smartTotalMoved,
     smartWeightedRateDiff,
   ]);
 
