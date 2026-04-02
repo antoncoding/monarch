@@ -36,6 +36,7 @@ import { FiTrash2 } from 'react-icons/fi';
 import { AllocationCell } from '../allocation-cell';
 import { FromMarketsTable } from '../from-markets-table';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
+import { RiskIndicator } from '@/features/markets/components/risk-indicator';
 import { RebalanceActionInput } from './rebalance-action-input';
 import { RebalanceCart } from './rebalance-cart';
 
@@ -141,6 +142,44 @@ function PreviewSection({ title, rows }: { title: string; rows: PreviewRow[] }) 
       </div>
     </div>
   );
+}
+
+function formatAmountForSmartConstraintLog(value: bigint, decimals: number): { raw: string; formatted: string } {
+  return {
+    raw: value.toString(),
+    formatted: formatUnits(value, decimals),
+  };
+}
+
+function getSmartConstraintWarning(plan: SmartRebalancePlan | null): { title: string; detail: string } | null {
+  const violations = plan?.diagnostics.constraintViolations ?? [];
+  if (violations.length === 0) return null;
+
+  const reasons = new Set(violations.map((violation) => violation.reason));
+
+  if (reasons.size === 1 && reasons.has('locked-liquidity')) {
+    return {
+      title: 'Some max-allocation limits could not be met with current withdrawable liquidity.',
+      detail:
+        'One or more positions cannot be reduced far enough right now. Raise the cap on the flagged market or wait for more liquidity before retrying.',
+    };
+  }
+
+  if (reasons.size === 1 && reasons.has('selected-capacity')) {
+    return {
+      title: 'Your selected max-allocation limits leave too little room for the full balance.',
+      detail:
+        plan?.diagnostics.unallocatedAmount && plan.diagnostics.unallocatedAmount > 0n
+          ? 'Raise one or more caps or add more destination markets. Any excess amount beyond the selected room will remain in the wallet.'
+          : 'Raise one or more caps or add more destination markets before retrying.',
+    };
+  }
+
+  return {
+    title: 'Some max-allocation limits could not be fully satisfied.',
+    detail:
+      'One or more positions could not be reduced far enough because of current withdrawable liquidity or selected capacity. Check the console for per-market details.',
+  };
 }
 
 export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch, isRefetching }: RebalanceModalProps) {
@@ -292,6 +331,34 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     })
       .then((plan) => {
         if (id !== calcIdRef.current) return;
+
+        if (plan && plan.diagnostics.constraintViolations.length > 0) {
+          console.warn('[smart-rebalance] unmet max-allocation constraints', {
+            calcId: id,
+            chainId: groupedPosition.chainId,
+            loanAssetSymbol: groupedPosition.loanAssetSymbol,
+            totalPool: formatAmountForSmartConstraintLog(plan.totalPool, groupedPosition.loanAssetDecimals),
+            totalMoved: formatAmountForSmartConstraintLog(plan.totalMoved, groupedPosition.loanAssetDecimals),
+            selectedCapacityShortfall: formatAmountForSmartConstraintLog(
+              plan.diagnostics.selectedCapacityShortfall,
+              groupedPosition.loanAssetDecimals,
+            ),
+            unallocatedAmount: formatAmountForSmartConstraintLog(plan.diagnostics.unallocatedAmount, groupedPosition.loanAssetDecimals),
+            violations: plan.diagnostics.constraintViolations.map((violation) => ({
+              uniqueKey: violation.uniqueKey,
+              collateralSymbol: violation.collateralSymbol,
+              maxAllocationPercent: violation.maxAllocationBps / 100,
+              reason: violation.reason,
+              currentAmount: formatAmountForSmartConstraintLog(violation.currentAmount, groupedPosition.loanAssetDecimals),
+              targetAmount: formatAmountForSmartConstraintLog(violation.targetAmount, groupedPosition.loanAssetDecimals),
+              maxAllowedAmount: formatAmountForSmartConstraintLog(violation.maxAllowedAmount, groupedPosition.loanAssetDecimals),
+              excessAmount: formatAmountForSmartConstraintLog(violation.excessAmount, groupedPosition.loanAssetDecimals),
+              maxWithdrawable: formatAmountForSmartConstraintLog(violation.maxWithdrawable, groupedPosition.loanAssetDecimals),
+              lockedAmount: formatAmountForSmartConstraintLog(violation.lockedAmount, groupedPosition.loanAssetDecimals),
+            })),
+          });
+        }
+
         setSmartPlan(plan);
       })
       .catch((error: unknown) => {
@@ -503,26 +570,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     });
   }, [currentSupplyByMarket, groupedPosition.loanAssetDecimals, marketByKey, smartPlan, smartSelectedMarketKeys]);
 
-  const constraintViolations = useMemo(() => {
-    if (!smartPlan) return [];
-
-    const deltaByMarket = new Map(smartPlan.deltas.map((delta) => [delta.market.uniqueKey, delta]));
-    const violations: { uniqueKey: string; maxAllocationBps: number }[] = [];
-
-    for (const [uniqueKey, maxAllocationBps] of Object.entries(debouncedSmartMaxAllocationBps)) {
-      if (maxAllocationBps >= 10_000) continue;
-
-      const delta = deltaByMarket.get(uniqueKey);
-      const targetAmount = delta?.targetAmount ?? currentSupplyByMarket.get(uniqueKey) ?? 0n;
-      const maxAllowedAmount = (smartPlan.totalPool * BigInt(maxAllocationBps)) / 10_000n;
-
-      if (targetAmount > maxAllowedAmount) {
-        violations.push({ uniqueKey, maxAllocationBps });
-      }
-    }
-
-    return violations;
-  }, [currentSupplyByMarket, debouncedSmartMaxAllocationBps, smartPlan]);
+  const smartConstraintWarning = useMemo(() => getSmartConstraintWarning(smartPlan), [smartPlan]);
 
   const isSmartWithdrawOnly = useMemo(() => {
     if (!smartPlan || smartTotalMoved === 0n) return false;
@@ -1134,9 +1182,18 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
             {!isSmartCalculating && smartPlan && smartTotalMoved > 0n && !isSmartFeeReady && (
               <div className="text-sm text-red-500">Waiting for loan asset USD price to enforce the smart rebalance fee cap.</div>
             )}
-            {!isSmartCalculating && constraintViolations.length > 0 && (
-              <div className="rounded border border-yellow-500/30 bg-yellow-500/10 px-2 py-1.5 text-xs text-yellow-300">
-                Some max-allocation limits could not be fully satisfied due to current market liquidity/capacity.
+            {!isSmartCalculating && smartConstraintWarning != null && (
+              <div className="flex items-start gap-3 rounded border border-border bg-surface px-3 py-2.5 shadow-sm">
+                <div className="pt-0.5">
+                  <RiskIndicator
+                    level="yellow"
+                    description={smartConstraintWarning.title}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-yellow-700 dark:text-yellow-300">{smartConstraintWarning.title}</div>
+                  <div className="mt-1 text-xs leading-relaxed text-secondary">{smartConstraintWarning.detail}</div>
+                </div>
               </div>
             )}
 
