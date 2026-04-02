@@ -88,7 +88,7 @@ type ChartTooltipContentProps = {
 
 export function ChartTooltipContent({ active, payload, label, formatValue }: ChartTooltipContentProps) {
   if (!active || !payload) return null;
-  const pointMeta = payload[0]?.payload as { blockNumber?: number; isStateRead?: boolean } | undefined;
+  const pointMeta = payload[0]?.payload as { isStateRead?: boolean } | undefined;
 
   return (
     <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
@@ -102,7 +102,6 @@ export function ChartTooltipContent({ active, payload, label, formatValue }: Cha
           })}
         </p>
         <div className="flex items-center gap-2 text-[11px] text-secondary/70">
-          {pointMeta?.blockNumber ? <span>Block {pointMeta.blockNumber.toLocaleString()}</span> : null}
           {pointMeta?.isStateRead ? (
             <span className="rounded border border-border/60 bg-surface px-1.5 py-0.5 uppercase tracking-wide text-secondary">
               State Read
