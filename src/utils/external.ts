@@ -1,6 +1,6 @@
 import { getNetworkName, SupportedNetworks, getExplorerUrl } from './networks';
 
-const getMorphoNetworkSlug = (chainId: number): string | undefined => {
+export const getMorphoNetworkSlug = (chainId: number): string | undefined => {
   const network = getNetworkName(chainId)?.toLowerCase();
   if (chainId === SupportedNetworks.HyperEVM) {
     return 'hyperevm';
@@ -8,16 +8,25 @@ const getMorphoNetworkSlug = (chainId: number): string | undefined => {
   if (chainId === SupportedNetworks.Mainnet) {
     return 'ethereum';
   }
+  if (chainId === SupportedNetworks.Etherlink) {
+    return undefined;
+  }
   return network;
+};
+
+export const supportsMorphoAppLinks = (chainId: number): boolean => {
+  return getMorphoNetworkSlug(chainId) !== undefined;
 };
 
 export const getMarketURL = (id: string, chainId: number): string => {
   const network = getMorphoNetworkSlug(chainId);
+  if (!network) return 'https://app.morpho.org';
   return `https://app.morpho.org/${network}/market/${id}`;
 };
 
 export const getVaultURL = (address: string, chainId: number): string => {
   const network = getMorphoNetworkSlug(chainId);
+  if (!network) return 'https://app.morpho.org';
   return `https://app.morpho.org/${network}/vault/${address}`;
 };
 

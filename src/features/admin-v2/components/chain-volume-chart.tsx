@@ -24,6 +24,7 @@ const CHAIN_COLOR_INDEX: Record<number, number> = {
   137: 3, // Polygon
   130: 4, // Unichain
   42161: 6, // Arbitrum
+  42793: 7, // Etherlink
   999: 5, // HyperEVM
   143: 2, // Monad
 };
