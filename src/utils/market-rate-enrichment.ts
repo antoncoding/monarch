@@ -1,7 +1,7 @@
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoMarketRateEnrichments, getMorphoMarketRateFieldsKey } from '@/data-sources/morpho-api/market-rate-fields';
-import { MarketUtils, SharesMath } from '@morpho-org/blue-sdk';
+import { AdaptiveCurveIrmLib, MarketUtils, MathLib, SharesMath } from '@morpho-org/blue-sdk';
 import type { Address } from 'viem';
 import { morphoIrmAbi } from '@/abis/morpho-irm';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
@@ -77,6 +77,19 @@ export type MarketRateEnrichment = Pick<
 export type MarketRateEnrichmentMap = Map<string, MarketRateEnrichment>;
 export const ROLLING_RATE_WINDOW_SECONDS = LOOKBACK_WINDOWS.map((window) => window.seconds);
 
+export type HistoricalMarketBoundaryState = {
+  timestamp: number;
+  targetTimestamp: number;
+  blockNumber: number;
+  supplyApy: number;
+  borrowApy: number;
+  apyAtTarget: number;
+  utilization: number;
+  supplyAssets: bigint;
+  borrowAssets: bigint;
+  liquidityAssets: bigint;
+};
+
 const buildEmptyEnrichment = (): MarketRateEnrichment => ({
   apyAtTarget: 0,
   rateAtTarget: '0',
@@ -92,6 +105,31 @@ const buildEmptyWindowRates = (windowSeconds: number[]): MarketWindowRates =>
   new Map(windowSeconds.map((seconds) => [seconds, { supplyApy: null, borrowApy: null }]));
 
 const toBigInt = (value: string | number | bigint): bigint => BigInt(value);
+
+const deriveRateAtTargetFromBorrowRate = (borrowRate: bigint, utilization: bigint): bigint => {
+  if (borrowRate <= 0n) {
+    return 0n;
+  }
+
+  const targetUtilization = AdaptiveCurveIrmLib.TARGET_UTILIZATION;
+  const errNormFactor = utilization > targetUtilization ? MathLib.WAD - targetUtilization : targetUtilization;
+  if (errNormFactor <= 0n) {
+    return 0n;
+  }
+
+  const err = MathLib.wDivDown(utilization - targetUtilization, errNormFactor);
+  const coeff =
+    err < 0n
+      ? MathLib.WAD - MathLib.wDivDown(MathLib.WAD, AdaptiveCurveIrmLib.CURVE_STEEPNESS)
+      : AdaptiveCurveIrmLib.CURVE_STEEPNESS - MathLib.WAD;
+  const factor = MathLib.wMulDown(coeff, err) + MathLib.WAD;
+
+  if (factor <= 0n) {
+    return 0n;
+  }
+
+  return MathLib.wDivDown(borrowRate, factor);
+};
 
 export const getWindowRatesFromEnrichment = (enrichment: MarketRateEnrichment | undefined, windowSeconds: number): WindowRealizedRates => {
   if (!enrichment) {
@@ -482,6 +520,84 @@ export async function fetchRealizedMarketWindowRates(
   );
 
   return marketWindowRates;
+}
+
+export async function fetchHistoricalMarketBoundaryState(
+  market: RateEnrichmentMarketInput,
+  targetTimestamp: number,
+  customRpcUrls: CustomRpcUrls = {},
+): Promise<HistoricalMarketBoundaryState | null> {
+  const [boundaryState] = await fetchHistoricalMarketBoundaryStates(market, [targetTimestamp], customRpcUrls);
+  return boundaryState ?? null;
+}
+
+export async function fetchHistoricalMarketBoundaryStates(
+  market: RateEnrichmentMarketInput,
+  targetTimestamps: number[],
+  customRpcUrls: CustomRpcUrls = {},
+): Promise<HistoricalMarketBoundaryState[]> {
+  const uniqueTargetTimestamps = Array.from(
+    new Set(targetTimestamps.filter((timestamp) => Number.isFinite(timestamp) && timestamp > 0)),
+  ).sort((left, right) => left - right);
+
+  if (uniqueTargetTimestamps.length === 0) {
+    return [];
+  }
+
+  const chainId = market.morphoBlue.chain.id as SupportedNetworks;
+  const client = getClient(chainId, customRpcUrls[chainId]);
+
+  try {
+    const latestBlockNumber = Number(await client.getBlockNumber());
+    const latestBlock = await client.getBlock({ blockNumber: BigInt(latestBlockNumber) });
+    const latestTimestamp = Number(latestBlock.timestamp);
+    const boundaryBlocks = await fetchBlocksWithTimestamps(client, chainId, uniqueTargetTimestamps, latestBlockNumber, latestTimestamp);
+    const boundaryStates: HistoricalMarketBoundaryState[] = [];
+
+    for (const boundaryBlock of boundaryBlocks) {
+      const snapshots = await fetchMarketsSnapshots([market.uniqueKey], chainId, client, boundaryBlock.blockNumber);
+      const snapshot = snapshots.get(market.uniqueKey.toLowerCase());
+      if (!snapshot || isUninitializedSnapshot(snapshot)) {
+        continue;
+      }
+
+      const borrowRates = await fetchBoundaryBorrowRates([market], chainId, snapshots, client, boundaryBlock.blockNumber);
+      const borrowRate = borrowRates.get(market.uniqueKey.toLowerCase());
+      if (borrowRate == null) {
+        continue;
+      }
+
+      const accruedState = accrueSnapshotToTimestamp(snapshot, borrowRate, boundaryBlock.timestamp);
+      if (!accruedState) {
+        continue;
+      }
+
+      const utilizationWad = MarketUtils.getUtilization({
+        totalSupplyAssets: accruedState.totalSupplyAssets,
+        totalBorrowAssets: accruedState.totalBorrowAssets,
+      });
+      const supplyRate = MathLib.wMulUp(MathLib.wMulDown(borrowRate, utilizationWad), MathLib.WAD - toBigInt(snapshot.fee));
+      const rateAtTarget = deriveRateAtTargetFromBorrowRate(borrowRate, utilizationWad);
+
+      boundaryStates.push({
+        timestamp: boundaryBlock.timestamp,
+        targetTimestamp: boundaryBlock.targetTimestamp,
+        blockNumber: boundaryBlock.blockNumber,
+        supplyApy: MarketUtils.rateToApy(supplyRate),
+        borrowApy: MarketUtils.rateToApy(borrowRate),
+        apyAtTarget: MarketUtils.rateToApy(rateAtTarget),
+        utilization: Number(utilizationWad) / 1e18,
+        supplyAssets: accruedState.totalSupplyAssets,
+        borrowAssets: accruedState.totalBorrowAssets,
+        liquidityAssets: accruedState.totalSupplyAssets - accruedState.totalBorrowAssets,
+      });
+    }
+
+    return boundaryStates;
+  } catch (error) {
+    console.warn(`[market-rate-enrichment] Failed to fetch boundary states for market ${market.uniqueKey} on chain ${chainId}:`, error);
+    return [];
+  }
 }
 
 export async function fetchMarketRateEnrichment(

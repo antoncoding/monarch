@@ -88,16 +88,28 @@ type ChartTooltipContentProps = {
 
 export function ChartTooltipContent({ active, payload, label, formatValue }: ChartTooltipContentProps) {
   if (!active || !payload) return null;
+  const pointMeta = payload[0]?.payload as { blockNumber?: number; isStateRead?: boolean } | undefined;
+
   return (
     <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-      <p className="mb-2 text-xs text-secondary">
-        {new Date((label ?? 0) * 1000).toLocaleString(undefined, {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
-      </p>
+      <div className="mb-2 flex items-start justify-between gap-4">
+        <p className="text-xs text-secondary">
+          {new Date((label ?? 0) * 1000).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+        <div className="flex items-center gap-2 text-[11px] text-secondary/70">
+          {pointMeta?.blockNumber ? <span>Block {pointMeta.blockNumber.toLocaleString()}</span> : null}
+          {pointMeta?.isStateRead ? (
+            <span className="rounded border border-border/60 bg-surface px-1.5 py-0.5 uppercase tracking-wide text-secondary">
+              State Read
+            </span>
+          ) : null}
+        </div>
+      </div>
       <div className="space-y-1">
         {payload.map((entry: any) => (
           <div

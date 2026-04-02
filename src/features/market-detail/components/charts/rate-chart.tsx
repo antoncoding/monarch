@@ -53,7 +53,11 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
   const rateChainId = chainId as SupportedNetworks;
   const customRpcUrl = customRpcUrls[rateChainId];
 
-  const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
+  const {
+    data: historicalData,
+    stateReadPoints,
+    isLoading,
+  } = useMarketHistoricalData(marketId, chainId, selectedTimeRange, market, selectedTimeframe);
   const { data: realizedRates, isLoading: isRealizedRatesLoading } = useQuery<WindowRealizedRates>({
     queryKey: ['market-realized-window-rates', chainId, market.uniqueKey, realizedWindowSeconds, customRpcUrl ?? null],
     queryFn: async () => {
@@ -87,6 +91,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
   });
 
   const chartData = useMemo(() => {
+    const stateReadByTimestamp = new Map(stateReadPoints.map((point) => [point.targetTimestamp, point]));
     const historicalPoints = historicalData?.rates
       ? historicalData.rates.supplyApy
           .map((point: TimeseriesDataPoint, index: number) => {
@@ -113,6 +118,8 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
               supplyApy: supplyVal,
               borrowApy: borrowVal,
               apyAtTarget: targetVal,
+              blockNumber: stateReadByTimestamp.get(point.x)?.blockNumber,
+              isStateRead: stateReadByTimestamp.has(point.x),
             };
           })
           .filter((point): point is NonNullable<typeof point> => point !== null)
@@ -138,6 +145,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
     market.state.borrowApy,
     market.state.apyAtTarget,
     selectedTimeRange.endTimestamp,
+    stateReadPoints,
   ]);
 
   const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;

@@ -47,7 +47,11 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
   const chartColors = useChartColors();
 
-  const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
+  const {
+    data: historicalData,
+    stateReadPoints,
+    isLoading,
+  } = useMarketHistoricalData(marketId, chainId, selectedTimeRange, market, selectedTimeframe);
 
   const [visibleLines, setVisibleLines] = useState({
     supply: true,
@@ -62,6 +66,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   };
 
   const chartData = useMemo(() => {
+    const stateReadByTimestamp = new Map(stateReadPoints.map((point) => [point.targetTimestamp, point]));
     if (!historicalData?.volumes) {
       return [
         {
@@ -88,6 +93,8 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
           supply: convertValue(point.y),
           borrow: convertValue(borrowData[index]?.y),
           liquidity: convertValue(liquidityData[index]?.y),
+          blockNumber: stateReadByTimestamp.get(point.x)?.blockNumber,
+          isStateRead: stateReadByTimestamp.has(point.x),
         };
       })
       .filter((point): point is NonNullable<typeof point> => point !== null);
@@ -107,6 +114,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     market.state.borrowAssets,
     market.state.liquidityAssets,
     selectedTimeRange.endTimestamp,
+    stateReadPoints,
   ]);
 
   const formatValue = (value: number) => {
