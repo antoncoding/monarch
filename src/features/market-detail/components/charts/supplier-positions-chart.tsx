@@ -13,7 +13,7 @@ import { useMarketDetailChartState, calculateTimePoints } from '@/stores/useMark
 import { formatSimple, formatReadable } from '@/utils/balance';
 import { formatChartTime } from '@/utils/chart';
 import { getSlicedAddress } from '@/utils/address';
-import { chartTooltipCursor } from './chart-utils';
+import { chartTooltipCursor, getTimeSeriesXAxisProps } from './chart-utils';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
@@ -45,7 +45,7 @@ function SupplierPositionsTooltip({
 
   return (
     <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-      <div className="mb-2 space-y-0.5">
+      <div className="mb-2 flex items-start justify-between gap-4">
         <p className="text-xs text-secondary">
           {new Date(timestamp * 1000).toLocaleString(undefined, {
             month: 'short',
@@ -54,7 +54,7 @@ function SupplierPositionsTooltip({
             minute: '2-digit',
           })}
         </p>
-        {blockNumber && <p className="font-mono text-xs text-secondary/70">Block #{blockNumber.toLocaleString()}</p>}
+        {blockNumber ? <p className="text-[11px] text-secondary/70">Block {blockNumber.toLocaleString()}</p> : null}
       </div>
       <div className="space-y-1">
         {payload
@@ -251,6 +251,7 @@ export function SupplierPositionsChart({ marketId, chainId, market }: SupplierPo
             />
             <XAxis
               dataKey="timestamp"
+              {...getTimeSeriesXAxisProps(selectedTimeRange)}
               axisLine={false}
               tickLine={false}
               tickMargin={12}

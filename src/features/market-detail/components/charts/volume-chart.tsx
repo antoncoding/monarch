@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import moment from 'moment';
 import { Card } from '@/components/ui/card';
 import { Tooltip as HeroTooltip } from '@/components/ui/tooltip';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -20,6 +19,7 @@ import {
   createLegendClickHandler,
   chartTooltipCursor,
   chartLegendStyle,
+  getTimeSeriesXAxisProps,
 } from './chart-utils';
 import type { AssetTimeseriesDataPoint, Market } from '@/utils/types';
 
@@ -47,7 +47,12 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
   const chartColors = useChartColors();
 
-  const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
+  const {
+    data: historicalData,
+    stateReadPoints,
+    isLoading,
+    isFetching,
+  } = useMarketHistoricalData(marketId, chainId, selectedTimeRange, market, selectedTimeframe);
 
   const [visibleLines, setVisibleLines] = useState({
     supply: true,
@@ -62,10 +67,11 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   };
 
   const chartData = useMemo(() => {
+    const stateReadByTimestamp = new Map(stateReadPoints.map((point) => [point.targetTimestamp, point]));
     if (!historicalData?.volumes) {
       return [
         {
-          x: moment().unix(),
+          x: selectedTimeRange.endTimestamp,
           supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
           borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
           liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
@@ -88,12 +94,14 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
           supply: convertValue(point.y),
           borrow: convertValue(borrowData[index]?.y),
           liquidity: convertValue(liquidityData[index]?.y),
+          blockNumber: stateReadByTimestamp.get(point.x)?.blockNumber,
+          isStateRead: stateReadByTimestamp.has(point.x),
         };
       })
       .filter((point): point is NonNullable<typeof point> => point !== null);
 
     const nowPoint = {
-      x: moment().unix(),
+      x: selectedTimeRange.endTimestamp,
       supply: convertValue(BigInt(market.state.supplyAssets ?? 0)),
       borrow: convertValue(BigInt(market.state.borrowAssets ?? 0)),
       liquidity: convertValue(BigInt(market.state.liquidityAssets ?? 0)),
@@ -106,6 +114,8 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     market.state.supplyAssets,
     market.state.borrowAssets,
     market.state.liquidityAssets,
+    selectedTimeRange.endTimestamp,
+    stateReadPoints,
   ]);
 
   const formatValue = (value: number) => {
@@ -200,6 +210,12 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
 
         {/* Controls */}
         <div className="flex gap-2">
+          {isFetching && !isLoading ? (
+            <div className="flex items-center gap-2 rounded-full border border-border/60 bg-surface px-2 py-1 text-[11px] text-secondary">
+              <Spinner size={12} />
+              <span>Updating</span>
+            </div>
+          ) : null}
           <Select
             value={selectedTimeframe}
             onValueChange={(value) => setTimeframe(value as '1d' | '7d' | '30d' | '3m' | '6m')}
@@ -245,6 +261,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
               />
               <XAxis
                 dataKey="x"
+                {...getTimeSeriesXAxisProps(selectedTimeRange)}
                 axisLine={false}
                 tickLine={false}
                 tickMargin={12}

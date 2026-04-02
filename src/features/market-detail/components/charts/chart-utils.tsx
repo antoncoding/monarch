@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { CHART_COLORS, type useChartColors } from '@/constants/chartColors';
 import { TIMEFRAME_CONFIG, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
+import type { TimeseriesOptions } from '@/utils/types';
 
 // Derive labels from centralized config
 export const TIMEFRAME_LABELS: Record<ChartTimeframe, string> = Object.fromEntries(
@@ -87,16 +88,27 @@ type ChartTooltipContentProps = {
 
 export function ChartTooltipContent({ active, payload, label, formatValue }: ChartTooltipContentProps) {
   if (!active || !payload) return null;
+  const pointMeta = payload[0]?.payload as { isStateRead?: boolean } | undefined;
+
   return (
     <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
-      <p className="mb-2 text-xs text-secondary">
-        {new Date((label ?? 0) * 1000).toLocaleString(undefined, {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
-      </p>
+      <div className="mb-2 flex items-start justify-between gap-4">
+        <p className="text-xs text-secondary">
+          {new Date((label ?? 0) * 1000).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+        <div className="flex items-center gap-2 text-[11px] text-secondary/70">
+          {pointMeta?.isStateRead ? (
+            <span className="rounded border border-border/60 bg-surface px-1.5 py-0.5 uppercase tracking-wide text-secondary">
+              State Read
+            </span>
+          ) : null}
+        </div>
+      </div>
       <div className="space-y-1">
         {payload.map((entry: any) => (
           <div
@@ -156,3 +168,9 @@ export const chartLegendStyle = {
   iconType: 'circle' as const,
   iconSize: 8,
 };
+
+export const getTimeSeriesXAxisProps = (timeRange: TimeseriesOptions) => ({
+  type: 'number' as const,
+  scale: 'linear' as const,
+  domain: [timeRange.startTimestamp, timeRange.endTimestamp] as [number, number],
+});
