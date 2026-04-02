@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { CHART_COLORS, type useChartColors } from '@/constants/chartColors';
 import { TIMEFRAME_CONFIG, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
+import type { TimeseriesOptions } from '@/utils/types';
 
 // Derive labels from centralized config
 export const TIMEFRAME_LABELS: Record<ChartTimeframe, string> = Object.fromEntries(
@@ -156,3 +157,9 @@ export const chartLegendStyle = {
   iconType: 'circle' as const,
   iconSize: 8,
 };
+
+export const getTimeSeriesXAxisProps = (timeRange: TimeseriesOptions) => ({
+  type: 'number' as const,
+  scale: 'linear' as const,
+  domain: [timeRange.startTimestamp, timeRange.endTimestamp] as [number, number],
+});

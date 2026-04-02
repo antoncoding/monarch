@@ -15,6 +15,7 @@ import type { Market } from '@/utils/types';
 const SECONDS_PER_DAY = 24 * 60 * 60;
 const BORROW_RATE_BATCH_SIZE = 100;
 const BORROW_RATE_PARALLEL_BATCHES = 2;
+const MARKET_RATE_RPC_FALLBACK_ENABLED = process.env.NEXT_PUBLIC_ENABLE_MARKET_RATE_RPC_FALLBACK?.trim().toLowerCase() !== 'false';
 
 const LOOKBACK_WINDOWS = [
   {
@@ -510,7 +511,7 @@ export async function fetchMarketRateEnrichment(
       enrichments.set(key, morphoEnrichment);
     });
 
-    if (morphoRateFetchFailed) {
+    if (morphoRateFetchFailed && MARKET_RATE_RPC_FALLBACK_ENABLED) {
       const windowRates = await fetchRealizedMarketWindowRates(
         chainMarkets,
         LOOKBACK_WINDOWS.map((window) => window.seconds),

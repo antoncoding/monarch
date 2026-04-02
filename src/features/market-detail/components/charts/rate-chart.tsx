@@ -30,6 +30,7 @@ import {
   createLegendClickHandler,
   chartTooltipCursor,
   chartLegendStyle,
+  getTimeSeriesXAxisProps,
 } from './chart-utils';
 import type { Market } from '@/utils/types';
 import type { TimeseriesDataPoint } from '@/utils/types';
@@ -86,38 +87,58 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
   });
 
   const chartData = useMemo(() => {
-    if (!historicalData?.rates) return [];
-    const { supplyApy, borrowApy, apyAtTarget } = historicalData.rates;
+    const historicalPoints = historicalData?.rates
+      ? historicalData.rates.supplyApy
+          .map((point: TimeseriesDataPoint, index: number) => {
+            const borrowValue = historicalData.rates.borrowApy[index]?.y;
+            const targetValue = historicalData.rates.apyAtTarget[index]?.y;
 
-    return supplyApy
-      .map((point: TimeseriesDataPoint, index: number) => {
-        const borrowValue = borrowApy[index]?.y;
-        const targetValue = apyAtTarget[index]?.y;
+            if (
+              point.y === null ||
+              borrowValue == null ||
+              targetValue == null ||
+              !Number.isFinite(point.y) ||
+              !Number.isFinite(borrowValue) ||
+              !Number.isFinite(targetValue)
+            ) {
+              return null;
+            }
 
-        if (
-          point.y === null ||
-          borrowValue == null ||
-          targetValue == null ||
-          !Number.isFinite(point.y) ||
-          !Number.isFinite(borrowValue) ||
-          !Number.isFinite(targetValue)
-        ) {
-          return null;
-        }
+            const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
+            const borrowVal = isAprDisplay ? convertApyToApr(borrowValue) : borrowValue;
+            const targetVal = isAprDisplay ? convertApyToApr(targetValue) : targetValue;
 
-        const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
-        const borrowVal = isAprDisplay ? convertApyToApr(borrowValue) : borrowValue;
-        const targetVal = isAprDisplay ? convertApyToApr(targetValue) : targetValue;
+            return {
+              x: point.x,
+              supplyApy: supplyVal,
+              borrowApy: borrowVal,
+              apyAtTarget: targetVal,
+            };
+          })
+          .filter((point): point is NonNullable<typeof point> => point !== null)
+      : [];
 
-        return {
-          x: point.x,
-          supplyApy: supplyVal,
-          borrowApy: borrowVal,
-          apyAtTarget: targetVal,
-        };
-      })
-      .filter((point): point is NonNullable<typeof point> => point !== null);
-  }, [historicalData, isAprDisplay]);
+    const nowPoint = {
+      x: selectedTimeRange.endTimestamp,
+      supplyApy: isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy,
+      borrowApy: isAprDisplay ? convertApyToApr(market.state.borrowApy) : market.state.borrowApy,
+      apyAtTarget: isAprDisplay ? convertApyToApr(market.state.apyAtTarget) : market.state.apyAtTarget,
+    };
+
+    const lastHistoricalPoint = historicalPoints.at(-1);
+    if (!lastHistoricalPoint || lastHistoricalPoint.x < nowPoint.x) {
+      return [...historicalPoints, nowPoint];
+    }
+
+    return historicalPoints;
+  }, [
+    historicalData,
+    isAprDisplay,
+    market.state.supplyApy,
+    market.state.borrowApy,
+    market.state.apyAtTarget,
+    selectedTimeRange.endTimestamp,
+  ]);
 
   const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;
 
@@ -212,6 +233,7 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
               />
               <XAxis
                 dataKey="x"
+                {...getTimeSeriesXAxisProps(selectedTimeRange)}
                 axisLine={false}
                 tickLine={false}
                 tickMargin={12}

@@ -13,7 +13,7 @@ import { useMarketDetailChartState, calculateTimePoints } from '@/stores/useMark
 import { formatSimple, formatReadable } from '@/utils/balance';
 import { formatChartTime } from '@/utils/chart';
 import { getSlicedAddress } from '@/utils/address';
-import { chartTooltipCursor } from './chart-utils';
+import { chartTooltipCursor, getTimeSeriesXAxisProps } from './chart-utils';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
@@ -251,6 +251,7 @@ export function SupplierPositionsChart({ marketId, chainId, market }: SupplierPo
             />
             <XAxis
               dataKey="timestamp"
+              {...getTimeSeriesXAxisProps(selectedTimeRange)}
               axisLine={false}
               tickLine={false}
               tickMargin={12}
