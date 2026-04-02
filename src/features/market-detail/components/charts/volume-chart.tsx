@@ -51,6 +51,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     data: historicalData,
     stateReadPoints,
     isLoading,
+    isFetching,
   } = useMarketHistoricalData(marketId, chainId, selectedTimeRange, market, selectedTimeframe);
 
   const [visibleLines, setVisibleLines] = useState({
@@ -209,6 +210,12 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
 
         {/* Controls */}
         <div className="flex gap-2">
+          {isFetching && !isLoading ? (
+            <div className="flex items-center gap-2 rounded-full border border-border/60 bg-surface px-2 py-1 text-[11px] text-secondary">
+              <Spinner size={12} />
+              <span>Updating</span>
+            </div>
+          ) : null}
           <Select
             value={selectedTimeframe}
             onValueChange={(value) => setTimeframe(value as '1d' | '7d' | '30d' | '3m' | '6m')}

@@ -5,7 +5,7 @@ import { fetchMonarchMarketHistoricalData } from '@/data-sources/monarch-api/his
 import { fetchMorphoMarketHistoricalData, type HistoricalDataSuccessResult } from '@/data-sources/morpho-api/historical';
 import { fetchSubgraphMarketHistoricalData } from '@/data-sources/subgraph/historical';
 import { fetchHistoricalMarketBoundaryStates, type HistoricalMarketBoundaryState } from '@/utils/market-rate-enrichment';
-import { TIMEFRAME_CONFIG, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
+import { TIMEFRAME_CONFIG, calculateTimePoints, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market, TimeseriesOptions } from '@/utils/types';
 
@@ -23,34 +23,6 @@ type HistoricalSamplePoint = {
   supplyAssets: bigint;
   borrowAssets: bigint;
   liquidityAssets: bigint;
-};
-
-const HOUR_IN_SECONDS = 60 * 60;
-const DAY_IN_SECONDS = 24 * HOUR_IN_SECONDS;
-
-const getHistoricalFillIntervalSeconds = (timeframe: ChartTimeframe): number => {
-  switch (timeframe) {
-    case '1d':
-    case '7d':
-      return HOUR_IN_SECONDS;
-    case '30d':
-      return DAY_IN_SECONDS;
-    default:
-      return TIMEFRAME_CONFIG[timeframe].intervalSeconds;
-  }
-};
-
-const buildHistoricalFillTimestamps = (timeframe: ChartTimeframe, endTimestamp: number): number[] => {
-  const durationSeconds = TIMEFRAME_CONFIG[timeframe].durationSeconds;
-  const intervalSeconds = getHistoricalFillIntervalSeconds(timeframe);
-  const startTimestamp = endTimestamp - durationSeconds;
-  const timestamps: number[] = [];
-
-  for (let timestamp = startTimestamp; timestamp <= endTimestamp; timestamp += intervalSeconds) {
-    timestamps.push(timestamp);
-  }
-
-  return timestamps;
 };
 
 const buildHistoricalSamplePoints = (historicalData: HistoricalDataSuccessResult | null): HistoricalSamplePoint[] => {
@@ -162,7 +134,7 @@ export const useMarketHistoricalData = (
     timeframe ?? null,
   ];
 
-  const { data, isLoading, error, refetch } = useQuery<UseMarketHistoricalDataResult>({
+  const { data, isLoading, isFetching, error, refetch } = useQuery<UseMarketHistoricalDataResult>({
     queryKey: queryKey,
     queryFn: async (): Promise<UseMarketHistoricalDataResult> => {
       if (!uniqueKey || !network || !options) {
@@ -210,8 +182,8 @@ export const useMarketHistoricalData = (
 
       let stateReadPoints: HistoricalMarketBoundaryState[] = [];
       if (market && timeframe) {
-        const targetTimestamps = buildHistoricalFillTimestamps(timeframe, options.endTimestamp).slice(0, -1);
-        const toleranceSeconds = Math.max(1, Math.floor(getHistoricalFillIntervalSeconds(timeframe) / 2));
+        const targetTimestamps = calculateTimePoints(timeframe, options.endTimestamp).slice(0, -1);
+        const toleranceSeconds = Math.max(1, Math.floor(TIMEFRAME_CONFIG[timeframe].intervalSeconds / 2));
         const historicalPoints = buildHistoricalSamplePoints(historicalData);
         const usedPointIndexes = new Set<number>();
         const pointsByTarget = new Map<number, HistoricalSamplePoint>();
@@ -278,6 +250,7 @@ export const useMarketHistoricalData = (
     data: data?.historicalData ?? null,
     stateReadPoints: data?.stateReadPoints ?? [],
     isLoading: isLoading,
+    isFetching: isFetching,
     error: error,
     refetch: refetch,
   };
