@@ -61,8 +61,10 @@ export const getMerklCampaignURL = (chainId: number, type: string, identifier: s
   return `https://app.merkl.xyz/opportunities/${chainName}/${type}/${identifier}`;
 };
 
+export const MONARCH_DOCS_URL = 'https://docs.monarchlend.xyz';
+
 export const EXTERNAL_LINKS = {
-  docs: 'https://monarch-lend.gitbook.io/monarch-lend/',
+  docs: MONARCH_DOCS_URL,
   discord: 'https://discord.gg/Ur4dwN3aPS',
   github: 'https://github.com/monarch-xyz',
 } as const;
