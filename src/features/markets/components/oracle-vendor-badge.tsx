@@ -4,15 +4,8 @@ import React from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoWarningOutline, IoHelpCircleOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
-import {
-  OracleType,
-  OracleVendorIcons,
-  type PriceFeedVendors,
-  getOracleType,
-  parseMetaOracleVendors,
-  parsePriceFeedVendors,
-} from '@/utils/oracle';
-import { getMetaOracleDataFromMetadata, getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { OracleType, OracleVendorIcons, getOracleVendorInfo, type PriceFeedVendors, getOracleType } from '@/utils/oracle';
+import { getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
 
 type OracleVendorBadgeProps = {
   chainId: number;
@@ -39,7 +32,6 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
 function OracleVendorBadge({ chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
   const standardOracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
-  const metaOracleData = getMetaOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
 
   const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
   const isCustom = oracleType === OracleType.Custom;
@@ -53,7 +45,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
     !standardOracleData?.quoteFeedTwo &&
     (standardOracleData?.baseVault || standardOracleData?.quoteVault);
 
-  const vendorInfo = isMeta && metaOracleData ? parseMetaOracleVendors(metaOracleData) : parsePriceFeedVendors(standardOracleData);
+  const vendorInfo = getOracleVendorInfo(oracleAddress, chainId, oracleMetadataMap);
   const { coreVendors, taggedVendors, hasCompletelyUnknown, hasTaggedUnknown } = vendorInfo;
   const hasUnknownFeed = hasCompletelyUnknown || hasTaggedUnknown;
   const displayNames = hasUnknownFeed ? [...coreVendors, ...taggedVendors, 'Unverified'] : [...coreVendors, ...taggedVendors];

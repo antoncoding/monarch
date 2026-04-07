@@ -173,7 +173,7 @@ function transformToRecord(data: OracleMetadataFile | null | undefined): OracleM
  */
 export function useOracleMetadata(chainId: SupportedNetworks | number | undefined) {
   return useQuery({
-    queryKey: ['oracle-metadata', chainId],
+    queryKey: ['oracle-metadata', ORACLE_GIST_BASE_URL ?? 'unset', chainId],
     queryFn: () => (chainId ? fetchOracleMetadata(chainId) : Promise.resolve(null)),
     select: transformToRecord,
     enabled: !!chainId,
@@ -246,7 +246,7 @@ export function getMetaOracleDataFromMetadata(
 export function useAllOracleMetadata() {
   const queries = useQueries({
     queries: ALL_SUPPORTED_NETWORKS.map((chainId) => ({
-      queryKey: ['oracle-metadata', chainId],
+      queryKey: ['oracle-metadata', ORACLE_GIST_BASE_URL ?? 'unset', chainId],
       queryFn: () => fetchOracleMetadata(chainId),
       staleTime: 1000 * 60 * 30,
       gcTime: 1000 * 60 * 60,

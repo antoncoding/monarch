@@ -154,6 +154,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
         );
 
       case PriceFeedVendors.PythNetwork:
+      case PriceFeedVendors.Midas:
       case PriceFeedVendors.Oval:
       case PriceFeedVendors.Lido:
         return (
