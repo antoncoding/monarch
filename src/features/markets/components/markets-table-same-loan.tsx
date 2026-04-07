@@ -15,7 +15,7 @@ import { TrustedByCell } from '@/features/autovault/components/trusted-vault-bad
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useModal } from '@/hooks/useModal';
-import { getStandardOracleDataFromMetadata, useAllOracleMetadata } from '@/hooks/useOracleMetadata';
+import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -23,7 +23,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
 import { getViemChain } from '@/utils/networks';
-import { parsePriceFeedVendors, type PriceFeedVendors } from '@/utils/oracle';
+import { getOracleVendorInfo, type PriceFeedVendors } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
 import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
@@ -455,9 +455,7 @@ export function MarketsTableWithSameLoanAsset({
 
     markets.forEach((m) => {
       if (!m?.market?.morphoBlue?.chain?.id) return;
-      const vendorInfo = parsePriceFeedVendors(
-        getStandardOracleDataFromMetadata(oracleMetadataMap, m.market.oracleAddress, m.market.morphoBlue.chain.id),
-      );
+      const vendorInfo = getOracleVendorInfo(m.market.oracleAddress, m.market.morphoBlue.chain.id, oracleMetadataMap);
       if (vendorInfo?.coreVendors) {
         vendorInfo.coreVendors.forEach((vendor) => oracleSet.add(vendor));
       }

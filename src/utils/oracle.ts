@@ -46,6 +46,7 @@ export enum PriceFeedVendors {
   Lido = 'Lido',
   Pendle = 'Pendle',
   API3 = 'API3',
+  Midas = 'Midas',
   Unknown = 'Unknown',
 }
 
@@ -58,6 +59,7 @@ export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
   [PriceFeedVendors.Lido]: require('../imgs/oracles/lido.png') as string,
   [PriceFeedVendors.Pendle]: require('../imgs/oracles/pendle.png') as string,
   [PriceFeedVendors.API3]: require('../imgs/oracles/api3.svg') as string,
+  [PriceFeedVendors.Midas]: require('../imgs/oracles/midas.png') as string,
   [PriceFeedVendors.Unknown]: '',
 };
 
@@ -70,6 +72,7 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
   const normalizedProvider = provider.trim().toLowerCase();
 
   if (normalizedProvider.includes('pendle')) return PriceFeedVendors.Pendle;
+  if (normalizedProvider.includes('midas')) return PriceFeedVendors.Midas;
 
   const mapping: Record<string, PriceFeedVendors> = {
     chainlink: PriceFeedVendors.Chainlink,
@@ -79,6 +82,7 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
     oval: PriceFeedVendors.Oval,
     pyth: PriceFeedVendors.PythNetwork,
     api3: PriceFeedVendors.API3,
+    midas: PriceFeedVendors.Midas,
   };
 
   return mapping[normalizedProvider] ?? PriceFeedVendors.Unknown;
@@ -182,16 +186,20 @@ export function getOracleType(oracleAddress?: string, chainId?: number, metadata
   return OracleType.Custom;
 }
 
+function emptyVendorInfo(): VendorInfo {
+  return {
+    coreVendors: [],
+    taggedVendors: [],
+    hasCompletelyUnknown: false,
+    hasTaggedUnknown: false,
+    vendors: [],
+    hasUnknown: false,
+  };
+}
+
 export function parsePriceFeedVendors(oracleData: OracleOutputData | null | undefined): VendorInfo {
   if (!oracleData) {
-    return {
-      coreVendors: [],
-      taggedVendors: [],
-      hasCompletelyUnknown: false,
-      hasTaggedUnknown: false,
-      vendors: [],
-      hasUnknown: false,
-    };
+    return emptyVendorInfo();
   }
 
   const feeds = [oracleData.baseFeedOne, oracleData.baseFeedTwo, oracleData.quoteFeedOne, oracleData.quoteFeedTwo];
@@ -248,6 +256,31 @@ export function parseMetaOracleVendors(metaData: MetaOracleOutputData): VendorIn
     ...(backup ? [backup.baseFeedOne, backup.baseFeedTwo, backup.quoteFeedOne, backup.quoteFeedTwo] : []),
   ];
   return classifyEnrichedFeeds(feeds);
+}
+
+export function getOracleVendorInfo(
+  oracleAddress: string | undefined,
+  chainId: number | undefined,
+  metadataMap: OracleMetadataRecord | undefined,
+): VendorInfo {
+  if (!oracleAddress || !metadataMap) {
+    return emptyVendorInfo();
+  }
+
+  const metadata = getOracleFromMetadata(metadataMap, oracleAddress, chainId);
+  if (!metadata) {
+    return emptyVendorInfo();
+  }
+
+  if (metadata.type === 'meta') {
+    return parseMetaOracleVendors(metadata.data);
+  }
+
+  if (metadata.type === 'standard') {
+    return parsePriceFeedVendors(metadata.data);
+  }
+
+  return emptyVendorInfo();
 }
 
 type CheckFeedsPathResult = {
