@@ -1,5 +1,5 @@
 import { createPublicClient, http, type PublicClient } from 'viem';
-import { arbitrum, base, mainnet, monad, optimism, polygon, unichain } from 'viem/chains';
+import { arbitrum, base, etherlink, mainnet, monad, optimism, polygon, unichain } from 'viem/chains';
 import { getDefaultRPC, getViemChain, SupportedNetworks, hyperEvm } from './networks';
 
 // Default clients (cached)
@@ -32,6 +32,10 @@ const initializeDefaultClients = () => {
       [SupportedNetworks.Arbitrum]: createPublicClient({
         chain: arbitrum,
         transport: http(getDefaultRPC(SupportedNetworks.Arbitrum)),
+      }) as PublicClient,
+      [SupportedNetworks.Etherlink]: createPublicClient({
+        chain: etherlink,
+        transport: http(getDefaultRPC(SupportedNetworks.Etherlink)),
       }) as PublicClient,
       [SupportedNetworks.HyperEVM]: createPublicClient({
         chain: hyperEvm,
