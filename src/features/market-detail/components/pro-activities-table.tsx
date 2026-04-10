@@ -528,7 +528,11 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
       return undefined;
     }
 
-    if (!activity.isMonarch || isSimpleMonarchAccountResolvedKind(activity.kind)) {
+    const hasCurrentMarketBorrowOrRepayLeg = activity.legs.some((leg) => {
+      return leg.isCurrentMarket && (leg.kind === 'borrow' || leg.kind === 'repay');
+    });
+
+    if (!activity.isMonarch || isSimpleMonarchAccountResolvedKind(activity.kind) || hasCurrentMarketBorrowOrRepayLeg) {
       return activity.actorAddress as Address;
     }
 
