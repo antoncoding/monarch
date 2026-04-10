@@ -35,7 +35,7 @@ export type LeverageQuote = {
    */
   initialCapitalCollateralTokenAmount: bigint;
   /**
-   * Additional market collateral-token amount sourced by the flash leg. 
+   * Additional market collateral-token amount sourced by the flash leg.
    *
    * - ERC4626 route: minimum shares accepted for depositing the flash-loaned loan assets
    * - swap route: minimum collateral output expected from selling the flash-borrowed loan asset

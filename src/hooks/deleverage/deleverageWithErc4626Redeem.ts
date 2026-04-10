@@ -16,8 +16,9 @@ type DeleverageWithErc4626RedeemParams = {
   autoWithdrawCollateralAmount: bigint;
   bundlerAddress: Address;
   /**
-   * Exact market collateral-share amount to route through the repay/redeem leg.
-   * On full-close-by-shares this must come from the quote-derived close bound, not the raw input field.
+   * ERC4626 share amount routed through the unwind leg.
+   * - partial route: exact shares to redeem
+   * - full-close route: maximum shares the bundler may spend to withdraw the exact repayment assets
    */
   collateralToRedeem: bigint;
   ensureBundlerAuthorization: EnsureBundlerAuthorization;
@@ -82,11 +83,22 @@ export const deleverageWithErc4626Redeem = async ({
     useRepayByShares: useCloseRoute,
   });
 
-  // No swap slippage exists on the ERC4626 redeem path.
-  // This redeem leg must return at least the flash-loan settlement amount or the whole bundle
-  // would revert later during flash-loan repayment. Extra loan assets from the buffered close
-  // amount are swept back to the user, while any remaining collateral is withdrawn separately below.
-  const minLoanAssetsOut = flashLoanAmount;
+  const unwindVaultTx = useCloseRoute
+    ? encodeFunctionData({
+        abi: morphoBundlerAbi,
+        functionName: 'erc4626Withdraw',
+        // Full close is the reverse of leverage's exact-asset deposit path: ask the vault for the
+        // exact buffered loan-asset amount needed to settle the flash loan, with a max-shares ceiling.
+        args: [route.collateralVault, flashLoanAmount, collateralToRedeem, bundlerAddress, bundlerAddress],
+      })
+    : encodeFunctionData({
+        abi: morphoBundlerAbi,
+        functionName: 'erc4626Redeem',
+        // Partial unwind keeps the user-selected share amount fixed and applies the slippage buffer as
+        // a minimum loan-asset floor derived from the redeem preview.
+        args: [route.collateralVault, collateralToRedeem, flashLoanAmount, bundlerAddress, bundlerAddress],
+      });
+
   const callbackTxs: `0x${string}`[] = [
     encodeFunctionData({
       abi: morphoBundlerAbi,
@@ -106,11 +118,7 @@ export const deleverageWithErc4626Redeem = async ({
       // Withdraw ERC4626 shares onto the bundler because the same bundler multicall redeems them immediately.
       args: [marketParams, collateralToRedeem, bundlerAddress],
     }),
-    encodeFunctionData({
-      abi: morphoBundlerAbi,
-      functionName: 'erc4626Redeem',
-      args: [route.collateralVault, collateralToRedeem, minLoanAssetsOut, bundlerAddress, bundlerAddress],
-    }),
+    unwindVaultTx,
   ];
 
   if (autoWithdrawCollateralAmount > 0n) {
