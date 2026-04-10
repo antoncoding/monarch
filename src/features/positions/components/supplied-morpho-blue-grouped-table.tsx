@@ -25,7 +25,9 @@ import { useModalStore } from '@/stores/useModalStore';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import type { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
-import { formatReadable, formatBalance } from '@/utils/balance';
+import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
+import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
+import { formatTokenAmountPreview } from '@/utils/token-amount-format';
 import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
@@ -206,7 +208,7 @@ export function SuppliedMorphoBlueGroupedTable({
                     {/* Loan asset details */}
                     <TableCell data-label="Size">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="font-medium">{formatReadable(groupedPosition.totalSupply)}</span>
+                        <span className="font-medium">{formatReadableTokenAmount(groupedPosition.totalSupply)}</span>
                         <span>{groupedPosition.loanAsset}</span>
                         <TokenIcon
                           address={groupedPosition.loanAssetAddress}
@@ -275,27 +277,38 @@ export function SuppliedMorphoBlueGroupedTable({
 
                               const startTimestamp = blockData.timestamp * 1000;
                               const endTimestamp = Date.now();
+                              const earningsPreview = formatTokenAmountPreview(earnings, groupedPosition.loanAssetDecimals);
+                              const exactTokenAmount = `${earningsPreview.full} ${groupedPosition.loanAsset}`;
 
                               return (
                                 <TooltipContent
                                   title="Interest Accrued Time Period"
-                                  detail={`Calculated from ${moment(Number(startTimestamp)).format('MMM D, YYYY HH:mm')} to ${moment(Number(endTimestamp)).format('MMM D, YYYY HH:mm')}`}
+                                  detail={
+                                    <div className="space-y-1">
+                                      <div>
+                                        Calculated from {moment(Number(startTimestamp)).format('MMM D, YYYY HH:mm')} to{' '}
+                                        {moment(Number(endTimestamp)).format('MMM D, YYYY HH:mm')}
+                                      </div>
+                                      <div>Exact amount: {exactTokenAmount}</div>
+                                    </div>
+                                  }
                                 />
                               );
                             })()}
                           >
                             <div className="cursor-help">
                               {(() => {
-                                const earningsReadable = Number(formatBalance(earnings, groupedPosition.loanAssetDecimals));
                                 const priceKey = getTokenPriceKey(groupedPosition.loanAssetAddress, groupedPosition.chainId);
                                 const price = prices.get(priceKey);
-                                const tokenAmount = `${formatReadable(earningsReadable)} ${groupedPosition.loanAsset}`;
-                                const usdValue = price ? earningsReadable * price : null;
+                                const earningsPreview = formatTokenAmountPreview(earnings, groupedPosition.loanAssetDecimals);
+                                const tokenAmount = `${earningsPreview.compact} ${groupedPosition.loanAsset}`;
+                                const usdValue = computeAssetUsdValue(earnings, groupedPosition.loanAssetDecimals, price ?? null);
+                                const usdDisplay = usdValue == null ? null : formatUsdValueDisplay(usdValue);
 
-                                if (showEarningsInUsd && usdValue !== null) {
+                                if (showEarningsInUsd && usdDisplay !== null) {
                                   return (
                                     <div className="flex flex-col items-center gap-0 font-medium">
-                                      <span>${formatReadable(usdValue, usdValue < 1 ? 4 : 2)}</span>
+                                      <span>{usdDisplay.display}</span>
                                       <span className="font-normal opacity-70">{tokenAmount}</span>
                                     </div>
                                   );

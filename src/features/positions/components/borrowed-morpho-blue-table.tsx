@@ -17,7 +17,7 @@ import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/featu
 import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
-import { formatReadable } from '@/utils/balance';
+import { formatReadableTokenAmount } from '@/utils/balance';
 import { buildBorrowPositionRows } from '@/utils/positions';
 import { computeHealthScoreFromLtv, formatHealthScore } from '@/modals/borrow/components/helpers';
 import type { MarketPositionWithEarnings } from '@/utils/types';
@@ -177,7 +177,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                       <div className="flex items-center justify-center gap-2">
                         {row.isActiveDebt ? (
                           <>
-                            <span className="font-medium">{formatReadable(row.borrowAmount)}</span>
+                            <span className="font-medium">{formatReadableTokenAmount(row.borrowAmount)}</span>
                             <span>{row.market.loanAsset.symbol}</span>
                             <TokenIcon
                               address={row.market.loanAsset.address}
@@ -210,7 +210,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                       <div className="flex items-center justify-center gap-2">
                         {row.collateralAmount > 0 ? (
                           <>
-                            <span className="font-medium">{formatReadable(row.collateralAmount)}</span>
+                            <span className="font-medium">{formatReadableTokenAmount(row.collateralAmount)}</span>
                             <span>{row.market.collateralAsset.symbol}</span>
                             <TokenIcon
                               address={row.market.collateralAsset.address}

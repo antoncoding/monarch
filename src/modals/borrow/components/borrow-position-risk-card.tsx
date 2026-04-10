@@ -39,6 +39,19 @@ type PreviewIndicatorProps = {
   children: ReactNode;
 };
 
+type TokenMetricValueProps = {
+  isPreview: boolean;
+  title: ReactNode;
+  detail: ReactNode;
+  secondaryDetail?: ReactNode;
+  displayAmount: string;
+  fullAmount: string;
+  symbol: string;
+  valueClassName: string;
+};
+
+const INLINE_VALUE_TOOLTIP_CLASS_NAME = 'px-4 py-3 text-xs';
+
 function formatSignedNumberDelta(value: number, suffix = ''): string {
   if (!Number.isFinite(value)) return '0';
   if (value > 0) return `+${value.toFixed(2)}${suffix}`;
@@ -80,6 +93,50 @@ function PreviewIndicator({ isPreview, title, detail, secondaryDetail, children 
   );
 }
 
+function TokenMetricValue({
+  isPreview,
+  title,
+  detail,
+  secondaryDetail,
+  displayAmount,
+  fullAmount,
+  symbol,
+  valueClassName,
+}: TokenMetricValueProps): JSX.Element {
+  const content = (
+    <div className="flex min-w-0 flex-wrap items-center gap-1">
+      <span className={`${valueClassName} shrink-0`}>{displayAmount}</span>
+      <span className={`${valueClassName} shrink-0`}>{symbol}</span>
+    </div>
+  );
+
+  if (isPreview) {
+    return (
+      <PreviewIndicator
+        isPreview={isPreview}
+        title={title}
+        detail={detail}
+        secondaryDetail={secondaryDetail}
+      >
+        {content}
+      </PreviewIndicator>
+    );
+  }
+
+  if (displayAmount === fullAmount) {
+    return content;
+  }
+
+  return (
+    <Tooltip
+      content={`${fullAmount} ${symbol}`}
+      className={INLINE_VALUE_TOOLTIP_CLASS_NAME}
+    >
+      <span className="inline-flex min-w-0 cursor-help items-center border-b border-dotted border-secondary/70 pb-px">{content}</span>
+    </Tooltip>
+  );
+}
+
 function renderLiquidationPriceValue(priceLabel: string, priceGapLabel: string | null): ReactNode {
   if (priceGapLabel == null || priceLabel === '-' || priceLabel === '∞') {
     return priceLabel;
@@ -104,7 +161,7 @@ export function BorrowPositionRiskCard({
   projectedLtv,
   lltv,
   hasChanges = false,
-  useCompactAmountDisplay = false,
+  useCompactAmountDisplay = true,
 }: BorrowPositionRiskCardProps): JSX.Element {
   const projectedLtvWidth = useMemo(() => {
     if (lltv <= 0n) return 0;
@@ -114,7 +171,7 @@ export function BorrowPositionRiskCard({
   const projectedCollateralValue = projectedCollateral ?? currentCollateral;
   const projectedBorrowValue = projectedBorrow ?? currentBorrow;
   const metricLabelClassName = 'mb-1 font-zen text-xs opacity-50';
-  const metricValueClassName = 'font-zen text-sm tabular-nums whitespace-nowrap';
+  const metricValueClassName = 'font-zen text-sm tabular-nums';
 
   const showProjectedCollateral = hasChanges && projectedCollateralValue !== currentCollateral;
   const showProjectedBorrow = hasChanges && projectedBorrowValue !== currentBorrow;
@@ -248,9 +305,9 @@ export function BorrowPositionRiskCard({
   return (
     <div className="bg-hovered mb-5 rounded-sm p-4">
       <div className="mb-4 grid gap-4 md:grid-cols-3">
-        <div>
+        <div className="min-w-0">
           <p className={metricLabelClassName}>Collateral</p>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <TokenIcon
               address={market.collateralAsset.address}
               chainId={market.morphoBlue.chain.id}
@@ -258,23 +315,22 @@ export function BorrowPositionRiskCard({
               width={16}
               height={16}
             />
-            <div className="flex items-center gap-1">
-              <PreviewIndicator
-                isPreview={showProjectedCollateral}
-                title="Collateral Preview"
-                detail={`${collateralCurrentDetail} → ${collateralProjectedDetail} ${market.collateralAsset.symbol}`}
-                secondaryDetail={`Delta: ${collateralDeltaLabel} ${market.collateralAsset.symbol}`}
-              >
-                <span className={metricValueClassName}>{collateralDisplay}</span>
-              </PreviewIndicator>
-              <span className={metricValueClassName}>{market.collateralAsset.symbol}</span>
-            </div>
+            <TokenMetricValue
+              isPreview={showProjectedCollateral}
+              title="Collateral Preview"
+              detail={`${collateralCurrentDetail} → ${collateralProjectedDetail} ${market.collateralAsset.symbol}`}
+              secondaryDetail={`Delta: ${collateralDeltaLabel} ${market.collateralAsset.symbol}`}
+              displayAmount={collateralDisplay}
+              fullAmount={collateralProjectedDetail}
+              symbol={market.collateralAsset.symbol}
+              valueClassName={metricValueClassName}
+            />
           </div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <p className={metricLabelClassName}>Debt (Loan)</p>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <TokenIcon
               address={market.loanAsset.address}
               chainId={market.morphoBlue.chain.id}
@@ -282,17 +338,16 @@ export function BorrowPositionRiskCard({
               width={16}
               height={16}
             />
-            <div className="flex items-center gap-1">
-              <PreviewIndicator
-                isPreview={showProjectedBorrow}
-                title="Debt (Loan) Preview"
-                detail={`${borrowCurrentDetail} → ${borrowProjectedDetail} ${market.loanAsset.symbol}`}
-                secondaryDetail={`Delta: ${borrowDeltaLabel} ${market.loanAsset.symbol}`}
-              >
-                <span className={metricValueClassName}>{borrowDisplay}</span>
-              </PreviewIndicator>
-              <span className={metricValueClassName}>{market.loanAsset.symbol}</span>
-            </div>
+            <TokenMetricValue
+              isPreview={showProjectedBorrow}
+              title="Debt (Loan) Preview"
+              detail={`${borrowCurrentDetail} → ${borrowProjectedDetail} ${market.loanAsset.symbol}`}
+              secondaryDetail={`Delta: ${borrowDeltaLabel} ${market.loanAsset.symbol}`}
+              displayAmount={borrowDisplay}
+              fullAmount={borrowProjectedDetail}
+              symbol={market.loanAsset.symbol}
+              valueClassName={metricValueClassName}
+            />
           </div>
         </div>
 

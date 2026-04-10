@@ -48,6 +48,43 @@ export function formatReadable(_num: number | string, precision = 2): string {
   }
 }
 
+type FormatReadableTokenAmountOptions = {
+  precision?: number;
+  minDisplayDecimals?: number;
+};
+
+export function formatReadableTokenAmount(
+  value: number | string,
+  { precision = 4, minDisplayDecimals = 4 }: FormatReadableTokenAmountOptions = {},
+): string {
+  const numericValue = typeof value === 'string' ? Number.parseFloat(value) : value;
+  if (!Number.isFinite(numericValue)) return typeof value === 'string' ? value : String(value);
+
+  const absoluteValue = Math.abs(numericValue);
+  const minDisplayThreshold = 10 ** -minDisplayDecimals;
+
+  if (absoluteValue > 0 && absoluteValue < minDisplayThreshold) {
+    return `< ${minDisplayThreshold.toFixed(minDisplayDecimals)}`;
+  }
+
+  if (absoluteValue >= 1000) {
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      maximumFractionDigits: 2,
+    }).format(numericValue);
+  }
+
+  if (absoluteValue >= 1) {
+    return numericValue.toLocaleString('en-US', {
+      maximumFractionDigits: precision,
+    });
+  }
+
+  return numericValue.toLocaleString('en-US', {
+    maximumSignificantDigits: precision,
+  });
+}
+
 export function formatSimple(num: number | bigint) {
   return new Intl.NumberFormat('en-us', {
     minimumFractionDigits: 2,
