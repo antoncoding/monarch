@@ -351,7 +351,9 @@ export function AddCollateralAndLeverage({
     ? useLoanAssetInput
       ? 'Total Collateral Added (Min.)'
       : 'Collateral From Swap (Min.)'
-    : 'Total Collateral Added';
+    : isErc4626Route
+      ? 'Total Collateral Added (Min.)'
+      : 'Total Collateral Added';
   const hasExecutableInitialCapitalConversion = useMemo(() => {
     if (!useLoanAssetInput) return true;
     if (isSwapRoute) return quote.totalCollateralTokenAmountAdded > 0n;
@@ -387,6 +389,7 @@ export function AddCollateralAndLeverage({
     market.loanAsset.symbol,
   ]);
   const shouldShowSwapPreviewDetails = isSwapRoute && quote.swapPriceRoute != null && swapRatePreviewText != null;
+  const shouldShowSlippageControl = isSwapRoute || isErc4626Route;
   const toDisplayRate = useCallback(
     (apy: number | null): number | null => {
       if (apy == null || !Number.isFinite(apy)) return null;
@@ -786,19 +789,19 @@ export function AddCollateralAndLeverage({
                   </div>
                 )}
                 {shouldShowSwapPreviewDetails && (
-                  <>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-secondary">Swap Quote</span>
-                      <span className="text-right">{swapRatePreviewText}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-secondary">Max Slippage</span>
-                      <SlippageInlineEditor
-                        value={swapSlippagePercent}
-                        onChange={setSwapSlippagePercent}
-                      />
-                    </div>
-                  </>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-secondary">Swap Quote</span>
+                    <span className="text-right">{swapRatePreviewText}</span>
+                  </div>
+                )}
+                {shouldShowSlippageControl && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-secondary">Max Slippage</span>
+                    <SlippageInlineEditor
+                      value={swapSlippagePercent}
+                      onChange={setSwapSlippagePercent}
+                    />
+                  </div>
                 )}
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">{borrowRatePreviewLabel}</span>

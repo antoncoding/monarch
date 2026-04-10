@@ -30,14 +30,14 @@ export type LeverageQuote = {
    * Market collateral-token amount sourced directly from the user's starting capital before the flash leg.
    *
    * - collateral-input mode: equals `initialCapitalInputAmount`
-   * - ERC4626 loan-input mode: `previewDeposit(initialCapitalInputAmount)`
+   * - ERC4626 loan-input mode: minimum shares accepted for `deposit(initialCapitalInputAmount)`
    * - swap loan-input mode: `0n` because the user loan input is sold together with the flash leg
    */
   initialCapitalCollateralTokenAmount: bigint;
   /**
    * Additional market collateral-token amount sourced by the flash leg.
    *
-   * - ERC4626 route: exact vault share amount minted in the callback
+   * - ERC4626 route: minimum shares accepted for depositing the flash-loaned loan assets
    * - swap route: minimum collateral output expected from selling the flash-borrowed loan asset
    */
   flashLegCollateralTokenAmount: bigint;
@@ -89,7 +89,7 @@ export function useLeverageQuote({
     },
   });
 
-  const initialCapitalCollateralTokenAmount = useMemo(() => {
+  const quotedInitialCapitalCollateralTokenAmount = useMemo(() => {
     if (!route) return 0n;
     if (isSwapLoanAssetInput) return 0n;
     if (!isLoanAssetInput) return initialCapitalInputAmount;
@@ -99,13 +99,18 @@ export function useLeverageQuote({
     return 0n;
   }, [route, isSwapLoanAssetInput, isLoanAssetInput, initialCapitalInputAmount, previewDepositCollateralSharesFromUserLoanAssets]);
 
+  const initialCapitalCollateralTokenAmount = useMemo(() => {
+    if (route?.kind !== 'erc4626' || !isLoanAssetInput) return quotedInitialCapitalCollateralTokenAmount;
+    return withSlippageFloor(quotedInitialCapitalCollateralTokenAmount, slippageBps);
+  }, [route, isLoanAssetInput, quotedInitialCapitalCollateralTokenAmount, slippageBps]);
+
   const targetFlashCollateralTokenAmount = useMemo(
-    () => (isSwapLoanAssetInput ? 0n : computeFlashCollateralAmount(initialCapitalCollateralTokenAmount, multiplierBps)),
-    [isSwapLoanAssetInput, initialCapitalCollateralTokenAmount, multiplierBps],
+    () => (isSwapLoanAssetInput ? 0n : computeFlashCollateralAmount(quotedInitialCapitalCollateralTokenAmount, multiplierBps)),
+    [isSwapLoanAssetInput, quotedInitialCapitalCollateralTokenAmount, multiplierBps],
   );
 
   const {
-    data: previewMintRequiredLoanAssetsForFlashCollateralShares,
+    data: previewMintableLoanAssets,
     isLoading: isLoadingErc4626Mint,
     error: erc4626MintError,
   } = useReadContract({
@@ -235,11 +240,12 @@ export function useLeverageQuote({
       if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.flashLegCollateralTokenAmount ?? 0n;
       return swapCollateralInputQuoteQuery.data?.flashLegCollateralTokenAmount ?? 0n;
     }
-    return targetFlashCollateralTokenAmount;
+    return withSlippageFloor(targetFlashCollateralTokenAmount, slippageBps);
   }, [
     route,
     isLoanAssetInput,
     targetFlashCollateralTokenAmount,
+    slippageBps,
     swapLoanInputCombinedQuoteQuery.data?.flashLegCollateralTokenAmount,
     swapCollateralInputQuoteQuery.data?.flashLegCollateralTokenAmount,
   ]);
@@ -252,13 +258,13 @@ export function useLeverageQuote({
     }
     // `previewMint(targetFlashCollateralTokenAmount)` returns how many loan-token assets the flash leg
     // must source to mint that exact collateral-share amount.
-    return (previewMintRequiredLoanAssetsForFlashCollateralShares as bigint | undefined) ?? 0n;
+    return previewMintableLoanAssets ?? 0n;
   }, [
     route,
     isLoanAssetInput,
     swapLoanInputCombinedQuoteQuery.data?.flashLoanAssetAmount,
     swapCollateralInputQuoteQuery.data?.flashLoanAssetAmount,
-    previewMintRequiredLoanAssetsForFlashCollateralShares,
+    previewMintableLoanAssets,
   ]);
 
   const totalCollateralTokenAmountAdded = useMemo(() => {
