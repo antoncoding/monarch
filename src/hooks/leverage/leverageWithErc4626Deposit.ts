@@ -22,11 +22,12 @@ type LeverageWithErc4626DepositParams = {
   route: Erc4626LeverageRoute;
   /** Exact user-entered starting capital, denominated by `isLoanAssetInput`. */
   initialCapitalInputAmount: bigint;
-  /** Market collateral-token amount sourced from the initial capital before the flash leg. */
+  /** Minimum collateral shares accepted from depositing the initial capital before the flash leg. */
   initialCapitalCollateralTokenAmount: bigint;
   initialCapitalInputTokenAddress: Address;
   initialCapitalTransferAmount: bigint;
   isLoanAssetInput: boolean;
+  /** Minimum collateral shares accepted from depositing the flash-loaned assets. */
   flashLegCollateralTokenAmount: bigint;
   flashLoanAssetAmount: bigint; // amount to flashloan in loan asset
   leverageFeeAmount: bigint;
@@ -136,8 +137,7 @@ export const leverageWithErc4626Deposit = async ({
 
   if (isLoanAssetInput) {
     // WHY: the user provided an exact amount of loan-token assets, so this leg should deposit that
-    // exact asset amount into the vault. The share floor is the exact quote returned by previewDeposit,
-    // not a swap-style slippage floor.
+    // exact asset amount into the vault with a share floor derived from the ERC4626 preview.
     txs.push(
       encodeFunctionData({
         abi: morphoBundlerAbi,
@@ -150,11 +150,11 @@ export const leverageWithErc4626Deposit = async ({
   const callbackTxs: `0x${string}`[] = [
     encodeFunctionData({
       abi: morphoBundlerAbi,
-      functionName: 'erc4626Mint',
-      // Mint the exact flash-leg collateral shares quoted off-chain. If the vault now requires
-      // more than flashLoanAssetAmount assets, revert early instead of minting fewer shares and drifting
-      // above the previewed leverage target. If it requires fewer, residual loan assets are swept later.
-      args: [route.collateralVault, flashLegCollateralTokenAmount, flashLoanAssetAmount, bundlerAddress],
+      functionName: 'erc4626Deposit',
+      // Deposit the exact flash-loaned assets and enforce a minimum share floor. This keeps the
+      // flash leg executable even if the vault's share price moved enough that an exact-share mint
+      // would require more assets than the flash loan supplied.
+      args: [route.collateralVault, flashLoanAssetAmount, flashLegCollateralTokenAmount, bundlerAddress],
     }),
   ];
 
