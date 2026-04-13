@@ -10,7 +10,6 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    minimumCacheTTL: 2_678_400,
     remotePatterns: [
       {
         protocol: 'https',
@@ -23,10 +22,6 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'api.dicebear.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'storage.googleapis.com',
       },
     ],
   },
