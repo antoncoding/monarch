@@ -4,6 +4,7 @@ import type { SupportedNetworks } from './networks';
 import { getClient } from './rpc';
 import { findToken, infoToKey } from './tokens';
 import type { TokenInfo } from './types';
+import { DATA_API_BASE_URL } from './urls';
 
 export type TokenAddressInput = {
   address: string;
@@ -24,6 +25,14 @@ export type SerializedResolvedTokenInfos = Record<string, ResolvedTokenInfo>;
 
 const TOKEN_METADATA_BATCH_SIZE = 200;
 const erc20SymbolBytes32Abi = parseAbi(['function symbol() view returns (bytes32)']);
+
+const getTokenMetadataClientUrl = (): string => {
+  if (!DATA_API_BASE_URL) {
+    throw new Error('NEXT_PUBLIC_DATA_API_BASE_URL is required.');
+  }
+
+  return `${DATA_API_BASE_URL}/v1/tokens/metadata`;
+};
 
 const normalizeAddress = (value: string): string => value.toLowerCase();
 
@@ -252,7 +261,7 @@ export const resolveUnknownTokenInfosOnchain = async (
 };
 
 const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInput[]): Promise<Map<string, ResolvedTokenInfo>> => {
-  const response = await fetch('/api/token-metadata', {
+  const response = await fetch(getTokenMetadataClientUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

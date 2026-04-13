@@ -7,6 +7,8 @@ export const URLS = {
   MORPHO_REWARDS_API: 'https://rewards.morpho.org/v1',
 } as const;
 
+export const DATA_API_BASE_URL = process.env.NEXT_PUBLIC_DATA_API_BASE_URL?.replace(/\/+$/, '') ?? '';
+
 export const MONARCH_AGENT_URLS: Partial<Record<SupportedNetworks, string>> = {
   [SupportedNetworks.Base]: 'https://api.studio.thegraph.com/query/110397/monarch-agent-base/version/latest',
   [SupportedNetworks.Polygon]: 'https://api.studio.thegraph.com/query/110397/monarch-agent-polygon/version/latest',

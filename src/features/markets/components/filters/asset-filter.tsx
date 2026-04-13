@@ -79,6 +79,7 @@ export default function AssetFilter({
         alt={token.symbol}
         width={size}
         height={size}
+        unoptimized
       />
     ) : (
       <div
