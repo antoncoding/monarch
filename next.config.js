@@ -23,10 +23,6 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'api.dicebear.com',
       },
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
     ],
   },
   // temp fix for reown package issue: https://github.com/MetaMask/metamask-sdk/issues/1376

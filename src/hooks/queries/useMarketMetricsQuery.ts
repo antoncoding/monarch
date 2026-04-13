@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { monarchGraphqlFetcher } from '@/data-sources/monarch-api/fetchers';
 import { useMarketPreferences, type CustomTagConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
+import { DATA_API_BASE_URL } from '@/utils/urls';
 
 // Re-export types for convenience
 export type { FlowTimeWindow } from '@/stores/useMarketPreferences';
@@ -78,6 +79,21 @@ type MarketMetricsParams = {
 };
 
 const PAGE_SIZE = 1000;
+const MARKET_METRICS_REFRESH_MS = 15 * 60 * 1000;
+
+const getMarketMetricsClientUrl = (searchParams?: URLSearchParams): string => {
+  if (!DATA_API_BASE_URL) {
+    throw new Error('NEXT_PUBLIC_DATA_API_BASE_URL is required.');
+  }
+
+  const baseUrl = `${DATA_API_BASE_URL}/v1/markets/metrics`;
+  if (!searchParams || searchParams.size === 0) {
+    return baseUrl;
+  }
+
+  return `${baseUrl}?${searchParams.toString()}`;
+};
+
 const MARKET_LIQUIDATION_PRESENCE_QUERY = `
   query MarketLiquidationPresence($chainId: Int!, $marketId: String!) {
     Morpho_Liquidate(
@@ -105,7 +121,7 @@ const fetchMarketMetricsPage = async (params: MarketMetricsParams, limit: number
   searchParams.set('limit', String(limit));
   searchParams.set('offset', String(offset));
 
-  const response = await fetch(`/api/monarch/metrics?${searchParams.toString()}`);
+  const response = await fetch(getMarketMetricsClientUrl(searchParams));
 
   if (!response.ok) {
     throw new Error('Failed to fetch market metrics');
@@ -163,7 +179,7 @@ const fetchMarketLiquidationPresence = async (chainId: number, marketId: string)
 
 /**
  * Fetches enhanced market metrics from the Monarch monitoring API.
- * Pre-fetched and cached for 5 minutes.
+ * Pre-fetched and cached for 15 minutes.
  *
  * Returns rich metadata including:
  * - Flow data (1h, 24h, 7d, 30d) for supply/borrow
@@ -178,8 +194,8 @@ export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
   return useQuery({
     queryKey: ['market-metrics', { chainId, sortBy, sortOrder }],
     queryFn: () => fetchAllMarketMetrics({ chainId, sortBy, sortOrder }),
-    staleTime: 5 * 60 * 1000, // 5 minutes - matches API update frequency
-    refetchInterval: 5 * 60 * 1000, // Match staleTime - no point refetching more often
+    staleTime: MARKET_METRICS_REFRESH_MS,
+    refetchInterval: MARKET_METRICS_REFRESH_MS,
     refetchOnWindowFocus: false, // Don't refetch on focus since data is slow-changing
     enabled,
   });
