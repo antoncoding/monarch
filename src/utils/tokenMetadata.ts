@@ -107,7 +107,20 @@ export const serializeResolvedTokenInfos = (resolvedTokenInfos: Map<string, Reso
   Object.fromEntries(resolvedTokenInfos);
 
 export const deserializeResolvedTokenInfos = (value: SerializedResolvedTokenInfos): Map<string, ResolvedTokenInfo> =>
-  new Map(Object.entries(value));
+  new Map(
+    Object.entries(value).map(([key, resolvedTokenInfo]) => {
+      if (key.includes(':')) {
+        const [chainIdRaw, address] = key.split(':');
+        const chainId = Number(chainIdRaw);
+
+        if (Number.isInteger(chainId) && address) {
+          return [infoToKey(address, chainId), resolvedTokenInfo] satisfies [string, ResolvedTokenInfo];
+        }
+      }
+
+      return [key, resolvedTokenInfo] satisfies [string, ResolvedTokenInfo];
+    }),
+  );
 
 export const fetchOnchainTokenMetadataMap = async (
   tokens: TokenAddressInput[],
@@ -261,47 +274,58 @@ export const resolveUnknownTokenInfosOnchain = async (
 };
 
 const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInput[]): Promise<Map<string, ResolvedTokenInfo>> => {
-  const response = await fetch(getTokenMetadataClientUrl(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ tokens }),
-  });
+  const uniqueTokens = dedupeTokenInputs(tokens);
+  const batches: TokenAddressInput[][] = [];
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch token metadata: ${response.status}`);
+  for (let start = 0; start < uniqueTokens.length; start += TOKEN_METADATA_BATCH_SIZE) {
+    batches.push(uniqueTokens.slice(start, start + TOKEN_METADATA_BATCH_SIZE));
   }
 
-  const data = (await response.json()) as { tokens?: SerializedResolvedTokenInfos };
-  return deserializeResolvedTokenInfos(data.tokens ?? {});
+  const responses = await Promise.allSettled(
+    batches.map(async (tokenBatch) => {
+      const response = await fetch(getTokenMetadataClientUrl(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tokens: tokenBatch }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch token metadata: ${response.status}`);
+      }
+
+      const data = (await response.json()) as { tokens?: SerializedResolvedTokenInfos };
+      return deserializeResolvedTokenInfos(data.tokens ?? {});
+    }),
+  );
+
+  const resolvedTokenInfos = new Map<string, ResolvedTokenInfo>();
+
+  for (const response of responses) {
+    if (response.status !== 'fulfilled') {
+      continue;
+    }
+
+    for (const [key, value] of response.value.entries()) {
+      resolvedTokenInfos.set(key, value);
+    }
+  }
+
+  return resolvedTokenInfos;
 };
 
 export const resolveTokenInfos = async (
   tokens: TokenAddressInput[],
-  customRpcUrls: CustomRpcUrls = {},
+  _customRpcUrls: CustomRpcUrls = {},
 ): Promise<Map<string, ResolvedTokenInfo>> => {
   const uniqueTokens = dedupeTokenInputs(tokens);
   const resolvedTokenInfos = new Map<string, ResolvedTokenInfo>();
   const unresolvedTokens = uniqueTokens.filter((token) => !findToken(token.address, token.chainId));
-  const serverResolvedTokens = unresolvedTokens.filter((token) => !customRpcUrls[token.chainId]);
-  const clientResolvedTokens = unresolvedTokens.filter((token) => Boolean(customRpcUrls[token.chainId]));
-  const [serverResolvedTokenInfos, clientResolvedTokenInfos] = await Promise.all([
-    serverResolvedTokens.length === 0
-      ? Promise.resolve(new Map<string, ResolvedTokenInfo>())
-      : typeof window === 'undefined'
-        ? resolveUnknownTokenInfosOnchain(serverResolvedTokens, customRpcUrls)
-        : fetchResolvedUnknownTokenInfosFromServer(serverResolvedTokens).catch(() =>
-            resolveUnknownTokenInfosOnchain(serverResolvedTokens, customRpcUrls),
-          ),
-    clientResolvedTokens.length === 0
-      ? Promise.resolve(new Map<string, ResolvedTokenInfo>())
-      : resolveUnknownTokenInfosOnchain(clientResolvedTokens, customRpcUrls),
-  ]);
-  const unresolvedTokenInfos = new Map<string, ResolvedTokenInfo>([
-    ...serverResolvedTokenInfos.entries(),
-    ...clientResolvedTokenInfos.entries(),
-  ]);
+  const unresolvedTokenInfos =
+    unresolvedTokens.length === 0
+      ? new Map<string, ResolvedTokenInfo>()
+      : await fetchResolvedUnknownTokenInfosFromServer(unresolvedTokens).catch(() => new Map<string, ResolvedTokenInfo>());
 
   for (const token of uniqueTokens) {
     const key = infoToKey(token.address, token.chainId);
