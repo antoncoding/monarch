@@ -30,6 +30,9 @@ export type EnrichedFeed = {
   heartbeat?: number;
   deviationThreshold?: number;
   ens?: string; // Chainlink ENS name for feed URL (e.g. "eth-usd")
+  riskTier?: number; // Chronicle dashboard risk tier
+  updateInterval?: number; // Chronicle update cadence in seconds
+  updateSpread?: number; // Chronicle deviation threshold percentage
   feedType?: string; // Redstone feed type: "market" or "fundamental"
   baseDiscountPerYear?: string; // Pendle base discount per year (raw 18-decimal value)
   innerOracle?: string; // Pendle inner oracle address
