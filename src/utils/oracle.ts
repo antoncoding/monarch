@@ -39,6 +39,7 @@ export enum OracleType {
 
 export enum PriceFeedVendors {
   Chainlink = 'Chainlink',
+  Chronicle = 'Chronicle',
   PythNetwork = 'Pyth Network',
   Redstone = 'Redstone',
   Oval = 'Oval',
@@ -52,6 +53,7 @@ export enum PriceFeedVendors {
 
 export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
   [PriceFeedVendors.Chainlink]: require('../imgs/oracles/chainlink.png') as string,
+  [PriceFeedVendors.Chronicle]: require('../imgs/oracles/chronicle.svg') as string,
   [PriceFeedVendors.PythNetwork]: require('../imgs/oracles/pyth.png') as string,
   [PriceFeedVendors.Redstone]: require('../imgs/oracles/redstone.svg') as string,
   [PriceFeedVendors.Oval]: require('../imgs/oracles/uma.png') as string,
@@ -71,11 +73,13 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
 
   const normalizedProvider = provider.trim().toLowerCase();
 
+  if (normalizedProvider.includes('chronicle')) return PriceFeedVendors.Chronicle;
   if (normalizedProvider.includes('pendle')) return PriceFeedVendors.Pendle;
   if (normalizedProvider.includes('midas')) return PriceFeedVendors.Midas;
 
   const mapping: Record<string, PriceFeedVendors> = {
     chainlink: PriceFeedVendors.Chainlink,
+    chronicle: PriceFeedVendors.Chronicle,
     redstone: PriceFeedVendors.Redstone,
     compound: PriceFeedVendors.Compound,
     lido: PriceFeedVendors.Lido,
@@ -106,6 +110,17 @@ export function getChainlinkFeedUrl(chainId: number, ens: string): string {
   if (!path) return '';
 
   return `https://data.chain.link/feeds/${path}/${ens}`;
+}
+
+/**
+ * Generate Chronicle dashboard URL from a feed pair.
+ */
+export function getChronicleFeedUrl(baseAsset: string, quoteAsset: string): string {
+  if (!baseAsset || !quoteAsset || baseAsset === 'Unknown' || quoteAsset === 'Unknown') {
+    return '';
+  }
+
+  return `https://chroniclelabs.org/dashboard/oracle/${encodeURIComponent(baseAsset)}/${encodeURIComponent(quoteAsset)}`;
 }
 
 export type FeedVendorResult = {

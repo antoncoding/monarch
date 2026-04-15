@@ -109,6 +109,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
   const getTooltipContent = () => {
     switch (vendor) {
       case PriceFeedVendors.Chainlink:
+      case PriceFeedVendors.Chronicle:
         return (
           <ChainlinkFeedTooltip
             feed={feed}

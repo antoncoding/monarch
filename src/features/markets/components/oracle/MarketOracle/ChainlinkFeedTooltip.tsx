@@ -7,7 +7,14 @@ import { useGlobalModal } from '@/contexts/GlobalModalContext';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { getChainlinkFeedUrl, OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
+import {
+  detectFeedVendorFromMetadata,
+  getChainlinkFeedUrl,
+  getChronicleFeedUrl,
+  OracleVendorIcons,
+  PriceFeedVendors,
+  type FeedFreshnessStatus,
+} from '@/utils/oracle';
 import { ChainlinkRiskTiersModal } from './ChainlinkRiskTiersModal';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
@@ -39,14 +46,22 @@ function getRiskTierBadge(category: string) {
 
 export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: ChainlinkFeedTooltipProps) {
   const { toggleModal, closeModal } = useGlobalModal();
-  const baseAsset = feed.pair[0] ?? 'Unknown';
-  const quoteAsset = feed.pair[1] ?? 'Unknown';
+  const { vendor, assetPair } = detectFeedVendorFromMetadata(feed);
+  const baseAsset = assetPair.baseAsset;
+  const quoteAsset = assetPair.quoteAsset;
+  const isChronicle = vendor === PriceFeedVendors.Chronicle;
+  const feedTitle = isChronicle ? 'Chronicle Feed Details' : 'Chainlink Feed Details';
+  const vendorLabel = isChronicle ? 'Chronicle' : 'Chainlink';
+  const intervalValue = isChronicle ? (feed.updateInterval ?? feed.heartbeat) : (feed.heartbeat ?? null);
+  const deviationValue = isChronicle ? (feed.updateSpread ?? feed.deviationThreshold) : (feed.deviationThreshold ?? null);
+  const chronicleRiskTier = isChronicle ? feed.riskTier : null;
+  const chainlinkTier = isChronicle ? null : feed.tier;
 
-  const vendorIcon = OracleVendorIcons[PriceFeedVendors.Chainlink];
+  const vendorIcon = OracleVendorIcons[vendor] || OracleVendorIcons[PriceFeedVendors.Chainlink];
 
-  const chainlinkUrl = feed.ens ? getChainlinkFeedUrl(chainId, feed.ens) : '';
+  const vendorUrl = isChronicle ? getChronicleFeedUrl(baseAsset, quoteAsset) : feed.ens ? getChainlinkFeedUrl(chainId, feed.ens) : '';
 
-  const hasDetails = feed.heartbeat != null || feed.tier != null || feed.deviationThreshold != null;
+  const hasDetails = intervalValue != null || chainlinkTier != null || chronicleRiskTier != null || deviationValue != null;
 
   return (
     <div className="flex w-fit max-w-[22rem] flex-col gap-3">
@@ -56,13 +71,13 @@ export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: Chainlink
           <div className="flex-shrink-0">
             <Image
               src={vendorIcon}
-              alt="Chainlink"
+              alt={vendorLabel}
               width={16}
               height={16}
             />
           </div>
         )}
-        <div className="font-zen font-bold">Chainlink Feed Details</div>
+        <div className="font-zen font-bold">{feedTitle}</div>
       </div>
 
       {/* Feed pair name */}
@@ -72,20 +87,20 @@ export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: Chainlink
         </div>
       </div>
 
-      {/* Chainlink Specific Data */}
+      {/* Vendor specific data */}
       {hasDetails && (
         <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          {feed.heartbeat != null && (
+          {intervalValue != null && (
             <div className="flex justify-between font-zen text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Heartbeat:</span>
-              <span className="font-medium">{feed.heartbeat}s</span>
+              <span className="text-gray-600 dark:text-gray-400">{isChronicle ? 'Update Interval:' : 'Heartbeat:'}</span>
+              <span className="font-medium">{intervalValue}s</span>
             </div>
           )}
-          {feed.tier != null && (
+          {chainlinkTier != null && (
             <div className="flex items-center justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Risk Tier:</span>
               <div className="flex items-center gap-1">
-                {getRiskTierBadge(feed.tier)}
+                {getRiskTierBadge(chainlinkTier)}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -106,10 +121,16 @@ export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: Chainlink
               </div>
             </div>
           )}
-          {feed.deviationThreshold != null && (
+          {chronicleRiskTier != null && (
             <div className="flex justify-between font-zen text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Deviation Threshold:</span>
-              <span className="font-medium">{feed.deviationThreshold}%</span>
+              <span className="text-gray-600 dark:text-gray-400">Risk Tier:</span>
+              <span className="font-medium">{chronicleRiskTier}</span>
+            </div>
+          )}
+          {deviationValue != null && (
+            <div className="flex justify-between font-zen text-sm">
+              <span className="text-gray-600 dark:text-gray-400">{isChronicle ? 'Update Spread:' : 'Deviation Threshold:'}</span>
+              <span className="font-medium">{deviationValue}%</span>
             </div>
           )}
         </div>
@@ -135,9 +156,9 @@ export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: Chainlink
             />
             Etherscan
           </Link>
-          {chainlinkUrl && (
+          {vendorUrl && (
             <Link
-              href={chainlinkUrl}
+              href={vendorUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
@@ -145,12 +166,12 @@ export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: Chainlink
               {vendorIcon && (
                 <Image
                   src={vendorIcon}
-                  alt="Chainlink"
+                  alt={vendorLabel}
                   width={12}
                   height={12}
                 />
               )}
-              Chainlink
+              {vendorLabel}
             </Link>
           )}
         </div>
