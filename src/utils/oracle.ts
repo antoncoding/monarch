@@ -336,13 +336,47 @@ function getPegAnchor(symbol: string): TokenPeg | null {
   if (normalized === 'eth' || normalized === 'weth') return TokenPeg.ETH;
   if (normalized === 'btc') return TokenPeg.BTC;
 
-  const token = supportedTokens.find((supportedToken) => normalizeSymbol(supportedToken.symbol) === normalized);
-  return token?.peg ?? null;
+  const matchingPegs = Array.from(
+    new Set(
+      supportedTokens
+        .filter((supportedToken) => normalizeSymbol(supportedToken.symbol) === normalized)
+        .map((supportedToken) => supportedToken.peg)
+        .filter((peg): peg is TokenPeg => peg != null),
+    ),
+  );
+
+  if (matchingPegs.length === 1) {
+    return matchingPegs[0];
+  }
+
+  return null;
+}
+
+function inferWrappedAssetLabel(expectedSymbol: string, actualSymbol: string): string | null {
+  const expected = normalizeSymbol(expectedSymbol);
+  const actual = normalizeSymbol(actualSymbol);
+
+  const wrapperPrefixes = ['cb', 'wst', 'we', 'k', 'gt', 'os', 'rs', 'apx', 'bsd', 'lb', 'eb'];
+  for (const prefix of wrapperPrefixes) {
+    if (expected.startsWith(prefix) && expected.slice(prefix.length) === actual) {
+      return `${expectedSymbol} <> ${actualSymbol} peg`;
+    }
+    if (actual.startsWith(prefix) && actual.slice(prefix.length) === expected) {
+      return `${expectedSymbol} <> ${actualSymbol} peg`;
+    }
+  }
+
+  return null;
 }
 
 function inferAssumptionLabel(expectedSymbol: string, actualSymbol: string): string | null {
   if (normalizeEquivalentSymbol(expectedSymbol) === normalizeEquivalentSymbol(actualSymbol)) {
     return null;
+  }
+
+  const wrappedAssetLabel = inferWrappedAssetLabel(expectedSymbol, actualSymbol);
+  if (wrappedAssetLabel) {
+    return wrappedAssetLabel;
   }
 
   const expectedPeg = getPegAnchor(expectedSymbol);
@@ -456,7 +490,7 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
   } else {
     missingPath = `Oracle uses ${actualPath.toUpperCase()} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected.`;
     if (inferredAssumptions.length > 0) {
-      missingPath += ` Monarch infers hardcoded assumptions: ${inferredAssumptions.join(' and ')}.`;
+      missingPath += `\nHardcoded assumptions: ${inferredAssumptions.join(', ')}.`;
     }
   }
 
