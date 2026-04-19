@@ -20,6 +20,7 @@ import {
 } from '@/hooks/useOracleMetadata';
 import { formatSimple } from './balance';
 import { SupportedNetworks } from './networks';
+import { TokenPeg, supportedTokens } from './tokens';
 
 type VendorInfo = {
   coreVendors: PriceFeedVendors[]; // Well-known vendors (Chainlink, Redstone, etc.)
@@ -303,14 +304,73 @@ type CheckFeedsPathResult = {
   hasUnknownFeed?: boolean;
   missingPath?: string;
   expectedPath?: string;
+  actualPath?: string;
+  inferredAssumptions?: string[];
+};
+
+// Symbols in the same UI-resolution group are treated as already resolved for path validation.
+// Keep this list extremely small: only exact wrappers / naming continuations we explicitly want
+// to suppress warnings for, not general peg-equivalent assets.
+const SAME_FAMILY_SYMBOL_GROUPS: Record<string, string> = {
+  weth: 'eth',
+  usds: 'maker-usd',
+  dai: 'maker-usd',
 };
 
 /**
  * Normalize asset symbols for comparison
  */
 function normalizeSymbol(symbol: string): string {
-  const normalized = symbol.toLowerCase();
-  return normalized === 'weth' ? 'eth' : normalized;
+  return symbol.toLowerCase();
+}
+
+function normalizeEquivalentSymbol(symbol: string): string {
+  const normalized = normalizeSymbol(symbol);
+  return SAME_FAMILY_SYMBOL_GROUPS[normalized] ?? normalized;
+}
+
+function getPegAnchor(symbol: string): TokenPeg | null {
+  const normalized = normalizeSymbol(symbol);
+
+  if (normalized === 'usd') return TokenPeg.USD;
+  if (normalized === 'eth' || normalized === 'weth') return TokenPeg.ETH;
+  if (normalized === 'btc') return TokenPeg.BTC;
+
+  const token = supportedTokens.find((supportedToken) => normalizeSymbol(supportedToken.symbol) === normalized);
+  return token?.peg ?? null;
+}
+
+function inferAssumptionLabel(expectedSymbol: string, actualSymbol: string): string | null {
+  if (normalizeEquivalentSymbol(expectedSymbol) === normalizeEquivalentSymbol(actualSymbol)) {
+    return null;
+  }
+
+  const expectedPeg = getPegAnchor(expectedSymbol);
+  const actualPeg = getPegAnchor(actualSymbol);
+
+  if (!expectedPeg || !actualPeg || expectedPeg !== actualPeg) {
+    return null;
+  }
+
+  return `${expectedSymbol} <> ${actualSymbol} peg`;
+}
+
+function cancelOutAssets(numeratorAssets: string[], denominatorAssets: string[], areEquivalent: (left: string, right: string) => boolean) {
+  const remainingDenominatorAssets = [...denominatorAssets];
+  const remainingNumeratorAssets: string[] = [];
+
+  for (const numeratorAsset of numeratorAssets) {
+    const denominatorIndex = remainingDenominatorAssets.findIndex((denominatorAsset) => areEquivalent(numeratorAsset, denominatorAsset));
+
+    if (denominatorIndex >= 0) {
+      remainingDenominatorAssets.splice(denominatorIndex, 1);
+      continue;
+    }
+
+    remainingNumeratorAssets.push(numeratorAsset);
+  }
+
+  return { remainingNumeratorAssets, remainingDenominatorAssets };
 }
 
 type FeedPathEntry = {
@@ -330,13 +390,12 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
     return { isValid: false, hasUnknownFeed: true };
   }
 
-  const numeratorCounts = new Map<string, number>();
-  const denominatorCounts = new Map<string, number>();
+  const numeratorAssets: string[] = [];
+  const denominatorAssets: string[] = [];
 
-  const incrementCount = (map: Map<string, number>, asset: string) => {
+  const pushAsset = (assets: string[], asset: string) => {
     if (asset !== 'EMPTY') {
-      const normalizedAsset = normalizeSymbol(asset);
-      map.set(normalizedAsset, (map.get(normalizedAsset) ?? 0) + 1);
+      assets.push(asset);
     }
   };
 
@@ -344,66 +403,69 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
     if (!hasData) continue;
 
     if (type === 'base1' || type === 'base2' || type === 'baseVault') {
-      incrementCount(numeratorCounts, path.base);
-      incrementCount(denominatorCounts, path.quote);
+      pushAsset(numeratorAssets, path.base);
+      pushAsset(denominatorAssets, path.quote);
     } else {
-      incrementCount(denominatorCounts, path.base);
-      incrementCount(numeratorCounts, path.quote);
+      pushAsset(denominatorAssets, path.base);
+      pushAsset(numeratorAssets, path.quote);
     }
   }
 
-  const cancelOut = (num: Map<string, number>, den: Map<string, number>) => {
-    const assets = new Set([...num.keys(), ...den.keys()]);
+  const exactCancellation = cancelOutAssets(
+    numeratorAssets,
+    denominatorAssets,
+    (left, right) => normalizeSymbol(left) === normalizeSymbol(right),
+  );
+  const equivalentCancellation = cancelOutAssets(
+    numeratorAssets,
+    denominatorAssets,
+    (left, right) => normalizeEquivalentSymbol(left) === normalizeEquivalentSymbol(right),
+  );
 
-    for (const asset of assets) {
-      const numCount = num.get(asset) ?? 0;
-      const denCount = den.get(asset) ?? 0;
-      const minCount = Math.min(numCount, denCount);
-
-      if (minCount > 0) {
-        num.set(asset, numCount - minCount);
-        den.set(asset, denCount - minCount);
-
-        if (num.get(asset) === 0) num.delete(asset);
-        if (den.get(asset) === 0) den.delete(asset);
-      }
-    }
-  };
-
-  cancelOut(numeratorCounts, denominatorCounts);
-
-  const remainingNumeratorAssets = Array.from(numeratorCounts.keys()).filter((asset) => (numeratorCounts.get(asset) ?? 0) > 0);
-  const remainingDenominatorAssets = Array.from(denominatorCounts.keys()).filter((asset) => (denominatorCounts.get(asset) ?? 0) > 0);
+  const remainingNumeratorAssets = equivalentCancellation.remainingNumeratorAssets;
+  const remainingDenominatorAssets = equivalentCancellation.remainingDenominatorAssets;
 
   const normalizedCollateralSymbol = normalizeSymbol(collateralSymbol);
   const normalizedLoanSymbol = normalizeSymbol(loanSymbol);
-
   const expectedPath = `${normalizedCollateralSymbol}/${normalizedLoanSymbol}`;
 
   const isValid =
     remainingNumeratorAssets.length === 1 &&
     remainingDenominatorAssets.length === 1 &&
-    remainingNumeratorAssets[0] === normalizedCollateralSymbol &&
-    remainingDenominatorAssets[0] === normalizedLoanSymbol &&
-    (numeratorCounts.get(normalizedCollateralSymbol) ?? 0) === 1 &&
-    (denominatorCounts.get(normalizedLoanSymbol) ?? 0) === 1;
+    normalizeEquivalentSymbol(remainingNumeratorAssets[0]) === normalizeEquivalentSymbol(collateralSymbol) &&
+    normalizeEquivalentSymbol(remainingDenominatorAssets[0]) === normalizeEquivalentSymbol(loanSymbol);
 
   if (isValid) {
     return { isValid: true };
   }
 
+  const actualPath = `${exactCancellation.remainingNumeratorAssets.join('*') || 'EMPTY'}/${exactCancellation.remainingDenominatorAssets.join('*') || 'EMPTY'}`;
+
+  const inferredAssumptions = [
+    exactCancellation.remainingNumeratorAssets.length === 1
+      ? inferAssumptionLabel(collateralSymbol, exactCancellation.remainingNumeratorAssets[0])
+      : null,
+    exactCancellation.remainingDenominatorAssets.length === 1
+      ? inferAssumptionLabel(loanSymbol, exactCancellation.remainingDenominatorAssets[0])
+      : null,
+  ].filter((value): value is string => Boolean(value));
+
   let missingPath = '';
-  if (remainingNumeratorAssets.length === 0 && remainingDenominatorAssets.length === 0) {
+  if (exactCancellation.remainingNumeratorAssets.length === 0 && exactCancellation.remainingDenominatorAssets.length === 0) {
     missingPath = 'All assets canceled out - no price path found';
   } else {
-    const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join('*')}`;
-    missingPath = `Oracle uses ${actualPath.toUpperCase()} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected`;
+    missingPath = `Oracle uses ${actualPath.toUpperCase()} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected.`;
+    if (inferredAssumptions.length > 0) {
+      missingPath += ` Monarch infers hardcoded assumptions: ${inferredAssumptions.join(' and ')}.`;
+    }
   }
 
   return {
     isValid: false,
     missingPath,
     expectedPath,
+    actualPath,
+    inferredAssumptions,
   };
 }
 
