@@ -14,6 +14,8 @@ export enum TokenPeg {
   USD = 'USD',
   ETH = 'ETH',
   BTC = 'BTC',
+  XRP = 'XRP',
+  HYPE = 'HYPE',
 }
 
 export type ERC20Token = {
@@ -781,6 +783,7 @@ const supportedTokens = [
         address: '0x5555555555555555555555555555555555555555',
       },
     ],
+    peg: TokenPeg.HYPE,
   },
   {
     symbol: 'UETH',
@@ -823,6 +826,7 @@ const supportedTokens = [
     img: require('../imgs/tokens/cbxrp.png') as string,
     decimals: 6,
     networks: [{ chain: base, address: '0xcb585250f852C6c6bf90434AB21A00f02833a4af' }],
+    peg: TokenPeg.XRP,
   },
   {
     symbol: 'cbADA',

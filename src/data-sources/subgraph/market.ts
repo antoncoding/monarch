@@ -48,11 +48,16 @@ const transformSubgraphMarketToMarket = (
     if (!('peg' in token) || token.peg === undefined) {
       return undefined;
     }
-    const peg = token.peg as TokenPeg;
-    if (peg === TokenPeg.USD) {
-      return 1;
+
+    switch (token.peg) {
+      case TokenPeg.USD:
+        return 1;
+      case TokenPeg.ETH:
+      case TokenPeg.BTC:
+        return majorPrices[token.peg];
+      default:
+        return undefined;
     }
-    return majorPrices[peg];
   };
 
   const mapToken = (token: Partial<SubgraphToken> | undefined) => ({

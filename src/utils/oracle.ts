@@ -335,6 +335,8 @@ function getPegAnchor(symbol: string): TokenPeg | null {
   if (normalized === 'usd') return TokenPeg.USD;
   if (normalized === 'eth' || normalized === 'weth') return TokenPeg.ETH;
   if (normalized === 'btc') return TokenPeg.BTC;
+  if (normalized === 'xrp') return TokenPeg.XRP;
+  if (normalized === 'hype') return TokenPeg.HYPE;
 
   const matchingPegs = Array.from(
     new Set(
@@ -345,38 +347,19 @@ function getPegAnchor(symbol: string): TokenPeg | null {
     ),
   );
 
-  if (matchingPegs.length === 1) {
-    return matchingPegs[0];
-  }
-
-  return null;
+  return matchingPegs.length === 1 ? matchingPegs[0] : null;
 }
 
-function inferWrappedAssetLabel(expectedSymbol: string, actualSymbol: string): string | null {
-  const expected = normalizeSymbol(expectedSymbol);
-  const actual = normalizeSymbol(actualSymbol);
-
-  const wrapperPrefixes = ['cb', 'wst', 'we', 'k', 'gt', 'os', 'rs', 'apx', 'bsd', 'lb', 'eb'];
-  for (const prefix of wrapperPrefixes) {
-    if (expected.startsWith(prefix) && expected.slice(prefix.length) === actual) {
-      return `${expectedSymbol} <> ${actualSymbol} peg`;
-    }
-    if (actual.startsWith(prefix) && actual.slice(prefix.length) === expected) {
-      return `${expectedSymbol} <> ${actualSymbol} peg`;
-    }
-  }
-
-  return null;
-}
-
+/**
+ * Infer a missing hardcoded assumption from the exact unresolved path.
+ *
+ * Inputs are the expected market asset symbol and the exact remaining symbol on the
+ * unresolved oracle path after standard cancellation. If both resolve to the same peg
+ * anchor, we surface that missing conversion as an assumption.
+ */
 function inferAssumptionLabel(expectedSymbol: string, actualSymbol: string): string | null {
   if (normalizeEquivalentSymbol(expectedSymbol) === normalizeEquivalentSymbol(actualSymbol)) {
     return null;
-  }
-
-  const wrappedAssetLabel = inferWrappedAssetLabel(expectedSymbol, actualSymbol);
-  if (wrappedAssetLabel) {
-    return wrappedAssetLabel;
   }
 
   const expectedPeg = getPegAnchor(expectedSymbol);
