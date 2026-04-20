@@ -391,7 +391,7 @@ function formatPathMismatchWarning(actualPath: string, inferredAssumptions: stri
 
   const formattedPath = actualPath.toUpperCase();
   if (inferredAssumptions.length > 0) {
-    return `Oracle has hardcoded path: ${formattedPath}. Missing legs: ${inferredAssumptions.join(', ')}.`;
+    return `Oracle has hardcoded path: ${formattedPath}. This assumes ${inferredAssumptions.join(' and ')}.`;
   }
 
   return `Oracle path mismatch: ${formattedPath}.`;
