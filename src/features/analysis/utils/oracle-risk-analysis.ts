@@ -76,7 +76,8 @@ export type RiskAnalysisResult = {
   totalBorrowUsd: number;
   totalCollateralUsd: number;
   totalExposureUsd: number;
-  invalidPathCount: number;
+  pegAssumptionMarketCount: number;
+  pegAssumptionExposureUsd: number;
   unknownOracleCount: number;
   rows: AnalysisMarketRow[];
   oracleBuckets: AnalysisBucket[];
@@ -355,7 +356,8 @@ export function buildRiskAnalysis({ markets, oracleMetadataMap, exposureMetric }
     totalBorrowUsd: rows.reduce((total, row) => total + row.borrowUsd, 0),
     totalCollateralUsd: rows.reduce((total, row) => total + row.collateralUsd, 0),
     totalExposureUsd: rows.reduce((total, row) => total + row.exposureUsd, 0),
-    invalidPathCount: rows.filter((row) => !row.isValidPath).length,
+    pegAssumptionMarketCount: rows.filter((row) => row.pegAssumptions.length > 0).length,
+    pegAssumptionExposureUsd: rows.filter((row) => row.pegAssumptions.length > 0).reduce((total, row) => total + row.exposureUsd, 0),
     unknownOracleCount: rows.filter((row) => row.vendorLabels.includes(UNKNOWN_VENDOR) || row.oracleType === 'missing').length,
     rows,
     oracleBuckets: finalizeBuckets(oracleBuckets),

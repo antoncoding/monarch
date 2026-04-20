@@ -1137,7 +1137,8 @@ export default function AnalysisView() {
   const setActiveAssumptionKey = assumptionMode === 'peg' ? setSelectedPegKey : setSelectedVaultKey;
 
   const isInitialLoading = loading || oracleMetadataLoading;
-  const metricLabel = exposureMetric === 'borrow' ? 'borrow exposure' : 'supply TVL';
+  const metricLabel = exposureMetric === 'borrow' ? 'Borrow Exposure' : 'Supply TVL';
+  const pegRiskMetricLabel = exposureMetric === 'borrow' ? 'Borrow Behind Peg Assumptions' : 'Supply Behind Peg Assumptions';
 
   return (
     <>
@@ -1172,21 +1173,21 @@ export default function AnalysisView() {
 
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <MetricCard
-                label={exposureMetric === 'borrow' ? 'Borrow Exposure' : 'Supply TVL'}
+                label={metricLabel}
                 value={formatUsdValue(analysis.totalExposureUsd)}
                 detail={`${analysis.marketCount} markets in scope`}
                 icon={<RiDatabase2Line />}
               />
               <MetricCard
-                label="Borrowed"
-                value={formatUsdValue(analysis.totalBorrowUsd)}
-                detail={`${formatPercent(analysis.totalBorrowUsd, analysis.totalSupplyUsd)} of supply TVL`}
+                label={pegRiskMetricLabel}
+                value={formatUsdValue(analysis.pegAssumptionExposureUsd)}
+                detail={`${formatPercent(analysis.pegAssumptionExposureUsd, analysis.totalExposureUsd)} of selected ${exposureMetric}`}
                 icon={<RiScales3Line />}
               />
               <MetricCard
-                label="Peg Assumptions"
-                value={`${analysis.invalidPathCount}`}
-                detail={`${formatPercent(analysis.invalidPathCount, Math.max(analysis.marketCount, 1))} of ${analysis.marketCount} markets rely on hardcoded assumptions`}
+                label="Markets With Peg Assumption"
+                value={`${analysis.pegAssumptionMarketCount}`}
+                detail={`${formatPercent(analysis.pegAssumptionMarketCount, Math.max(analysis.marketCount, 1))} of ${analysis.marketCount} markets rely on hardcoded assumptions`}
                 icon={<RiNodeTree />}
               />
               <MetricCard
