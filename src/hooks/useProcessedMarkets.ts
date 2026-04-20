@@ -13,6 +13,11 @@ import { formatBalance } from '@/utils/balance';
 import type { TokenPriceInput } from '@/data-sources/morpho-api/prices';
 import type { Market } from '@/utils/types';
 
+type UseProcessedMarketsOptions = {
+  marketsRefetchInterval?: number | false;
+  marketsRefetchOnWindowFocus?: boolean;
+};
+
 const EMPTY_RATE_ENRICHMENTS: MarketRateEnrichmentMap = new Map();
 
 const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market['supplyingVaults']): boolean => {
@@ -84,8 +89,17 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
  * const { rawMarketsUnfiltered } = useProcessedMarkets(); // For blacklist modal
  * ```
  */
-export const useProcessedMarkets = () => {
-  const { data: rawMarketsFromQuery, isLoading, isRefetching, error, refetch } = useMarketsQuery();
+export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
+  const {
+    data: rawMarketsFromQuery,
+    isLoading,
+    isRefetching,
+    error,
+    refetch,
+  } = useMarketsQuery({
+    refetchInterval: options?.marketsRefetchInterval,
+    refetchOnWindowFocus: options?.marketsRefetchOnWindowFocus,
+  });
   const { whitelistLookup, supplyingVaultsLookup } = useMorphoWhitelistStatusQuery();
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
   const { showUnwhitelistedMarkets } = useAppSettings();

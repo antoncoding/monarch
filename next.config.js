@@ -13,15 +13,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'ipfs.io',
-      },
-      {
-        protocol: 'https',
-        hostname: 'effigy.im',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.dicebear.com',
+        hostname: '**',
       },
     ],
   },
