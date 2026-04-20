@@ -60,6 +60,15 @@ const transformSubgraphMarketToMarket = (
     }
   };
 
+  const fillMissingPrice = (currentPrice: number, token: ERC20Token | UnknownERC20Token | undefined): number => {
+    if (currentPrice > 0 || !token) {
+      return currentPrice;
+    }
+
+    const estimatedPrice = getEstimateValue(token);
+    return estimatedPrice === undefined ? currentPrice : estimatedPrice;
+  };
+
   const mapToken = (token: Partial<SubgraphToken> | undefined) => ({
     id: token?.id ?? '0x',
     address: token?.id ?? '0x',
@@ -112,15 +121,8 @@ const transformSubgraphMarketToMarket = (
     warnings.push(UNRECOGNIZED_COLLATERAL);
   }
 
-  if (!hasUSDPrice) {
-    // no price available, try to estimate
-    if (knownLoadAsset) {
-      loanAssetPrice = getEstimateValue(knownLoadAsset) ?? 0;
-    }
-    if (knownCollateralAsset) {
-      collateralAssetPrice = getEstimateValue(knownCollateralAsset) ?? 0;
-    }
-  }
+  loanAssetPrice = fillMissingPrice(loanAssetPrice, knownLoadAsset);
+  collateralAssetPrice = fillMissingPrice(collateralAssetPrice, knownCollateralAsset);
 
   const supplyAssetsUsd = formatBalance(supplyAssets, loanAsset.decimals) * loanAssetPrice;
   const borrowAssetsUsd = formatBalance(borrowAssets, loanAsset.decimals) * loanAssetPrice;

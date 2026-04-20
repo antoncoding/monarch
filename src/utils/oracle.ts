@@ -313,8 +313,22 @@ type CheckFeedsPathResult = {
 // to suppress warnings for, not general peg-equivalent assets.
 const SAME_FAMILY_SYMBOL_GROUPS: Record<string, string> = {
   weth: 'eth',
+  whype: 'hype',
   usds: 'maker-usd',
   dai: 'maker-usd',
+};
+
+// Non-token symbols (and a few canonical aliases) that can appear in oracle paths.
+// Registered ERC20s should resolve through supportedTokens + peg metadata instead.
+const PEG_ANCHOR_SYMBOLS: Partial<Record<string, TokenPeg>> = {
+  usd: TokenPeg.USD,
+  eth: TokenPeg.ETH,
+  weth: TokenPeg.ETH,
+  steth: TokenPeg.ETH,
+  btc: TokenPeg.BTC,
+  xrp: TokenPeg.XRP,
+  hype: TokenPeg.HYPE,
+  whype: TokenPeg.HYPE,
 };
 
 /**
@@ -331,12 +345,10 @@ function normalizeEquivalentSymbol(symbol: string): string {
 
 function getPegAnchor(symbol: string): TokenPeg | null {
   const normalized = normalizeSymbol(symbol);
-
-  if (normalized === 'usd') return TokenPeg.USD;
-  if (normalized === 'eth' || normalized === 'weth') return TokenPeg.ETH;
-  if (normalized === 'btc') return TokenPeg.BTC;
-  if (normalized === 'xrp') return TokenPeg.XRP;
-  if (normalized === 'hype') return TokenPeg.HYPE;
+  const canonicalAnchor = PEG_ANCHOR_SYMBOLS[normalized];
+  if (canonicalAnchor !== undefined) {
+    return canonicalAnchor;
+  }
 
   const matchingPegs = Array.from(
     new Set(
@@ -370,6 +382,19 @@ function inferAssumptionLabel(expectedSymbol: string, actualSymbol: string): str
   }
 
   return `${expectedSymbol} <> ${actualSymbol} peg`;
+}
+
+function formatPathMismatchWarning(actualPath: string, inferredAssumptions: string[]): string {
+  if (actualPath === 'EMPTY/EMPTY') {
+    return 'Oracle path mismatch: no price path found.';
+  }
+
+  const formattedPath = actualPath.toUpperCase();
+  if (inferredAssumptions.length > 0) {
+    return `Oracle has hardcoded path: ${formattedPath}. Missing legs: ${inferredAssumptions.join(', ')}.`;
+  }
+
+  return `Oracle path mismatch: ${formattedPath}.`;
 }
 
 function cancelOutAssets(numeratorAssets: string[], denominatorAssets: string[], areEquivalent: (left: string, right: string) => boolean) {
@@ -467,15 +492,7 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
       : null,
   ].filter((value): value is string => Boolean(value));
 
-  let missingPath = '';
-  if (exactCancellation.remainingNumeratorAssets.length === 0 && exactCancellation.remainingDenominatorAssets.length === 0) {
-    missingPath = 'All assets canceled out - no price path found';
-  } else {
-    missingPath = `Oracle uses ${actualPath.toUpperCase()} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected.`;
-    if (inferredAssumptions.length > 0) {
-      missingPath += `\nHardcoded assumptions: ${inferredAssumptions.join(', ')}.`;
-    }
-  }
+  const missingPath = formatPathMismatchWarning(actualPath, inferredAssumptions);
 
   return {
     isValid: false,
