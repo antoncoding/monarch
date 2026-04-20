@@ -308,18 +308,10 @@ type CheckFeedsPathResult = {
   inferredAssumptions?: string[];
 };
 
-// Symbols in the same UI-resolution group are treated as already resolved for path validation.
-// Keep this list extremely small: only exact wrappers / naming continuations we explicitly want
-// to suppress warnings for, not general peg-equivalent assets.
-const SAME_FAMILY_SYMBOL_GROUPS: Record<string, string> = {
-  weth: 'eth',
-  whype: 'hype',
-  usds: 'maker-usd',
-  dai: 'maker-usd',
-};
-
 // Non-token symbols (and a few canonical aliases) that can appear in oracle paths.
-// Registered ERC20s should resolve through supportedTokens + peg metadata instead.
+// These anchors only explain unresolved path assumptions; they do not make a
+// mismatched oracle path valid. Registered ERC20s should resolve through
+// supportedTokens + peg metadata instead.
 const PEG_ANCHOR_SYMBOLS: Partial<Record<string, TokenPeg>> = {
   usd: TokenPeg.USD,
   eth: TokenPeg.ETH,
@@ -335,12 +327,8 @@ const PEG_ANCHOR_SYMBOLS: Partial<Record<string, TokenPeg>> = {
  * Normalize asset symbols for comparison
  */
 function normalizeSymbol(symbol: string): string {
-  return symbol.toLowerCase();
-}
-
-function normalizeEquivalentSymbol(symbol: string): string {
-  const normalized = normalizeSymbol(symbol);
-  return SAME_FAMILY_SYMBOL_GROUPS[normalized] ?? normalized;
+  const normalized = symbol.toLowerCase();
+  return normalized === 'weth' ? 'eth' : normalized;
 }
 
 function getPegAnchor(symbol: string): TokenPeg | null {
@@ -370,7 +358,7 @@ function getPegAnchor(symbol: string): TokenPeg | null {
  * anchor, we surface that missing conversion as an assumption.
  */
 function inferAssumptionLabel(expectedSymbol: string, actualSymbol: string): string | null {
-  if (normalizeEquivalentSymbol(expectedSymbol) === normalizeEquivalentSymbol(actualSymbol)) {
+  if (normalizeSymbol(expectedSymbol) === normalizeSymbol(actualSymbol)) {
     return null;
   }
 
@@ -458,14 +446,8 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
     denominatorAssets,
     (left, right) => normalizeSymbol(left) === normalizeSymbol(right),
   );
-  const equivalentCancellation = cancelOutAssets(
-    numeratorAssets,
-    denominatorAssets,
-    (left, right) => normalizeEquivalentSymbol(left) === normalizeEquivalentSymbol(right),
-  );
-
-  const remainingNumeratorAssets = equivalentCancellation.remainingNumeratorAssets;
-  const remainingDenominatorAssets = equivalentCancellation.remainingDenominatorAssets;
+  const remainingNumeratorAssets = exactCancellation.remainingNumeratorAssets;
+  const remainingDenominatorAssets = exactCancellation.remainingDenominatorAssets;
 
   const normalizedCollateralSymbol = normalizeSymbol(collateralSymbol);
   const normalizedLoanSymbol = normalizeSymbol(loanSymbol);
@@ -474,8 +456,8 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
   const isValid =
     remainingNumeratorAssets.length === 1 &&
     remainingDenominatorAssets.length === 1 &&
-    normalizeEquivalentSymbol(remainingNumeratorAssets[0]) === normalizeEquivalentSymbol(collateralSymbol) &&
-    normalizeEquivalentSymbol(remainingDenominatorAssets[0]) === normalizeEquivalentSymbol(loanSymbol);
+    normalizeSymbol(remainingNumeratorAssets[0]) === normalizedCollateralSymbol &&
+    normalizeSymbol(remainingDenominatorAssets[0]) === normalizedLoanSymbol;
 
   if (isValid) {
     return { isValid: true };
