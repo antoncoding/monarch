@@ -82,6 +82,7 @@ export type RiskAnalysisResult = {
   oracleBuckets: AnalysisBucket[];
   pegAssumptionBuckets: AnalysisBucket[];
   noPegAssumptionBucket: AnalysisBucket | null;
+  unknownPegRouteBucket: AnalysisBucket | null;
   vaultAssumptionBuckets: AnalysisBucket[];
   loanAssetBuckets: AnalysisAssetBucket[];
   collateralAssetBuckets: AnalysisAssetBucket[];
@@ -305,6 +306,7 @@ export function buildRiskAnalysis({ markets, oracleMetadataMap, exposureMetric }
   const oracleBuckets = new Map<string, MutableBucket>();
   const pegAssumptionBuckets = new Map<string, MutableBucket>();
   const noPegAssumptionBucket = createBucket('no-peg-assumption', 'No Assumption');
+  const unknownPegRouteBucket = createBucket('unknown-peg-route', 'Unknown');
   const vaultAssumptionBuckets = new Map<string, MutableBucket>();
   const loanAssetBuckets = new Map<string, MutableAssetBucket>();
   const collateralAssetBuckets = new Map<string, MutableAssetBucket>();
@@ -325,7 +327,11 @@ export function buildRiskAnalysis({ markets, oracleMetadataMap, exposureMetric }
       pegAssumptionBuckets.set(assumption, bucket);
     }
 
-    if (row.pegAssumptions.length === 0) {
+    const hasUnknownPegRoute = row.oracleType === 'missing' || row.unknownLegCount > 0 || row.actualPath === EMPTY_PATH;
+
+    if (row.pegAssumptions.length === 0 && hasUnknownPegRoute) {
+      addToBucket(unknownPegRouteBucket, row, row.exposureUsd);
+    } else if (row.pegAssumptions.length === 0) {
       addToBucket(noPegAssumptionBucket, row, row.exposureUsd);
     }
 
@@ -351,6 +357,7 @@ export function buildRiskAnalysis({ markets, oracleMetadataMap, exposureMetric }
     oracleBuckets: finalizeBuckets(oracleBuckets),
     pegAssumptionBuckets: finalizeBuckets(pegAssumptionBuckets),
     noPegAssumptionBucket: finalizeBuckets(new Map([[noPegAssumptionBucket.key, noPegAssumptionBucket]]))[0] ?? null,
+    unknownPegRouteBucket: finalizeBuckets(new Map([[unknownPegRouteBucket.key, unknownPegRouteBucket]]))[0] ?? null,
     vaultAssumptionBuckets: finalizeBuckets(vaultAssumptionBuckets),
     loanAssetBuckets: finalizeAssetBuckets(loanAssetBuckets),
     collateralAssetBuckets: finalizeAssetBuckets(collateralAssetBuckets),

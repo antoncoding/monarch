@@ -1117,7 +1117,8 @@ export default function AnalysisView() {
   const pegBuckets = analysis.noPegAssumptionBucket
     ? [analysis.noPegAssumptionBucket, ...analysis.pegAssumptionBuckets]
     : analysis.pegAssumptionBuckets;
-  const assumptionBuckets = assumptionMode === 'peg' ? pegBuckets : analysis.vaultAssumptionBuckets;
+  const pegBucketsWithUnknown = analysis.unknownPegRouteBucket ? [...pegBuckets, analysis.unknownPegRouteBucket] : pegBuckets;
+  const assumptionBuckets = assumptionMode === 'peg' ? pegBucketsWithUnknown : analysis.vaultAssumptionBuckets;
   const activeAssumptionBucket =
     assumptionMode === 'peg'
       ? (assumptionBuckets.find((bucket) => bucket.key === selectedPegKey) ?? assumptionBuckets[0])
@@ -1173,15 +1174,15 @@ export default function AnalysisView() {
                 icon={<RiScales3Line />}
               />
               <MetricCard
-                label="Route Assumptions"
+                label="Peg Assumptions"
                 value={`${analysis.invalidPathCount}`}
-                detail={`${formatPercent(analysis.invalidPathCount, Math.max(analysis.marketCount, 1))} need assumptions`}
+                detail={`${formatPercent(analysis.invalidPathCount, Math.max(analysis.marketCount, 1))} of ${analysis.marketCount} markets rely on hardcoded assumptions`}
                 icon={<RiNodeTree />}
               />
               <MetricCard
-                label="Unknown Oracles"
+                label="Unknown Feeds"
                 value={`${analysis.unknownOracleCount}`}
-                detail={`${formatPercent(analysis.unknownOracleCount, Math.max(analysis.marketCount, 1))} of ${analysis.marketCount} listed markets`}
+                detail={`${formatPercent(analysis.unknownOracleCount, Math.max(analysis.marketCount, 1))} of ${analysis.marketCount} markets contain feeds unknown to Monarch`}
                 icon={<RiErrorWarningLine />}
               />
             </section>
