@@ -13,20 +13,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'ipfs.io',
-      },
-      {
-        protocol: 'https',
-        hostname: 'effigy.im',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.dicebear.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'storage.googleapis.com',
-        pathname: '/prod-pendle-bucket-a/images/assets/pro/**',
+        hostname: '**',
       },
     ],
   },
