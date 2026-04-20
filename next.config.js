@@ -23,6 +23,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'api.dicebear.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/prod-pendle-bucket-a/images/assets/pro/**',
+      },
     ],
   },
   // temp fix for reown package issue: https://github.com/MetaMask/metamask-sdk/issues/1376
