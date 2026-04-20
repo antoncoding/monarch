@@ -328,7 +328,9 @@ const PEG_ANCHOR_SYMBOLS: Partial<Record<string, TokenPeg>> = {
  */
 function normalizeSymbol(symbol: string): string {
   const normalized = symbol.toLowerCase();
-  return normalized === 'weth' ? 'eth' : normalized;
+  if (normalized === 'weth') return 'eth';
+  if (normalized === 'whype') return 'hype';
+  return normalized;
 }
 
 function getPegAnchor(symbol: string): TokenPeg | null {
@@ -372,7 +374,7 @@ function inferAssumptionLabel(expectedSymbol: string, actualSymbol: string): str
   return `${expectedSymbol} <> ${actualSymbol} peg`;
 }
 
-function formatPathMismatchWarning(actualPath: string, inferredAssumptions: string[]): string {
+function formatPathMismatchWarning(actualPath: string, expectedPath: string, inferredAssumptions: string[]): string {
   if (actualPath === 'EMPTY/EMPTY') {
     return 'Oracle path mismatch: no price path found.';
   }
@@ -382,7 +384,7 @@ function formatPathMismatchWarning(actualPath: string, inferredAssumptions: stri
     return `Oracle has hardcoded path: ${formattedPath}. This assumes ${inferredAssumptions.join(' and ')}.`;
   }
 
-  return `Oracle path mismatch: ${formattedPath}.`;
+  return `Oracle uses ${formattedPath} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected.`;
 }
 
 function cancelOutAssets(numeratorAssets: string[], denominatorAssets: string[], areEquivalent: (left: string, right: string) => boolean) {
@@ -452,6 +454,7 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
   const normalizedCollateralSymbol = normalizeSymbol(collateralSymbol);
   const normalizedLoanSymbol = normalizeSymbol(loanSymbol);
   const expectedPath = `${normalizedCollateralSymbol}/${normalizedLoanSymbol}`;
+  const expectedDisplayPath = `${collateralSymbol}/${loanSymbol}`;
 
   const isValid =
     remainingNumeratorAssets.length === 1 &&
@@ -474,7 +477,7 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
       : null,
   ].filter((value): value is string => Boolean(value));
 
-  const missingPath = formatPathMismatchWarning(actualPath, inferredAssumptions);
+  const missingPath = formatPathMismatchWarning(actualPath, expectedDisplayPath, inferredAssumptions);
 
   return {
     isValid: false,
