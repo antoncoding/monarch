@@ -9,11 +9,15 @@ export type SingleChainERC20Basic = {
   address: string;
 };
 
-// a token can be "linked" to a pegged asset, we use this to estimate the USD value for markets if it's not presented.
+// A token can be linked to a loose reference asset. USD, ETH, and BTC currently
+// have price fallback sources; the broader enum is also used to explain oracle
+// path assumptions when scanner feeds use an anchor symbol instead of the token.
 export enum TokenPeg {
   USD = 'USD',
   ETH = 'ETH',
   BTC = 'BTC',
+  XRP = 'XRP',
+  HYPE = 'HYPE',
 }
 
 export type ERC20Token = {
@@ -27,7 +31,8 @@ export type ERC20Token = {
   isFactoryToken?: boolean;
   source?: TokenSource;
 
-  // this is not a "hard peg", instead only used for market supply / borrow USD value estimation
+  // Not a hard-peg guarantee. It may backfill market USD values only when a
+  // supported reference price exists, and it may label oracle path assumptions.
   peg?: TokenPeg;
 };
 
@@ -781,6 +786,7 @@ const supportedTokens = [
         address: '0x5555555555555555555555555555555555555555',
       },
     ],
+    peg: TokenPeg.HYPE,
   },
   {
     symbol: 'UETH',
@@ -823,6 +829,7 @@ const supportedTokens = [
     img: require('../imgs/tokens/cbxrp.png') as string,
     decimals: 6,
     networks: [{ chain: base, address: '0xcb585250f852C6c6bf90434AB21A00f02833a4af' }],
+    peg: TokenPeg.XRP,
   },
   {
     symbol: 'cbADA',

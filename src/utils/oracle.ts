@@ -20,6 +20,7 @@ import {
 } from '@/hooks/useOracleMetadata';
 import { formatSimple } from './balance';
 import { SupportedNetworks } from './networks';
+import { TokenPeg, supportedTokens } from './tokens';
 
 type VendorInfo = {
   coreVendors: PriceFeedVendors[]; // Well-known vendors (Chainlink, Redstone, etc.)
@@ -303,6 +304,23 @@ type CheckFeedsPathResult = {
   hasUnknownFeed?: boolean;
   missingPath?: string;
   expectedPath?: string;
+  actualPath?: string;
+  inferredAssumptions?: string[];
+};
+
+// Non-token symbols (and a few canonical aliases) that can appear in oracle paths.
+// These anchors only explain unresolved path assumptions; they do not make a
+// mismatched oracle path valid. Registered ERC20s should resolve through
+// supportedTokens + peg metadata instead.
+const PEG_ANCHOR_SYMBOLS: Partial<Record<string, TokenPeg>> = {
+  usd: TokenPeg.USD,
+  eth: TokenPeg.ETH,
+  weth: TokenPeg.ETH,
+  steth: TokenPeg.ETH,
+  btc: TokenPeg.BTC,
+  xrp: TokenPeg.XRP,
+  hype: TokenPeg.HYPE,
+  whype: TokenPeg.HYPE,
 };
 
 /**
@@ -310,7 +328,81 @@ type CheckFeedsPathResult = {
  */
 function normalizeSymbol(symbol: string): string {
   const normalized = symbol.toLowerCase();
-  return normalized === 'weth' ? 'eth' : normalized;
+  if (normalized === 'weth') return 'eth';
+  if (normalized === 'whype') return 'hype';
+  return normalized;
+}
+
+function getPegAnchor(symbol: string): TokenPeg | null {
+  const normalized = normalizeSymbol(symbol);
+  const canonicalAnchor = PEG_ANCHOR_SYMBOLS[normalized];
+  if (canonicalAnchor !== undefined) {
+    return canonicalAnchor;
+  }
+
+  const matchingPegs = Array.from(
+    new Set(
+      supportedTokens
+        .filter((supportedToken) => normalizeSymbol(supportedToken.symbol) === normalized)
+        .map((supportedToken) => supportedToken.peg)
+        .filter((peg): peg is TokenPeg => peg != null),
+    ),
+  );
+
+  return matchingPegs.length === 1 ? matchingPegs[0] : null;
+}
+
+/**
+ * Infer a missing hardcoded assumption from the exact unresolved path.
+ *
+ * Inputs are the expected market asset symbol and the exact remaining symbol on the
+ * unresolved oracle path after standard cancellation. If both resolve to the same peg
+ * anchor, we surface that missing conversion as an assumption.
+ */
+function inferAssumptionLabel(expectedSymbol: string, actualSymbol: string): string | null {
+  if (normalizeSymbol(expectedSymbol) === normalizeSymbol(actualSymbol)) {
+    return null;
+  }
+
+  const expectedPeg = getPegAnchor(expectedSymbol);
+  const actualPeg = getPegAnchor(actualSymbol);
+
+  if (!expectedPeg || !actualPeg || expectedPeg !== actualPeg) {
+    return null;
+  }
+
+  return `${expectedSymbol} <> ${actualSymbol} peg`;
+}
+
+function formatPathMismatchWarning(actualPath: string, expectedPath: string, inferredAssumptions: string[]): string {
+  if (actualPath === 'EMPTY/EMPTY') {
+    return 'Oracle path mismatch: no price path found.';
+  }
+
+  const formattedPath = actualPath.toUpperCase();
+  if (inferredAssumptions.length > 0) {
+    return `Oracle has hardcoded path: ${formattedPath}. This assumes ${inferredAssumptions.join(' and ')}.`;
+  }
+
+  return `Oracle uses ${formattedPath} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected.`;
+}
+
+function cancelOutAssets(numeratorAssets: string[], denominatorAssets: string[], areEquivalent: (left: string, right: string) => boolean) {
+  const remainingDenominatorAssets = [...denominatorAssets];
+  const remainingNumeratorAssets: string[] = [];
+
+  for (const numeratorAsset of numeratorAssets) {
+    const denominatorIndex = remainingDenominatorAssets.findIndex((denominatorAsset) => areEquivalent(numeratorAsset, denominatorAsset));
+
+    if (denominatorIndex >= 0) {
+      remainingDenominatorAssets.splice(denominatorIndex, 1);
+      continue;
+    }
+
+    remainingNumeratorAssets.push(numeratorAsset);
+  }
+
+  return { remainingNumeratorAssets, remainingDenominatorAssets };
 }
 
 type FeedPathEntry = {
@@ -330,13 +422,12 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
     return { isValid: false, hasUnknownFeed: true };
   }
 
-  const numeratorCounts = new Map<string, number>();
-  const denominatorCounts = new Map<string, number>();
+  const numeratorAssets: string[] = [];
+  const denominatorAssets: string[] = [];
 
-  const incrementCount = (map: Map<string, number>, asset: string) => {
+  const pushAsset = (assets: string[], asset: string) => {
     if (asset !== 'EMPTY') {
-      const normalizedAsset = normalizeSymbol(asset);
-      map.set(normalizedAsset, (map.get(normalizedAsset) ?? 0) + 1);
+      assets.push(asset);
     }
   };
 
@@ -344,66 +435,56 @@ function validateFeedPaths(feedPaths: FeedPathEntry[], collateralSymbol: string,
     if (!hasData) continue;
 
     if (type === 'base1' || type === 'base2' || type === 'baseVault') {
-      incrementCount(numeratorCounts, path.base);
-      incrementCount(denominatorCounts, path.quote);
+      pushAsset(numeratorAssets, path.base);
+      pushAsset(denominatorAssets, path.quote);
     } else {
-      incrementCount(denominatorCounts, path.base);
-      incrementCount(numeratorCounts, path.quote);
+      pushAsset(denominatorAssets, path.base);
+      pushAsset(numeratorAssets, path.quote);
     }
   }
 
-  const cancelOut = (num: Map<string, number>, den: Map<string, number>) => {
-    const assets = new Set([...num.keys(), ...den.keys()]);
-
-    for (const asset of assets) {
-      const numCount = num.get(asset) ?? 0;
-      const denCount = den.get(asset) ?? 0;
-      const minCount = Math.min(numCount, denCount);
-
-      if (minCount > 0) {
-        num.set(asset, numCount - minCount);
-        den.set(asset, denCount - minCount);
-
-        if (num.get(asset) === 0) num.delete(asset);
-        if (den.get(asset) === 0) den.delete(asset);
-      }
-    }
-  };
-
-  cancelOut(numeratorCounts, denominatorCounts);
-
-  const remainingNumeratorAssets = Array.from(numeratorCounts.keys()).filter((asset) => (numeratorCounts.get(asset) ?? 0) > 0);
-  const remainingDenominatorAssets = Array.from(denominatorCounts.keys()).filter((asset) => (denominatorCounts.get(asset) ?? 0) > 0);
+  const exactCancellation = cancelOutAssets(
+    numeratorAssets,
+    denominatorAssets,
+    (left, right) => normalizeSymbol(left) === normalizeSymbol(right),
+  );
+  const remainingNumeratorAssets = exactCancellation.remainingNumeratorAssets;
+  const remainingDenominatorAssets = exactCancellation.remainingDenominatorAssets;
 
   const normalizedCollateralSymbol = normalizeSymbol(collateralSymbol);
   const normalizedLoanSymbol = normalizeSymbol(loanSymbol);
-
   const expectedPath = `${normalizedCollateralSymbol}/${normalizedLoanSymbol}`;
+  const expectedDisplayPath = `${collateralSymbol}/${loanSymbol}`;
 
   const isValid =
     remainingNumeratorAssets.length === 1 &&
     remainingDenominatorAssets.length === 1 &&
-    remainingNumeratorAssets[0] === normalizedCollateralSymbol &&
-    remainingDenominatorAssets[0] === normalizedLoanSymbol &&
-    (numeratorCounts.get(normalizedCollateralSymbol) ?? 0) === 1 &&
-    (denominatorCounts.get(normalizedLoanSymbol) ?? 0) === 1;
+    normalizeSymbol(remainingNumeratorAssets[0]) === normalizedCollateralSymbol &&
+    normalizeSymbol(remainingDenominatorAssets[0]) === normalizedLoanSymbol;
 
   if (isValid) {
     return { isValid: true };
   }
 
-  let missingPath = '';
-  if (remainingNumeratorAssets.length === 0 && remainingDenominatorAssets.length === 0) {
-    missingPath = 'All assets canceled out - no price path found';
-  } else {
-    const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join('*')}`;
-    missingPath = `Oracle uses ${actualPath.toUpperCase()} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected`;
-  }
+  const actualPath = `${exactCancellation.remainingNumeratorAssets.join('*') || 'EMPTY'}/${exactCancellation.remainingDenominatorAssets.join('*') || 'EMPTY'}`;
+
+  const inferredAssumptions = [
+    exactCancellation.remainingNumeratorAssets.length === 1
+      ? inferAssumptionLabel(collateralSymbol, exactCancellation.remainingNumeratorAssets[0])
+      : null,
+    exactCancellation.remainingDenominatorAssets.length === 1
+      ? inferAssumptionLabel(loanSymbol, exactCancellation.remainingDenominatorAssets[0])
+      : null,
+  ].filter((value): value is string => Boolean(value));
+
+  const missingPath = formatPathMismatchWarning(actualPath, expectedDisplayPath, inferredAssumptions);
 
   return {
     isValid: false,
     missingPath,
     expectedPath,
+    actualPath,
+    inferredAssumptions,
   };
 }
 
