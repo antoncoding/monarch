@@ -631,11 +631,13 @@ function OracleExposureSection({
       <MarketExposureTable
         title={activeBucket ? `${activeBucket.label} Markets` : 'Oracle Markets'}
         entries={activeBucket?.markets ?? []}
-        totalUsd={activeBucket?.markets.reduce((total, { row }) => total + row.supplyUsd, 0) ?? totalUsd}
+        totalUsd={
+          activeBucket?.markets.reduce((total, { row }) => total + (exposureMetric === 'borrow' ? row.borrowUsd : row.supplyUsd), 0) ??
+          totalUsd
+        }
         exposureMetric={exposureMetric}
         showAssumptions={false}
         showFeeds
-        forceSupplyAmounts
         oracleMetadataMap={oracleMetadataMap}
       />
     </div>
