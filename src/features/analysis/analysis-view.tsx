@@ -5,7 +5,7 @@ import { formatUnits } from 'viem';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Cell, Legend as RechartsLegend, Pie, PieChart, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { RiDatabase2Line, RiNodeTree, RiPieChart2Line, RiScales3Line, RiShieldCheckLine } from 'react-icons/ri';
+import { RiDatabase2Line, RiErrorWarningLine, RiNodeTree, RiPieChart2Line, RiScales3Line } from 'react-icons/ri';
 import Header from '@/components/layout/header/Header';
 import { AddressIdentity } from '@/components/shared/address-identity';
 import { NetworkIcon } from '@/components/shared/network-icon';
@@ -57,7 +57,6 @@ const ASSUMPTION_OPTIONS: ButtonOption[] = [
 ];
 
 const OTHER_BUCKET_KEY = '__other';
-const MAX_DONUT_SLICES = 8;
 const MAX_TABLE_ROWS = 8;
 
 type DonutDataPoint = {
@@ -81,37 +80,24 @@ const formatAssumptionLabel = (label: string): string => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+function UsdWithPercent({ valueUsd, totalUsd }: { valueUsd: number; totalUsd: number }) {
+  return (
+    <span className="inline-flex shrink-0 items-baseline gap-1 whitespace-nowrap tabular-nums">
+      <span>{formatUsdValue(valueUsd)}</span>
+      <span className="text-xs text-secondary">({formatPercent(valueUsd, totalUsd)})</span>
+    </span>
+  );
+}
+
 const getMarketHref = (row: AnalysisMarketRow): string => `/market/${row.chainId}/${row.market.uniqueKey}`;
 
 const getDonutData = (buckets: AnalysisBucket[]): DonutDataPoint[] => {
-  const visible = buckets.slice(0, MAX_DONUT_SLICES);
-  const hidden = buckets.slice(MAX_DONUT_SLICES);
-  const hiddenValue = hidden.reduce((total, bucket) => total + bucket.valueUsd, 0);
-  const hiddenMarketCount = hidden.reduce((total, bucket) => total + bucket.marketCount, 0);
-
-  if (hiddenValue <= 0) {
-    return visible.map((bucket) => ({
-      key: bucket.key,
-      label: bucket.label,
-      valueUsd: bucket.valueUsd,
-      marketCount: bucket.marketCount,
-    }));
-  }
-
-  return [
-    ...visible.map((bucket) => ({
-      key: bucket.key,
-      label: bucket.label,
-      valueUsd: bucket.valueUsd,
-      marketCount: bucket.marketCount,
-    })),
-    {
-      key: OTHER_BUCKET_KEY,
-      label: 'Other',
-      valueUsd: hiddenValue,
-      marketCount: hiddenMarketCount,
-    },
-  ];
+  return buckets.map((bucket) => ({
+    key: bucket.key,
+    label: bucket.label,
+    valueUsd: bucket.valueUsd,
+    marketCount: bucket.marketCount,
+  }));
 };
 
 const isKnownVendor = (label: string): label is PriceFeedVendors => {
@@ -447,7 +433,10 @@ function SplitRow({
           {leading}
           <span className="truncate">{label}</span>
         </div>
-        <span className="tabular-nums text-secondary">{formatPercent(valueUsd, totalUsd)}</span>
+        <UsdWithPercent
+          valueUsd={valueUsd}
+          totalUsd={totalUsd}
+        />
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-hovered">
         <div
@@ -681,7 +670,10 @@ function AssumptionBars({
               >
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="min-w-0 truncate">{formatAssumptionLabel(bucket.label)}</span>
-                  <span className="text-xs text-secondary">{formatPercent(bucket.valueUsd, totalUsd)}</span>
+                  <UsdWithPercent
+                    valueUsd={bucket.valueUsd}
+                    totalUsd={totalUsd}
+                  />
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-hovered">
                   <div
@@ -691,7 +683,6 @@ function AssumptionBars({
                 </div>
                 <div className="flex items-center justify-between gap-3 text-xs text-secondary">
                   <span>{bucket.marketCount} markets</span>
-                  <span className="tabular-nums">{formatUsdValue(bucket.valueUsd)}</span>
                 </div>
               </button>
             );
@@ -786,7 +777,10 @@ function AssetDominanceBars({ title, buckets, totalUsd }: { title: string; bucke
                   />
                   <span className="truncate">{bucket.label}</span>
                 </div>
-                <span className="text-xs text-secondary">{formatPercent(bucket.valueUsd, totalUsd)}</span>
+                <UsdWithPercent
+                  valueUsd={bucket.valueUsd}
+                  totalUsd={totalUsd}
+                />
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-hovered">
                 <div
@@ -796,7 +790,6 @@ function AssetDominanceBars({ title, buckets, totalUsd }: { title: string; bucke
               </div>
               <div className="flex items-center justify-between gap-3 text-xs text-secondary">
                 <span>{bucket.marketCount} markets</span>
-                <span className="tabular-nums">{formatUsdValue(bucket.valueUsd)}</span>
               </div>
             </div>
           ))}
@@ -944,7 +937,7 @@ function OracleFeedsCell({
   }
 
   return (
-    <div className="mx-auto flex max-w-[360px] flex-wrap items-center justify-center gap-2">
+    <div className="flex w-max max-w-none flex-nowrap items-center justify-start gap-2">
       {paths.map((path) => (
         <FeedEntry
           key={`feed-${path.address}`}
@@ -1013,7 +1006,7 @@ function MarketExposureTable({
               <TableHead className="whitespace-nowrap px-4 py-3 text-right font-normal">{usdHeader}</TableHead>
               <TableHead className="whitespace-nowrap px-4 py-3 text-right font-normal">{amountHeader}</TableHead>
               {showFeeds ? (
-                <TableHead className="whitespace-nowrap px-4 py-3 text-center font-normal">Feeds</TableHead>
+                <TableHead className="whitespace-nowrap px-4 py-3 font-normal">Feeds</TableHead>
               ) : (
                 <TableHead className="whitespace-nowrap px-4 py-3 text-center font-normal">Oracle</TableHead>
               )}
@@ -1054,17 +1047,15 @@ function MarketExposureTable({
                     </Link>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-right tabular-nums">
-                    <div className="grid gap-1">
-                      <span>{formatUsdValue(forceSupplyAmounts ? row.supplyUsd : row.exposureUsd)}</span>
-                      <span className="text-[11px] text-secondary">
-                        {formatPercent(forceSupplyAmounts ? row.supplyUsd : row.exposureUsd, totalUsd)}
-                      </span>
-                    </div>
+                    <UsdWithPercent
+                      valueUsd={forceSupplyAmounts ? row.supplyUsd : row.exposureUsd}
+                      totalUsd={totalUsd}
+                    />
                   </TableCell>
                   <TableCell className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                     {formatLoanAssetAmount(row, exposureMetric, forceSupplyAmounts)}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-center">
+                  <TableCell className={cn('px-4 py-3', !showFeeds && 'text-center')}>
                     {showFeeds ? (
                       <OracleFeedsCell
                         row={row}
@@ -1149,7 +1140,7 @@ export default function AnalysisView() {
             <p className="text-xs uppercase text-secondary">Morpho Global Dashboard</p>
             <h1 className="pt-2">Risk Breakdown</h1>
             <p className="max-w-2xl text-sm leading-6 text-secondary">
-              Oracle vendors, peg assumptions, and asset dominance across the selected Morpho market universe.
+              Oracle vendors, peg assumptions, and asset dominance across the Morpho universe.
             </p>
           </div>
           <Controls
@@ -1190,8 +1181,8 @@ export default function AnalysisView() {
               <MetricCard
                 label="Unknown Oracles"
                 value={`${analysis.unknownOracleCount}`}
-                detail={`${formatPercent(analysis.unknownOracleCount, Math.max(analysis.marketCount, 1))} of scoped markets`}
-                icon={<RiShieldCheckLine />}
+                detail={`${formatPercent(analysis.unknownOracleCount, Math.max(analysis.marketCount, 1))} of ${analysis.marketCount} listed markets`}
+                icon={<RiErrorWarningLine />}
               />
             </section>
 

@@ -10,7 +10,7 @@ import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { GearIcon } from '@radix-ui/react-icons';
 import { LuSunMedium } from 'react-icons/lu';
-import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
+import { RiBookLine, RiDiscordFill, RiGithubFill, RiPieChart2Line } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useModal } from '@/hooks/useModal';
@@ -104,13 +104,6 @@ export function Navbar() {
           </NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
           <NavbarLink
-            href="/analysis"
-            matchKey="/analysis"
-          >
-            Analysis
-          </NavbarLink>
-          <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
-          <NavbarLink
             href="/autovault"
             matchKey="/autovault"
           >
@@ -174,6 +167,14 @@ export function Navbar() {
               align="end"
               className="min-w-[180px]"
             >
+              <DropdownMenuItem
+                endContent={<RiPieChart2Line className="h-4 w-4" />}
+                onClick={() => {
+                  window.location.href = '/analysis';
+                }}
+              >
+                Analysis
+              </DropdownMenuItem>
               <DropdownMenuItem
                 endContent={<RiBookLine className="h-4 w-4" />}
                 onClick={() => window.open(EXTERNAL_LINKS.docs, '_blank')}
