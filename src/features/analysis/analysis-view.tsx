@@ -77,7 +77,7 @@ const formatAssumptionLabel = (label: string): string => {
   return label
     .replace(/\s+peg$/i, '')
     .replace(/\s+vault conversion$/i, '')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+    .trim();
 };
 
 function UsdWithPercent({ valueUsd, totalUsd }: { valueUsd: number; totalUsd: number }) {
@@ -448,7 +448,15 @@ function SplitRow({
   );
 }
 
-function ProviderDetailPanel({ bucket, totalUsd }: { bucket?: AnalysisBucket; totalUsd: number }) {
+function ProviderDetailPanel({
+  bucket,
+  totalUsd,
+  exposureMetric,
+}: {
+  bucket?: AnalysisBucket;
+  totalUsd: number;
+  exposureMetric: AnalysisExposureMetric;
+}) {
   const [detailMode, setDetailMode] = useState<ProviderDetailMode>('assets');
 
   if (!bucket) {
@@ -456,6 +464,7 @@ function ProviderDetailPanel({ bucket, totalUsd }: { bucket?: AnalysisBucket; to
   }
 
   const providerLink = getProviderLink(bucket.label);
+  const exposureLabel = exposureMetric === 'borrow' ? 'Borrow' : 'Supply';
   const assetSplit = getProviderAssetSplit(bucket);
   const maxAssetUsd = Math.max(...assetSplit.map((item) => item.valueUsd), 1);
   const maxChainUsd = Math.max(...bucket.chainBreakdown.map((chain) => chain.valueUsd), 1);
@@ -488,7 +497,7 @@ function ProviderDetailPanel({ bucket, totalUsd }: { bucket?: AnalysisBucket; to
 
         <div className="grid grid-cols-3 gap-3 rounded-sm bg-hovered/45 p-3">
           <div className="grid gap-1">
-            <span className="text-xs text-secondary">Supply</span>
+            <span className="text-xs text-secondary">{exposureLabel}</span>
             <span className="text-sm tabular-nums">{formatUsdValue(bucket.valueUsd)}</span>
           </div>
           <div className="grid gap-1">
@@ -615,6 +624,7 @@ function OracleExposureSection({
         <ProviderDetailPanel
           bucket={activeBucket}
           totalUsd={totalUsd}
+          exposureMetric={exposureMetric}
         />
       </div>
 

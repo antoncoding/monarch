@@ -298,6 +298,10 @@ const finalizeAssetBuckets = (buckets: Map<string, MutableAssetBucket>): Analysi
     .sort((left, right) => right.valueUsd - left.valueUsd);
 };
 
+const finalizeOptionalBucket = (bucket: MutableBucket): AnalysisBucket | null => {
+  return bucket.marketCount > 0 ? (finalizeBuckets(new Map([[bucket.key, bucket]]))[0] ?? null) : null;
+};
+
 export function buildRiskAnalysis({ markets, oracleMetadataMap, exposureMetric }: BuildRiskAnalysisInput): RiskAnalysisResult {
   const rows = markets
     .map((market) => buildMarketRow(market, oracleMetadataMap, exposureMetric))
@@ -327,7 +331,7 @@ export function buildRiskAnalysis({ markets, oracleMetadataMap, exposureMetric }
       pegAssumptionBuckets.set(assumption, bucket);
     }
 
-    const hasUnknownPegRoute = row.oracleType === 'missing' || row.unknownLegCount > 0 || row.actualPath === EMPTY_PATH;
+    const hasUnknownPegRoute = row.oracleType === 'missing' || row.unknownLegCount > 0 || row.actualPath === EMPTY_PATH || !row.isValidPath;
 
     if (row.pegAssumptions.length === 0 && hasUnknownPegRoute) {
       addToBucket(unknownPegRouteBucket, row, row.exposureUsd);
@@ -356,8 +360,8 @@ export function buildRiskAnalysis({ markets, oracleMetadataMap, exposureMetric }
     rows,
     oracleBuckets: finalizeBuckets(oracleBuckets),
     pegAssumptionBuckets: finalizeBuckets(pegAssumptionBuckets),
-    noPegAssumptionBucket: finalizeBuckets(new Map([[noPegAssumptionBucket.key, noPegAssumptionBucket]]))[0] ?? null,
-    unknownPegRouteBucket: finalizeBuckets(new Map([[unknownPegRouteBucket.key, unknownPegRouteBucket]]))[0] ?? null,
+    noPegAssumptionBucket: finalizeOptionalBucket(noPegAssumptionBucket),
+    unknownPegRouteBucket: finalizeOptionalBucket(unknownPegRouteBucket),
     vaultAssumptionBuckets: finalizeBuckets(vaultAssumptionBuckets),
     loanAssetBuckets: finalizeAssetBuckets(loanAssetBuckets),
     collateralAssetBuckets: finalizeAssetBuckets(collateralAssetBuckets),

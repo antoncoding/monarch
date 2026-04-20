@@ -5,7 +5,7 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { GearIcon } from '@radix-ui/react-icons';
@@ -77,6 +77,7 @@ export function NavbarTitle() {
 export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useConnection();
+  const router = useRouter();
   const { open: openModal } = useModal();
   const [mounted, setMounted] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -169,9 +170,7 @@ export function Navbar() {
             >
               <DropdownMenuItem
                 endContent={<RiPieChart2Line className="h-4 w-4" />}
-                onClick={() => {
-                  window.location.href = '/analysis';
-                }}
+                onClick={() => router.push('/analysis')}
               >
                 Analysis
               </DropdownMenuItem>
