@@ -104,6 +104,13 @@ export function Navbar() {
           </NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
           <NavbarLink
+            href="/analysis"
+            matchKey="/analysis"
+          >
+            Analysis
+          </NavbarLink>
+          <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
+          <NavbarLink
             href="/autovault"
             matchKey="/autovault"
           >

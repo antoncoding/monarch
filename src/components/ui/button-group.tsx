@@ -14,7 +14,7 @@ type ButtonGroupProps = {
   value: string;
   onChange: (value: ButtonOption['value']) => void;
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'primary';
+  variant?: 'default' | 'primary' | 'compact';
   equalWidth?: boolean;
 };
 
@@ -40,12 +40,21 @@ const variantStyles = {
       ? 'before:bg-gradient-to-b before:from-white/10 before:to-transparent'
       : 'before:bg-gradient-to-b before:from-transparent before:to-black/5',
   ],
+  compact: (isSelected: boolean) => [
+    isSelected ? 'bg-hovered text-primary' : 'bg-transparent text-primary hover:bg-hovered/70',
+    'border-0 shadow-none',
+  ],
 };
 
 export default function ButtonGroup({ options, value, onChange, size = 'md', variant = 'default', equalWidth = false }: ButtonGroupProps) {
+  const isCompact = variant === 'compact';
+
   return (
     <div
-      className="inline-flex rounded shadow-sm"
+      className={clsx(
+        'inline-flex',
+        isCompact ? 'h-10 overflow-hidden rounded-sm bg-surface shadow-sm' : 'rounded shadow-sm',
+      )}
       role="group"
       aria-label="Button group"
     >
@@ -66,11 +75,11 @@ export default function ButtonGroup({ options, value, onChange, size = 'md', var
               equalWidth && 'min-w-[3rem] text-center',
 
               // Position-based styles
-              isFirst ? 'rounded-l' : '-ml-px rounded-none',
-              isLast ? 'rounded-r' : 'rounded-none',
+              isCompact ? 'rounded-none' : isFirst ? 'rounded-l' : '-ml-px rounded-none',
+              !isCompact && (isLast ? 'rounded-r' : 'rounded-none'),
 
               // Variant & State styles
-              variant === 'default' ? variantStyles.default(isSelected) : variantStyles.primary(isSelected),
+              variantStyles[variant](isSelected),
 
               // Hover & Focus styles
               'hover:relative hover:z-20',

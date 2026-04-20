@@ -13,6 +13,11 @@ const toError = (error: unknown): Error => {
   return new Error(String(error));
 };
 
+type UseMarketsQueryOptions = {
+  refetchInterval?: number | false;
+  refetchOnWindowFocus?: boolean;
+};
+
 /**
  * Fetches markets from all supported networks using React Query.
  *
@@ -33,7 +38,7 @@ const toError = (error: unknown): Error => {
  * const { data: markets, isLoading, isRefetching, refetch } = useMarketsQuery();
  * ```
  */
-export const useMarketsQuery = () => {
+export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
   const { customRpcUrls } = useCustomRpcContext();
   const rpcIdentity = Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right));
 
@@ -146,7 +151,7 @@ export const useMarketsQuery = () => {
       return filtered;
     },
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
-    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes in background
-    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes in background by default
+    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
   });
 };

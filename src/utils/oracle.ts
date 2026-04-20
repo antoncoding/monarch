@@ -77,6 +77,7 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
   if (normalizedProvider.includes('chronicle')) return PriceFeedVendors.Chronicle;
   if (normalizedProvider.includes('pendle')) return PriceFeedVendors.Pendle;
   if (normalizedProvider.includes('midas')) return PriceFeedVendors.Midas;
+  if (normalizedProvider.includes('pyth')) return PriceFeedVendors.PythNetwork;
 
   const mapping: Record<string, PriceFeedVendors> = {
     chainlink: PriceFeedVendors.Chainlink,
