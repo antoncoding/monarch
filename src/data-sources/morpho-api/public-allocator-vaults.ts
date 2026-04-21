@@ -1,4 +1,5 @@
 import { publicAllocatorVaultsQuery } from '@/graphql/public-allocator-query';
+import { PUBLIC_ALLOCATOR_ADDRESSES_BY_CHAIN_ID } from '@/constants/public-allocator-addresses';
 import type { SupportedNetworks } from '@/utils/networks';
 import { morphoGraphqlFetcher } from './fetchers';
 import type { VaultAllocationMarket, VaultAllocation } from './vault-allocations';
@@ -19,6 +20,10 @@ export type PublicAllocatorConfig = {
   flowCaps: PublicAllocatorFlowCap[];
 };
 
+type VaultAllocator = {
+  address: string;
+};
+
 export type PublicAllocatorVault = {
   address: string;
   name: string;
@@ -29,6 +34,7 @@ export type PublicAllocatorVault = {
     decimals: number;
   };
   publicAllocatorConfig: PublicAllocatorConfig;
+  allocators: VaultAllocator[];
   state: {
     totalAssets: string;
     allocation: VaultAllocation[];
@@ -46,6 +52,7 @@ type RawVaultItem = {
     decimals: number;
   };
   publicAllocatorConfig: PublicAllocatorConfig | null;
+  allocators: VaultAllocator[];
   state: {
     totalAssets: string;
     allocation: {
@@ -67,7 +74,8 @@ type PublicAllocatorVaultsApiResponse = {
 
 /**
  * Batch-fetches supplying vaults with their public allocator configuration.
- * Only returns vaults that have publicAllocatorConfig enabled (non-null).
+ * Only returns vaults that have publicAllocatorConfig enabled and have the
+ * chain's Public Allocator authorized as a current vault allocator.
  */
 export const fetchPublicAllocatorVaults = async (addresses: string[], chainId: SupportedNetworks): Promise<PublicAllocatorVault[]> => {
   if (addresses.length === 0) return [];
@@ -84,6 +92,11 @@ export const fetchPublicAllocatorVaults = async (addresses: string[], chainId: S
   const items = response?.data?.vaults?.items;
   if (!items) return [];
 
-  // Filter to only vaults with PA enabled
-  return items.filter((vault): vault is PublicAllocatorVault => vault.publicAllocatorConfig !== null);
+  const allocatorAddress = PUBLIC_ALLOCATOR_ADDRESSES_BY_CHAIN_ID[chainId]?.toLowerCase();
+  if (!allocatorAddress) return [];
+
+  return items.filter(
+    (vault): vault is PublicAllocatorVault =>
+      vault.publicAllocatorConfig !== null && vault.allocators.some((allocator) => allocator.address.toLowerCase() === allocatorAddress),
+  );
 };

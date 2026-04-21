@@ -1,8 +1,8 @@
-import { URLS } from '@/utils/urls';
-
 type MorphoGraphqlFetcherOptions = {
   timeoutMs?: number;
 };
+
+const MORPHO_BLUE_API_URL = 'https://blue-api.morpho.org/graphql';
 
 // Generic fetcher for Morpho API
 export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
@@ -19,7 +19,7 @@ export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
     : null;
 
   try {
-    const response = await fetch(URLS.MORPHO_BLUE_API, {
+    const response = await fetch(MORPHO_BLUE_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables }),

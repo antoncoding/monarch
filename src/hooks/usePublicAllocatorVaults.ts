@@ -18,7 +18,7 @@ export type ProcessedPublicAllocatorVault = PublicAllocatorVault & {
  * mapped by market ID for easy lookup.
  */
 export function usePublicAllocatorVaults(supplyingVaultAddresses: string[], chainId: SupportedNetworks) {
-  const addressesKey = supplyingVaultAddresses.sort().join(',');
+  const addressesKey = [...supplyingVaultAddresses].sort().join(',');
 
   const {
     data: rawVaults,

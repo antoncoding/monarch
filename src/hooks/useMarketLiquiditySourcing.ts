@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { type Address, zeroAddress } from 'viem';
-import { usePublicAllocatorVaults, type ProcessedPublicAllocatorVault } from '@/hooks/usePublicAllocatorVaults';
+import { usePublicAllocatorVaults } from '@/hooks/usePublicAllocatorVaults';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import {
   getVaultPullableAmount,
@@ -30,7 +30,7 @@ export type ReallocationPlan = {
 };
 
 export type LiquiditySourcingResult = {
-  /** Total extra liquidity available across all PA vaults */
+  /** Maximum extra liquidity executable by the current one-vault PA reallocation flow */
   totalAvailableExtraLiquidity: bigint;
   /** Whether any PA vaults can source liquidity for this market */
   canSourceLiquidity: boolean;
@@ -82,11 +82,10 @@ export function useMarketLiquiditySourcing(market: Market | undefined, network: 
       .sort((a, b) => (b.pullable > a.pullable ? 1 : b.pullable < a.pullable ? -1 : 0));
   }, [paVaults, marketKey, isNetworkSupported]);
 
-  // Total available extra liquidity across all PA vaults
-  const totalAvailableExtraLiquidity = useMemo(
-    () => vaultsWithPullable.reduce((sum, { pullable }) => sum + pullable, 0n),
-    [vaultsWithPullable],
-  );
+  // The current execution path builds one reallocateTo call for one PA vault.
+  // Expose the largest single-vault amount, not the sum across vaults that
+  // cannot be executed together by the withdraw flow.
+  const totalAvailableExtraLiquidity = useMemo(() => vaultsWithPullable[0]?.pullable ?? 0n, [vaultsWithPullable]);
 
   const canSourceLiquidity = totalAvailableExtraLiquidity > 0n;
 
@@ -103,32 +102,22 @@ export function useMarketLiquiditySourcing(market: Market | undefined, network: 
         return null;
       }
 
-      // Find the best vault that can cover the full amount
-      // (first in sorted order that has enough pullable)
-      let selectedEntry: { vault: ProcessedPublicAllocatorVault; pullable: bigint } | null = null;
-
-      for (const entry of vaultsWithPullable) {
-        if (entry.pullable >= extraAmountNeeded) {
-          selectedEntry = entry;
-          break;
-        }
-      }
-
-      // If no single vault can cover it, use the vault with the most pullable
-      // (partial coverage is still useful)
-      if (!selectedEntry) {
-        selectedEntry = vaultsWithPullable[0];
-      }
+      const selectedEntry = vaultsWithPullable.find((entry) => entry.pullable >= extraAmountNeeded);
+      if (!selectedEntry) return null;
 
       const { vault } = selectedEntry;
 
       // Auto-allocate withdrawals using the greedy algorithm
       const allocated = autoAllocateWithdrawals(vault, marketKey, extraAmountNeeded);
       if (allocated.length === 0) return null;
+      const allocatedAmount = allocated.reduce((sum, { amount }) => sum + amount, 0n);
+      if (allocatedAmount < extraAmountNeeded) return null;
 
       // Resolve to full withdrawal structs with market params
       const resolvedWithdrawals = resolveWithdrawals(vault, allocated);
       if (resolvedWithdrawals.length === 0) return null;
+      const resolvedAmount = resolvedWithdrawals.reduce((sum, { amount }) => sum + amount, 0n);
+      if (resolvedAmount < extraAmountNeeded) return null;
 
       // Build target market params
       const targetMarketParams: PAMarketParams = {
