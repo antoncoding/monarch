@@ -1,5 +1,5 @@
 import { publicAllocatorVaultsQuery } from '@/graphql/public-allocator-query';
-import { PUBLIC_ALLOCATOR_ADDRESSES_BY_CHAIN_ID } from '@/constants/public-allocator-addresses';
+import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import type { SupportedNetworks } from '@/utils/networks';
 import { morphoGraphqlFetcher } from './fetchers';
 import type { VaultAllocationMarket, VaultAllocation } from './vault-allocations';
@@ -92,7 +92,7 @@ export const fetchPublicAllocatorVaults = async (addresses: string[], chainId: S
   const items = response?.data?.vaults?.items;
   if (!items) return [];
 
-  const allocatorAddress = PUBLIC_ALLOCATOR_ADDRESSES_BY_CHAIN_ID[chainId]?.toLowerCase();
+  const allocatorAddress = PUBLIC_ALLOCATOR_ADDRESSES[chainId]?.toLowerCase();
   if (!allocatorAddress) return [];
 
   return items.filter(
