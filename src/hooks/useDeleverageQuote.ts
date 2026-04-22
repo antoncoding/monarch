@@ -5,6 +5,7 @@ import { useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { withSlippageCeil, withSlippageFloor } from './leverage/math';
+import { toUserFacingVeloraQuoteError } from './leverage/velora-quote-errors';
 import type { LeverageRoute } from './leverage/types';
 
 type UseDeleverageQuoteParams = {
@@ -135,6 +136,7 @@ export function useDeleverageQuote({
         userAddress: swapExecutionAddress as `0x${string}`,
         side: 'BUY',
       });
+
       const quotedDebtCloseAmount = BigInt(buyRoute.destAmount);
       if (quotedDebtCloseAmount !== bufferedBorrowAssets) {
         throw new Error('Failed to resolve the exact full-close collateral bound. Refresh the quote and try again.');
@@ -265,7 +267,7 @@ export function useDeleverageQuote({
       }
       const routeError = withdrawCollateralAmount > 0n ? swapRepayQuoteQuery.error : null;
       if (!routeError) return null;
-      return routeError instanceof Error ? routeError.message : 'Failed to quote Velora swap route for deleverage.';
+      return toUserFacingVeloraQuoteError({ error: routeError, action: 'deleverage' });
     }
     const routeError = erc4626PreviewRedeemError;
     if (!routeError) return null;

@@ -3,8 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
-import { computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
+import { BPS_SCALE, computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
+import { toUserFacingVeloraQuoteError } from './leverage/velora-quote-errors';
 import type { LeverageRoute } from './leverage/types';
+
+const SELL_QUOTE_TARGET_BUFFER_BPS = 10_020n;
+const SELL_QUOTE_MAX_ATTEMPTS = 4;
+const shouldLogLeverageQuoteDebug = () => process.env.NODE_ENV !== 'production';
 
 type UseLeverageQuoteParams = {
   chainId: number;
@@ -50,6 +55,189 @@ export type LeverageQuote = {
   swapPriceRoute: VeloraPriceRoute | null;
 };
 
+/**
+ * Collateral-input leverage targets a collateral output, but the executable Velora calldata is exact-in SELL.
+ * Iterate exact-in SELL quotes to size the loan-token input; earlier quotes are discarded and only the final
+ * route is submitted for transaction calldata.
+ */
+const scaleRawAmountCeil = (amount: bigint, fromDecimals: number, toDecimals: number): bigint => {
+  if (amount <= 0n) return 0n;
+  if (fromDecimals === toDecimals) return amount;
+
+  if (toDecimals > fromDecimals) {
+    return amount * 10n ** BigInt(toDecimals - fromDecimals);
+  }
+
+  const divisor = 10n ** BigInt(fromDecimals - toDecimals);
+  return (amount + divisor - 1n) / divisor;
+};
+
+const withTargetBuffer = (amount: bigint): bigint => {
+  if (amount <= 0n) return 1n;
+  return (amount * SELL_QUOTE_TARGET_BUFFER_BPS + BPS_SCALE - 1n) / BPS_SCALE;
+};
+
+const getNextSellAmountForTargetCollateral = ({
+  currentSellAmount,
+  quotedCollateralAmount,
+  targetCollateralAmount,
+}: {
+  currentSellAmount: bigint;
+  quotedCollateralAmount: bigint;
+  targetCollateralAmount: bigint;
+}): bigint => {
+  if (quotedCollateralAmount <= 0n) return withTargetBuffer(currentSellAmount * 2n);
+
+  const proportionalSellAmount = (currentSellAmount * targetCollateralAmount + quotedCollateralAmount - 1n) / quotedCollateralAmount;
+  const bufferedSellAmount = withTargetBuffer(proportionalSellAmount);
+  if (bufferedSellAmount > currentSellAmount) return bufferedSellAmount;
+
+  return currentSellAmount + (currentSellAmount / 5n || 1n);
+};
+
+const resolveInitialSellAmountForTargetCollateral = async ({
+  chainId,
+  loanTokenAddress,
+  loanTokenDecimals,
+  collateralTokenAddress,
+  collateralTokenDecimals,
+  targetCollateralTokenAmount,
+  swapExecutionAddress,
+}: {
+  chainId: number;
+  loanTokenAddress: string;
+  loanTokenDecimals: number;
+  collateralTokenAddress: string;
+  collateralTokenDecimals: number;
+  targetCollateralTokenAmount: bigint;
+  swapExecutionAddress: `0x${string}`;
+}): Promise<bigint> => {
+  try {
+    // Prefer a price-aware bootstrap. When exact-out BUY is available, its required source amount is a
+    // much better first SELL guess than a raw decimal conversion, especially for routes like USDC -> cbBTC.
+    const buyRoute = await fetchVeloraPriceRoute({
+      srcToken: loanTokenAddress,
+      srcDecimals: loanTokenDecimals,
+      destToken: collateralTokenAddress,
+      destDecimals: collateralTokenDecimals,
+      amount: targetCollateralTokenAmount,
+      network: chainId,
+      userAddress: swapExecutionAddress,
+      side: 'BUY',
+    });
+
+    const initialSellAmount = BigInt(buyRoute.srcAmount);
+    if (initialSellAmount > 0n && BigInt(buyRoute.destAmount) >= targetCollateralTokenAmount) {
+      return initialSellAmount;
+    }
+  } catch (error) {
+    if (shouldLogLeverageQuoteDebug()) {
+      console.info('[leverage quote] Exact-out BUY bootstrap unavailable, falling back to estimated SELL seed', {
+        chainId,
+        targetCollateralAmount: targetCollateralTokenAmount.toString(),
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  const estimatedSellAmount = scaleRawAmountCeil(targetCollateralTokenAmount, collateralTokenDecimals, loanTokenDecimals);
+  return estimatedSellAmount > 0n ? estimatedSellAmount : 1n;
+};
+
+const quoteVeloraCollateralInputRoute = async ({
+  chainId,
+  loanTokenAddress,
+  loanTokenDecimals,
+  collateralTokenAddress,
+  collateralTokenDecimals,
+  targetCollateralTokenAmount,
+  slippageBps,
+  swapExecutionAddress,
+}: {
+  chainId: number;
+  loanTokenAddress: string;
+  loanTokenDecimals: number;
+  collateralTokenAddress: string;
+  collateralTokenDecimals: number;
+  targetCollateralTokenAmount: bigint;
+  slippageBps: number;
+  swapExecutionAddress: `0x${string}`;
+}): Promise<{
+  flashLoanAssetAmount: bigint;
+  flashLegCollateralTokenAmount: bigint;
+  priceRoute: VeloraPriceRoute;
+}> => {
+  let sellAmount = await resolveInitialSellAmountForTargetCollateral({
+    chainId,
+    loanTokenAddress,
+    loanTokenDecimals,
+    collateralTokenAddress,
+    collateralTokenDecimals,
+    targetCollateralTokenAmount,
+    swapExecutionAddress,
+  });
+
+  let latestQuote: {
+    flashLoanAssetAmount: bigint;
+    flashLegCollateralTokenAmount: bigint;
+    quotedCollateralTokenAmount: bigint;
+    priceRoute: VeloraPriceRoute;
+  } | null = null;
+
+  for (let attempt = 0; attempt < SELL_QUOTE_MAX_ATTEMPTS; attempt += 1) {
+    const sellRoute = await fetchVeloraPriceRoute({
+      srcToken: loanTokenAddress,
+      srcDecimals: loanTokenDecimals,
+      destToken: collateralTokenAddress,
+      destDecimals: collateralTokenDecimals,
+      amount: sellAmount,
+      network: chainId,
+      userAddress: swapExecutionAddress,
+      side: 'SELL',
+    });
+    const quotedCollateralTokenAmount = BigInt(sellRoute.destAmount);
+
+    latestQuote = {
+      flashLoanAssetAmount: sellAmount,
+      flashLegCollateralTokenAmount: withSlippageFloor(quotedCollateralTokenAmount, slippageBps),
+      quotedCollateralTokenAmount,
+      priceRoute: sellRoute,
+    };
+
+    if (quotedCollateralTokenAmount >= targetCollateralTokenAmount) {
+      break;
+    }
+
+    sellAmount = getNextSellAmountForTargetCollateral({
+      currentSellAmount: sellAmount,
+      quotedCollateralAmount: quotedCollateralTokenAmount,
+      targetCollateralAmount: targetCollateralTokenAmount,
+    });
+  }
+
+  if (!latestQuote) {
+    throw new Error('Failed to quote Velora sell route for leverage.');
+  }
+  if (latestQuote.quotedCollateralTokenAmount < targetCollateralTokenAmount) {
+    throw new Error('Failed to size Velora sell route for target leverage. Try a lower multiplier or refresh the quote.');
+  }
+  if (shouldLogLeverageQuoteDebug()) {
+    console.info('[leverage quote] Velora collateral-input route sized', {
+      chainId,
+      sellAmount: latestQuote.flashLoanAssetAmount.toString(),
+      quotedCollateralAmount: latestQuote.quotedCollateralTokenAmount.toString(),
+      minCollateralAmount: latestQuote.flashLegCollateralTokenAmount.toString(),
+      targetCollateralAmount: targetCollateralTokenAmount.toString(),
+      slippageBps,
+    });
+  }
+
+  return {
+    flashLoanAssetAmount: latestQuote.flashLoanAssetAmount,
+    flashLegCollateralTokenAmount: latestQuote.flashLegCollateralTokenAmount,
+    priceRoute: latestQuote.priceRoute,
+  };
+};
 /**
  * Converts user leverage intent into deterministic route amounts.
  *
@@ -141,46 +329,17 @@ export function useLeverageQuote({
       userAddress ?? null,
     ],
     enabled: route?.kind === 'swap' && !isLoanAssetInput && targetFlashCollateralTokenAmount > 0n && !!userAddress,
-    queryFn: async () => {
-      const buyRoute = await fetchVeloraPriceRoute({
-        srcToken: loanTokenAddress,
-        srcDecimals: loanTokenDecimals,
-        destToken: collateralTokenAddress,
-        destDecimals: collateralTokenDecimals,
-        amount: targetFlashCollateralTokenAmount,
-        network: chainId,
-        userAddress: swapExecutionAddress as `0x${string}`,
-        side: 'BUY',
-      });
-
-      const borrowAssets = BigInt(buyRoute.srcAmount);
-      if (borrowAssets <= 0n) {
-        return {
-          flashLoanAssetAmount: 0n,
-          flashLegCollateralTokenAmount: 0n,
-          priceRoute: null,
-        };
-      }
-
-      const sellRoute = await fetchVeloraPriceRoute({
-        srcToken: loanTokenAddress,
-        srcDecimals: loanTokenDecimals,
-        destToken: collateralTokenAddress,
-        destDecimals: collateralTokenDecimals,
-        amount: borrowAssets,
-        network: chainId,
-        userAddress: swapExecutionAddress as `0x${string}`,
-        side: 'SELL',
-      });
-
-      return {
-        flashLoanAssetAmount: borrowAssets,
-        // Quote preview uses the requested sell size as authoritative. The built calldata
-        // still has to prove that exact sell amount before leverage execution can proceed.
-        flashLegCollateralTokenAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
-        priceRoute: sellRoute,
-      };
-    },
+    queryFn: async () =>
+      quoteVeloraCollateralInputRoute({
+        chainId,
+        loanTokenAddress,
+        loanTokenDecimals,
+        collateralTokenAddress,
+        collateralTokenDecimals,
+        targetCollateralTokenAmount: targetFlashCollateralTokenAmount,
+        slippageBps,
+        swapExecutionAddress: swapExecutionAddress as `0x${string}`,
+      }),
   });
 
   const swapLoanInputCombinedQuoteQuery = useQuery({
@@ -294,7 +453,7 @@ export function useLeverageQuote({
       if (!userAddress && initialCapitalInputAmount > 0n) return 'Connect wallet to fetch swap-backed leverage route.';
       const routeError = isLoanAssetInput ? swapLoanInputCombinedQuoteQuery.error : swapCollateralInputQuoteQuery.error;
       if (!routeError) return null;
-      return routeError instanceof Error ? routeError.message : 'Failed to quote Velora swap route for leverage.';
+      return toUserFacingVeloraQuoteError({ error: routeError, action: 'leverage' });
     }
     const erc4626RouteError = erc4626DepositError ?? erc4626MintError;
     if (!erc4626RouteError) return null;
