@@ -8,6 +8,7 @@ import type { LeverageRoute } from './leverage/types';
 
 const SELL_QUOTE_TARGET_BUFFER_BPS = 10_020n;
 const SELL_QUOTE_MAX_ATTEMPTS = 4;
+const shouldLogLeverageQuoteDebug = () => process.env.NODE_ENV !== 'production';
 
 type UseLeverageQuoteParams = {
   chainId: number;
@@ -55,8 +56,8 @@ export type LeverageQuote = {
 
 /**
  * Collateral-input leverage targets a collateral output, but the executable Velora calldata is exact-in SELL.
- * When Velora cannot solve exact-out BUY at size, iterate exact-in SELL quotes until one route reaches the
- * target collateral amount; only the final route is submitted for transaction calldata.
+ * Iterate exact-in SELL quotes to size the loan-token input; earlier quotes are discarded and only the final
+ * route is submitted for transaction calldata.
  */
 const scaleRawAmountCeil = (amount: bigint, fromDecimals: number, toDecimals: number): bigint => {
   if (amount <= 0n) return 0n;
@@ -163,6 +164,16 @@ const quoteVeloraSellRouteForTargetCollateral = async ({
   if (latestQuote.quotedCollateralTokenAmount < targetCollateralTokenAmount) {
     throw new Error('Failed to size Velora sell route for target leverage. Try a lower multiplier or refresh the quote.');
   }
+  if (shouldLogLeverageQuoteDebug()) {
+    console.info('[leverage quote] Velora SELL route sized', {
+      chainId,
+      sellAmount: latestQuote.flashLoanAssetAmount.toString(),
+      quotedCollateralAmount: latestQuote.quotedCollateralTokenAmount.toString(),
+      minCollateralAmount: latestQuote.flashLegCollateralTokenAmount.toString(),
+      targetCollateralAmount: targetCollateralTokenAmount.toString(),
+      slippageBps,
+    });
+  }
 
   return {
     flashLoanAssetAmount: latestQuote.flashLoanAssetAmount,
@@ -262,53 +273,8 @@ export function useLeverageQuote({
       userAddress ?? null,
     ],
     enabled: route?.kind === 'swap' && !isLoanAssetInput && targetFlashCollateralTokenAmount > 0n && !!userAddress,
-    queryFn: async () => {
-      try {
-        const buyRoute = await fetchVeloraPriceRoute({
-          srcToken: loanTokenAddress,
-          srcDecimals: loanTokenDecimals,
-          destToken: collateralTokenAddress,
-          destDecimals: collateralTokenDecimals,
-          amount: targetFlashCollateralTokenAmount,
-          network: chainId,
-          userAddress: swapExecutionAddress as `0x${string}`,
-          side: 'BUY',
-        });
-
-        const borrowAssets = BigInt(buyRoute.srcAmount);
-        if (borrowAssets <= 0n) {
-          return {
-            flashLoanAssetAmount: 0n,
-            flashLegCollateralTokenAmount: 0n,
-            priceRoute: null,
-          };
-        }
-
-        const sellRoute = await fetchVeloraPriceRoute({
-          srcToken: loanTokenAddress,
-          srcDecimals: loanTokenDecimals,
-          destToken: collateralTokenAddress,
-          destDecimals: collateralTokenDecimals,
-          amount: borrowAssets,
-          network: chainId,
-          userAddress: swapExecutionAddress as `0x${string}`,
-          side: 'SELL',
-        });
-
-        return {
-          flashLoanAssetAmount: borrowAssets,
-          // Quote preview uses the requested sell size as authoritative. The built calldata
-          // still has to prove that exact sell amount before leverage execution can proceed.
-          flashLegCollateralTokenAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
-          priceRoute: sellRoute,
-        };
-      } catch {
-        // Velora's exact-out BUY solver can fail for large routes even when
-        // exact-in SELL liquidity is available. Execution already uses sell calldata, so
-        // fall back to sizing one final SELL route for the transaction.
-      }
-
-      return quoteVeloraSellRouteForTargetCollateral({
+    queryFn: async () =>
+      quoteVeloraSellRouteForTargetCollateral({
         chainId,
         loanTokenAddress,
         loanTokenDecimals,
@@ -317,8 +283,7 @@ export function useLeverageQuote({
         targetCollateralTokenAmount: targetFlashCollateralTokenAmount,
         slippageBps,
         swapExecutionAddress: swapExecutionAddress as `0x${string}`,
-      });
-    },
+      }),
   });
 
   const swapLoanInputCombinedQuoteQuery = useQuery({

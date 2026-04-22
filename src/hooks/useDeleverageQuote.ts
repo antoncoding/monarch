@@ -135,6 +135,7 @@ export function useDeleverageQuote({
         userAddress: swapExecutionAddress as `0x${string}`,
         side: 'BUY',
       });
+
       const quotedDebtCloseAmount = BigInt(buyRoute.destAmount);
       if (quotedDebtCloseAmount !== bufferedBorrowAssets) {
         throw new Error('Failed to resolve the exact full-close collateral bound. Refresh the quote and try again.');
