@@ -4,6 +4,7 @@ import { useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { BPS_SCALE, computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
+import { toUserFacingVeloraQuoteError } from './leverage/velora-quote-errors';
 import type { LeverageRoute } from './leverage/types';
 
 const SELL_QUOTE_TARGET_BUFFER_BPS = 10_020n;
@@ -452,7 +453,7 @@ export function useLeverageQuote({
       if (!userAddress && initialCapitalInputAmount > 0n) return 'Connect wallet to fetch swap-backed leverage route.';
       const routeError = isLoanAssetInput ? swapLoanInputCombinedQuoteQuery.error : swapCollateralInputQuoteQuery.error;
       if (!routeError) return null;
-      return routeError instanceof Error ? routeError.message : 'Failed to quote Velora swap route for leverage.';
+      return toUserFacingVeloraQuoteError({ error: routeError, action: 'leverage' });
     }
     const erc4626RouteError = erc4626DepositError ?? erc4626MintError;
     if (!erc4626RouteError) return null;
