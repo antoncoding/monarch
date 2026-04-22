@@ -29,12 +29,12 @@ export const toUserFacingVeloraQuoteError = ({ error, action }: { error: unknown
   if (message.includes('estimated_loss_greater_than_max_impact') || message.includes('max impact')) {
     const impactValue = extractImpactValue(error);
     return impactValue
-      ? `This swap would lose too much value right now (~${impactValue} impact). Try a smaller amount or a different market.`
-      : 'This swap is too expensive right now. Try a smaller amount or a different market.';
+      ? `Could not find a quote with reasonable impact right now (~${impactValue} impact). Try a smaller amount or a different market.`
+      : 'Could not find a quote with reasonable impact right now. Try a smaller amount or a different market.';
   }
 
   if (message.includes('failed to size velora sell route for target leverage')) {
-    return 'Could not find a swap route that reaches this size. Try a smaller amount or a lower multiplier.';
+    return 'Could not find a swap route that reaches this size. Try a smaller amount or lower leverage.';
   }
 
   if (isPairValidationError(message)) {
