@@ -6,6 +6,10 @@ import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/ap
 import { computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
 
+const SELL_QUOTE_TARGET_BUFFER_BPS = 10_020n;
+const SELL_QUOTE_MAX_ATTEMPTS = 4;
+const BPS_SCALE = 10_000n;
+
 type UseLeverageQuoteParams = {
   chainId: number;
   route: LeverageRoute | null;
@@ -48,6 +52,119 @@ export type LeverageQuote = {
   isLoading: boolean;
   error: string | null;
   swapPriceRoute: VeloraPriceRoute | null;
+};
+
+const scaleRawAmountCeil = (amount: bigint, fromDecimals: number, toDecimals: number): bigint => {
+  if (amount <= 0n) return 0n;
+  if (fromDecimals === toDecimals) return amount;
+
+  if (toDecimals > fromDecimals) {
+    return amount * 10n ** BigInt(toDecimals - fromDecimals);
+  }
+
+  const divisor = 10n ** BigInt(fromDecimals - toDecimals);
+  return (amount + divisor - 1n) / divisor;
+};
+
+const withTargetBuffer = (amount: bigint): bigint => {
+  if (amount <= 0n) return 1n;
+  return (amount * SELL_QUOTE_TARGET_BUFFER_BPS + BPS_SCALE - 1n) / BPS_SCALE;
+};
+
+const getNextSellAmountForTargetCollateral = ({
+  currentSellAmount,
+  quotedCollateralAmount,
+  targetCollateralAmount,
+}: {
+  currentSellAmount: bigint;
+  quotedCollateralAmount: bigint;
+  targetCollateralAmount: bigint;
+}): bigint => {
+  if (quotedCollateralAmount <= 0n) return withTargetBuffer(currentSellAmount * 2n);
+
+  const proportionalSellAmount = (currentSellAmount * targetCollateralAmount + quotedCollateralAmount - 1n) / quotedCollateralAmount;
+  const bufferedSellAmount = withTargetBuffer(proportionalSellAmount);
+  if (bufferedSellAmount > currentSellAmount) return bufferedSellAmount;
+
+  return currentSellAmount + (currentSellAmount / 5n || 1n);
+};
+
+const quoteVeloraSellRouteForTargetCollateral = async ({
+  chainId,
+  loanTokenAddress,
+  loanTokenDecimals,
+  collateralTokenAddress,
+  collateralTokenDecimals,
+  targetCollateralTokenAmount,
+  slippageBps,
+  swapExecutionAddress,
+}: {
+  chainId: number;
+  loanTokenAddress: string;
+  loanTokenDecimals: number;
+  collateralTokenAddress: string;
+  collateralTokenDecimals: number;
+  targetCollateralTokenAmount: bigint;
+  slippageBps: number;
+  swapExecutionAddress: `0x${string}`;
+}): Promise<{
+  flashLoanAssetAmount: bigint;
+  flashLegCollateralTokenAmount: bigint;
+  priceRoute: VeloraPriceRoute;
+}> => {
+  let sellAmount = scaleRawAmountCeil(targetCollateralTokenAmount, collateralTokenDecimals, loanTokenDecimals);
+  if (sellAmount <= 0n) sellAmount = 1n;
+
+  let latestQuote: {
+    flashLoanAssetAmount: bigint;
+    flashLegCollateralTokenAmount: bigint;
+    quotedCollateralTokenAmount: bigint;
+    priceRoute: VeloraPriceRoute;
+  } | null = null;
+
+  for (let attempt = 0; attempt < SELL_QUOTE_MAX_ATTEMPTS; attempt += 1) {
+    const sellRoute = await fetchVeloraPriceRoute({
+      srcToken: loanTokenAddress,
+      srcDecimals: loanTokenDecimals,
+      destToken: collateralTokenAddress,
+      destDecimals: collateralTokenDecimals,
+      amount: sellAmount,
+      network: chainId,
+      userAddress: swapExecutionAddress,
+      side: 'SELL',
+    });
+    const quotedCollateralTokenAmount = BigInt(sellRoute.destAmount);
+
+    latestQuote = {
+      flashLoanAssetAmount: sellAmount,
+      flashLegCollateralTokenAmount: withSlippageFloor(quotedCollateralTokenAmount, slippageBps),
+      quotedCollateralTokenAmount,
+      priceRoute: sellRoute,
+    };
+
+    if (quotedCollateralTokenAmount >= targetCollateralTokenAmount) {
+      break;
+    }
+
+    sellAmount = getNextSellAmountForTargetCollateral({
+      currentSellAmount: sellAmount,
+      quotedCollateralAmount: quotedCollateralTokenAmount,
+      targetCollateralAmount: targetCollateralTokenAmount,
+    });
+  }
+
+  if (!latestQuote) {
+    throw new Error('Failed to quote Velora sell route for leverage.');
+  }
+  if (latestQuote.quotedCollateralTokenAmount < targetCollateralTokenAmount) {
+    throw new Error('Failed to size Velora sell route for target leverage. Try a lower multiplier or refresh the quote.');
+  }
+
+  return {
+    flashLoanAssetAmount: latestQuote.flashLoanAssetAmount,
+    flashLegCollateralTokenAmount: latestQuote.flashLegCollateralTokenAmount,
+    priceRoute: latestQuote.priceRoute,
+  };
 };
 
 /**
@@ -142,44 +259,61 @@ export function useLeverageQuote({
     ],
     enabled: route?.kind === 'swap' && !isLoanAssetInput && targetFlashCollateralTokenAmount > 0n && !!userAddress,
     queryFn: async () => {
-      const buyRoute = await fetchVeloraPriceRoute({
-        srcToken: loanTokenAddress,
-        srcDecimals: loanTokenDecimals,
-        destToken: collateralTokenAddress,
-        destDecimals: collateralTokenDecimals,
-        amount: targetFlashCollateralTokenAmount,
-        network: chainId,
-        userAddress: swapExecutionAddress as `0x${string}`,
-        side: 'BUY',
-      });
+      try {
+        const buyRoute = await fetchVeloraPriceRoute({
+          srcToken: loanTokenAddress,
+          srcDecimals: loanTokenDecimals,
+          destToken: collateralTokenAddress,
+          destDecimals: collateralTokenDecimals,
+          amount: targetFlashCollateralTokenAmount,
+          network: chainId,
+          userAddress: swapExecutionAddress as `0x${string}`,
+          side: 'BUY',
+        });
 
-      const borrowAssets = BigInt(buyRoute.srcAmount);
-      if (borrowAssets <= 0n) {
+        const borrowAssets = BigInt(buyRoute.srcAmount);
+        if (borrowAssets <= 0n) {
+          return {
+            flashLoanAssetAmount: 0n,
+            flashLegCollateralTokenAmount: 0n,
+            priceRoute: null,
+          };
+        }
+
+        const sellRoute = await fetchVeloraPriceRoute({
+          srcToken: loanTokenAddress,
+          srcDecimals: loanTokenDecimals,
+          destToken: collateralTokenAddress,
+          destDecimals: collateralTokenDecimals,
+          amount: borrowAssets,
+          network: chainId,
+          userAddress: swapExecutionAddress as `0x${string}`,
+          side: 'SELL',
+        });
+
         return {
-          flashLoanAssetAmount: 0n,
-          flashLegCollateralTokenAmount: 0n,
-          priceRoute: null,
+          flashLoanAssetAmount: borrowAssets,
+          // Quote preview uses the requested sell size as authoritative. The built calldata
+          // still has to prove that exact sell amount before leverage execution can proceed.
+          flashLegCollateralTokenAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
+          priceRoute: sellRoute,
         };
+      } catch {
+        // Velora's exact-out BUY solver can fail for large routes even when
+        // exact-in SELL liquidity is available. Execution already uses sell calldata, so
+        // size a SELL quote directly before surfacing a quote error.
       }
 
-      const sellRoute = await fetchVeloraPriceRoute({
-        srcToken: loanTokenAddress,
-        srcDecimals: loanTokenDecimals,
-        destToken: collateralTokenAddress,
-        destDecimals: collateralTokenDecimals,
-        amount: borrowAssets,
-        network: chainId,
-        userAddress: swapExecutionAddress as `0x${string}`,
-        side: 'SELL',
+      return quoteVeloraSellRouteForTargetCollateral({
+        chainId,
+        loanTokenAddress,
+        loanTokenDecimals,
+        collateralTokenAddress,
+        collateralTokenDecimals,
+        targetCollateralTokenAmount: targetFlashCollateralTokenAmount,
+        slippageBps,
+        swapExecutionAddress: swapExecutionAddress as `0x${string}`,
       });
-
-      return {
-        flashLoanAssetAmount: borrowAssets,
-        // Quote preview uses the requested sell size as authoritative. The built calldata
-        // still has to prove that exact sell amount before leverage execution can proceed.
-        flashLegCollateralTokenAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
-        priceRoute: sellRoute,
-      };
     },
   });
 
