@@ -94,7 +94,56 @@ const getNextSellAmountForTargetCollateral = ({
   return currentSellAmount + (currentSellAmount / 5n || 1n);
 };
 
-const quoteVeloraSellRouteForTargetCollateral = async ({
+const resolveInitialSellAmountForTargetCollateral = async ({
+  chainId,
+  loanTokenAddress,
+  loanTokenDecimals,
+  collateralTokenAddress,
+  collateralTokenDecimals,
+  targetCollateralTokenAmount,
+  swapExecutionAddress,
+}: {
+  chainId: number;
+  loanTokenAddress: string;
+  loanTokenDecimals: number;
+  collateralTokenAddress: string;
+  collateralTokenDecimals: number;
+  targetCollateralTokenAmount: bigint;
+  swapExecutionAddress: `0x${string}`;
+}): Promise<bigint> => {
+  try {
+    // Prefer a price-aware bootstrap. When exact-out BUY is available, its required source amount is a
+    // much better first SELL guess than a raw decimal conversion, especially for routes like USDC -> cbBTC.
+    const buyRoute = await fetchVeloraPriceRoute({
+      srcToken: loanTokenAddress,
+      srcDecimals: loanTokenDecimals,
+      destToken: collateralTokenAddress,
+      destDecimals: collateralTokenDecimals,
+      amount: targetCollateralTokenAmount,
+      network: chainId,
+      userAddress: swapExecutionAddress,
+      side: 'BUY',
+    });
+
+    const initialSellAmount = BigInt(buyRoute.srcAmount);
+    if (initialSellAmount > 0n && BigInt(buyRoute.destAmount) >= targetCollateralTokenAmount) {
+      return initialSellAmount;
+    }
+  } catch (error) {
+    if (shouldLogLeverageQuoteDebug()) {
+      console.info('[leverage quote] Exact-out BUY bootstrap unavailable, falling back to estimated SELL seed', {
+        chainId,
+        targetCollateralAmount: targetCollateralTokenAmount.toString(),
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  const estimatedSellAmount = scaleRawAmountCeil(targetCollateralTokenAmount, collateralTokenDecimals, loanTokenDecimals);
+  return estimatedSellAmount > 0n ? estimatedSellAmount : 1n;
+};
+
+const quoteVeloraCollateralInputRoute = async ({
   chainId,
   loanTokenAddress,
   loanTokenDecimals,
@@ -117,8 +166,15 @@ const quoteVeloraSellRouteForTargetCollateral = async ({
   flashLegCollateralTokenAmount: bigint;
   priceRoute: VeloraPriceRoute;
 }> => {
-  let sellAmount = scaleRawAmountCeil(targetCollateralTokenAmount, collateralTokenDecimals, loanTokenDecimals);
-  if (sellAmount <= 0n) sellAmount = 1n;
+  let sellAmount = await resolveInitialSellAmountForTargetCollateral({
+    chainId,
+    loanTokenAddress,
+    loanTokenDecimals,
+    collateralTokenAddress,
+    collateralTokenDecimals,
+    targetCollateralTokenAmount,
+    swapExecutionAddress,
+  });
 
   let latestQuote: {
     flashLoanAssetAmount: bigint;
@@ -165,7 +221,7 @@ const quoteVeloraSellRouteForTargetCollateral = async ({
     throw new Error('Failed to size Velora sell route for target leverage. Try a lower multiplier or refresh the quote.');
   }
   if (shouldLogLeverageQuoteDebug()) {
-    console.info('[leverage quote] Velora SELL route sized', {
+    console.info('[leverage quote] Velora collateral-input route sized', {
       chainId,
       sellAmount: latestQuote.flashLoanAssetAmount.toString(),
       quotedCollateralAmount: latestQuote.quotedCollateralTokenAmount.toString(),
@@ -181,7 +237,6 @@ const quoteVeloraSellRouteForTargetCollateral = async ({
     priceRoute: latestQuote.priceRoute,
   };
 };
-
 /**
  * Converts user leverage intent into deterministic route amounts.
  *
@@ -274,7 +329,7 @@ export function useLeverageQuote({
     ],
     enabled: route?.kind === 'swap' && !isLoanAssetInput && targetFlashCollateralTokenAmount > 0n && !!userAddress,
     queryFn: async () =>
-      quoteVeloraSellRouteForTargetCollateral({
+      quoteVeloraCollateralInputRoute({
         chainId,
         loanTokenAddress,
         loanTokenDecimals,
