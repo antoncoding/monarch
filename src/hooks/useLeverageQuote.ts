@@ -3,12 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
-import { computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
+import { BPS_SCALE, computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
 import type { LeverageRoute } from './leverage/types';
 
 const SELL_QUOTE_TARGET_BUFFER_BPS = 10_020n;
 const SELL_QUOTE_MAX_ATTEMPTS = 4;
-const BPS_SCALE = 10_000n;
 
 type UseLeverageQuoteParams = {
   chainId: number;
@@ -54,6 +53,11 @@ export type LeverageQuote = {
   swapPriceRoute: VeloraPriceRoute | null;
 };
 
+/**
+ * Collateral-input leverage targets a collateral output, but the executable Velora calldata is exact-in SELL.
+ * When Velora cannot solve exact-out BUY at size, iterate exact-in SELL quotes until one route reaches the
+ * target collateral amount; only the final route is submitted for transaction calldata.
+ */
 const scaleRawAmountCeil = (amount: bigint, fromDecimals: number, toDecimals: number): bigint => {
   if (amount <= 0n) return 0n;
   if (fromDecimals === toDecimals) return amount;
@@ -301,7 +305,7 @@ export function useLeverageQuote({
       } catch {
         // Velora's exact-out BUY solver can fail for large routes even when
         // exact-in SELL liquidity is available. Execution already uses sell calldata, so
-        // size a SELL quote directly before surfacing a quote error.
+        // fall back to sizing one final SELL route for the transaction.
       }
 
       return quoteVeloraSellRouteForTargetCollateral({
