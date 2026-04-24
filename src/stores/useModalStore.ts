@@ -50,12 +50,6 @@ export type ModalProps = {
     isRefetching: boolean;
   };
 
-  groupedPositionAction: {
-    groupedPosition: GroupedPosition;
-    refetch: (onSuccess?: () => void) => void;
-    isRefetching: boolean;
-  };
-
   rebalanceMarketSelection: {
     vaultAsset: `0x${string}`;
     chainId: SupportedNetworks;

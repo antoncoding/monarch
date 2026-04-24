@@ -339,14 +339,6 @@ export function SuppliedMorphoBlueGroupedTable({
                       <div className="flex items-center justify-center gap-2">
                         <PositionActionsDropdown
                           isOwner={isOwner}
-                          onGroupedActionClick={() => {
-                            if (!isOwner) return;
-                            openModal('groupedPositionAction', {
-                              groupedPosition,
-                              refetch,
-                              isRefetching,
-                            });
-                          }}
                           onRebalanceClick={() => {
                             if (!isOwner) return;
                             openModal('rebalance', {

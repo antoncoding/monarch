@@ -1,6 +1,7 @@
 // Import the necessary hooks
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type Address, encodeFunctionData } from 'viem';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { type Address, encodeFunctionData, getAddress, isAddress } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import { publicAllocatorAbi } from '@/abis/public-allocator';
@@ -49,6 +50,8 @@ export function WithdrawModalContent({
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
   const [withdrawPhase, setWithdrawPhase] = useState<WithdrawPhase>('idle');
+  const [showRecipientInput, setShowRecipientInput] = useState(false);
+  const [recipientInput, setRecipientInput] = useState('');
 
   // Transaction tracking for ProcessModal
   const tracking = useTransactionTracking('withdraw');
@@ -63,6 +66,19 @@ export function WithdrawModalContent({
   );
   const { address: account, chainId } = useConnection();
   const { mutateAsync: switchChainAsync } = useSwitchChain();
+
+  const recipientAddress = useMemo(() => {
+    if (!showRecipientInput) return account;
+    if (!recipientInput.trim() || !isAddress(recipientInput)) return null;
+    return getAddress(recipientInput);
+  }, [account, recipientInput, showRecipientInput]);
+
+  const recipientError = useMemo(() => {
+    if (!showRecipientInput) return null;
+    if (!recipientInput.trim()) return 'Enter a valid EVM address.';
+    if (!isAddress(recipientInput)) return 'Enter a valid EVM address.';
+    return null;
+  }, [recipientInput, showRecipientInput]);
 
   // Prefer the market prop (which has fresh state) over position.market
   const activeMarket = market ?? position?.market;
@@ -113,7 +129,7 @@ export function WithdrawModalContent({
 
   // ── Execute the withdraw transaction (shared between direct and 2-step flows) ──
   const executeWithdraw = useCallback(async () => {
-    if (!activeMarket || !account) return;
+    if (!activeMarket || !account || !recipientAddress) return;
 
     let assetsToWithdraw: string;
     let sharesToWithdraw: string;
@@ -145,7 +161,7 @@ export function WithdrawModalContent({
             BigInt(assetsToWithdraw),
             BigInt(sharesToWithdraw),
             account, // onBehalf
-            account, // receiver
+            recipientAddress, // receiver
           ],
         }),
         chainId: activeMarket.morphoBlue.chain.id,
@@ -156,7 +172,7 @@ export function WithdrawModalContent({
       tracking.fail();
       console.error('Error during withdraw:', error);
     }
-  }, [account, activeMarket, position, withdrawAmount, sendWithdrawTxAsync, tracking]);
+  }, [account, activeMarket, position, recipientAddress, withdrawAmount, sendWithdrawTxAsync, tracking]);
 
   // ── Main withdraw handler ──
   const handleWithdraw = useCallback(async () => {
@@ -171,6 +187,11 @@ export function WithdrawModalContent({
     }
 
     const tokenSymbol = activeMarket.loanAsset.symbol;
+
+    if (showRecipientInput && !recipientAddress) {
+      toast.error('Invalid recipient', 'Enter a valid recipient address to continue.');
+      return;
+    }
 
     if (needsSourcing && liquiditySourcing) {
       // 2-step flow: source liquidity first
@@ -256,6 +277,8 @@ export function WithdrawModalContent({
     switchChainAsync,
     toast,
     tracking,
+    showRecipientInput,
+    recipientAddress,
   ]);
 
   const handleWithdrawClick = useCallback(() => {
@@ -334,6 +357,41 @@ export function WithdrawModalContent({
             </p>
           )}
         </div>
+
+        <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              setShowRecipientInput((current) => {
+                const next = !current;
+                if (!next) {
+                  setRecipientInput('');
+                }
+                return next;
+              });
+            }}
+            className="flex w-full items-center justify-between text-left text-xs text-secondary transition-opacity hover:opacity-100"
+            aria-expanded={showRecipientInput}
+          >
+            <span className="font-monospace uppercase tracking-[0.12em]">Withdraw to another address</span>
+            <ChevronDownIcon className={`h-4 w-4 transition-transform ${showRecipientInput ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showRecipientInput && (
+            <div className="mt-3 space-y-2">
+              <input
+                type="text"
+                inputMode="text"
+                value={recipientInput}
+                onChange={(event) => setRecipientInput(event.target.value)}
+                placeholder="0x..."
+                className="h-10 w-full rounded border border-white/10 bg-surface px-3 py-2 font-mono text-sm focus:border-primary focus:outline-none"
+              />
+              <p className="text-xs text-secondary">Optional exit path: send withdrawn assets directly to another address.</p>
+              {recipientError && <p className="text-xs text-red-500">{recipientError}</p>}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-4">
@@ -342,7 +400,7 @@ export function WithdrawModalContent({
             targetChainId={activeMarket.morphoBlue.chain.id}
             onClick={handleWithdrawClick}
             isLoading={isLoading}
-            disabled={!withdrawAmount || !!inputError}
+            disabled={!withdrawAmount || !!inputError || !!recipientError}
             variant="primary"
             className="min-w-32"
           >
