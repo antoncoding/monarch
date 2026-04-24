@@ -55,9 +55,28 @@ export function GroupedPositionActionModal({
   const [selectedMarketKeys, setSelectedMarketKeys] = useState<Set<string>>(new Set());
   const [recipientAddressInput, setRecipientAddressInput] = useState('');
 
+  const accountAddress = useMemo(() => {
+    if (!account || !isAddress(account)) return null;
+    return getAddress(account);
+  }, [account]);
+
   const suppliedPositions = useMemo(
     () => groupedPosition.markets.filter((position) => BigInt(position.state.supplyAssets) > 0n),
     [groupedPosition.markets],
+  );
+
+  const illiquidMarketKeys = useMemo(
+    () =>
+      new Set(
+        suppliedPositions
+          .filter((position) => {
+            const positionAssets = BigInt(position.state.supplyAssets);
+            const marketLiquidity = BigInt(position.market.state.liquidityAssets);
+            return positionAssets > marketLiquidity;
+          })
+          .map((position) => position.market.uniqueKey),
+      ),
+    [suppliedPositions],
   );
 
   const wasOpenRef = useRef(false);
@@ -70,8 +89,14 @@ export function GroupedPositionActionModal({
 
     setMode('withdraw');
     setRecipientAddressInput('');
-    setSelectedMarketKeys(new Set(suppliedPositions.map((position) => position.market.uniqueKey)));
-  }, [isOpen, suppliedPositions]);
+    setSelectedMarketKeys(
+      new Set(
+        suppliedPositions
+          .filter((position) => !illiquidMarketKeys.has(position.market.uniqueKey))
+          .map((position) => position.market.uniqueKey),
+      ),
+    );
+  }, [illiquidMarketKeys, isOpen, suppliedPositions]);
 
   const selectedPositions = useMemo(
     () => suppliedPositions.filter((position) => selectedMarketKeys.has(position.market.uniqueKey)),
@@ -84,13 +109,8 @@ export function GroupedPositionActionModal({
   );
 
   const liquidityShortfallPositions = useMemo(
-    () =>
-      selectedPositions.filter((position) => {
-        const positionAssets = BigInt(position.state.supplyAssets);
-        const marketLiquidity = BigInt(position.market.state.liquidityAssets);
-        return positionAssets > marketLiquidity;
-      }),
-    [selectedPositions],
+    () => selectedPositions.filter((position) => illiquidMarketKeys.has(position.market.uniqueKey)),
+    [illiquidMarketKeys, selectedPositions],
   );
 
   const transferRecipient = useMemo(() => {
@@ -150,7 +170,7 @@ export function GroupedPositionActionModal({
       return;
     }
 
-    if (mode === 'transfer' && transferRecipient === account) {
+    if (mode === 'transfer' && transferRecipient === accountAddress) {
       toast.info('Same recipient', 'Choose a different address to move this position.');
       return;
     }
@@ -189,7 +209,7 @@ export function GroupedPositionActionModal({
           encodeFunctionData({
             abi: morphoBundlerAbi,
             functionName: 'morphoSupply',
-            args: [getMarketParams(position), expectedAssets, 0n, 1n, transferRecipient, '0x'],
+            args: [getMarketParams(position), 0n, fullShares, 0n, transferRecipient, '0x'],
           }),
         );
       }
@@ -200,13 +220,12 @@ export function GroupedPositionActionModal({
       return;
     }
 
-    let gasEstimate = GAS_COSTS.BUNDLER_REBALANCE;
-    if (withdrawTxs.length > 1) {
-      gasEstimate += GAS_COSTS.SINGLE_WITHDRAW * BigInt(withdrawTxs.length - 1);
-    }
-    if (supplyTxs.length > 1) {
-      gasEstimate += GAS_COSTS.SINGLE_SUPPLY * BigInt(supplyTxs.length - 1);
-    }
+    const baseOverhead =
+      GAS_COSTS.BUNDLER_REBALANCE > GAS_COSTS.SINGLE_WITHDRAW + GAS_COSTS.SINGLE_SUPPLY
+        ? GAS_COSTS.BUNDLER_REBALANCE - GAS_COSTS.SINGLE_WITHDRAW - GAS_COSTS.SINGLE_SUPPLY
+        : 0n;
+    const gasEstimate =
+      baseOverhead + GAS_COSTS.SINGLE_WITHDRAW * BigInt(withdrawTxs.length) + GAS_COSTS.SINGLE_SUPPLY * BigInt(supplyTxs.length);
 
     await execution.executeBundle({
       metadata: {
@@ -245,6 +264,7 @@ export function GroupedPositionActionModal({
     selectedTotalFormatted,
     toast,
     transferRecipient,
+    accountAddress,
   ]);
 
   const toggleMarketSelection = useCallback((marketUniqueKey: string, checked: boolean) => {
@@ -300,7 +320,15 @@ export function GroupedPositionActionModal({
               <Button
                 size="xs"
                 variant="surface"
-                onClick={() => setSelectedMarketKeys(new Set(suppliedPositions.map((position) => position.market.uniqueKey)))}
+                onClick={() =>
+                  setSelectedMarketKeys(
+                    new Set(
+                      suppliedPositions
+                        .filter((position) => !illiquidMarketKeys.has(position.market.uniqueKey))
+                        .map((position) => position.market.uniqueKey),
+                    ),
+                  )
+                }
               >
                 Select All
               </Button>
@@ -318,22 +346,36 @@ export function GroupedPositionActionModal({
             {suppliedPositions.map((position) => {
               const marketKey = position.market.uniqueKey;
               const checked = selectedMarketKeys.has(marketKey);
+              const isIlliquid = illiquidMarketKeys.has(marketKey);
               const supplied = formatReadable(formatBalance(position.state.supplyAssets, groupedPosition.loanAssetDecimals), 4);
 
               return (
                 <div
                   key={marketKey}
-                  className="flex items-center justify-between gap-3 rounded border border-white/10 px-3 py-2"
+                  className={`flex items-center justify-between gap-3 rounded border px-3 py-2 ${
+                    isIlliquid ? 'border-yellow-500/30 bg-yellow-500/5 opacity-70' : 'border-white/10'
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={checked}
-                      onCheckedChange={(next) => toggleMarketSelection(marketKey, next === true)}
+                      disabled={isIlliquid}
+                      onCheckedChange={(next) => {
+                        if (isIlliquid) return;
+                        toggleMarketSelection(marketKey, next === true);
+                      }}
                     />
                     <div className="text-xs">
-                      <p className="font-medium">
-                        {position.market.collateralAsset.symbol} / {groupedPosition.loanAssetSymbol}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">
+                          {position.market.collateralAsset.symbol} / {groupedPosition.loanAssetSymbol}
+                        </p>
+                        {isIlliquid && (
+                          <span className="rounded border border-yellow-500/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-yellow-200">
+                            Illiquid
+                          </span>
+                        )}
+                      </div>
                       <p className="text-secondary">{marketKey.slice(0, 10)}...</p>
                     </div>
                   </div>
