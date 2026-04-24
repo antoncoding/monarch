@@ -70,10 +70,9 @@ export function WithdrawModalContent({
 
   const recipientAddress = useMemo(() => {
     if (!account) return null;
-    if (!showRecipientInput) return account;
     if (!normalizedRecipientInput || !isAddress(normalizedRecipientInput)) return account;
     return getAddress(normalizedRecipientInput);
-  }, [account, normalizedRecipientInput, showRecipientInput]);
+  }, [account, normalizedRecipientInput]);
 
   const recipientNotice = useMemo(() => {
     if (!showRecipientInput || normalizedRecipientInput.length === 0) return null;
@@ -275,7 +274,6 @@ export function WithdrawModalContent({
     switchChainAsync,
     toast,
     tracking,
-    showRecipientInput,
   ]);
 
   const handleWithdrawClick = useCallback(() => {
@@ -358,34 +356,25 @@ export function WithdrawModalContent({
         <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
           <button
             type="button"
-            onClick={() => {
-              setShowRecipientInput((current) => {
-                const next = !current;
-                if (!next) {
-                  setRecipientInput('');
-                }
-                return next;
-              });
-            }}
-            className="flex w-full items-center justify-between text-left text-[11px] text-secondary transition-opacity hover:opacity-100"
+            onClick={() => setShowRecipientInput((current) => !current)}
+            className="flex w-full items-center justify-between text-left"
             aria-expanded={showRecipientInput}
           >
-            <span className="font-monospace uppercase tracking-[0.12em]">Advanced</span>
-            <ChevronDownIcon className={`h-4 w-4 transition-transform ${showRecipientInput ? 'rotate-180' : ''}`} />
+            <span className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Recipient</span>
+            <ChevronDownIcon className={`h-4 w-4 text-secondary transition-transform ${showRecipientInput ? 'rotate-180' : ''}`} />
           </button>
 
           {showRecipientInput && (
-            <div className="mt-3 space-y-2">
-              <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Recipient</p>
+            <div className="mt-3">
               <input
                 type="text"
                 inputMode="text"
                 value={recipientInput}
                 onChange={(event) => setRecipientInput(event.target.value)}
                 placeholder="0x..."
-                className="h-10 w-full rounded border border-white/10 bg-surface px-3 py-2 font-mono text-sm focus:border-primary focus:outline-none"
+                className="h-10 w-full rounded border border-transparent bg-hovered px-3 py-2 font-zen text-sm focus:border-transparent focus:outline-none"
               />
-              {recipientNotice && <p className="text-xs text-secondary">{recipientNotice}</p>}
+              {recipientNotice && <p className="mt-1 text-xs text-secondary">{recipientNotice}</p>}
             </div>
           )}
         </div>
