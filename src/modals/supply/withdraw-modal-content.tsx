@@ -66,18 +66,22 @@ export function WithdrawModalContent({
   );
   const { address: account, chainId } = useConnection();
   const { mutateAsync: switchChainAsync } = useSwitchChain();
+  const normalizedRecipientInput = recipientInput.trim();
 
   const recipientAddress = useMemo(() => {
+    if (!account) return null;
     if (!showRecipientInput) return account;
-    if (!recipientInput.trim() || !isAddress(recipientInput)) return null;
-    return getAddress(recipientInput);
-  }, [account, recipientInput, showRecipientInput]);
+    if (!normalizedRecipientInput || !isAddress(normalizedRecipientInput)) return account;
+    return getAddress(normalizedRecipientInput);
+  }, [account, normalizedRecipientInput, showRecipientInput]);
 
-  const recipientError = useMemo(() => {
-    if (!showRecipientInput || recipientInput.length === 0) return null;
-    if (!isAddress(recipientInput)) return 'Enter a valid EVM address.';
+  const recipientNotice = useMemo(() => {
+    if (!showRecipientInput || normalizedRecipientInput.length === 0) return null;
+    if (!isAddress(normalizedRecipientInput)) {
+      return 'Invalid address. Withdrawal will default to your connected wallet.';
+    }
     return null;
-  }, [recipientInput, showRecipientInput]);
+  }, [normalizedRecipientInput, showRecipientInput]);
 
   // Prefer the market prop (which has fresh state) over position.market
   const activeMarket = market ?? position?.market;
@@ -128,7 +132,7 @@ export function WithdrawModalContent({
 
   // ── Execute the withdraw transaction (shared between direct and 2-step flows) ──
   const executeWithdraw = useCallback(async () => {
-    if (!activeMarket || !account || !recipientAddress) return;
+    if (!activeMarket || !account) return;
 
     let assetsToWithdraw: string;
     let sharesToWithdraw: string;
@@ -160,7 +164,7 @@ export function WithdrawModalContent({
             BigInt(assetsToWithdraw),
             BigInt(sharesToWithdraw),
             account, // onBehalf
-            recipientAddress, // receiver
+            recipientAddress ?? account, // receiver
           ],
         }),
         chainId: activeMarket.morphoBlue.chain.id,
@@ -186,11 +190,6 @@ export function WithdrawModalContent({
     }
 
     const tokenSymbol = activeMarket.loanAsset.symbol;
-
-    if (showRecipientInput && !recipientAddress) {
-      toast.error('Invalid recipient', 'Enter a valid recipient address to continue.');
-      return;
-    }
 
     if (needsSourcing && liquiditySourcing) {
       // 2-step flow: source liquidity first
@@ -277,7 +276,6 @@ export function WithdrawModalContent({
     toast,
     tracking,
     showRecipientInput,
-    recipientAddress,
   ]);
 
   const handleWithdrawClick = useCallback(() => {
@@ -387,7 +385,7 @@ export function WithdrawModalContent({
                 placeholder="0x..."
                 className="h-10 w-full rounded border border-white/10 bg-surface px-3 py-2 font-mono text-sm focus:border-primary focus:outline-none"
               />
-              {recipientError && <p className="text-xs text-red-500">{recipientError}</p>}
+              {recipientNotice && <p className="text-xs text-secondary">{recipientNotice}</p>}
             </div>
           )}
         </div>
@@ -399,7 +397,7 @@ export function WithdrawModalContent({
             targetChainId={activeMarket.morphoBlue.chain.id}
             onClick={handleWithdrawClick}
             isLoading={isLoading}
-            disabled={!withdrawAmount || !!inputError || !!recipientError}
+            disabled={!withdrawAmount || !!inputError}
             variant="primary"
             className="min-w-32"
           >
