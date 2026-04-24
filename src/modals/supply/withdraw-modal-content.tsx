@@ -74,8 +74,7 @@ export function WithdrawModalContent({
   }, [account, recipientInput, showRecipientInput]);
 
   const recipientError = useMemo(() => {
-    if (!showRecipientInput) return null;
-    if (!recipientInput.trim()) return 'Enter a valid EVM address.';
+    if (!showRecipientInput || recipientInput.length === 0) return null;
     if (!isAddress(recipientInput)) return 'Enter a valid EVM address.';
     return null;
   }, [recipientInput, showRecipientInput]);
@@ -370,15 +369,16 @@ export function WithdrawModalContent({
                 return next;
               });
             }}
-            className="flex w-full items-center justify-between text-left text-xs text-secondary transition-opacity hover:opacity-100"
+            className="flex w-full items-center justify-between text-left text-[11px] text-secondary transition-opacity hover:opacity-100"
             aria-expanded={showRecipientInput}
           >
-            <span className="font-monospace uppercase tracking-[0.12em]">Withdraw to another address</span>
+            <span className="font-monospace uppercase tracking-[0.12em]">Advanced</span>
             <ChevronDownIcon className={`h-4 w-4 transition-transform ${showRecipientInput ? 'rotate-180' : ''}`} />
           </button>
 
           {showRecipientInput && (
             <div className="mt-3 space-y-2">
+              <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Recipient</p>
               <input
                 type="text"
                 inputMode="text"
@@ -387,7 +387,6 @@ export function WithdrawModalContent({
                 placeholder="0x..."
                 className="h-10 w-full rounded border border-white/10 bg-surface px-3 py-2 font-mono text-sm focus:border-primary focus:outline-none"
               />
-              <p className="text-xs text-secondary">Optional exit path: send withdrawn assets directly to another address.</p>
               {recipientError && <p className="text-xs text-red-500">{recipientError}</p>}
             </div>
           )}
