@@ -2,16 +2,18 @@
 
 import type React from 'react';
 import { TbArrowsRightLeft } from 'react-icons/tb';
+import { BsArrowUpRightCircle } from 'react-icons/bs';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 type PositionActionsDropdownProps = {
   isOwner: boolean;
+  onGroupedActionClick: () => void;
   onRebalanceClick: () => void;
 };
 
-export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionActionsDropdownProps) {
+export function PositionActionsDropdown({ isOwner, onGroupedActionClick, onRebalanceClick }: PositionActionsDropdownProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -24,8 +26,6 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionA
     <div
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={-1}
     >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -38,6 +38,14 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionA
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={onGroupedActionClick}
+            startContent={<BsArrowUpRightCircle className="h-4 w-4" />}
+            disabled={!isOwner}
+            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
+          >
+            Withdraw / Transfer
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={onRebalanceClick}
             startContent={<TbArrowsRightLeft className="h-4 w-4" />}

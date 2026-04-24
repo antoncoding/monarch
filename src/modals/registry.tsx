@@ -24,6 +24,9 @@ const SupplyModalV2 = lazy(() => import('@/modals/supply/supply-modal').then((m)
 const RebalanceModal = lazy(() =>
   import('@/features/positions/components/rebalance/rebalance-modal').then((m) => ({ default: m.RebalanceModal })),
 );
+const GroupedPositionActionModal = lazy(() =>
+  import('@/features/positions/components/grouped-position-action-modal').then((m) => ({ default: m.GroupedPositionActionModal })),
+);
 
 const RebalanceMarketSelectionModal = lazy(() =>
   import('@/features/markets/components/market-selection-modal').then((m) => ({ default: m.MarketSelectionModal })),
@@ -54,6 +57,7 @@ export const MODAL_REGISTRY: {
   bridgeSwap: SwapModal,
   supply: SupplyModalV2,
   rebalance: RebalanceModal,
+  groupedPositionAction: GroupedPositionActionModal,
   rebalanceMarketSelection: RebalanceMarketSelectionModal,
   marketSettings: MarketSettingsModal,
   monarchSettings: MonarchSettingsModal,
