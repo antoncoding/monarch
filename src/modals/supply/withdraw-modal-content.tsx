@@ -1,6 +1,7 @@
 // Import the necessary hooks
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type Address, encodeFunctionData } from 'viem';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { type Address, encodeFunctionData, getAddress, isAddress } from 'viem';
 import { useConnection, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import { publicAllocatorAbi } from '@/abis/public-allocator';
@@ -49,6 +50,8 @@ export function WithdrawModalContent({
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
   const [withdrawPhase, setWithdrawPhase] = useState<WithdrawPhase>('idle');
+  const [showRecipientInput, setShowRecipientInput] = useState(false);
+  const [recipientInput, setRecipientInput] = useState('');
 
   // Transaction tracking for ProcessModal
   const tracking = useTransactionTracking('withdraw');
@@ -63,6 +66,21 @@ export function WithdrawModalContent({
   );
   const { address: account, chainId } = useConnection();
   const { mutateAsync: switchChainAsync } = useSwitchChain();
+  const normalizedRecipientInput = recipientInput.trim();
+
+  const recipientAddress = useMemo(() => {
+    if (!account) return null;
+    if (!normalizedRecipientInput || !isAddress(normalizedRecipientInput)) return account;
+    return getAddress(normalizedRecipientInput);
+  }, [account, normalizedRecipientInput]);
+
+  const recipientNotice = useMemo(() => {
+    if (!showRecipientInput || normalizedRecipientInput.length === 0) return null;
+    if (!isAddress(normalizedRecipientInput)) {
+      return 'Invalid address. Withdrawal will default to your connected wallet.';
+    }
+    return null;
+  }, [normalizedRecipientInput, showRecipientInput]);
 
   // Prefer the market prop (which has fresh state) over position.market
   const activeMarket = market ?? position?.market;
@@ -145,7 +163,7 @@ export function WithdrawModalContent({
             BigInt(assetsToWithdraw),
             BigInt(sharesToWithdraw),
             account, // onBehalf
-            account, // receiver
+            recipientAddress ?? account, // receiver
           ],
         }),
         chainId: activeMarket.morphoBlue.chain.id,
@@ -156,7 +174,7 @@ export function WithdrawModalContent({
       tracking.fail();
       console.error('Error during withdraw:', error);
     }
-  }, [account, activeMarket, position, withdrawAmount, sendWithdrawTxAsync, tracking]);
+  }, [account, activeMarket, position, recipientAddress, withdrawAmount, sendWithdrawTxAsync, tracking]);
 
   // ── Main withdraw handler ──
   const handleWithdraw = useCallback(async () => {
@@ -332,6 +350,32 @@ export function WithdrawModalContent({
               ⚡ Will source extra liquidity from {reallocationPlan.vaultName}
               {reallocationPlan.fee > 0n && <span className="ml-1 opacity-70">(fee: {formatBalance(reallocationPlan.fee, 18)} ETH)</span>}
             </p>
+          )}
+        </div>
+
+        <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
+          <button
+            type="button"
+            onClick={() => setShowRecipientInput((current) => !current)}
+            className="flex w-full items-center justify-between text-left"
+            aria-expanded={showRecipientInput}
+          >
+            <span className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Recipient</span>
+            <ChevronDownIcon className={`h-4 w-4 text-secondary transition-transform ${showRecipientInput ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showRecipientInput && (
+            <div className="mt-3">
+              <input
+                type="text"
+                inputMode="text"
+                value={recipientInput}
+                onChange={(event) => setRecipientInput(event.target.value)}
+                placeholder="0x..."
+                className="h-10 w-full rounded border border-transparent bg-hovered px-3 py-2 font-zen text-sm focus:border-transparent focus:outline-none"
+              />
+              {recipientNotice && <p className="mt-1 text-xs text-secondary">{recipientNotice}</p>}
+            </div>
           )}
         </div>
       </div>
