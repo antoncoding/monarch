@@ -4,7 +4,7 @@ import type { Chain } from 'viem';
 
 import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
-import { parseMarketFilterUrlState, resolveMarketFilterSelectionsFromUrlState } from '@/features/markets/market-filter-url-state';
+import { parseMarketFilterUrlState } from '@/features/markets/market-filter-url-state';
 import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
@@ -17,14 +17,6 @@ import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 
 import { CompactFilterBar } from './components/filters/compact-filter-bar';
 import MarketsTable from './components/table/markets-table';
-
-const haveSameSelections = (left: string[], right: string[]): boolean => {
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  return left.every((value) => right.includes(value));
-};
 
 type MarketsProps = {
   initialSearchParams: string;
@@ -51,37 +43,6 @@ export default function Markets({ initialSearchParams }: MarketsProps) {
   const { currentPage, setCurrentPage, resetPage } = usePagination();
   const { allTokens } = useTokensQuery();
   const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
-  const resolvedUrlLoanSelections = useMemo(() => {
-    if (urlFilterState.selectedLoanSelectors === undefined) {
-      return undefined;
-    }
-
-    if (urlFilterState.selectedLoanSelectors.length === 0) {
-      return [];
-    }
-
-    if (loading) {
-      return null;
-    }
-
-    return resolveMarketFilterSelectionsFromUrlState(urlFilterState.selectedLoanSelectors, uniqueLoanAssets);
-  }, [loading, uniqueLoanAssets, urlFilterState.selectedLoanSelectors]);
-
-  const resolvedUrlCollateralSelections = useMemo(() => {
-    if (urlFilterState.selectedCollateralSelectors === undefined) {
-      return undefined;
-    }
-
-    if (urlFilterState.selectedCollateralSelectors.length === 0) {
-      return [];
-    }
-
-    if (loading) {
-      return null;
-    }
-
-    return resolveMarketFilterSelectionsFromUrlState(urlFilterState.selectedCollateralSelectors, uniqueCollaterals);
-  }, [loading, uniqueCollaterals, urlFilterState.selectedCollateralSelectors]);
 
   // Force compact mode on mobile
   useEffect(() => {
@@ -173,43 +134,12 @@ export default function Markets({ initialSearchParams }: MarketsProps) {
       return;
     }
 
-    if (resolvedUrlLoanSelections === null || resolvedUrlCollateralSelections === null) {
-      return;
-    }
-
-    const nextSelections: {
-      selectedCollaterals?: string[];
-      selectedLoanAssets?: string[];
-      selectedNetwork?: typeof persistedFilters.selectedNetwork;
-    } = {};
-
     if (urlFilterState.selectedNetwork !== undefined && urlFilterState.selectedNetwork !== persistedFilters.selectedNetwork) {
-      nextSelections.selectedNetwork = urlFilterState.selectedNetwork;
-    }
-
-    if (resolvedUrlLoanSelections !== undefined && !haveSameSelections(resolvedUrlLoanSelections, persistedFilters.selectedLoanAssets)) {
-      nextSelections.selectedLoanAssets = resolvedUrlLoanSelections;
-    }
-
-    if (
-      resolvedUrlCollateralSelections !== undefined &&
-      !haveSameSelections(resolvedUrlCollateralSelections, persistedFilters.selectedCollaterals)
-    ) {
-      nextSelections.selectedCollaterals = resolvedUrlCollateralSelections;
-    }
-
-    if (Object.keys(nextSelections).length > 0) {
-      persistedFilters.applySelections(nextSelections);
+      persistedFilters.applySelections({ selectedNetwork: urlFilterState.selectedNetwork });
     }
 
     appliedUrlSignatureRef.current = urlFilterState.signature;
-  }, [
-    persistedFilters,
-    resolvedUrlCollateralSelections,
-    resolvedUrlLoanSelections,
-    urlFilterState.selectedNetwork,
-    urlFilterState.signature,
-  ]);
+  }, [persistedFilters, urlFilterState.selectedNetwork, urlFilterState.signature]);
 
   // Reset page when filters change
   useEffect(() => {
