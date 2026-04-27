@@ -10,8 +10,10 @@ import {
   unichain,
   hyperEvm as hyperEvmOld,
 } from 'viem/chains';
+import { isSupportedNetwork as isSupportedNetworkValue, SupportedNetworks as SupportedNetworkId } from './supported-networks';
 import { v2AgentsBase } from './monarch-agent';
 import type { AgentMetadata } from './types';
+export { ALL_SUPPORTED_NETWORKS, SupportedNetworks, isSupportedNetwork } from './supported-networks';
 
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const rpcPriority = process.env.NEXT_PUBLIC_RPC_PRIORITY;
@@ -37,30 +39,6 @@ const getRpcUrl = (specificRpcUrl: string | undefined, alchemySubdomain?: string
   return targetRpc ?? alchemyUrl ?? '';
 };
 
-export enum SupportedNetworks {
-  Mainnet = 1,
-  Optimism = 10,
-  Base = 8453,
-  Polygon = 137,
-  Unichain = 130,
-  Arbitrum = 42_161,
-  Etherlink = 42_793,
-  HyperEVM = 999,
-  Monad = 143,
-}
-
-export const ALL_SUPPORTED_NETWORKS = [
-  SupportedNetworks.Mainnet,
-  SupportedNetworks.Optimism,
-  SupportedNetworks.Base,
-  SupportedNetworks.Polygon,
-  SupportedNetworks.Unichain,
-  SupportedNetworks.Arbitrum,
-  SupportedNetworks.Etherlink,
-  SupportedNetworks.HyperEVM,
-  SupportedNetworks.Monad,
-];
-
 // use hyperevm as custom chain
 export const hyperEvm = defineChain({
   ...hyperEvmOld,
@@ -80,7 +58,7 @@ type VaultAgentConfig = {
 };
 
 type NetworkConfig = {
-  network: SupportedNetworks;
+  network: SupportedNetworkId;
   logo: string;
   name: string;
   chain: Chain;
@@ -101,7 +79,7 @@ type NetworkConfig = {
 
 export const networks: NetworkConfig[] = [
   {
-    network: SupportedNetworks.Mainnet,
+    network: SupportedNetworkId.Mainnet,
     logo: require('../imgs/chains/eth.svg') as string,
     name: 'Mainnet',
     chain: mainnet,
@@ -112,7 +90,7 @@ export const networks: NetworkConfig[] = [
     wrappedNativeToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
   },
   {
-    network: SupportedNetworks.Optimism,
+    network: SupportedNetworkId.Optimism,
     logo: require('../imgs/chains/op.svg') as string,
     name: 'Optimism',
     chain: optimism,
@@ -123,7 +101,7 @@ export const networks: NetworkConfig[] = [
     wrappedNativeToken: '0x4200000000000000000000000000000000000006',
   },
   {
-    network: SupportedNetworks.Base,
+    network: SupportedNetworkId.Base,
     logo: require('../imgs/chains/base.webp') as string,
     name: 'Base',
     chain: base,
@@ -140,7 +118,7 @@ export const networks: NetworkConfig[] = [
     wrappedNativeToken: '0x4200000000000000000000000000000000000006',
   },
   {
-    network: SupportedNetworks.Polygon,
+    network: SupportedNetworkId.Polygon,
     chain: polygon,
     logo: require('../imgs/chains/polygon.png') as string,
     name: 'Polygon',
@@ -152,7 +130,7 @@ export const networks: NetworkConfig[] = [
     wrappedNativeToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
   },
   {
-    network: SupportedNetworks.Unichain,
+    network: SupportedNetworkId.Unichain,
     chain: unichain,
     logo: require('../imgs/chains/unichain.svg') as string,
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_UNICHAIN_RPC, 'unichain-mainnet'),
@@ -163,7 +141,7 @@ export const networks: NetworkConfig[] = [
     wrappedNativeToken: '0x4200000000000000000000000000000000000006',
   },
   {
-    network: SupportedNetworks.Arbitrum,
+    network: SupportedNetworkId.Arbitrum,
     chain: arbitrum,
     logo: require('../imgs/chains/arbitrum.png') as string,
     name: 'Arbitrum',
@@ -174,7 +152,7 @@ export const networks: NetworkConfig[] = [
     wrappedNativeToken: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
   },
   {
-    network: SupportedNetworks.Etherlink,
+    network: SupportedNetworkId.Etherlink,
     chain: etherlinkChain,
     logo: require('../imgs/chains/etherlink.svg') as string,
     name: 'Etherlink',
@@ -186,7 +164,7 @@ export const networks: NetworkConfig[] = [
     wrappedNativeToken: '0xc9B53AB2679f573e480d01e0f49e2B5CFB7a3EAb',
   },
   {
-    network: SupportedNetworks.HyperEVM,
+    network: SupportedNetworkId.HyperEVM,
     chain: hyperEvm,
     logo: require('../imgs/chains/hyperevm.png') as string,
     name: 'HyperEVM',
@@ -198,7 +176,7 @@ export const networks: NetworkConfig[] = [
     explorerUrl: 'https://hyperevmscan.io',
   },
   {
-    network: SupportedNetworks.Monad,
+    network: SupportedNetworkId.Monad,
     chain: monad,
     logo: require('../imgs/chains/monad.svg') as string,
     name: 'Monad',
@@ -212,26 +190,26 @@ export const networks: NetworkConfig[] = [
 ];
 
 export const isSupportedChain = (chainId: number) => {
-  return Object.values(SupportedNetworks).includes(chainId);
+  return isSupportedNetworkValue(chainId);
 };
 
-export const getNetworkConfig = (chainId: SupportedNetworks): NetworkConfig => {
+export const getNetworkConfig = (chainId: SupportedNetworkId): NetworkConfig => {
   return networks.find((network) => network.network === chainId) as NetworkConfig;
 };
 
-export const getViemChain = (chainId: SupportedNetworks): Chain => {
+export const getViemChain = (chainId: SupportedNetworkId): Chain => {
   return getNetworkConfig(chainId).chain;
 };
 
-export const getDefaultRPC = (chainId: SupportedNetworks): string => {
+export const getDefaultRPC = (chainId: SupportedNetworkId): string => {
   return getNetworkConfig(chainId).defaultRPC;
 };
 
-export const getBlocktime = (chainId: SupportedNetworks): number => {
+export const getBlocktime = (chainId: SupportedNetworkId): number => {
   return getNetworkConfig(chainId).blocktime;
 };
 
-export const getMaxBlockDelay = (chainId: SupportedNetworks): number => {
+export const getMaxBlockDelay = (chainId: SupportedNetworkId): number => {
   return getNetworkConfig(chainId).maxBlockDelay || 0;
 };
 
@@ -242,7 +220,7 @@ export const isAgentAvailable = (chainId: number): boolean => {
   return true;
 };
 
-export const getAgentConfig = (chainId: SupportedNetworks): VaultAgentConfig | undefined => {
+export const getAgentConfig = (chainId: SupportedNetworkId): VaultAgentConfig | undefined => {
   const network = getNetworkConfig(chainId);
   return network?.vaultConfig;
 };
@@ -257,15 +235,15 @@ export const getNetworkName = (chainId: number) => {
   return target?.name;
 };
 
-export const getExplorerUrl = (chainId: SupportedNetworks): string => {
+export const getExplorerUrl = (chainId: SupportedNetworkId): string => {
   return getNetworkConfig(chainId).explorerUrl ?? 'https://etherscan.io';
 };
 
-export const getNativeTokenSymbol = (chainId: SupportedNetworks): string => {
+export const getNativeTokenSymbol = (chainId: SupportedNetworkId): string => {
   return getNetworkConfig(chainId).nativeTokenSymbol ?? 'ETH';
 };
 
-export const getWrappedNativeToken = (chainId: SupportedNetworks): Address | undefined => {
+export const getWrappedNativeToken = (chainId: SupportedNetworkId): Address | undefined => {
   return getNetworkConfig(chainId).wrappedNativeToken;
 };
 

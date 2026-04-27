@@ -1,5 +1,6 @@
 import { generateMetadata } from '@/utils/generateMetadata';
 import MarketContent from '@/features/markets/markets-view';
+import { serializeSearchParamsRecord, type SearchParamsRecord } from '@/utils/search-params';
 
 export const metadata = generateMetadata({
   title: 'Markets | Monarch',
@@ -8,6 +9,11 @@ export const metadata = generateMetadata({
   pathname: '',
 });
 
-export default function MarketPage() {
-  return <MarketContent />;
+type MarketPageProps = {
+  searchParams: Promise<SearchParamsRecord>;
+};
+
+export default async function MarketPage({ searchParams }: MarketPageProps) {
+  const resolvedSearchParams = await searchParams;
+  return <MarketContent initialSearchParams={serializeSearchParamsRecord(resolvedSearchParams)} />;
 }

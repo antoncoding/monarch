@@ -1,18 +1,14 @@
 import { create } from 'zustand';
-import type { SupportedNetworks } from '@/utils/networks';
 import type { PriceFeedVendors } from '@/utils/oracle';
 
 /**
- * Temporary filter state for markets page (resets on refresh for lightning-fast UX).
+ * Session-only filter state for the markets page.
  *
- * Separation from useMarketPreferences:
- * - useMarketPreferences: UI preferences (sort, view mode, USD thresholds, column visibility) - persisted
- * - useMarketsFilters: Data filters (which assets/network to view, search query) - temporary
+ * Persisted market selections (network, loan asset, collateral) live in
+ * useMarketFilterPreferences. This store holds the transient filters that
+ * should reset naturally between sessions or when the user clears the page.
  */
 type MarketsFiltersState = {
-  selectedCollaterals: string[];
-  selectedLoanAssets: string[];
-  selectedNetwork: SupportedNetworks | null;
   selectedOracles: PriceFeedVendors[];
   searchQuery: string;
   trendingMode: boolean; // Official trending filter (backend-computed)
@@ -21,9 +17,6 @@ type MarketsFiltersState = {
 };
 
 type MarketsFiltersActions = {
-  setSelectedCollaterals: (collaterals: string[]) => void;
-  setSelectedLoanAssets: (assets: string[]) => void;
-  setSelectedNetwork: (network: SupportedNetworks | null) => void;
   setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
   setSearchQuery: (query: string) => void;
   toggleTrendingMode: () => void;
@@ -35,9 +28,6 @@ type MarketsFiltersActions = {
 type MarketsFiltersStore = MarketsFiltersState & MarketsFiltersActions;
 
 const DEFAULT_STATE: MarketsFiltersState = {
-  selectedCollaterals: [],
-  selectedLoanAssets: [],
-  selectedNetwork: null,
   selectedOracles: [],
   searchQuery: '',
   trendingMode: false,
@@ -50,16 +40,12 @@ const DEFAULT_STATE: MarketsFiltersState = {
  *
  * @example
  * ```tsx
- * const { selectedCollaterals, setSelectedCollaterals } = useMarketsFilters();
  * const { searchQuery, setSearchQuery, resetFilters } = useMarketsFilters();
  * ```
  */
 export const useMarketsFilters = create<MarketsFiltersStore>()((set) => ({
   ...DEFAULT_STATE,
 
-  setSelectedCollaterals: (collaterals) => set({ selectedCollaterals: [...new Set(collaterals)] }),
-  setSelectedLoanAssets: (assets) => set({ selectedLoanAssets: [...new Set(assets)] }),
-  setSelectedNetwork: (network) => set({ selectedNetwork: network }),
   setSelectedOracles: (oracles) => set({ selectedOracles: oracles }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   toggleTrendingMode: () => set((state) => ({ trendingMode: !state.trendingMode })),

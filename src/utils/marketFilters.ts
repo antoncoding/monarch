@@ -7,6 +7,7 @@
 
 import { LOCKED_MARKET_APY_THRESHOLD } from '@/constants/markets';
 import type { OracleMetadataRecord } from '@/hooks/useOracleMetadata';
+import { marketFilterSelectionIncludesAsset } from '@/features/markets/market-filter-selection';
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import { type PriceFeedVendors, getOracleType, getOracleVendorInfo, OracleType } from '@/utils/oracle';
@@ -135,8 +136,8 @@ export const createCollateralFilter = (selectedCollaterals: string[]): MarketFil
     return () => true;
   }
   return (market) => {
-    return selectedCollaterals.some((combinedKey) =>
-      combinedKey.split('|').includes(`${market.collateralAsset.address.toLowerCase()}-${market.morphoBlue.chain.id}`),
+    return selectedCollaterals.some((selectionKey) =>
+      marketFilterSelectionIncludesAsset(selectionKey, market.collateralAsset.address, market.morphoBlue.chain.id),
     );
   };
 };
@@ -149,8 +150,8 @@ export const createLoanAssetFilter = (selectedLoanAssets: string[]): MarketFilte
     return () => true;
   }
   return (market) => {
-    return selectedLoanAssets.some((combinedKey) =>
-      combinedKey.split('|').includes(`${market.loanAsset.address.toLowerCase()}-${market.morphoBlue.chain.id}`),
+    return selectedLoanAssets.some((selectionKey) =>
+      marketFilterSelectionIncludesAsset(selectionKey, market.loanAsset.address, market.morphoBlue.chain.id),
     );
   };
 };
