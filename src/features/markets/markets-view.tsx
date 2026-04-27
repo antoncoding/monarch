@@ -1,12 +1,14 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Chain } from 'viem';
 
 import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
+import { parseMarketFilterUrlState, resolveMarketFilterSelectionsFromUrlState } from '@/features/markets/market-filter-url-state';
 import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { useMarketFilterPreferences } from '@/stores/useMarketFilterPreferences';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { usePagination } from '@/hooks/usePagination';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -16,14 +18,29 @@ import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import { CompactFilterBar } from './components/filters/compact-filter-bar';
 import MarketsTable from './components/table/markets-table';
 
-export default function Markets() {
+const haveSameSelections = (left: string[], right: string[]): boolean => {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value) => right.includes(value));
+};
+
+type MarketsProps = {
+  initialSearchParams: string;
+};
+
+export default function Markets({ initialSearchParams }: MarketsProps) {
   const toast = useStyledToast();
+  const appliedUrlSignatureRef = useRef<string | null>(null);
 
   // Data fetching with React Query
   const { data: rawMarkets, isLoading: loading, refetch } = useMarketsQuery();
   const { markets, isLoading: filteredMarketsLoading, isWhitelistUnavailable } = useFilteredMarkets();
 
   const filters = useMarketsFilters();
+  const persistedFilters = useMarketFilterPreferences();
+  const urlFilterState = useMemo(() => parseMarketFilterUrlState(new URLSearchParams(initialSearchParams)), [initialSearchParams]);
 
   // UI state
   const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
@@ -34,6 +51,37 @@ export default function Markets() {
   const { currentPage, setCurrentPage, resetPage } = usePagination();
   const { allTokens } = useTokensQuery();
   const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
+  const resolvedUrlLoanSelections = useMemo(() => {
+    if (urlFilterState.selectedLoanSelectors === undefined) {
+      return undefined;
+    }
+
+    if (urlFilterState.selectedLoanSelectors.length === 0) {
+      return [];
+    }
+
+    if (loading) {
+      return null;
+    }
+
+    return resolveMarketFilterSelectionsFromUrlState(urlFilterState.selectedLoanSelectors, uniqueLoanAssets);
+  }, [loading, uniqueLoanAssets, urlFilterState.selectedLoanSelectors]);
+
+  const resolvedUrlCollateralSelections = useMemo(() => {
+    if (urlFilterState.selectedCollateralSelectors === undefined) {
+      return undefined;
+    }
+
+    if (urlFilterState.selectedCollateralSelectors.length === 0) {
+      return [];
+    }
+
+    if (loading) {
+      return null;
+    }
+
+    return resolveMarketFilterSelectionsFromUrlState(urlFilterState.selectedCollateralSelectors, uniqueCollaterals);
+  }, [loading, uniqueCollaterals, urlFilterState.selectedCollateralSelectors]);
 
   // Force compact mode on mobile
   useEffect(() => {
@@ -115,13 +163,61 @@ export default function Markets() {
     setUniqueLoanAssets(processTokens(loanList));
   }, [rawMarkets, includeUnknownTokens, allTokens]);
 
+  useLayoutEffect(() => {
+    if (!urlFilterState.signature) {
+      appliedUrlSignatureRef.current = null;
+      return;
+    }
+
+    if (appliedUrlSignatureRef.current === urlFilterState.signature) {
+      return;
+    }
+
+    if (resolvedUrlLoanSelections === null || resolvedUrlCollateralSelections === null) {
+      return;
+    }
+
+    const nextSelections: {
+      selectedCollaterals?: string[];
+      selectedLoanAssets?: string[];
+      selectedNetwork?: typeof persistedFilters.selectedNetwork;
+    } = {};
+
+    if (urlFilterState.selectedNetwork !== undefined && urlFilterState.selectedNetwork !== persistedFilters.selectedNetwork) {
+      nextSelections.selectedNetwork = urlFilterState.selectedNetwork;
+    }
+
+    if (resolvedUrlLoanSelections !== undefined && !haveSameSelections(resolvedUrlLoanSelections, persistedFilters.selectedLoanAssets)) {
+      nextSelections.selectedLoanAssets = resolvedUrlLoanSelections;
+    }
+
+    if (
+      resolvedUrlCollateralSelections !== undefined &&
+      !haveSameSelections(resolvedUrlCollateralSelections, persistedFilters.selectedCollaterals)
+    ) {
+      nextSelections.selectedCollaterals = resolvedUrlCollateralSelections;
+    }
+
+    if (Object.keys(nextSelections).length > 0) {
+      persistedFilters.applySelections(nextSelections);
+    }
+
+    appliedUrlSignatureRef.current = urlFilterState.signature;
+  }, [
+    persistedFilters,
+    resolvedUrlCollateralSelections,
+    resolvedUrlLoanSelections,
+    urlFilterState.selectedNetwork,
+    urlFilterState.signature,
+  ]);
+
   // Reset page when filters change
   useEffect(() => {
     resetPage();
   }, [
-    filters.selectedNetwork,
-    filters.selectedCollaterals,
-    filters.selectedLoanAssets,
+    persistedFilters.selectedNetwork,
+    persistedFilters.selectedCollaterals,
+    persistedFilters.selectedLoanAssets,
     filters.selectedOracles,
     filters.searchQuery,
     resetPage,
@@ -149,6 +245,11 @@ export default function Markets() {
     refetch().then(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
   }, [refetch, toast]);
 
+  const handleClearAll = useCallback(() => {
+    persistedFilters.reset();
+    filters.resetFilters();
+  }, [filters, persistedFilters]);
+
   return (
     <>
       <div className="flex w-full flex-col justify-between font-zen">
@@ -168,18 +269,18 @@ export default function Markets() {
           <CompactFilterBar
             searchQuery={filters.searchQuery}
             onSearch={filters.setSearchQuery}
-            selectedNetwork={filters.selectedNetwork}
-            setSelectedNetwork={filters.setSelectedNetwork}
-            selectedLoanAssets={filters.selectedLoanAssets}
-            setSelectedLoanAssets={filters.setSelectedLoanAssets}
+            selectedNetwork={persistedFilters.selectedNetwork}
+            setSelectedNetwork={persistedFilters.setSelectedNetwork}
+            selectedLoanAssets={persistedFilters.selectedLoanAssets}
+            setSelectedLoanAssets={persistedFilters.setSelectedLoanAssets}
             loanAssetItems={uniqueLoanAssets}
-            selectedCollaterals={filters.selectedCollaterals}
-            setSelectedCollaterals={filters.setSelectedCollaterals}
+            selectedCollaterals={persistedFilters.selectedCollaterals}
+            setSelectedCollaterals={persistedFilters.setSelectedCollaterals}
             collateralItems={uniqueCollaterals}
             selectedOracles={filters.selectedOracles}
             setSelectedOracles={filters.setSelectedOracles}
             loading={loading}
-            onClearAll={filters.resetFilters}
+            onClearAll={handleClearAll}
           />
         </div>
       </div>

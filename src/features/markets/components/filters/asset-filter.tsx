@@ -2,8 +2,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { getMarketFilterAssetSelectionKey } from '@/features/markets/market-filter-selection';
 import { cn } from '@/utils/components';
-import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
+import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 
 type AssetFilterProps = {
   label: string;
@@ -40,12 +41,10 @@ export default function AssetFilter({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getTokenKey = (token: ERC20Token | UnknownERC20Token) => token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-
   const toggleDropdown = () => setIsOpen(!isOpen);
 
   const selectOption = (token: ERC20Token | UnknownERC20Token) => {
-    const tokenKey = getTokenKey(token);
+    const tokenKey = getMarketFilterAssetSelectionKey(token);
     if (selectedAssets.includes(tokenKey)) {
       setSelectedAssets(selectedAssets.filter((asset) => asset !== tokenKey));
     } else {
@@ -67,7 +66,7 @@ export default function AssetFilter({
       const newSelection = updateFromSearch
         .map((symbol) => items.find((item) => item.symbol.toLowerCase() === symbol.toLowerCase()))
         .filter(Boolean)
-        .map((token) => getTokenKey(token!));
+        .map((token) => getMarketFilterAssetSelectionKey(token!));
       setSelectedAssets(newSelection);
     }
   }, [updateFromSearch, items, setSelectedAssets]);
@@ -115,7 +114,7 @@ export default function AssetFilter({
           ) : selectedAssets.length > 0 ? (
             <div className="flex items-center gap-1">
               {selectedAssets.slice(0, 3).map((asset) => {
-                const token = items.find((item) => getTokenKey(item) === asset);
+                const token = items.find((item) => getMarketFilterAssetSelectionKey(item) === asset);
                 return token ? <span key={asset}>{renderTokenIcon(token, 14)}</span> : null;
               })}
               {selectedAssets.length > 3 && <span className="text-xs text-secondary">+{selectedAssets.length - 3}</span>}
@@ -143,7 +142,7 @@ export default function AssetFilter({
               role="listbox"
             >
               {filteredItems.map((token) => {
-                const tokenKey = getTokenKey(token);
+                const tokenKey = getMarketFilterAssetSelectionKey(token);
                 const isSelected = selectedAssets.includes(tokenKey);
                 return (
                   <li

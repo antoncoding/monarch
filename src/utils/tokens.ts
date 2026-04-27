@@ -1,4 +1,5 @@
 import { type Chain, arbitrum, base, etherlink, mainnet, monad, optimism, polygon, unichain } from 'viem/chains';
+import { toChainAssetKey } from './chain-asset-key';
 import { getWrappedNativeToken, hyperEvm } from './networks';
 
 export type TokenSource = 'local' | 'external' | 'unknown';
@@ -1004,9 +1005,7 @@ const findToken = (address: string, chainId: number) => {
   );
 };
 
-const infoToKey = (address: string, chainId: number) => {
-  return `${address.toLowerCase()}-${chainId}`;
-};
+const infoToKey = toChainAssetKey;
 
 const findTokenWithKey = (key: string) => {
   // key: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48-1|0x833589fcd6edb6e08f4c7c32d4f71b54bda02913-8453'

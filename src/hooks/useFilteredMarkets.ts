@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
+import { useMarketFilterPreferences } from '@/stores/useMarketFilterPreferences';
 import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
@@ -21,6 +22,7 @@ type UseFilteredMarketsResult = {
 
 export const useFilteredMarkets = (): UseFilteredMarketsResult => {
   const preferences = useMarketPreferences();
+  const persistedFilters = useMarketFilterPreferences();
   const { allMarkets, whitelistedMarkets } = useProcessedMarkets();
   const { whitelistLookup, isLoading: whitelistLoading, isFetching: whitelistFetching } = useMorphoWhitelistStatusQuery();
   const { data: oracleMetadataMap } = useAllOracleMetadata();
@@ -41,12 +43,12 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
     if (filteredMarkets.length === 0) return [];
 
     filteredMarkets = filterMarkets(filteredMarkets, {
-      selectedNetwork: filters.selectedNetwork,
+      selectedNetwork: persistedFilters.selectedNetwork,
       showUnknownTokens: preferences.includeUnknownTokens,
       showUnknownOracle: preferences.showUnknownOracle,
       showLockedMarkets: preferences.showLockedMarkets,
-      selectedCollaterals: filters.selectedCollaterals,
-      selectedLoanAssets: filters.selectedLoanAssets,
+      selectedCollaterals: persistedFilters.selectedCollaterals,
+      selectedLoanAssets: persistedFilters.selectedLoanAssets,
       selectedOracles: filters.selectedOracles,
       usdFilters: {
         minSupply: {
@@ -154,6 +156,7 @@ export const useFilteredMarkets = (): UseFilteredMarketsResult => {
     shouldBlockWhitelistedFiltering,
     showUnwhitelistedMarkets,
     filters,
+    persistedFilters,
     preferences,
     trustedVaults,
     findToken,
