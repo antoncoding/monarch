@@ -19,6 +19,8 @@ export const getMorphoAddress = (chain: SupportedNetworks) => {
       return '0x8f5ae9cddb9f68de460c77730b018ae7e04a140a';
     case SupportedNetworks.Arbitrum:
       return '0x6c247b1F6182318877311737BaC0844bAa518F5e';
+    case SupportedNetworks.Etherlink:
+      return '0xbCE7364E63C3B13C73E9977a83c9704E2aCa876e';
     case SupportedNetworks.HyperEVM:
       return '0x68e37dE8d93d3496ae143F2E900490f6280C57cD';
     case SupportedNetworks.Monad:
@@ -43,6 +45,8 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
       return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     case SupportedNetworks.Arbitrum:
       return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
+    case SupportedNetworks.Etherlink:
+      return '0x5738366B9348f22607294007e75114922dF2a16A';
     case SupportedNetworks.HyperEVM:
       return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     case SupportedNetworks.Monad:
@@ -65,6 +69,8 @@ export const getIRMTitle = (address: string) => {
     case '0x9a6061d51743b31d2c3be75d83781fa423f53f0e': // on unichain
       return 'Adaptive Curve';
     case '0x66f30587fb8d4206918deb78eca7d5ebbafd06da': // on arbitrum
+      return 'Adaptive Curve';
+    case '0xc1523be776e66ba07b609b1914d0925278f21fe5': // on etherlink
       return 'Adaptive Curve';
     case '0xd4a426f010986dcad727e8dd6eed44ca4a9b7483': // on hyperevm
       return 'Adaptive Curve';
@@ -104,6 +110,8 @@ export function getMorphoGenesisDate(chainId: number): Date {
       return new Date('2025-02-18T02:03:6.000Z');
     case SupportedNetworks.Arbitrum:
       return new Date('2025-01-17T06:04:51.000Z');
+    case SupportedNetworks.Etherlink:
+      return new Date('2025-07-14T20:41:53.000Z');
     case SupportedNetworks.HyperEVM:
       return new Date('2025-04-03T04:52:00.000Z');
     case SupportedNetworks.Monad:

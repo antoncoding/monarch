@@ -24,6 +24,7 @@ export const WETH_BY_CHAIN: Partial<Record<SupportedNetworks, Address>> = {
   [SupportedNetworks.Polygon]: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
   [SupportedNetworks.Unichain]: '0x4200000000000000000000000000000000000006',
   [SupportedNetworks.Arbitrum]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
+  [SupportedNetworks.Etherlink]: '0xfc24f770F94edBca6D6f885E12d4317320BcB401',
   [SupportedNetworks.Monad]: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242',
 };
 

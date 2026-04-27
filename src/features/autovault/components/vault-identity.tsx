@@ -7,7 +7,7 @@ import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import type { VaultCurator } from '@/constants/vaults/known_vaults';
-import { getVaultURL } from '@/utils/external';
+import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { VaultIcon } from './vault-icon';
 
 type VaultIdentityVariant = 'chip' | 'inline' | 'icon';
@@ -44,6 +44,7 @@ export function VaultIdentity({
   showAddressInTooltip = true,
 }: VaultIdentityProps) {
   const vaultHref = useMemo(() => getVaultURL(address, chainId), [address, chainId]);
+  const canLinkToMorpho = useMemo(() => supportsMorphoAppLinks(chainId), [chainId]);
   const formattedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   const displayName = vaultName ?? formattedAddress;
   const curatorLabel = curator === 'unknown' ? 'Curator unknown' : `Curated by ${curator}`;
@@ -92,19 +93,20 @@ export function VaultIdentity({
     );
   })();
 
-  const interactiveContent = showLink ? (
-    <Link
-      href={vaultHref}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="no-underline"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {baseContent}
-    </Link>
-  ) : (
-    baseContent
-  );
+  const interactiveContent =
+    showLink && canLinkToMorpho ? (
+      <Link
+        href={vaultHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="no-underline"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {baseContent}
+      </Link>
+    ) : (
+      baseContent
+    );
 
   if (!showTooltip) {
     return interactiveContent;
