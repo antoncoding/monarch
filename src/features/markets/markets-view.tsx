@@ -18,13 +18,10 @@ import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import { CompactFilterBar } from './components/filters/compact-filter-bar';
 import MarketsTable from './components/table/markets-table';
 
-type MarketsProps = {
-  initialSearchParams: string;
-};
-
-export default function Markets({ initialSearchParams }: MarketsProps) {
+export default function Markets() {
   const toast = useStyledToast();
   const appliedUrlSignatureRef = useRef<string | null>(null);
+  const [currentSearchParams, setCurrentSearchParams] = useState('');
 
   // Data fetching with React Query
   const { data: rawMarkets, isLoading: loading, refetch } = useMarketsQuery();
@@ -32,7 +29,7 @@ export default function Markets({ initialSearchParams }: MarketsProps) {
 
   const filters = useMarketsFilters();
   const persistedFilters = useMarketFilterPreferences();
-  const urlFilterState = useMemo(() => parseMarketFilterUrlState(new URLSearchParams(initialSearchParams)), [initialSearchParams]);
+  const urlFilterState = useMemo(() => parseMarketFilterUrlState(new URLSearchParams(currentSearchParams)), [currentSearchParams]);
 
   // UI state
   const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
@@ -43,6 +40,10 @@ export default function Markets({ initialSearchParams }: MarketsProps) {
   const { currentPage, setCurrentPage, resetPage } = usePagination();
   const { allTokens } = useTokensQuery();
   const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
+
+  useLayoutEffect(() => {
+    setCurrentSearchParams(window.location.search.startsWith('?') ? window.location.search.slice(1) : window.location.search);
+  }, []);
 
   // Force compact mode on mobile
   useEffect(() => {
