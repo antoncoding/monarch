@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import MarketContent from '../../../../src/features/market-detail/market-view';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'Market Details | Morpho Blue',
   description: 'Detailed information about a specific market on Morpho Blue',
