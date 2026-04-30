@@ -1,8 +1,7 @@
 import { type Abi, type Address, encodeAbiParameters, encodeFunctionData, maxUint256, zeroHash } from 'viem';
 
-const PARASWAP_SELL_EXACT_AMOUNT_OFFSET = 100n;
-const PARASWAP_SELL_MIN_DEST_AMOUNT_OFFSET = 132n;
-const PARASWAP_SELL_QUOTED_DEST_AMOUNT_OFFSET = 164n;
+const CALLDATA_SELECTOR_BYTES = 4n;
+const WORD_BYTES = 32n;
 
 export type Bundler3Call = {
   to: Address;
@@ -29,18 +28,37 @@ export const encodeBundler3Calls = (bundle: Bundler3Call[]): `0x${string}` => {
   return encodeAbiParameters(BUNDLER3_CALLS_ABI_PARAMS, [bundle]);
 };
 
-export const getParaswapSellOffsets = (augustusCallData: `0x${string}`) => {
+export const getParaswapSellOffsets = ({
+  augustusCallData,
+  exactAmount,
+  limitAmount,
+}: {
+  augustusCallData: `0x${string}`;
+  exactAmount: bigint;
+  limitAmount: bigint;
+}) => {
   // Guard only for malformed calldata; supported Velora/Paraswap sell methods can vary by selector
-  // while retaining the same amount fields layout required by the adapter offsets below.
+  // while retaining adjacent exact-in amount fields required by the adapter offsets below.
   if (augustusCallData.length < 10) {
     throw new Error('Invalid Paraswap calldata for swap-backed route.');
   }
 
-  return {
-    exactAmount: PARASWAP_SELL_EXACT_AMOUNT_OFFSET,
-    limitAmount: PARASWAP_SELL_MIN_DEST_AMOUNT_OFFSET,
-    quotedAmount: PARASWAP_SELL_QUOTED_DEST_AMOUNT_OFFSET,
-  } as const;
+  const calldataByteLength = BigInt((augustusCallData.length - 2) / 2);
+  for (let offset = CALLDATA_SELECTOR_BYTES; offset + WORD_BYTES * 3n <= calldataByteLength; offset += WORD_BYTES) {
+    const candidateExactAmount = readCalldataUint256(augustusCallData, offset);
+    if (candidateExactAmount !== exactAmount) continue;
+
+    const candidateLimitAmount = readCalldataUint256(augustusCallData, offset + WORD_BYTES);
+    if (candidateLimitAmount !== limitAmount) continue;
+
+    return {
+      exactAmount: offset,
+      limitAmount: offset + WORD_BYTES,
+      quotedAmount: offset + WORD_BYTES * 2n,
+    } as const;
+  }
+
+  throw new Error('Paraswap sell calldata does not match the reviewed swap quote.');
 };
 
 export const readCalldataUint256 = (callData: `0x${string}`, offset: bigint): bigint => {

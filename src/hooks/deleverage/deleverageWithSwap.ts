@@ -3,13 +3,7 @@ import { bundlerV3Abi } from '@/abis/bundlerV3';
 import { morphoGeneralAdapterV1Abi } from '@/abis/morphoGeneralAdapterV1';
 import { paraswapAdapterAbi } from '@/abis/paraswapAdapter';
 import type { VeloraPriceRoute } from '@/features/swap/api/velora';
-import {
-  buildBundler3Erc20SweepCalls,
-  type Bundler3Call,
-  encodeBundler3Calls,
-  getParaswapSellOffsets,
-  readCalldataUint256,
-} from '@/hooks/leverage/bundler3';
+import { buildBundler3Erc20SweepCalls, type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets } from '@/hooks/leverage/bundler3';
 import { withSlippageFloor } from '@/hooks/leverage/math';
 import {
   type EnsureBundlerAuthorization,
@@ -109,19 +103,7 @@ export const deleverageWithSwap = async ({
     transactionTarget: swapTxPayload.to,
   });
 
-  const sellOffsets = getParaswapSellOffsets(swapTxPayload.data);
   const quotedLoanAssetsOut = BigInt(swapSellPriceRoute.destAmount);
-  const calldataSellCollateralAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
-  // Only validate execution-authoritative swap fields here:
-  // - exactAmount: the collateral amount the adapter will actually sell
-  // - limitAmount: the minimum loan assets the adapter must receive
-  //
-  // Paraswap's quotedAmount is informational route metadata, not the actual execution floor.
-  // Rejecting on that field creates false positives without improving flash-loan safety.
-  if (calldataSellCollateralAmount !== withdrawCollateralAmount) {
-    throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-  }
-
   const loanAssetsOutSlippageFloor = withSlippageFloor(quotedLoanAssetsOut, slippageBps);
   if (useCloseRoute) {
     if (loanAssetsOutSlippageFloor < flashLoanAmount) {
@@ -131,10 +113,11 @@ export const deleverageWithSwap = async ({
     throw new Error('Velora returned zero loan output for deleverage swap.');
   }
 
-  const calldataLoanAssetsOutSlippageFloor = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
-  if (calldataLoanAssetsOutSlippageFloor !== loanAssetsOutSlippageFloor) {
-    throw new Error('Deleverage quote changed. Please review the updated preview and try again.');
-  }
+  const sellOffsets = getParaswapSellOffsets({
+    augustusCallData: swapTxPayload.data,
+    exactAmount: withdrawCollateralAmount,
+    limitAmount: loanAssetsOutSlippageFloor,
+  });
 
   const callbackBundle: Bundler3Call[] = [
     {
