@@ -9,13 +9,7 @@ import type { VeloraPriceRoute } from '@/features/swap/api/velora';
 import { getMorphoAddress, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { PERMIT2_ADDRESS } from '@/utils/permit2';
 import type { Market } from '@/utils/types';
-import {
-  buildBundler3Erc20SweepCalls,
-  type Bundler3Call,
-  encodeBundler3Calls,
-  getParaswapSellOffsets,
-  readCalldataUint256,
-} from './bundler3';
+import { buildBundler3Erc20SweepCalls, type Bundler3Call, encodeBundler3Calls, getParaswapSellOffsets } from './bundler3';
 import {
   type EnsureBundlerAuthorization,
   type MorphoMarketParams,
@@ -184,12 +178,11 @@ export const leverageWithSwap = async ({
     throw new Error('Velora returned zero collateral output for leverage swap.');
   }
 
-  const sellOffsets = getParaswapSellOffsets(swapTxPayload.data);
-  const calldataSellAmount = readCalldataUint256(swapTxPayload.data, sellOffsets.exactAmount);
-  const calldataMinCollateralOut = readCalldataUint256(swapTxPayload.data, sellOffsets.limitAmount);
-  if (calldataSellAmount !== totalLoanSellAmount || calldataMinCollateralOut !== collateralOutSlippageFloor) {
-    throw new Error('Leverage quote changed. Please review the updated preview and try again.');
-  }
+  const sellOffsets = getParaswapSellOffsets({
+    augustusCallData: swapTxPayload.data,
+    exactAmount: totalLoanSellAmount,
+    limitAmount: collateralOutSlippageFloor,
+  });
 
   const callbackBundle: Bundler3Call[] = [
     // Move the sold loan asset into the Paraswap adapter, which is the contract that actually executes the swap.
