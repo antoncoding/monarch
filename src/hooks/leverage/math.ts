@@ -8,6 +8,8 @@ const ASSET_INPUT_SHARE_SLIPPAGE_BUFFER_BPS = 50n; // 0.50%
 const MORPHO_VIRTUAL_SHARES = 1_000_000n;
 const MORPHO_VIRTUAL_ASSETS = 1n;
 const DEFAULT_SLIPPAGE_TOLERANCE_BPS = BPS_SCALE - LEVERAGE_SLIPPAGE_BUFFER_BPS;
+const FRACTIONAL_BPS_SCALE = 1_000_000n;
+const FRACTIONAL_BPS_DENOMINATOR = BPS_SCALE * FRACTIONAL_BPS_SCALE;
 const MAX_TARGET_LTV_BPS = BPS_SCALE - 1n;
 const COMPACT_AMOUNT_LOCALE = 'en-US';
 const COMPACT_AMOUNT_MIN_THRESHOLD = 0.000001;
@@ -17,16 +19,18 @@ const UNSIGNED_INTEGER_REGEX = /^\d+$/;
 const minBigInt = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 const floorSub = (value: bigint, subtract: bigint): bigint => (value > subtract ? value - subtract : 0n);
 const getSlippageToleranceBps = (slippageBps?: number): bigint => {
-  if (slippageBps == null || !Number.isFinite(slippageBps)) return DEFAULT_SLIPPAGE_TOLERANCE_BPS;
-  const rounded = BigInt(Math.round(slippageBps));
-  if (rounded <= 0n) return 0n;
-  if (rounded >= BPS_SCALE) return BPS_SCALE - 1n;
-  return rounded;
+  // Return values are scaled by FRACTIONAL_BPS_SCALE so sub-1-bps slippage
+  // survives BigInt floor/ceil math.
+  if (slippageBps == null || !Number.isFinite(slippageBps)) return DEFAULT_SLIPPAGE_TOLERANCE_BPS * FRACTIONAL_BPS_SCALE;
+  const scaled = BigInt(Math.round(slippageBps * Number(FRACTIONAL_BPS_SCALE)));
+  if (scaled <= 0n) return 0n;
+  if (scaled >= FRACTIONAL_BPS_DENOMINATOR) return FRACTIONAL_BPS_DENOMINATOR - 1n;
+  return scaled;
 };
 
 const getSlippageFloorBps = (slippageBps?: number): bigint => {
   const toleranceBps = getSlippageToleranceBps(slippageBps);
-  const floorBps = BPS_SCALE - toleranceBps;
+  const floorBps = FRACTIONAL_BPS_DENOMINATOR - toleranceBps;
   return floorBps > 0n ? floorBps : 1n;
 };
 
@@ -336,14 +340,14 @@ export const formatTokenAmountPreview = (value: bigint, decimals: number): { com
 export const withSlippageFloor = (value: bigint, slippageBps?: number): bigint => {
   if (value <= 0n) return 0n;
   const floorBps = getSlippageFloorBps(slippageBps);
-  const floored = (value * floorBps) / LEVERAGE_MULTIPLIER_SCALE_BPS;
+  const floored = (value * floorBps) / FRACTIONAL_BPS_DENOMINATOR;
   return floored > 0n ? floored : 1n;
 };
 
 export const withSlippageCeil = (value: bigint, slippageBps?: number): bigint => {
   if (value <= 0n) return 0n;
-  const ceilBps = LEVERAGE_MULTIPLIER_SCALE_BPS + getSlippageToleranceBps(slippageBps);
-  return (value * ceilBps + LEVERAGE_MULTIPLIER_SCALE_BPS - 1n) / LEVERAGE_MULTIPLIER_SCALE_BPS;
+  const ceilBps = FRACTIONAL_BPS_DENOMINATOR + getSlippageToleranceBps(slippageBps);
+  return (value * ceilBps + FRACTIONAL_BPS_DENOMINATOR - 1n) / FRACTIONAL_BPS_DENOMINATOR;
 };
 
 /**
