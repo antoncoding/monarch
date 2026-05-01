@@ -10,24 +10,21 @@ type UseAddressLabelReturn = {
 
 /**
  * Hook to resolve address labels in priority order:
- * 1. Vault name (if address is a known vault)
+ * 1. Vault name (if address is a known vault or recognized vault adapter)
  * 2. ENS name (handled by Name component)
  * 3. Shortened address (0x1234...5678)
  */
 export function useAddressLabel(address: Address, chainId?: number): UseAddressLabelReturn {
-  const { getVaultByAddress } = useVaultRegistry();
+  const { getAddressLabel } = useVaultRegistry();
 
-  const vaultName = useMemo(() => {
-    const vault = getVaultByAddress(address, chainId);
-    return vault?.name;
-  }, [address, chainId, getVaultByAddress]);
+  const addressLabel = useMemo(() => getAddressLabel(address, chainId), [address, chainId, getAddressLabel]);
 
   const shortAddress = useMemo(() => {
     return getSlicedAddress(address as `0x${string}`);
   }, [address]);
 
   return {
-    vaultName,
+    vaultName: addressLabel?.displayName,
     shortAddress,
   };
 }

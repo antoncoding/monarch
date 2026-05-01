@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
@@ -73,16 +73,19 @@ function SuppliersPieTooltip({
 
 export function SuppliersPieChart({ chainId, market }: SuppliersPieChartProps) {
   const { data: suppliers, isLoading, totalCount } = useAllMarketSuppliers(market.uniqueKey, chainId);
-  const { getVaultByAddress } = useVaultRegistry();
+  const { getAddressLabel } = useVaultRegistry();
   const [expandedOther, setExpandedOther] = useState(false);
   const chartColors = useChartColors();
 
-  // Helper to get display name for an address (vault name or shortened address)
-  const getDisplayName = (address: string): string => {
-    const vault = getVaultByAddress(address as Address, chainId);
-    if (vault?.name) return vault.name;
-    return getSlicedAddress(address as `0x${string}`);
-  };
+  // Helper to get display name for an address (vault/adapter label or shortened address)
+  const getDisplayName = useCallback(
+    (address: string): string => {
+      const addressLabel = getAddressLabel(address as Address, chainId);
+      if (addressLabel?.displayName) return addressLabel.displayName;
+      return getSlicedAddress(address as `0x${string}`);
+    },
+    [getAddressLabel, chainId],
+  );
 
   const pieData = useMemo(() => {
     if (!suppliers || suppliers.length === 0) return [];

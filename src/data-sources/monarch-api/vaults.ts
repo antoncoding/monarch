@@ -17,6 +17,14 @@ export type VaultAdapterDetails = {
   factoryAddress: string;
 };
 
+export type VaultAdapterAlias = {
+  adapterType: string;
+  address: string;
+  chainId: SupportedNetworks;
+  vaultAddress: string;
+  vaultName: string;
+};
+
 export const MORPHO_MARKET_ADAPTER_TYPES = ['MorphoMarketV1AdapterV2', 'MorphoMarketV1Adapter'] as const;
 
 export const isRecognizedMorphoMarketAdapterType = (adapterType: string | null | undefined): boolean => {
@@ -93,6 +101,15 @@ type MonarchAdapterRecord = {
   vaultAddress: string;
 };
 
+type MonarchAdapterAliasRecord = MonarchAdapterRecord & {
+  vault: {
+    vaultAddress: string;
+    chainId: number;
+    name: string | null;
+    symbol: string | null;
+  } | null;
+};
+
 type MonarchVaultsResponse = {
   data?: {
     Vault?: MonarchVault[];
@@ -111,6 +128,15 @@ type MonarchAdapterLookupResponse = {
     Adapter?: MonarchAdapterRecord[];
   };
 };
+
+type MonarchAdapterAliasesResponse = {
+  data?: {
+    Adapter?: MonarchAdapterAliasRecord[];
+  };
+};
+
+const MONARCH_ADAPTER_ALIAS_PAGE_SIZE = 1000;
+const MONARCH_ADAPTER_ALIAS_MAX_PAGES = 20;
 
 const MONARCH_VAULT_FIELDS = `
   id
@@ -230,6 +256,28 @@ const adaptersByAddressQuery = `
   }
 `;
 
+const adapterAliasesQuery = `
+  query MonarchVaultAdapterAliases($adapterTypes: [String!]!, $limit: Int!, $offset: Int!) {
+    Adapter(
+      where: { adapterType: { _in: $adapterTypes } }
+      order_by: [{ createdAt: desc }]
+      limit: $limit
+      offset: $offset
+    ) {
+      adapterAddress
+      adapterType
+      chainId
+      vaultAddress
+      vault {
+        vaultAddress
+        chainId
+        name
+        symbol
+      }
+    }
+  }
+`;
+
 export const fetchUserVaultV2DetailsAllNetworks = async (owner: string): Promise<UserVaultV2[]> => {
   const response = await monarchGraphqlFetcher<MonarchVaultsResponse>(userVaultsQuery, {
     owner: owner.toLowerCase(),
@@ -284,4 +332,69 @@ export const fetchMonarchAdaptersByAddress = async (
     seenAddresses.add(adapter.address);
     return true;
   });
+};
+
+const transformAdapterAliasRecord = (adapter: MonarchAdapterAliasRecord): VaultAdapterAlias | null => {
+  if (!isRecognizedMorphoMarketAdapterType(adapter.adapterType)) {
+    return null;
+  }
+
+  const chainId = toSupportedNetwork(adapter.chainId);
+  if (!chainId || (adapter.vault && adapter.vault.chainId !== adapter.chainId)) {
+    return null;
+  }
+
+  const vaultAddress = normalizeAddress(adapter.vault?.vaultAddress ?? adapter.vaultAddress);
+  const vaultName = adapter.vault?.name?.trim() || adapter.vault?.symbol?.trim() || '';
+  if (!vaultName) {
+    return null;
+  }
+
+  return {
+    address: normalizeAddress(adapter.adapterAddress),
+    adapterType: adapter.adapterType,
+    chainId,
+    vaultAddress,
+    vaultName,
+  };
+};
+
+export const fetchMonarchVaultAdapterAliases = async (): Promise<VaultAdapterAlias[]> => {
+  try {
+    const aliases: VaultAdapterAlias[] = [];
+    const seenKeys = new Set<string>();
+
+    for (let page = 0; page < MONARCH_ADAPTER_ALIAS_MAX_PAGES; page++) {
+      const response = await monarchGraphqlFetcher<MonarchAdapterAliasesResponse>(adapterAliasesQuery, {
+        adapterTypes: MORPHO_MARKET_ADAPTER_TYPES,
+        limit: MONARCH_ADAPTER_ALIAS_PAGE_SIZE,
+        offset: page * MONARCH_ADAPTER_ALIAS_PAGE_SIZE,
+      });
+
+      const records = response.data?.Adapter ?? [];
+      for (const record of records) {
+        const alias = transformAdapterAliasRecord(record);
+        if (!alias) {
+          continue;
+        }
+
+        const key = `${alias.chainId}:${alias.address}`;
+        if (seenKeys.has(key)) {
+          continue;
+        }
+
+        seenKeys.add(key);
+        aliases.push(alias);
+      }
+
+      if (records.length < MONARCH_ADAPTER_ALIAS_PAGE_SIZE) {
+        break;
+      }
+    }
+
+    return aliases;
+  } catch (error) {
+    console.warn('Error fetching Monarch vault adapter aliases:', error);
+    return [];
+  }
 };
