@@ -3,7 +3,8 @@ import { formatTokenAmountPreview } from '@/hooks/leverage/math';
 const RATE_PREVIEW_DECIMALS = 8;
 
 export const formatSlippagePercent = (value: number): string => {
-  return value.toFixed(2).replace(/\.?0+$/, '');
+  const decimals = value < 0.01 ? 3 : 2;
+  return value.toFixed(decimals).replace(/\.?0+$/, '');
 };
 
 export const computeUnitRatePreviewAmount = (

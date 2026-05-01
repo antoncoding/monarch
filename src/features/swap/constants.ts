@@ -20,8 +20,11 @@ export const DEFAULT_SLIPPAGE_PERCENT = 0.5;
 
 /**
  * Slippage tolerance input bounds as percentages.
+ *
+ * ParaSwap accepts fractional BPS values for RFQ routes, so the UI allows
+ * sub-0.01% tolerances for stable pairs while keeping a positive floor.
  */
-export const MIN_SLIPPAGE_PERCENT = 0.01;
+export const MIN_SLIPPAGE_PERCENT = 0.001;
 export const MAX_SLIPPAGE_PERCENT = 5;
 
 export const clampSlippagePercent = (value: number): number => {
@@ -29,5 +32,5 @@ export const clampSlippagePercent = (value: number): number => {
 };
 
 export const slippagePercentToBps = (value: number): number => {
-  return Math.round(clampSlippagePercent(value) * 100);
+  return Number((clampSlippagePercent(value) * 100).toFixed(6));
 };
