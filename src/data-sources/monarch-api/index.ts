@@ -28,8 +28,10 @@ export {
   type TimeRange,
 } from './transactions';
 export {
+  fetchMonarchVaultAdapterAliases,
   fetchMonarchVaultDetails,
   fetchUserVaultV2DetailsAllNetworks,
+  type VaultAdapterAlias,
   type VaultAdapterDetails,
   type UserVaultV2,
   type VaultV2Cap,

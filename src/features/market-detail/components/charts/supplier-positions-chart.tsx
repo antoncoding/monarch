@@ -84,7 +84,7 @@ export function SupplierPositionsChart({ marketId, chainId, market }: SupplierPo
   const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
   const chartColors = useChartColors();
-  const { getVaultByAddress } = useVaultRegistry();
+  const { getAddressLabel } = useVaultRegistry();
 
   const { data: suppliers, isLoading: suppliersLoading } = useAllMarketSuppliers(market.uniqueKey, chainId);
 
@@ -120,11 +120,11 @@ export function SupplierPositionsChart({ marketId, chainId, market }: SupplierPo
   // Get display name for a supplier address
   const getDisplayName = useCallback(
     (address: string): string => {
-      const vault = getVaultByAddress(address as Address, chainId);
-      if (vault?.name) return vault.name;
+      const addressLabel = getAddressLabel(address as Address, chainId);
+      if (addressLabel?.displayName) return addressLabel.displayName;
       return getSlicedAddress(address as `0x${string}`);
     },
-    [getVaultByAddress, chainId],
+    [getAddressLabel, chainId],
   );
 
   const handleLegendClick = useCallback(
