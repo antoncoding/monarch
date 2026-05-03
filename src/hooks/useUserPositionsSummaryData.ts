@@ -87,6 +87,8 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     positions,
     user,
     snapshotBlocks,
+    boundaryBlockData: actualBlockData ?? {},
+    transactions: mergedTransactions,
   });
 
   const positionsWithEarnings = usePositionsWithEarnings(positions ?? [], mergedTransactions, allSnapshots ?? {}, actualBlockData ?? {});

@@ -130,6 +130,42 @@ export const envioMarketDailySnapshotsQuery = buildEnvioMarketSnapshotsQuery({
   rootField: 'MarketDailySnapshot',
 });
 
+const envioMarketBoundarySnapshotSelection = `
+  timestamp
+  blockNumber
+  totalSupplyAssets
+  totalSupplyShares
+  totalBorrowAssets
+  totalBorrowShares
+`;
+
+export const envioMarketBoundarySnapshotQuery = `
+  query EnvioMarketBoundarySnapshot($chainId: Int!, $marketId: String!, $timestamp: numeric!) {
+    hourly: MarketHourlySnapshot(
+      where: {
+        chainId: { _eq: $chainId }
+        marketId: { _eq: $marketId }
+        timestamp: { _lte: $timestamp }
+      }
+      order_by: [{ timestamp: desc }]
+      limit: 1
+    ) {
+      ${envioMarketBoundarySnapshotSelection}
+    }
+    daily: MarketDailySnapshot(
+      where: {
+        chainId: { _eq: $chainId }
+        marketId: { _eq: $marketId }
+        timestamp: { _lte: $timestamp }
+      }
+      order_by: [{ timestamp: desc }]
+      limit: 1
+    ) {
+      ${envioMarketBoundarySnapshotSelection}
+    }
+  }
+`;
+
 export const buildEnvioMarketsPageQuery = ({ useChainIdFilter }: { useChainIdFilter: boolean }): string => {
   const variableDeclarations = ['$limit: Int!', '$offset: Int!', '$zeroAddress: String!'];
   const whereClauses = ['collateralToken: { _neq: $zeroAddress }', 'irm: { _neq: $zeroAddress }'];

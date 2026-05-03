@@ -1,6 +1,7 @@
 import type { Address } from 'viem';
 import { calculateEarningsFromSnapshot, type EarningsCalculation, filterTransactionsInPeriod } from '@/utils/interest';
 import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead } from '@/utils/networks';
 import { fetchPositionsSnapshots } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
@@ -47,6 +48,7 @@ export const usePositionReport = (
     let endDate = _endDate;
 
     if (!startDate || !endDate || !selectedAsset) return null;
+    if (!supportsHistoricalStateRead(selectedAsset.chainId)) return null;
 
     if (endDate.getTime() > Date.now()) {
       console.log('setting end date to now');

@@ -13,7 +13,7 @@ import {
 import { isSupportedNetwork as isSupportedNetworkValue, SupportedNetworks as SupportedNetworkId } from './supported-networks';
 import { v2AgentsBase } from './monarch-agent';
 import type { AgentMetadata } from './types';
-export { ALL_SUPPORTED_NETWORKS, SupportedNetworks, isSupportedNetwork } from './supported-networks';
+export { ALL_SUPPORTED_NETWORKS, SupportedNetworks, isSupportedNetwork, supportsHistoricalStateRead } from './supported-networks';
 
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const rpcPriority = process.env.NEXT_PUBLIC_RPC_PRIORITY;

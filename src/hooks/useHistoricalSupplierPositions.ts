@@ -5,7 +5,7 @@ import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { convertSharesToAssets } from '@/utils/positions';
 import { getMorphoAddress } from '@/utils/morpho';
 import { fetchBlocksWithTimestamps, type BlockWithTimestamp } from '@/utils/blockEstimation';
-import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import { calculateTimePoints, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
 import type { MarketSupplier } from '@/utils/types';
@@ -144,6 +144,9 @@ export function useHistoricalSupplierPositions(
     queryKey: ['historicalSupplierPositions', marketId, chainId, timeframe, supplierAddressesHash],
     queryFn: async () => {
       if (!marketId || !chainId || topSuppliers.length === 0) {
+        return null;
+      }
+      if (!supportsHistoricalStateRead(chainId)) {
         return null;
       }
 

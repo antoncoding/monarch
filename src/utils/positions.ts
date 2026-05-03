@@ -3,7 +3,9 @@ import { abi as chainlinkOracleAbi } from '@/abis/chainlinkOraclev2';
 import morphoABI from '@/abis/morpho';
 import { getMorphoAddress } from './morpho';
 import type { SupportedNetworks } from './networks';
+import { convertSharesToAssets } from './share-conversion';
 import type { Market as MorphoMarket, MarketPosition, MarketPositionWithEarnings, GroupedPosition } from './types';
+export { convertSharesToAssets } from './share-conversion';
 
 export type PositionSnapshot = {
   supplyAssets: string;
@@ -92,11 +94,6 @@ function arrayToMarket(arr: readonly bigint[]): MorphoMarketState {
     lastUpdate: arr[4],
     fee: arr[5],
   };
-}
-
-export function convertSharesToAssets(shares: bigint, totalAssets: bigint, totalShares: bigint): bigint {
-  if (totalShares === 0n) return 0n;
-  return (shares * totalAssets) / totalShares;
 }
 
 /**
@@ -654,8 +651,8 @@ export function processCollaterals(groupedPositions: GroupedPosition[]): Grouped
  * @param positions - Original positions without earnings data
  * @returns Positions with initialized empty earnings
  */
-export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]): MarketPositionWithEarnings[] {
-  return positions.map((position) => ({
+export function initializePositionWithEmptyEarnings(position: MarketPosition): MarketPositionWithEarnings {
+  return {
     ...position,
     earned: '0',
     actualApy: 0,
@@ -663,5 +660,9 @@ export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]
     effectiveTime: 0,
     totalDeposits: '0',
     totalWithdraws: '0',
-  }));
+  };
+}
+
+export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]): MarketPositionWithEarnings[] {
+  return positions.map(initializePositionWithEmptyEarnings);
 }

@@ -25,3 +25,19 @@ export const ALL_SUPPORTED_NETWORKS = [
 export const isSupportedNetwork = (chainId: number): chainId is SupportedNetworks => {
   return ALL_SUPPORTED_NETWORKS.includes(chainId as SupportedNetworks);
 };
+
+export const NETWORK_SUPPORTS_HISTORICAL_STATE_READ: Record<SupportedNetworks, boolean> = {
+  [SupportedNetworks.Mainnet]: true,
+  [SupportedNetworks.Optimism]: true,
+  [SupportedNetworks.Base]: true,
+  [SupportedNetworks.Polygon]: true,
+  [SupportedNetworks.Unichain]: true,
+  [SupportedNetworks.Arbitrum]: true,
+  [SupportedNetworks.Etherlink]: true,
+  [SupportedNetworks.HyperEVM]: false,
+  [SupportedNetworks.Monad]: true,
+};
+
+export const supportsHistoricalStateRead = (chainId: number): chainId is SupportedNetworks => {
+  return isSupportedNetwork(chainId) && NETWORK_SUPPORTS_HISTORICAL_STATE_READ[chainId];
+};
