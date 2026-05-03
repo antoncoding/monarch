@@ -47,20 +47,25 @@ export const usePositionSnapshots = ({ positions, user, snapshotBlocks, boundary
 
           const marketIds = chainPositions.map((p) => p.market.uniqueKey);
 
-          const snapshots = supportsHistoricalStateRead(chainIdNum)
-            ? await fetchPositionsSnapshots(
-                marketIds,
-                user as Address,
-                chainIdNum,
-                blockNum,
-                getClient(chainIdNum, customRpcUrls[chainIdNum]),
-              )
-            : await buildIndexedPositionSnapshotsAtBoundary({
-                positions: chainPositions,
-                transactions,
-                chainId: chainIdNum as SupportedNetworks,
-                boundaryTimestamp: boundaryBlockData[chainIdNum].timestamp,
-              });
+          let snapshots: Map<string, PositionSnapshot>;
+          if (supportsHistoricalStateRead(chainIdNum)) {
+            // For chains that support historical RPC state reads, read the position directly at the boundary block.
+            snapshots = await fetchPositionsSnapshots(
+              marketIds,
+              user as Address,
+              chainIdNum,
+              blockNum,
+              getClient(chainIdNum, customRpcUrls[chainIdNum]),
+            );
+          } else {
+            // For chains that do not support historical RPC state reads, rebuild the boundary snapshot from indexed events.
+            snapshots = await buildIndexedPositionSnapshotsAtBoundary({
+              positions: chainPositions,
+              transactions,
+              chainId: chainIdNum as SupportedNetworks,
+              boundaryTimestamp: boundaryBlockData[chainIdNum].timestamp,
+            });
+          }
 
           snapshotsByChain[chainIdNum] = snapshots;
         }),

@@ -70,6 +70,17 @@ const reverseSharePosition = (position: MarketPosition, transactionsAfterBoundar
   };
 };
 
+/**
+ * Builds per-market user position snapshots at a historical boundary without historical RPC state.
+ *
+ * High-level flow:
+ * 1. Start from the latest user position shares.
+ * 2. Reverse indexed Morpho events after the boundary timestamp to recover boundary shares.
+ * 3. Convert recovered shares to assets using indexed market totals nearest the boundary.
+ *
+ * Returns a map keyed by lowercase market id. Markets that cannot be reconstructed safely
+ * are omitted so callers fail closed instead of treating missing data as a zero balance.
+ */
 export const buildIndexedPositionSnapshotsAtBoundary = async ({
   positions,
   transactions,
