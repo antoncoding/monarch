@@ -1,11 +1,11 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { useQuery } from '@tanstack/react-query';
 import { formatUnits, type Address, type PublicClient } from 'viem';
 import morphoABI from '@/abis/morpho';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
-import { convertSharesToAssets } from '@/utils/positions';
 import { getMorphoAddress } from '@/utils/morpho';
 import { fetchBlocksWithTimestamps, type BlockWithTimestamp } from '@/utils/blockEstimation';
-import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import { calculateTimePoints, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
 import type { MarketSupplier } from '@/utils/types';
@@ -96,8 +96,7 @@ async function fetchBlockData(
         const positionData = positionResult.result as PositionDataRaw;
         const supplyShares = positionData[0];
 
-        // Convert shares to assets
-        const supplyAssets = convertSharesToAssets(supplyShares, blockTotalSupplyAssets, blockTotalSupplyShares);
+        const supplyAssets = SharesMath.toAssets(supplyShares, blockTotalSupplyAssets, blockTotalSupplyShares, 'Down');
 
         dataPoint[supplier.address] = Number(formatUnits(supplyAssets, loanAssetDecimals));
       } else {
@@ -130,7 +129,7 @@ export function useHistoricalSupplierPositions(
   // Get top suppliers by current supply shares
   const topSuppliers: SupplierInfo[] = (suppliers ?? []).slice(0, TOP_SUPPLIERS_LIMIT).map((s) => {
     const shares = BigInt(s.supplyShares);
-    const assets = convertSharesToAssets(shares, totalSupplyAssets, totalSupplyShares);
+    const assets = SharesMath.toAssets(shares, totalSupplyAssets, totalSupplyShares, 'Down');
     return {
       address: s.userAddress,
       currentSupply: assets,
@@ -144,6 +143,9 @@ export function useHistoricalSupplierPositions(
     queryKey: ['historicalSupplierPositions', marketId, chainId, timeframe, supplierAddressesHash],
     queryFn: async () => {
       if (!marketId || !chainId || topSuppliers.length === 0) {
+        return null;
+      }
+      if (!supportsHistoricalStateRead(chainId)) {
         return null;
       }
 

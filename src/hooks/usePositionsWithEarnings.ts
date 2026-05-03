@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { calculateEarningsFromSnapshot } from '@/utils/interest';
 import type { MarketPosition, UserTransaction, MarketPositionWithEarnings } from '@/utils/types';
-import type { PositionSnapshot } from '@/utils/positions';
+import { initializePositionWithEmptyEarnings, type PositionSnapshot } from '@/utils/positions';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
 // Simple helper for the period timestamp calculation
@@ -30,24 +30,16 @@ export const usePositionsWithEarnings = (
   chainBlockData: Record<number, { block: number; timestamp: number }>,
 ): MarketPositionWithEarnings[] => {
   return useMemo(() => {
-    if (!transactions || transactions.length === 0) {
-      return positions.map((p) => ({
-        ...p,
-        earned: '0',
-        actualApy: 0,
-        avgCapital: '0',
-        effectiveTime: 0,
-        totalDeposits: '0',
-        totalWithdraws: '0',
-      }));
-    }
-
     const endTimestamp = Math.floor(Date.now() / 1000);
 
     return positions.map((position) => {
       const chainId = position.market.morphoBlue.chain.id;
       const chainData = chainBlockData[chainId];
-      const startTimestamp = chainData?.timestamp ?? 0;
+      if (!chainData?.timestamp) {
+        return initializePositionWithEmptyEarnings(position);
+      }
+
+      const startTimestamp = chainData.timestamp;
 
       const currentBalance = BigInt(position.state.supplyAssets);
       const marketIdLower = position.market.uniqueKey.toLowerCase();
@@ -55,7 +47,11 @@ export const usePositionsWithEarnings = (
       // Get past balance from snapshot
       const chainSnapshots = snapshotsByChain[chainId];
       const pastSnapshot = chainSnapshots?.get(marketIdLower);
-      const pastBalance = pastSnapshot ? BigInt(pastSnapshot.supplyAssets) : 0n;
+      if (!pastSnapshot) {
+        return initializePositionWithEmptyEarnings(position);
+      }
+
+      const pastBalance = BigInt(pastSnapshot.supplyAssets);
 
       // Filter transactions for this market only.
       // Time-window filtering is centralized in calculateEarningsFromSnapshot.

@@ -6,7 +6,7 @@ import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
-import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import { useCurrentBlocks } from './queries/useCurrentBlocks';
 import { useBlockTimestamps } from './queries/useBlockTimestamps';
@@ -87,6 +87,10 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
       await Promise.all(
         Object.entries(vaultsByNetwork).map(async ([networkIdStr, networkVaults]) => {
           const networkId = Number(networkIdStr) as SupportedNetworks;
+          if (!supportsHistoricalStateRead(networkId)) {
+            return;
+          }
+
           const client = getClient(networkId, customRpcUrls[networkId]);
           const pastBlock = snapshotBlocks[networkId];
           const blockData = actualBlockData[networkId];

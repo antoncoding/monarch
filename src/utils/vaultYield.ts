@@ -2,7 +2,7 @@ import type { Address } from 'viem';
 import { erc4626Abi } from '@/abis/erc4626';
 import { computeAnnualizedApyFromGrowth } from '@/utils/rateMath';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
-import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import { getVaultReadKey } from '@/utils/vaultAllocation';
 
@@ -71,6 +71,10 @@ export async function fetchVaultYieldSnapshots({
   await Promise.all(
     Object.entries(vaultsByNetwork).map(async ([networkIdValue, networkVaults]) => {
       const networkId = Number(networkIdValue) as SupportedNetworks;
+      if (!supportsHistoricalStateRead(networkId)) {
+        setNetworkResults(results, networkVaults, networkId, buildNullSnapshot);
+        return;
+      }
 
       try {
         const client = getClient(networkId, customRpcUrls?.[networkId]);

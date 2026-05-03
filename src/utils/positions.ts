@@ -1,3 +1,4 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { type Address, formatUnits, type PublicClient } from 'viem';
 import { abi as chainlinkOracleAbi } from '@/abis/chainlinkOraclev2';
 import morphoABI from '@/abis/morpho';
@@ -92,11 +93,6 @@ function arrayToMarket(arr: readonly bigint[]): MorphoMarketState {
     lastUpdate: arr[4],
     fee: arr[5],
   };
-}
-
-export function convertSharesToAssets(shares: bigint, totalAssets: bigint, totalShares: bigint): bigint {
-  if (totalShares === 0n) return 0n;
-  return (shares * totalAssets) / totalShares;
 }
 
 /**
@@ -194,9 +190,9 @@ export async function fetchPositionsSnapshots(
         if (marketResult.status === 'success' && marketResult.result) {
           const market = arrayToMarket(marketResult.result as readonly bigint[]);
 
-          const supplyAssets = convertSharesToAssets(position.supplyShares, market.totalSupplyAssets, market.totalSupplyShares);
+          const supplyAssets = SharesMath.toAssets(position.supplyShares, market.totalSupplyAssets, market.totalSupplyShares, 'Down');
 
-          const borrowAssets = convertSharesToAssets(position.borrowShares, market.totalBorrowAssets, market.totalBorrowShares);
+          const borrowAssets = SharesMath.toAssets(position.borrowShares, market.totalBorrowAssets, market.totalBorrowShares, 'Up');
 
           result.set(marketId, {
             supplyShares: position.supplyShares.toString(),
@@ -654,8 +650,8 @@ export function processCollaterals(groupedPositions: GroupedPosition[]): Grouped
  * @param positions - Original positions without earnings data
  * @returns Positions with initialized empty earnings
  */
-export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]): MarketPositionWithEarnings[] {
-  return positions.map((position) => ({
+export function initializePositionWithEmptyEarnings(position: MarketPosition): MarketPositionWithEarnings {
+  return {
     ...position,
     earned: '0',
     actualApy: 0,
@@ -663,5 +659,9 @@ export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]
     effectiveTime: 0,
     totalDeposits: '0',
     totalWithdraws: '0',
-  }));
+  };
+}
+
+export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]): MarketPositionWithEarnings[] {
+  return positions.map(initializePositionWithEmptyEarnings);
 }

@@ -6,7 +6,7 @@ import type { Address } from 'viem';
 import { morphoIrmAbi } from '@/abis/morpho-irm';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import { fetchBlocksWithTimestamps } from '@/utils/blockEstimation';
-import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { fetchMarketsSnapshots, type MarketSnapshot } from '@/utils/positions';
 import { computeAnnualizedApyFromGrowth } from '@/utils/rateMath';
 import { getClient } from '@/utils/rpc';
@@ -460,11 +460,15 @@ export async function fetchRealizedMarketWindowRates(
   await Promise.all(
     Object.entries(marketsByChain).map(async ([chainIdValue, chainMarkets]) => {
       const chainId = Number(chainIdValue) as SupportedNetworks;
-      const client = getClient(chainId, customRpcUrls[chainId]);
-
       chainMarkets.forEach((market) => {
         marketWindowRates.set(getMarketRateEnrichmentKey(market.uniqueKey, chainId), buildEmptyWindowRates(uniqueWindows));
       });
+
+      if (!supportsHistoricalStateRead(chainId)) {
+        return;
+      }
+
+      const client = getClient(chainId, customRpcUrls[chainId]);
 
       try {
         const latestBlockNumber = Number(await client.getBlockNumber());
@@ -545,6 +549,10 @@ export async function fetchHistoricalMarketBoundaryStates(
   }
 
   const chainId = market.morphoBlue.chain.id as SupportedNetworks;
+  if (!supportsHistoricalStateRead(chainId)) {
+    return [];
+  }
+
   const client = getClient(chainId, customRpcUrls[chainId]);
 
   try {

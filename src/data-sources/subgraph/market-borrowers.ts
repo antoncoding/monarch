@@ -1,6 +1,6 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { marketBorrowersQuery } from '@/graphql/morpho-subgraph-queries';
 import type { SupportedNetworks } from '@/utils/networks';
-import { convertSharesToAssets } from '@/utils/positions';
 import type { MarketBorrower, PaginatedMarketBorrowers } from '@/utils/types';
 import { requireSubgraphUrl, subgraphGraphqlFetcher } from './fetchers';
 
@@ -96,10 +96,8 @@ export const fetchSubgraphMarketBorrowers = async (
 
       // Map all items to unified type
       allMappedItems = positions.map((position) => {
-        // Convert borrow shares to borrow assets
-        // borrowAssets = (shares * totalBorrow) / totalBorrowShares
         const shares = BigInt(position.shares);
-        const borrowAssets = convertSharesToAssets(shares, totalBorrow, totalBorrowShares).toString();
+        const borrowAssets = SharesMath.toAssets(shares, totalBorrow, totalBorrowShares, 'Up').toString();
 
         // Get collateral balance from nested positions (should be exactly 1)
         const collateralBalance = position.account.positions[0]?.balance ?? '0';

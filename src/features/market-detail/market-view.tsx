@@ -17,7 +17,7 @@ import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import { useMarketDetailPreferences, type MarketDetailActivitiesView, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
 import useUserPosition from '@/hooks/useUserPosition';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { BorrowersTable } from '@/features/market-detail/components/borrowers-table';
 import { BorrowsTable } from '@/features/market-detail/components/borrows-table';
 import BorrowerFiltersModal from '@/features/market-detail/components/filters/borrower-filters-modal';
@@ -64,6 +64,7 @@ function MarketContent() {
 
   // 2. Network setup
   const network = Number(chainId as string) as SupportedNetworks;
+  const showSupplierPositionsChart = supportsHistoricalStateRead(network);
 
   // 3. Consolidated state
   const { open: openModal } = useModal();
@@ -449,13 +450,15 @@ function MarketContent() {
               />
             </div>
 
-            <div className="mt-6">
-              <SupplierPositionsChart
-                marketId={marketId as string}
-                chainId={network}
-                market={market}
-              />
-            </div>
+            {showSupplierPositionsChart && (
+              <div className="mt-6">
+                <SupplierPositionsChart
+                  marketId={marketId as string}
+                  chainId={network}
+                  market={market}
+                />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="activities">

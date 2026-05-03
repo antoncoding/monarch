@@ -72,6 +72,9 @@ type NetworkConfig = {
   // Make it larger if blockFinder keeps having block find block issues
   maxBlockDelay?: number;
 
+  // Defaults to true. Set false when an RPC cannot read contract state at historical blocks.
+  supportsHistoricalStateRead?: boolean;
+
   explorerUrl?: string;
   nativeTokenSymbol?: string;
   wrappedNativeToken?: Address;
@@ -171,6 +174,7 @@ export const networks: NetworkConfig[] = [
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_HYPEREVM_RPC, 'hyperliquid-mainnet'),
     blocktime: 1,
     maxBlockDelay: 5,
+    supportsHistoricalStateRead: false,
     nativeTokenSymbol: 'WHYPE',
     wrappedNativeToken: '0x5555555555555555555555555555555555555555',
     explorerUrl: 'https://hyperevmscan.io',
@@ -211,6 +215,10 @@ export const getBlocktime = (chainId: SupportedNetworkId): number => {
 
 export const getMaxBlockDelay = (chainId: SupportedNetworkId): number => {
   return getNetworkConfig(chainId).maxBlockDelay || 0;
+};
+
+export const supportsHistoricalStateRead = (chainId: number): chainId is SupportedNetworkId => {
+  return isSupportedNetworkValue(chainId) && (getNetworkConfig(chainId).supportsHistoricalStateRead ?? true);
 };
 
 export const isAgentAvailable = (chainId: number): boolean => {

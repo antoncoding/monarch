@@ -1,3 +1,4 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { useMemo } from 'react';
 import type { Address } from 'viem';
 import { useReadContracts } from 'wagmi';
@@ -6,7 +7,6 @@ import morphoABI from '@/abis/morpho';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import { getMorphoAddress } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
-import { convertSharesToAssets } from '@/utils/positions';
 
 // ── Types ──
 
@@ -134,7 +134,7 @@ export function usePublicAllocatorLiveData(
       const totalBorrowAssets = marketData[2];
 
       // Convert supply shares to assets
-      const vaultSupplyAssets = convertSharesToAssets(supplyShares, totalSupplyAssets, totalSupplyShares);
+      const vaultSupplyAssets = SharesMath.toAssets(supplyShares, totalSupplyAssets, totalSupplyShares, 'Down');
 
       // Market liquidity = total supply - total borrow
       const marketLiquidity = totalSupplyAssets - totalBorrowAssets;

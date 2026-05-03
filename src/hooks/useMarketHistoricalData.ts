@@ -6,7 +6,7 @@ import { fetchMorphoMarketHistoricalData, type HistoricalDataSuccessResult } fro
 import { fetchSubgraphMarketHistoricalData } from '@/data-sources/subgraph/historical';
 import { fetchHistoricalMarketBoundaryStates, type HistoricalMarketBoundaryState } from '@/utils/market-rate-enrichment';
 import { TIMEFRAME_CONFIG, calculateTimePoints, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
-import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import type { Market, TimeseriesOptions } from '@/utils/types';
 
 type UseMarketHistoricalDataResult = {
@@ -201,15 +201,17 @@ export const useMarketHistoricalData = (
         });
 
         const missingTargetTimestamps = targetTimestamps.filter((targetTimestamp) => !pointsByTarget.has(targetTimestamp));
-        try {
-          stateReadPoints = await fetchHistoricalMarketBoundaryStates(
-            market,
-            missingTargetTimestamps,
-            customRpcUrl ? { [network]: customRpcUrl } : {},
-          );
-        } catch (boundaryError) {
-          console.error('Failed to fetch historical boundary states via RPC:', boundaryError);
-          stateReadPoints = [];
+        if (supportsHistoricalStateRead(network)) {
+          try {
+            stateReadPoints = await fetchHistoricalMarketBoundaryStates(
+              market,
+              missingTargetTimestamps,
+              customRpcUrl ? { [network]: customRpcUrl } : {},
+            );
+          } catch (boundaryError) {
+            console.error('Failed to fetch historical boundary states via RPC:', boundaryError);
+            stateReadPoints = [];
+          }
         }
 
         stateReadPoints.forEach((point) => {
