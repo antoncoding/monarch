@@ -1,3 +1,4 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { usePublicClient } from 'wagmi';
@@ -6,7 +7,7 @@ import { fetchMonarchUserPositionStateForMarket } from '@/data-sources/monarch-a
 import { fetchMorphoUserPositionForMarket } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/positions';
 import type { SupportedNetworks } from '@/utils/networks';
-import { convertSharesToAssets, fetchPositionSnapshot } from '@/utils/positions';
+import { fetchPositionSnapshot } from '@/utils/positions';
 import type { MarketPosition } from '@/utils/types';
 import { useProcessedMarkets } from './useProcessedMarkets';
 
@@ -24,15 +25,17 @@ const buildPositionFromLiveMarket = (
   market: MarketPosition['market'],
   state: Pick<MarketPosition['state'], 'supplyShares' | 'borrowShares' | 'collateral'>,
 ): MarketPosition => {
-  const supplyAssets = convertSharesToAssets(
+  const supplyAssets = SharesMath.toAssets(
     BigInt(state.supplyShares),
     BigInt(market.state.supplyAssets),
     BigInt(market.state.supplyShares),
+    'Down',
   ).toString();
-  const borrowAssets = convertSharesToAssets(
+  const borrowAssets = SharesMath.toAssets(
     BigInt(state.borrowShares),
     BigInt(market.state.borrowAssets),
     BigInt(market.state.borrowShares),
+    'Up',
   ).toString();
 
   return {

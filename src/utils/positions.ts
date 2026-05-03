@@ -1,11 +1,10 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { type Address, formatUnits, type PublicClient } from 'viem';
 import { abi as chainlinkOracleAbi } from '@/abis/chainlinkOraclev2';
 import morphoABI from '@/abis/morpho';
 import { getMorphoAddress } from './morpho';
 import type { SupportedNetworks } from './networks';
-import { convertSharesToAssets } from './share-conversion';
 import type { Market as MorphoMarket, MarketPosition, MarketPositionWithEarnings, GroupedPosition } from './types';
-export { convertSharesToAssets } from './share-conversion';
 
 export type PositionSnapshot = {
   supplyAssets: string;
@@ -191,9 +190,9 @@ export async function fetchPositionsSnapshots(
         if (marketResult.status === 'success' && marketResult.result) {
           const market = arrayToMarket(marketResult.result as readonly bigint[]);
 
-          const supplyAssets = convertSharesToAssets(position.supplyShares, market.totalSupplyAssets, market.totalSupplyShares);
+          const supplyAssets = SharesMath.toAssets(position.supplyShares, market.totalSupplyAssets, market.totalSupplyShares, 'Down');
 
-          const borrowAssets = convertSharesToAssets(position.borrowShares, market.totalBorrowAssets, market.totalBorrowShares);
+          const borrowAssets = SharesMath.toAssets(position.borrowShares, market.totalBorrowAssets, market.totalBorrowShares, 'Up');
 
           result.set(marketId, {
             supplyShares: position.supplyShares.toString(),

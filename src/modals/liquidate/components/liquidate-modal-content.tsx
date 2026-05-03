@@ -1,4 +1,6 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { useState, useCallback, useMemo } from 'react';
+import type { Address } from 'viem';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import Input from '@/components/Input/Input';
 import { useLiquidateTransaction } from '@/hooks/useLiquidateTransaction';
@@ -8,7 +10,6 @@ import type { Market } from '@/utils/types';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { AccountIdentity } from '@/components/shared/account-identity';
-import type { Address } from 'viem';
 
 type LiquidateModalContentProps = {
   market: Market;
@@ -40,7 +41,9 @@ export function LiquidateModalContent({
   const totalBorrowAssets = BigInt(market.state.borrowAssets);
   const totalBorrowShares = BigInt(market.state.borrowShares);
   const borrowerDebtInAssets =
-    totalBorrowShares > 0n && borrowerBorrowShares > 0n ? (borrowerBorrowShares * totalBorrowAssets) / totalBorrowShares : 0n;
+    totalBorrowShares > 0n && borrowerBorrowShares > 0n
+      ? SharesMath.toAssets(borrowerBorrowShares, totalBorrowAssets, totalBorrowShares, 'Up')
+      : 0n;
 
   // Calculate USD values
   const borrowerDebtUsd =

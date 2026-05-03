@@ -1,3 +1,4 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import {
   envioBorrowersPageQuery,
   envioBorrowRepayPageQuery,
@@ -5,7 +6,6 @@ import {
   envioSuppliersPageQuery,
   envioSupplyWithdrawPageQuery,
 } from '@/graphql/envio-queries';
-import { convertSharesToAssets } from '@/utils/positions';
 import type {
   Market,
   MarketActivityTransaction,
@@ -185,7 +185,7 @@ const mapMonarchActivityRows = (rows: MonarchActivityEventRow[], type: MarketAct
 };
 
 const convertBorrowSharesToAssets = (borrowShares: string, marketState: BorrowSharePriceState): string => {
-  return convertSharesToAssets(BigInt(borrowShares), BigInt(marketState.borrowAssets), BigInt(marketState.borrowShares)).toString();
+  return SharesMath.toAssets(BigInt(borrowShares), BigInt(marketState.borrowAssets), BigInt(marketState.borrowShares), 'Up').toString();
 };
 
 const mapCachedBorrowers = (positions: CachedBorrowerPosition[], marketState: BorrowSharePriceState): MarketBorrower[] => {

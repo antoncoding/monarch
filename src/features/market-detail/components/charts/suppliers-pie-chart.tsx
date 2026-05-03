@@ -1,5 +1,6 @@
 'use client';
 
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { useCallback, useMemo, useState } from 'react';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
@@ -99,7 +100,7 @@ export function SuppliersPieChart({ chainId, market }: SuppliersPieChartProps) {
     const suppliersWithAssets = suppliers
       .map((supplier) => {
         const shares = BigInt(supplier.supplyShares);
-        const assets = (shares * totalSupplyAssets) / totalSupplyShares;
+        const assets = SharesMath.toAssets(shares, totalSupplyAssets, totalSupplyShares, 'Down');
         const assetsNumber = Number(formatUnits(assets, market.loanAsset.decimals));
         // Use scaled bigint math for precision
         const percentageScaled = (shares * 10000n) / totalSupplyShares;

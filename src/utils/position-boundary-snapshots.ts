@@ -1,6 +1,6 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
 import { fetchMonarchMarketBoundarySnapshots } from '@/data-sources/monarch-api/market-boundary-snapshots';
 import type { PositionSnapshot } from '@/utils/positions';
-import { convertSharesToAssets } from '@/utils/share-conversion';
 import { UserTxTypes, type MarketPosition, type UserTransaction } from '@/utils/types';
 import type { SupportedNetworks } from './networks';
 
@@ -148,9 +148,9 @@ export const buildIndexedPositionSnapshotsAtBoundary = async ({
 
     snapshots.set(marketKey, {
       supplyShares: reconstructed.supplyShares.toString(),
-      supplyAssets: convertSharesToAssets(reconstructed.supplyShares, totalSupplyAssets, totalSupplyShares).toString(),
+      supplyAssets: SharesMath.toAssets(reconstructed.supplyShares, totalSupplyAssets, totalSupplyShares, 'Down').toString(),
       borrowShares: reconstructed.borrowShares.toString(),
-      borrowAssets: convertSharesToAssets(reconstructed.borrowShares, totalBorrowAssets, totalBorrowShares).toString(),
+      borrowAssets: SharesMath.toAssets(reconstructed.borrowShares, totalBorrowAssets, totalBorrowShares, 'Up').toString(),
       collateral: reconstructed.collateral.toString(),
     });
   }
