@@ -1,14 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { IoHelpCircleOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
-import { useGlobalModal } from '@/contexts/GlobalModalContext';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import { OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
+import { FeedTypeSection } from './FeedTypeSection';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
-import { RedstoneTypesModal } from './RedstoneTypesModal';
 
 type RedstoneFeedTooltipProps = {
   feed: EnrichedFeed;
@@ -17,13 +15,12 @@ type RedstoneFeedTooltipProps = {
 };
 
 export function RedstoneFeedTooltip({ feed, chainId, feedFreshness }: RedstoneFeedTooltipProps) {
-  const { toggleModal, closeModal } = useGlobalModal();
   const baseAsset = feed.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair[1] ?? 'Unknown';
 
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Redstone];
 
-  const hasDetails = feed.feedType != null || feed.heartbeat != null || feed.deviationThreshold != null;
+  const hasDetails = feed.heartbeat != null || feed.deviationThreshold != null;
 
   return (
     <div className="flex w-fit max-w-[22rem] flex-col gap-3">
@@ -49,34 +46,11 @@ export function RedstoneFeedTooltip({ feed, chainId, feedFreshness }: RedstoneFe
         </div>
       </div>
 
+      <FeedTypeSection feed={feed} />
+
       {/* Redstone Specific Data */}
       {hasDetails && (
         <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          {feed.feedType != null && (
-            <div className="flex items-center justify-between font-zen text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Type:</span>
-              <div className="flex items-center gap-1">
-                <span className="font-medium">{feed.feedType === 'fundamental' ? 'Fundamental' : 'Standard'}</span>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleModal(
-                      <RedstoneTypesModal
-                        isOpen
-                        onClose={() => closeModal()}
-                      />,
-                    );
-                  }}
-                  className="cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
-                  type="button"
-                  aria-label="Learn about feed types"
-                >
-                  <IoHelpCircleOutline size={14} />
-                </button>
-              </div>
-            </div>
-          )}
           {feed.heartbeat != null && (
             <div className="flex justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Heartbeat:</span>

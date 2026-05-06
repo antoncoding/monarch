@@ -16,6 +16,7 @@ import {
   type FeedFreshnessStatus,
 } from '@/utils/oracle';
 import { ChainlinkRiskTiersModal } from './ChainlinkRiskTiersModal';
+import { FeedTypeSection } from './FeedTypeSection';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type ChainlinkFeedTooltipProps = {
@@ -86,6 +87,8 @@ export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: Chainlink
           {baseAsset} / {quoteAsset}
         </div>
       </div>
+
+      <FeedTypeSection feed={feed} />
 
       {/* Vendor specific data */}
       {hasDetails && (

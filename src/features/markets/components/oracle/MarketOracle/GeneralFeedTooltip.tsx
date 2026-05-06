@@ -5,6 +5,7 @@ import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import { mapProviderToVendor, OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
+import { FeedTypeSection } from './FeedTypeSection';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type GeneralFeedTooltipProps = {
@@ -43,6 +44,8 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
           {baseAsset} / {quoteAsset}
         </div>
       </div>
+
+      <FeedTypeSection feed={feed} />
 
       {/* Description */}
       {feed.description && (
