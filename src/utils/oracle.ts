@@ -24,9 +24,9 @@ import { TokenPeg, supportedTokens } from './tokens';
 
 type VendorInfo = {
   coreVendors: PriceFeedVendors[]; // Well-known vendors (Chainlink, Redstone, etc.)
-  taggedVendors: string[]; // Tagged by Morpho but not core (Pendle, Spectra, etc.)
+  taggedVendors: string[]; // Known provider names without a core vendor badge/icon yet
   hasCompletelyUnknown: boolean; // True unknown feeds (no data found)
-  hasTaggedUnknown: boolean; // Tagged but not in core vendors
+  hasTaggedUnknown: boolean; // Provider is tagged, but not widely used enough for a core vendor type
   // Legacy properties for backward compatibility
   vendors: PriceFeedVendors[];
   hasUnknown: boolean;
@@ -259,7 +259,7 @@ function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
     hasCompletelyUnknown,
     hasTaggedUnknown,
     vendors: legacyVendors,
-    hasUnknown: hasCompletelyUnknown || hasTaggedUnknown,
+    hasUnknown: hasCompletelyUnknown,
   };
 }
 

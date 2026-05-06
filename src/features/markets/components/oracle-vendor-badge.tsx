@@ -47,8 +47,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
 
   const vendorInfo = getOracleVendorInfo(oracleAddress, chainId, oracleMetadataMap);
   const { coreVendors, taggedVendors, hasCompletelyUnknown, hasTaggedUnknown } = vendorInfo;
-  const hasUnknownFeed = hasCompletelyUnknown || hasTaggedUnknown;
-  const displayNames = hasUnknownFeed ? [...coreVendors, ...taggedVendors, 'Unverified'] : [...coreVendors, ...taggedVendors];
+  const displayNames = hasCompletelyUnknown ? [...coreVendors, ...taggedVendors, 'Unknown'] : [...coreVendors, ...taggedVendors];
   const showTaggedFallbackIcon = !isCustom && !isVaultOnly && coreVendors.length === 0 && taggedVendors.length > 0;
   const showGenericFallbackIcon = !isCustom && !isVaultOnly && coreVendors.length === 0 && taggedVendors.length === 0;
 
@@ -70,7 +69,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
           className="text-secondary"
           size={18}
         />
-      ) : hasUnknownFeed ? (
+      ) : hasCompletelyUnknown ? (
         <>
           {coreVendors.map((vendor, index) => (
             <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>
@@ -109,7 +108,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
       const oracleLabel = isMeta ? 'Meta Oracle' : 'Standard Oracle';
       const allKnownVendors = [...coreVendors, ...taggedVendors];
 
-      if (showGenericFallbackIcon && !hasUnknownFeed) {
+      if (showGenericFallbackIcon && !hasCompletelyUnknown) {
         return (
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium text-primary font-zen">{oracleLabel}</p>
@@ -120,15 +119,20 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
 
       const feedSummary =
         allKnownVendors.length > 0
-          ? hasUnknownFeed
-            ? `${allKnownVendors.join(', ')} and unverified feeds`
+          ? hasCompletelyUnknown
+            ? `${allKnownVendors.join(', ')} and unknown feeds`
             : allKnownVendors.join(', ')
-          : 'unverified or unclassified feeds';
+          : 'unknown or unclassified feeds';
 
       return (
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-primary font-zen">{oracleLabel}</p>
           <p className="text-xs text-secondary font-zen">Uses feeds from {feedSummary}.</p>
+          {hasTaggedUnknown && (
+            <p className="text-xs text-secondary font-zen">
+              {taggedVendors.join(', ')} {taggedVendors.length === 1 ? 'is' : 'are'} tagged, but not widely used.
+            </p>
+          )}
         </div>
       );
     };
