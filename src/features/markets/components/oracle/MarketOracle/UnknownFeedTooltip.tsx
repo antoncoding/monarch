@@ -6,6 +6,7 @@ import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import type { FeedFreshnessStatus } from '@/utils/oracle';
+import { FeedTypeSection } from './FeedTypeSection';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type UnknownFeedTooltipProps = {
@@ -28,6 +29,8 @@ export function UnknownFeedTooltip({ feed, chainId, feedFreshness }: UnknownFeed
 
       {/* Description */}
       <div className="font-zen text-sm text-gray-600 dark:text-gray-400">This oracle uses an unrecognized price feed contract.</div>
+
+      <FeedTypeSection feed={feed} />
 
       <FeedFreshnessSection feedFreshness={feedFreshness} />
 

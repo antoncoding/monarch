@@ -19,6 +19,8 @@ import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks
  */
 
 export type OracleFeedProvider = string | null;
+export type KnownOracleFeedType = 'market' | 'fundamental' | 'dex' | 'nav';
+export type OracleFeedType = KnownOracleFeedType | (string & {});
 
 export type EnrichedFeed = {
   address: string;
@@ -33,7 +35,7 @@ export type EnrichedFeed = {
   riskTier?: number; // Chronicle dashboard risk tier
   updateInterval?: number; // Chronicle update cadence in seconds
   updateSpread?: number; // Chronicle deviation threshold percentage
-  feedType?: string; // Redstone feed type: "market" or "fundamental"
+  feedType?: OracleFeedType; // Scanner feed category: "market", "fundamental", "dex", "nav", or future categories
   baseDiscountPerYear?: string; // Pendle base discount per year (raw 18-decimal value)
   innerOracle?: string; // Pendle inner oracle address
   pt?: string; // Pendle PT token address

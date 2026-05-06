@@ -119,14 +119,6 @@ const UNRECOGNIZED_FEEDS: WarningWithDetail = {
   category: WarningCategory.oracle,
 };
 
-// morpho config list
-const UNRECOGNIZED_FEEDS_TAGGED: WarningWithDetail = {
-  code: 'unknown feeds tagged',
-  level: 'warning',
-  description: 'This market oracle has feeds that were tagged by Morpho but not verified by Monarch',
-  category: WarningCategory.oracle,
-};
-
 type MarketWarningsOptions = {
   considerWhitelist?: boolean;
   oracleMetadataMap?: OracleMetadataRecord;
@@ -189,11 +181,6 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
       result.push(UNRECOGNIZED_FEEDS);
     }
 
-    // Tagged but not core vendors get the milder warning
-    if (vendorInfo.hasTaggedUnknown) {
-      result.push(UNRECOGNIZED_FEEDS_TAGGED);
-    }
-
     // Check if oracle feeds can produce a valid price path
     if (market.collateralAsset?.symbol && market.loanAsset?.symbol) {
       const feedsPathResult = checkFeedsPath(standardOracleData, market.collateralAsset.symbol, market.loanAsset.symbol);
@@ -218,7 +205,6 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
     if (metadata) {
       const vendorInfo = parseMetaOracleVendors(metadata);
       if (vendorInfo.hasCompletelyUnknown) result.push(UNRECOGNIZED_FEEDS);
-      if (vendorInfo.hasTaggedUnknown) result.push(UNRECOGNIZED_FEEDS_TAGGED);
 
       if (market.collateralAsset?.symbol && market.loanAsset?.symbol) {
         const primaryResult = metadata.oracleSources.primary

@@ -6,6 +6,7 @@ import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import { OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
+import { FeedTypeSection } from './FeedTypeSection';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
 type PendleFeedTooltipProps = {
@@ -54,12 +55,14 @@ export function PendleFeedTooltip({ feed, chainId, feedFreshness }: PendleFeedTo
         </div>
       </div>
 
+      <FeedTypeSection feed={feed} />
+
       {/* Pendle Specific Data */}
       {(typeLabel != null || feed.baseDiscountPerYear != null) && (
         <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
           {typeLabel != null && (
             <div className="flex justify-between font-zen text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Type:</span>
+              <span className="text-gray-600 dark:text-gray-400">Pendle Model:</span>
               <span className="font-medium">{typeLabel}</span>
             </div>
           )}
