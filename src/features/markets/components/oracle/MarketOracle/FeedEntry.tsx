@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import Link from 'next/link';
 import type { Address } from 'viem';
 import { useReadContracts } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
@@ -200,7 +201,11 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
       content={getTooltipContent()}
       className="min-w-[12rem] max-w-[calc(100vw-2rem)] [&>div]:!w-full [&>div]:min-w-[12rem] [&>div]:gap-4"
     >
-      <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80 gap-1">
+      <Link
+        href={`/feed/${chainId}/${feed.address}`}
+        className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80 gap-1 no-underline text-primary"
+        onClick={(event) => event.stopPropagation()}
+      >
         {showAssetPair ? (
           <div className="flex min-w-0 flex-1 items-center gap-1">
             <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">{baseAsset}</span>
@@ -232,7 +237,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
             />
           )}
         </div>
-      </div>
+      </Link>
     </Tooltip>
   );
 }
