@@ -341,8 +341,7 @@ export function WithdrawModalContent({
             }
           />
           <p className="mt-1 text-right text-xs text-secondary">
-            Available: {formatReadable(formatBalance(position?.state.supplyAssets ?? 0n, activeMarket.loanAsset.decimals))}{' '}
-            {activeMarket.loanAsset.symbol}
+            Available: {formatReadable(formatBalance(effectiveMax, activeMarket.loanAsset.decimals))} {activeMarket.loanAsset.symbol}
           </p>
 
           {needsSourcing && reallocationPlan && (
