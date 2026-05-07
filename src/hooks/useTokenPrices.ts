@@ -1,21 +1,30 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchTokenPrices, type TokenPriceInput } from '@/data-sources/morpho-api/prices';
-import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
-import { findToken, TokenPeg, supportedTokens } from '@/utils/tokens';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchTokenPrices, getTokenPriceKey, type TokenPriceInput } from '@/data-sources/morpho-api/prices';
 import { fetchMajorPrices, type MajorPrices } from '@/utils/majorPrices';
+import { findToken, supportedTokens, TokenPeg } from '@/utils/tokens';
 
-// Query keys for token prices
+const TOKEN_PRICE_STALE_TIME = 5 * 60 * 1000;
+const TOKEN_PRICE_GC_TIME = 10 * 60 * 1000;
+
+type TokenPriceCacheEntry = {
+  price: number | null;
+  direct: boolean;
+};
+
+// Query keys for token prices. Batch keys preserve network efficiency; token
+// keys make overlapping consumers share cached prices by chain + address.
 export const tokenPriceKeys = {
   all: ['tokenPrices'] as const,
-  tokens: (tokens: TokenPriceInput[]) => {
-    // Create a stable, sorted key from tokens
+  token: (token: TokenPriceInput) => [...tokenPriceKeys.all, 'token', token.chainId, token.address.toLowerCase()] as const,
+  batch: (tokens: TokenPriceInput[]) => {
     const sortedTokens = [...tokens]
-      .map((t) => `${t.address.toLowerCase()}-${t.chainId}`)
+      .map((token) => getTokenPriceKey(token.address, token.chainId))
       .sort()
       .join(',');
-    return [...tokenPriceKeys.all, sortedTokens] as const;
+    return [...tokenPriceKeys.all, 'batch', sortedTokens] as const;
   },
+  tokens: (tokens: TokenPriceInput[]) => tokenPriceKeys.batch(tokens),
 };
 
 type UseTokenPricesReturn = {
@@ -25,33 +34,44 @@ type UseTokenPricesReturn = {
   error: Error | null;
 };
 
-/**
- * Hook to fetch and cache token prices from Morpho API
- * @param tokens - Array of token addresses and chain IDs to fetch prices for
- * @returns Object containing prices map, loading state, and error
- */
 const getPegCacheKey = (peg: TokenPeg, chainId: number) => `${peg}-${chainId}`;
 
-const isFinitePositive = (value: number | undefined): value is number => {
-  return value !== undefined && Number.isFinite(value) && value > 0;
+const isFinitePositive = (value: number | null | undefined): value is number => {
+  return value !== null && value !== undefined && Number.isFinite(value) && value > 0;
 };
 
+const toCacheEntry = (price: number | undefined): TokenPriceCacheEntry => {
+  return isFinitePositive(price) ? { price, direct: true } : { price: null, direct: false };
+};
+
+const normalizeTokens = (tokens: TokenPriceInput[]): TokenPriceInput[] => {
+  const uniqueTokens = new Map<string, TokenPriceInput>();
+
+  tokens.forEach((token) => {
+    const normalizedToken = {
+      address: token.address.toLowerCase(),
+      chainId: token.chainId,
+    };
+    const key = getTokenPriceKey(normalizedToken.address, normalizedToken.chainId);
+
+    if (!uniqueTokens.has(key)) {
+      uniqueTokens.set(key, normalizedToken);
+    }
+  });
+
+  return Array.from(uniqueTokens.values());
+};
+
+/**
+ * Hook to fetch and cache token prices from Morpho API.
+ *
+ * Prices are fetched in batches for network efficiency, then stored under
+ * per-token query keys so a page asking for a subset can reuse data fetched by
+ * a broader market view, and vice versa.
+ */
 export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn => {
-  // Memoize the token list to prevent unnecessary refetches
-  const stableTokens = useMemo(() => {
-    // Deduplicate tokens based on address-chainId combination
-    const uniqueTokens = new Map<string, TokenPriceInput>();
-    tokens.forEach((token) => {
-      const key = `${token.address.toLowerCase()}-${token.chainId}`;
-      if (!uniqueTokens.has(key)) {
-        uniqueTokens.set(key, {
-          address: token.address.toLowerCase(),
-          chainId: token.chainId,
-        });
-      }
-    });
-    return Array.from(uniqueTokens.values());
-  }, [tokens]);
+  const queryClient = useQueryClient();
+  const stableTokens = useMemo(() => normalizeTokens(tokens), [tokens]);
 
   // If we need ETH/BTC peg fallbacks, add reference tokens for those pegs on the same chains.
   const tokensWithPegRefs = useMemo(() => {
@@ -81,7 +101,7 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
           return token.peg === peg && token.networks.some((_network) => _network.chain.id === chainId);
         });
         if (!referenceToken) return;
-        const network = referenceToken.networks.find((n) => n.chain.id === chainId);
+        const network = referenceToken.networks.find((tokenNetwork) => tokenNetwork.chain.id === chainId);
         if (!network) return;
 
         const key = getTokenPriceKey(network.address, chainId);
@@ -94,19 +114,62 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
     return Array.from(uniqueTokens.values());
   }, [stableTokens]);
 
-  const {
-    data: prices,
-    isLoading,
-    error,
-  } = useQuery<Map<string, number>, Error>({
-    queryKey: tokenPriceKeys.tokens(tokensWithPegRefs),
-    queryFn: async () => {
-      return fetchTokenPrices(tokensWithPegRefs);
-    },
-    enabled: tokensWithPegRefs.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+  const tokenCacheQueries = useQueries({
+    queries: tokensWithPegRefs.map((token) => ({
+      queryKey: tokenPriceKeys.token(token),
+      queryFn: async () => {
+        const prices = await fetchTokenPrices([token]);
+        return toCacheEntry(prices.get(getTokenPriceKey(token.address, token.chainId)));
+      },
+      enabled: false,
+      staleTime: TOKEN_PRICE_STALE_TIME,
+      gcTime: TOKEN_PRICE_GC_TIME,
+    })),
   });
+
+  const tokensToFetch = useMemo(() => {
+    return tokensWithPegRefs.filter((_token, index) => {
+      const query = tokenCacheQueries[index];
+      return !query?.data || query.isStale;
+    });
+  }, [tokenCacheQueries, tokensWithPegRefs]);
+
+  const batchPriceQuery = useQuery<Map<string, TokenPriceCacheEntry>, Error>({
+    queryKey: tokenPriceKeys.batch(tokensToFetch),
+    queryFn: async () => {
+      const prices = await fetchTokenPrices(tokensToFetch);
+      const entries = new Map<string, TokenPriceCacheEntry>();
+
+      tokensToFetch.forEach((token) => {
+        const key = getTokenPriceKey(token.address, token.chainId);
+        const entry = toCacheEntry(prices.get(key));
+
+        entries.set(key, entry);
+        queryClient.setQueryData(tokenPriceKeys.token(token), entry);
+      });
+
+      return entries;
+    },
+    enabled: tokensToFetch.length > 0,
+    staleTime: TOKEN_PRICE_STALE_TIME,
+    gcTime: TOKEN_PRICE_GC_TIME,
+  });
+
+  const priceEntries = useMemo(() => {
+    const entries = new Map<string, TokenPriceCacheEntry>();
+
+    tokensWithPegRefs.forEach((token, index) => {
+      const entry = tokenCacheQueries[index]?.data;
+      if (!entry) return;
+      entries.set(getTokenPriceKey(token.address, token.chainId), entry);
+    });
+
+    batchPriceQuery.data?.forEach((entry, key) => {
+      entries.set(key, entry);
+    });
+
+    return entries;
+  }, [batchPriceQuery.data, tokenCacheQueries, tokensWithPegRefs]);
 
   const needsMajorPrices = useMemo(() => {
     return stableTokens.some((token) => {
@@ -119,12 +182,23 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
     queryKey: ['majorPrices'],
     queryFn: fetchMajorPrices,
     enabled: needsMajorPrices,
-    staleTime: 60_000, // 1 minute
+    staleTime: 60_000,
     gcTime: 5 * 60 * 1000,
   });
 
+  const basePrices = useMemo(() => {
+    const prices = new Map<string, number>();
+
+    priceEntries.forEach((entry, key) => {
+      if (isFinitePositive(entry.price)) {
+        prices.set(key, entry.price);
+      }
+    });
+
+    return prices;
+  }, [priceEntries]);
+
   const pricesWithFallback = useMemo(() => {
-    const basePrices = prices ?? new Map<string, number>();
     const resolvedPrices = new Map(basePrices);
 
     // Cache peg reference prices by chain
@@ -172,16 +246,26 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
     });
 
     return resolvedPrices;
-  }, [prices, stableTokens, tokensWithPegRefs, majorPrices]);
+  }, [basePrices, stableTokens, tokensWithPegRefs, majorPrices]);
 
   const directPriceKeys = useMemo(() => {
-    return new Set((prices ?? new Map<string, number>()).keys());
-  }, [prices]);
+    const keys = new Set<string>();
+
+    priceEntries.forEach((entry, key) => {
+      if (entry.direct && isFinitePositive(entry.price)) {
+        keys.add(key);
+      }
+    });
+
+    return keys;
+  }, [priceEntries]);
+
+  const hasUncachedTokens = tokenCacheQueries.some((query) => !query.data);
 
   return {
     prices: pricesWithFallback,
     directPriceKeys,
-    isLoading,
-    error: error ?? null,
+    isLoading: tokensWithPegRefs.length > 0 && hasUncachedTokens && batchPriceQuery.isLoading,
+    error: batchPriceQuery.error ?? null,
   };
 };

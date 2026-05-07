@@ -16,9 +16,12 @@ import type { Market } from '@/utils/types';
 type UseProcessedMarketsOptions = {
   marketsRefetchInterval?: number | false;
   marketsRefetchOnWindowFocus?: boolean;
+  enableRateEnrichment?: boolean;
+  enableUsdEnrichment?: boolean;
 };
 
 const EMPTY_RATE_ENRICHMENTS: MarketRateEnrichmentMap = new Map();
+const EMPTY_PENDING_CHAIN_IDS = new Set<number>();
 
 const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market['supplyingVaults']): boolean => {
   const currentVaults = current ?? [];
@@ -80,6 +83,9 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
  * 4. Enrich rolling 24h/7d/30d market rates via archive RPC + Morpho SDK math
  * 5. Backfill USD values when direct prices are available
  *
+ * Identity-only consumers can disable rate and USD enrichment so they do not
+ * pay for archive RPC or token-price reads unrelated to their view.
+ *
  * @returns Processed markets with loading states
  *
  * @example
@@ -90,6 +96,8 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
  * ```
  */
 export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
+  const enableRateEnrichment = options?.enableRateEnrichment ?? true;
+  const enableUsdEnrichment = options?.enableUsdEnrichment ?? true;
   const {
     data: rawMarketsFromQuery,
     isLoading,
@@ -170,15 +178,20 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     isLoading: isRateEnrichmentQueryLoading,
     isFetching: isRateEnrichmentFetching,
     isRefetching: isRateEnrichmentRefetching,
-  } = useMarketRateEnrichmentQuery(processedData.allMarkets);
+  } = useMarketRateEnrichmentQuery(enableRateEnrichment ? processedData.allMarkets : []);
 
   const isRateEnrichmentLoading =
+    enableRateEnrichment &&
     processedData.allMarkets.length > 0 &&
     marketRateEnrichments.size === 0 &&
     rateEnrichmentPendingChainIds.size > 0 &&
     (isRateEnrichmentQueryLoading || isRateEnrichmentFetching);
 
   const allMarketsWithRates = useMemo<Market[]>(() => {
+    if (!enableRateEnrichment) {
+      return processedData.allMarkets;
+    }
+
     if (!processedData.allMarkets.length || marketRateEnrichments.size === 0) {
       return processedData.allMarkets;
     }
@@ -197,10 +210,11 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
         },
       };
     });
-  }, [processedData.allMarkets, marketRateEnrichments]);
+  }, [enableRateEnrichment, processedData.allMarkets, marketRateEnrichments]);
 
   // Build token list only for markets whose USD values need to be backfilled or upgraded from estimated prices.
   const tokensForUsdResolution = useMemo<TokenPriceInput[]>(() => {
+    if (!enableUsdEnrichment) return [];
     if (!allMarketsWithRates.length) return [];
 
     const tokens: TokenPriceInput[] = [];
@@ -238,9 +252,10 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     });
 
     return tokens;
-  }, [allMarketsWithRates]);
+  }, [enableUsdEnrichment, allMarketsWithRates]);
 
-  const { prices: tokenPrices, directPriceKeys } = useTokenPrices(tokensForUsdResolution);
+  const { prices: tokenPrices, directPriceKeys, isLoading: isTokenPricesLoading } = useTokenPrices(tokensForUsdResolution);
+  const isUsdEnrichmentLoading = enableUsdEnrichment && tokensForUsdResolution.length > 0 && isTokenPricesLoading;
 
   const allMarketsWithUsd = useMemo<Market[]>(() => {
     if (!allMarketsWithRates.length) return allMarketsWithRates;
@@ -318,9 +333,10 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     whitelistedMarkets: whitelistedMarketsWithUsd,
     markets, // Computed from setting (backward compatible with old context)
     isRateEnrichmentLoading,
-    rateEnrichmentPendingChainIds,
+    isUsdEnrichmentLoading,
+    rateEnrichmentPendingChainIds: enableRateEnrichment ? rateEnrichmentPendingChainIds : EMPTY_PENDING_CHAIN_IDS,
     loading: isLoading,
-    isRefetching: isRefetching || isRateEnrichmentRefetching,
+    isRefetching: isRefetching || (enableRateEnrichment && isRateEnrichmentRefetching),
     error,
     refetch,
   };
