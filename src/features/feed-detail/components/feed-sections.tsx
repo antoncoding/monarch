@@ -15,7 +15,6 @@ import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { MARKETS_PAGE_SIZE, ORACLE_CONTRACTS_PAGE_SIZE } from '../feed-detail-constants';
 import { formatOptionalTimestamp, formatScannerTimestamp } from '../feed-detail-formatters';
 import {
-  formatLltv,
   formatPercentValue,
   formatUsdCompact,
   getFeedTitle,
@@ -460,14 +459,13 @@ export function MarketsSection({ dependencies, chainId }: { dependencies: FeedMa
         <p className="text-sm text-secondary">No loaded markets currently use this feed.</p>
       ) : (
         <div className="overflow-x-auto">
-          <Table className="min-w-[64rem] table-fixed">
+          <Table className="min-w-[58rem] table-fixed">
             <colgroup>
-              <col className="w-[40%]" />
-              <col className="w-[13%]" />
-              <col className="w-[13%]" />
-              <col className="w-[11%]" />
-              <col className="w-[9%]" />
+              <col className="w-[46%]" />
               <col className="w-[14%]" />
+              <col className="w-[14%]" />
+              <col className="w-[11%]" />
+              <col className="w-[15%]" />
             </colgroup>
             <TableHeader>
               <TableRow className="border-b text-left text-xs text-secondary">
@@ -475,7 +473,6 @@ export function MarketsSection({ dependencies, chainId }: { dependencies: FeedMa
                 <TableHead className="px-3 py-2 text-center align-middle">Supplied</TableHead>
                 <TableHead className="px-3 py-2 text-center align-middle">Borrowed</TableHead>
                 <TableHead className="px-3 py-2 text-right">Utilization</TableHead>
-                <TableHead className="px-3 py-2 text-right">LLTV</TableHead>
                 <TableHead className="px-3 py-2 text-right">Market ID</TableHead>
               </TableRow>
             </TableHeader>
@@ -492,7 +489,7 @@ export function MarketsSection({ dependencies, chainId }: { dependencies: FeedMa
                       mode={MarketIdentityMode.Focused}
                       showId={false}
                       showOracle={false}
-                      showLltv={false}
+                      showLltv
                     />
                   </TableCell>
                   <TableCell className="px-3 py-2 text-center align-middle tabular-nums whitespace-nowrap">
@@ -502,7 +499,6 @@ export function MarketsSection({ dependencies, chainId }: { dependencies: FeedMa
                     {formatUsdCompact(market.state.borrowAssetsUsd)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{formatPercentValue(market.state.utilization)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatLltv(market.lltv)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end">
                       <MarketIdBadge
