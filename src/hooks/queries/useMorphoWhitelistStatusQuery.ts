@@ -10,6 +10,13 @@ import { useMarketWhitelistFlags } from '@/stores/useMarketWhitelistFlags';
 
 const EMPTY_LOOKUP = new Map<string, boolean>();
 const EMPTY_SUPPLYING_VAULTS_LOOKUP = new Map<string, { address: string }[]>();
+const MORPHO_MARKET_METADATA_STALE_TIME = 5 * 60 * 1000;
+
+type UseMorphoWhitelistStatusQueryOptions = {
+  enabled?: boolean;
+  refetchInterval?: number | false;
+  refetchOnWindowFocus?: boolean;
+};
 
 const toWhitelistRefreshes = (refreshes: MorphoMarketMetadataRefresh[]): MorphoWhitelistStatusRefresh[] =>
   refreshes.map(({ network, metadata }) => ({
@@ -21,7 +28,8 @@ const toWhitelistRefreshes = (refreshes: MorphoMarketMetadataRefresh[]): MorphoW
     })),
   }));
 
-export const useMorphoWhitelistStatusQuery = () => {
+export const useMorphoWhitelistStatusQuery = (options?: UseMorphoWhitelistStatusQueryOptions) => {
+  const enabled = options?.enabled ?? true;
   const flagsByNetwork = useMarketWhitelistFlags((state) => state.flagsByNetwork);
   const replaceNetworks = useMarketWhitelistFlags((state) => state.replaceNetworks);
 
@@ -35,9 +43,10 @@ export const useMorphoWhitelistStatusQuery = () => {
         return [];
       }
     },
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
+    enabled,
+    staleTime: MORPHO_MARKET_METADATA_STALE_TIME,
+    refetchInterval: enabled ? (options?.refetchInterval ?? MORPHO_MARKET_METADATA_STALE_TIME) : false,
+    refetchOnWindowFocus: enabled ? (options?.refetchOnWindowFocus ?? true) : false,
   });
 
   useEffect(() => {

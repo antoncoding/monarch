@@ -34,6 +34,11 @@ type UseTokenPricesReturn = {
   error: Error | null;
 };
 
+type UseTokenPricesOptions = {
+  refetchOnWindowFocus?: boolean;
+  refetchOnReconnect?: boolean;
+};
+
 const getPegCacheKey = (peg: TokenPeg, chainId: number) => `${peg}-${chainId}`;
 
 const isFinitePositive = (value: number | null | undefined): value is number => {
@@ -69,7 +74,7 @@ const normalizeTokens = (tokens: TokenPriceInput[]): TokenPriceInput[] => {
  * per-token query keys so a page asking for a subset can reuse data fetched by
  * a broader market view, and vice versa.
  */
-export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn => {
+export const useTokenPrices = (tokens: TokenPriceInput[], options?: UseTokenPricesOptions): UseTokenPricesReturn => {
   const queryClient = useQueryClient();
   const stableTokens = useMemo(() => normalizeTokens(tokens), [tokens]);
 
@@ -153,6 +158,8 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
     enabled: tokensToFetch.length > 0,
     staleTime: TOKEN_PRICE_STALE_TIME,
     gcTime: TOKEN_PRICE_GC_TIME,
+    ...(options?.refetchOnWindowFocus !== undefined ? { refetchOnWindowFocus: options.refetchOnWindowFocus } : {}),
+    ...(options?.refetchOnReconnect !== undefined ? { refetchOnReconnect: options.refetchOnReconnect } : {}),
   });
 
   const priceEntries = useMemo(() => {
@@ -184,6 +191,8 @@ export const useTokenPrices = (tokens: TokenPriceInput[]): UseTokenPricesReturn 
     enabled: needsMajorPrices,
     staleTime: 60_000,
     gcTime: 5 * 60 * 1000,
+    ...(options?.refetchOnWindowFocus !== undefined ? { refetchOnWindowFocus: options.refetchOnWindowFocus } : {}),
+    ...(options?.refetchOnReconnect !== undefined ? { refetchOnReconnect: options.refetchOnReconnect } : {}),
   });
 
   const basePrices = useMemo(() => {

@@ -211,7 +211,11 @@ export function findFeedMarketDependencies({
     rows.push({ market, occurrences });
   }
 
-  return rows.sort((left, right) => {
+  return sortFeedMarketDependenciesByExposure(rows);
+}
+
+export function sortFeedMarketDependenciesByExposure(dependencies: FeedMarketDependency[]): FeedMarketDependency[] {
+  return [...dependencies].sort((left, right) => {
     const rightExposure = toFiniteNumber(right.market.state?.supplyAssetsUsd) + toFiniteNumber(right.market.state?.borrowAssetsUsd);
     const leftExposure = toFiniteNumber(left.market.state?.supplyAssetsUsd) + toFiniteNumber(left.market.state?.borrowAssetsUsd);
     return rightExposure - leftExposure;

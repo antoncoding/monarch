@@ -57,7 +57,7 @@ export function useFeedContractDetails({
     query: {
       enabled: feedContracts.length > 0,
       staleTime: 60_000,
-      refetchInterval: 60_000,
+      refetchInterval: false,
       refetchOnWindowFocus: false,
     },
   });

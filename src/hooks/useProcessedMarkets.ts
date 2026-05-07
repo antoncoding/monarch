@@ -1,21 +1,19 @@
 import { useMemo } from 'react';
-import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { useMarketRateEnrichmentQuery } from '@/hooks/queries/useMarketRateEnrichmentQuery';
 import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
-import { useTokenPrices } from '@/hooks/useTokenPrices';
+import { useUsdEnrichedMarkets } from '@/hooks/useUsdEnrichedMarkets';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
 import { isForceUnwhitelisted } from '@/utils/markets';
-import { formatBalance } from '@/utils/balance';
-import type { TokenPriceInput } from '@/data-sources/morpho-api/prices';
 import type { Market } from '@/utils/types';
 
 type UseProcessedMarketsOptions = {
   marketsRefetchInterval?: number | false;
   marketsRefetchOnWindowFocus?: boolean;
+  enableMorphoMetadata?: boolean;
   enableRateEnrichment?: boolean;
   enableUsdEnrichment?: boolean;
 };
@@ -41,34 +39,6 @@ const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market
   }
 
   return true;
-};
-
-const hasPositiveAssets = (value?: string): boolean => {
-  if (!value) return false;
-  try {
-    return BigInt(value) > 0n;
-  } catch {
-    return false;
-  }
-};
-
-const isFiniteNumber = (value: number | null | undefined): value is number => {
-  return value !== null && value !== undefined && Number.isFinite(value);
-};
-
-const shouldComputeUsd = (usdValue: number | null | undefined, assets?: string): boolean => {
-  if (!isFiniteNumber(usdValue)) return hasPositiveAssets(assets);
-  if (usdValue === 0 && hasPositiveAssets(assets)) return true;
-  return false;
-};
-
-const shouldResolveUsdValue = (usdValue: number | null | undefined, assets: string | undefined, replaceEstimated: boolean): boolean => {
-  if (replaceEstimated) return hasPositiveAssets(assets);
-  return shouldComputeUsd(usdValue, assets);
-};
-
-const computeUsdValue = (assets: string, decimals: number, price: number): number => {
-  return formatBalance(assets, decimals) * price;
 };
 
 /**
@@ -98,6 +68,7 @@ const computeUsdValue = (assets: string, decimals: number, price: number): numbe
 export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   const enableRateEnrichment = options?.enableRateEnrichment ?? true;
   const enableUsdEnrichment = options?.enableUsdEnrichment ?? true;
+  const enableMorphoMetadata = options?.enableMorphoMetadata ?? true;
   const {
     data: rawMarketsFromQuery,
     isLoading,
@@ -108,7 +79,9 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     refetchInterval: options?.marketsRefetchInterval,
     refetchOnWindowFocus: options?.marketsRefetchOnWindowFocus,
   });
-  const { whitelistLookup, supplyingVaultsLookup } = useMorphoWhitelistStatusQuery();
+  const { whitelistLookup, supplyingVaultsLookup } = useMorphoWhitelistStatusQuery({
+    enabled: enableMorphoMetadata,
+  });
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
   const { showUnwhitelistedMarkets } = useAppSettings();
 
@@ -212,111 +185,9 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     });
   }, [enableRateEnrichment, processedData.allMarkets, marketRateEnrichments]);
 
-  // Build token list only for markets whose USD values need to be backfilled or upgraded from estimated prices.
-  const tokensForUsdResolution = useMemo<TokenPriceInput[]>(() => {
-    if (!enableUsdEnrichment) return [];
-    if (!allMarketsWithRates.length) return [];
-
-    const tokens: TokenPriceInput[] = [];
-    const seen = new Set<string>();
-
-    const addToken = (address: string, chainId: number) => {
-      const key = getTokenPriceKey(address, chainId);
-      if (seen.has(key)) return;
-      seen.add(key);
-      tokens.push({ address, chainId });
-    };
-
-    allMarketsWithRates.forEach((market) => {
-      const chainId = market.morphoBlue.chain.id;
-      const hasLoanExposure =
-        hasPositiveAssets(market.state?.supplyAssets) ||
-        hasPositiveAssets(market.state?.borrowAssets) ||
-        hasPositiveAssets(market.state?.liquidityAssets);
-
-      const needsLoanUsd =
-        (!market.hasUSDPrice && hasLoanExposure) ||
-        shouldComputeUsd(market.state?.supplyAssetsUsd, market.state?.supplyAssets) ||
-        shouldComputeUsd(market.state?.borrowAssetsUsd, market.state?.borrowAssets) ||
-        shouldComputeUsd(market.state?.liquidityAssetsUsd, market.state?.liquidityAssets);
-
-      const needsCollateralUsd = shouldComputeUsd(market.state?.collateralAssetsUsd ?? null, market.state?.collateralAssets);
-
-      if (needsLoanUsd) {
-        addToken(market.loanAsset.address, chainId);
-      }
-
-      if (needsCollateralUsd) {
-        addToken(market.collateralAsset.address, chainId);
-      }
-    });
-
-    return tokens;
-  }, [enableUsdEnrichment, allMarketsWithRates]);
-
-  const { prices: tokenPrices, directPriceKeys, isLoading: isTokenPricesLoading } = useTokenPrices(tokensForUsdResolution);
-  const isUsdEnrichmentLoading = enableUsdEnrichment && tokensForUsdResolution.length > 0 && isTokenPricesLoading;
-
-  const allMarketsWithUsd = useMemo<Market[]>(() => {
-    if (!allMarketsWithRates.length) return allMarketsWithRates;
-    if (tokensForUsdResolution.length === 0 || tokenPrices.size === 0) return allMarketsWithRates;
-
-    return allMarketsWithRates.map((market) => {
-      const chainId = market.morphoBlue.chain.id;
-      const loanPriceKey = getTokenPriceKey(market.loanAsset.address, chainId);
-      const collateralPriceKey = getTokenPriceKey(market.collateralAsset.address, chainId);
-      const loanPrice = tokenPrices.get(loanPriceKey);
-      const collateralPrice = tokenPrices.get(collateralPriceKey);
-      const hasDirectLoanPrice = directPriceKeys.has(loanPriceKey);
-      const shouldReplaceEstimatedLoanUsd = !market.hasUSDPrice && hasDirectLoanPrice;
-      const shouldReplaceEstimatedCollateralUsd = !market.hasUSDPrice && directPriceKeys.has(collateralPriceKey);
-
-      let nextState = market.state;
-      let changed = false;
-
-      if (loanPrice !== undefined && Number.isFinite(loanPrice)) {
-        if (shouldResolveUsdValue(nextState.supplyAssetsUsd, nextState.supplyAssets, shouldReplaceEstimatedLoanUsd)) {
-          nextState = { ...nextState, supplyAssetsUsd: computeUsdValue(nextState.supplyAssets, market.loanAsset.decimals, loanPrice) };
-          changed = true;
-        }
-        if (shouldResolveUsdValue(nextState.borrowAssetsUsd, nextState.borrowAssets, shouldReplaceEstimatedLoanUsd)) {
-          nextState = { ...nextState, borrowAssetsUsd: computeUsdValue(nextState.borrowAssets, market.loanAsset.decimals, loanPrice) };
-          changed = true;
-        }
-        if (shouldResolveUsdValue(nextState.liquidityAssetsUsd, nextState.liquidityAssets, shouldReplaceEstimatedLoanUsd)) {
-          nextState = {
-            ...nextState,
-            liquidityAssetsUsd: computeUsdValue(nextState.liquidityAssets, market.loanAsset.decimals, loanPrice),
-          };
-          changed = true;
-        }
-      }
-
-      if (
-        collateralPrice !== undefined &&
-        Number.isFinite(collateralPrice) &&
-        shouldResolveUsdValue(nextState.collateralAssetsUsd ?? null, nextState.collateralAssets, shouldReplaceEstimatedCollateralUsd)
-      ) {
-        nextState = {
-          ...nextState,
-          collateralAssetsUsd: computeUsdValue(nextState.collateralAssets, market.collateralAsset.decimals, collateralPrice),
-        };
-        changed = true;
-      }
-
-      const nextHasUsdPrice = market.hasUSDPrice || hasDirectLoanPrice;
-
-      if (!changed && nextHasUsdPrice === market.hasUSDPrice) {
-        return market;
-      }
-
-      return {
-        ...market,
-        state: nextState,
-        hasUSDPrice: nextHasUsdPrice,
-      };
-    });
-  }, [allMarketsWithRates, directPriceKeys, tokenPrices, tokensForUsdResolution]);
+  const { markets: allMarketsWithUsd, isLoading: isUsdEnrichmentLoading } = useUsdEnrichedMarkets(allMarketsWithRates, {
+    enabled: enableUsdEnrichment,
+  });
 
   const whitelistedMarketsWithUsd = useMemo(() => {
     return allMarketsWithUsd.filter((market) => market.whitelisted);

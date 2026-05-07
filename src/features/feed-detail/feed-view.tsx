@@ -8,7 +8,9 @@ import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { useUsdEnrichedMarkets } from '@/hooks/useUsdEnrichedMarkets';
 import { detectFeedVendorFromMetadata, OracleVendorIcons, PriceFeedVendors } from '@/utils/oracle';
+import { getMarketIdentityKey } from '@/utils/market-identity';
 import { getNetworkName, isSupportedNetwork } from '@/utils/networks';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import {
@@ -18,6 +20,7 @@ import {
   getFeedTitle,
   getRepresentativeLeg,
   getUniqueOracleOccurrences,
+  sortFeedMarketDependenciesByExposure,
   toFiniteNumber,
 } from './feed-detail-utils';
 import { useFeedContractDetails } from './hooks/use-feed-contract-details';
@@ -52,13 +55,12 @@ export default function FeedContent() {
     isLoading: oracleMetadataLoading,
     isError: oracleMetadataError,
   } = useOracleMetadata(isRouteSupported ? chainId : undefined);
-  const {
-    allMarkets,
-    loading: marketsLoading,
-    isUsdEnrichmentLoading,
-  } = useProcessedMarkets({
+  const { allMarkets, loading: marketsLoading } = useProcessedMarkets({
+    marketsRefetchInterval: false,
     marketsRefetchOnWindowFocus: false,
+    enableMorphoMetadata: false,
     enableRateEnrichment: false,
+    enableUsdEnrichment: false,
   });
 
   const occurrences = useMemo(() => {
@@ -95,7 +97,7 @@ export default function FeedContent() {
     oracleMetadataLoading,
   });
 
-  const dependencies = useMemo(() => {
+  const baseDependencies = useMemo(() => {
     if (!feedAddress || !isRouteSupported) return [];
     return findFeedMarketDependencies({
       markets: allMarkets,
@@ -104,6 +106,27 @@ export default function FeedContent() {
       chainId,
     });
   }, [allMarkets, chainId, feedAddress, isRouteSupported, oracleMetadataMap]);
+  const dependencyMarkets = useMemo(() => baseDependencies.map(({ market }) => market), [baseDependencies]);
+  const { markets: usdEnrichedDependencyMarkets, isLoading: isUsdEnrichmentLoading } = useUsdEnrichedMarkets(dependencyMarkets, {
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  const dependencies = useMemo(() => {
+    if (baseDependencies.length === 0) return baseDependencies;
+
+    const enrichedMarketsByKey = new Map(
+      usdEnrichedDependencyMarkets.map((market) => [getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market]),
+    );
+
+    return sortFeedMarketDependenciesByExposure(
+      baseDependencies.map((dependency) => ({
+        ...dependency,
+        market:
+          enrichedMarketsByKey.get(getMarketIdentityKey(dependency.market.morphoBlue.chain.id, dependency.market.uniqueKey)) ??
+          dependency.market,
+      })),
+    );
+  }, [baseDependencies, usdEnrichedDependencyMarkets]);
 
   const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
   const feedTitle = feedAddress ? getFeedTitle(representativeLeg, feedAddress) : 'Feed';
