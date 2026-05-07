@@ -212,10 +212,8 @@ export function findFeedMarketDependencies({
   }
 
   return rows.sort((left, right) => {
-    const rightExposure =
-      toFiniteNumber(right.market.state?.supplyAssetsUsd) + toFiniteNumber(right.market.state?.borrowAssetsUsd);
-    const leftExposure =
-      toFiniteNumber(left.market.state?.supplyAssetsUsd) + toFiniteNumber(left.market.state?.borrowAssetsUsd);
+    const rightExposure = toFiniteNumber(right.market.state?.supplyAssetsUsd) + toFiniteNumber(right.market.state?.borrowAssetsUsd);
+    const leftExposure = toFiniteNumber(left.market.state?.supplyAssetsUsd) + toFiniteNumber(left.market.state?.borrowAssetsUsd);
     return rightExposure - leftExposure;
   });
 }

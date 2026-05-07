@@ -27,7 +27,6 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { FeedTypeBadge, getFeedTypeInfo } from '@/features/markets/components/oracle/MarketOracle/FeedTypeBadge';
-import { getExplorerURL } from '@/utils/external';
 import {
   detectFeedVendorFromMetadata,
   formatOracleDuration,
@@ -152,12 +151,10 @@ type FeedPriceHistoryPoint = {
 };
 
 const FEED_TYPE_PAGE_COPY: Record<string, string> = {
-  market:
-    'A market feed reports a market-observed price for an asset pair, usually from exchange or aggregated market pricing. It is easiest to reason about for liquid assets, but its reliability depends on the venues or pools used by the provider.',
-  fundamental:
-    'A fundamental feed reports a protocol conversion rate or accounting relationship rather than a traded spot price. It is useful for wrapper, share, or reserve relationships, but can hide market divergence if read like an exchange price.',
-  nav: 'A NAV feed reports net asset value from assets, liabilities, reserves, or collateralization. It answers a backing or accounting question and usually should not be treated as executable market liquidity.',
-  dex: 'A DEX feed derives pricing from decentralized-exchange market structure such as Pendle or TWAP-style pools. It can cover assets without broad vendor support, but its quality depends on pool liquidity, averaging windows, and market construction.',
+  market: 'A market feed reports an observed asset-pair price, usually from exchange or aggregated market pricing.',
+  fundamental: 'A fundamental feed reports a protocol conversion rate or accounting relationship, not a traded spot price.',
+  nav: 'A NAV feed reports net asset value based on assets, liabilities, reserves, or collateralization.',
+  dex: 'A DEX feed derives price from onchain market structure such as a pool, TWAP, or Pendle market.',
 };
 
 function routeValue(value: string | string[] | undefined): string | undefined {
@@ -178,9 +175,8 @@ function normalizeOracleAnswer(answer: bigint, decimals: number): number | null 
 }
 
 function buildPriceHistoryTargetTimestamps(latestTimestamp: number): number[] {
-  return Array.from(
-    { length: PRICE_HISTORY_POINT_COUNT },
-    (_, index) => Math.round(latestTimestamp - PRICE_HISTORY_WINDOW_SECONDS + index * PRICE_HISTORY_INTERVAL_SECONDS),
+  return Array.from({ length: PRICE_HISTORY_POINT_COUNT }, (_, index) =>
+    Math.round(latestTimestamp - PRICE_HISTORY_WINDOW_SECONDS + index * PRICE_HISTORY_INTERVAL_SECONDS),
   );
 }
 
@@ -201,7 +197,13 @@ function useFeedPriceHistory({
   const canReadHistoricalState = supportedChainId ? supportsHistoricalStateRead(supportedChainId) : false;
 
   return useQuery({
-    queryKey: ['feed-price-history', supportedChainId ?? 'unsupported', address?.toLowerCase() ?? null, decimals ?? null, customRpcUrl ?? null],
+    queryKey: [
+      'feed-price-history',
+      supportedChainId ?? 'unsupported',
+      address?.toLowerCase() ?? null,
+      decimals ?? null,
+      customRpcUrl ?? null,
+    ],
     queryFn: async (): Promise<FeedPriceHistoryPoint[]> => {
       if (!address || !supportedChainId || !canReadHistoricalState) return [];
 
@@ -217,13 +219,7 @@ function useFeedPriceHistory({
       const latestBlock = await client.getBlock({ blockNumber: BigInt(latestBlockNumber) });
       const latestTimestamp = Number(latestBlock.timestamp);
       const targetTimestamps = buildPriceHistoryTargetTimestamps(latestTimestamp);
-      const blocks = await fetchBlocksWithTimestamps(
-        client,
-        supportedChainId,
-        targetTimestamps,
-        latestBlockNumber,
-        latestTimestamp,
-      );
+      const blocks = await fetchBlocksWithTimestamps(client, supportedChainId, targetTimestamps, latestBlockNumber, latestTimestamp);
 
       const points = await Promise.all(
         blocks.map(async (block) => {
@@ -358,15 +354,12 @@ function getFeedTypePageDescription(feedType: string | null | undefined, fallbac
   return FEED_TYPE_PAGE_COPY[normalizedFeedType] ?? fallback;
 }
 
-function ProviderLink({
-  leg,
-  chainId,
-  className,
-}: {
-  leg: FeedDependencyLeg | null;
-  chainId: number;
-  className?: string;
-}) {
+function isChainlinkFeedLeg(leg: FeedDependencyLeg | null): boolean {
+  const provider = getFeedProviderLabel(leg).toLowerCase();
+  return provider.includes('chainlink') || Boolean(leg?.tier);
+}
+
+function ProviderLink({ leg, chainId, className }: { leg: FeedDependencyLeg | null; chainId: number; className?: string }) {
   const providerLabel = getFeedProviderLabel(leg);
   const vendorIcon = getVendorIcon(leg);
   const vendorUrl = getVendorUrl(leg, chainId);
@@ -411,17 +404,17 @@ function CopyAddressButton({ address }: { address: string }) {
         await navigator.clipboard.writeText(address);
         toast.success('Feed address copied', `${address.slice(0, 10)}...${address.slice(-6)}`);
       }}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
+      className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
       aria-label="Copy feed address"
     >
-      <LuCopy className="h-4 w-4" />
+      <LuCopy className="h-3.5 w-3.5" />
     </button>
   );
 }
 
 function StatTile({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
-    <div className="rounded border border-border bg-surface px-4 py-3 shadow-sm">
+    <div className="flex min-h-[5.75rem] flex-col justify-center rounded border border-border bg-surface px-4 py-3 shadow-sm">
       <div className="font-monospace text-[11px] uppercase text-secondary">{label}</div>
       <div className="mt-1 text-xl font-medium tabular-nums text-primary">{value}</div>
       {detail && <div className="mt-1 text-xs text-secondary">{detail}</div>}
@@ -451,7 +444,11 @@ function SectionShell({ title, children, detail }: { title: string; children: Re
 }
 
 function normalizeDisplayText(value: string): string {
-  return value.replace(/\s*\/\s*/g, '/').replace(/\s+/g, ' ').trim().toLowerCase();
+  return value
+    .replace(/\s*\/\s*/g, '/')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
 }
 
 function getDistinctFeedDescription(leg: FeedDependencyLeg | null): string | null {
@@ -507,7 +504,7 @@ function DependencyTypeValue({ leg, kind }: { leg: FeedDependencyLeg | null; kin
         content={
           <TooltipContent
             title="Vault conversion"
-            detail="This dependency is a vault accounting leg, not a live price-feed interface."
+            detail="Vault accounting value. There is no live price round to read."
             className="max-w-xs"
           />
         }
@@ -542,12 +539,13 @@ function FeedHero({
 }) {
   const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
   const networkImg = getNetworkImg(chainId);
+  const hasProviderBadge = Boolean(leg?.provider || leg?.vendor);
 
   return (
-    <section className="rounded border border-border bg-surface px-5 py-3 shadow-sm">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+    <section className="rounded border border-border bg-surface px-5 py-4 shadow-sm sm:px-6 sm:py-5">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.86fr)_minmax(36rem,1fr)] lg:items-center">
         <div className="min-w-0">
-          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {networkImg && (
               <Image
                 src={networkImg}
@@ -561,50 +559,44 @@ function FeedHero({
               feedType={leg?.feedType}
               showUnknown
             />
-            {leg?.provider && <Badge size="sm">{leg.provider}</Badge>}
           </div>
 
-          <h1 className="break-words text-[1.625rem] font-semibold leading-tight text-primary">{getFeedTitle(leg, address)}</h1>
+          <h1 className="mt-4 break-words !py-0 !text-[1.625rem] !font-normal !leading-tight !text-foreground">
+            {getFeedTitle(leg, address)}
+          </h1>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
+            {hasProviderBadge && (
+              <ProviderLink
+                leg={leg}
+                chainId={chainId}
+                className="inline-flex items-center gap-1.5 rounded-sm bg-hovered px-2 py-1.5 text-xs leading-none text-secondary no-underline transition-colors hover:bg-gray-300 hover:text-primary dark:hover:bg-gray-700"
+              />
+            )}
             <AddressIdentity
               address={address}
               chainId={chainId}
             />
             <CopyAddressButton address={address} />
-            <Link
-              href={getExplorerURL(address as Address, chainId as SupportedNetworks)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-8 items-center gap-1.5 rounded-sm bg-hovered px-2 text-xs text-secondary no-underline transition-colors hover:text-primary"
-            >
-              Explorer
-              <ExternalLinkIcon className="h-3 w-3" />
-            </Link>
-            <ProviderLink
-              leg={leg}
-              chainId={chainId}
-              className="inline-flex h-8 items-center gap-1.5 rounded-sm bg-hovered px-2 text-xs text-secondary no-underline transition-colors hover:text-primary"
-            />
           </div>
         </div>
 
-        <div className="flex min-w-full flex-col gap-3 lg:min-w-[34rem]">
+        <div className="min-w-0">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <StatTile
-              label="Markets relying"
+              label="Markets using"
               value={marketCount.toLocaleString('en-US')}
               detail={`${oracleCount.toLocaleString('en-US')} oracle contract${oracleCount === 1 ? '' : 's'}`}
             />
             <StatTile
               label="Supply TVL"
               value={formatUsdCompact(totalSupplyUsd)}
-              detail="Loan assets supplied in dependent markets"
+              detail="Supplied value in markets using this feed"
             />
             <StatTile
               label="Borrow TVL"
               value={formatUsdCompact(totalBorrowUsd)}
-              detail="Debt using markets that trust this leg"
+              detail="Borrowed value in markets using this feed"
             />
           </div>
         </div>
@@ -626,7 +618,7 @@ function FeedMetadataSection({
   const isVault = kind === 'vault';
 
   return (
-    <SectionShell title={isVault ? 'Vault Dependency' : 'Feed Dependency'}>
+    <SectionShell title={isVault ? 'Vault Conversion' : 'Feed Overview'}>
       <div>
         {description && (
           <DetailRow
@@ -680,17 +672,13 @@ function VaultAccountingSection({ leg }: { leg: FeedDependencyLeg | null }) {
   return (
     <SectionShell
       title="Vault Accounting"
-      detail="This address is used as a vault conversion leg, so latest-round price reads and feed-owner inspection do not apply."
+      detail="Vault conversions use accounting values, so live price rounds are not shown."
     >
       <div>
         <DetailRow
           label="Conversion"
           value={
-            leg?.symbol && leg.assetSymbol ? (
-              `${leg.symbol} to ${leg.assetSymbol}`
-            ) : (
-              <span className="text-secondary">Unavailable</span>
-            )
+            leg?.symbol && leg.assetSymbol ? `${leg.symbol} to ${leg.assetSymbol}` : <span className="text-secondary">Unavailable</span>
           }
         />
         <DetailRow
@@ -732,20 +720,12 @@ function PriceHistoryTooltip({ active, payload, label }: { active?: boolean; pay
   );
 }
 
-function PriceHistoryChart({
-  points,
-  isLoading,
-  isError,
-}: {
-  points: FeedPriceHistoryPoint[];
-  isLoading: boolean;
-  isError: boolean;
-}) {
+function PriceHistoryChart({ points, isLoading, isError }: { points: FeedPriceHistoryPoint[]; isLoading: boolean; isError: boolean }) {
   const chartColors = useChartColors();
   const priceColor = chartColors.supply;
   const chartPoints = points.filter((point): point is FeedPriceHistoryPoint & { price: number } => point.price != null);
   const now = Math.floor(Date.now() / 1000);
-  const endTimestamp = points[points.length - 1]?.targetTimestamp ?? now;
+  const endTimestamp = points.at(-1)?.targetTimestamp ?? now;
   const timeRange = {
     startTimestamp: endTimestamp - PRICE_HISTORY_WINDOW_SECONDS,
     endTimestamp,
@@ -763,7 +743,7 @@ function PriceHistoryChart({
   if (isError || chartPoints.length < 2) {
     return (
       <div className="flex h-[300px] items-center justify-center rounded border border-border/60 bg-surface-soft px-6 text-center text-sm text-secondary">
-        No 24 hour archive price history was returned for this feed.
+        Price history is unavailable for this feed.
       </div>
     );
   }
@@ -870,19 +850,17 @@ function FeedInspectionSection({
   isPriceHistoryLoading: boolean;
   isPriceHistoryError: boolean;
 }) {
-  const providerLabel = getFeedProviderLabel(leg);
-  const providerLower = providerLabel.toLowerCase();
   const answer = latestRoundData?.[1] ?? latestAnswer;
   const updatedAt = latestRoundData?.[3] ?? latestTimestamp;
   const heartbeat = leg?.heartbeat ?? leg?.updateInterval ?? null;
   const deviationThreshold = leg?.deviationThreshold ?? leg?.updateSpread ?? null;
-  const isChainlink = providerLower.includes('chainlink') || Boolean(leg?.tier);
+  const isChainlink = isChainlinkFeedLeg(leg);
   const formattedAnswer = answer != null && decimals != null ? formatOraclePrice(answer, decimals) : 'Unavailable';
 
   return (
     <SectionShell
       title="Price, Last 24 Hours"
-      detail="24 archive reads across the last 24 hours with current feed and provider context beside the chart."
+      detail="Hourly archive reads from the configured RPC. Current feed context is shown on the right."
     >
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">
         <PriceHistoryChart
@@ -931,11 +909,11 @@ function FeedInspectionSection({
             />
           )}
           <DetailRow
-            label="Live price"
+            label="Current price"
             value={<span className="tabular-nums">{formattedAnswer}</span>}
           />
           <DetailRow
-            label="Updated"
+            label="Last update"
             value={formatOptionalTimestamp(updatedAt)}
           />
           <DetailRow
@@ -965,8 +943,8 @@ function ContractSection({
 }) {
   return (
     <SectionShell
-      title="Owner & Implementation"
-      detail="Owner Safe detection comes from the feed owner() contract. It is not Chainlink's offchain reporting threshold."
+      title="Chainlink Contract Details"
+      detail="Proxy implementation and owner contract, when available from the feed."
     >
       <div>
         <DetailRow
@@ -1024,10 +1002,10 @@ function OracleCoverageSection({ occurrences, chainId }: { occurrences: FeedDepe
   return (
     <SectionShell
       title="Oracle Contracts"
-      detail="Oracle contracts that include this feed leg in at least one route."
+      detail="Oracle contracts that reference this feed."
     >
       {uniqueOccurrences.length === 0 ? (
-        <p className="text-sm text-secondary">No indexed oracle contract currently references this feed leg.</p>
+        <p className="text-sm text-secondary">No indexed oracle contract references this feed.</p>
       ) : (
         <div className="overflow-x-auto">
           <Table>
@@ -1089,11 +1067,11 @@ function MarketsSection({ dependencies, chainId }: { dependencies: ReturnType<ty
 
   return (
     <SectionShell
-      title="Markets Relying On This Leg"
-      detail="Markets are sorted by total current supply plus borrow value."
+      title="Markets Using This Feed"
+      detail="Sorted by supplied plus borrowed USD value."
     >
       {dependencies.length === 0 ? (
-        <p className="text-sm text-secondary">No active market from the loaded market registry currently references this feed leg.</p>
+        <p className="text-sm text-secondary">No loaded markets currently use this feed.</p>
       ) : (
         <div className="overflow-x-auto">
           <Table className="min-w-[64rem] table-fixed">
@@ -1181,10 +1159,9 @@ function EmptyRouteState({ addressLabel, chainIdLabel }: { addressLabel: string;
           />
         </div>
         <div className="mt-6 rounded border border-border bg-surface p-6 shadow-sm">
-          <h1 className="text-lg font-medium text-primary">Feed route is not supported</h1>
+          <h1 className="text-lg font-medium text-primary">Unsupported feed URL</h1>
           <p className="mt-2 text-sm text-secondary">
-            The route needs a supported numeric chain id and an EVM address. Received chain {chainIdLabel || 'empty'} and address{' '}
-            {addressLabel || 'empty'}.
+            Use a supported chain id and EVM address. Received chain {chainIdLabel || 'empty'} and address {addressLabel || 'empty'}.
           </p>
         </div>
       </div>
@@ -1226,19 +1203,28 @@ export default function FeedContent() {
   }, [occurrences, representativeLeg]);
   const dependencyKind = representativeOccurrence?.kind ?? null;
   const isVaultDependency = dependencyKind === 'vault';
+  const isChainlinkFeed = isChainlinkFeedLeg(representativeLeg);
 
   const feedContracts = useMemo(() => {
     if (!feedAddress || !isRouteSupported || oracleMetadataLoading || isVaultDependency) return [];
-    return [
+    const priceReadContracts = [
       { address: feedAddress, abi: feedInspectorAbi, functionName: 'latestRoundData' as const, chainId },
       { address: feedAddress, abi: feedInspectorAbi, functionName: 'latestAnswer' as const, chainId },
       { address: feedAddress, abi: feedInspectorAbi, functionName: 'latestTimestamp' as const, chainId },
       { address: feedAddress, abi: feedInspectorAbi, functionName: 'decimals' as const, chainId },
+    ];
+
+    if (!isChainlinkFeed) {
+      return priceReadContracts;
+    }
+
+    return [
+      ...priceReadContracts,
       { address: feedAddress, abi: feedInspectorAbi, functionName: 'version' as const, chainId },
       { address: feedAddress, abi: feedInspectorAbi, functionName: 'aggregator' as const, chainId },
       { address: feedAddress, abi: feedInspectorAbi, functionName: 'owner' as const, chainId },
     ];
-  }, [chainId, feedAddress, isRouteSupported, isVaultDependency, oracleMetadataLoading]);
+  }, [chainId, feedAddress, isChainlinkFeed, isRouteSupported, isVaultDependency, oracleMetadataLoading]);
 
   const { data: feedReadResults } = useReadContracts({
     contracts: feedContracts,
@@ -1259,17 +1245,20 @@ export default function FeedContent() {
   const aggregatorAddressRaw = getReadResult<string>(feedReadResults, 5);
   const ownerAddressRaw = getReadResult<string>(feedReadResults, 6);
   const aggregatorAddress =
-    !isVaultDependency && isUsableAddress(aggregatorAddressRaw) && normalizeAddress(aggregatorAddressRaw) !== normalizeAddress(feedAddress)
+    isChainlinkFeed &&
+    !isVaultDependency &&
+    isUsableAddress(aggregatorAddressRaw) &&
+    normalizeAddress(aggregatorAddressRaw) !== normalizeAddress(feedAddress)
       ? aggregatorAddressRaw
       : null;
-  const ownerAddress = !isVaultDependency && isUsableAddress(ownerAddressRaw) ? ownerAddressRaw : null;
+  const ownerAddress = isChainlinkFeed && !isVaultDependency && isUsableAddress(ownerAddressRaw) ? ownerAddressRaw : null;
   const safeContracts = useMemo(() => {
-    if (!ownerAddress || !isRouteSupported || isVaultDependency) return [];
+    if (!ownerAddress || !isChainlinkFeed || !isRouteSupported || isVaultDependency) return [];
     return [
       { address: ownerAddress, abi: safeInspectorAbi, functionName: 'getOwners' as const, chainId },
       { address: ownerAddress, abi: safeInspectorAbi, functionName: 'getThreshold' as const, chainId },
     ];
-  }, [chainId, isRouteSupported, isVaultDependency, ownerAddress]);
+  }, [chainId, isChainlinkFeed, isRouteSupported, isVaultDependency, ownerAddress]);
 
   const { data: safeReadResults } = useReadContracts({
     contracts: safeContracts,
@@ -1283,6 +1272,8 @@ export default function FeedContent() {
 
   const safeOwners = getReadResult<readonly Address[]>(safeReadResults, 0);
   const safeThreshold = getReadResult<bigint>(safeReadResults, 1);
+  const showChainlinkContractDetails =
+    isChainlinkFeed && !isVaultDependency && (version != null || aggregatorAddress != null || ownerAddress != null || safeOwners != null);
 
   const dependencies = useMemo(() => {
     if (!feedAddress || !isRouteSupported) return [];
@@ -1366,19 +1357,19 @@ export default function FeedContent() {
 
           {isMetadataLoading && (
             <div className="rounded border border-border bg-surface px-5 py-4 text-sm text-secondary shadow-sm">
-              Loading market and oracle dependency data...
+              Loading market and oracle data...
             </div>
           )}
 
           {oracleMetadataError && (
             <div className="rounded border border-yellow-500/30 bg-yellow-500/10 px-5 py-4 text-sm text-yellow-800 dark:text-yellow-200">
-              Oracle metadata failed to load for {networkName}. Live contract reads may still work.
+              Oracle metadata failed to load for {networkName}. Onchain reads may still work.
             </div>
           )}
 
           {!isMetadataLoading && !representativeLeg && (
             <div className="rounded border border-border bg-surface px-5 py-4 text-sm text-secondary shadow-sm">
-              This address was not found in the current scanner dependency graph. Contract reads and explorer links are still shown.
+              This feed was not found in the current oracle metadata. Contract reads and links are still shown.
             </div>
           )}
 
@@ -1405,7 +1396,7 @@ export default function FeedContent() {
             />
           )}
 
-          {!isVaultDependency && (
+          {showChainlinkContractDetails && (
             <ContractSection
               chainId={chainId}
               aggregatorAddress={aggregatorAddress}
