@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { LuArrowRight, LuLayers } from 'react-icons/lu';
@@ -9,7 +10,7 @@ type VaultEntryProps = {
   chainId: number;
 };
 
-export function VaultEntry({ vault }: VaultEntryProps): JSX.Element {
+export function VaultEntry({ vault, chainId }: VaultEntryProps): JSX.Element {
   const baseAsset = getTruncatedAssetName(vault.pair?.[0] ?? 'Unknown');
   const quoteAsset = getTruncatedAssetName(vault.pair?.[1] ?? 'Unknown');
 
@@ -24,7 +25,11 @@ export function VaultEntry({ vault }: VaultEntryProps): JSX.Element {
         />
       }
     >
-      <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80 gap-1">
+      <Link
+        href={`/feed/${chainId}/${vault.address}`}
+        className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80 gap-1 no-underline text-primary"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-1">
           <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">{baseAsset}</span>
           <LuArrowRight
@@ -39,7 +44,7 @@ export function VaultEntry({ vault }: VaultEntryProps): JSX.Element {
             className="flex-shrink-0 text-secondary"
           />
         </div>
-      </div>
+      </Link>
     </Tooltip>
   );
 }

@@ -27,6 +27,7 @@ export type EnrichedFeed = {
   description: string;
   pair: [string, string] | [];
   provider: OracleFeedProvider;
+  vendor?: string;
   decimals?: number;
   tier?: string; // Chainlink feed category: "verified", "high", "medium", "low", "custom", etc.
   heartbeat?: number;
@@ -42,10 +43,15 @@ export type EnrichedFeed = {
   ptSymbol?: string; // Pendle PT token symbol
   pendleFeedKind?: string; // Pendle feed kind (e.g. "PendleChainlinkOracle", "LinearDiscount")
   pendleFeedSubtype?: string; // Pendle subtype (e.g. "SparkLinearDiscountOracle")
+  oracleType?: string;
 };
 
 export type EnrichedVault = {
   address: string;
+  description?: string;
+  provider?: OracleFeedProvider;
+  vendor?: string;
+  feedType?: OracleFeedType;
   symbol: string;
   asset: string;
   assetSymbol: string;
