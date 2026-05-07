@@ -211,9 +211,13 @@ export function findFeedMarketDependencies({
     rows.push({ market, occurrences });
   }
 
-  return rows.sort(
-    (left, right) => toFiniteNumber(right.market.state?.supplyAssetsUsd) - toFiniteNumber(left.market.state?.supplyAssetsUsd),
-  );
+  return rows.sort((left, right) => {
+    const rightExposure =
+      toFiniteNumber(right.market.state?.supplyAssetsUsd) + toFiniteNumber(right.market.state?.borrowAssetsUsd);
+    const leftExposure =
+      toFiniteNumber(left.market.state?.supplyAssetsUsd) + toFiniteNumber(left.market.state?.borrowAssetsUsd);
+    return rightExposure - leftExposure;
+  });
 }
 
 export function getRepresentativeLeg(occurrences: FeedDependencyOccurrence[]): FeedDependencyLeg | null {
