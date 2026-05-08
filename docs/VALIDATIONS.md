@@ -70,6 +70,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Domain matching, token resolution, unit conversion, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
+- Portfolio and position analysis must preserve transaction-discovered market IDs even when current on-chain balances are zero; list-level hide settings must not remove those markets from summary or history inputs.
 
 
 ## Transactions And Wallet Flows

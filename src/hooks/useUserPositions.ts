@@ -2,8 +2,10 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
+import { fetchMonarchMarket, fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
+import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoUserPositionMarkets, fetchMorphoUserPositionMarketsForNetworks } from '@/data-sources/morpho-api/positions';
+import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
@@ -13,6 +15,7 @@ import type { Market, MarketPosition } from '@/utils/types';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useCustomRpc } from '@/stores/useCustomRpc';
 import { useProcessedMarkets } from './useProcessedMarkets';
+import { fetchAllUserTransactions } from './queries/fetchUserTransactions';
 
 // Type for market key and chain identifier
 type PositionMarket = {
@@ -61,10 +64,11 @@ export const positionKeys = {
   snapshot: (marketKey: string, userAddress: string, chainId: number) =>
     [...positionKeys.all, 'snapshot', marketKey, userAddress, chainId] as const,
   // Key for the final enhanced position data, dependent on initialData result
-  enhanced: (user: string | undefined, initialData: InitialDataResponse | undefined) =>
+  enhanced: (user: string | undefined, initialData: InitialDataResponse | undefined, showEmpty: boolean) =>
     [
       'enhanced-positions',
       user,
+      showEmpty ? 'include-empty' : 'active-only',
       initialData?.finalMarketKeys
         .map((k) => `${k.marketUniqueKey.toLowerCase()}-${k.chainId}`)
         .sort()
@@ -82,7 +86,6 @@ const fetchSourceMarketKeysForNetwork = async (user: string, network: SupportedN
 
   if (morphoApiSupported) {
     try {
-      console.log(`Attempting to fetch positions via Morpho API for network ${network}`);
       markets = await fetchMorphoUserPositionMarkets(user, network);
     } catch (error) {
       console.error(`Failed to fetch positions via Morpho API for network ${network}:`, error);
@@ -93,7 +96,6 @@ const fetchSourceMarketKeysForNetwork = async (user: string, network: SupportedN
 
   if (markets.length === 0 && (!morphoApiSupported || apiError)) {
     try {
-      console.log(`Attempting to fetch positions via Subgraph for network ${network}`);
       markets = await fetchSubgraphUserPositionMarkets(user, network);
     } catch (subgraphError) {
       console.error(`Failed to fetch positions via Subgraph for network ${network}:`, subgraphError);
@@ -166,11 +168,90 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
   return sourcePositionMarkets;
 };
 
+const appendUniquePositionMarkets = (markets: PositionMarket[], positionMarkets: Map<string, PositionMarket>): void => {
+  for (const market of markets) {
+    positionMarkets.set(`${market.marketUniqueKey.toLowerCase()}-${market.chainId}`, market);
+  }
+};
+
+const fetchTransactionMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarket[]> => {
+  const networksToFetch = chainIds ?? ALL_SUPPORTED_NETWORKS;
+  // Closed positions have zero current state, so transaction history is the durable source of exited market IDs.
+  const transactionResults = await Promise.allSettled(
+    networksToFetch.map(async (chainId) => {
+      const response = await fetchAllUserTransactions({
+        userAddress: [user],
+        chainId,
+      });
+
+      if (response.error && response.items.length === 0) {
+        throw new Error(response.error);
+      }
+
+      return response.items
+        .map((transaction) => transaction.data?.market?.uniqueKey)
+        .filter((marketUniqueKey): marketUniqueKey is string => Boolean(marketUniqueKey))
+        .map((marketUniqueKey) => ({
+          marketUniqueKey,
+          chainId,
+        }));
+    }),
+  );
+
+  const markets: PositionMarket[] = [];
+  for (const result of transactionResults) {
+    if (result.status === 'fulfilled') {
+      for (const market of result.value) {
+        markets.push(market);
+      }
+      continue;
+    }
+
+    console.warn('[Positions] Failed to discover historical position markets from transactions:', result.reason);
+  }
+
+  return markets;
+};
+
+const fetchPositionMarketShell = async (
+  marketInfo: PositionMarket,
+  customRpcUrls: Partial<Record<SupportedNetworks, string>>,
+): Promise<Market | null> => {
+  const chainId = marketInfo.chainId as SupportedNetworks;
+
+  try {
+    const monarchMarket = await fetchMonarchMarket(marketInfo.marketUniqueKey, chainId, customRpcUrls);
+    if (monarchMarket) {
+      return monarchMarket;
+    }
+  } catch (error) {
+    console.warn(`[Positions] Failed to fetch Monarch market shell for ${marketInfo.marketUniqueKey} on ${chainId}:`, error);
+  }
+
+  if (supportsMorphoApi(chainId)) {
+    try {
+      const morphoMarket = await fetchMorphoMarket(marketInfo.marketUniqueKey, chainId);
+      if (morphoMarket) {
+        return morphoMarket;
+      }
+    } catch (error) {
+      console.warn(`[Positions] Failed to fetch Morpho market shell for ${marketInfo.marketUniqueKey} on ${chainId}:`, error);
+    }
+  }
+
+  try {
+    return await fetchSubgraphMarket(marketInfo.marketUniqueKey, chainId);
+  } catch (error) {
+    console.warn(`[Positions] Failed to fetch Subgraph market shell for ${marketInfo.marketUniqueKey} on ${chainId}:`, error);
+    return null;
+  }
+};
+
 // --- Main Hook --- //
 
 const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?: SupportedNetworks[]) => {
   const queryClient = useQueryClient();
-  const { allMarkets } = useProcessedMarkets();
+  const { allMarkets, rawMarketsUnfiltered } = useProcessedMarkets();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
   const { customRpcUrls } = useCustomRpc();
@@ -183,13 +264,14 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
     error: initialError,
   } = useQuery<InitialDataResponse>({
     // Note: Removed MarketsContextType type assertion
-    queryKey: [...positionKeys.initialData(user ?? ''), chainIds?.join(',') ?? 'all'],
+    queryKey: [...positionKeys.initialData(user ?? ''), showEmpty ? 'include-empty' : 'active-only', chainIds?.join(',') ?? 'all'],
     queryFn: async () => {
       // User is guaranteed non-null here due to the 'enabled' flag
       if (!user) throw new Error('Assertion failed: User should be defined here.');
 
       // Fetch keys from API/Subgraph
       const sourceMarketKeys = await fetchSourceMarketKeys(user, chainIds);
+      const transactionMarketKeys = showEmpty ? await fetchTransactionMarketKeys(user, chainIds) : [];
       // Get keys from cache and filter by chainIds if provided
       const cachedMarkets = getUserMarkets();
       const filteredCachedMarkets = chainIds
@@ -197,20 +279,15 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
         : cachedMarkets;
 
       // Combine and deduplicate
-      const combinedMarkets = [...sourceMarketKeys, ...filteredCachedMarkets];
       const uniqueMarketsMap = new Map<string, PositionMarket>();
-      combinedMarkets.forEach((market) => {
-        const key = `${market.marketUniqueKey.toLowerCase()}-${market.chainId}`;
-        if (!uniqueMarketsMap.has(key)) {
-          uniqueMarketsMap.set(key, market);
-        }
-      });
+      appendUniquePositionMarkets(sourceMarketKeys, uniqueMarketsMap);
+      appendUniquePositionMarkets(transactionMarketKeys, uniqueMarketsMap);
+      appendUniquePositionMarkets(filteredCachedMarkets, uniqueMarketsMap);
 
       const finalMarketKeys = Array.from(uniqueMarketsMap.values());
-      // console.log(`[Positions] Query 1: Final unique keys count: ${finalMarketKeys.length}`);
       return { finalMarketKeys };
     },
-    enabled: !!user && allMarkets.length > 0,
+    enabled: !!user && (allMarkets.length > 0 || rawMarketsUnfiltered.length > 0),
     staleTime: 0,
   });
 
@@ -220,27 +297,49 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
     isLoading: isLoadingEnhanced,
     isRefetching: isRefetchingEnhanced,
   } = useQuery<EnhancedMarketPosition[]>({
-    queryKey: positionKeys.enhanced(user, initialData),
+    queryKey: positionKeys.enhanced(user, initialData, showEmpty),
     queryFn: async () => {
       if (!initialData || !user) throw new Error('Assertion failed: initialData/user should be defined here.');
-
-      console.log('fetching enhanced positions with market keys');
 
       const { finalMarketKeys } = initialData;
 
       // Group markets by chainId for batched fetching
       const marketsByChain = new Map<number, PositionMarket[]>();
-      finalMarketKeys.forEach((marketInfo) => {
+      for (const marketInfo of finalMarketKeys) {
         const existing = marketsByChain.get(marketInfo.chainId) ?? [];
         existing.push(marketInfo);
         marketsByChain.set(marketInfo.chainId, existing);
-      });
+      }
 
       // Build market data map from the complete market registry.
       const marketDataMap = new Map<string, Market>();
-      allMarkets.forEach((market) => {
+      for (const market of allMarkets) {
         marketDataMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
-      });
+      }
+      for (const market of rawMarketsUnfiltered) {
+        const key = getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey);
+        if (!marketDataMap.has(key)) {
+          marketDataMap.set(key, market);
+        }
+      }
+
+      const missingMarketKeys = finalMarketKeys.filter(
+        (marketInfo) => !marketDataMap.has(getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey)),
+      );
+
+      if (missingMarketKeys.length > 0) {
+        const fetchedMarkets = await Promise.allSettled(
+          missingMarketKeys.map((marketInfo) => fetchPositionMarketShell(marketInfo, customRpcUrls)),
+        );
+
+        for (const result of fetchedMarkets) {
+          if (result.status !== 'fulfilled' || !result.value) {
+            continue;
+          }
+
+          marketDataMap.set(getMarketIdentityKey(result.value.morphoBlue.chain.id, result.value.uniqueKey), result.value);
+        }
+      }
 
       // Fetch snapshots for each chain using batched multicall
       const allSnapshots = new Map<string, PositionSnapshot>();
@@ -276,12 +375,12 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
 
       // Combine market data with snapshots
       const validPositions: EnhancedMarketPosition[] = [];
-      finalMarketKeys.forEach((marketInfo) => {
+      for (const marketInfo of finalMarketKeys) {
         const marketKey = getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey);
         const market = marketDataMap.get(marketKey);
         const snapshot = allSnapshots.get(marketKey);
 
-        if (!market || !snapshot) return;
+        if (!market || !snapshot) continue;
 
         const hasSupply = snapshot.supplyShares.toString() !== '0';
         const hasBorrow = snapshot.borrowShares.toString() !== '0';
@@ -294,7 +393,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
             oraclePrice: allOraclePrices.get(marketKey) ?? null,
           });
         }
-      });
+      }
 
       // Update market cache
       const marketsToCache = validPositions

@@ -68,6 +68,38 @@ export type BorrowPositionRow = {
 
 const ONE_YEAR_IN_SECONDS = 86_400 * 365;
 
+const toPositionAmount = (value: string | number | bigint | null | undefined): bigint => {
+  if (value === null || value === undefined || value === '') {
+    return 0n;
+  }
+
+  try {
+    return BigInt(value);
+  } catch {
+    return 0n;
+  }
+};
+
+export function hasOpenPosition(position: MarketPosition): boolean {
+  return (
+    toPositionAmount(position.state.supplyShares) > 0n ||
+    toPositionAmount(position.state.borrowShares) > 0n ||
+    toPositionAmount(position.state.collateral) > 0n
+  );
+}
+
+export function hasSupplyPositionHistory(position: MarketPositionWithEarnings): boolean {
+  return (
+    toPositionAmount(position.state.supplyShares) > 0n ||
+    toPositionAmount(position.state.supplyAssets) > 0n ||
+    toPositionAmount(position.earned) !== 0n ||
+    toPositionAmount(position.totalDeposits) > 0n ||
+    toPositionAmount(position.totalWithdraws) > 0n ||
+    toPositionAmount(position.avgCapital) > 0n ||
+    position.effectiveTime > 0
+  );
+}
+
 function normalizeOraclePriceResult(value: unknown): string | null {
   if (typeof value === 'bigint' || typeof value === 'number' || typeof value === 'string') {
     return value.toString();
@@ -493,7 +525,7 @@ export function groupPositionsByLoanAsset(
   chainBlockData: Record<number, { block: number; timestamp: number }>,
 ): GroupedPosition[] {
   return positions
-    .filter((position) => BigInt(position.state.supplyShares) > 0)
+    .filter(hasSupplyPositionHistory)
     .reduce((acc: GroupedPosition[], position) => {
       const loanAssetAddress = position.market.loanAsset.address;
       const loanAssetDecimals = position.market.loanAsset.decimals;
@@ -519,32 +551,27 @@ export function groupPositionsByLoanAsset(
         acc.push(groupedPosition);
       }
 
-      // Check if position should be included in the group
-      const shouldInclude = BigInt(position.state.supplyShares) > 0 || position.earned !== '0';
+      groupedPosition.markets.push(position);
 
-      if (shouldInclude) {
-        groupedPosition.markets.push(position);
+      const supplyAmount = Number(formatUnits(toPositionAmount(position.state.supplyAssets), loanAssetDecimals));
+      groupedPosition.totalSupply += supplyAmount;
 
-        const supplyAmount = Number(formatUnits(BigInt(position.state.supplyAssets), loanAssetDecimals));
-        groupedPosition.totalSupply += supplyAmount;
+      const weightedApyContribution = supplyAmount * (position.market.state?.supplyApy ?? 0);
+      groupedPosition.totalWeightedApy += weightedApyContribution;
 
-        const weightedApyContribution = supplyAmount * (position.market.state?.supplyApy ?? 0); // Use optional chaining for state
-        groupedPosition.totalWeightedApy += weightedApyContribution; // Accumulate weighted APY sum
+      const collateralAddress = position.market.collateralAsset?.address;
+      const collateralSymbol = position.market.collateralAsset?.symbol;
 
-        const collateralAddress = position.market.collateralAsset?.address;
-        const collateralSymbol = position.market.collateralAsset?.symbol;
-
-        if (collateralAddress && collateralSymbol) {
-          const existingCollateral = groupedPosition.collaterals.find((c) => c.address === collateralAddress);
-          if (existingCollateral) {
-            existingCollateral.amount += supplyAmount;
-          } else {
-            groupedPosition.collaterals.push({
-              address: collateralAddress,
-              symbol: collateralSymbol,
-              amount: supplyAmount,
-            });
-          }
+      if (supplyAmount > 0 && collateralAddress && collateralSymbol) {
+        const existingCollateral = groupedPosition.collaterals.find((c) => c.address === collateralAddress);
+        if (existingCollateral) {
+          existingCollateral.amount += supplyAmount;
+        } else {
+          groupedPosition.collaterals.push({
+            address: collateralAddress,
+            symbol: collateralSymbol,
+            amount: supplyAmount,
+          });
         }
       }
 
