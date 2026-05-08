@@ -20,6 +20,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - The final code remains accessible, performant, type-safe, and maintainable.
 - There are comments explaining "why" we do certain thing when a function is complex, or a workflow is updated and non-obvious.
 - After updating a function, check all appearances of that function across the codebase to ensure the change doesn't introduce new bugs.
+- Try to see if this change introduce too many lines of code. Always question are all lines of code necessary? Can we achieve the same goal with fewer lines of code or more elegantly by solving the issue at a higher level / different checkpoint?
 
 ## Bug Fixes
 
@@ -105,6 +106,7 @@ If a relevant command cannot be run, state why and identify the residual risk.
 - State the validation sections applied.
 - State the verification commands run and whether they passed.
 - State remaining risks or say none known.
+- Is it the most elegant way to solve the problem? If not, go back and provide your feedback again to iterate on the solution.
 - For user-reported bugs in high-impact flows, also state:
   - root cause category,
   - why prior validation missed it,
