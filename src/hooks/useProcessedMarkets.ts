@@ -16,6 +16,7 @@ type UseProcessedMarketsOptions = {
   enableMorphoMetadata?: boolean;
   enableRateEnrichment?: boolean;
   enableUsdEnrichment?: boolean;
+  includeUnknownTokens?: boolean;
 };
 
 const EMPTY_RATE_ENRICHMENTS: MarketRateEnrichmentMap = new Map();
@@ -66,7 +67,7 @@ const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market
  * ```
  */
 export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
-  const enableRateEnrichment = options?.enableRateEnrichment ?? true;
+  const enableRateEnrichment = options?.enableRateEnrichment ?? false;
   const enableUsdEnrichment = options?.enableUsdEnrichment ?? true;
   const enableMorphoMetadata = options?.enableMorphoMetadata ?? true;
   const {
@@ -78,6 +79,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   } = useMarketsQuery({
     refetchInterval: options?.marketsRefetchInterval,
     refetchOnWindowFocus: options?.marketsRefetchOnWindowFocus,
+    includeUnknownTokens: options?.includeUnknownTokens,
   });
   const { whitelistLookup, supplyingVaultsLookup } = useMorphoWhitelistStatusQuery({
     enabled: enableMorphoMetadata,

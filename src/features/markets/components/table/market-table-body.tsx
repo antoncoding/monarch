@@ -10,7 +10,6 @@ import { MarketRiskIndicators } from '@/features/markets/components/market-risk-
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
-import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -26,14 +25,20 @@ type MarketTableBodyProps = {
   expandedRowId: string | null;
   setExpandedRowId: (id: string | null) => void;
   trustedVaultMap: Map<string, TrustedVault>;
+  rateEnrichmentPendingChainIds: Set<number>;
 };
 
 type HistoricalRateField = Exclude<keyof MarketRateEnrichment, 'apyAtTarget' | 'rateAtTarget'>;
 
-export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
+export function MarketTableBody({
+  currentEntries,
+  expandedRowId,
+  setExpandedRowId,
+  trustedVaultMap,
+  rateEnrichmentPendingChainIds,
+}: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
-  const { rateEnrichmentPendingChainIds } = useProcessedMarkets();
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });

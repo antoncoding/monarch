@@ -1,5 +1,4 @@
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoMarketRateEnrichments, getMorphoMarketRateFieldsKey } from '@/data-sources/morpho-api/market-rate-fields';
 import { AdaptiveCurveIrmLib, MarketUtils, MathLib, SharesMath } from '@morpho-org/blue-sdk';
 import type { Address } from 'viem';
@@ -11,11 +10,13 @@ import { fetchMarketsSnapshots, type MarketSnapshot } from '@/utils/positions';
 import { computeAnnualizedApyFromGrowth } from '@/utils/rateMath';
 import { getClient } from '@/utils/rpc';
 import type { Market } from '@/utils/types';
+import { shouldUseRateRpcFallbackForMarket } from '@/utils/market-rpc-gating';
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
 const BORROW_RATE_BATCH_SIZE = 100;
 const BORROW_RATE_PARALLEL_BATCHES = 2;
-const MARKET_RATE_RPC_FALLBACK_ENABLED = process.env.NEXT_PUBLIC_ENABLE_MARKET_RATE_RPC_FALLBACK?.trim().toLowerCase() !== 'false';
+const MARKET_RATE_RPC_FALLBACK_ENABLED = process.env.NEXT_PUBLIC_ENABLE_MARKET_RATE_RPC_FALLBACK?.trim().toLowerCase() === 'true';
+const MORPHO_RATE_FIELDS_CACHE_TTL_MS = 15 * 60 * 1000;
 
 const LOOKBACK_WINDOWS = [
   {
@@ -36,8 +37,20 @@ const LOOKBACK_WINDOWS = [
 ] as const;
 
 export type RateEnrichmentMarketInput = Pick<Market, 'uniqueKey' | 'lltv' | 'irmAddress' | 'oracleAddress'> & {
-  loanAsset: Pick<Market['loanAsset'], 'address'>;
-  collateralAsset: Pick<Market['collateralAsset'], 'address'>;
+  loanAsset: Pick<Market['loanAsset'], 'address' | 'decimals'>;
+  collateralAsset: Pick<Market['collateralAsset'], 'address' | 'decimals'>;
+  state?: Partial<
+    Pick<
+      Market['state'],
+      | 'supplyAssets'
+      | 'borrowAssets'
+      | 'liquidityAssets'
+      | 'collateralAssets'
+      | 'supplyAssetsUsd'
+      | 'borrowAssetsUsd'
+      | 'liquidityAssetsUsd'
+    >
+  >;
   morphoBlue: {
     chain: {
       id: number;
@@ -238,20 +251,33 @@ const computeWindowRates = (startState: BoundaryState, endState: BoundaryState):
   };
 };
 
-const buildApiEnrichmentFromMarket = (market: Market): MarketRateEnrichment => ({
-  apyAtTarget: market.state.apyAtTarget,
-  rateAtTarget: market.state.rateAtTarget,
-  dailySupplyApy: market.state.dailySupplyApy ?? null,
-  dailyBorrowApy: market.state.dailyBorrowApy ?? null,
-  weeklySupplyApy: market.state.weeklySupplyApy ?? null,
-  weeklyBorrowApy: market.state.weeklyBorrowApy ?? null,
-  monthlySupplyApy: market.state.monthlySupplyApy ?? null,
-  monthlyBorrowApy: market.state.monthlyBorrowApy ?? null,
-});
-
 type MorphoRateFetchResult = {
   enrichments: Map<string, MarketRateEnrichment>;
   failed: boolean;
+};
+
+type CachedMorphoRateFields = Awaited<ReturnType<typeof fetchMorphoMarketRateEnrichments>>;
+const morphoRateFieldsCache = new Map<SupportedNetworks, { expiresAt: number; promise: Promise<CachedMorphoRateFields> }>();
+
+const fetchCachedMorphoMarketRateEnrichments = (chainId: SupportedNetworks): Promise<CachedMorphoRateFields> => {
+  const now = Date.now();
+  const cached = morphoRateFieldsCache.get(chainId);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.promise;
+  }
+
+  const promise = fetchMorphoMarketRateEnrichments(chainId).catch((error) => {
+    morphoRateFieldsCache.delete(chainId);
+    throw error;
+  });
+
+  morphoRateFieldsCache.set(chainId, {
+    expiresAt: now + MORPHO_RATE_FIELDS_CACHE_TTL_MS,
+    promise,
+  });
+
+  return promise;
 };
 
 const fetchMorphoRateMarketsByKey = async (
@@ -266,21 +292,7 @@ const fetchMorphoRateMarketsByKey = async (
   }
 
   try {
-    if (chainMarkets.length === 1) {
-      const morphoMarket = await fetchMorphoMarket(chainMarkets[0].uniqueKey, chainId);
-      if (!morphoMarket) {
-        return {
-          enrichments: new Map(),
-          failed: false,
-        };
-      }
-
-      return {
-        enrichments: new Map([[getMarketRateEnrichmentKey(morphoMarket.uniqueKey, chainId), buildApiEnrichmentFromMarket(morphoMarket)]]),
-        failed: false,
-      };
-    }
-    const morphoEnrichments = await fetchMorphoMarketRateEnrichments(chainId);
+    const morphoEnrichments = await fetchCachedMorphoMarketRateEnrichments(chainId);
     return {
       enrichments: chainMarkets.reduce((acc, market) => {
         const enrichment = morphoEnrichments.get(getMorphoMarketRateFieldsKey(chainId, market.uniqueKey));
@@ -636,13 +648,27 @@ export async function fetchMarketRateEnrichment(
     });
 
     if (morphoRateFetchFailed && MARKET_RATE_RPC_FALLBACK_ENABLED) {
+      const rpcFallbackMarkets: RateEnrichmentMarketInput[] = [];
+
+      chainMarkets.forEach((market) => {
+        if (!shouldUseRateRpcFallbackForMarket(market)) {
+          return;
+        }
+
+        rpcFallbackMarkets.push(market);
+      });
+
+      if (rpcFallbackMarkets.length === 0) {
+        continue;
+      }
+
       const windowRates = await fetchRealizedMarketWindowRates(
-        chainMarkets,
+        rpcFallbackMarkets,
         LOOKBACK_WINDOWS.map((window) => window.seconds),
         customRpcUrls,
       );
 
-      chainMarkets.forEach((market) => {
+      rpcFallbackMarkets.forEach((market) => {
         const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
         const ratesByWindow = windowRates.get(key);
 
