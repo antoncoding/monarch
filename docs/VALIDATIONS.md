@@ -86,7 +86,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 ## UI And Accessibility
 
 - Avoid repeated large UI blocks; extract or reuse only when it reduces real duplication.
-- Validate loading, empty, disabled, error, and success states for changed flows.
+- Validate loading, empty, disabled, error, and success states for changed flows; period-derived metrics must not show stale values while recalculating.
 - Do not use Next.js raw image patterns where the project expects `next/image`.
 - Make sure Mobile view is considered.
 - Simplify wording to have clear call to action, remove unnecessary explain to details. Focus on what a user should do and should see, not what you want to say

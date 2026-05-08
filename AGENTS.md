@@ -27,8 +27,8 @@ Universal coding-agent rules for the Monarch codebase.
 - Preserve existing functionality; a fix that removes required behavior is a regression.
 - Prefer first-principles domain fixes over retries, filters, or workaround logic.
 - Remove temporary debugging code before finishing.
-- Do not use direct `window.localStorage` reads/writes in components or hooks for user preferences or dismissals; use the existing persisted Zustand patterns unless a shared utility/store layer is explicitly justified.
-- Run `npx ultracite fix` before committing, and `npx ultracite check` to verify, when code changes make those checks relevant.
+- Run `npx ultracite check` to verify, when code changes make those checks relevant.
+- Try to see if you can fix issue with removing complexity. Always question are all lines of code necessary? Remove bad trials.
 
 ## Final Validation Gate
 For every non-trivial code or docs change, do this immediately before the final response:
@@ -36,6 +36,6 @@ For every non-trivial code or docs change, do this immediately before the final 
 1. Read `docs/VALIDATIONS.md`.
 2. Apply only the sections relevant to the files and behavior touched.
 3. Fix validation failures before reporting completion, unless blocked.
-4. In the final response, state the validation sections applied, verification run, and remaining risks.
+4. In the final response, state the validation sections and rules applied, verification run, and remaining risks.
 
 When a user-reported bug exposes a reusable failure pattern, add the new rule to `docs/VALIDATIONS.md`, not this file.
