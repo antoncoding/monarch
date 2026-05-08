@@ -146,6 +146,8 @@ After fixing any user-reported bug in a high-impact flow:
    - which new validation rule now prevents recurrence.
 3. Prefer chokepoint validations that protect all related components, not just the touched file.
 
+Validation bullet: portfolio/position flows must never drop a user-owned market solely because global market browsing filters or unresolved-token defaults omit that market; hydrate user-discovered market IDs with unknown-token metadata before deciding a position is not renderable.
+
 ---
 
 ## Code Quality Standards
