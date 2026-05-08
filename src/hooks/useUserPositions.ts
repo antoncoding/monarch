@@ -5,6 +5,7 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
 import { fetchMorphoUserPositionMarkets, fetchMorphoUserPositionMarketsForNetworks } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
+import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, type PositionMarketOracleInput } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
@@ -235,10 +236,10 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
         marketsByChain.set(marketInfo.chainId, existing);
       });
 
-      // Build market data map from allMarkets context (no need to fetch individually)
+      // Build market data map from the complete market registry.
       const marketDataMap = new Map<string, Market>();
       allMarkets.forEach((market) => {
-        marketDataMap.set(market.uniqueKey.toLowerCase(), market);
+        marketDataMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
       });
 
       // Fetch snapshots for each chain using batched multicall
@@ -254,7 +255,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
 
           const marketInputs: PositionMarketOracleInput[] = markets.map((marketInfo) => ({
             marketUniqueKey: marketInfo.marketUniqueKey,
-            oracleAddress: marketDataMap.get(marketInfo.marketUniqueKey.toLowerCase())?.oracleAddress ?? null,
+            oracleAddress: marketDataMap.get(getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey))?.oracleAddress ?? null,
           }));
           const { snapshots, oraclePrices } = await fetchLatestPositionSnapshotsWithOraclePrices(
             marketInputs,
@@ -265,10 +266,10 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
 
           // Merge into allSnapshots
           snapshots.forEach((snapshot, marketId) => {
-            allSnapshots.set(marketId.toLowerCase(), snapshot);
+            allSnapshots.set(getMarketIdentityKey(chainId, marketId), snapshot);
           });
           oraclePrices.forEach((oraclePrice, marketId) => {
-            allOraclePrices.set(marketId.toLowerCase(), oraclePrice);
+            allOraclePrices.set(getMarketIdentityKey(chainId, marketId), oraclePrice);
           });
         }),
       );
@@ -276,7 +277,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
       // Combine market data with snapshots
       const validPositions: EnhancedMarketPosition[] = [];
       finalMarketKeys.forEach((marketInfo) => {
-        const marketKey = marketInfo.marketUniqueKey.toLowerCase();
+        const marketKey = getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey);
         const market = marketDataMap.get(marketKey);
         const snapshot = allSnapshots.get(marketKey);
 
