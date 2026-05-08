@@ -10,7 +10,6 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 4. Run the narrowest commands that prove the change is correct.
 5. Report applied sections, commands run, and remaining risks in the final response.
 
-Mechanical checks such as typecheck and lint are necessary but not sufficient. Validation also means reviewing whether the change is correct, simple, maintainable, and scoped to the root cause.
 
 ## Universal Validation
 
@@ -88,6 +87,7 @@ Mechanical checks such as typecheck and lint are necessary but not sufficient. V
 - Validate loading, empty, disabled, error, and success states for changed flows.
 - Do not use Next.js raw image patterns where the project expects `next/image`.
 - Make sure Mobile view is considered.
+- Simplify wording to have clear call to action, remove unnecessary explain to details. Focus on what a user should do and should see, not what you want to say
 
 ## Verification Commands
 
