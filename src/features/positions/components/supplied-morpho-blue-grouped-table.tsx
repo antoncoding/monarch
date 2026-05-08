@@ -29,7 +29,7 @@ import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { formatTokenAmountPreview } from '@/utils/token-amount-format';
 import { getNetworkImg } from '@/utils/networks';
-import { getGroupedEarnings, groupPositionsByLoanAsset, hasOpenPosition, processCollaterals } from '@/utils/positions';
+import { getGroupedEarnings, groupPositionsByLoanAsset, hasActiveSupplyPosition, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
@@ -84,7 +84,7 @@ export function SuppliedMorphoBlueGroupedTable({
   };
 
   const visiblePositions = useMemo(
-    () => (hideClosedPositions ? positions.filter(hasOpenPosition) : positions),
+    () => (hideClosedPositions ? positions.filter(hasActiveSupplyPosition) : positions),
     [positions, hideClosedPositions],
   );
   const groupedPositions = useMemo(() => groupPositionsByLoanAsset(visiblePositions, actualBlockData), [visiblePositions, actualBlockData]);

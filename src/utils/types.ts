@@ -18,6 +18,7 @@ export type MarketPosition = {
     collateral: string;
   };
   oraclePrice?: string | null;
+  hasSupplyHistory?: boolean;
   market: Market; // Now using the full Market type
 };
 
@@ -28,6 +29,7 @@ export type MarketPositionWithEarnings = MarketPosition & {
   effectiveTime: number; // Seconds held in period
   totalDeposits: string;
   totalWithdraws: string;
+  hasSupplyHistory: boolean;
 };
 
 export enum UserTxTypes {

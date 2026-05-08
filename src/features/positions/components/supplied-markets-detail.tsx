@@ -16,7 +16,7 @@ import type { GroupedPosition, MarketPositionWithEarnings } from '@/utils/types'
 import { AllocationCell } from './allocation-cell';
 import { UserPositionsChart } from './user-positions-chart';
 import type { UserTransaction } from '@/utils/types';
-import { hasOpenPosition, type PositionSnapshot } from '@/utils/positions';
+import { hasActiveSupplyPosition, type PositionSnapshot } from '@/utils/positions';
 
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
@@ -41,8 +41,8 @@ function MarketRow({
   const suppliedAmount = Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals));
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
   const earned = BigInt(position.earned ?? '0');
-  const earnedPreview = isEarningsLoading || earned === 0n ? null : formatTokenAmountPreview(earned, position.market.loanAsset.decimals);
-  const hasOpenBalance = hasOpenPosition(position);
+  const earnedPreview = earned === 0n ? null : formatTokenAmountPreview(earned, position.market.loanAsset.decimals);
+  const hasActiveSupply = hasActiveSupplyPosition(position);
 
   return (
     <TableRow
@@ -73,7 +73,7 @@ function MarketRow({
         data-label="Allocation"
         className="align-middle"
       >
-        {hasOpenBalance ? (
+        {hasActiveSupply ? (
           <AllocationCell
             amount={suppliedAmount}
             symbol={position.market.loanAsset.symbol}
@@ -117,7 +117,7 @@ function MarketRow({
         style={{ minWidth: '180px' }}
       >
         <div className="flex items-center justify-end gap-2">
-          {hasOpenBalance && (
+          {hasActiveSupply && (
             <Button
               size="sm"
               variant="surface"

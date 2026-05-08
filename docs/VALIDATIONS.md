@@ -20,7 +20,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - The final code remains accessible, performant, type-safe, and maintainable.
 - There are comments explaining "why" we do certain thing when a function is complex, or a workflow is updated and non-obvious.
 - After updating a function, check all appearances of that function across the codebase to ensure the change doesn't introduce new bugs.
-- Try to see if this change introduce too many lines of code. Always question are all lines of code necessary? Can we achieve the same goal with fewer lines of code or more elegantly by solving the issue at a higher level / different checkpoint?
+- Try to see if this change introduces too many lines of code. Always question whether all lines of code are necessary. Can we achieve the same goal with fewer lines of code or more elegantly by solving the issue at a higher level or different checkpoint?
 
 ## Bug Fixes
 
@@ -40,7 +40,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 
 - Use function components and keep hooks at the top level.
 - Do not define components inside other components. 
-- Make sure bad no `useEffect` causing infinite looping.
+- Avoid `useEffect` hooks that cause infinite loops.
 - Use stable, unique keys for iterables instead of array indexes when an entity ID exists.
 - Reuse existing explicit types. Do not use `any` 
 - Use type narrowing instead of type assertions when practical.
@@ -65,12 +65,13 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 ## Data And Domain Flows
 
 - Data fetching should use existing React Query hooks and established cache keys where possible.
-- Please respect the setting in "useCustomRPC" whenever a request is RPC related.
+- Please respect the setting in "useCustomRPC" whenever a request is RPC-related.
 - Grouped fetching via RPC must be bundled with `multicall` to increase efficiency if they're on the same chain or block.
 - Domain matching, token resolution, unit conversion, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
 - Portfolio and position analysis must preserve transaction-discovered market IDs even when current on-chain balances are zero; list-level hide settings must not remove those markets from summary or history inputs.
+- Supplied-position surfaces must distinguish active supply (`supplyShares`/`supplyAssets`) and historical supply (`MarketSupply`/`MarketWithdraw`) from borrow shares and collateral.
 
 
 ## Transactions And Wallet Flows
@@ -89,7 +90,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Validate loading, empty, disabled, error, and success states for changed flows; period-derived metrics must not show stale values while recalculating.
 - Do not use Next.js raw image patterns where the project expects `next/image`.
 - Make sure Mobile view is considered.
-- Simplify wording to have clear call to action, remove unnecessary explain to details. Focus on what a user should do and should see, not what you want to say
+- Simplify wording to provide a clear call to action; remove unnecessary explanations. Focus on what a user should do and what they should see, not what you want to say.
 
 ## Verification Commands
 

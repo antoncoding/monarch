@@ -88,15 +88,18 @@ export function hasOpenPosition(position: MarketPosition): boolean {
   );
 }
 
+export function hasActiveSupplyPosition(position: MarketPosition): boolean {
+  return toPositionAmount(position.state.supplyShares) > 0n || toPositionAmount(position.state.supplyAssets) > 0n;
+}
+
 export function hasSupplyPositionHistory(position: MarketPositionWithEarnings): boolean {
   return (
-    toPositionAmount(position.state.supplyShares) > 0n ||
-    toPositionAmount(position.state.supplyAssets) > 0n ||
-    toPositionAmount(position.earned) !== 0n ||
+    position.hasSupplyHistory ||
+    hasActiveSupplyPosition(position) ||
+    toPositionAmount(position.earned) > 0n ||
     toPositionAmount(position.totalDeposits) > 0n ||
     toPositionAmount(position.totalWithdraws) > 0n ||
-    toPositionAmount(position.avgCapital) > 0n ||
-    position.effectiveTime > 0
+    toPositionAmount(position.avgCapital) > 0n
   );
 }
 
@@ -677,7 +680,10 @@ export function processCollaterals(groupedPositions: GroupedPosition[]): Grouped
  * @param positions - Original positions without earnings data
  * @returns Positions with initialized empty earnings
  */
-export function initializePositionWithEmptyEarnings(position: MarketPosition): MarketPositionWithEarnings {
+export function initializePositionWithEmptyEarnings(
+  position: MarketPosition,
+  hasSupplyHistory = Boolean(position.hasSupplyHistory) || hasActiveSupplyPosition(position),
+): MarketPositionWithEarnings {
   return {
     ...position,
     earned: '0',
@@ -686,9 +692,10 @@ export function initializePositionWithEmptyEarnings(position: MarketPosition): M
     effectiveTime: 0,
     totalDeposits: '0',
     totalWithdraws: '0',
+    hasSupplyHistory,
   };
 }
 
 export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]): MarketPositionWithEarnings[] {
-  return positions.map(initializePositionWithEmptyEarnings);
+  return positions.map((position) => initializePositionWithEmptyEarnings(position));
 }

@@ -27,8 +27,8 @@ Universal coding-agent rules for the Monarch codebase.
 - Preserve existing functionality; a fix that removes required behavior is a regression.
 - Prefer first-principles domain fixes over retries, filters, or workaround logic.
 - Remove temporary debugging code before finishing.
-- Run `npx ultracite check` to verify, when code changes make those checks relevant.
-- Try to see if you can fix issue with removing complexity. Always question are all lines of code necessary? Remove bad trials.
+- Run `npx ultracite fix` before committing, and `npx ultracite check` to verify, when code changes make those checks relevant.
+- Try to see if you can fix the issue by removing complexity. Always question whether all lines of code are necessary and remove unnecessary experiments.
 
 ## Final Validation Gate
 For every non-trivial code or docs change, do this immediately before the final response:

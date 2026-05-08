@@ -12,6 +12,7 @@ import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks
 import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, type PositionMarketOracleInput } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
 import type { Market, MarketPosition } from '@/utils/types';
+import { isSupplyPositionTransaction } from '@/utils/transactionGrouping';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useCustomRpc } from '@/stores/useCustomRpc';
 import { useProcessedMarkets } from './useProcessedMarkets';
@@ -21,6 +22,7 @@ import { fetchAllUserTransactions } from './queries/fetchUserTransactions';
 type PositionMarket = {
   marketUniqueKey: string;
   chainId: number;
+  hasSupplyHistory?: boolean;
 };
 
 type PositionsFetchSource = 'morpho-api' | 'subgraph' | 'combined';
@@ -170,13 +172,19 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
 
 const appendUniquePositionMarkets = (markets: PositionMarket[], positionMarkets: Map<string, PositionMarket>): void => {
   for (const market of markets) {
-    positionMarkets.set(`${market.marketUniqueKey.toLowerCase()}-${market.chainId}`, market);
+    const key = `${market.marketUniqueKey.toLowerCase()}-${market.chainId}`;
+    const existingMarket = positionMarkets.get(key);
+    positionMarkets.set(key, {
+      ...market,
+      hasSupplyHistory: Boolean(existingMarket?.hasSupplyHistory || market.hasSupplyHistory),
+    });
   }
 };
 
-const fetchTransactionMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarket[]> => {
+const fetchSupplyTransactionMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarket[]> => {
   const networksToFetch = chainIds ?? ALL_SUPPORTED_NETWORKS;
-  // Closed positions have zero current state, so transaction history is the durable source of exited market IDs.
+  // Closed supply positions have zero current state, so all-time supply/withdraw history is
+  // the durable source of exited market IDs before the transaction query can be scoped by positions.
   const transactionResults = await Promise.allSettled(
     networksToFetch.map(async (chainId) => {
       const response = await fetchAllUserTransactions({
@@ -189,11 +197,13 @@ const fetchTransactionMarketKeys = async (user: string, chainIds?: SupportedNetw
       }
 
       return response.items
+        .filter(isSupplyPositionTransaction)
         .map((transaction) => transaction.data?.market?.uniqueKey)
         .filter((marketUniqueKey): marketUniqueKey is string => Boolean(marketUniqueKey))
         .map((marketUniqueKey) => ({
           marketUniqueKey,
           chainId,
+          hasSupplyHistory: true,
         }));
     }),
   );
@@ -269,9 +279,12 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
       // User is guaranteed non-null here due to the 'enabled' flag
       if (!user) throw new Error('Assertion failed: User should be defined here.');
 
-      // Fetch keys from API/Subgraph
-      const sourceMarketKeys = await fetchSourceMarketKeys(user, chainIds);
-      const transactionMarketKeys = showEmpty ? await fetchTransactionMarketKeys(user, chainIds) : [];
+      // Fetch keys from API/Subgraph. Closed supply positions need transaction-discovered market IDs
+      // before hooks like useUserTransactionsQuery can be enabled from the resulting position set.
+      const [sourceMarketKeys, transactionMarketKeys] = await Promise.all([
+        fetchSourceMarketKeys(user, chainIds),
+        showEmpty ? fetchSupplyTransactionMarketKeys(user, chainIds) : Promise.resolve<PositionMarket[]>([]),
+      ]);
       // Get keys from cache and filter by chainIds if provided
       const cachedMarkets = getUserMarkets();
       const filteredCachedMarkets = chainIds
@@ -391,6 +404,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
             state: snapshot,
             market: market,
             oraclePrice: allOraclePrices.get(marketKey) ?? null,
+            hasSupplyHistory: marketInfo.hasSupplyHistory,
           });
         }
       }
