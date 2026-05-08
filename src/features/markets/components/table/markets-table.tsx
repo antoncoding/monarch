@@ -27,18 +27,6 @@ type MarketsTableProps = {
 };
 
 function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, onRefresh, isMobile }: MarketsTableProps) {
-  // Get loading states directly from query (no prop drilling!)
-  const { isLoading: loading, isRefetching, data: rawMarkets, dataUpdatedAt } = useMarketsQuery();
-
-  // Get trusted vaults directly from store (no prop drilling!)
-  const { vaults: trustedVaults } = useTrustedVaults();
-
-  const { markets, isLoading: filteredMarketsLoading, isWhitelistUnavailable } = useFilteredMarkets();
-  const isEmpty = !rawMarkets;
-  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
-  const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
-  const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
-
   const {
     columnVisibility,
     sortColumn,
@@ -54,6 +42,32 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
     minLiquidityEnabled,
     starredMarkets,
   } = useMarketPreferences();
+
+  // Get loading states directly from query (no prop drilling!)
+  const {
+    isLoading: loading,
+    isRefetching,
+    data: rawMarkets,
+    dataUpdatedAt,
+  } = useMarketsQuery({
+    includeUnknownTokens,
+  });
+
+  // Get trusted vaults directly from store (no prop drilling!)
+  const { vaults: trustedVaults } = useTrustedVaults();
+
+  const {
+    markets,
+    isLoading: filteredMarketsLoading,
+    isWhitelistUnavailable,
+    rateEnrichmentPendingChainIds,
+  } = useFilteredMarkets({
+    currentPage,
+  });
+  const isEmpty = !rawMarkets;
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
+  const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
   const { starredOnly } = useMarketsFilters();
 
@@ -339,6 +353,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
               expandedRowId={expandedRowId}
               setExpandedRowId={setExpandedRowId}
               trustedVaultMap={trustedVaultMap}
+              rateEnrichmentPendingChainIds={rateEnrichmentPendingChainIds}
             />
           </Table>
         )}

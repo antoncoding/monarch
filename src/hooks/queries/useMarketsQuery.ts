@@ -4,6 +4,7 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
@@ -16,6 +17,7 @@ const toError = (error: unknown): Error => {
 type UseMarketsQueryOptions = {
   refetchInterval?: number | false;
   refetchOnWindowFocus?: boolean;
+  includeUnknownTokens?: boolean;
 };
 
 /**
@@ -40,10 +42,12 @@ type UseMarketsQueryOptions = {
  */
 export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
   const { customRpcUrls } = useCustomRpcContext();
+  const { allTokens, isLoading: tokensLoading } = useTokensQuery();
   const rpcIdentity = Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right));
+  const includeUnknownTokens = options?.includeUnknownTokens ?? false;
 
   return useQuery({
-    queryKey: ['markets', rpcIdentity],
+    queryKey: ['markets', rpcIdentity, includeUnknownTokens, allTokens.length],
     queryFn: async () => {
       const fetchErrors: Error[] = [];
       const marketsByChain = new Map<SupportedNetworks, Market[]>();
@@ -76,7 +80,10 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
       };
 
       try {
-        const monarchMarkets = await fetchMonarchMarkets(undefined, customRpcUrls);
+        const monarchMarkets = await fetchMonarchMarkets(undefined, customRpcUrls, {
+          resolveUnknownTokens: includeUnknownTokens,
+          trustedTokens: allTokens,
+        });
         const monarchMarketsByChain = partitionMarketsByChain(monarchMarkets);
 
         for (const [network, markets] of monarchMarketsByChain.entries()) {
@@ -153,5 +160,6 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
     refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes in background by default
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
+    enabled: !tokensLoading,
   });
 };

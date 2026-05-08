@@ -22,10 +22,23 @@ export default function Markets() {
   const toast = useStyledToast();
   const appliedUrlSignatureRef = useRef<string | null>(null);
   const [currentSearchParams, setCurrentSearchParams] = useState('');
+  const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
 
   // Data fetching with React Query
-  const { data: rawMarkets, isLoading: loading, refetch } = useMarketsQuery();
-  const { markets, isLoading: filteredMarketsLoading, isWhitelistUnavailable } = useFilteredMarkets();
+  const {
+    data: rawMarkets,
+    isLoading: loading,
+    refetch,
+  } = useMarketsQuery({
+    includeUnknownTokens,
+  });
+  const {
+    markets,
+    isLoading: filteredMarketsLoading,
+    isWhitelistUnavailable,
+  } = useFilteredMarkets({
+    enableRateEnrichment: false,
+  });
 
   const filters = useMarketsFilters();
   const persistedFilters = useMarketFilterPreferences();
@@ -39,7 +52,6 @@ export default function Markets() {
   // Store hooks
   const { currentPage, setCurrentPage, resetPage } = usePagination();
   const { allTokens } = useTokensQuery();
-  const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
 
   useLayoutEffect(() => {
     setCurrentSearchParams(window.location.search.startsWith('?') ? window.location.search.slice(1) : window.location.search);

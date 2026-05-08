@@ -2,7 +2,7 @@ import { erc20Abi, parseAbi, type Address, type Hex } from 'viem';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import type { SupportedNetworks } from './networks';
 import { getClient } from './rpc';
-import { findToken, infoToKey } from './tokens';
+import { findToken, infoToKey, type ERC20Token } from './tokens';
 import type { TokenInfo } from './types';
 import { DATA_API_BASE_URL } from './urls';
 
@@ -22,6 +22,11 @@ export type OnchainTokenMetadata = {
 };
 
 export type SerializedResolvedTokenInfos = Record<string, ResolvedTokenInfo>;
+
+type ResolveTokenInfosOptions = {
+  resolveUnknownTokens?: boolean;
+  trustedTokens?: ERC20Token[];
+};
 
 const TOKEN_METADATA_BATCH_SIZE = 200;
 const erc20SymbolBytes32Abi = parseAbi(['function symbol() view returns (bytes32)']);
@@ -90,6 +95,17 @@ const groupTokenInputsByChain = (tokens: TokenAddressInput[]): Map<SupportedNetw
   }
 
   return tokensByChain;
+};
+
+const findResolvedToken = (address: string, chainId: SupportedNetworks, trustedTokens: ERC20Token[] = []): ERC20Token | undefined => {
+  const localToken = findToken(address, chainId);
+  if (localToken) {
+    return localToken;
+  }
+
+  return trustedTokens.find((token) =>
+    token.networks.some((network) => network.address.toLowerCase() === address.toLowerCase() && network.chain.id === chainId),
+  );
 };
 
 const getOrCreateTokenMetadata = (metadataByToken: Map<string, OnchainTokenMetadata>, key: string): OnchainTokenMetadata => {
@@ -318,18 +334,21 @@ const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInpu
 export const resolveTokenInfos = async (
   tokens: TokenAddressInput[],
   _customRpcUrls: CustomRpcUrls = {},
+  options: ResolveTokenInfosOptions = {},
 ): Promise<Map<string, ResolvedTokenInfo>> => {
   const uniqueTokens = dedupeTokenInputs(tokens);
+  const shouldResolveUnknownTokens = options.resolveUnknownTokens ?? true;
+  const trustedTokens = options.trustedTokens ?? [];
   const resolvedTokenInfos = new Map<string, ResolvedTokenInfo>();
-  const unresolvedTokens = uniqueTokens.filter((token) => !findToken(token.address, token.chainId));
+  const unresolvedTokens = uniqueTokens.filter((token) => !findResolvedToken(token.address, token.chainId, trustedTokens));
   const unresolvedTokenInfos =
-    unresolvedTokens.length === 0
+    !shouldResolveUnknownTokens || unresolvedTokens.length === 0
       ? new Map<string, ResolvedTokenInfo>()
       : await fetchResolvedUnknownTokenInfosFromServer(unresolvedTokens).catch(() => new Map<string, ResolvedTokenInfo>());
 
   for (const token of uniqueTokens) {
     const key = infoToKey(token.address, token.chainId);
-    const knownToken = findToken(token.address, token.chainId);
+    const knownToken = findResolvedToken(token.address, token.chainId, trustedTokens);
 
     if (knownToken) {
       resolvedTokenInfos.set(key, {

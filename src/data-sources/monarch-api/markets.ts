@@ -6,6 +6,7 @@ import { isMarketRegistryEntryAllowed } from '@/utils/markets';
 import { getMorphoAddress } from '@/utils/morpho';
 import { isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import { infoToKey } from '@/utils/tokens';
+import type { ERC20Token } from '@/utils/tokens';
 import { resolveTokenInfos, type ResolvedTokenInfo, type TokenAddressInput } from '@/utils/tokenMetadata';
 import type { Market, MarketWarning } from '@/utils/types';
 import { UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
@@ -33,6 +34,15 @@ type MonarchMarketsPageResponse = {
   data?: {
     Market?: MonarchMarketRow[];
   };
+};
+
+type MapMonarchMarketRowsOptions = {
+  resolveUnknownTokens?: boolean;
+  trustedTokens?: ERC20Token[];
+};
+
+type MapMonarchMarketOptions = {
+  warnOnMissingTokenInfo?: boolean;
 };
 
 const MONARCH_MARKETS_PAGE_SIZE = 1_000;
@@ -127,7 +137,11 @@ const getMarketTokenInputs = (markets: MonarchMarketRow[]): TokenAddressInput[] 
   return tokens;
 };
 
-const mapMonarchMarketToMarket = (market: MonarchMarketRow, tokenInfos: Map<string, ResolvedTokenInfo>): Market | null => {
+const mapMonarchMarketToMarket = (
+  market: MonarchMarketRow,
+  tokenInfos: Map<string, ResolvedTokenInfo>,
+  options: MapMonarchMarketOptions = {},
+): Market | null => {
   if (!isSupportedChain(market.chainId)) {
     return null;
   }
@@ -150,7 +164,9 @@ const mapMonarchMarketToMarket = (market: MonarchMarketRow, tokenInfos: Map<stri
   const collateralAsset = tokenInfos.get(infoToKey(collateralAssetAddress, chainId));
 
   if (!loanAsset || !collateralAsset) {
-    console.warn(`Skipping Monarch market ${market.marketId} on chain ${chainId}: token decimals could not be resolved.`);
+    if (options.warnOnMissingTokenInfo ?? true) {
+      console.warn(`Skipping Monarch market ${market.marketId} on chain ${chainId}: token decimals could not be resolved.`);
+    }
     return null;
   }
 
@@ -203,18 +219,36 @@ const fetchMonarchMarketsPage = async (query: string, variables: Record<string, 
   }
 };
 
-const mapMonarchMarketRows = async (rows: MonarchMarketRow[], customRpcUrls: CustomRpcUrls = {}): Promise<Market[]> => {
+const mapMonarchMarketRows = async (
+  rows: MonarchMarketRow[],
+  customRpcUrls: CustomRpcUrls = {},
+  options: MapMonarchMarketRowsOptions = {},
+): Promise<Market[]> => {
   if (rows.length === 0) {
     return [];
   }
 
-  const tokenInfos = await resolveTokenInfos(getMarketTokenInputs(rows), customRpcUrls);
+  const shouldResolveUnknownTokens = options.resolveUnknownTokens ?? true;
+  const tokenInfos = await resolveTokenInfos(getMarketTokenInputs(rows), customRpcUrls, {
+    resolveUnknownTokens: shouldResolveUnknownTokens,
+    trustedTokens: options.trustedTokens,
+  });
 
-  return rows.map((market) => mapMonarchMarketToMarket(market, tokenInfos)).filter((market): market is Market => market !== null);
+  return rows
+    .map((market) =>
+      mapMonarchMarketToMarket(market, tokenInfos, {
+        warnOnMissingTokenInfo: shouldResolveUnknownTokens,
+      }),
+    )
+    .filter((market): market is Market => market !== null);
 };
 
 // If `network` is omitted, this fetches the merged multi-chain market registry in one query path.
-export const fetchMonarchMarkets = async (network?: SupportedNetworks, customRpcUrls: CustomRpcUrls = {}): Promise<Market[]> => {
+export const fetchMonarchMarkets = async (
+  network?: SupportedNetworks,
+  customRpcUrls: CustomRpcUrls = {},
+  options: MapMonarchMarketRowsOptions = {},
+): Promise<Market[]> => {
   const query = buildEnvioMarketsPageQuery({
     useChainIdFilter: network !== undefined,
   });
@@ -242,7 +276,7 @@ export const fetchMonarchMarkets = async (network?: SupportedNetworks, customRpc
     offset += rows.length;
   }
 
-  return mapMonarchMarketRows(allRows, customRpcUrls);
+  return mapMonarchMarketRows(allRows, customRpcUrls, options);
 };
 
 export const fetchMonarchMarket = async (
@@ -256,6 +290,8 @@ export const fetchMonarchMarket = async (
     zeroAddress: MONARCH_MARKETS_ZERO_ADDRESS,
   });
 
-  const [market] = await mapMonarchMarketRows(rows, customRpcUrls);
+  const [market] = await mapMonarchMarketRows(rows, customRpcUrls, {
+    resolveUnknownTokens: true,
+  });
   return market ?? null;
 };

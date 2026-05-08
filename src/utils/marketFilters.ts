@@ -5,13 +5,13 @@
  * different market views (main markets page, same-loan-asset tables, etc.)
  */
 
-import { LOCKED_MARKET_APY_THRESHOLD } from '@/constants/markets';
+import { LOCKED_MARKET_APY_THRESHOLD, LOCKED_MARKET_APY_THRESHOLDS } from '@/constants/markets';
 import type { OracleMetadataRecord } from '@/hooks/useOracleMetadata';
 import { marketFilterSelectionIncludesAsset } from '@/features/markets/market-filter-selection';
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import { type PriceFeedVendors, getOracleType, getOracleVendorInfo, OracleType } from '@/utils/oracle';
-import type { ERC20Token } from '@/utils/tokens';
+import { findToken as findSupportedToken, TokenPeg, type ERC20Token } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 
 // ============================================================================
@@ -115,8 +115,19 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMeta
   };
 };
 
+const getLockedMarketApyThreshold = (market: Market): number => {
+  const chainId = market.morphoBlue.chain.id;
+  const loanAsset = findSupportedToken(market.loanAsset.address, chainId);
+  const isEthPegLoanMarket = loanAsset?.peg === TokenPeg.ETH || market.loanAsset.symbol.toUpperCase() === 'WETH';
+
+  return isEthPegLoanMarket ? LOCKED_MARKET_APY_THRESHOLDS.ethPegLoanAsset : LOCKED_MARKET_APY_THRESHOLD;
+};
+
 /**
- * Filter out locked/frozen markets with extreme APY (> 1500%)
+ * Filter out locked/frozen markets with extreme supply APY.
+ *
+ * The generic threshold is 1500%, but ETH-pegged loan markets use 100%
+ * because locked WETH markets have appeared around 200%.
  */
 export const createLockedMarketFilter = (showLocked: boolean): MarketFilter => {
   if (showLocked) {
@@ -124,7 +135,7 @@ export const createLockedMarketFilter = (showLocked: boolean): MarketFilter => {
   }
   return (market) => {
     const supplyApy = market.state?.supplyApy ?? 0;
-    return supplyApy <= LOCKED_MARKET_APY_THRESHOLD;
+    return supplyApy <= getLockedMarketApyThreshold(market);
   };
 };
 

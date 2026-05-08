@@ -6,6 +6,7 @@ import { PulseLoader } from 'react-spinners';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useMarketRateEnrichmentQuery } from '@/hooks/queries/useMarketRateEnrichmentQuery';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import {
   computeLiquidationOraclePrice,
@@ -19,6 +20,7 @@ import {
   isInfiniteLtv,
 } from '@/modals/borrow/components/helpers';
 import { getMarketIdentityKey } from '@/utils/market-identity';
+import { getMarketRateEnrichmentKey } from '@/utils/market-rate-enrichment';
 import type { BorrowPositionRow } from '@/utils/positions';
 
 type BorrowedMorphoBlueRowDetailProps = {
@@ -142,7 +144,9 @@ function renderHistoricalRateValue(value: number | null | undefined, isRateEnric
 }
 
 export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetailProps) {
-  const { allMarkets, rateEnrichmentPendingChainIds } = useProcessedMarkets();
+  const { allMarkets } = useProcessedMarkets({
+    enableRateEnrichment: false,
+  });
   const marketIdentityKey = useMemo(
     () => getMarketIdentityKey(row.market.morphoBlue.chain.id, row.market.uniqueKey),
     [row.market.morphoBlue.chain.id, row.market.uniqueKey],
@@ -151,15 +155,28 @@ export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetail
     () => allMarkets.find((market) => getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey) === marketIdentityKey),
     [allMarkets, marketIdentityKey],
   );
+  const rateMarket = liveMarket ?? row.market;
+  const { data: marketRateEnrichments, pendingChainIds: rateEnrichmentPendingChainIds } = useMarketRateEnrichmentQuery([rateMarket]);
+  const marketWithRates = useMemo(() => {
+    const enrichment = marketRateEnrichments.get(getMarketRateEnrichmentKey(rateMarket.uniqueKey, rateMarket.morphoBlue.chain.id));
+    if (!enrichment) {
+      return rateMarket;
+    }
+
+    return {
+      ...rateMarket,
+      state: {
+        ...rateMarket.state,
+        ...enrichment,
+      },
+    };
+  }, [marketRateEnrichments, rateMarket]);
   const resolvedRow = useMemo(
-    () =>
-      liveMarket
-        ? {
-            ...row,
-            market: liveMarket,
-          }
-        : row,
-    [liveMarket, row],
+    () => ({
+      ...row,
+      market: marketWithRates,
+    }),
+    [marketWithRates, row],
   );
   const isRateEnrichmentPending = rateEnrichmentPendingChainIds.has(resolvedRow.market.morphoBlue.chain.id);
 
