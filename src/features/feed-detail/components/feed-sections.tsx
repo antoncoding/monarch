@@ -46,6 +46,7 @@ export function FeedHero({
   totalSupplyUsd,
   totalBorrowUsd,
   oracleCount,
+  isStatsLoading,
 }: {
   leg: FeedDependencyLeg | null;
   address: string;
@@ -54,10 +55,12 @@ export function FeedHero({
   totalSupplyUsd: number;
   totalBorrowUsd: number;
   oracleCount: number;
+  isStatsLoading?: boolean;
 }) {
   const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
   const networkImg = getNetworkImg(chainId);
   const hasProviderBadge = Boolean(leg?.provider || leg?.vendor);
+  const statValue = (value: string): string => (isStatsLoading ? 'Calculating' : value);
 
   return (
     <section className="rounded border border-border bg-surface px-5 py-4 shadow-sm sm:px-6 sm:py-5">
@@ -103,18 +106,22 @@ export function FeedHero({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <StatTile
               label="Markets using"
-              value={marketCount.toLocaleString('en-US')}
-              detail={`${oracleCount.toLocaleString('en-US')} oracle contract${oracleCount === 1 ? '' : 's'}`}
+              value={statValue(marketCount.toLocaleString('en-US'))}
+              detail={
+                isStatsLoading
+                  ? 'Market usage and oracle contracts are loading'
+                  : `${oracleCount.toLocaleString('en-US')} oracle contract${oracleCount === 1 ? '' : 's'}`
+              }
             />
             <StatTile
               label="Supply TVL"
-              value={formatUsdCompact(totalSupplyUsd)}
-              detail="Supplied value in markets using this feed"
+              value={statValue(formatUsdCompact(totalSupplyUsd))}
+              detail={isStatsLoading ? 'Supplied value is still calculating' : 'Supplied value in markets using this feed'}
             />
             <StatTile
               label="Borrow TVL"
-              value={formatUsdCompact(totalBorrowUsd)}
-              detail="Borrowed value in markets using this feed"
+              value={statValue(formatUsdCompact(totalBorrowUsd))}
+              detail={isStatsLoading ? 'Borrowed value is still calculating' : 'Borrowed value in markets using this feed'}
             />
           </div>
         </div>
