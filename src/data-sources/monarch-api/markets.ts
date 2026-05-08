@@ -228,12 +228,11 @@ const mapMonarchMarketRows = async (
     return [];
   }
 
+  const shouldResolveUnknownTokens = options.resolveUnknownTokens ?? true;
   const tokenInfos = await resolveTokenInfos(getMarketTokenInputs(rows), customRpcUrls, {
-    resolveUnknownTokens: options.resolveUnknownTokens ?? true,
+    resolveUnknownTokens: shouldResolveUnknownTokens,
     trustedTokens: options.trustedTokens,
   });
-
-  const shouldResolveUnknownTokens = options.resolveUnknownTokens ?? true;
 
   return rows
     .map((market) =>
