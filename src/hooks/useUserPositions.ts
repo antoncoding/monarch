@@ -2,10 +2,9 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMonarchMarket, fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
+import { fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
 import { fetchMorphoUserPositionMarkets, fetchMorphoUserPositionMarketsForNetworks } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
-import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, type PositionMarketOracleInput } from '@/utils/positions';
@@ -173,7 +172,6 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
   const queryClient = useQueryClient();
   const { allMarkets } = useProcessedMarkets();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
-  const isBlacklisted = useBlacklistedMarkets((state) => state.isBlacklisted);
 
   const { customRpcUrls } = useCustomRpc();
 
@@ -238,30 +236,11 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
         marketsByChain.set(marketInfo.chainId, existing);
       });
 
-      // Build market data map from the default registry, then hydrate user-owned markets missing from that registry.
+      // Build market data map from the complete market registry.
       const marketDataMap = new Map<string, Market>();
       allMarkets.forEach((market) => {
         marketDataMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
       });
-
-      const missingMarketKeys = finalMarketKeys.filter((marketInfo) => {
-        const marketIdentityKey = getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey);
-        return !marketDataMap.has(marketIdentityKey) && !isBlacklisted(marketInfo.marketUniqueKey.toLowerCase());
-      });
-
-      const missingMarketResults = await Promise.allSettled(
-        missingMarketKeys.map((marketInfo) =>
-          fetchMonarchMarket(marketInfo.marketUniqueKey, marketInfo.chainId as SupportedNetworks, customRpcUrls),
-        ),
-      );
-
-      for (const result of missingMarketResults) {
-        if (result.status !== 'fulfilled' || !result.value) {
-          continue;
-        }
-
-        marketDataMap.set(getMarketIdentityKey(result.value.morphoBlue.chain.id, result.value.uniqueKey), result.value);
-      }
 
       // Fetch snapshots for each chain using batched multicall
       const allSnapshots = new Map<string, PositionSnapshot>();
