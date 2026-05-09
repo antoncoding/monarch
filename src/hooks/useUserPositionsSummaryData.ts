@@ -16,7 +16,7 @@ export type { EarningsPeriod } from '@/stores/usePositionsFilters';
 const useUserPositionsSummaryData = (user: string | undefined, period: EarningsPeriod = 'day', chainIds?: SupportedNetworks[]) => {
   const queryClient = useQueryClient();
 
-  const { data: positions, loading: positionsLoading, isRefetching, positionsError } = useUserPositions(user, false, chainIds);
+  const { data: positions, loading: positionsLoading, isRefetching, positionsError } = useUserPositions(user, true, chainIds);
 
   const uniqueChainIds = useMemo(
     () => chainIds ?? [...new Set(positions?.map((p) => p.market.morphoBlue.chain.id as SupportedNetworks) ?? [])],

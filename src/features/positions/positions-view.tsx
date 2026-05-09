@@ -24,6 +24,7 @@ import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
 import { PositionBreadcrumbs } from '@/features/position-detail/components/position-breadcrumbs';
 import { SupportedNetworks } from '@/utils/networks';
+import { hasSupplyPositionHistory } from '@/utils/positions';
 
 export default function Positions() {
   const { account } = useParams<{ account: string }>();
@@ -78,7 +79,7 @@ export default function Positions() {
 
   const loadingMessage = isMarketsLoading ? 'Loading markets...' : 'Loading user positions...';
 
-  const hasSuppliedMarkets = marketPositions.some((position) => BigInt(position.state.supplyShares) > 0n);
+  const hasSuppliedMarkets = marketPositions.some(hasSupplyPositionHistory);
   const hasBorrowPositions = marketPositions.some(
     (position) => BigInt(position.state.borrowShares) > 0n || BigInt(position.state.collateral) > 0n,
   );

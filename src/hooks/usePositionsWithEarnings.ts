@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { calculateEarningsFromSnapshot } from '@/utils/interest';
 import type { MarketPosition, UserTransaction, MarketPositionWithEarnings } from '@/utils/types';
-import { initializePositionWithEmptyEarnings, type PositionSnapshot } from '@/utils/positions';
+import { hasActiveSupplyPosition, initializePositionWithEmptyEarnings, type PositionSnapshot } from '@/utils/positions';
+import { isSupplyPositionTransaction } from '@/utils/transactionGrouping';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
 // Simple helper for the period timestamp calculation
@@ -34,28 +35,27 @@ export const usePositionsWithEarnings = (
 
     return positions.map((position) => {
       const chainId = position.market.morphoBlue.chain.id;
+      const marketIdLower = position.market.uniqueKey.toLowerCase();
+      const marketTxs = transactions.filter(
+        (tx) => tx.data?.market?.uniqueKey?.toLowerCase() === marketIdLower && isSupplyPositionTransaction(tx),
+      );
+      const hasSupplyHistory = Boolean(position.hasSupplyHistory) || hasActiveSupplyPosition(position) || marketTxs.length > 0;
       const chainData = chainBlockData[chainId];
       if (!chainData?.timestamp) {
-        return initializePositionWithEmptyEarnings(position);
+        return initializePositionWithEmptyEarnings(position, hasSupplyHistory);
       }
 
       const startTimestamp = chainData.timestamp;
-
       const currentBalance = BigInt(position.state.supplyAssets);
-      const marketIdLower = position.market.uniqueKey.toLowerCase();
 
       // Get past balance from snapshot
       const chainSnapshots = snapshotsByChain[chainId];
       const pastSnapshot = chainSnapshots?.get(marketIdLower);
       if (!pastSnapshot) {
-        return initializePositionWithEmptyEarnings(position);
+        return initializePositionWithEmptyEarnings(position, hasSupplyHistory);
       }
 
       const pastBalance = BigInt(pastSnapshot.supplyAssets);
-
-      // Filter transactions for this market only.
-      // Time-window filtering is centralized in calculateEarningsFromSnapshot.
-      const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey?.toLowerCase() === marketIdLower);
 
       const earnings = calculateEarningsFromSnapshot(currentBalance, pastBalance, marketTxs, startTimestamp, endTimestamp);
 
@@ -67,6 +67,7 @@ export const usePositionsWithEarnings = (
         effectiveTime: earnings.effectiveTime,
         totalDeposits: earnings.totalDeposits.toString(),
         totalWithdraws: earnings.totalWithdraws.toString(),
+        hasSupplyHistory,
       };
     });
   }, [positions, transactions, snapshotsByChain, chainBlockData]);

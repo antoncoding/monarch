@@ -1,4 +1,4 @@
-import type { UserTransaction } from './types';
+import { type UserTransaction, UserTxTypes } from './types';
 
 export type GroupedTransaction = {
   hash: string;
@@ -13,14 +13,18 @@ export type GroupedTransaction = {
  * Filters transactions to only include withdrawals
  */
 export function getWithdrawals(transactions: UserTransaction[]): UserTransaction[] {
-  return transactions.filter((t) => t.type === 'MarketWithdraw');
+  return transactions.filter((t) => t.type === UserTxTypes.MarketWithdraw);
 }
 
 /**
  * Filters transactions to only include supplies
  */
 export function getSupplies(transactions: UserTransaction[]): UserTransaction[] {
-  return transactions.filter((t) => t.type === 'MarketSupply');
+  return transactions.filter((t) => t.type === UserTxTypes.MarketSupply);
+}
+
+export function isSupplyPositionTransaction(transaction: UserTransaction): boolean {
+  return transaction.type === UserTxTypes.MarketSupply || transaction.type === UserTxTypes.MarketWithdraw;
 }
 
 /**

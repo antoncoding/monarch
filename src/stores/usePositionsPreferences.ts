@@ -8,12 +8,14 @@ import {
 type PositionsPreferencesState = {
   showCollateralExposure: boolean;
   showEarningsInUsd: boolean;
+  hideClosedPositions: boolean;
   borrowedTableColumnVisibility: BorrowedTableColumnVisibility;
 };
 
 type PositionsPreferencesActions = {
   setShowCollateralExposure: (show: boolean) => void;
   setShowEarningsInUsd: (show: boolean) => void;
+  setHideClosedPositions: (hide: boolean) => void;
   setBorrowedTableColumnVisibility: (
     visibilityOrUpdater: BorrowedTableColumnVisibility | ((prev: BorrowedTableColumnVisibility) => BorrowedTableColumnVisibility),
   ) => void;
@@ -23,6 +25,13 @@ type PositionsPreferencesActions = {
 };
 
 type PositionsPreferencesStore = PositionsPreferencesState & PositionsPreferencesActions;
+
+const DEFAULT_STATE: PositionsPreferencesState = {
+  showCollateralExposure: true,
+  showEarningsInUsd: false,
+  hideClosedPositions: true,
+  borrowedTableColumnVisibility: DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
+};
 
 /**
  * Zustand store for positions page preferences.
@@ -36,13 +45,12 @@ export const usePositionsPreferences = create<PositionsPreferencesStore>()(
   persist(
     (set) => ({
       // Default state
-      showCollateralExposure: true,
-      showEarningsInUsd: false,
-      borrowedTableColumnVisibility: DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
+      ...DEFAULT_STATE,
 
       // Actions
       setShowCollateralExposure: (show) => set({ showCollateralExposure: show }),
       setShowEarningsInUsd: (show) => set({ showEarningsInUsd: show }),
+      setHideClosedPositions: (hide) => set({ hideClosedPositions: hide }),
       setBorrowedTableColumnVisibility: (visibilityOrUpdater) =>
         set((state) => ({
           borrowedTableColumnVisibility:
@@ -52,14 +60,10 @@ export const usePositionsPreferences = create<PositionsPreferencesStore>()(
     }),
     {
       name: 'monarch_store_positionsPreferences',
-      version: 2,
+      version: 4,
       migrate: (state, version) => {
         if (!state || typeof state !== 'object') {
-          return {
-            showCollateralExposure: true,
-            showEarningsInUsd: false,
-            borrowedTableColumnVisibility: DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
-          } as PositionsPreferencesState;
+          return DEFAULT_STATE;
         }
 
         const persisted = state as Partial<PositionsPreferencesState>;
@@ -69,6 +73,7 @@ export const usePositionsPreferences = create<PositionsPreferencesStore>()(
             ...persisted,
             showCollateralExposure: persisted.showCollateralExposure ?? true,
             showEarningsInUsd: persisted.showEarningsInUsd ?? false,
+            hideClosedPositions: persisted.hideClosedPositions ?? true,
             borrowedTableColumnVisibility: {
               ...DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
               ...(persisted.borrowedTableColumnVisibility ?? {}),
@@ -80,6 +85,7 @@ export const usePositionsPreferences = create<PositionsPreferencesStore>()(
           ...persisted,
           showCollateralExposure: persisted.showCollateralExposure ?? true,
           showEarningsInUsd: persisted.showEarningsInUsd ?? false,
+          hideClosedPositions: persisted.hideClosedPositions ?? true,
           borrowedTableColumnVisibility: {
             ...DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
             ...(persisted.borrowedTableColumnVisibility ?? {}),

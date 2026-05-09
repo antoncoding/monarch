@@ -29,7 +29,7 @@ import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { formatTokenAmountPreview } from '@/utils/token-amount-format';
 import { getNetworkImg } from '@/utils/networks';
-import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
+import { getGroupedEarnings, groupPositionsByLoanAsset, hasActiveSupplyPosition, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
@@ -66,7 +66,7 @@ export function SuppliedMorphoBlueGroupedTable({
   const setPeriod = usePositionsFilters((s) => s.setPeriod);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const { showEarningsInUsd, setShowEarningsInUsd } = usePositionsPreferences();
+  const { showEarningsInUsd, setShowEarningsInUsd, hideClosedPositions, setHideClosedPositions } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
@@ -83,7 +83,11 @@ export function SuppliedMorphoBlueGroupedTable({
     all: 'All',
   };
 
-  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(positions, actualBlockData), [positions, actualBlockData]);
+  const visiblePositions = useMemo(
+    () => (hideClosedPositions ? positions.filter(hasActiveSupplyPosition) : positions),
+    [positions, hideClosedPositions],
+  );
+  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(visiblePositions, actualBlockData), [visiblePositions, actualBlockData]);
   const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
 
   const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
@@ -181,9 +185,20 @@ export function SuppliedMorphoBlueGroupedTable({
             </TableRow>
           </TableHeader>
           <TableBody className="text-sm">
+            {processedPositions.length === 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={7}
+                  className="py-8 text-center text-secondary"
+                >
+                  Closed supply positions are hidden.
+                </TableCell>
+              </TableRow>
+            )}
             {processedPositions.map((groupedPosition) => {
               const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
               const avgApy = groupedPosition.totalWeightedApy;
+              const isClosedSupplyGroup = groupedPosition.totalSupply === 0;
 
               const earnings = getGroupedEarnings(groupedPosition);
 
@@ -208,7 +223,9 @@ export function SuppliedMorphoBlueGroupedTable({
                     {/* Loan asset details */}
                     <TableCell data-label="Size">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="font-medium">{formatReadableTokenAmount(groupedPosition.totalSupply)}</span>
+                        <span className={`font-medium ${isClosedSupplyGroup ? 'text-secondary' : ''}`}>
+                          {formatReadableTokenAmount(groupedPosition.totalSupply)}
+                        </span>
                         <span>{groupedPosition.loanAsset}</span>
                         <TokenIcon
                           address={groupedPosition.loanAssetAddress}
@@ -223,14 +240,20 @@ export function SuppliedMorphoBlueGroupedTable({
                     {/* Current APR/APY  */}
                     <TableCell data-label={`${rateLabel} (now)`}>
                       <div className="flex items-center justify-center">
-                        <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
+                        {isClosedSupplyGroup ? (
+                          <span className="font-medium text-secondary">-</span>
+                        ) : (
+                          <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
+                        )}
                       </div>
                     </TableCell>
 
                     {/* Actual APY for period */}
                     <TableCell data-label={`${rateLabel} (${periodLabels[period]})`}>
                       <div className="flex items-center justify-center">
-                        {isEarningsLoading ? (
+                        {isClosedSupplyGroup ? (
+                          <span className="font-medium text-secondary">-</span>
+                        ) : isEarningsLoading ? (
                           <PulseLoader
                             size={4}
                             color="#f45f2d"
@@ -391,6 +414,7 @@ export function SuppliedMorphoBlueGroupedTable({
                               transactions={transactions}
                               snapshotsByChain={snapshotsByChain}
                               chainBlockData={actualBlockData}
+                              isEarningsLoading={isEarningsLoading}
                             />
                           </motion.div>
                         </TableCell>
@@ -459,6 +483,16 @@ export function SuppliedMorphoBlueGroupedTable({
                   <IconSwitch
                     selected={showEarningsInUsd}
                     onChange={setShowEarningsInUsd}
+                    size="xs"
+                  />
+                </FilterRow>
+                <FilterRow
+                  title="Hide Closed Positions"
+                  description="Hide exited market positions from the supply list"
+                >
+                  <IconSwitch
+                    selected={hideClosedPositions}
+                    onChange={setHideClosedPositions}
                     size="xs"
                   />
                 </FilterRow>

@@ -83,7 +83,11 @@ type CollateralIconsDisplayProps = {
  */
 export function CollateralIconsDisplay({ collaterals, chainId, maxDisplay = 8, iconSize = 20 }: CollateralIconsDisplayProps) {
   if (collaterals.length === 0) {
-    return <span className="text-sm text-gray-500"> - </span>;
+    return (
+      <div className="flex items-center justify-center">
+        <span className="font-medium text-secondary">-</span>
+      </div>
+    );
   }
 
   // Sort by amount descending
@@ -101,14 +105,22 @@ export function CollateralIconsDisplay({ collaterals, chainId, maxDisplay = 8, i
           className={`relative ${index === 0 ? 'ml-0' : '-ml-2'}`}
           style={{ zIndex: preview.length - index }}
         >
-          <TokenIcon
-            address={collateral.address}
-            chainId={chainId}
-            symbol={collateral.symbol}
-            width={iconSize}
-            height={iconSize}
-            opacity={collateral.amount > 0 ? 1 : 0.5}
-          />
+          <div
+            className="flex items-center justify-center overflow-hidden rounded-full bg-white"
+            style={{
+              width: iconSize,
+              height: iconSize,
+              opacity: collateral.amount > 0 ? 1 : 0.5,
+            }}
+          >
+            <TokenIcon
+              address={collateral.address}
+              chainId={chainId}
+              symbol={collateral.symbol}
+              width={iconSize}
+              height={iconSize}
+            />
+          </div>
         </div>
       ))}
       {remaining.length > 0 && (
