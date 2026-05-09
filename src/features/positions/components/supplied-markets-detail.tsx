@@ -71,7 +71,7 @@ function MarketRow({
       </TableCell>
       <TableCell
         data-label="Allocation"
-        className="align-middle"
+        className="text-center align-middle"
       >
         {hasActiveSupply ? (
           <AllocationCell
@@ -80,7 +80,7 @@ function MarketRow({
             percentage={percentageOfPortfolio}
           />
         ) : (
-          <span className="text-secondary">Closed</span>
+          <span className="font-medium text-secondary">-</span>
         )}
       </TableCell>
       <TableCell

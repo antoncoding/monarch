@@ -198,6 +198,7 @@ export function SuppliedMorphoBlueGroupedTable({
             {processedPositions.map((groupedPosition) => {
               const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
               const avgApy = groupedPosition.totalWeightedApy;
+              const isClosedSupplyGroup = groupedPosition.totalSupply === 0;
 
               const earnings = getGroupedEarnings(groupedPosition);
 
@@ -222,7 +223,9 @@ export function SuppliedMorphoBlueGroupedTable({
                     {/* Loan asset details */}
                     <TableCell data-label="Size">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="font-medium">{formatReadableTokenAmount(groupedPosition.totalSupply)}</span>
+                        <span className={`font-medium ${isClosedSupplyGroup ? 'text-secondary' : ''}`}>
+                          {formatReadableTokenAmount(groupedPosition.totalSupply)}
+                        </span>
                         <span>{groupedPosition.loanAsset}</span>
                         <TokenIcon
                           address={groupedPosition.loanAssetAddress}
@@ -237,14 +240,20 @@ export function SuppliedMorphoBlueGroupedTable({
                     {/* Current APR/APY  */}
                     <TableCell data-label={`${rateLabel} (now)`}>
                       <div className="flex items-center justify-center">
-                        <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
+                        {isClosedSupplyGroup ? (
+                          <span className="font-medium text-secondary">-</span>
+                        ) : (
+                          <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
+                        )}
                       </div>
                     </TableCell>
 
                     {/* Actual APY for period */}
                     <TableCell data-label={`${rateLabel} (${periodLabels[period]})`}>
                       <div className="flex items-center justify-center">
-                        {isEarningsLoading ? (
+                        {isClosedSupplyGroup ? (
+                          <span className="font-medium text-secondary">-</span>
+                        ) : isEarningsLoading ? (
                           <PulseLoader
                             size={4}
                             color="#f45f2d"

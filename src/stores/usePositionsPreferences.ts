@@ -29,7 +29,7 @@ type PositionsPreferencesStore = PositionsPreferencesState & PositionsPreference
 const DEFAULT_STATE: PositionsPreferencesState = {
   showCollateralExposure: true,
   showEarningsInUsd: false,
-  hideClosedPositions: false,
+  hideClosedPositions: true,
   borrowedTableColumnVisibility: DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
 };
 
@@ -60,7 +60,7 @@ export const usePositionsPreferences = create<PositionsPreferencesStore>()(
     }),
     {
       name: 'monarch_store_positionsPreferences',
-      version: 3,
+      version: 4,
       migrate: (state, version) => {
         if (!state || typeof state !== 'object') {
           return DEFAULT_STATE;
@@ -73,7 +73,7 @@ export const usePositionsPreferences = create<PositionsPreferencesStore>()(
             ...persisted,
             showCollateralExposure: persisted.showCollateralExposure ?? true,
             showEarningsInUsd: persisted.showEarningsInUsd ?? false,
-            hideClosedPositions: false,
+            hideClosedPositions: persisted.hideClosedPositions ?? true,
             borrowedTableColumnVisibility: {
               ...DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
               ...(persisted.borrowedTableColumnVisibility ?? {}),
@@ -85,7 +85,7 @@ export const usePositionsPreferences = create<PositionsPreferencesStore>()(
           ...persisted,
           showCollateralExposure: persisted.showCollateralExposure ?? true,
           showEarningsInUsd: persisted.showEarningsInUsd ?? false,
-          hideClosedPositions: persisted.hideClosedPositions ?? false,
+          hideClosedPositions: persisted.hideClosedPositions ?? true,
           borrowedTableColumnVisibility: {
             ...DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY,
             ...(persisted.borrowedTableColumnVisibility ?? {}),
