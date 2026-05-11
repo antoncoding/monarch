@@ -24,6 +24,7 @@ type SuppliedMarketsDetailProps = {
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   chainBlockData: Record<number, { block: number; timestamp: number }>;
   isEarningsLoading: boolean;
+  isOwner: boolean;
 };
 
 function MarketRow({
@@ -31,11 +32,13 @@ function MarketRow({
   totalSupply,
   rateLabel,
   isEarningsLoading,
+  isOwner,
 }: {
   position: MarketPositionWithEarnings;
   totalSupply: number;
   rateLabel: string;
   isEarningsLoading: boolean;
+  isOwner: boolean;
 }) {
   const { open } = useModal();
   const suppliedAmount = Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals));
@@ -116,8 +119,23 @@ function MarketRow({
         className="justify-end px-4 py-3"
         style={{ minWidth: '180px' }}
       >
-        <div className="flex items-center justify-end gap-2">
-          {hasActiveSupply && (
+        {isOwner ? (
+          <div className="flex items-center justify-end gap-2">
+            {hasActiveSupply && (
+              <Button
+                size="sm"
+                variant="surface"
+                onClick={() => {
+                  open('supply', {
+                    market: position.market,
+                    position,
+                    defaultMode: 'withdraw',
+                  });
+                }}
+              >
+                Withdraw
+              </Button>
+            )}
             <Button
               size="sm"
               variant="surface"
@@ -125,26 +143,15 @@ function MarketRow({
                 open('supply', {
                   market: position.market,
                   position,
-                  defaultMode: 'withdraw',
                 });
               }}
             >
-              Withdraw
+              Supply
             </Button>
-          )}
-          <Button
-            size="sm"
-            variant="surface"
-            onClick={() => {
-              open('supply', {
-                market: position.market,
-                position,
-              });
-            }}
-          >
-            Supply
-          </Button>
-        </div>
+          </div>
+        ) : (
+          <span className="block w-full text-right text-xs text-secondary">-</span>
+        )}
       </TableCell>
     </TableRow>
   );
@@ -157,6 +164,7 @@ export function SuppliedMarketsDetail({
   snapshotsByChain,
   chainBlockData,
   isEarningsLoading,
+  isOwner,
 }: SuppliedMarketsDetailProps) {
   const { short: rateLabel } = useRateLabel();
 
@@ -220,6 +228,7 @@ export function SuppliedMarketsDetail({
                   totalSupply={totalSupply}
                   rateLabel={rateLabel}
                   isEarningsLoading={isEarningsLoading}
+                  isOwner={isOwner}
                 />
               ))}
             </TableBody>
