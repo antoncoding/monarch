@@ -67,6 +67,7 @@ type SuppliedMarketPositionsTableProps = {
   positions: MarketPositionWithEarnings[];
   periodLabel: string;
   rateLabel: string;
+  hideEmptyPositions: boolean;
   isEarningsLoading: boolean;
   isOwner: boolean;
   showEarningsInUsd: boolean;
@@ -182,6 +183,7 @@ function SuppliedMarketPositionsTable({
   positions,
   periodLabel,
   rateLabel,
+  hideEmptyPositions,
   isEarningsLoading,
   isOwner,
   showEarningsInUsd,
@@ -213,7 +215,7 @@ function SuppliedMarketPositionsTable({
               colSpan={8}
               className="py-8 text-center text-secondary"
             >
-              Closed supply positions are hidden.
+              {hideEmptyPositions ? 'Empty supply positions are hidden.' : 'You have no supply positions.'}
             </TableCell>
           </TableRow>
         )}
@@ -386,6 +388,7 @@ export function SuppliedMorphoBlueGroupedTable({
     sixmonth: '6M',
     all: 'All',
   };
+  const selectedPeriodLabel = periodLabels[period] ?? period;
 
   const supplyPositions = useMemo(() => positions.filter(hasSupplyPositionHistory), [positions]);
   const visiblePositions = useMemo(
@@ -531,9 +534,9 @@ export function SuppliedMorphoBlueGroupedTable({
                 <TableHead>Size</TableHead>
                 <TableHead>{rateLabel} (now)</TableHead>
                 <TableHead>
-                  {rateLabel} ({periodLabels[period]})
+                  {rateLabel} ({selectedPeriodLabel})
                 </TableHead>
-                <TableHead>Interest Accrued ({periodLabels[period]})</TableHead>
+                <TableHead>Interest Accrued ({selectedPeriodLabel})</TableHead>
                 <TableHead>Collateral</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -545,7 +548,7 @@ export function SuppliedMorphoBlueGroupedTable({
                     colSpan={7}
                     className="py-8 text-center text-secondary"
                   >
-                    Closed supply positions are hidden.
+                    {hideClosedPositions ? 'Empty supply positions are hidden.' : 'You have no supply positions.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -603,7 +606,7 @@ export function SuppliedMorphoBlueGroupedTable({
                       </TableCell>
 
                       {/* Actual APY for period */}
-                      <TableCell data-label={`${rateLabel} (${periodLabels[period]})`}>
+                      <TableCell data-label={`${rateLabel} (${selectedPeriodLabel})`}>
                         <div className="flex items-center justify-center">
                           {isClosedSupplyGroup ? (
                             <span className="font-medium text-secondary">-</span>
@@ -618,7 +621,7 @@ export function SuppliedMorphoBlueGroupedTable({
                               content={
                                 <TooltipContent
                                   title={`Historical ${rateLabel}`}
-                                  detail={`Annualized yield from interest earned over the last ${periodLabels[period]}, weighted by your balance over time.`}
+                                  detail={`Annualized yield from interest earned over the last ${selectedPeriodLabel}, weighted by your balance over time.`}
                                 />
                               }
                             >
@@ -634,7 +637,7 @@ export function SuppliedMorphoBlueGroupedTable({
                       </TableCell>
 
                       {/* Accrued interest */}
-                      <TableCell data-label={`Interest Accrued (${period})`}>
+                      <TableCell data-label={`Interest Accrued (${selectedPeriodLabel})`}>
                         <div className="flex items-center justify-center gap-2">
                           <InterestAccruedDisplay
                             earnings={earnings}
@@ -721,6 +724,7 @@ export function SuppliedMorphoBlueGroupedTable({
                                 snapshotsByChain={snapshotsByChain}
                                 chainBlockData={actualBlockData}
                                 isEarningsLoading={isEarningsLoading}
+                                isOwner={isOwner}
                               />
                             </motion.div>
                           </TableCell>
@@ -735,8 +739,9 @@ export function SuppliedMorphoBlueGroupedTable({
         ) : (
           <SuppliedMarketPositionsTable
             positions={marketPositions}
-            periodLabel={periodLabels[period]}
+            periodLabel={selectedPeriodLabel}
             rateLabel={rateLabel}
+            hideEmptyPositions={hideClosedPositions}
             isEarningsLoading={isEarningsLoading}
             isOwner={isOwner}
             showEarningsInUsd={showEarningsInUsd}

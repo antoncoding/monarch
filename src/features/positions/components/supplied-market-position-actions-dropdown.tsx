@@ -23,6 +23,7 @@ export function SuppliedMarketPositionActionsDropdown({
 }: SuppliedMarketPositionActionsDropdownProps) {
   const { open } = useModalStore();
   const canWithdraw = isOwner && isActiveSupply;
+  const canDeposit = isOwner;
 
   const handleClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -44,6 +45,8 @@ export function SuppliedMarketPositionActionsDropdown({
   };
 
   const handleDepositClick = () => {
+    if (!canDeposit) return;
+
     open('supply', {
       market: position.market,
       position,
@@ -55,40 +58,37 @@ export function SuppliedMarketPositionActionsDropdown({
   };
 
   return (
-    <div
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={-1}
-    >
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            size="xs"
-            variant="surface"
-            className="text-xs"
-            aria-label="Position actions"
-          >
-            <IoEllipsisVertical className="h-3 w-3" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={handleWithdrawClick}
-            startContent={<BsArrowDownCircle className="h-4 w-4" />}
-            disabled={!canWithdraw}
-            className={canWithdraw ? '' : 'cursor-not-allowed opacity-50'}
-          >
-            Withdraw
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={handleDepositClick}
-            startContent={<BsArrowUpCircle className="h-4 w-4" />}
-          >
-            Deposit
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          size="xs"
+          variant="surface"
+          className="text-xs"
+          aria-label="Position actions"
+          onClick={handleClick}
+          onKeyDown={handleKeyDown}
+        >
+          <IoEllipsisVertical className="h-3 w-3" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={handleWithdrawClick}
+          startContent={<BsArrowDownCircle className="h-4 w-4" />}
+          disabled={!canWithdraw}
+          className={canWithdraw ? '' : 'cursor-not-allowed opacity-50'}
+        >
+          Withdraw
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleDepositClick}
+          startContent={<BsArrowUpCircle className="h-4 w-4" />}
+          disabled={!canDeposit}
+          className={canDeposit ? '' : 'cursor-not-allowed opacity-50'}
+        >
+          Deposit
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
