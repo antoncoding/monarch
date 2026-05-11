@@ -10,9 +10,10 @@ import { MarketFilter } from '@/features/positions/components/markets-filter-com
 import type { ModalZIndex } from '@/components/common/Modal';
 import { ClearFiltersButton } from '@/components/shared/clear-filters-button';
 import { TablePagination } from '@/components/shared/table-pagination';
+import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
-import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useModal } from '@/hooks/useModal';
 import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
@@ -27,7 +28,7 @@ import { getOracleVendorInfo, type PriceFeedVendors } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
 import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
-import { buildTrustedVaultMap } from '@/utils/vaults';
+import { buildTrustedVaultMap, buildTrustedVaultMetadata, getTrustedVaultsForMarket, isMarketTrustedByVault } from '@/utils/vaults';
 import { MarketIdBadge } from './market-id-badge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from './market-identity';
 import { MarketIndicators } from './market-indicators';
@@ -70,36 +71,6 @@ enum SortColumn {
   Risk = 7,
   TrustedBy = 8,
   UtilizationRate = 9,
-}
-
-function getTrustedVaultsForMarket(market: Market, trustedVaultMap: Map<string, TrustedVault>): TrustedVault[] {
-  if (!market.supplyingVaults?.length) {
-    return [];
-  }
-
-  const chainId = market.morphoBlue.chain.id;
-  const seen = new Set<string>();
-  const matches: TrustedVault[] = [];
-
-  market.supplyingVaults.forEach((vault) => {
-    if (!vault.address) return;
-    const key = getVaultKey(vault.address, chainId);
-    if (seen.has(key)) return;
-    seen.add(key);
-    const trusted = trustedVaultMap.get(key);
-    if (trusted) {
-      matches.push(trusted);
-    }
-  });
-
-  return matches.sort((a, b) => {
-    const aUnknown = a.curator === 'unknown';
-    const bUnknown = b.curator === 'unknown';
-    if (aUnknown !== bUnknown) {
-      return aUnknown ? 1 : -1;
-    }
-    return a.name.localeCompare(b.name);
-  });
 }
 
 function HTSortable({
@@ -364,19 +335,17 @@ export function MarketsTableWithSameLoanAsset({
   } = useMarketPreferences();
 
   const { vaults: userTrustedVaults } = useTrustedVaults();
+  const shouldLoadTrustedVaultMetadata = columnVisibility.trustedBy && userTrustedVaults.length > 0;
+  const { data: morphoVaults = [] } = useAllMorphoVaultsQuery({ enabled: shouldLoadTrustedVaultMetadata });
 
+  const trustedVaultMetadata = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
   const trustedVaultMap = useMemo(() => {
-    return buildTrustedVaultMap(userTrustedVaults);
-  }, [userTrustedVaults]);
+    return buildTrustedVaultMap(userTrustedVaults, trustedVaultMetadata);
+  }, [userTrustedVaults, trustedVaultMetadata]);
 
   const hasTrustedVault = useCallback(
     (market: Market) => {
-      if (!market.supplyingVaults?.length) return false;
-      const chainId = market.morphoBlue.chain.id;
-      return market.supplyingVaults.some((vault) => {
-        if (!vault.address) return false;
-        return trustedVaultMap.has(getVaultKey(vault.address as string, chainId));
-      });
+      return isMarketTrustedByVault(market, trustedVaultMap);
     },
     [trustedVaultMap],
   );

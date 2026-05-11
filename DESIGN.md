@@ -215,6 +215,7 @@ Cards are working surfaces, not decorative marketing panels.
 - **Shadow Strategy:** `shadow-sm` at rest, stronger shadows only when elevated as an overlay or focused interaction.
 - **Border:** Low-contrast border for chart cards, feed sections, modals, and repeated panels.
 - **Internal Padding:** 16px for compact panels, 24px for larger market or position headers.
+- **Modal Scroll:** modal should let the main panel own vertical scrolling. Avoid nested scroll regions inside sections unless the content needs an independent fixed context.
 
 ### Inputs / Fields
 

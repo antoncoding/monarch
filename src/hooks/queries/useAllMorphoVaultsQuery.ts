@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllMorphoVaults, type MorphoVault } from '@/data-sources/morpho-api/vaults';
 
+export const MORPHO_VAULTS_QUERY_KEY = ['morpho-vaults'] as const;
+
+type UseAllMorphoVaultsQueryOptions = {
+  enabled?: boolean;
+};
+
 /**
  * Fetches all whitelisted Morpho vaults from the API using React Query.
  *
@@ -14,9 +20,9 @@ import { fetchAllMorphoVaults, type MorphoVault } from '@/data-sources/morpho-ap
  * const { data: vaults, isLoading, error, refetch } = useAllMorphoVaultsQuery();
  * ```
  */
-export const useAllMorphoVaultsQuery = () => {
+export const useAllMorphoVaultsQuery = (options?: UseAllMorphoVaultsQueryOptions) => {
   return useQuery<MorphoVault[], Error>({
-    queryKey: ['morpho-vaults'],
+    queryKey: MORPHO_VAULTS_QUERY_KEY,
     queryFn: async () => {
       try {
         return await fetchAllMorphoVaults();
@@ -25,6 +31,7 @@ export const useAllMorphoVaultsQuery = () => {
         throw err instanceof Error ? err : new Error('Failed to fetch Morpho vaults');
       }
     },
+    enabled: options?.enabled ?? true,
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
     refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes in background
     refetchOnWindowFocus: true, // Refetch when user returns to tab

@@ -11,6 +11,7 @@ import { useMarketWhitelistFlags } from '@/stores/useMarketWhitelistFlags';
 const EMPTY_LOOKUP = new Map<string, boolean>();
 const EMPTY_SUPPLYING_VAULTS_LOOKUP = new Map<string, { address: string }[]>();
 const MORPHO_MARKET_METADATA_STALE_TIME = 5 * 60 * 1000;
+export const MORPHO_MARKET_METADATA_QUERY_KEY = ['morpho-market-metadata'] as const;
 
 type UseMorphoWhitelistStatusQueryOptions = {
   enabled?: boolean;
@@ -34,7 +35,7 @@ export const useMorphoWhitelistStatusQuery = (options?: UseMorphoWhitelistStatus
   const replaceNetworks = useMarketWhitelistFlags((state) => state.replaceNetworks);
 
   const query = useQuery({
-    queryKey: ['morpho-market-metadata'],
+    queryKey: MORPHO_MARKET_METADATA_QUERY_KEY,
     queryFn: async () => {
       try {
         return await fetchAllMorphoMarketMetadata();

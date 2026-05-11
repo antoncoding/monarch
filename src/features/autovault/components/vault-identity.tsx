@@ -4,9 +4,9 @@ import { useMemo, type ReactNode } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { AddressIdentity } from '@/components/shared/address-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import type { VaultCurator } from '@/constants/vaults/known_vaults';
 import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { VaultIcon } from './vault-icon';
 
@@ -16,8 +16,9 @@ type VaultIdentityProps = {
   address: `0x${string}`;
   asset?: `0x${string}`;
   chainId: number;
-  curator: VaultCurator | string;
   vaultName?: string;
+  imageSrc?: string;
+  description?: string;
   showLink?: boolean;
   variant?: VaultIdentityVariant;
   showTooltip?: boolean;
@@ -32,8 +33,9 @@ export function VaultIdentity({
   address,
   asset,
   chainId,
-  curator,
   vaultName,
+  imageSrc,
+  description,
   showLink = true,
   variant = 'chip',
   showTooltip = true,
@@ -47,32 +49,30 @@ export function VaultIdentity({
   const canLinkToMorpho = useMemo(() => supportsMorphoAppLinks(chainId), [chainId]);
   const formattedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   const displayName = vaultName ?? formattedAddress;
-  const curatorLabel = curator === 'unknown' ? 'Curator unknown' : `Curated by ${curator}`;
+  const iconAlt = `${displayName} logo`;
+
+  const renderIcon = (size: number) => {
+    return (
+      <VaultIcon
+        imageSrc={imageSrc}
+        width={size}
+        height={size}
+        alt={iconAlt}
+      />
+    );
+  };
 
   const baseContent = (() => {
     if (variant === 'icon') {
-      return (
-        <div className={`inline-flex items-center ${className}`}>
-          <VaultIcon
-            curator={curator}
-            width={iconSize}
-            height={iconSize}
-          />
-        </div>
-      );
+      return <div className={`inline-flex items-center ${className}`}>{renderIcon(iconSize)}</div>;
     }
 
     if (variant === 'inline') {
       return (
         <div className={`inline-flex items-center gap-2 ${className}`}>
-          <VaultIcon
-            curator={curator}
-            width={iconSize}
-            height={iconSize}
-          />
+          {renderIcon(iconSize)}
           <div className="flex flex-col leading-tight font-zen">
             <span className="text-sm text-primary">{displayName}</span>
-            <span className="text-[11px] text-secondary">{curatorLabel}</span>
           </div>
         </div>
       );
@@ -80,11 +80,7 @@ export function VaultIdentity({
 
     return (
       <div className={`inline-flex items-center gap-2 rounded bg-hovered px-2 py-1 text-xs text-secondary ${className}`}>
-        <VaultIcon
-          curator={curator}
-          width={iconSize}
-          height={iconSize}
-        />
+        {renderIcon(iconSize)}
         <div className="flex flex-col leading-tight">
           <span className="text-primary">{displayName}</span>
           <span className="font-monospace text-[10px]">{formattedAddress}</span>
@@ -112,12 +108,15 @@ export function VaultIdentity({
     return interactiveContent;
   }
 
-  const resolvedDetail = tooltipDetail ?? (
-    <div className="flex flex-col gap-1 text-sm">
-      {showAddressInTooltip && <span className="rounded bg-hovered px-1 py-0.5 font-monospace text-xs opacity-70">{address}</span>}
-      <span className="text-secondary">{curatorLabel}</span>
-    </div>
-  );
+  const defaultDetail = showAddressInTooltip ? (
+    <AddressIdentity
+      address={address}
+      chainId={chainId}
+      label="Vault"
+    />
+  ) : undefined;
+  const resolvedDetail = tooltipDetail ?? defaultDetail;
+  const resolvedSecondaryDetail = tooltipSecondaryDetail ?? description;
 
   const tooltipTitle = (
     <div className="flex items-center gap-2">
@@ -138,16 +137,10 @@ export function VaultIdentity({
     <Tooltip
       content={
         <TooltipContent
-          icon={
-            <VaultIcon
-              curator={curator}
-              width={32}
-              height={32}
-            />
-          }
+          icon={renderIcon(32)}
           title={tooltipTitle}
           detail={resolvedDetail}
-          secondaryDetail={tooltipSecondaryDetail}
+          secondaryDetail={resolvedSecondaryDetail}
           actionIcon={<ExternalLinkIcon className="h-4 w-4" />}
           actionHref={vaultHref}
           onActionClick={(e) => e.stopPropagation()}

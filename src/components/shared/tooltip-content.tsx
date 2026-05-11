@@ -21,12 +21,14 @@ export function TooltipContent({
   actionHref,
   onActionClick,
 }: TooltipContentProps) {
+  const contentClassName = `max-w-[min(22rem,calc(100vw-2rem))] overflow-hidden break-words ${className}`;
+
   // Simple tooltip with just an icon and title
   if (!detail && !secondaryDetail) {
     return (
-      <div className={`flex items-center gap-2 ${className}`}>
+      <div className={`flex items-center gap-2 ${contentClassName}`}>
         {icon && <div className="flex items-center">{icon}</div>}
-        <span className="font-zen text-primary">{title}</span>
+        <span className="min-w-0 font-zen text-primary">{title}</span>
         {actionIcon && actionHref && (
           <a
             href={actionHref}
@@ -44,13 +46,13 @@ export function TooltipContent({
 
   // Complex tooltip with additional details
   return (
-    <div className={className}>
+    <div className={contentClassName}>
       <div className="flex w-full gap-3">
         {icon && <div className="flex-shrink-0 self-center">{icon}</div>}
-        <div className="flex flex-col gap-1 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           {title && <div className="font-zen text-primary">{title}</div>}
-          {detail && <div className="font-zen text-sm text-primary whitespace-pre-line">{detail}</div>}
-          {secondaryDetail && <div className="font-zen text-xs text-secondary">{secondaryDetail}</div>}
+          {detail && <div className="whitespace-pre-line font-zen text-sm text-primary">{detail}</div>}
+          {secondaryDetail && <div className="whitespace-pre-line font-zen text-xs text-secondary">{secondaryDetail}</div>}
         </div>
         {actionIcon && actionHref && (
           <a

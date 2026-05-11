@@ -6,12 +6,13 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
 import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
-import { buildTrustedVaultMap } from '@/utils/vaults';
+import { buildTrustedVaultMap, buildTrustedVaultMetadata } from '@/utils/vaults';
 import { SortColumn } from '../constants';
 import { MarketTableBody } from './market-table-body';
 import { HTSortable } from './market-table-utils';
@@ -55,6 +56,9 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
 
   // Get trusted vaults directly from store (no prop drilling!)
   const { vaults: trustedVaults } = useTrustedVaults();
+  const trustedVaultCount = trustedVaults.length;
+  const shouldLoadTrustedVaultMetadata = columnVisibility.trustedBy && trustedVaultCount > 0;
+  const { data: morphoVaults = [] } = useAllMorphoVaultsQuery({ enabled: shouldLoadTrustedVaultMetadata });
 
   const {
     markets,
@@ -90,7 +94,8 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
     [sortColumn, sortDirection, setSortColumn, setSortDirection],
   );
 
-  const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
+  const trustedVaultMetadata = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
+  const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults, trustedVaultMetadata), [trustedVaults, trustedVaultMetadata]);
 
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
@@ -123,7 +128,10 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
       return "Try disabling 'Hide Unknown Oracles' guard in filters.";
     }
     if (trustedVaultsOnly) {
-      return 'Disable the Trusted Vaults filter or update your trusted list in Settings.';
+      if (trustedVaultCount === 0) {
+        return 'No trusted vaults selected. Set up trusted vaults, or turn off the trusted vaults filter.';
+      }
+      return 'No markets match your trusted vaults. Add more vaults or turn off the trusted vaults filter.';
     }
     if (minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled) {
       return 'Try disabling USD filters in settings, or adjust your filter thresholds.';

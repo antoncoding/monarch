@@ -33,6 +33,7 @@ function CategoryButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
+      aria-label={collapsed ? cat.label : undefined}
       className={cn(
         'flex items-center gap-2 rounded px-3 py-2.5 text-left transition-colors',
         isSelected ? 'bg-surface text-primary' : 'text-secondary hover:bg-surface/50 hover:text-primary',

@@ -1,18 +1,45 @@
 'use client';
 
-import { useMemo } from 'react';
 import Image from 'next/image';
-import { type VaultCurator, getVaultLogo } from '@/constants/vaults/known_vaults';
 
 type VaultIconProps = {
-  curator: VaultCurator | string;
+  imageSrc?: string;
   width?: number;
   height?: number;
   className?: string;
+  alt?: string;
 };
 
-export function VaultIcon({ curator, width = 24, height = 24, className = '' }: VaultIconProps) {
-  const logoSrc = useMemo(() => getVaultLogo(curator), [curator]);
+const TRUSTED_VAULT_IMAGE_HOSTNAMES = new Set(['cdn.morpho.org']);
+
+function getTrustedVaultImageSrc(imageSrc?: string) {
+  if (!imageSrc) return undefined;
+
+  try {
+    const url = new URL(imageSrc);
+    if (url.protocol !== 'https:' || !TRUSTED_VAULT_IMAGE_HOSTNAMES.has(url.hostname)) {
+      return undefined;
+    }
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+export function VaultIcon({ imageSrc, width = 24, height = 24, className = '', alt }: VaultIconProps) {
+  const altText = alt ?? 'Vault logo';
+  const trustedImageSrc = getTrustedVaultImageSrc(imageSrc);
+
+  if (!trustedImageSrc) {
+    return (
+      <div
+        aria-label={altText}
+        className={`rounded-full bg-gray-300 dark:bg-gray-700 ${className}`}
+        role="img"
+        style={{ width, height }}
+      />
+    );
+  }
 
   return (
     <div
@@ -23,11 +50,12 @@ export function VaultIcon({ curator, width = 24, height = 24, className = '' }: 
       }}
     >
       <Image
-        src={logoSrc}
-        alt={`${curator} logo`}
+        src={trustedImageSrc}
+        alt={altText}
         width={width}
         height={height}
-        className="object-contain p-0.5"
+        className="object-contain"
+        unoptimized
       />
     </div>
   );
