@@ -1,0 +1,444 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-11T02:02:28Z",
+  "title": "Design System: Monarch",
+  "extensions": {
+    "colorMeta": {
+      "monarch-orange": {
+        "role": "primary",
+        "displayName": "Monarch Orange",
+        "canonical": "#f45f2d",
+        "tonalRamp": [
+          "oklch(18% 0.08 38)",
+          "oklch(28% 0.12 38)",
+          "oklch(40% 0.16 38)",
+          "oklch(55% 0.18 38)",
+          "oklch(68% 0.15 38)",
+          "oklch(78% 0.10 38)",
+          "oklch(88% 0.06 38)",
+          "oklch(95% 0.03 38)"
+        ]
+      },
+      "light-canvas": {
+        "role": "neutral",
+        "displayName": "Light Canvas",
+        "canonical": "#f0f2f7",
+        "tonalRamp": [
+          "#16181a",
+          "#313537",
+          "#596066",
+          "#8e8e8e",
+          "#c8ccd4",
+          "#e2e8f0",
+          "#f0f2f7",
+          "#ffffff"
+        ]
+      },
+      "light-surface": {
+        "role": "neutral",
+        "displayName": "Light Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#202426",
+          "#313537",
+          "#596066",
+          "#8e8e8e",
+          "#d7dbe3",
+          "#f0f2f7",
+          "#f6f8fb",
+          "#ffffff"
+        ]
+      },
+      "light-hover": {
+        "role": "neutral",
+        "displayName": "Light Hover",
+        "canonical": "#f6f8fb",
+        "tonalRamp": [
+          "#16181a",
+          "#313537",
+          "#596066",
+          "#8e8e8e",
+          "#d7dbe3",
+          "#e9edf4",
+          "#f6f8fb",
+          "#ffffff"
+        ]
+      },
+      "text-ink": {
+        "role": "neutral",
+        "displayName": "Text Ink",
+        "canonical": "#16181a",
+        "tonalRamp": [
+          "#16181a",
+          "#202426",
+          "#313537",
+          "#596066",
+          "#8e8e8e",
+          "#c8ccd4",
+          "#f0f2f7",
+          "#ffffff"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Text Muted",
+        "canonical": "#8e8e8e",
+        "tonalRamp": [
+          "#202426",
+          "#313537",
+          "#596066",
+          "#737373",
+          "#8e8e8e",
+          "#b6b6b6",
+          "#d7dbe3",
+          "#f0f2f7"
+        ]
+      },
+      "light-border": {
+        "role": "neutral",
+        "displayName": "Light Border",
+        "canonical": "#e2e8f0",
+        "tonalRamp": [
+          "#1e293b",
+          "#334155",
+          "#64748b",
+          "#94a3b8",
+          "#cbd5e1",
+          "#e2e8f0",
+          "#f1f5f9",
+          "#f8fafc"
+        ]
+      },
+      "dark-canvas": {
+        "role": "neutral",
+        "displayName": "Dark Canvas",
+        "canonical": "#16181a",
+        "tonalRamp": [
+          "#16181a",
+          "#202426",
+          "#313537",
+          "#596066",
+          "#8e8e8e",
+          "#c8ccd4",
+          "#f0f2f7",
+          "#ffffff"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Dark Surface",
+        "canonical": "#202426",
+        "tonalRamp": [
+          "#16181a",
+          "#202426",
+          "#313537",
+          "#596066",
+          "#8e8e8e",
+          "#c8ccd4",
+          "#f0f2f7",
+          "#ffffff"
+        ]
+      },
+      "dark-hover": {
+        "role": "neutral",
+        "displayName": "Dark Hover",
+        "canonical": "#313537",
+        "tonalRamp": [
+          "#16181a",
+          "#202426",
+          "#313537",
+          "#596066",
+          "#8e8e8e",
+          "#c8ccd4",
+          "#f0f2f7",
+          "#ffffff"
+        ]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Dark Border",
+        "canonical": "#1e293b",
+        "tonalRamp": [
+          "#0f172a",
+          "#1e293b",
+          "#334155",
+          "#64748b",
+          "#94a3b8",
+          "#cbd5e1",
+          "#e2e8f0",
+          "#f8fafc"
+        ]
+      },
+      "grid-muted-light": {
+        "role": "neutral",
+        "displayName": "Light Grid Muted",
+        "canonical": "#00000014",
+        "tonalRamp": [
+          "#00000008",
+          "#0000000a",
+          "#0000000d",
+          "#00000014",
+          "#0000001f",
+          "#00000033",
+          "#0000004d",
+          "#00000066"
+        ]
+      },
+      "grid-muted-dark": {
+        "role": "neutral",
+        "displayName": "Dark Grid Muted",
+        "canonical": "#ffffff14",
+        "tonalRamp": [
+          "#ffffff08",
+          "#ffffff0a",
+          "#ffffff0d",
+          "#ffffff14",
+          "#ffffff1f",
+          "#ffffff33",
+          "#ffffff4d",
+          "#ffffff66"
+        ]
+      },
+      "grid-active": {
+        "role": "primary",
+        "displayName": "Grid Active",
+        "canonical": "#f45f2d99",
+        "tonalRamp": [
+          "#f45f2d1a",
+          "#f45f2d33",
+          "#f45f2d4d",
+          "#f45f2d66",
+          "#f45f2d80",
+          "#f45f2d99",
+          "#f45f2dcc",
+          "#f45f2d"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing headlines and major intro states only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles and major section headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles, panel titles, and compact product headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Dense product copy, table support text, and modal explanations."
+      },
+      "label": {
+        "displayName": "Technical Label",
+        "purpose": "Section tags, addresses, code-like metadata, and compact markers."
+      }
+    },
+    "shadows": [
+      {
+        "name": "surface-rest",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Default cards, compact filters, and neutral buttons."
+      },
+      {
+        "name": "surface-hover",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "Button hover and small elevated feedback."
+      },
+      {
+        "name": "overlay",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Dropdowns, popovers, tooltips, and menus."
+      },
+      {
+        "name": "modal",
+        "value": "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+        "purpose": "High priority modal surfaces."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "150ms ease-out",
+        "purpose": "Dropdown and menu open or close feedback."
+      },
+      {
+        "name": "state-standard",
+        "value": "200ms ease-in-out",
+        "purpose": "Buttons, compact filters, hover states, and control feedback."
+      },
+      {
+        "name": "grid-slow",
+        "value": "700ms ease-in-out",
+        "purpose": "Animated grid divider cell transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action with Monarch Orange, compact height, low radius, and quiet hover lift.",
+      "html": "<button class=\"ds-btn-primary\">Explore Markets</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; min-width: 80px; padding: 8px 16px; border: 0; border-radius: 6px; background: #f45f2d; color: #ffffff; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: background-color 200ms ease-in-out, filter 200ms ease-in-out, box-shadow 200ms ease-in-out, transform 200ms ease-in-out; } .ds-btn-primary:hover { background: color-mix(in srgb, #f45f2d 85%, transparent); filter: brightness(1.05); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); } .ds-btn-primary:active { transform: scale(0.98); filter: brightness(0.95); } .ds-btn-primary:focus-visible { outline: 1px solid #f45f2d; outline-offset: 2px; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Neutral action for secondary commands on app surfaces.",
+      "html": "<button class=\"ds-btn-default\">Learn More</button>",
+      "css": ".ds-btn-default { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; min-width: 80px; padding: 8px 16px; border: 0; border-radius: 6px; background: #ffffff; color: #16181a; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: background-color 200ms ease-in-out, filter 200ms ease-in-out, box-shadow 200ms ease-in-out, transform 200ms ease-in-out; } .ds-btn-default:hover { background: rgb(255 255 255 / 0.7); filter: brightness(0.95); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); } .ds-btn-default:active { transform: scale(0.98); filter: brightness(0.9); } .ds-btn-default:focus-visible { outline: 1px solid rgb(244 95 45 / 0.5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Filled Input",
+      "kind": "input",
+      "refersTo": "input-filled",
+      "description": "Compact filled field for filters, search, and modal forms.",
+      "html": "<label class=\"ds-input-label\" for=\"ds-input\">Market search</label><input class=\"ds-input-filled\" id=\"ds-input\" placeholder=\"Search markets...\" />",
+      "css": ".ds-input-label { display: block; margin-bottom: 6px; color: #8e8e8e; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; font-size: 12px; font-weight: 500; } .ds-input-filled { display: flex; width: 100%; height: 40px; padding: 8px 12px; border: 0; border-radius: 2px; background: #f6f8fb; color: #16181a; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; font-size: 14px; outline: none; transition: box-shadow 200ms ease-in-out, background-color 200ms ease-in-out; } .ds-input-filled::placeholder { color: #8e8e8e; } .ds-input-filled:focus-visible { box-shadow: 0 0 0 1px rgb(244 95 45 / 0.5); } .ds-input-filled:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Working surface for charts, feed sections, headers, and compact panels.",
+      "html": "<section class=\"ds-card\"><h3>Oracle Risk</h3><p>Inspect provider exposure and market concentration without hiding the underlying inputs.</p></section>",
+      "css": ".ds-card { padding: 16px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff; color: #16181a; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); } .ds-card h3 { margin: 0 0 8px; font-size: 16px; font-weight: 500; line-height: 1.25; } .ds-card p { margin: 0; max-width: 65ch; color: #8e8e8e; font-size: 14px; line-height: 1.5; }"
+    },
+    {
+      "name": "Header Navigation Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Top bar route link with text-only active indicator.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link ds-nav-link-active\" href=\"#\">Markets</a><span class=\"ds-nav-divider\"></span><a class=\"ds-nav-link\" href=\"#\">Autovault</a></nav>",
+      "css": ".ds-nav { display: inline-flex; align-items: center; gap: 4px; height: 56px; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; } .ds-nav-link { position: relative; padding: 4px 12px; color: #f45f2d; font-size: 14px; font-weight: 400; text-align: center; text-decoration: none; transition: color 200ms ease-in-out; } .ds-nav-link:hover { color: rgb(244 95 45 / 0.8); } .ds-nav-link::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -4px; height: 1.5px; background: transparent; transition: background-color 200ms ease-in-out; } .ds-nav-link-active::after { background: #f45f2d; } .ds-nav-divider { width: 0; height: 16px; border-left: 1px dashed rgb(142 142 142 / 0.2); }"
+    },
+    {
+      "name": "Section Tag",
+      "kind": "chip",
+      "refersTo": "section-tag",
+      "description": "Mono bracket label used on landing and section headers.",
+      "html": "<span class=\"ds-section-tag\">[ Market Analysis ]</span>",
+      "css": ".ds-section-tag { display: inline-block; padding: 4px 8px; border: 1px solid rgb(244 95 45 / 0.2); border-radius: 6px; color: rgb(244 95 45 / 0.8); font-family: 'Victor Mono', ui-monospace, monospace; font-size: 12px; font-weight: 400; line-height: 1; letter-spacing: 0.2em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Compact Filter Control",
+      "kind": "custom",
+      "refersTo": "filter-control",
+      "description": "Surface control used in market filters for search, network, assets, and oracle selectors.",
+      "html": "<button class=\"ds-filter-control\">Network <span>All</span></button>",
+      "css": ".ds-filter-control { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 0; border-radius: 2px; background: #ffffff; color: #16181a; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; font-size: 14px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: background-color 200ms ease-in-out, box-shadow 200ms ease-in-out; } .ds-filter-control span { color: #8e8e8e; } .ds-filter-control:hover { background: #f6f8fb; } .ds-filter-control:focus-visible { outline: 1px solid rgb(244 95 45 / 0.5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Dropdown Menu",
+      "kind": "custom",
+      "refersTo": "dropdown-menu",
+      "description": "Low-radius overlay menu used by navigation, settings, and compact actions.",
+      "html": "<div class=\"ds-dropdown\"><button class=\"ds-dropdown-item\">Analysis</button><button class=\"ds-dropdown-item\">Settings</button></div>",
+      "css": ".ds-dropdown { min-width: 160px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 2px; background: #ffffff; color: #16181a; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); } .ds-dropdown-item { display: flex; width: 100%; align-items: center; gap: 12px; padding: 8px 16px; border: 0; border-radius: 2px; background: transparent; color: #16181a; font-family: inherit; font-size: 14px; text-align: left; cursor: pointer; transition: background-color 150ms ease-out; } .ds-dropdown-item:hover, .ds-dropdown-item:focus-visible { background: #f6f8fb; outline: none; }"
+    },
+    {
+      "name": "Highlighted Checkbox",
+      "kind": "input",
+      "refersTo": "checkbox-highlighted",
+      "description": "Acknowledgement row for risk or confirmation flows.",
+      "html": "<label class=\"ds-checkbox-highlighted\"><span class=\"ds-checkbox-box\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M13.5 4.5 6.5 11.5 3 8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" /></svg></span><span>I understand the risk context.</span></label>",
+      "css": ".ds-checkbox-highlighted { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid rgb(244 95 45 / 0.2); border-radius: 2px; background: rgb(244 95 45 / 0.05); color: #8e8e8e; font-family: 'Zen Kaku Gothic New', Inter, sans-serif; font-size: 14px; line-height: 1; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: background-color 200ms ease-in-out; } .ds-checkbox-highlighted:hover { background: rgb(244 95 45 / 0.1); } .ds-checkbox-box { display: grid; place-content: center; width: 16px; height: 16px; flex: 0 0 16px; border: 1px solid #f45f2d; border-radius: 2px; background: #f45f2d; color: #ffffff; } .ds-checkbox-box svg { width: 14px; height: 14px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Analyst's Workbench",
+    "overview": "Monarch is a restrained product interface for people who already understand that DeFi lending carries real tradeoffs. The current design works because it feels like a clean workbench: structured, data-forward, low-drama, and precise. Future work should preserve that character before adding any new visual idea.\n\nThe system uses light and dark technical neutrals, low-radius components, sparse Monarch Orange, dashed grid texture, and compact table-first layouts. It should feel useful to advanced DeFi users, Morpho power users, and fund managers who prefer control over persuasion.\n\nIt explicitly rejects the PRODUCT.md anti-references: a simple retail dashboard, hype-heavy crypto funnel, toy-like yield app, persuasive UX-maxi product, deposit-pressure patterns, exaggerated emotional copy, gamified yield chasing, and over-simplified risk presentation.",
+    "keyCharacteristics": [
+      "Dense enough for repeated market analysis, but clean enough to scan.",
+      "Existing components are the default vocabulary; new surfaces should extend them, not replace them.",
+      "Orange is reserved for primary action, selection, active state, and meaningful grid energy.",
+      "Tables, filters, breadcrumbs, modals, and settings panels should remain familiar product UI.",
+      "Landing-page grid accents may be expressive, but product surfaces stay neutral and task-first."
+    ],
+    "rules": [
+      {
+        "name": "The Preservation Rule",
+        "body": "Document the current design before changing it. Do not redesign Monarch by inventing a new theme, component library, or interaction language unless the task explicitly asks for that.",
+        "section": "overview"
+      },
+      {
+        "name": "The Orange Has Weight Rule",
+        "body": "Monarch Orange must stay rare. If a screen starts to look orange, the accent has failed.",
+        "section": "colors"
+      },
+      {
+        "name": "The Neutral Surface Rule",
+        "body": "Prefer background, surface, hover, border, and muted text tokens before adding new hues.",
+        "section": "colors"
+      },
+      {
+        "name": "The Grid Is Infrastructure Rule",
+        "body": "Dot grids and dashed borders should feel like measurement marks and table structure, not decoration pasted on top.",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Type Rule",
+        "body": "Do not create drama through type. Use weight, size, and spacing for hierarchy, not oversized labels or display type inside controls.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono Marker Rule",
+        "body": "Victor Mono is a signal for technical metadata and brackets, not a replacement body font.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat At Rest Rule",
+        "body": "Surfaces should look stable before interaction. Add lift for state or overlay priority, not for decoration.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Dark Mode Border Rule",
+        "body": "In dark mode, low-contrast borders do more work than shadows. Preserve that choice.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve the current component library first: `button`, `card`, `input`, `table`, `dropdown-menu`, `select`, `tabs`, `modal`, and filter components are the default vocabulary.",
+      "Do keep Monarch Orange sparse and meaningful: primary actions, active states, focus, checked state, and grid activation.",
+      "Do keep product surfaces dense, neutral, and table-first for expert workflows.",
+      "Do use low-radius controls, subtle borders, faint grid texture, and quiet shadows exactly because they make the interface feel precise.",
+      "Do make risk, oracle, liquidity, collateral, and rate context visible without turning it into sales copy.",
+      "Do respect reduced motion and keep motion tied to state, reveal, or feedback."
+    ],
+    "donts": [
+      "Don't make Monarch feel like a simple retail dashboard.",
+      "Don't make Monarch feel like a hype-heavy crypto funnel.",
+      "Don't make Monarch feel like a toy-like yield app.",
+      "Don't make Monarch feel like a persuasive UX-maxi product that nudges users into action before they are ready.",
+      "Don't add deposit-pressure patterns, exaggerated emotional copy, gamified yield chasing, or over-simplified risk presentation.",
+      "Don't replace the current visual system with a new theme, new radius scale, new typography system, or new component vocabulary during routine feature work.",
+      "Don't use gradient text, decorative glassmorphism, hero-metric templates, identical marketing-card grids, or modal-first design as a default.",
+      "Don't add heavy color to inactive states, especially full-saturation orange.",
+      "Don't extend colored side-stripe accents beyond the existing table row orientation pattern."
+    ]
+  }
+}
