@@ -3,9 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { RiSparkling2Fill } from 'react-icons/ri';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
-import { defaultTrustedVaults } from '@/constants/vaults/known_vaults';
+import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { buildTrustedVaultMap, buildTrustedVaultMetadata } from '@/utils/vaults';
 import { SettingActionItem, SettingToggleItem } from '../SettingItem';
 import type { DetailView } from '../constants';
 
@@ -17,24 +18,18 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
   const { vaults: userTrustedVaults } = useTrustedVaults();
   const { rebalanceDefaultMode, setRebalanceDefaultMode } = useAppSettings();
   const [mounted, setMounted] = useState(false);
+  const trustedVaultCount = userTrustedVaults.length;
+  const { data: morphoVaults = [] } = useAllMorphoVaultsQuery({ enabled: trustedVaultCount > 0 });
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const defaultVaultKeys = useMemo(
-    () => new Set(defaultTrustedVaults.map((vault) => `${vault.chainId}-${vault.address.toLowerCase()}`)),
-    [],
-  );
+  const trustedVaultMetadata = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
 
   const sortedTrustedVaults = useMemo(() => {
-    return [...userTrustedVaults].sort((a, b) => {
-      const aDefault = defaultVaultKeys.has(`${a.chainId}-${a.address.toLowerCase()}`);
-      const bDefault = defaultVaultKeys.has(`${b.chainId}-${b.address.toLowerCase()}`);
-      if (aDefault === bDefault) return 0;
-      return aDefault ? -1 : 1;
-    });
-  }, [userTrustedVaults, defaultVaultKeys]);
+    return Array.from(buildTrustedVaultMap(userTrustedVaults, trustedVaultMetadata).values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [userTrustedVaults, trustedVaultMetadata]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,36 +49,50 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
         <h3 className="text-xs uppercase text-secondary">Trusted Vaults</h3>
         <SettingActionItem
           title="Manage Trusted Vaults"
-          description="Choose which vaults you trust. Only vaults marked as default trusted are selected automatically."
-          buttonLabel="Edit"
+          description={
+            trustedVaultCount === 0
+              ? 'Used by Trusted By columns and the trusted vaults filter.'
+              : `${trustedVaultCount} selected for market columns and filters.`
+          }
+          buttonLabel={trustedVaultCount === 0 ? 'Set up' : 'Edit'}
           onClick={() => onNavigateToDetail?.('trusted-vaults')}
+          badge={
+            trustedVaultCount === 0 ? (
+              <span className="rounded-sm bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-medium text-orange-500">0 selected</span>
+            ) : undefined
+          }
         />
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-2">
             {mounted ? (
-              <>
-                {sortedTrustedVaults.slice(0, 10).map((vault) => (
-                  <VaultIdentity
-                    key={`${vault.address}-${vault.chainId}`}
-                    address={vault.address as `0x${string}`}
-                    chainId={vault.chainId}
-                    curator={vault.curator}
-                    vaultName={vault.name}
-                    asset={vault.asset}
-                    variant="icon"
-                    iconSize={20}
-                    showTooltip
-                    showLink
-                  />
-                ))}
-                {userTrustedVaults.length > 10 && (
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] text-secondary dark:bg-gray-700">
-                    +{userTrustedVaults.length - 10}
-                  </div>
-                )}
-              </>
+              trustedVaultCount === 0 ? (
+                <div className="text-xs text-secondary">No trusted vaults selected.</div>
+              ) : (
+                <>
+                  {sortedTrustedVaults.slice(0, 10).map((vault) => (
+                    <VaultIdentity
+                      key={`${vault.address}-${vault.chainId}`}
+                      address={vault.address as `0x${string}`}
+                      chainId={vault.chainId}
+                      description={vault.metadataDescription}
+                      imageSrc={vault.metadataImage}
+                      vaultName={vault.name}
+                      asset={vault.asset}
+                      variant="icon"
+                      iconSize={20}
+                      showTooltip
+                      showLink
+                    />
+                  ))}
+                  {trustedVaultCount > 10 && (
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-[10px] text-secondary dark:bg-gray-700">
+                      +{trustedVaultCount - 10}
+                    </div>
+                  )}
+                </>
+              )
             ) : (
-              <div className="flex h-6 items-center text-xs text-secondary">Loading vaults...</div>
+              <div className="flex h-6 items-center text-xs text-secondary">Loading vaults</div>
             )}
           </div>
         </div>

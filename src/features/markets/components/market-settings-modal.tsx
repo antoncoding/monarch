@@ -1,11 +1,14 @@
 import { useState, type ReactNode } from 'react';
 import { FiSliders } from 'react-icons/fi';
+import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Input } from '@/components/ui/input';
 import { Modal, ModalBody, ModalHeader, type ModalZIndex } from '@/components/common/Modal';
+import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { COLUMN_DESCRIPTIONS, COLUMN_LABELS, DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from './column-visibility';
 
 type MarketSettingsModalProps = {
@@ -34,11 +37,15 @@ function SettingItem({ title, description, children }: SettingItemProps) {
 
 export default function MarketSettingsModal({ isOpen, onOpenChange, zIndex = 'settings' }: MarketSettingsModalProps) {
   const { columnVisibility, setColumnVisibility, entriesPerPage, setEntriesPerPage } = useMarketPreferences();
+  const { vaults: trustedVaults } = useTrustedVaults();
+  const { open: openModal } = useModal();
   const { short: rateShort } = useRateLabel();
 
   const [customEntries, setCustomEntries] = useState(entriesPerPage.toString());
 
   const rateWord = rateShort === 'APR' ? 'rate' : 'yield';
+  const trustedVaultCount = trustedVaults.length;
+  const trustedByNeedsSetup = columnVisibility.trustedBy && trustedVaultCount === 0;
 
   const getLabel = (key: keyof ColumnVisibility): string => {
     if (key === 'supplyAPY') return `Supply ${rateShort}`;
@@ -49,6 +56,9 @@ export default function MarketSettingsModal({ isOpen, onOpenChange, zIndex = 'se
   const getDescription = (key: keyof ColumnVisibility): string => {
     if (key === 'supplyAPY') return `Annual percentage ${rateWord} for suppliers`;
     if (key === 'borrowAPY') return `Annual percentage ${rateWord} for borrowers`;
+    if (key === 'trustedBy' && trustedVaultCount === 0) {
+      return 'Shows your trusted vaults. Set them up first.';
+    }
     return COLUMN_DESCRIPTIONS[key];
   };
 
@@ -58,6 +68,14 @@ export default function MarketSettingsModal({ isOpen, onOpenChange, zIndex = 'se
       setEntriesPerPage(value);
     }
     setCustomEntries(value > 0 ? String(value) : entriesPerPage.toString());
+  };
+
+  const handleOpenTrustedVaults = () => {
+    onOpenChange(false);
+    openModal('monarchSettings', {
+      initialCategory: 'preferences',
+      initialDetailView: 'trusted-vaults',
+    });
   };
 
   const columnKeys = Object.keys(COLUMN_LABELS) as (keyof ColumnVisibility)[];
@@ -79,6 +97,22 @@ export default function MarketSettingsModal({ isOpen, onOpenChange, zIndex = 'se
             onClose={onClose}
           />
           <ModalBody className="flex flex-col gap-4">
+            {trustedByNeedsSetup && (
+              <div className="flex items-center justify-between gap-3 rounded bg-orange-500/10 p-3 text-orange-600 dark:text-orange-500">
+                <div className="flex min-w-0 items-start gap-2">
+                  <IoWarningOutline className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p className="text-xs">Trusted By is visible, but no trusted vaults are selected.</p>
+                </div>
+                <Button
+                  size="xs"
+                  variant="default"
+                  onClick={handleOpenTrustedVaults}
+                  className="shrink-0"
+                >
+                  Set up
+                </Button>
+              </div>
+            )}
             <div className="flex flex-col gap-4">
               <h3 className="text-xs uppercase text-secondary">Visible Columns</h3>
               <div className="flex flex-col gap-1">

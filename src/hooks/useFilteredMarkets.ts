@@ -12,9 +12,9 @@ import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
-import { getVaultKey } from '@/constants/vaults/known_vaults';
 import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
 import type { Market } from '@/utils/types';
+import { buildTrustedVaultMap, isMarketTrustedByVault } from '@/utils/vaults';
 
 type UseFilteredMarketsOptions = {
   currentPage?: number;
@@ -110,6 +110,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const officialTrendingKeys = useOfficialTrendingMarketKeys();
   const customTagKeys = useCustomTagMarketKeys();
   const shouldBlockWhitelistedFiltering = !showUnwhitelistedMarkets && whitelistLookup.size === 0;
+  const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const filteredCandidates = useMemo(() => {
     if (shouldBlockWhitelistedFiltering) {
@@ -147,15 +148,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     });
 
     if (preferences.trustedVaultsOnly) {
-      const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
-      filteredMarkets = filteredMarkets.filter((market) => {
-        if (!market.supplyingVaults?.length) return false;
-        const chainId = market.morphoBlue.chain.id;
-        return market.supplyingVaults.some((vault) => {
-          if (!vault.address) return false;
-          return trustedVaultKeys.has(getVaultKey(vault.address as string, chainId));
-        });
-      });
+      filteredMarkets = filteredMarkets.filter((market) => isMarketTrustedByVault(market, trustedVaultMap));
     }
 
     // Official trending filter (backend-computed)
@@ -189,7 +182,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     filters,
     persistedFilters,
     preferences,
-    trustedVaults,
+    trustedVaultMap,
     findToken,
     officialTrendingKeys,
     customTagKeys,
@@ -206,14 +199,11 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     }
 
     if (preferences.sortColumn === SortColumn.TrustedBy) {
-      const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
       return sortMarkets(
         filteredCandidates,
         (a, b) => {
-          const aHasTrusted =
-            a.supplyingVaults?.some((v) => v.address && trustedVaultKeys.has(getVaultKey(v.address, a.morphoBlue.chain.id))) ?? false;
-          const bHasTrusted =
-            b.supplyingVaults?.some((v) => v.address && trustedVaultKeys.has(getVaultKey(v.address, b.morphoBlue.chain.id))) ?? false;
+          const aHasTrusted = isMarketTrustedByVault(a, trustedVaultMap);
+          const bHasTrusted = isMarketTrustedByVault(b, trustedVaultMap);
           return Number(aHasTrusted) - Number(bHasTrusted);
         },
         preferences.sortDirection as 1 | -1,
@@ -226,7 +216,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     }
 
     return filteredCandidates;
-  }, [filteredCandidates, preferences.sortColumn, preferences.sortDirection, preferences.starredMarkets, trustedVaults]);
+  }, [filteredCandidates, preferences.sortColumn, preferences.sortDirection, preferences.starredMarkets, trustedVaultMap]);
 
   const rateEnrichmentTargets = useMemo(() => {
     if (!shouldEnableRateEnrichment) {

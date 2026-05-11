@@ -9,12 +9,13 @@ import { MarketIndicators } from '@/features/markets/components/market-indicator
 import { MarketRiskIndicators } from '@/features/markets/components/market-risk-indicators';
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
-import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { MarketRateEnrichment } from '@/utils/market-rate-enrichment';
 import type { Market } from '@/utils/types';
+import { getTrustedVaultsForMarket } from '@/utils/vaults';
 import { APYCell } from '../apy-breakdown-tooltip';
 import { MarketActionsDropdown } from '../market-actions-dropdown';
 import { ExpandedMarketDetail } from './market-row-detail';
@@ -79,36 +80,6 @@ export function MarketTableBody({
     (columnVisibility.weeklyBorrowAPY ? 1 : 0) +
     (columnVisibility.monthlySupplyAPY ? 1 : 0) +
     (columnVisibility.monthlyBorrowAPY ? 1 : 0);
-
-  const getTrustedVaultsForMarket = (market: Market): TrustedVault[] => {
-    if (!columnVisibility.trustedBy || !market.supplyingVaults?.length) {
-      return [];
-    }
-
-    const chainId = market.morphoBlue.chain.id;
-    const uniqueMatches: TrustedVault[] = [];
-    const seen = new Set<string>();
-
-    market.supplyingVaults.forEach((vault) => {
-      if (!vault.address) return;
-      const key = getVaultKey(vault.address as string, chainId);
-      if (seen.has(key)) return;
-      seen.add(key);
-      const trusted = trustedVaultMap.get(key);
-      if (trusted) {
-        uniqueMatches.push(trusted);
-      }
-    });
-
-    return uniqueMatches.sort((a, b) => {
-      const aUnknown = a.curator === 'unknown';
-      const bUnknown = b.curator === 'unknown';
-      if (aUnknown !== bUnknown) {
-        return aUnknown ? 1 : -1;
-      }
-      return a.name.localeCompare(b.name);
-    });
-  };
 
   return (
     <TableBody className="text-sm">
@@ -196,7 +167,7 @@ export function MarketTableBody({
                   className="z-50 text-center"
                   style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}
                 >
-                  <TrustedByCell vaults={getTrustedVaultsForMarket(item)} />
+                  <TrustedByCell vaults={getTrustedVaultsForMarket(item, trustedVaultMap)} />
                 </TableCell>
               )}
               {columnVisibility.totalSupply && (

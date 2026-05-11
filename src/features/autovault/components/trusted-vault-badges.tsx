@@ -5,48 +5,25 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 
+const TRUSTED_BY_ICON_SIZE = 16;
+
 type MoreVaultsBadgeProps = {
-  vaults: TrustedVault[];
+  count: number;
   badgeSize?: number;
 };
 
-export function MoreVaultsBadge({ vaults, badgeSize = 22 }: MoreVaultsBadgeProps) {
-  if (vaults.length === 0) return null;
+export function MoreVaultsBadge({ count, badgeSize = TRUSTED_BY_ICON_SIZE }: MoreVaultsBadgeProps) {
+  if (count === 0) return null;
 
   return (
-    <Tooltip
-      content={
-        <TooltipContent
-          title={<span className="text-sm font-semibold">More trusted vaults</span>}
-          detail={
-            <div className="flex flex-col gap-2">
-              {vaults.map((vault) => (
-                <VaultIdentity
-                  key={`${vault.address}-${vault.chainId}`}
-                  address={vault.address}
-                  chainId={vault.chainId}
-                  curator={vault.curator}
-                  vaultName={vault.name}
-                  variant="inline"
-                  showAddressInTooltip={false}
-                />
-              ))}
-            </div>
-          }
-        />
-      }
+    <span
+      className="ml-1 inline-flex items-center justify-center font-monospace text-[11px] leading-none text-secondary"
+      style={{
+        height: badgeSize,
+      }}
     >
-      <span
-        className="-ml-2 flex items-center justify-center rounded-full border border-background/40 bg-hovered text-[11px] text-secondary"
-        style={{
-          width: badgeSize,
-          height: badgeSize,
-          zIndex: 0,
-        }}
-      >
-        +{vaults.length}
-      </span>
-    </Tooltip>
+      +{count}
+    </span>
   );
 }
 
@@ -55,39 +32,69 @@ type TrustedByCellProps = {
   badgeSize?: number;
 };
 
-export function TrustedByCell({ vaults, badgeSize = 22 }: TrustedByCellProps) {
+export function TrustedByCell({ vaults, badgeSize = TRUSTED_BY_ICON_SIZE }: TrustedByCellProps) {
   if (!vaults.length) {
     return <span className="text-xs text-secondary">-</span>;
   }
 
   const preview = vaults.slice(0, 3);
+  const hiddenCount = vaults.length - preview.length;
 
   return (
-    <div className="flex items-center justify-center">
-      {preview.map((vault, index) => (
-        <div
-          key={`${vault.address}-${vault.chainId}`}
-          className={`relative ${index === 0 ? 'ml-0' : '-ml-2'}`}
-          style={{ zIndex: preview.length - index }}
-        >
-          <VaultIdentity
-            address={vault.address}
-            chainId={vault.chainId}
-            curator={vault.curator}
-            vaultName={vault.name}
-            variant="icon"
-            iconSize={badgeSize}
-            className="rounded-full border border-background/40 bg-surface transition-transform duration-150 hover:-translate-y-1"
-            showAddressInTooltip={false}
-          />
-        </div>
-      ))}
-      {vaults.length > preview.length && (
-        <MoreVaultsBadge
-          vaults={vaults.slice(preview.length)}
-          badgeSize={badgeSize}
+    <Tooltip
+      content={
+        <TooltipContent
+          title={<span className="text-sm font-semibold">Trusted vaults</span>}
+          detail={
+            <div className="flex flex-col gap-2">
+              {vaults.map((vault) => (
+                <VaultIdentity
+                  key={`${vault.address}-${vault.chainId}`}
+                  address={vault.address}
+                  asset={vault.asset}
+                  chainId={vault.chainId}
+                  description={vault.metadataDescription}
+                  imageSrc={vault.metadataImage}
+                  vaultName={vault.name}
+                  variant="inline"
+                  showAddressInTooltip={false}
+                  showTooltip={false}
+                />
+              ))}
+            </div>
+          }
         />
-      )}
-    </div>
+      }
+    >
+      <div className="flex items-center justify-center">
+        {preview.map((vault, index) => (
+          <div
+            key={`${vault.address}-${vault.chainId}`}
+            className={`relative ${index === 0 ? 'ml-0' : '-ml-2'}`}
+            style={{ zIndex: preview.length - index }}
+          >
+            <VaultIdentity
+              address={vault.address}
+              asset={vault.asset}
+              chainId={vault.chainId}
+              description={vault.metadataDescription}
+              imageSrc={vault.metadataImage}
+              vaultName={vault.name}
+              variant="icon"
+              iconSize={badgeSize}
+              className="rounded-full border border-background/40 bg-surface transition-transform duration-150 hover:-translate-y-1"
+              showAddressInTooltip={false}
+              showTooltip={false}
+            />
+          </div>
+        ))}
+        {hiddenCount > 0 && (
+          <MoreVaultsBadge
+            count={hiddenCount}
+            badgeSize={badgeSize}
+          />
+        )}
+      </div>
+    </Tooltip>
   );
 }

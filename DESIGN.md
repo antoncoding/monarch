@@ -215,6 +215,8 @@ Cards are working surfaces, not decorative marketing panels.
 - **Shadow Strategy:** `shadow-sm` at rest, stronger shadows only when elevated as an overlay or focused interaction.
 - **Border:** Low-contrast border for chart cards, feed sections, modals, and repeated panels.
 - **Internal Padding:** 16px for compact panels, 24px for larger market or position headers.
+- **Settings Alignment:** Settings panels use one content axis. Section labels, helper text, action rows, and controls should start from the same left edge; avoid nested mini-cards or extra left padding unless an icon/list affordance needs it.
+- **Settings Scroll:** Settings pages should let the main panel own vertical scrolling. Avoid nested scroll regions inside sections unless the content needs an independent fixed context.
 
 ### Inputs / Fields
 

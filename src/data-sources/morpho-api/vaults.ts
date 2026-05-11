@@ -6,7 +6,7 @@ type VaultAddressByNetwork = {
   networkId: number;
 };
 
-// Constants for Morpho vault fetching
+// Constants for Morpho listed vault fetching
 const MORPHO_SUPPORTED_CHAIN_IDS = [1, 10, 8453, 999, 137, 42_161, 130];
 const MAX_VAULTS_LIMIT = 500;
 
@@ -15,9 +15,12 @@ export type MorphoVault = {
   address: string;
   chainId: number;
   name: string;
+  featured: boolean;
   totalAssets: string;
   assetAddress: string;
   assetSymbol: string;
+  metadataDescription?: string;
+  metadataImage?: string;
 };
 
 // API response types
@@ -27,6 +30,11 @@ type ApiVault = {
     id: number;
   };
   name: string;
+  featured: boolean;
+  metadata?: {
+    description?: string | null;
+    image?: string | null;
+  } | null;
   state: {
     apy?: number | null;
     totalAssets: string;
@@ -65,14 +73,17 @@ function transformVault(apiVault: ApiVault): MorphoVault {
     address: apiVault.address,
     chainId: apiVault.chain.id,
     name: apiVault.name,
+    featured: apiVault.featured,
     totalAssets: apiVault.state.totalAssets,
     assetAddress: apiVault.asset.address,
     assetSymbol: apiVault.asset.symbol,
+    metadataDescription: apiVault.metadata?.description ?? undefined,
+    metadataImage: apiVault.metadata?.image ?? undefined,
   };
 }
 
 /**
- * Fetches all whitelisted vaults from Morpho API across supported chains
+ * Fetches listed vaults from Morpho API across supported chains
  *
  * @returns Array of MorphoVault
  */
@@ -95,7 +106,6 @@ export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
 
     const vaults = response.data?.vaults?.items;
     if (!vaults || vaults.length === 0) {
-      console.log('No whitelisted vaults found');
       return [];
     }
 

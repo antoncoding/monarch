@@ -58,6 +58,7 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const trustedVaultCount = trustedVaults.length;
+  const hasTrustedVaults = trustedVaultCount > 0;
   const starredCount = starredMarkets.length;
 
   // Navigate to a specific detail view, then reopen filter when settings closes
@@ -78,6 +79,9 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
   const isButtonVariant = variant === 'button';
 
   const formatThreshold = (value: string) => `>= $${formatReadable(parseNumericThreshold(value))}`;
+  const trustedVaultsDescription = hasTrustedVaults
+    ? `Show markets supplied by your ${trustedVaultCount} trusted vault${trustedVaultCount !== 1 ? 's' : ''}`
+    : 'Set up trusted vaults to use this filter.';
 
   return (
     <div className={className}>
@@ -255,23 +259,25 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
                   />
                 </FilterRow>
                 <FilterRow
-                  title="Trusted Vaults Only"
-                  description={`Show markets supplied by your ${trustedVaultCount} trusted vault${trustedVaultCount !== 1 ? 's' : ''}`}
+                  title="Trusted vaults"
+                  description={trustedVaultsDescription}
                 >
                   <div className="flex items-center gap-1.5">
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size={hasTrustedVaults ? 'icon' : 'xs'}
                       onClick={() => handleOpenDetailView('trusted-vaults')}
-                      aria-label="Configure trusted vaults"
-                      className="h-6 w-6"
+                      aria-label={hasTrustedVaults ? 'Configure trusted vaults' : 'Set up trusted vaults'}
+                      className={hasTrustedVaults ? 'h-6 w-6' : 'h-6'}
                     >
                       <GoGear className="h-3.5 w-3.5" />
+                      {!hasTrustedVaults && <span>Set up</span>}
                     </Button>
                     <IconSwitch
                       selected={trustedVaultsOnly}
                       onChange={setTrustedVaultsOnly}
                       size="xs"
+                      disabled={!hasTrustedVaults && !trustedVaultsOnly}
                     />
                   </div>
                 </FilterRow>

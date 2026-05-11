@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 
 type TrustedVaultsState = {
   vaults: TrustedVault[];
@@ -36,7 +36,7 @@ type TrustedVaultsStore = TrustedVaultsState & TrustedVaultsActions;
 export const useTrustedVaults = create<TrustedVaultsStore>()(
   persist(
     (set, get) => ({
-      vaults: defaultTrustedVaults,
+      vaults: [],
 
       addVault: (vault) => {
         const { vaults } = get();
