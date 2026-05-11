@@ -33,9 +33,9 @@ Universal coding-agent rules for the Monarch codebase.
 ## Final Validation Gate
 For every non-trivial code or docs change, do this immediately before the final response:
 
-1. Read `docs/VALIDATIONS.md`.
-2. Apply only the sections relevant to the files and behavior touched.
-3. Fix validation failures before reporting completion, unless blocked.
+1. Read `docs/VALIDATIONS.md` line by line.
+2. Apply the sections and rules relevant to the files and behavior touched. (Can use multi-agent for this)
+3. Evaluate them and fix validation failures before reporting completion, unless blocked.
 4. In the final response, state the validation sections and rules applied, verification run, and remaining risks.
 
 When a user-reported bug exposes a reusable failure pattern, add the new rule to `docs/VALIDATIONS.md`, not this file.
