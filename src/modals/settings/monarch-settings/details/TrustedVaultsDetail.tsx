@@ -177,24 +177,26 @@ export function TrustedVaultsDetail() {
 
   const { data: morphoVaults = [], isLoading: morphoLoading } = useAllMorphoVaultsQuery();
 
-  const morphoListedVaults = useMemo<TrustedVault[]>(() => {
-    return morphoVaults.map(morphoVaultToTrustedVault);
-  }, [morphoVaults]);
-  const trustedVaultMetadata = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
+  const mergedVaults = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
+  const mergedVaultsByKey = useMemo(() => new Map(mergedVaults.map((vault) => [vaultKey(vault), vault])), [mergedVaults]);
 
-  const morphoVaultsByKey = useMemo(() => new Map(morphoListedVaults.map((vault) => [vaultKey(vault), vault])), [morphoListedVaults]);
+  const morphoListedVaults = useMemo<TrustedVault[]>(() => {
+    return morphoVaults.map((morphoVault) => {
+      const vault = morphoVaultToTrustedVault(morphoVault);
+      return {
+        ...(mergedVaultsByKey.get(vaultKey(vault)) ?? vault),
+        source: 'morpho',
+      };
+    });
+  }, [morphoVaults, mergedVaultsByKey]);
   const monarchVaults = useMemo<TrustedVault[]>(() => {
     return known_vaults.map((vault) => {
-      const morphoVault = morphoVaultsByKey.get(vaultKey(vault));
       return {
-        ...vault,
-        featured: morphoVault?.featured ?? vault.featured,
-        metadataDescription: morphoVault?.metadataDescription ?? vault.metadataDescription,
-        metadataImage: morphoVault?.metadataImage ?? vault.metadataImage,
+        ...(mergedVaultsByKey.get(vaultKey(vault)) ?? vault),
         source: 'monarch',
       };
     });
-  }, [morphoVaultsByKey]);
+  }, [mergedVaultsByKey]);
 
   const browseVaults = useMemo<BrowseVault[]>(() => {
     const vaultsByKey = new Map<string, BrowseVault>();
@@ -227,7 +229,7 @@ export function TrustedVaultsDetail() {
   };
 
   const enrichedTrustedVaults = useMemo(() => {
-    return Array.from(buildTrustedVaultMap(userTrustedVaults, trustedVaultMetadata).values()).map((vault) => {
+    return Array.from(buildTrustedVaultMap(userTrustedVaults, mergedVaults).values()).map((vault) => {
       const browseVault = browseVaultsByKey.get(vaultKey(vault));
       return browseVault
         ? {
@@ -238,7 +240,7 @@ export function TrustedVaultsDetail() {
           }
         : vault;
     });
-  }, [userTrustedVaults, trustedVaultMetadata, browseVaultsByKey]);
+  }, [userTrustedVaults, mergedVaults, browseVaultsByKey]);
 
   const sortedTrustedVaults = useMemo(() => {
     return [...enrichedTrustedVaults].sort((a, b) => a.name.localeCompare(b.name));
@@ -254,7 +256,7 @@ export function TrustedVaultsDetail() {
     () => filteredBrowseVaults.filter((vault) => !trustedVaultKeys.has(vaultKey(vault))).length,
     [filteredBrowseVaults, trustedVaultKeys],
   );
-  const isMorphoSourceLoading = morphoLoading && sourceFilter !== 'monarch';
+  const isMorphoSourceLoading = morphoLoading && sourceFilter === 'morpho';
   const sourceFilterOptions = useMemo(
     () => [
       { id: 'all' as const, label: 'All', count: browseVaults.length },

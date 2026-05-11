@@ -91,7 +91,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Do not use Next.js raw image patterns where the project expects `next/image`.
 - Make sure Mobile view is considered.
 - Simplify wording to provide a clear call to action; remove unnecessary explanations. Focus on what a user should do and what they should see, not what you want to say.
-- Models, should let the main panel own vertical scrolling; avoid nested scroll regions inside sections unless the content needs an independent fixed context.
+- Modals should let the main panel own vertical scrolling; avoid nested scroll regions inside sections unless the content needs an independent fixed context.
 
 ## Verification Commands
 
