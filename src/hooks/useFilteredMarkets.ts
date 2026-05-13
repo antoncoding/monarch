@@ -97,6 +97,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const persistedFilters = useMarketFilterPreferences();
   const isHistoricalRateSort = HISTORICAL_RATE_SORT_COLUMNS.has(preferences.sortColumn);
   const isRateAtTargetSort = preferences.sortColumn === SortColumn.RateAtTarget;
+  const requiresGlobalRateSort = isHistoricalRateSort || isRateAtTargetSort;
   const historicalRateColumnsVisible =
     preferences.columnVisibility.dailySupplyAPY ||
     preferences.columnVisibility.dailyBorrowAPY ||
@@ -237,7 +238,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       return [];
     }
 
-    if (isHistoricalRateSort) {
+    if (requiresGlobalRateSort) {
       return filteredCandidates;
     }
 
@@ -246,7 +247,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     return sortedCandidates.slice(startIndex, startIndex + preferences.entriesPerPage);
   }, [
     shouldEnableRateEnrichment,
-    isHistoricalRateSort,
+    requiresGlobalRateSort,
     filteredCandidates,
     sortedCandidates,
     options?.currentPage,
@@ -279,7 +280,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       return sortedCandidates;
     }
 
-    if (!isHistoricalRateSort) {
+    if (!requiresGlobalRateSort) {
       return mergeRateEnrichments(sortedCandidates, marketRateEnrichments);
     }
 
@@ -295,7 +296,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     shouldEnableRateEnrichment,
     marketRateEnrichments,
     sortedCandidates,
-    isHistoricalRateSort,
+    requiresGlobalRateSort,
     filteredCandidates,
     preferences.sortColumn,
     preferences.sortDirection,
