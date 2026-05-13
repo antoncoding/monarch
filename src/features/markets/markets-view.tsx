@@ -203,7 +203,7 @@ export default function Markets() {
           />
         </div>
 
-        <div className="pb-2 pt-2">
+        <div className="pt-2">
           <CompactFilterBar
             searchQuery={filters.searchQuery}
             onSearch={filters.setSearchQuery}

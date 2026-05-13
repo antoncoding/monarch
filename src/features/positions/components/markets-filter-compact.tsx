@@ -144,7 +144,12 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
             size={isButtonVariant ? 16 : 14}
             style={{ color: hasActiveFilters ? MONARCH_PRIMARY : undefined }}
           />
-          {hasAffectedGuards && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-yellow-500 ring-2 ring-surface" />}
+          {hasAffectedGuards && (
+            <span
+              className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: MONARCH_PRIMARY }}
+            />
+          )}
         </Button>
       </Tooltip>
 
