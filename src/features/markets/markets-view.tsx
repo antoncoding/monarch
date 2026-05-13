@@ -29,9 +29,7 @@ export default function Markets() {
     data: rawMarkets,
     isLoading: loading,
     refetch,
-  } = useMarketsQuery({
-    includeUnknownTokens,
-  });
+  } = useMarketsQuery();
   const {
     markets,
     isLoading: filteredMarketsLoading,

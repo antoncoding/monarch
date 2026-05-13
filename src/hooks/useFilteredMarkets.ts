@@ -99,7 +99,6 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const shouldEnableRateEnrichment = options?.enableRateEnrichment ?? (isHistoricalRateSort || historicalRateColumnsVisible);
   const { allMarkets, whitelistedMarkets } = useProcessedMarkets({
     enableRateEnrichment: false,
-    includeUnknownTokens: preferences.includeUnknownTokens,
   });
   const { whitelistLookup, isLoading: whitelistLoading, isFetching: whitelistFetching } = useMorphoWhitelistStatusQuery();
   const { data: oracleMetadataMap } = useAllOracleMetadata();
@@ -109,14 +108,10 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys();
   const customTagKeys = useCustomTagMarketKeys();
-  const shouldBlockWhitelistedFiltering = !showUnwhitelistedMarkets && whitelistLookup.size === 0;
+  const isWhitelistUnavailable = !showUnwhitelistedMarkets && whitelistLookup.size === 0 && !whitelistLoading && !whitelistFetching;
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const filteredCandidates = useMemo(() => {
-    if (shouldBlockWhitelistedFiltering) {
-      return [];
-    }
-
     let filteredMarkets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
     if (filteredMarkets.length === 0) return [];
 
@@ -177,7 +172,6 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   }, [
     allMarkets,
     whitelistedMarkets,
-    shouldBlockWhitelistedFiltering,
     showUnwhitelistedMarkets,
     filters,
     persistedFilters,
@@ -271,8 +265,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
 
   return {
     markets,
-    isLoading: shouldBlockWhitelistedFiltering && (whitelistLoading || whitelistFetching),
-    isWhitelistUnavailable: shouldBlockWhitelistedFiltering && !whitelistLoading && !whitelistFetching,
+    isLoading: false,
+    isWhitelistUnavailable,
     rateEnrichmentPendingChainIds: shouldEnableRateEnrichment ? rateEnrichmentPendingChainIds : EMPTY_PENDING_CHAIN_IDS,
   };
 };

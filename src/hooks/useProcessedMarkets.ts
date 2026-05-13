@@ -16,7 +16,6 @@ type UseProcessedMarketsOptions = {
   enableMorphoMetadata?: boolean;
   enableRateEnrichment?: boolean;
   enableUsdEnrichment?: boolean;
-  includeUnknownTokens?: boolean;
 };
 
 const EMPTY_RATE_ENRICHMENTS: MarketRateEnrichmentMap = new Map();
@@ -79,7 +78,6 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   } = useMarketsQuery({
     refetchInterval: options?.marketsRefetchInterval,
     refetchOnWindowFocus: options?.marketsRefetchOnWindowFocus,
-    includeUnknownTokens: options?.includeUnknownTokens,
   });
   const { whitelistLookup, supplyingVaultsLookup } = useMorphoWhitelistStatusQuery({
     enabled: enableMorphoMetadata,

@@ -50,9 +50,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
     isRefetching,
     data: rawMarkets,
     dataUpdatedAt,
-  } = useMarketsQuery({
-    includeUnknownTokens,
-  });
+  } = useMarketsQuery();
 
   // Get trusted vaults directly from store (no prop drilling!)
   const { vaults: trustedVaults } = useTrustedVaults();

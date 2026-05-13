@@ -70,6 +70,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Domain matching, token resolution, unit conversion, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
+- Display and risk guards must not change the base registry/query shape for shared data. Fetch complete inputs, then apply guard filtering at the view or shared-filter boundary unless the feature is explicitly scoped to a smaller dataset.
 - Portfolio and position analysis must preserve transaction-discovered market IDs even when current on-chain balances are zero; list-level hide settings must not remove those markets from summary or history inputs.
 - Supplied-position surfaces must distinguish active supply (`supplyShares`/`supplyAssets`) and historical supply (`MarketSupply`/`MarketWithdraw`) from borrow shares and collateral.
 

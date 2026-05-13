@@ -17,11 +17,6 @@ const toError = (error: unknown): Error => {
 type UseMarketsQueryOptions = {
   refetchInterval?: number | false;
   refetchOnWindowFocus?: boolean;
-  /**
-   * Defaults to true so programmatic consumers get a complete market registry.
-   * Browse surfaces with an explicit "hide unknown tokens" guard should pass false.
-   */
-  includeUnknownTokens?: boolean;
 };
 
 /**
@@ -48,10 +43,9 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
   const { customRpcUrls } = useCustomRpcContext();
   const { allTokens, isLoading: tokensLoading } = useTokensQuery();
   const rpcIdentity = Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right));
-  const includeUnknownTokens = options?.includeUnknownTokens ?? true;
 
   return useQuery({
-    queryKey: ['markets', rpcIdentity, includeUnknownTokens, allTokens.length],
+    queryKey: ['markets', rpcIdentity, allTokens.length],
     queryFn: async () => {
       const fetchErrors: Error[] = [];
       const marketsByChain = new Map<SupportedNetworks, Market[]>();
@@ -85,7 +79,6 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
 
       try {
         const monarchMarkets = await fetchMonarchMarkets(undefined, customRpcUrls, {
-          resolveUnknownTokens: includeUnknownTokens,
           trustedTokens: allTokens,
         });
         const monarchMarketsByChain = partitionMarketsByChain(monarchMarkets);

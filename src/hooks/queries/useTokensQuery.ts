@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 import { SupportedNetworks, getViemChain } from '@/utils/networks';
-import { supportedTokens } from '@/utils/tokens';
+import { infoToKey, supportedTokens } from '@/utils/tokens';
 import type { ERC20Token } from '@/utils/tokens';
 
 const PendleAssetSchema = z.object({
@@ -95,15 +95,24 @@ export const useTokensQuery = () => {
   });
 
   const allTokens = query.data ?? localTokensWithSource;
+  const tokenByKey = useMemo(() => {
+    const nextTokenByKey = new Map<string, ERC20Token>();
+
+    for (const token of allTokens) {
+      for (const network of token.networks) {
+        nextTokenByKey.set(infoToKey(network.address, network.chain.id), token);
+      }
+    }
+
+    return nextTokenByKey;
+  }, [allTokens]);
 
   const findToken = useCallback(
     (address: string, chainId: number) => {
       if (!address || !chainId) return undefined;
-      return allTokens.find((token) =>
-        token.networks.some((network) => network.address?.toLowerCase() === address.toLowerCase() && network.chain.id === chainId),
-      );
+      return tokenByKey.get(infoToKey(address, chainId));
     },
-    [allTokens],
+    [tokenByKey],
   );
 
   const getUniqueTokens = useCallback(
