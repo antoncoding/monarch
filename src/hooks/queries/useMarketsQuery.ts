@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
-import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { getTokensIdentityKey, useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
@@ -42,10 +43,11 @@ type UseMarketsQueryOptions = {
 export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
   const { customRpcUrls } = useCustomRpcContext();
   const { allTokens, isLoading: tokensLoading } = useTokensQuery();
-  const rpcIdentity = Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right));
+  const rpcIdentity = useMemo(() => Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right)), [customRpcUrls]);
+  const tokensIdentityKey = useMemo(() => getTokensIdentityKey(allTokens), [allTokens]);
 
   return useQuery({
-    queryKey: ['markets', rpcIdentity, allTokens.length],
+    queryKey: ['markets', rpcIdentity, tokensIdentityKey],
     queryFn: async () => {
       const fetchErrors: Error[] = [];
       const marketsByChain = new Map<SupportedNetworks, Market[]>();

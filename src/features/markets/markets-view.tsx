@@ -25,11 +25,7 @@ export default function Markets() {
   const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
 
   // Data fetching with React Query
-  const {
-    data: rawMarkets,
-    isLoading: loading,
-    refetch,
-  } = useMarketsQuery();
+  const { data: rawMarkets, isLoading: loading, refetch } = useMarketsQuery();
   const {
     markets,
     isLoading: filteredMarketsLoading,

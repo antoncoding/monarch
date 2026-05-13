@@ -24,6 +24,7 @@ type UseFilteredMarketsOptions = {
 type UseFilteredMarketsResult = {
   markets: Market[];
   isLoading: boolean;
+  isRefetching: boolean;
   isWhitelistUnavailable: boolean;
   rateEnrichmentPendingChainIds: Set<number>;
 };
@@ -97,10 +98,21 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     preferences.columnVisibility.monthlySupplyAPY ||
     preferences.columnVisibility.monthlyBorrowAPY;
   const shouldEnableRateEnrichment = options?.enableRateEnrichment ?? (isHistoricalRateSort || historicalRateColumnsVisible);
-  const { allMarkets, whitelistedMarkets } = useProcessedMarkets({
+  const {
+    allMarkets,
+    whitelistedMarkets,
+    loading: processedMarketsLoading,
+    isRefetching,
+  } = useProcessedMarkets({
     enableRateEnrichment: false,
+    enableUnknownTokenMetadata: preferences.includeUnknownTokens,
   });
-  const { whitelistLookup, isLoading: whitelistLoading, isFetching: whitelistFetching } = useMorphoWhitelistStatusQuery();
+  const {
+    whitelistLookup,
+    isLoading: whitelistLoading,
+    isFetching: whitelistFetching,
+    error: whitelistError,
+  } = useMorphoWhitelistStatusQuery();
   const { data: oracleMetadataMap } = useAllOracleMetadata();
   const filters = useMarketsFilters();
   const { showUnwhitelistedMarkets } = useAppSettings();
@@ -108,7 +120,9 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys();
   const customTagKeys = useCustomTagMarketKeys();
-  const isWhitelistUnavailable = !showUnwhitelistedMarkets && whitelistLookup.size === 0 && !whitelistLoading && !whitelistFetching;
+  const isWhitelistPending = !showUnwhitelistedMarkets && whitelistLookup.size === 0 && (whitelistLoading || whitelistFetching);
+  const isWhitelistUnavailable =
+    !showUnwhitelistedMarkets && whitelistLookup.size === 0 && !whitelistLoading && !whitelistFetching && Boolean(whitelistError);
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const filteredCandidates = useMemo(() => {
@@ -265,7 +279,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
 
   return {
     markets,
-    isLoading: false,
+    isLoading: processedMarketsLoading || (isWhitelistPending && whitelistedMarkets.length === 0),
+    isRefetching,
     isWhitelistUnavailable,
     rateEnrichmentPendingChainIds: shouldEnableRateEnrichment ? rateEnrichmentPendingChainIds : EMPTY_PENDING_CHAIN_IDS,
   };

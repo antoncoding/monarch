@@ -20,6 +20,15 @@ const localTokensWithSource: ERC20Token[] = supportedTokens.map((token) => ({
   source: 'local',
 }));
 
+export const getTokensIdentityKey = (tokens: ERC20Token[]): string => {
+  return tokens
+    .flatMap((token) =>
+      token.networks.map((network) => [network.chain.id, network.address.toLowerCase(), token.symbol, token.decimals].join(':')),
+    )
+    .sort()
+    .join('|');
+};
+
 async function fetchPendleAssets(chainId: number): Promise<PendleAsset[]> {
   try {
     const response = await fetch(`https://api-v2.pendle.finance/core/v1/${chainId}/assets/all`);
@@ -100,7 +109,11 @@ export const useTokensQuery = () => {
 
     for (const token of allTokens) {
       for (const network of token.networks) {
-        nextTokenByKey.set(infoToKey(network.address, network.chain.id), token);
+        if (!network.address) {
+          continue;
+        }
+
+        nextTokenByKey.set(infoToKey(network.address.toLowerCase(), network.chain.id), token);
       }
     }
 
@@ -110,7 +123,7 @@ export const useTokensQuery = () => {
   const findToken = useCallback(
     (address: string, chainId: number) => {
       if (!address || !chainId) return undefined;
-      return tokenByKey.get(infoToKey(address, chainId));
+      return tokenByKey.get(infoToKey(address.toLowerCase(), chainId));
     },
     [tokenByKey],
   );

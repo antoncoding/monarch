@@ -45,12 +45,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   } = useMarketPreferences();
 
   // Get loading states directly from query (no prop drilling!)
-  const {
-    isLoading: loading,
-    isRefetching,
-    data: rawMarkets,
-    dataUpdatedAt,
-  } = useMarketsQuery();
+  const { isLoading: loading, isRefetching, data: rawMarkets, dataUpdatedAt } = useMarketsQuery();
 
   // Get trusted vaults directly from store (no prop drilling!)
   const { vaults: trustedVaults } = useTrustedVaults();
@@ -61,6 +56,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   const {
     markets,
     isLoading: filteredMarketsLoading,
+    isRefetching: filteredMarketsRefetching,
     isWhitelistUnavailable,
     rateEnrichmentPendingChainIds,
   } = useFilteredMarkets({
@@ -144,7 +140,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
         actions={
           <MarketsTableActions
             onRefresh={onRefresh}
-            isRefetching={isRefetching}
+            isRefetching={isRefetching || filteredMarketsRefetching}
             isMobile={isMobile}
             dataUpdatedAt={dataUpdatedAt}
           />

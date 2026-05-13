@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
+import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
 import { useMarketRateEnrichmentQuery } from '@/hooks/queries/useMarketRateEnrichmentQuery';
 import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { getTokensIdentityKey, useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useUsdEnrichedMarkets } from '@/hooks/useUsdEnrichedMarkets';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -16,10 +20,12 @@ type UseProcessedMarketsOptions = {
   enableMorphoMetadata?: boolean;
   enableRateEnrichment?: boolean;
   enableUsdEnrichment?: boolean;
+  enableUnknownTokenMetadata?: boolean;
 };
 
 const EMPTY_RATE_ENRICHMENTS: MarketRateEnrichmentMap = new Map();
 const EMPTY_PENDING_CHAIN_IDS = new Set<number>();
+const UNKNOWN_TOKEN_METADATA_STALE_TIME = 5 * 60 * 1000;
 
 const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market['supplyingVaults']): boolean => {
   const currentVaults = current ?? [];
@@ -66,9 +72,11 @@ const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market
  * ```
  */
 export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
+  const { customRpcUrls } = useCustomRpcContext();
   const enableRateEnrichment = options?.enableRateEnrichment ?? false;
   const enableUsdEnrichment = options?.enableUsdEnrichment ?? true;
   const enableMorphoMetadata = options?.enableMorphoMetadata ?? true;
+  const enableUnknownTokenMetadata = options?.enableUnknownTokenMetadata ?? false;
   const {
     data: rawMarketsFromQuery,
     isLoading,
@@ -84,13 +92,29 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   });
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
   const { showUnwhitelistedMarkets } = useAppSettings();
+  const { allTokens } = useTokensQuery();
+  const rpcIdentity = useMemo(() => Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right)), [customRpcUrls]);
+  const tokensIdentityKey = useMemo(() => getTokensIdentityKey(allTokens), [allTokens]);
+
+  const { data: resolvedUnknownTokenMarkets, isFetching: isUnknownTokenMetadataFetching } = useQuery({
+    queryKey: ['markets-with-unknown-token-metadata', rpcIdentity, tokensIdentityKey],
+    queryFn: () =>
+      fetchMonarchMarkets(undefined, customRpcUrls, {
+        resolveUnknownTokens: true,
+        trustedTokens: allTokens,
+      }),
+    enabled: enableUnknownTokenMetadata && rawMarketsFromQuery !== undefined,
+    staleTime: UNKNOWN_TOKEN_METADATA_STALE_TIME,
+  });
+  const rawMarketsForProcessing =
+    enableUnknownTokenMetadata && resolvedUnknownTokenMarkets ? resolvedUnknownTokenMarkets : rawMarketsFromQuery;
 
   // Get blacklisted keys (memoized to prevent infinite loops)
   const allBlacklistedMarketKeys = useMemo(() => getAllBlacklistedKeys(), [customBlacklistedMarkets, getAllBlacklistedKeys]);
 
   // Process markets: blacklist filter + force-unwhitelisted overrides
   const processedData = useMemo(() => {
-    if (!rawMarketsFromQuery) {
+    if (!rawMarketsForProcessing) {
       return {
         rawMarketsUnfiltered: [],
         allMarkets: [],
@@ -98,7 +122,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
       };
     }
 
-    const withMergedMorphoMetadata = rawMarketsFromQuery.map((market) => {
+    const withMergedMorphoMetadata = rawMarketsForProcessing.map((market) => {
       const marketIdentityKey = getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey);
       const cachedWhitelisted = whitelistLookup.get(marketIdentityKey);
       const cachedSupplyingVaults = supplyingVaultsLookup.get(marketIdentityKey);
@@ -143,7 +167,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
       allMarkets,
       whitelistedMarkets,
     };
-  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup]);
+  }, [rawMarketsForProcessing, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup]);
 
   const {
     data: marketRateEnrichments = EMPTY_RATE_ENRICHMENTS,
@@ -205,9 +229,10 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     markets, // Computed from setting (backward compatible with old context)
     isRateEnrichmentLoading,
     isUsdEnrichmentLoading,
+    isUnknownTokenMetadataFetching,
     rateEnrichmentPendingChainIds: enableRateEnrichment ? rateEnrichmentPendingChainIds : EMPTY_PENDING_CHAIN_IDS,
     loading: isLoading,
-    isRefetching: isRefetching || (enableRateEnrichment && isRateEnrichmentRefetching),
+    isRefetching: isRefetching || isUnknownTokenMetadataFetching || (enableRateEnrichment && isRateEnrichmentRefetching),
     error,
     refetch,
   };

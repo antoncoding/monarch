@@ -188,5 +188,9 @@ export const fetchAllMorphoMarketMetadata = async (): Promise<MorphoMarketMetada
     });
   }
 
+  if (successfulRefreshes.length === 0 && MORPHO_SUPPORTED_NETWORKS.length > 0) {
+    throw new Error('[WhitelistStatus] Failed to fetch market metadata for all supported networks.');
+  }
+
   return successfulRefreshes;
 };

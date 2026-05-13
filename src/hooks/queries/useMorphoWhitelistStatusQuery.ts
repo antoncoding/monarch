@@ -36,14 +36,7 @@ export const useMorphoWhitelistStatusQuery = (options?: UseMorphoWhitelistStatus
 
   const query = useQuery({
     queryKey: MORPHO_MARKET_METADATA_QUERY_KEY,
-    queryFn: async () => {
-      try {
-        return await fetchAllMorphoMarketMetadata();
-      } catch (error) {
-        console.warn('Morpho market metadata refresh failed; continuing with cached whitelist flags.', error);
-        return [];
-      }
-    },
+    queryFn: fetchAllMorphoMarketMetadata,
     enabled,
     staleTime: MORPHO_MARKET_METADATA_STALE_TIME,
     refetchInterval: enabled ? (options?.refetchInterval ?? MORPHO_MARKET_METADATA_STALE_TIME) : false,
@@ -104,6 +97,7 @@ export const useMorphoWhitelistStatusQuery = (options?: UseMorphoWhitelistStatus
     supplyingVaultsLookup,
     isLoading: query.isLoading && whitelistLookup.size === 0 && supplyingVaultsLookup.size === 0,
     isFetching: query.isFetching,
+    error: query.error,
     refetch: query.refetch,
   };
 };

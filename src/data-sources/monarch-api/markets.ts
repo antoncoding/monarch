@@ -165,8 +165,11 @@ const mapMonarchMarketToMarket = (
 
   if (!loanAsset || !collateralAsset) {
     if (options.warnOnMissingTokenInfo ?? true) {
-      console.warn(`Skipping Monarch market ${market.marketId} on chain ${chainId}: token decimals could not be resolved.`);
+      console.warn(
+        `Skipping market ${market.marketId} on chain ${chainId}: missing token metadata for ${loanAsset ? collateralAssetAddress : loanAssetAddress}`,
+      );
     }
+
     return null;
   }
 
@@ -228,7 +231,7 @@ const mapMonarchMarketRows = async (
     return [];
   }
 
-  const shouldResolveUnknownTokens = options.resolveUnknownTokens ?? true;
+  const shouldResolveUnknownTokens = options.resolveUnknownTokens ?? false;
   const tokenInfos = await resolveTokenInfos(getMarketTokenInputs(rows), customRpcUrls, {
     resolveUnknownTokens: shouldResolveUnknownTokens,
     trustedTokens: options.trustedTokens,
