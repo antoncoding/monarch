@@ -60,12 +60,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   const shouldLoadTrustedVaultMetadata = columnVisibility.trustedBy && trustedVaultCount > 0;
   const { data: morphoVaults = [] } = useAllMorphoVaultsQuery({ enabled: shouldLoadTrustedVaultMetadata });
 
-  const {
-    markets,
-    isLoading: filteredMarketsLoading,
-    isWhitelistUnavailable,
-    rateEnrichmentPendingChainIds,
-  } = useFilteredMarkets({
+  const { markets, rateEnrichmentPendingChainIds } = useFilteredMarkets({
     currentPage,
   });
   const isEmpty = !rawMarkets;
@@ -102,7 +97,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   const currentEntries = markets.slice(indexOfFirstEntry, indexOfLastEntry);
 
   const totalPages = Math.ceil(markets.length / entriesPerPage);
-  const shouldUseFullWidthState = loading || filteredMarketsLoading || isEmpty || markets.length === 0;
+  const shouldUseFullWidthState = loading || isEmpty || markets.length === 0;
 
   const containerClassName = [
     'flex flex-col gap-2 pb-4',
@@ -153,7 +148,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
         }
         className="w-full"
       >
-        {loading || filteredMarketsLoading ? (
+        {loading ? (
           <LoadingScreen
             message="Loading Morpho Blue Markets..."
             className="min-h-[300px] w-full px-4"
@@ -164,12 +159,8 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
           </div>
         ) : markets.length === 0 ? (
           <EmptyScreen
-            message={isWhitelistUnavailable ? 'Morpho whitelist data is unavailable' : 'No markets found with the current filters'}
-            hint={
-              isWhitelistUnavailable
-                ? "Hidden unwhitelisted markets is enabled, but Monarch couldn't confirm Morpho whitelist status right now. Try refreshing or temporarily showing unwhitelisted markets."
-                : getEmptyStateHint()
-            }
+            message="No markets found with the current filters"
+            hint={getEmptyStateHint()}
             className="min-h-[300px] w-full px-[4%]"
           />
         ) : (

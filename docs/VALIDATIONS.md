@@ -70,6 +70,8 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Domain matching, token resolution, unit conversion, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
+- Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.
+- Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
 - Portfolio and position analysis must preserve transaction-discovered market IDs even when current on-chain balances are zero; list-level hide settings must not remove those markets from summary or history inputs.
 - Supplied-position surfaces must distinguish active supply (`supplyShares`/`supplyAssets`) and historical supply (`MarketSupply`/`MarketWithdraw`) from borrow shares and collateral.
 
@@ -88,6 +90,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 
 - Avoid repeated large UI blocks; extract or reuse only when it reduces real duplication.
 - Validate loading, empty, disabled, error, and success states for changed flows; period-derived metrics must not show stale values while recalculating.
+- Cold-start loading for optional metadata or enrichment must not trigger warning/error banners; warn only after a source is partial, stale, or unavailable.
 - Do not use Next.js raw image patterns where the project expects `next/image`.
 - Make sure Mobile view is considered.
 - Simplify wording to provide a clear call to action; remove unnecessary explanations. Focus on what a user should do and what they should see, not what you want to say.

@@ -265,7 +265,7 @@ export function useAllOracleMetadata() {
   });
 
   const isLoading = queries.some((q) => q.isLoading);
-  const isError = queries.some((q) => q.isError);
+  const isError = queries.some((q) => q.isError || q.isRefetchError || q.failureCount > 0);
 
   // Create stable dependency based on data update timestamps
   // This prevents unnecessary recalculations when queries array reference changes

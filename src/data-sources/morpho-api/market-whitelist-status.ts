@@ -188,5 +188,9 @@ export const fetchAllMorphoMarketMetadata = async (): Promise<MorphoMarketMetada
     });
   }
 
+  if (successfulRefreshes.length === 0) {
+    throw new Error('[WhitelistStatus] Failed to fetch whitelist metadata for every supported network.');
+  }
+
   return successfulRefreshes;
 };

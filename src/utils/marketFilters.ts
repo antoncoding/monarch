@@ -101,8 +101,18 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMeta
   if (showUnknownOracle) {
     return () => true;
   }
+
+  const metadataChainIds = new Set(Object.values(oracleMetadataMap ?? {}).map((oracle) => oracle.chainId));
+  if (metadataChainIds.size === 0) {
+    return () => true;
+  }
+
   return (market) => {
     const chainId = market.morphoBlue.chain.id;
+    if (!metadataChainIds.has(chainId)) {
+      return true;
+    }
+
     const oracleType = getOracleType(market.oracleAddress, chainId, oracleMetadataMap);
 
     if (oracleType === OracleType.Custom) {

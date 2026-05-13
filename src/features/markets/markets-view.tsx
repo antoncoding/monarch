@@ -16,6 +16,7 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 
 import { CompactFilterBar } from './components/filters/compact-filter-bar';
+import { MarketFilterDependencyBanner } from './components/filter-dependency-banner';
 import MarketsTable from './components/table/markets-table';
 
 export default function Markets() {
@@ -23,6 +24,7 @@ export default function Markets() {
   const appliedUrlSignatureRef = useRef<string | null>(null);
   const [currentSearchParams, setCurrentSearchParams] = useState('');
   const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
+  const { currentPage, setCurrentPage, resetPage } = usePagination();
 
   // Data fetching with React Query
   const {
@@ -32,13 +34,7 @@ export default function Markets() {
   } = useMarketsQuery({
     includeUnknownTokens,
   });
-  const {
-    markets,
-    isLoading: filteredMarketsLoading,
-    isWhitelistUnavailable,
-  } = useFilteredMarkets({
-    enableRateEnrichment: false,
-  });
+  const { markets, marketDataNotices } = useFilteredMarkets({ currentPage });
 
   const filters = useMarketsFilters();
   const persistedFilters = useMarketFilterPreferences();
@@ -50,7 +46,6 @@ export default function Markets() {
   const [isMobile, setIsMobile] = useState(false);
 
   // Store hooks
-  const { currentPage, setCurrentPage, resetPage } = usePagination();
   const { allTokens } = useTokensQuery();
 
   useLayoutEffect(() => {
@@ -70,8 +65,8 @@ export default function Markets() {
 
   // Effective table view mode - always compact on mobile
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
-  const isLoadingTableState = loading || filteredMarketsLoading;
-  const isTableFallbackState = !rawMarkets || markets.length === 0 || isWhitelistUnavailable;
+  const isLoadingTableState = loading;
+  const isTableFallbackState = !rawMarkets || markets.length === 0;
   const shouldUseFullWidthTableLayout = isLoadingTableState || isTableFallbackState || effectiveTableViewMode === 'compact';
 
   // Compute unique collaterals and loan assets for filter dropdowns
@@ -225,6 +220,7 @@ export default function Markets() {
             loading={loading}
             onClearAll={handleClearAll}
           />
+          <MarketFilterDependencyBanner notices={marketDataNotices} />
         </div>
       </div>
 
