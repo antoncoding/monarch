@@ -27,20 +27,18 @@ const getNetworkReadiness = (
   isLoading: boolean,
   isError: boolean,
 ): MarketFilterDependencyReadiness => {
-  if (isError && expectedChainIds.every((chainId) => availableChainIds.has(chainId))) {
-    return 'stale';
-  }
+  const hasAllExpectedChainIds = expectedChainIds.every((chainId) => availableChainIds.has(chainId));
 
-  if (expectedChainIds.every((chainId) => availableChainIds.has(chainId))) {
-    return 'ready';
-  }
-
-  if (availableChainIds.size > 0) {
-    return 'partial';
+  if (hasAllExpectedChainIds) {
+    return isError ? 'stale' : 'ready';
   }
 
   if (isLoading) {
     return 'loading';
+  }
+
+  if (availableChainIds.size > 0) {
+    return 'partial';
   }
 
   return 'unavailable';

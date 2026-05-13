@@ -43,21 +43,7 @@ const HISTORICAL_RATE_SORT_COLUMNS = new Set<SortColumn>([
 const EMPTY_PENDING_CHAIN_IDS = new Set<number>();
 const EMPTY_DATA_NOTICES: MarketDataNotice[] = [];
 
-const formatNetworkList = (chainIds: Set<number>): string => {
-  const names = Array.from(chainIds).map((chainId) => getNetworkName(chainId) ?? `chain ${chainId}`);
-  if (names.length === 0) {
-    return '';
-  }
-  if (names.length === 1) {
-    return ` for ${names[0]}`;
-  }
-  if (names.length === 2) {
-    return ` for ${names[0]} and ${names[1]}`;
-  }
-
-  const lastName = names.at(-1) ?? '';
-  return ` for ${names.slice(0, -1).join(', ')}, and ${lastName}`;
-};
+const getNetworkLabel = (chainId: number): string => getNetworkName(chainId) ?? `chain ${chainId}`;
 
 const getSortPropertyPath = (sortColumn: SortColumn): string => {
   const sortPropertyMap: Record<SortColumn, string> = {
@@ -278,14 +264,14 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       return EMPTY_DATA_NOTICES;
     }
 
-    return [
-      {
-        id: 'market-rate-enrichment',
-        impact: `Morpho rate data is unavailable${formatNetworkList(
-          morphoRateFailedChainIds,
+    return Array.from(morphoRateFailedChainIds)
+      .sort((a, b) => a - b)
+      .map((chainId) => ({
+        id: `market-rate-enrichment-${chainId}`,
+        impact: `Morpho rate data is unavailable for ${getNetworkLabel(
+          chainId,
         )}. ${rateNoticeSubject} may be missing for those markets; current Supply APY and Borrow APY still use live market data.`,
-      },
-    ];
+      }));
   }, [morphoRateFailedChainIds, rateNoticeSubject, shouldEnableRateEnrichment]);
 
   const markets = useMemo(() => {
