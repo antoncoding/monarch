@@ -1,4 +1,4 @@
-import { cloneElement, forwardRef, isValidElement } from 'react';
+import { forwardRef } from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
@@ -95,19 +95,19 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     if (asChild) {
-      const slottedChildren =
-        isDisabled && isValidElement<{ disabled?: boolean }>(children)
-          ? cloneElement(children, { disabled: true })
-          : children;
+      const slotProps = {
+        ...props,
+        disabled: isDisabled,
+        'aria-disabled': isDisabled,
+      } as React.ComponentPropsWithoutRef<typeof Slot>;
 
       return (
         <Slot
           className={buttonClassName}
           ref={ref}
-          {...props}
-          aria-disabled={isDisabled}
+          {...slotProps}
         >
-          {slottedChildren}
+          {children}
         </Slot>
       );
     }
