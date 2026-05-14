@@ -2,19 +2,41 @@
 
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
 import type { MorphoVault } from '@/data-sources/morpho-api/vaults';
+import type { VaultAdapterAlias } from '@/data-sources/monarch-api/vaults';
 import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
 import { useVaultAdapterAliasesQuery } from '@/hooks/queries/useVaultAdapterAliasesQuery';
 import type { Address } from 'viem';
 
+export type VaultAccountKind = 'morpho-vault' | 'vault-v2' | 'vault-adapter';
+
+export type VaultAccountIdentity = {
+  kind: VaultAccountKind;
+  displayName: string;
+  chainId: number;
+  address: Address;
+  vaultAddress: Address;
+  adapterAddress?: Address;
+  adapterType?: string;
+  assetAddress?: string;
+  assetSymbol?: string;
+  metadataDescription?: string;
+  metadataImage?: string;
+  source: 'morpho' | 'monarch';
+};
+
 type AddressLabel = {
   displayName: string;
-  kind: 'vault' | 'vault-adapter';
-  vaultAddress: string;
+  kind: VaultAccountKind;
+  chainId: number;
+  vaultAddress: Address;
+  adapterAddress?: Address;
   adapterType?: string;
 };
 
 type AdapterAddressAlias = {
+  adapterAddress: string;
   adapterType: string;
+  chainId: number;
   vaultAddress: string;
   vaultName: string;
 };
@@ -24,12 +46,66 @@ type VaultRegistryContextType = {
   loading: boolean;
   error: Error | null;
   getVaultByAddress: (address: Address, chainId?: number) => MorphoVault | undefined;
+  getVaultAccountIdentity: (address: Address, chainId?: number) => VaultAccountIdentity | undefined;
   getAddressLabel: (address: Address, chainId?: number) => AddressLabel | undefined;
 };
 
 const VaultRegistryContext = createContext<VaultRegistryContextType | undefined>(undefined);
 
 const getAddressKey = (address: string, chainId: number) => `${chainId}:${address.toLowerCase()}`;
+
+const toAddress = (value: string): Address => value.toLowerCase() as Address;
+
+const toAdapterAddressAlias = (adapterAlias: VaultAdapterAlias): AdapterAddressAlias => ({
+  adapterAddress: adapterAlias.address,
+  adapterType: adapterAlias.adapterType,
+  chainId: adapterAlias.chainId,
+  vaultAddress: adapterAlias.vaultAddress,
+  vaultName: adapterAlias.vaultName,
+});
+
+const morphoVaultToIdentity = (vault: MorphoVault): VaultAccountIdentity => ({
+  kind: 'morpho-vault',
+  displayName: vault.name,
+  chainId: vault.chainId,
+  address: toAddress(vault.address),
+  vaultAddress: toAddress(vault.address),
+  assetAddress: vault.assetAddress,
+  assetSymbol: vault.assetSymbol,
+  metadataDescription: vault.metadataDescription,
+  metadataImage: vault.metadataImage,
+  source: 'morpho',
+});
+
+const adapterAliasToAdapterIdentity = (adapterAlias: AdapterAddressAlias, morphoVault?: MorphoVault): VaultAccountIdentity => ({
+  kind: 'vault-adapter',
+  displayName: adapterAlias.vaultName,
+  chainId: adapterAlias.chainId,
+  address: toAddress(adapterAlias.adapterAddress),
+  vaultAddress: toAddress(adapterAlias.vaultAddress),
+  adapterAddress: toAddress(adapterAlias.adapterAddress),
+  adapterType: adapterAlias.adapterType,
+  assetAddress: morphoVault?.assetAddress,
+  assetSymbol: morphoVault?.assetSymbol,
+  metadataDescription: morphoVault?.metadataDescription,
+  metadataImage: morphoVault?.metadataImage,
+  source: 'monarch',
+});
+
+const adapterAliasToVaultIdentity = (adapterAlias: AdapterAddressAlias, morphoVault?: MorphoVault): VaultAccountIdentity => ({
+  kind: 'vault-v2',
+  displayName: morphoVault?.name || adapterAlias.vaultName,
+  chainId: adapterAlias.chainId,
+  address: toAddress(adapterAlias.vaultAddress),
+  vaultAddress: toAddress(adapterAlias.vaultAddress),
+  adapterAddress: toAddress(adapterAlias.adapterAddress),
+  adapterType: adapterAlias.adapterType,
+  assetAddress: morphoVault?.assetAddress,
+  assetSymbol: morphoVault?.assetSymbol,
+  metadataDescription: morphoVault?.metadataDescription,
+  metadataImage: morphoVault?.metadataImage,
+  source: 'monarch',
+});
 
 export function VaultRegistryProvider({ children }: { children: ReactNode }) {
   const { data: vaults = [], isLoading: vaultsLoading, error: vaultsError } = useAllMorphoVaultsQuery();
@@ -46,11 +122,18 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
   const adapterAliasesByScopedAddress = useMemo(() => {
     const lookup = new Map<string, AdapterAddressAlias>();
     for (const adapterAlias of adapterAliases) {
-      lookup.set(getAddressKey(adapterAlias.address, adapterAlias.chainId), {
-        vaultAddress: adapterAlias.vaultAddress,
-        vaultName: adapterAlias.vaultName,
-        adapterType: adapterAlias.adapterType,
-      });
+      lookup.set(getAddressKey(adapterAlias.address, adapterAlias.chainId), toAdapterAddressAlias(adapterAlias));
+    }
+    return lookup;
+  }, [adapterAliases]);
+
+  const adapterAliasesByVaultScopedAddress = useMemo(() => {
+    const lookup = new Map<string, AdapterAddressAlias[]>();
+    for (const adapterAlias of adapterAliases) {
+      const key = getAddressKey(adapterAlias.vaultAddress, adapterAlias.chainId);
+      const existing = lookup.get(key) ?? [];
+      existing.push(toAdapterAddressAlias(adapterAlias));
+      lookup.set(key, existing);
     }
     return lookup;
   }, [adapterAliases]);
@@ -67,34 +150,54 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
     [vaults, vaultsByScopedAddress],
   );
 
+  const getVaultAccountIdentity = useCallback(
+    (address: Address, chainId?: number): VaultAccountIdentity | undefined => {
+      const normalizedAddress = address.toLowerCase();
+
+      const adapterAlias = chainId
+        ? adapterAliasesByScopedAddress.get(getAddressKey(normalizedAddress, chainId))
+        : adapterAliases.filter((candidate) => candidate.address.toLowerCase() === normalizedAddress).map(toAdapterAddressAlias)[0];
+
+      if (adapterAlias) {
+        return adapterAliasToAdapterIdentity(adapterAlias, getVaultByAddress(toAddress(adapterAlias.vaultAddress), adapterAlias.chainId));
+      }
+
+      const vaultAliases = chainId
+        ? (adapterAliasesByVaultScopedAddress.get(getAddressKey(normalizedAddress, chainId)) ?? [])
+        : adapterAliases.filter((candidate) => candidate.vaultAddress.toLowerCase() === normalizedAddress).map(toAdapterAddressAlias);
+
+      const vaultAlias = vaultAliases[0];
+      if (vaultAlias) {
+        return adapterAliasToVaultIdentity(vaultAlias, getVaultByAddress(address, vaultAlias.chainId));
+      }
+
+      const vault = getVaultByAddress(address, chainId);
+      if (vault) {
+        return morphoVaultToIdentity(vault);
+      }
+
+      return undefined;
+    },
+    [adapterAliases, adapterAliasesByScopedAddress, adapterAliasesByVaultScopedAddress, getVaultByAddress],
+  );
+
   const getAddressLabel = useCallback(
     (address: Address, chainId?: number): AddressLabel | undefined => {
-      const vault = getVaultByAddress(address, chainId);
-      if (vault?.name) {
-        return {
-          displayName: vault.name,
-          kind: 'vault',
-          vaultAddress: vault.address.toLowerCase(),
-        };
-      }
-
-      if (!chainId) {
-        return undefined;
-      }
-
-      const adapterAlias = adapterAliasesByScopedAddress.get(getAddressKey(address, chainId));
-      if (!adapterAlias) {
+      const identity = getVaultAccountIdentity(address, chainId);
+      if (!identity) {
         return undefined;
       }
 
       return {
-        displayName: `${adapterAlias.vaultName} (adapter)`,
-        kind: 'vault-adapter',
-        vaultAddress: adapterAlias.vaultAddress,
-        adapterType: adapterAlias.adapterType,
+        displayName: identity.kind === 'vault-adapter' ? `${identity.displayName} (adapter)` : identity.displayName,
+        kind: identity.kind,
+        chainId: identity.chainId,
+        vaultAddress: identity.vaultAddress,
+        adapterAddress: identity.adapterAddress,
+        adapterType: identity.adapterType,
       };
     },
-    [adapterAliasesByScopedAddress, getVaultByAddress],
+    [getVaultAccountIdentity],
   );
 
   const value = useMemo(
@@ -103,9 +206,19 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
       loading: vaultsLoading || adapterAliasesLoading,
       error: vaultsError ?? adapterAliasesError,
       getVaultByAddress,
+      getVaultAccountIdentity,
       getAddressLabel,
     }),
-    [vaults, vaultsLoading, adapterAliasesLoading, vaultsError, adapterAliasesError, getVaultByAddress, getAddressLabel],
+    [
+      vaults,
+      vaultsLoading,
+      adapterAliasesLoading,
+      vaultsError,
+      adapterAliasesError,
+      getVaultByAddress,
+      getVaultAccountIdentity,
+      getAddressLabel,
+    ],
   );
 
   return <VaultRegistryContext.Provider value={value}>{children}</VaultRegistryContext.Provider>;

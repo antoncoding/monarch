@@ -3,27 +3,32 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import Link from 'next/link';
 import { FaCircle } from 'react-icons/fa';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import { LuCopy } from 'react-icons/lu';
+import { LuCopy, LuLink } from 'react-icons/lu';
 import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { useConnection, useEnsName } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountActionsPopover } from '@/components/shared/account-actions-popover';
 import { Name } from '@/components/shared/name';
+import { TooltipContent } from '@/components/shared/tooltip-content';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useAddressLabel } from '@/hooks/useAddressLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
+import type { VaultAccountIdentity } from '@/contexts/VaultRegistryContext';
 import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
+import { formatVaultAdapterType } from '@/utils/vaults';
 import type { Address } from 'viem';
 
 const ACCOUNT_IDENTITY_LABEL_MAX_WIDTH_CLASS = 'max-w-[22rem]';
 
 type AccountIdentityProps = {
   address: Address;
-  chainId: number;
+  chainId?: number;
   variant?: 'badge' | 'compact' | 'full';
   linkTo?: 'explorer' | 'profile' | 'none';
   copyable?: boolean;
@@ -32,6 +37,26 @@ type AccountIdentityProps = {
   showActions?: boolean;
   showBookmark?: boolean;
   className?: string;
+};
+
+type MainTagKind = 'adapter' | 'ens' | 'vault';
+
+const getMainTagClassName = (kind: MainTagKind) =>
+  clsx(
+    'inline-flex min-w-0 items-center rounded-sm px-2 py-1 font-zen text-xs text-secondary',
+    kind === 'adapter' ? 'border border-border bg-surface' : 'bg-hovered',
+  );
+
+const getEntityBadgeLabel = (vaultIdentity: VaultAccountIdentity): string | undefined => {
+  if (vaultIdentity.kind === 'vault-adapter') {
+    return undefined;
+  }
+
+  if (vaultIdentity.kind === 'vault-v2') {
+    return 'Vault V2';
+  }
+
+  return 'Vault';
 };
 
 /**
@@ -59,9 +84,10 @@ export function AccountIdentity({
 }: AccountIdentityProps) {
   const { address: connectedAddress, isConnected } = useConnection();
   const [mounted, setMounted] = useState(false);
+  const [metadataImageFailed, setMetadataImageFailed] = useState(false);
   const toast = useStyledToast();
   const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
-  const { vaultName, shortAddress } = useAddressLabel(address, chainId);
+  const { vaultName, vaultIdentity, shortAddress } = useAddressLabel(address, chainId);
   const { data: ensName } = useEnsName({
     address: address as `0x${string}`,
     chainId: 1,
@@ -70,6 +96,10 @@ export function AccountIdentity({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setMetadataImageFailed(false);
+  }, [vaultIdentity?.metadataImage]);
 
   const isOwner = useMemo(() => {
     return mounted && isConnected && address === connectedAddress;
@@ -81,13 +111,16 @@ export function AccountIdentity({
 
     if (linkTo === 'none') return null;
     if (linkTo === 'explorer') {
-      return getExplorerURL(address as `0x${string}`, chainId ?? SupportedNetworks.Mainnet);
+      return getExplorerURL(
+        address as `0x${string}`,
+        (chainId ?? vaultIdentity?.chainId ?? SupportedNetworks.Mainnet) as SupportedNetworks,
+      );
     }
     if (linkTo === 'profile') {
       return `/positions/${address}`;
     }
     return null;
-  }, [linkTo, address, showActions]);
+  }, [linkTo, address, showActions, chainId, vaultIdentity?.chainId]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -99,6 +132,22 @@ export function AccountIdentity({
   }, [address, toast]);
 
   const labelClasses = clsx('min-w-0 truncate', ACCOUNT_IDENTITY_LABEL_MAX_WIDTH_CLASS);
+  const adapterTypeLabel = vaultIdentity?.kind === 'vault-adapter' ? formatVaultAdapterType(vaultIdentity.adapterType) : undefined;
+  const mainTag = vaultIdentity
+    ? {
+        kind: vaultIdentity.kind === 'vault-adapter' ? ('adapter' as const) : ('vault' as const),
+        label: adapterTypeLabel ?? vaultIdentity.displayName,
+        title: adapterTypeLabel ?? vaultIdentity.displayName,
+      }
+    : showAddress && ensName
+      ? { kind: 'ens' as const, label: ensName, title: ensName }
+      : undefined;
+  const entityBadge = vaultIdentity ? getEntityBadgeLabel(vaultIdentity) : undefined;
+  const metadataImageUrl = vaultIdentity?.metadataImage && !metadataImageFailed ? vaultIdentity.metadataImage : undefined;
+  const linkedVaultHref =
+    vaultIdentity?.kind === 'vault-adapter' && vaultIdentity.vaultAddress.toLowerCase() !== address.toLowerCase()
+      ? `/positions/${vaultIdentity.vaultAddress}`
+      : undefined;
 
   // Badge variant - minimal inline badge (no avatar)
   if (variant === 'badge') {
@@ -178,7 +227,7 @@ export function AccountIdentity({
       return (
         <AccountActionsPopover
           address={address}
-          chainId={chainId}
+          chainId={chainId ?? vaultIdentity?.chainId}
         >
           {badgeElement}
         </AccountActionsPopover>
@@ -273,7 +322,7 @@ export function AccountIdentity({
       return (
         <AccountActionsPopover
           address={address}
-          chainId={chainId}
+          chainId={chainId ?? vaultIdentity?.chainId}
         >
           {compactElement}
         </AccountActionsPopover>
@@ -284,37 +333,55 @@ export function AccountIdentity({
   }
 
   const isBookmarked = showBookmark ? isAddressBookmarked(address) : false;
+  const fullAvatar = metadataImageUrl ? (
+    <Image
+      src={metadataImageUrl}
+      alt={vaultIdentity?.displayName ?? `Avatar for ${address}`}
+      width={36}
+      height={36}
+      className="rounded-full bg-hovered object-cover"
+      unoptimized
+      onError={() => setMetadataImageFailed(true)}
+    />
+  ) : (
+    <Avatar
+      address={address}
+      size={36}
+    />
+  );
 
-  // Full variant - avatar + address badge + extra info badges (all on one line, centered)
-  const fullContent = (
-    <>
-      <Avatar
-        address={address}
-        size={36}
-      />
-
-      {/* Address badge - always shows shortened address, click to copy */}
-      <span
-        className="inline-flex cursor-pointer items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-monospace text-xs text-secondary transition-colors hover:brightness-110"
-        onClick={(e) => {
+  const addressBadge = (
+    <span
+      className="inline-flex cursor-pointer items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-monospace text-xs text-secondary transition-colors hover:brightness-110"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void handleCopy();
+      }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           e.stopPropagation();
           void handleCopy();
-        }}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            void handleCopy();
-          }
-        }}
-      >
-        {shortAddress}
-        <LuCopy className="h-3.5 w-3.5" />
-      </span>
+        }
+      }}
+    >
+      {shortAddress}
+      <LuCopy className="h-3.5 w-3.5" />
+    </span>
+  );
 
-      {/* Connected indicator badge */}
+  const identityTrigger = (
+    <div className="inline-flex items-center gap-2">
+      {fullAvatar}
+      {addressBadge}
+    </div>
+  );
+
+  const metadataChips = (
+    <>
       {mounted && isOwner && (
         <span className="inline-flex items-center gap-1 rounded-sm bg-green-500/10 px-2 py-1 font-zen text-xs text-green-500">
           <FaCircle size={6} />
@@ -322,24 +389,52 @@ export function AccountIdentity({
         </span>
       )}
 
-      {/* ENS badge (only show if there's an actual ENS name) */}
-      {showAddress && !vaultName && ensName && (
-        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">{ensName}</span>
-      )}
-
-      {/* Vault name badge (if it's a vault) */}
-      {vaultName && (
-        <span className="inline-flex min-w-0 items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">
+      {mainTag && vaultIdentity?.kind === 'vault-adapter' ? (
+        <Tooltip
+          content={
+            <TooltipContent
+              title={`Adapter for ${vaultIdentity.displayName}`}
+              detail="This account holds Morpho Blue positions on behalf of the vault. The adapter and vault are separate accounts."
+            />
+          }
+        >
+          <span className={getMainTagClassName(mainTag.kind)}>
+            <span
+              className={labelClasses}
+              title={mainTag.title}
+            >
+              {mainTag.label}
+            </span>
+          </span>
+        </Tooltip>
+      ) : mainTag ? (
+        <span className={getMainTagClassName(mainTag.kind)}>
           <span
             className={labelClasses}
-            title={vaultName}
+            title={mainTag.title}
           >
-            {vaultName}
+            {mainTag.label}
           </span>
         </span>
+      ) : null}
+
+      {entityBadge && (
+        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 text-xs text-secondary">{entityBadge}</span>
       )}
 
-      {/* Explorer link */}
+      {linkedVaultHref && (
+        <Tooltip content={<TooltipContent title="Open vault account" />}>
+          <Link
+            href={linkedVaultHref}
+            className="inline-flex items-center gap-1 rounded-sm bg-hovered px-2 py-1 text-xs text-secondary no-underline transition-colors hover:text-primary hover:no-underline"
+            aria-label={`Open vault account for ${vaultIdentity?.displayName ?? 'linked vault'}`}
+          >
+            <span>Vault</span>
+            <LuLink className="h-3.5 w-3.5" />
+          </Link>
+        </Tooltip>
+      )}
+
       {linkTo === 'explorer' && href && (
         <a
           href={href}
@@ -370,45 +465,33 @@ export function AccountIdentity({
     </>
   );
 
-  const fullClasses = clsx('flex items-center gap-2', copyable && 'cursor-pointer transition-colors hover:brightness-110', className);
+  const fullClasses = clsx('flex items-center gap-2', className);
 
-  const fullElement =
-    href && linkTo === 'profile' ? (
-      <motion.div
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+  const fullTrigger = showActions ? (
+    <AccountActionsPopover
+      address={address}
+      chainId={chainId ?? vaultIdentity?.chainId}
+    >
+      {identityTrigger}
+    </AccountActionsPopover>
+  ) : href && linkTo === 'profile' ? (
+    <div className="inline-flex items-center gap-2">
+      <Link
+        href={href}
+        className="inline-flex items-center no-underline"
       >
-        <Link
-          href={href}
-          className={fullClasses}
-        >
-          {fullContent}
-        </Link>
-      </motion.div>
-    ) : (
-      <motion.div
-        className={fullClasses}
-        onClick={copyable ? () => void handleCopy() : undefined}
-        style={{ cursor: copyable ? 'pointer' : 'default' }}
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      >
-        {fullContent}
-      </motion.div>
-    );
+        {fullAvatar}
+      </Link>
+      {addressBadge}
+    </div>
+  ) : (
+    identityTrigger
+  );
 
-  if (showActions) {
-    return (
-      <AccountActionsPopover
-        address={address}
-        chainId={chainId}
-      >
-        {fullElement}
-      </AccountActionsPopover>
-    );
-  }
-
-  return fullElement;
+  return (
+    <div className={fullClasses}>
+      {fullTrigger}
+      {metadataChips}
+    </div>
+  );
 }

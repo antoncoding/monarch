@@ -13,17 +13,29 @@ import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
 export type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
-const useUserPositionsSummaryData = (user: string | undefined, period: EarningsPeriod = 'day', chainIds?: SupportedNetworks[]) => {
-  const queryClient = useQueryClient();
+type UseUserPositionsSummaryDataOptions = {
+  enabled?: boolean;
+};
 
-  const { data: positions, loading: positionsLoading, isRefetching, positionsError } = useUserPositions(user, true, chainIds);
+const useUserPositionsSummaryData = (
+  user: string | undefined,
+  period: EarningsPeriod = 'day',
+  chainIds?: SupportedNetworks[],
+  options: UseUserPositionsSummaryDataOptions = {},
+) => {
+  const queryClient = useQueryClient();
+  const enabled = options.enabled ?? true;
+  const activeUser = enabled ? user : undefined;
+
+  const { data: positions, loading: positionsLoading, isRefetching, positionsError } = useUserPositions(activeUser, true, chainIds);
 
   const uniqueChainIds = useMemo(
     () => chainIds ?? [...new Set(positions?.map((p) => p.market.morphoBlue.chain.id as SupportedNetworks) ?? [])],
     [chainIds, positions],
   );
 
-  const { data: currentBlocks } = useCurrentBlocks(uniqueChainIds);
+  const currentBlockChainIds = enabled ? uniqueChainIds : [];
+  const { data: currentBlocks } = useCurrentBlocks(currentBlockChainIds);
 
   const snapshotBlocks = useMemo(() => {
     if (!currentBlocks) return {};
@@ -53,31 +65,31 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     isFetching: isFetchingTransactions,
   } = useUserTransactionsQuery({
     filters: {
-      userAddress: user ? [user] : [],
+      userAddress: activeUser ? [activeUser] : [],
       marketUniqueKeys: positions?.map((p) => p.market.uniqueKey) ?? [],
       chainIds: uniqueChainIds,
     },
     paginate: true,
-    enabled: !!positions && !!user,
+    enabled: !!positions && !!activeUser,
   });
 
   const mergedTransactions = useMemo(
     () =>
       mergeUserTransactionsWithRecentCache({
-        userAddress: user,
+        userAddress: activeUser,
         chainIds: uniqueChainIds,
         apiTransactions: txData?.items ?? [],
       }),
-    [user, uniqueChainIds, txData?.items],
+    [activeUser, uniqueChainIds, txData?.items],
   );
 
   useEffect(() => {
     reconcileUserTransactionHistoryCache({
-      userAddress: user,
+      userAddress: activeUser,
       chainIds: uniqueChainIds,
       apiTransactions: txData?.items ?? [],
     });
-  }, [user, uniqueChainIds, txData?.items]);
+  }, [activeUser, uniqueChainIds, txData?.items]);
 
   const {
     data: allSnapshots,
@@ -85,7 +97,7 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     isFetching: isFetchingSnapshots,
   } = usePositionSnapshots({
     positions,
-    user,
+    user: activeUser,
     snapshotBlocks,
     boundaryBlockData: actualBlockData ?? {},
     transactions: mergedTransactions,
@@ -94,12 +106,17 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
   const positionsWithEarnings = usePositionsWithEarnings(positions ?? [], mergedTransactions, allSnapshots ?? {}, actualBlockData ?? {});
 
   const refetch = async (onSuccess?: () => void) => {
+    if (!activeUser) {
+      onSuccess?.();
+      return;
+    }
+
     try {
       await queryClient.invalidateQueries({
-        queryKey: positionKeys.initialData(user ?? ''),
+        queryKey: positionKeys.initialData(activeUser),
       });
       await queryClient.invalidateQueries({
-        queryKey: ['enhanced-positions', user],
+        queryKey: ['enhanced-positions', activeUser],
       });
       await queryClient.invalidateQueries({
         queryKey: ['all-position-snapshots'],
@@ -121,12 +138,13 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
   };
 
   const isEarningsLoading =
-    isLoadingSnapshots ||
-    isFetchingSnapshots ||
-    isLoadingTransactions ||
-    isFetchingTransactions ||
-    isLoadingBlockTimestamps ||
-    isFetchingBlockTimestamps;
+    enabled &&
+    (isLoadingSnapshots ||
+      isFetchingSnapshots ||
+      isLoadingTransactions ||
+      isFetchingTransactions ||
+      isLoadingBlockTimestamps ||
+      isFetchingBlockTimestamps);
 
   const loadingStates = {
     positions: positionsLoading,

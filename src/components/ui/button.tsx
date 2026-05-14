@@ -88,13 +88,28 @@ export type ButtonProps = {
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, radius, fullWidth, isLoading, asChild = false, children, disabled, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
+    const isDisabled = isLoading ? true : disabled;
+    const buttonClassName = cn(buttonVariants({ variant, size, radius, fullWidth, isLoading, className }));
+
+    if (asChild) {
+      return (
+        <Slot
+          className={buttonClassName}
+          ref={ref}
+          {...props}
+          aria-disabled={isDisabled}
+        >
+          {children}
+        </Slot>
+      );
+    }
+
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, radius, fullWidth, isLoading, className }))}
+      <button
+        className={buttonClassName}
         ref={ref}
         {...props}
-        disabled={isLoading ? true : disabled}
+        disabled={isDisabled}
       >
         {children}
         {isLoading ? (
@@ -104,7 +119,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             color="text-current"
           />
         ) : null}
-      </Comp>
+      </button>
     );
   },
 );

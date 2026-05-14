@@ -93,6 +93,15 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Cold-start loading for optional metadata or enrichment must not trigger warning/error banners; warn only after a source is partial, stale, or unavailable.
 - Dismissible data-quality warnings must be keyed per failing source and use a bounded TTL, so dismissing one source does not hide unrelated failures.
 - Do not use Next.js raw image patterns where the project expects `next/image`.
+- Components using Radix `Slot`/`asChild` must pass exactly one child; do not append loading spinners, icons, or other siblings beside the slotted child.
+- Identity metadata must extend the existing account/header surface before adding a new card; do not repeat the same avatar, address, name, or kind badge in a second nearby panel.
+- In one identity header, express the entity kind once as the main identifier; relationship rows should show only secondary facts and counterpart links.
+- Neutral identity classifications such as ENS, vault, and adapter must not use warning icons, warning copy, or warning-colored treatments.
+- Relationship metadata must not link to the current page's own account again; only link to counterpart accounts, external protocol pages, or expandable details.
+- V2 vault position pages must not render native vault-address market or vault tables when the meaningful market exposure is held by a linked adapter.
+- Vault and adapter relationship UI should prefer short chips, address badges, and structural grouping over explanatory paragraphs.
+- Use available entity icons in compact metadata chips before adding extra explanatory text.
+- Dense product headers should use compact chips, short address links, icon buttons, and tooltips for secondary navigation; avoid long text buttons unless they are the primary action.
 - Make sure Mobile view is considered.
 - Simplify wording to provide a clear call to action; remove unnecessary explanations. Focus on what a user should do and what they should see, not what you want to say.
 - Modals should let the main panel own vertical scrolling; avoid nested scroll regions inside sections unless the content needs an independent fixed context.
