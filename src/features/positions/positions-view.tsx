@@ -16,6 +16,7 @@ import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
 import { useVaultHistoricalApy } from '@/hooks/useVaultHistoricalApy';
 import { useVaultAccountIdentity } from '@/hooks/useVaultAccountIdentity';
+import { useVaultRegistry } from '@/contexts/VaultRegistryContext';
 import { useModal } from '@/hooks/useModal';
 import { usePositionsFilters } from '@/stores/usePositionsFilters';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
@@ -33,9 +34,11 @@ export default function Positions() {
   const { open } = useModal();
   const period = usePositionsFilters((s) => s.period);
   const { addVisitedAddress, toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
+  const { loading: isVaultRegistryLoading } = useVaultRegistry();
   const accountVaultIdentity = useVaultAccountIdentity(account);
   const isV2VaultPage = accountVaultIdentity?.kind === 'vault-v2';
-  const showNativeAccountSections = !isV2VaultPage;
+  const canEvaluateVaultIdentity = !isVaultRegistryLoading;
+  const showNativeAccountSections = canEvaluateVaultIdentity && !isV2VaultPage;
 
   const { loading: isMarketsLoading } = useProcessedMarkets();
 
@@ -80,9 +83,13 @@ export default function Positions() {
     error: pricesError,
   } = usePortfolioValue(marketPositions, vaults);
 
-  const loading = showNativeAccountSections && (isMarketsLoading || isPositionsLoading);
+  const loading = !canEvaluateVaultIdentity || (showNativeAccountSections && (isMarketsLoading || isPositionsLoading));
 
-  const loadingMessage = isMarketsLoading ? 'Loading markets...' : 'Loading user positions...';
+  const loadingMessage = canEvaluateVaultIdentity
+    ? isMarketsLoading
+      ? 'Loading markets...'
+      : 'Loading user positions...'
+    : 'Loading account metadata...';
 
   const hasSuppliedMarkets = showNativeAccountSections && marketPositions.some(hasSupplyPositionHistory);
   const hasBorrowPositions =
