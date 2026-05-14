@@ -109,3 +109,11 @@ export function isMarketTrustedByVault(market: Market, trustedVaultMap: Map<stri
 
   return false;
 }
+
+export function formatVaultAdapterType(adapterType?: string): string {
+  if (!adapterType) {
+    return 'Morpho market adapter';
+  }
+
+  return adapterType.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\bV\s+(\d+)\b/g, 'V$1');
+}
