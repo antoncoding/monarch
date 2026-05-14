@@ -288,6 +288,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                           chainId={chainId}
                           variant="compact"
                           linkTo="profile"
+                          showAdapterBadge
                         />
                       </TableCell>
                       <TableCell className="text-sm">

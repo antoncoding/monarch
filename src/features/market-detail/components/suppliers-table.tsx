@@ -135,6 +135,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                           chainId={chainId}
                           variant="compact"
                           linkTo="profile"
+                          showAdapterBadge
                         />
                       </TableCell>
                       <TableCell className="text-sm">

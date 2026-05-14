@@ -35,6 +35,7 @@ type AccountIdentityProps = {
   showCopy?: boolean;
   showAddress?: boolean;
   showActions?: boolean;
+  showAdapterBadge?: boolean;
   showBookmark?: boolean;
   className?: string;
 };
@@ -79,6 +80,7 @@ export function AccountIdentity({
   showCopy = false,
   showAddress = false,
   showActions = true,
+  showAdapterBadge = false,
   showBookmark = false,
   className,
 }: AccountIdentityProps) {
@@ -144,6 +146,12 @@ export function AccountIdentity({
       : undefined;
   const entityBadge = vaultIdentity ? getEntityBadgeLabel(vaultIdentity) : undefined;
   const metadataImageUrl = vaultIdentity?.metadataImage && !metadataImageFailed ? vaultIdentity.metadataImage : undefined;
+  const adapterBadge =
+    showAdapterBadge && vaultIdentity?.kind === 'vault-adapter' ? (
+      <span className="inline-flex shrink-0 items-center rounded-sm bg-surface px-1.5 py-0.5 font-zen text-[10px] uppercase tracking-[0.08em] text-secondary">
+        Adapter
+      </span>
+    ) : null;
   const linkedVaultHref =
     vaultIdentity?.kind === 'vault-adapter' && vaultIdentity.vaultAddress.toLowerCase() !== address.toLowerCase()
       ? `/positions/${vaultIdentity.vaultAddress}`
@@ -260,6 +268,7 @@ export function AccountIdentity({
             />
           )}
         </span>
+        {adapterBadge}
         {linkTo === 'explorer' && <ExternalLinkIcon className="h-3 w-3" />}
         {showCopy && (
           <LuCopy
