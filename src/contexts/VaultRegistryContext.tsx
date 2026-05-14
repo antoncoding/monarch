@@ -133,7 +133,9 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
     const lookup = new Map<string, AdapterAddressAlias[]>();
     for (const adapterAlias of adapterAliases) {
       const key = adapterAlias.address.toLowerCase();
-      lookup.set(key, [...(lookup.get(key) ?? []), toAdapterAddressAlias(adapterAlias)]);
+      const existing = lookup.get(key) ?? [];
+      existing.push(toAdapterAddressAlias(adapterAlias));
+      lookup.set(key, existing);
     }
     return lookup;
   }, [adapterAliases]);
@@ -142,7 +144,9 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
     const lookup = new Map<string, AdapterAddressAlias[]>();
     for (const adapterAlias of adapterAliases) {
       const key = adapterAlias.vaultAddress.toLowerCase();
-      lookup.set(key, [...(lookup.get(key) ?? []), toAdapterAddressAlias(adapterAlias)]);
+      const existing = lookup.get(key) ?? [];
+      existing.push(toAdapterAddressAlias(adapterAlias));
+      lookup.set(key, existing);
     }
     return lookup;
   }, [adapterAliases]);
