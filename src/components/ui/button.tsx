@@ -1,9 +1,11 @@
-import { forwardRef } from 'react';
+import { forwardRef, isValidElement } from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/utils/index';
 import { Spinner } from './spinner';
+
+const disabledAttributeElements = new Set(['button', 'fieldset', 'input', 'optgroup', 'option', 'select', 'textarea']);
 
 const buttonVariants = cva(
   'relative inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all duration-200 ease-in-out border-0 outline-0 ring-0 focus:border-0 focus:outline-0 focus:ring-0 active:border-0 active:outline-0 active:ring-0 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
@@ -91,15 +93,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const isDisabled = isLoading ? true : disabled;
     const buttonClassName = cn(
       buttonVariants({ variant, size, radius, fullWidth, isLoading, className }),
-      isDisabled && 'pointer-events-none cursor-not-allowed opacity-50',
+      asChild && isDisabled && 'pointer-events-none cursor-not-allowed opacity-50',
     );
 
     if (asChild) {
-      const slotProps = {
+      const slotProps: React.ComponentPropsWithoutRef<typeof Slot> & { disabled?: boolean } = {
         ...props,
-        disabled: isDisabled,
         'aria-disabled': isDisabled,
-      } as React.ComponentPropsWithoutRef<typeof Slot>;
+      };
+      if (isValidElement(children) && typeof children.type === 'string' && disabledAttributeElements.has(children.type)) {
+        slotProps.disabled = isDisabled;
+      }
 
       return (
         <Slot
