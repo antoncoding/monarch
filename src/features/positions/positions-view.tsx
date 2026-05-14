@@ -38,7 +38,9 @@ export default function Positions() {
   const accountVaultIdentity = useVaultAccountIdentity(account);
   const isV2VaultPage = accountVaultIdentity?.kind === 'vault-v2';
   const canEvaluateVaultIdentity = !isVaultRegistryLoading;
-  const showNativeAccountSections = canEvaluateVaultIdentity && !isV2VaultPage;
+  // Start native account fetches during identity resolution, but keep native UI hidden until vault status is known.
+  const shouldFetchNativeAccountData = !isV2VaultPage;
+  const showNativeAccountSections = canEvaluateVaultIdentity && shouldFetchNativeAccountData;
 
   const { loading: isMarketsLoading } = useProcessedMarkets();
 
@@ -51,7 +53,7 @@ export default function Positions() {
     actualBlockData,
     transactions,
     snapshotsByChain,
-  } = useUserPositionsSummaryData(account, period, undefined, { enabled: showNativeAccountSections });
+  } = useUserPositionsSummaryData(account, period, undefined, { enabled: shouldFetchNativeAccountData });
 
   // Fetch user's auto vaults
   const {
@@ -59,7 +61,7 @@ export default function Positions() {
     isLoading: isVaultsLoading,
     isRefetching: isVaultsRefetching,
     refetch: refetchVaults,
-  } = useUserVaultsV2Query({ userAddress: account as Address, enabled: showNativeAccountSections });
+  } = useUserVaultsV2Query({ userAddress: account as Address, enabled: shouldFetchNativeAccountData });
 
   // Fetch historical APY for vaults
   const { data: vaultApyData, isLoading: isVaultApyLoading } = useVaultHistoricalApy(vaults, period);
