@@ -154,7 +154,7 @@ export default function Positions() {
           </div>
         </div>
 
-        {accountVaultIdentity?.kind === 'vault-v2' && accountVaultIdentity.adapterAddress && (
+        {accountVaultIdentity?.kind === 'vault-v2' && (
           <VaultManagedExposures
             vaultAddress={account as Address}
             fallbackAdapterAddress={accountVaultIdentity.adapterAddress}

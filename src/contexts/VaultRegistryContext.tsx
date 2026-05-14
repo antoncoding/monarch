@@ -64,6 +64,9 @@ const toAdapterAddressAlias = (adapterAlias: VaultAdapterAlias): AdapterAddressA
   vaultName: adapterAlias.vaultName,
 });
 
+const toOptionalAdapterAddressAlias = (adapterAlias?: VaultAdapterAlias) =>
+  adapterAlias ? toAdapterAddressAlias(adapterAlias) : undefined;
+
 const morphoVaultToIdentity = (vault: MorphoVault): VaultAccountIdentity => ({
   kind: 'morpho-vault',
   displayName: vault.name,
@@ -156,17 +159,15 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
 
       const adapterAlias = chainId
         ? adapterAliasesByScopedAddress.get(getAddressKey(normalizedAddress, chainId))
-        : adapterAliases.filter((candidate) => candidate.address.toLowerCase() === normalizedAddress).map(toAdapterAddressAlias)[0];
+        : toOptionalAdapterAddressAlias(adapterAliases.find((candidate) => candidate.address.toLowerCase() === normalizedAddress));
 
       if (adapterAlias) {
         return adapterAliasToAdapterIdentity(adapterAlias, getVaultByAddress(toAddress(adapterAlias.vaultAddress), adapterAlias.chainId));
       }
 
-      const vaultAliases = chainId
-        ? (adapterAliasesByVaultScopedAddress.get(getAddressKey(normalizedAddress, chainId)) ?? [])
-        : adapterAliases.filter((candidate) => candidate.vaultAddress.toLowerCase() === normalizedAddress).map(toAdapterAddressAlias);
-
-      const vaultAlias = vaultAliases[0];
+      const vaultAlias = chainId
+        ? adapterAliasesByVaultScopedAddress.get(getAddressKey(normalizedAddress, chainId))?.[0]
+        : toOptionalAdapterAddressAlias(adapterAliases.find((candidate) => candidate.vaultAddress.toLowerCase() === normalizedAddress));
       if (vaultAlias) {
         return adapterAliasToVaultIdentity(vaultAlias, getVaultByAddress(address, vaultAlias.chainId));
       }

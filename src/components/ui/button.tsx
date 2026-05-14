@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { cloneElement, forwardRef, isValidElement } from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
@@ -89,9 +89,17 @@ export type ButtonProps = {
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, radius, fullWidth, isLoading, asChild = false, children, disabled, ...props }, ref) => {
     const isDisabled = isLoading ? true : disabled;
-    const buttonClassName = cn(buttonVariants({ variant, size, radius, fullWidth, isLoading, className }));
+    const buttonClassName = cn(
+      buttonVariants({ variant, size, radius, fullWidth, isLoading, className }),
+      isDisabled && 'pointer-events-none cursor-not-allowed opacity-50',
+    );
 
     if (asChild) {
+      const slottedChildren =
+        isDisabled && isValidElement<{ disabled?: boolean }>(children)
+          ? cloneElement(children, { disabled: true })
+          : children;
+
       return (
         <Slot
           className={buttonClassName}
@@ -99,7 +107,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           {...props}
           aria-disabled={isDisabled}
         >
-          {children}
+          {slottedChildren}
         </Slot>
       );
     }

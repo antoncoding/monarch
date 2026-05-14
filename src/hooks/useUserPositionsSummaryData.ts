@@ -75,15 +75,21 @@ const useUserPositionsSummaryData = (
 
   const mergedTransactions = useMemo(
     () =>
-      mergeUserTransactionsWithRecentCache({
-        userAddress: activeUser,
-        chainIds: uniqueChainIds,
-        apiTransactions: txData?.items ?? [],
-      }),
+      activeUser
+        ? mergeUserTransactionsWithRecentCache({
+            userAddress: activeUser,
+            chainIds: uniqueChainIds,
+            apiTransactions: txData?.items ?? [],
+          })
+        : [],
     [activeUser, uniqueChainIds, txData?.items],
   );
 
   useEffect(() => {
+    if (!activeUser) {
+      return;
+    }
+
     reconcileUserTransactionHistoryCache({
       userAddress: activeUser,
       chainIds: uniqueChainIds,
