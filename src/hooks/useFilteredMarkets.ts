@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import { useMarketRateEnrichmentQuery } from '@/hooks/queries/useMarketRateEnrichmentQuery';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useMarketFilterPreferences } from '@/stores/useMarketFilterPreferences';
-import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
-import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
+import { useMarketFilterDependencyStatus } from '@/hooks/useMarketFilterDependencyStatus';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -13,6 +12,7 @@ import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } 
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
+import { getNetworkName } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap, isMarketTrustedByVault } from '@/utils/vaults';
 
@@ -23,9 +23,13 @@ type UseFilteredMarketsOptions = {
 
 type UseFilteredMarketsResult = {
   markets: Market[];
-  isLoading: boolean;
-  isWhitelistUnavailable: boolean;
+  marketDataNotices: MarketDataNotice[];
   rateEnrichmentPendingChainIds: Set<number>;
+};
+
+export type MarketDataNotice = {
+  id: string;
+  impact: string;
 };
 
 const HISTORICAL_RATE_SORT_COLUMNS = new Set<SortColumn>([
@@ -37,6 +41,9 @@ const HISTORICAL_RATE_SORT_COLUMNS = new Set<SortColumn>([
   SortColumn.MonthlyBorrowAPY,
 ]);
 const EMPTY_PENDING_CHAIN_IDS = new Set<number>();
+const EMPTY_DATA_NOTICES: MarketDataNotice[] = [];
+
+const getNetworkLabel = (chainId: number): string => getNetworkName(chainId) ?? `chain ${chainId}`;
 
 const getSortPropertyPath = (sortColumn: SortColumn): string => {
   const sortPropertyMap: Record<SortColumn, string> = {
@@ -89,6 +96,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const preferences = useMarketPreferences();
   const persistedFilters = useMarketFilterPreferences();
   const isHistoricalRateSort = HISTORICAL_RATE_SORT_COLUMNS.has(preferences.sortColumn);
+  const isRateAtTargetSort = preferences.sortColumn === SortColumn.RateAtTarget;
+  const requiresGlobalRateSort = isHistoricalRateSort || isRateAtTargetSort;
   const historicalRateColumnsVisible =
     preferences.columnVisibility.dailySupplyAPY ||
     preferences.columnVisibility.dailyBorrowAPY ||
@@ -96,33 +105,39 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     preferences.columnVisibility.weeklyBorrowAPY ||
     preferences.columnVisibility.monthlySupplyAPY ||
     preferences.columnVisibility.monthlyBorrowAPY;
-  const shouldEnableRateEnrichment = options?.enableRateEnrichment ?? (isHistoricalRateSort || historicalRateColumnsVisible);
-  const { allMarkets, whitelistedMarkets } = useProcessedMarkets({
+  const rateDataColumnsVisible = preferences.columnVisibility.rateAtTarget || historicalRateColumnsVisible;
+  const shouldEnableRateEnrichment =
+    options?.enableRateEnrichment ?? (isHistoricalRateSort || isRateAtTargetSort || rateDataColumnsVisible);
+  const rateNoticeSubject =
+    (preferences.columnVisibility.rateAtTarget || isRateAtTargetSort) && (historicalRateColumnsVisible || isHistoricalRateSort)
+      ? 'Target Rate and 24h/7d/30d APY columns'
+      : preferences.columnVisibility.rateAtTarget || isRateAtTargetSort
+        ? 'Target Rate'
+        : '24h/7d/30d APY columns';
+  const { allMarkets } = useProcessedMarkets({
     enableRateEnrichment: false,
     includeUnknownTokens: preferences.includeUnknownTokens,
   });
-  const { whitelistLookup, isLoading: whitelistLoading, isFetching: whitelistFetching } = useMorphoWhitelistStatusQuery();
-  const { data: oracleMetadataMap } = useAllOracleMetadata();
+  const { canEvaluateUnknownTokenGuard, oracleMetadataMap, whitelistChainIds } = useMarketFilterDependencyStatus();
   const filters = useMarketsFilters();
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys();
   const customTagKeys = useCustomTagMarketKeys();
-  const shouldBlockWhitelistedFiltering = !showUnwhitelistedMarkets && whitelistLookup.size === 0;
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const filteredCandidates = useMemo(() => {
-    if (shouldBlockWhitelistedFiltering) {
-      return [];
-    }
-
-    let filteredMarkets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
+    // Morpho fallback markets start unwhitelisted until metadata overlays them.
+    // If a chain has no whitelist signal, keep it visible and let filters run.
+    let filteredMarkets = showUnwhitelistedMarkets
+      ? allMarkets
+      : allMarkets.filter((market) => !whitelistChainIds.has(market.morphoBlue.chain.id) || market.whitelisted);
     if (filteredMarkets.length === 0) return [];
 
     filteredMarkets = filterMarkets(filteredMarkets, {
       selectedNetwork: persistedFilters.selectedNetwork,
-      showUnknownTokens: preferences.includeUnknownTokens,
+      showUnknownTokens: preferences.includeUnknownTokens || !canEvaluateUnknownTokenGuard,
       showUnknownOracle: preferences.showUnknownOracle,
       showLockedMarkets: preferences.showLockedMarkets,
       selectedCollaterals: persistedFilters.selectedCollaterals,
@@ -176,9 +191,9 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     return filteredMarkets;
   }, [
     allMarkets,
-    whitelistedMarkets,
-    shouldBlockWhitelistedFiltering,
+    canEvaluateUnknownTokenGuard,
     showUnwhitelistedMarkets,
+    whitelistChainIds,
     filters,
     persistedFilters,
     preferences,
@@ -223,7 +238,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       return [];
     }
 
-    if (isHistoricalRateSort) {
+    if (requiresGlobalRateSort) {
       return filteredCandidates;
     }
 
@@ -232,22 +247,40 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     return sortedCandidates.slice(startIndex, startIndex + preferences.entriesPerPage);
   }, [
     shouldEnableRateEnrichment,
-    isHistoricalRateSort,
+    requiresGlobalRateSort,
     filteredCandidates,
     sortedCandidates,
     options?.currentPage,
     preferences.entriesPerPage,
   ]);
 
-  const { data: marketRateEnrichments, pendingChainIds: rateEnrichmentPendingChainIds } =
-    useMarketRateEnrichmentQuery(rateEnrichmentTargets);
+  const {
+    data: marketRateEnrichments,
+    pendingChainIds: rateEnrichmentPendingChainIds,
+    morphoRateFailedChainIds,
+  } = useMarketRateEnrichmentQuery(rateEnrichmentTargets);
+
+  const marketDataNotices = useMemo<MarketDataNotice[]>(() => {
+    if (!shouldEnableRateEnrichment || morphoRateFailedChainIds.size === 0) {
+      return EMPTY_DATA_NOTICES;
+    }
+
+    return Array.from(morphoRateFailedChainIds)
+      .sort((a, b) => a - b)
+      .map((chainId) => ({
+        id: `market-rate-enrichment-${chainId}`,
+        impact: `Morpho rate data is unavailable for ${getNetworkLabel(
+          chainId,
+        )}. ${rateNoticeSubject} may be missing for those markets; current Supply APY and Borrow APY still use live market data.`,
+      }));
+  }, [morphoRateFailedChainIds, rateNoticeSubject, shouldEnableRateEnrichment]);
 
   const markets = useMemo(() => {
     if (!shouldEnableRateEnrichment || marketRateEnrichments.size === 0) {
       return sortedCandidates;
     }
 
-    if (!isHistoricalRateSort) {
+    if (!requiresGlobalRateSort) {
       return mergeRateEnrichments(sortedCandidates, marketRateEnrichments);
     }
 
@@ -263,7 +296,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     shouldEnableRateEnrichment,
     marketRateEnrichments,
     sortedCandidates,
-    isHistoricalRateSort,
+    requiresGlobalRateSort,
     filteredCandidates,
     preferences.sortColumn,
     preferences.sortDirection,
@@ -271,8 +304,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
 
   return {
     markets,
-    isLoading: shouldBlockWhitelistedFiltering && (whitelistLoading || whitelistFetching),
-    isWhitelistUnavailable: shouldBlockWhitelistedFiltering && !whitelistLoading && !whitelistFetching,
+    marketDataNotices,
     rateEnrichmentPendingChainIds: shouldEnableRateEnrichment ? rateEnrichmentPendingChainIds : EMPTY_PENDING_CHAIN_IDS,
   };
 };

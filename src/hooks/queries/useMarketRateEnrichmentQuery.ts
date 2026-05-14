@@ -1,12 +1,17 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
-import { fetchMarketRateEnrichment, getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
+import {
+  fetchMarketRateEnrichmentWithStatus,
+  getMarketRateEnrichmentKey,
+  type MarketRateEnrichmentMap,
+} from '@/utils/market-rate-enrichment';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
 const EMPTY_ENRICHMENT_MAP: MarketRateEnrichmentMap = new Map();
 const EMPTY_PENDING_CHAIN_IDS = new Set<number>();
+const EMPTY_FAILED_CHAIN_IDS = new Set<number>();
 
 export const useMarketRateEnrichmentQuery = (markets: Market[]) => {
   const { customRpcUrls } = useCustomRpcContext();
@@ -29,7 +34,7 @@ export const useMarketRateEnrichmentQuery = (markets: Market[]) => {
 
       return {
         queryKey: ['market-rate-enrichment', chainId, marketIdentity, customRpcUrl ?? null],
-        queryFn: async () => fetchMarketRateEnrichment(chainMarkets, customRpcUrl ? { [chainId]: customRpcUrl } : {}),
+        queryFn: async () => fetchMarketRateEnrichmentWithStatus(chainMarkets, customRpcUrl ? { [chainId]: customRpcUrl } : {}),
         enabled: chainMarkets.length > 0,
         staleTime: 15 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
@@ -50,7 +55,7 @@ export const useMarketRateEnrichmentQuery = (markets: Market[]) => {
         return;
       }
 
-      query.data.forEach((value, key) => {
+      query.data.enrichments.forEach((value, key) => {
         merged.set(key, value);
       });
     });
@@ -75,6 +80,31 @@ export const useMarketRateEnrichmentQuery = (markets: Market[]) => {
     return pending.size > 0 ? pending : EMPTY_PENDING_CHAIN_IDS;
   }, [marketsByChain, enrichmentQueries]);
 
+  const morphoRateFailedChainIds = useMemo(() => {
+    if (marketsByChain.length === 0) {
+      return EMPTY_FAILED_CHAIN_IDS;
+    }
+
+    const failed = new Set<number>();
+
+    marketsByChain.forEach(([chainId], index) => {
+      const query = enrichmentQueries[index];
+      if (!query) {
+        return;
+      }
+
+      if (query.isError || query.isRefetchError || query.failureCount > 0) {
+        failed.add(chainId);
+      }
+
+      query.data?.morphoRateFailedChainIds.forEach((failedChainId) => {
+        failed.add(failedChainId);
+      });
+    });
+
+    return failed.size > 0 ? failed : EMPTY_FAILED_CHAIN_IDS;
+  }, [marketsByChain, enrichmentQueries]);
+
   const isFetching = enrichmentQueries.some((query) => query.isFetching);
   const isRefetching = enrichmentQueries.some((query) => query.isRefetching);
   const isLoading = data.size === 0 && pendingChainIds.size > 0;
@@ -82,6 +112,7 @@ export const useMarketRateEnrichmentQuery = (markets: Market[]) => {
   return {
     data,
     pendingChainIds,
+    morphoRateFailedChainIds,
     isLoading,
     isFetching,
     isRefetching,

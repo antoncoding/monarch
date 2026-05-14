@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
@@ -165,5 +165,6 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
     refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes in background by default
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
     enabled: !tokensLoading,
+    placeholderData: keepPreviousData,
   });
 };

@@ -49,6 +49,8 @@ export type RateEnrichmentMarketInput = Pick<Market, 'uniqueKey' | 'lltv' | 'irm
       | 'supplyAssetsUsd'
       | 'borrowAssetsUsd'
       | 'liquidityAssetsUsd'
+      | 'apyAtTarget'
+      | 'rateAtTarget'
     >
   >;
   morphoBlue: {
@@ -88,6 +90,10 @@ export type MarketRateEnrichment = Pick<
 >;
 
 export type MarketRateEnrichmentMap = Map<string, MarketRateEnrichment>;
+export type MarketRateEnrichmentResult = {
+  enrichments: MarketRateEnrichmentMap;
+  morphoRateFailedChainIds: Set<SupportedNetworks>;
+};
 export const ROLLING_RATE_WINDOW_SECONDS = LOOKBACK_WINDOWS.map((window) => window.seconds);
 
 export type HistoricalMarketBoundaryState = {
@@ -112,6 +118,12 @@ const buildEmptyEnrichment = (): MarketRateEnrichment => ({
   weeklyBorrowApy: null,
   monthlySupplyApy: null,
   monthlyBorrowApy: null,
+});
+
+const buildBaseEnrichment = (market: RateEnrichmentMarketInput): MarketRateEnrichment => ({
+  ...buildEmptyEnrichment(),
+  apyAtTarget: market.state?.apyAtTarget ?? 0,
+  rateAtTarget: market.state?.rateAtTarget ?? '0',
 });
 
 const buildEmptyWindowRates = (windowSeconds: number[]): MarketWindowRates =>
@@ -620,14 +632,18 @@ export async function fetchHistoricalMarketBoundaryStates(
   }
 }
 
-export async function fetchMarketRateEnrichment(
+export async function fetchMarketRateEnrichmentWithStatus(
   markets: RateEnrichmentMarketInput[],
   customRpcUrls: CustomRpcUrls = {},
-): Promise<MarketRateEnrichmentMap> {
+): Promise<MarketRateEnrichmentResult> {
   const enrichments = new Map<string, MarketRateEnrichment>();
+  const morphoRateFailedChainIds = new Set<SupportedNetworks>();
 
   if (markets.length === 0) {
-    return enrichments;
+    return {
+      enrichments,
+      morphoRateFailedChainIds,
+    };
   }
 
   const marketsByChain = markets.reduce((acc, market) => {
@@ -641,11 +657,15 @@ export async function fetchMarketRateEnrichment(
   for (const [chainId, chainMarkets] of marketsByChain.entries()) {
     const { enrichments: morphoEnrichmentsByKey, failed: morphoRateFetchFailed } = await fetchMorphoRateMarketsByKey(chainMarkets, chainId);
 
-    chainMarkets.forEach((market) => {
-      const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
-      const morphoEnrichment = morphoEnrichmentsByKey.get(key) ?? buildEmptyEnrichment();
-      enrichments.set(key, morphoEnrichment);
-    });
+    if (morphoRateFetchFailed) {
+      morphoRateFailedChainIds.add(chainId);
+    } else {
+      chainMarkets.forEach((market) => {
+        const key = getMarketRateEnrichmentKey(market.uniqueKey, chainId);
+        const morphoEnrichment = morphoEnrichmentsByKey.get(key) ?? buildBaseEnrichment(market);
+        enrichments.set(key, morphoEnrichment);
+      });
+    }
 
     if (morphoRateFetchFailed && MARKET_RATE_RPC_FALLBACK_ENABLED) {
       const rpcFallbackMarkets: RateEnrichmentMarketInput[] = [];
@@ -681,7 +701,7 @@ export async function fetchMarketRateEnrichment(
           acc[window.supplyField] = windowRatesEntry?.supplyApy ?? null;
           acc[window.borrowField] = windowRatesEntry?.borrowApy ?? null;
           return acc;
-        }, buildEmptyEnrichment());
+        }, buildBaseEnrichment(market));
 
         enrichments.set(key, {
           ...enrichments.get(key),
@@ -691,5 +711,15 @@ export async function fetchMarketRateEnrichment(
     }
   }
 
-  return enrichments;
+  return {
+    enrichments,
+    morphoRateFailedChainIds,
+  };
+}
+
+export async function fetchMarketRateEnrichment(
+  markets: RateEnrichmentMarketInput[],
+  customRpcUrls: CustomRpcUrls = {},
+): Promise<MarketRateEnrichmentMap> {
+  return (await fetchMarketRateEnrichmentWithStatus(markets, customRpcUrls)).enrichments;
 }

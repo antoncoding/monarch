@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { GoFilter, GoGear, GoShield, GoShieldCheck, GoStar } from 'react-icons/go';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Divider } from '@/components/ui/divider';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
@@ -10,6 +12,7 @@ import { Modal, ModalBody, ModalFooter, ModalHeader, type ModalZIndex } from '@/
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useDisclosure } from '@/hooks/useDisclosure';
+import { type MarketFilterGuardStatus, useMarketFilterDependencyStatus } from '@/hooks/useMarketFilterDependencyStatus';
 import { useModal } from '@/hooks/useModal';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -25,6 +28,37 @@ type MarketFilterProps = {
 };
 
 type DetailViewType = 'filter-thresholds' | 'trusted-vaults' | 'custom-tag-config';
+
+const isGuardAffected = (guard: MarketFilterGuardStatus | undefined): guard is MarketFilterGuardStatus =>
+  Boolean(guard?.active && guard.readiness !== 'ready');
+
+const getGuardDescription = (guard: MarketFilterGuardStatus | undefined, fallback: string) => {
+  return isGuardAffected(guard) ? guard.impact : fallback;
+};
+
+function GuardStatusBadge({ guard }: { guard: MarketFilterGuardStatus | undefined }) {
+  if (!isGuardAffected(guard)) {
+    return null;
+  }
+
+  return (
+    <Badge
+      variant={guard.readiness === 'unavailable' ? 'danger' : 'warning'}
+      size="sm"
+    >
+      {guard.statusLabel}
+    </Badge>
+  );
+}
+
+function GuardTitle({ label, guard }: { label: string; guard: MarketFilterGuardStatus | undefined }) {
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      {label}
+      <GuardStatusBadge guard={guard} />
+    </span>
+  );
+}
 
 export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings' }: MarketFilterProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
@@ -57,6 +91,11 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
   const { trendingMode, toggleTrendingMode, customTagMode, toggleCustomTagMode, starredOnly, toggleStarredOnly } = useMarketsFilters();
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
+  const { guardStatuses, hasAffectedGuards } = useMarketFilterDependencyStatus();
+  const guardStatusById = useMemo(() => new Map(guardStatuses.map((guard) => [guard.id, guard])), [guardStatuses]);
+  const unknownTokensGuard = guardStatusById.get('unknown-tokens');
+  const unknownOraclesGuard = guardStatusById.get('unknown-oracles');
+  const unwhitelistedMarketsGuard = guardStatusById.get('unwhitelisted-markets');
   const trustedVaultCount = trustedVaults.length;
   const hasTrustedVaults = trustedVaultCount > 0;
   const starredCount = starredMarkets.length;
@@ -89,7 +128,7 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
         content={
           <TooltipContent
             title="Filters"
-            detail="Toggle market filters and risk guards"
+            detail={hasAffectedGuards ? 'Some active filters cannot be fully checked' : 'Toggle market filters and risk guards'}
             icon={<GoFilter size={14} />}
           />
         }
@@ -97,7 +136,7 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
         <Button
           variant={isButtonVariant ? 'default' : 'ghost'}
           size={isButtonVariant ? 'md' : 'sm'}
-          className={isButtonVariant ? 'w-10 min-w-10 px-0' : 'min-w-0 px-2 text-secondary'}
+          className={isButtonVariant ? 'relative w-10 min-w-10 px-0' : 'relative min-w-0 px-2 text-secondary'}
           aria-label="Market filters"
           onClick={onOpen}
         >
@@ -105,6 +144,12 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
             size={isButtonVariant ? 16 : 14}
             style={{ color: hasActiveFilters ? MONARCH_PRIMARY : undefined }}
           />
+          {hasAffectedGuards && (
+            <span
+              className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: MONARCH_PRIMARY }}
+            />
+          )}
         </Button>
       </Tooltip>
 
@@ -133,8 +178,13 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
                 helper="Toggle guards to hide unverified or risky markets."
               >
                 <FilterRow
-                  title="Hide Unknown Tokens"
-                  description="Filter out tokens outside of the curated list."
+                  title={
+                    <GuardTitle
+                      label="Hide Unknown Tokens"
+                      guard={unknownTokensGuard}
+                    />
+                  }
+                  description={getGuardDescription(unknownTokensGuard, 'Filter out tokens outside of the curated list.')}
                 >
                   <IconSwitch
                     selected={!includeUnknownTokens}
@@ -146,8 +196,13 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
                   />
                 </FilterRow>
                 <FilterRow
-                  title="Hide Unknown Oracles"
-                  description="Filter out markets with unverified oracle feeds."
+                  title={
+                    <GuardTitle
+                      label="Hide Unknown Oracles"
+                      guard={unknownOraclesGuard}
+                    />
+                  }
+                  description={getGuardDescription(unknownOraclesGuard, 'Filter out markets with unverified oracle feeds.')}
                 >
                   <IconSwitch
                     selected={!showUnknownOracle}
@@ -159,8 +214,13 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
                   />
                 </FilterRow>
                 <FilterRow
-                  title="Hide Unwhitelisted Markets"
-                  description="Filter out markets not listed by Morpho."
+                  title={
+                    <GuardTitle
+                      label="Hide Unwhitelisted Markets"
+                      guard={unwhitelistedMarketsGuard}
+                    />
+                  }
+                  description={getGuardDescription(unwhitelistedMarketsGuard, 'Filter out markets not listed by Morpho.')}
                 >
                   <IconSwitch
                     selected={!showUnwhitelistedMarkets}

@@ -15,8 +15,8 @@ import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
+import { useMarketFilterDependencyStatus } from '@/hooks/useMarketFilterDependencyStatus';
 import { useModal } from '@/hooks/useModal';
-import { useAllOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -289,7 +289,7 @@ export function MarketsTableWithSameLoanAsset({
   // Get global market settings
   const { showUnwhitelistedMarkets, isAprDisplay } = useAppSettings();
   const { findToken } = useTokensQuery();
-  const { data: oracleMetadataMap } = useAllOracleMetadata();
+  const { canEvaluateUnknownTokenGuard, oracleMetadataMap, whitelistChainIds } = useMarketFilterDependencyStatus();
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
@@ -440,7 +440,7 @@ export function MarketsTableWithSameLoanAsset({
 
     // Apply global filters using the shared utility
     let filtered = filterMarkets(marketsListForFilter, {
-      showUnknownTokens: includeUnknownTokens,
+      showUnknownTokens: includeUnknownTokens || !canEvaluateUnknownTokenGuard,
       showUnknownOracle,
       selectedCollaterals: collateralFilter,
       selectedOracles: oracleFilter,
@@ -465,7 +465,7 @@ export function MarketsTableWithSameLoanAsset({
 
     // Apply whitelist filter (not in the shared utility because it uses global state)
     if (!showUnwhitelistedMarkets) {
-      filtered = filtered.filter((market) => market.whitelisted ?? false);
+      filtered = filtered.filter((market) => !whitelistChainIds.has(market.morphoBlue.chain.id) || market.whitelisted);
     }
 
     if (trustedVaultsOnly) {
@@ -501,6 +501,7 @@ export function MarketsTableWithSameLoanAsset({
   }, [
     marketsWithFreshState,
     collateralFilter,
+    canEvaluateUnknownTokenGuard,
     oracleFilter,
     sortColumn,
     sortDirection,
@@ -515,6 +516,7 @@ export function MarketsTableWithSameLoanAsset({
     findToken,
     hasTrustedVault,
     oracleMetadataMap,
+    whitelistChainIds,
     trustedVaultsOnly,
   ]);
 
