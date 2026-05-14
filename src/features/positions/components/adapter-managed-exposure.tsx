@@ -39,12 +39,13 @@ function AdapterIdentityChip({ adapterAddress, adapterType, chainId }: Omit<Adap
       address={adapterAddress}
       chainId={chainId}
     >
-      <span
-        className="inline-flex cursor-pointer items-center rounded-sm bg-hovered px-2 py-1 text-xs text-secondary transition-colors hover:text-primary"
+      <button
+        type="button"
+        className="inline-flex cursor-pointer items-center rounded-sm border-0 bg-hovered px-2 py-1 text-xs text-secondary transition-colors hover:text-primary"
         aria-label={`Open actions for ${label}`}
       >
         {label}
-      </span>
+      </button>
     </AccountActionsPopover>
   );
 }

@@ -17,7 +17,7 @@ export type VaultAccountIdentity = {
   vaultAddress: Address;
   adapterAddress?: Address;
   adapterType?: string;
-  assetAddress?: string;
+  assetAddress?: Address;
   assetSymbol?: string;
   metadataDescription?: string;
   metadataImage?: string;
@@ -73,7 +73,7 @@ const morphoVaultToIdentity = (vault: MorphoVault): VaultAccountIdentity => ({
   chainId: vault.chainId,
   address: toAddress(vault.address),
   vaultAddress: toAddress(vault.address),
-  assetAddress: vault.assetAddress,
+  assetAddress: toAddress(vault.assetAddress),
   assetSymbol: vault.assetSymbol,
   metadataDescription: vault.metadataDescription,
   metadataImage: vault.metadataImage,
@@ -88,7 +88,7 @@ const adapterAliasToAdapterIdentity = (adapterAlias: AdapterAddressAlias, morpho
   vaultAddress: toAddress(adapterAlias.vaultAddress),
   adapterAddress: toAddress(adapterAlias.adapterAddress),
   adapterType: adapterAlias.adapterType,
-  assetAddress: morphoVault?.assetAddress,
+  assetAddress: morphoVault?.assetAddress ? toAddress(morphoVault.assetAddress) : undefined,
   assetSymbol: morphoVault?.assetSymbol,
   metadataDescription: morphoVault?.metadataDescription,
   metadataImage: morphoVault?.metadataImage,
@@ -103,7 +103,7 @@ const adapterAliasToVaultIdentity = (adapterAlias: AdapterAddressAlias, morphoVa
   vaultAddress: toAddress(adapterAlias.vaultAddress),
   adapterAddress: toAddress(adapterAlias.adapterAddress),
   adapterType: adapterAlias.adapterType,
-  assetAddress: morphoVault?.assetAddress,
+  assetAddress: morphoVault?.assetAddress ? toAddress(morphoVault.assetAddress) : undefined,
   assetSymbol: morphoVault?.assetSymbol,
   metadataDescription: morphoVault?.metadataDescription,
   metadataImage: morphoVault?.metadataImage,
