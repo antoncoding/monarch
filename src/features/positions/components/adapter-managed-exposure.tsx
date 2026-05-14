@@ -146,7 +146,9 @@ export function VaultManagedExposures({
     return rows;
   }, [fallbackAdapterAddress, fallbackAdapterType, vaultDataQuery.data?.adapterDetails, vaultDataQuery.data?.adapters]);
 
-  if (adapters.length === 0) {
+  const showLoading = vaultDataQuery.isLoading && adapters.length === 0;
+
+  if (adapters.length === 0 && !showLoading) {
     return null;
   }
 
@@ -161,15 +163,19 @@ export function VaultManagedExposures({
       </div>
 
       <div className="space-y-6">
-        {adapters.map((adapter) => (
-          <AdapterExposure
-            key={`${chainId}:${adapter.address}`}
-            adapterAddress={adapter.address}
-            adapterType={adapter.adapterType}
-            chainId={chainId}
-            period={period}
-          />
-        ))}
+        {showLoading ? (
+          <div className="rounded bg-surface px-4 py-6 text-sm text-secondary shadow-sm">Loading...</div>
+        ) : (
+          adapters.map((adapter) => (
+            <AdapterExposure
+              key={`${chainId}:${adapter.address}`}
+              adapterAddress={adapter.address}
+              adapterType={adapter.adapterType}
+              chainId={chainId}
+              period={period}
+            />
+          ))
+        )}
       </div>
     </section>
   );
