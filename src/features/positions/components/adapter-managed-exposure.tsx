@@ -50,6 +50,10 @@ function AdapterIdentityChip({ adapterAddress, adapterType, chainId }: Omit<Adap
   );
 }
 
+function ExposureStatus({ message }: { message: string }) {
+  return <div className="rounded bg-surface px-4 py-6 text-sm text-secondary shadow-sm">{message}</div>;
+}
+
 function AdapterExposure({ adapterAddress, adapterType, chainId, period }: AdapterExposureProps) {
   const chainIds = useMemo(() => [chainId as SupportedNetworks], [chainId]);
 
@@ -70,7 +74,7 @@ function AdapterExposure({ adapterAddress, adapterType, chainId, period }: Adapt
         chainId={chainId}
       />
 
-      {isPositionsLoading && <div className="rounded bg-surface px-4 py-6 text-sm text-secondary shadow-sm">Loading...</div>}
+      {isPositionsLoading && <ExposureStatus message="Loading..." />}
 
       {!isPositionsLoading && hasSuppliedMarkets && (
         <SuppliedMorphoBlueGroupedTable
@@ -94,7 +98,7 @@ function AdapterExposure({ adapterAddress, adapterType, chainId, period }: Adapt
         />
       )}
 
-      {showEmpty && <div className="rounded bg-surface px-4 py-6 text-sm text-secondary shadow-sm">No positions.</div>}
+      {showEmpty && <ExposureStatus message="No positions." />}
     </div>
   );
 }
@@ -164,7 +168,7 @@ export function VaultManagedExposures({
 
       <div className="space-y-6">
         {showLoading ? (
-          <div className="rounded bg-surface px-4 py-6 text-sm text-secondary shadow-sm">Loading...</div>
+          <ExposureStatus message="Loading..." />
         ) : (
           adapters.map((adapter) => (
             <AdapterExposure
