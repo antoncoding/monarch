@@ -56,8 +56,6 @@ const getAddressKey = (address: string, chainId: number) => `${chainId}:${addres
 
 const toAddress = (value: string): Address => value.toLowerCase() as Address;
 
-const getSingleAlias = (aliases?: AdapterAddressAlias[]) => (aliases?.length === 1 ? aliases[0] : undefined);
-
 const toAdapterAddressAlias = (adapterAlias: VaultAdapterAlias): AdapterAddressAlias => ({
   adapterAddress: adapterAlias.address,
   adapterType: adapterAlias.adapterType,
@@ -65,6 +63,9 @@ const toAdapterAddressAlias = (adapterAlias: VaultAdapterAlias): AdapterAddressA
   vaultAddress: adapterAlias.vaultAddress,
   vaultName: adapterAlias.vaultName,
 });
+
+const toOptionalAdapterAddressAlias = (adapterAlias?: VaultAdapterAlias) =>
+  adapterAlias ? toAdapterAddressAlias(adapterAlias) : undefined;
 
 const morphoVaultToIdentity = (vault: MorphoVault): VaultAccountIdentity => ({
   kind: 'morpho-vault',
@@ -129,28 +130,6 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
     return lookup;
   }, [adapterAliases]);
 
-  const adapterAliasesByAddress = useMemo(() => {
-    const lookup = new Map<string, AdapterAddressAlias[]>();
-    for (const adapterAlias of adapterAliases) {
-      const key = adapterAlias.address.toLowerCase();
-      const existing = lookup.get(key) ?? [];
-      existing.push(toAdapterAddressAlias(adapterAlias));
-      lookup.set(key, existing);
-    }
-    return lookup;
-  }, [adapterAliases]);
-
-  const adapterAliasesByVaultAddress = useMemo(() => {
-    const lookup = new Map<string, AdapterAddressAlias[]>();
-    for (const adapterAlias of adapterAliases) {
-      const key = adapterAlias.vaultAddress.toLowerCase();
-      const existing = lookup.get(key) ?? [];
-      existing.push(toAdapterAddressAlias(adapterAlias));
-      lookup.set(key, existing);
-    }
-    return lookup;
-  }, [adapterAliases]);
-
   const adapterAliasesByVaultScopedAddress = useMemo(() => {
     const lookup = new Map<string, AdapterAddressAlias[]>();
     for (const adapterAlias of adapterAliases) {
@@ -180,7 +159,7 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
 
       const adapterAlias = chainId
         ? adapterAliasesByScopedAddress.get(getAddressKey(normalizedAddress, chainId))
-        : getSingleAlias(adapterAliasesByAddress.get(normalizedAddress));
+        : toOptionalAdapterAddressAlias(adapterAliases.find((candidate) => candidate.address.toLowerCase() === normalizedAddress));
 
       if (adapterAlias) {
         return adapterAliasToAdapterIdentity(adapterAlias, getVaultByAddress(toAddress(adapterAlias.vaultAddress), adapterAlias.chainId));
@@ -188,7 +167,7 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
 
       const vaultAlias = chainId
         ? adapterAliasesByVaultScopedAddress.get(getAddressKey(normalizedAddress, chainId))?.[0]
-        : getSingleAlias(adapterAliasesByVaultAddress.get(normalizedAddress));
+        : toOptionalAdapterAddressAlias(adapterAliases.find((candidate) => candidate.vaultAddress.toLowerCase() === normalizedAddress));
       if (vaultAlias) {
         return adapterAliasToVaultIdentity(vaultAlias, getVaultByAddress(address, vaultAlias.chainId));
       }
@@ -200,13 +179,7 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
 
       return undefined;
     },
-    [
-      adapterAliasesByAddress,
-      adapterAliasesByScopedAddress,
-      adapterAliasesByVaultAddress,
-      adapterAliasesByVaultScopedAddress,
-      getVaultByAddress,
-    ],
+    [adapterAliases, adapterAliasesByScopedAddress, adapterAliasesByVaultScopedAddress, getVaultByAddress],
   );
 
   const getAddressLabel = useCallback(
