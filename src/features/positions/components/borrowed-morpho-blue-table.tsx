@@ -18,6 +18,7 @@ import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
 import { formatReadableTokenAmount } from '@/utils/balance';
+import { getTruncatedAssetName } from '@/utils/oracle';
 import { buildBorrowPositionRows } from '@/utils/positions';
 import { computeHealthScoreFromLtv, formatHealthScore } from '@/modals/borrow/components/helpers';
 import type { MarketPositionWithEarnings } from '@/utils/types';
@@ -211,7 +212,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         {row.collateralAmount > 0 ? (
                           <>
                             <span className="font-medium">{formatReadableTokenAmount(row.collateralAmount)}</span>
-                            <span>{row.market.collateralAsset.symbol}</span>
+                            <span>{getTruncatedAssetName(row.market.collateralAsset.symbol)}</span>
                             <TokenIcon
                               address={row.market.collateralAsset.address}
                               chainId={row.market.morphoBlue.chain.id}
