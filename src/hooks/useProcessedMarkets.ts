@@ -7,7 +7,7 @@ import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
-import { isForceUnwhitelisted } from '@/utils/markets';
+import { isForceUnwhitelisted, isMarketVisibleWithWhitelistGuard } from '@/utils/markets';
 import type { Market } from '@/utils/types';
 
 type UseProcessedMarketsOptions = {
@@ -81,7 +81,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     refetchOnWindowFocus: options?.marketsRefetchOnWindowFocus,
     includeUnknownTokens: options?.includeUnknownTokens,
   });
-  const { whitelistLookup, supplyingVaultsLookup } = useMorphoWhitelistStatusQuery({
+  const { whitelistLookup, supplyingVaultsLookup, availableWhitelistChainIds } = useMorphoWhitelistStatusQuery({
     enabled: enableMorphoMetadata,
   });
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
@@ -96,7 +96,6 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
       return {
         rawMarketsUnfiltered: [],
         allMarkets: [],
-        whitelistedMarkets: [],
       };
     }
 
@@ -137,13 +136,9 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     // allMarkets: all markets (whitelisted + unwhitelisted, excluding blacklisted)
     const allMarkets = enriched;
 
-    // whitelistedMarkets: whitelisted only
-    const whitelistedMarkets = enriched.filter((market) => market.whitelisted);
-
     return {
       rawMarketsUnfiltered,
       allMarkets,
-      whitelistedMarkets,
     };
   }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup]);
 
@@ -192,8 +187,8 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   });
 
   const whitelistedMarketsWithUsd = useMemo(() => {
-    return allMarketsWithUsd.filter((market) => market.whitelisted);
-  }, [allMarketsWithUsd]);
+    return allMarketsWithUsd.filter((market) => isMarketVisibleWithWhitelistGuard(market, availableWhitelistChainIds));
+  }, [allMarketsWithUsd, availableWhitelistChainIds]);
 
   // Computed markets based on showUnwhitelistedMarkets setting (for backward compatibility)
   const markets = useMemo(() => {
