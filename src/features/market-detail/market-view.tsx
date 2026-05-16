@@ -12,6 +12,7 @@ import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
+import { normalizeMarketUniqueKey } from '@/utils/markets';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import { useMarketDetailPreferences, type MarketDetailActivitiesView, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
@@ -61,6 +62,7 @@ const ACTIVITIES_VIEW_OPTIONS: ButtonOption[] = [
 function MarketContent() {
   // 1. Get URL params first
   const { marketid: marketId, chainId } = useParams();
+  const marketKey = normalizeMarketUniqueKey(typeof marketId === 'string' ? marketId : undefined);
 
   // 2. Network setup
   const network = Number(chainId as string) as SupportedNetworks;
@@ -79,12 +81,7 @@ function MarketContent() {
   const [minBorrowerShares, setMinBorrowerShares] = useState('');
 
   // 4. Data fetching hooks - use unified time range
-  const {
-    data: market,
-    isLoading: isMarketLoading,
-    error: marketError,
-    refetch: refetchMarket,
-  } = useMarketData(marketId as string, network);
+  const { data: market, isLoading: isMarketLoading, error: marketError, refetch: refetchMarket } = useMarketData(marketKey, network);
 
   // Transaction filters with localStorage persistence (per symbol)
   const { minSupplyAmount, minBorrowAmount, setMinSupplyAmount, setMinBorrowAmount } = useTransactionFilters(
@@ -99,7 +96,7 @@ function MarketContent() {
 
   const { address } = useConnection();
 
-  const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketId as string);
+  const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketKey);
 
   // Get all warnings for this market (hook handles undefined market)
   const allWarnings = useMarketWarnings(market);
@@ -246,8 +243,7 @@ function MarketContent() {
   }
 
   if (isMarketLoading || !market) {
-    const marketIdLabel =
-      typeof marketId === 'string' && marketId.length > 10 ? `${marketId.slice(0, 6)}...${marketId.slice(-4)}` : 'Market';
+    const marketIdLabel = marketKey && marketKey.length > 10 ? `${marketKey.slice(0, 6)}...${marketKey.slice(-4)}` : 'Market';
 
     return (
       <div className="flex flex-col font-zen">
@@ -271,7 +267,7 @@ function MarketContent() {
           </div>
           <MarketHeader
             market={market}
-            marketId={marketId as string}
+            marketId={marketKey}
             network={network}
             isLoading={true}
           />
@@ -378,7 +374,7 @@ function MarketContent() {
         {/* Unified Market Header */}
         <MarketHeader
           market={market}
-          marketId={marketId as string}
+          marketId={marketKey}
           network={network}
           userPosition={userPosition}
           oraclePrice={formattedOraclePrice}
@@ -437,14 +433,14 @@ function MarketContent() {
 
           <TabsContent value="trend">
             <VolumeChart
-              marketId={marketId as string}
+              marketId={marketKey ?? ''}
               chainId={network}
               market={market}
             />
 
             <div className="mt-6">
               <RateChart
-                marketId={marketId as string}
+                marketId={marketKey ?? ''}
                 chainId={network}
                 market={market}
               />
@@ -453,7 +449,7 @@ function MarketContent() {
             {showSupplierPositionsChart && (
               <div className="mt-6">
                 <SupplierPositionsChart
-                  marketId={marketId as string}
+                  marketId={marketKey ?? ''}
                   chainId={network}
                   market={market}
                 />

@@ -25,6 +25,12 @@ export const parseNumericThreshold = (rawValue: string | undefined | null): numb
 const normalizeAddress = (value: string | undefined | null): string => value?.toLowerCase() ?? '';
 const isValidRegistryAddress = (value: string): boolean => value.length > 0 && isAddress(value);
 
+export const normalizeMarketUniqueKey = (value: string | undefined | null): string | undefined => {
+  const normalized = value?.toLowerCase();
+  if (!normalized) return undefined;
+  return normalized.startsWith('0x') ? normalized : `0x${normalized}`;
+};
+
 export const isBlockedMarketToken = (address: string | undefined | null): boolean => {
   const normalized = normalizeAddress(address);
   return normalized.length > 0 && blacklistTokens.includes(normalized);
