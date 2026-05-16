@@ -2,7 +2,7 @@ import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-
 import { formatUnits, type Address, zeroAddress } from 'viem';
 import { buildEnvioMarketsPageQuery, envioMarketByIdQuery } from '@/graphql/envio-queries';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
-import { isMarketRegistryEntryAllowed } from '@/utils/markets';
+import { isMarketRegistryEntryAllowed, normalizeMarketUniqueKey } from '@/utils/markets';
 import { getMorphoAddress } from '@/utils/morpho';
 import { isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import { infoToKey } from '@/utils/tokens';
@@ -170,9 +170,14 @@ const mapMonarchMarketToMarket = (
     return null;
   }
 
+  const marketId = normalizeMarketUniqueKey(market.marketId);
+  if (!marketId) {
+    return null;
+  }
+
   return {
-    id: normalizeAddress(market.marketId),
-    uniqueKey: normalizeAddress(market.marketId),
+    id: marketId,
+    uniqueKey: marketId,
     lltv: market.lltv,
     irmAddress: normalizeAddress(market.irm),
     oracleAddress: normalizeAddress(market.oracle) as Address,

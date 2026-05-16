@@ -67,13 +67,14 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Data fetching should use existing React Query hooks and established cache keys where possible.
 - Please respect the setting in "useCustomRPC" whenever a request is RPC-related.
 - Grouped fetching via RPC must be bundled with `multicall` to increase efficiency if they're on the same chain or block.
-- Domain matching, token resolution, unit conversion, address normalization, and formatting should live in shared chokepoints.
+- Domain matching, token resolution, unit conversion, entity ID normalization, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
 - Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
 - Portfolio and position analysis must preserve transaction-discovered market IDs even when current on-chain balances are zero; list-level hide settings must not remove those markets from summary or history inputs.
 - Supplied-position surfaces must distinguish active supply (`supplyShares`/`supplyAssets`) and historical supply (`MarketSupply`/`MarketWithdraw`) from borrow shares and collateral.
+- Shared components/modals launched from multiple pages may receive prefetched data, but every launcher must be verified to provide the same canonical data source and field completeness; do not let one route skip fields required by shared limits, previews, or transaction availability.
 
 
 ## Transactions And Wallet Flows

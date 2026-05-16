@@ -1,5 +1,6 @@
 import { isAddress } from 'viem';
 import { envioMarketTxContextsPageQuery, envioMarketTxContextsPageWithinSnapshotQuery } from '@/graphql/envio-queries';
+import { normalizeMarketUniqueKey } from '@/utils/markets';
 import { monarchGraphqlFetcher } from './fetchers';
 
 const MONARCH_MARKET_TX_CONTEXTS_TIMEOUT_MS = 15_000;
@@ -208,7 +209,8 @@ export type PaginatedMarketProActivities = {
 
 const toTimestamp = (value: string | number): number => (typeof value === 'number' ? value : Number.parseInt(value, 10));
 
-const sameMarket = (left: string | undefined, right: string): boolean => left?.toLowerCase() === right.toLowerCase();
+const getMarketKey = (marketId: string | undefined | null): string | undefined => normalizeMarketUniqueKey(marketId);
+const sameMarket = (left: string | undefined, right: string): boolean => getMarketKey(left) === getMarketKey(right);
 
 const isMorphoMarketLegKind = (kind: MarketProActivityLegKind): kind is MorphoMarketLegKind => {
   return (
@@ -258,8 +260,12 @@ const isTrueVaultRebalanceContext = (context: MonarchTxContextRow): boolean => {
     return false;
   }
 
-  const supplyMarketIds = new Set(context.morphoSupplies.map((leg) => leg.market_id.toLowerCase()));
-  const withdrawMarketIds = new Set(context.morphoWithdraws.map((leg) => leg.market_id.toLowerCase()));
+  const supplyMarketIds = new Set(
+    context.morphoSupplies.map((leg) => getMarketKey(leg.market_id)).filter((id): id is string => Boolean(id)),
+  );
+  const withdrawMarketIds = new Set(
+    context.morphoWithdraws.map((leg) => getMarketKey(leg.market_id)).filter((id): id is string => Boolean(id)),
+  );
 
   return supplyMarketIds.size > 0 && withdrawMarketIds.size > 0 && hasDistinctMarketPair(withdrawMarketIds, supplyMarketIds);
 };
@@ -273,13 +279,16 @@ const uniqueMarketIds = (legs: MarketProActivityLeg[]): string[] => {
       continue;
     }
 
-    const normalizedMarketId = leg.marketId.toLowerCase();
+    const normalizedMarketId = getMarketKey(leg.marketId);
+    if (!normalizedMarketId) {
+      continue;
+    }
     if (seen.has(normalizedMarketId)) {
       continue;
     }
 
     seen.add(normalizedMarketId);
-    marketIds.push(leg.marketId);
+    marketIds.push(normalizedMarketId);
   }
 
   return marketIds;
@@ -318,19 +327,23 @@ const mapMorphoLegs = (
   assetType: 'loan' | 'collateral',
   currentMarketId: string,
 ): MarketProActivityLeg[] => {
-  return (rows ?? []).map((row, index) => ({
-    id: `${kind}-${row.market_id}-${row.assets}-${row.caller}-${index}`,
-    kind,
-    source: 'morpho',
-    marketId: row.market_id,
-    amount: row.assets,
-    assetType,
-    isMonarch: row.isMonarch,
-    positionAddress: toOptionalAddress(row.onBehalf),
-    actorAddress: toOptionalAddress(row.caller) ?? toOptionalAddress(row.onBehalf),
-    receiverAddress: toOptionalAddress(row.receiver),
-    isCurrentMarket: sameMarket(row.market_id, currentMarketId),
-  }));
+  return (rows ?? []).map((row, index) => {
+    const marketId = getMarketKey(row.market_id);
+
+    return {
+      id: `${kind}-${marketId ?? row.market_id}-${row.assets}-${row.caller}-${index}`,
+      kind,
+      source: 'morpho',
+      marketId,
+      amount: row.assets,
+      assetType,
+      isMonarch: row.isMonarch,
+      positionAddress: toOptionalAddress(row.onBehalf),
+      actorAddress: toOptionalAddress(row.caller) ?? toOptionalAddress(row.onBehalf),
+      receiverAddress: toOptionalAddress(row.receiver),
+      isCurrentMarket: sameMarket(row.market_id, currentMarketId),
+    };
+  });
 };
 
 const mapVaultDepositLegs = (rows: MonarchVaultDepositRow[] | undefined, source: 'vault-v2' | 'legacy-vault'): MarketProActivityLeg[] => {
@@ -435,7 +448,7 @@ const mapLegacyVaultReallocateSupplyLegs = (
     id: row.id,
     kind: 'legacyVaultReallocateSupply',
     source: 'legacy-vault',
-    marketId: row.market_id,
+    marketId: getMarketKey(row.market_id),
     amount: row.suppliedAssets,
     assetType: 'loan',
     isMonarch: row.isMonarch,
@@ -453,7 +466,7 @@ const mapLegacyVaultReallocateWithdrawLegs = (
     id: row.id,
     kind: 'legacyVaultReallocateWithdraw',
     source: 'legacy-vault',
-    marketId: row.market_id,
+    marketId: getMarketKey(row.market_id),
     amount: row.withdrawnAssets,
     assetType: 'loan',
     isMonarch: row.isMonarch,
