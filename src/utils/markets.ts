@@ -26,7 +26,7 @@ const normalizeAddress = (value: string | undefined | null): string => value?.to
 const isValidRegistryAddress = (value: string): boolean => value.length > 0 && isAddress(value);
 
 export const normalizeMarketUniqueKey = (value: string | undefined | null): string | undefined => {
-  const normalized = value?.toLowerCase();
+  const normalized = value?.trim().toLowerCase();
   if (!normalized) return undefined;
   return normalized.startsWith('0x') ? normalized : `0x${normalized}`;
 };
