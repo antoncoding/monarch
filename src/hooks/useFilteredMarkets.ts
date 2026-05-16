@@ -12,6 +12,7 @@ import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } 
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
+import { isMarketVisibleWithWhitelistGuard } from '@/utils/markets';
 import { getNetworkName } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap, isMarketTrustedByVault } from '@/utils/vaults';
@@ -132,7 +133,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     // If a chain has no whitelist signal, keep it visible and let filters run.
     let filteredMarkets = showUnwhitelistedMarkets
       ? allMarkets
-      : allMarkets.filter((market) => !whitelistChainIds.has(market.morphoBlue.chain.id) || market.whitelisted);
+      : allMarkets.filter((market) => isMarketVisibleWithWhitelistGuard(market, whitelistChainIds));
     if (filteredMarkets.length === 0) return [];
 
     filteredMarkets = filterMarkets(filteredMarkets, {
