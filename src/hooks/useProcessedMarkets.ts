@@ -96,7 +96,6 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
       return {
         rawMarketsUnfiltered: [],
         allMarkets: [],
-        whitelistedMarkets: [],
       };
     }
 
@@ -137,15 +136,11 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     // allMarkets: all markets (whitelisted + unwhitelisted, excluding blacklisted)
     const allMarkets = enriched;
 
-    // whitelistedMarkets: whitelisted where metadata exists; fail open for chains without a whitelist signal.
-    const whitelistedMarkets = enriched.filter((market) => isMarketVisibleWithWhitelistGuard(market, availableWhitelistChainIds));
-
     return {
       rawMarketsUnfiltered,
       allMarkets,
-      whitelistedMarkets,
     };
-  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup, availableWhitelistChainIds]);
+  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup]);
 
   const {
     data: marketRateEnrichments = EMPTY_RATE_ENRICHMENTS,
