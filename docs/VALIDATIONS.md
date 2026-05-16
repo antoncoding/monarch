@@ -67,7 +67,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Data fetching should use existing React Query hooks and established cache keys where possible.
 - Please respect the setting in "useCustomRPC" whenever a request is RPC-related.
 - Grouped fetching via RPC must be bundled with `multicall` to increase efficiency if they're on the same chain or block.
-- Domain matching, token resolution, unit conversion, address normalization, and formatting should live in shared chokepoints.
+- Domain matching, token resolution, unit conversion, entity ID normalization, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
 - Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.

@@ -12,7 +12,6 @@ import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
-import { normalizeMarketUniqueKey } from '@/utils/markets';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import { useMarketDetailPreferences, type MarketDetailActivitiesView, type MarketDetailTab } from '@/stores/useMarketDetailPreferences';
@@ -30,6 +29,7 @@ import TransactionFiltersModal from '@/features/market-detail/components/filters
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketLiquiditySourcing } from '@/hooks/useMarketLiquiditySourcing';
 import { useAllMarketBorrowers, useAllMarketSuppliers } from '@/hooks/useAllMarketPositions';
+import { normalizeMarketUniqueKey } from '@/utils/markets';
 import { ProActivitiesTable } from './components/pro-activities-table';
 import { MarketHeader } from './components/market-header';
 import { TokenIcon } from '@/components/shared/token-icon';
