@@ -124,8 +124,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();
-  const officialTrendingKeys = useOfficialTrendingMarketKeys();
-  const customTagKeys = useCustomTagMarketKeys();
+  const officialTrendingKeys = useOfficialTrendingMarketKeys({ enabled: filters.trendingMode, defer: true });
+  const customTagKeys = useCustomTagMarketKeys({ enabled: filters.customTagMode, defer: true });
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const filteredCandidates = useMemo(() => {

@@ -46,7 +46,7 @@ type UseMarketsQueryOptions = {
  */
 export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
   const { customRpcUrls } = useCustomRpcContext();
-  const { allTokens, isLoading: tokensLoading } = useTokensQuery();
+  const { allTokens } = useTokensQuery();
   const rpcIdentity = Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right));
   const includeUnknownTokens = options?.includeUnknownTokens ?? true;
 
@@ -164,7 +164,6 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
     refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes in background by default
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
-    enabled: !tokensLoading,
     placeholderData: keepPreviousData,
   });
 };

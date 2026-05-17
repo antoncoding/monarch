@@ -30,11 +30,9 @@ type MarketCampaignsOptions = {
 
 export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCampaignsReturn {
   const { campaigns: allCampaigns, loading, error } = useMerklCampaignsQuery();
+  const { marketId, loanTokenAddress, chainId, whitelisted } = options;
 
   const result = useMemo(() => {
-    // Handle both string and object parameters for backward compatibility
-    const { marketId, loanTokenAddress, chainId, whitelisted } = options;
-
     const normalizedMarketId = marketId.toLowerCase();
 
     // Filter campaigns for this specific market
@@ -62,8 +60,6 @@ export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCa
       return true;
     });
 
-    console.debug(`[useMarketCampaigns] Active Campaigns for market ${normalizedMarketId.slice(0, 6)}`, allMarketCampaigns);
-
     const activeCampaigns = allMarketCampaigns.filter((campaign) => campaign.isActive);
 
     return {
@@ -74,7 +70,7 @@ export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCa
       loading,
       error,
     };
-  }, [allCampaigns, options, loading, error]);
+  }, [allCampaigns, chainId, error, loading, loanTokenAddress, marketId, whitelisted]);
 
   return result;
 }

@@ -12,7 +12,6 @@ import { DataPrefetcher } from '@/components/DataPrefetcher';
 
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';
-import { inter, zen, monospace } from './fonts';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -31,7 +30,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${zen.variable} ${inter.variable} ${monospace.variable}`}
     >
       <body suppressHydrationWarning>
         <ThemeProviders>

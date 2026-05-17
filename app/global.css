@@ -1,5 +1,4 @@
 /* stylelint-disable custom-property-pattern -- RainbowKit does not use kebab-case */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Zen+Kaku+Gothic+Antique&family=Zen+Kaku+Gothic+New&display=swap");
 @import "tailwindcss";
 
 /* Reference tailwind.config.js for HeroUI compatibility */
@@ -71,9 +70,12 @@
 
 /* Font families - use @theme inline to reference Next.js font CSS variables */
 @theme inline {
-  --font-inter: var(--font-inter);
-  --font-zen: var(--font-zen);
-  --font-monospace: var(--font-monospace);
+  --font-inter: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --font-zen: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --font-monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 @layer base {
@@ -322,7 +324,7 @@ body {
   margin: 0;
   background-color: var(--color-background);
   color: var(--color-text);
-  font-family: Inter, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
