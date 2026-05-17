@@ -94,6 +94,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Validate loading, empty, disabled, error, and success states for changed flows; period-derived metrics must not show stale values while recalculating.
 - Cold-start loading for optional metadata or enrichment must not trigger warning/error banners; warn only after a source is partial, stale, or unavailable.
 - Product routes must not add render-blocking external font CSS or multi-megabyte custom font assets to the app shell; prefer system font stacks or prove a small subset budget.
+- Font performance changes must preserve the intended design-token font families. Optimize with self-hosted subsets or scoped loading, not by silently mapping custom font utilities to system stacks.
 - Dismissible data-quality warnings must be keyed per failing source and use a bounded TTL, so dismissing one source does not hide unrelated failures.
 - Do not use Next.js raw image patterns where the project expects `next/image`.
 - Components using Radix `Slot`/`asChild` must pass exactly one child; do not append loading spinners, icons, or other siblings beside the slotted child.

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
-import { merklClient } from '@/utils/merklApi';
+import { fetchMerklApi } from '@/utils/merklApi';
 import { reportHandledError } from '@/utils/sentry';
 import type { RewardResponseType } from '@/utils/types';
 import { URLS } from '@/utils/urls';
@@ -41,6 +41,22 @@ type UserRewardsData = {
   merklRewardsWithProofs: MerklRewardWithProofs[];
 };
 
+type MerklRewardsResponse = Array<{
+  chain: {
+    id: number;
+  };
+  rewards?: Array<{
+    amount?: string;
+    claimed?: string;
+    proofs?: string[];
+    token: {
+      address: string;
+      symbol: string;
+      decimals: number;
+    };
+  }>;
+}>;
+
 // Query key factory
 export const userRewardsKeys = {
   all: ['user-rewards'] as const,
@@ -55,15 +71,13 @@ async function fetchMerklRewards(
 
   // Scan all supported networks for Merkl rewards
   for (const chainId of ALL_SUPPORTED_NETWORKS) {
-    const { data, error, status } = await merklClient.v4.users({ address: userAddress }).rewards.get({
-      query: {
-        chainId: [chainId.toString()],
-        reloadChainId: chainId,
-        test: false,
-        claimableOnly: true,
-        breakdownPage: 0,
-        type: 'TOKEN',
-      },
+    const { data, error, status } = await fetchMerklApi<MerklRewardsResponse>(`/v4/users/${userAddress}/rewards`, {
+      chainId: [chainId],
+      reloadChainId: chainId,
+      test: false,
+      claimableOnly: true,
+      breakdownPage: 0,
+      type: 'TOKEN',
     });
 
     if (error ?? status !== 200) {

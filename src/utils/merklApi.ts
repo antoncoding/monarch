@@ -1,18 +1,63 @@
-import { MerklApi } from '@merkl/api';
 import type { MerklCampaign, SimplifiedCampaign, MerklApiParams, MerklOpportunityLookupParams, MerklOpportunity } from './merklTypes';
 
 const MERKL_API_BASE_URL = 'https://api.merkl.xyz';
 
-// Initialize the Merkl SDK singleton
-export const merklClient = MerklApi(MERKL_API_BASE_URL);
-
 const MERKL_LIVE_STATUS = 'LIVE';
 const MERKL_HOLD_ACTION = 'HOLD';
 
-// Helper function to fetch campaigns using the SDK with Adapter pattern
+type MerklQueryValue = string | number | boolean | readonly (string | number | boolean)[];
+
+type MerklApiResult<T> = {
+  data: T | null;
+  error: string | null;
+  status: number;
+};
+
+const buildMerklUrl = (path: string, query: Record<string, MerklQueryValue | null | undefined> = {}): string => {
+  const url = new URL(path, MERKL_API_BASE_URL);
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value == null) continue;
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        url.searchParams.append(key, String(item));
+      }
+      continue;
+    }
+
+    url.searchParams.set(key, String(value));
+  }
+
+  return url.toString();
+};
+
+export async function fetchMerklApi<T>(
+  path: string,
+  query?: Record<string, MerklQueryValue | null | undefined>,
+): Promise<MerklApiResult<T>> {
+  const response = await fetch(buildMerklUrl(path, query));
+  const body = await response.text();
+
+  if (!response.ok) {
+    return {
+      data: null,
+      error: body || response.statusText,
+      status: response.status,
+    };
+  }
+
+  return {
+    data: body ? (JSON.parse(body) as T) : null,
+    error: null,
+    status: response.status,
+  };
+}
+
+// Helper function to fetch campaigns from the Merkl REST API.
 export async function fetchCampaigns(params: MerklApiParams = {}): Promise<MerklCampaign[]> {
   try {
-    const queryParams: Record<string, unknown> = {};
+    const queryParams: Record<string, MerklQueryValue> = {};
 
     if (params.type) queryParams.type = params.type;
     if (params.chainId !== undefined) queryParams.chainId = params.chainId;
@@ -21,20 +66,17 @@ export async function fetchCampaigns(params: MerklApiParams = {}): Promise<Merkl
     if (params.startTimestamp !== undefined) queryParams.startTimestamp = params.startTimestamp;
     if (params.endTimestamp !== undefined) queryParams.endTimestamp = params.endTimestamp;
 
-    const { data, error, status } = await merklClient.v4.campaigns.get({
-      query: {
-        ...queryParams,
-        mainProtocolId: 'morpho',
-        withOpportunity: true,
-      },
+    const { data, error, status } = await fetchMerklApi<MerklCampaign[]>('/v4/campaigns', {
+      ...queryParams,
+      mainProtocolId: 'morpho',
+      withOpportunity: true,
     });
 
-    if (error ?? status !== 200) {
+    if (error || status !== 200) {
       throw new Error(`Merkl API error: ${status} ${error}`);
     }
 
-    // The SDK returns data that's compatible with our MerklCampaign type
-    return data as unknown as MerklCampaign[];
+    return Array.isArray(data) ? data : [];
   } catch (err) {
     console.error('Error fetching Merkl campaigns:', err);
     throw err;
@@ -77,10 +119,8 @@ export const buildMerklOpportunityId = (params: Omit<MerklOpportunityLookupParam
 export async function fetchMerklOpportunityById(params: MerklOpportunityLookupParams): Promise<MerklOpportunity | null> {
   try {
     const opportunityId = buildMerklOpportunityId(params);
-    const { data, error, status } = await merklClient.v4.opportunities({ id: opportunityId }).get({
-      query: {
-        campaigns: params.campaigns ?? false,
-      },
+    const { data, error, status } = await fetchMerklApi<MerklOpportunity>(`/v4/opportunities/${opportunityId}`, {
+      campaigns: params.campaigns ?? false,
     });
 
     if (status === 404) {
@@ -163,7 +203,7 @@ function getBaseCampaignFields(
   };
 }
 
-// Adapter function to convert SDK campaign to SimplifiedCampaign
+// Adapter function to convert Merkl campaigns to SimplifiedCampaign.
 export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampaign {
   const baseFields = getBaseCampaignFields(campaign);
 
