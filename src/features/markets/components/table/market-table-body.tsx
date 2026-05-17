@@ -1,7 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { GoStarFill, GoStar } from 'react-icons/go';
-import { PulseLoader } from 'react-spinners';
 import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
@@ -51,13 +49,7 @@ export function MarketTableBody({
     }
 
     if (rateEnrichmentPendingChainIds.has(market.morphoBlue.chain.id)) {
-      return (
-        <PulseLoader
-          size={4}
-          color="#f45f2d"
-          margin={3}
-        />
-      );
+      return '...';
     }
 
     return '—';
@@ -83,14 +75,13 @@ export function MarketTableBody({
 
   return (
     <TableBody className="text-sm">
-      {currentEntries.map((item, index) => {
+      {currentEntries.map((item) => {
         const collatToShow = item.collateralAsset.symbol.slice(0, 6).concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
         const isStared = starredMarkets.includes(item.uniqueKey);
 
         return (
-          <React.Fragment key={index}>
+          <React.Fragment key={item.uniqueKey}>
             <TableRow
-              key={item.uniqueKey}
               onClick={() => {
                 setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey);
               }}
@@ -321,29 +312,18 @@ export function MarketTableBody({
                 </div>
               </TableCell>
             </TableRow>
-            <AnimatePresence>
-              {expandedRowId === item.uniqueKey && (
-                <TableRow className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
-                  <TableCell
-                    className="collaps-viewer bg-hovered p-0"
-                    colSpan={visibleColumnsCount}
-                  >
-                    <motion.div
-                      key="content"
-                      initial={{ height: 0 }}
-                      animate={{ height: 'auto' }}
-                      exit={{ height: 0 }}
-                      transition={{ duration: 0.1 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-4">
-                        <ExpandedMarketDetail market={item} />
-                      </div>
-                    </motion.div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </AnimatePresence>
+            {expandedRowId === item.uniqueKey && (
+              <TableRow className="table-body-focused">
+                <TableCell
+                  className="collaps-viewer bg-hovered p-0"
+                  colSpan={visibleColumnsCount}
+                >
+                  <div className="p-4">
+                    <ExpandedMarketDetail market={item} />
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
           </React.Fragment>
         );
       })}

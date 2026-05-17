@@ -6,12 +6,7 @@ import { IoWarningOutline } from 'react-icons/io5';
 import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CustomTagIcon } from '@/components/shared/custom-tag-icons';
-import {
-  getMetricsKey,
-  useMarketMetricsMap,
-  matchesCustomTag,
-  type FlowTimeWindow,
-} from '@/hooks/queries/useMarketMetricsQuery';
+import { getMetricsKey, useMarketMetricsMap, matchesCustomTag, type FlowTimeWindow } from '@/hooks/queries/useMarketMetricsQuery';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketPreferences, type CustomTagConfig } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
