@@ -8,6 +8,7 @@ import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { abi as vaultFactoryAbi } from '@/abis/vaultv2factory';
 import type { SupportedNetworks } from '@/utils/networks';
 import { addDeployedVault } from '@/utils/vault-storage';
+import { getMonarchVaultHref } from '@/utils/vaults';
 
 export type DeploymentPhase = 'selection' | 'deploying' | 'success';
 
@@ -114,7 +115,7 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
 
   const navigateToVault = useCallback(() => {
     if (deployedVaultAddress && selectedTokenAndNetwork) {
-      router.push(`/vault/${selectedTokenAndNetwork.networkId}/${deployedVaultAddress}`);
+      router.push(getMonarchVaultHref(selectedTokenAndNetwork.networkId, deployedVaultAddress));
     }
   }, [deployedVaultAddress, selectedTokenAndNetwork, router]);
 

@@ -28,6 +28,7 @@ import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import { formatBalance } from '@/utils/balance';
 import { getSlicedAddress } from '@/utils/address';
+import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { parseCapIdParams } from '@/utils/morpho';
 import { groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { ALL_SUPPORTED_NETWORKS, getNetworkConfig, SupportedNetworks } from '@/utils/networks';
@@ -244,6 +245,10 @@ export default function VaultContent() {
     if (!adapterAddress || !assetAddress) return undefined;
     return `/position/${chainId}/${assetAddress}/${adapterAddress}`;
   }, [adapterAddress, assetAddress, chainId]);
+  const morphoVaultHref = useMemo(() => {
+    if (!supportsMorphoAppLinks(chainId)) return undefined;
+    return getVaultURL(vaultAddressValue, chainId);
+  }, [chainId, vaultAddressValue]);
 
   const { open: openSettings } = useVaultSettingsModalStore();
   const { open: openInitialization } = useVaultInitializationModalStore();
@@ -402,6 +407,7 @@ export default function VaultContent() {
             showWithdrawWhenEmpty
             isRefetching={isRefetching}
             isLoading={vaultDataLoading || vaultContract.isLoading}
+            morphoHref={morphoVaultHref}
           />
 
           {needsInitialization && vaultContract.isOwner && networkConfig?.vaultConfig?.marketAdapterFactory && (

@@ -47,6 +47,7 @@ type VaultHeaderProps = {
   showWithdrawWhenEmpty?: boolean;
   isRefetching: boolean;
   isLoading: boolean;
+  morphoHref?: string;
 };
 
 export function VaultHeader({
@@ -73,6 +74,7 @@ export function VaultHeader({
   showWithdrawWhenEmpty = false,
   isRefetching,
   isLoading,
+  morphoHref,
 }: VaultHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const toast = useStyledToast();
@@ -281,6 +283,14 @@ export function VaultHeader({
                   >
                     View on Explorer
                   </DropdownMenuItem>
+                  {morphoHref && (
+                    <DropdownMenuItem
+                      onClick={() => window.open(morphoHref, '_blank', 'noopener,noreferrer')}
+                      startContent={<FiExternalLink className="h-4 w-4" />}
+                    >
+                      View on Morpho
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

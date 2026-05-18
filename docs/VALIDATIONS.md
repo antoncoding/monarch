@@ -108,6 +108,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Relationship metadata must not link to the current page's own account again; only link to counterpart accounts, external protocol pages, or expandable details.
 - V2 vault position pages must not render native vault-address market or vault tables when the meaningful market exposure is held by a linked adapter.
 - Vault and adapter relationship UI should prefer short chips, address badges, and structural grouping over explanatory paragraphs.
+- Vault identity and vault action links should resolve to Monarch's canonical `/vault/:chainId/:address` route by default; external Morpho vault links belong only in explicit "View on Morpho" actions.
 - Use available entity icons in compact metadata chips before adding extra explanatory text.
 - Dense product headers should use compact chips, short address links, icon buttons, and tooltips for secondary navigation; avoid long text buttons unless they are the primary action.
 - Downstream detail-panel empty states must not contradict confirmed parent/header metadata; if a relationship is configured but no child detail exists, hide the optional panel or use neutral child-specific copy.
