@@ -112,14 +112,13 @@ function VaultAdapterPositionDetail({
     positions,
     isPositionsLoading,
     isEarningsLoading,
-    loadingStates,
     actualBlockData,
     transactions,
     snapshotsByChain,
-  } = useUserPositionsSummaryData(adapterAddress, period, undefined, {
+  } = useUserPositionsSummaryData(adapterAddress, period, [chainId], {
     enabled: hasAdapterPositionTarget && marketHints.length > 0,
     marketHints,
-    showEmpty: false,
+    showEmpty: true,
   });
 
   const groupedPositions = useMemo(() => {
@@ -139,7 +138,6 @@ function VaultAdapterPositionDetail({
     const marketKeys = new Set(currentPosition.markets.map((marketPosition) => marketPosition.market.uniqueKey.toLowerCase()));
     return transactions.filter((tx) => tx.data.market && marketKeys.has(tx.data.market.uniqueKey.toLowerCase()));
   }, [currentPosition, transactions]);
-  const snapshotChainCount = useMemo(() => Object.keys(snapshotsByChain).length, [snapshotsByChain]);
 
   if (!adapterAddress && !isResolvingAdapter) {
     return <VaultStatusPanel message="No connected Morpho market adapter found for this vault." />;

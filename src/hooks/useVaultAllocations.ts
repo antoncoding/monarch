@@ -150,6 +150,8 @@ export function useVaultAllocations({
   const {
     data: capMarketsById = EMPTY_MARKET_MAP,
     isLoading: capMarketsLoading,
+    error: capMarketsError,
+    refetch: refetchCapMarkets,
   } = useQuery({
     queryKey: ['vault-cap-markets', vaultAddress.toLowerCase(), chainId, marketIdsKey, rpcIdentity],
     queryFn: async () => {
@@ -160,13 +162,24 @@ export function useVaultAllocations({
         })),
       );
       const nextMarkets = new Map<string, Market>();
+      const unresolvedMarketIds: string[] = [];
 
-      for (const result of results) {
-        if (result.status !== 'fulfilled' || !result.value.market) {
+      for (const [index, result] of results.entries()) {
+        if (result.status !== 'fulfilled') {
+          unresolvedMarketIds.push(marketIds[index] ?? `index:${index}`);
+          continue;
+        }
+
+        if (!result.value.market) {
+          unresolvedMarketIds.push(result.value.marketId);
           continue;
         }
 
         nextMarkets.set(result.value.marketId.toLowerCase(), result.value.market);
+      }
+
+      if (unresolvedMarketIds.length > 0) {
+        throw new Error(`Failed to resolve vault cap markets: ${unresolvedMarketIds.join(', ')}`);
       }
 
       return nextMarkets;
@@ -253,8 +266,9 @@ export function useVaultAllocations({
     collateralAllocations,
     marketAllocations,
     loading,
-    error,
+    error: capMarketsError ?? error,
     refetch: () => {
+      void refetchCapMarkets();
       void refetch();
     },
   };

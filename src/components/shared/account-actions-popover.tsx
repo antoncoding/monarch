@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { LuCopy, LuUser, LuWallet } from 'react-icons/lu';
 import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
@@ -32,6 +33,7 @@ export function AccountActionsPopover({
   profileHref = `/positions/${address}`,
   profileLabel = 'View Portfolio',
 }: AccountActionsPopoverProps) {
+  const router = useRouter();
   const toast = useStyledToast();
   const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
   const isBookmarked = isAddressBookmarked(address);
@@ -46,8 +48,8 @@ export function AccountActionsPopover({
   }, [address, toast]);
 
   const handleViewAccount = useCallback(() => {
-    window.location.href = profileHref;
-  }, [profileHref]);
+    router.push(profileHref);
+  }, [profileHref, router]);
 
   const handleViewExplorer = useCallback(() => {
     const explorerUrl = getExplorerURL(address, (chainId ?? SupportedNetworks.Mainnet) as SupportedNetworks);
