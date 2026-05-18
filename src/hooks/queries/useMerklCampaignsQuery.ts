@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
+import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
 import { fetchActiveCampaigns, simplifyMerklCampaign, expandMultiLendBorrowCampaign } from '@/utils/merklApi';
 import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
 
 const CAMPAIGN_TYPES_TO_FETCH: MerklCampaignType[] = ['MORPHOSUPPLY', 'MORPHOBORROW', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
 
 export const useMerklCampaignsQuery = () => {
+  const enabled = useDeferredQueryEnable(true, true, 2000);
   const query = useQuery({
     queryKey: ['merkl-campaigns'],
     queryFn: async () => {
@@ -38,11 +40,12 @@ export const useMerklCampaignsQuery = () => {
     staleTime: 5 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
+    enabled,
   });
 
   return {
     campaigns: query.data ?? [],
-    loading: query.isLoading,
+    loading: !enabled || query.isLoading,
     error: query.error?.message ?? null,
     refetch: query.refetch,
   };

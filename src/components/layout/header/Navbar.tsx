@@ -65,7 +65,7 @@ export function NavbarTitle() {
       <Link
         href="/"
         passHref
-        className="text-center font-zen text-base font-medium text-primary no-underline"
+        className="text-center font-zen text-base font-normal text-primary no-underline"
         aria-label="Monarch home"
       >
         Monarch

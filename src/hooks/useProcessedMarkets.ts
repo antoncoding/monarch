@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
-import { useMarketRateEnrichmentQuery } from '@/hooks/queries/useMarketRateEnrichmentQuery';
 import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useUsdEnrichedMarkets } from '@/hooks/useUsdEnrichedMarkets';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { getMarketIdentityKey } from '@/utils/market-identity';
-import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
 import { isForceUnwhitelisted, isMarketVisibleWithWhitelistGuard } from '@/utils/markets';
 import type { Market } from '@/utils/types';
 
@@ -14,13 +12,9 @@ type UseProcessedMarketsOptions = {
   marketsRefetchInterval?: number | false;
   marketsRefetchOnWindowFocus?: boolean;
   enableMorphoMetadata?: boolean;
-  enableRateEnrichment?: boolean;
   enableUsdEnrichment?: boolean;
   includeUnknownTokens?: boolean;
 };
-
-const EMPTY_RATE_ENRICHMENTS: MarketRateEnrichmentMap = new Map();
-const EMPTY_PENDING_CHAIN_IDS = new Set<number>();
 
 const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market['supplyingVaults']): boolean => {
   const currentVaults = current ?? [];
@@ -51,11 +45,12 @@ const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market
  * 1. Get raw markets from React Query
  * 2. Merge whitelist and supplying-vault metadata
  * 3. Apply blacklist and force-unwhitelisted overrides
- * 4. Enrich rolling 24h/7d/30d market rates via archive RPC + Morpho SDK math
- * 5. Backfill USD values when direct prices are available
+ * 4. Backfill USD values when direct prices are available
  *
- * Identity-only consumers can disable rate and USD enrichment so they do not
- * pay for archive RPC or token-price reads unrelated to their view.
+ * Identity-only consumers can disable USD enrichment so they do not pay for
+ * token-price reads unrelated to their view.
+ * Rolling rate enrichment is intentionally owned by downstream views that know
+ * which visible rows or sort modes need that expensive work.
  *
  * @returns Processed markets with loading states
  *
@@ -67,13 +62,13 @@ const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market
  * ```
  */
 export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
-  const enableRateEnrichment = options?.enableRateEnrichment ?? false;
   const enableUsdEnrichment = options?.enableUsdEnrichment ?? true;
   const enableMorphoMetadata = options?.enableMorphoMetadata ?? true;
   const {
     data: rawMarketsFromQuery,
     isLoading,
     isRefetching,
+    dataUpdatedAt,
     error,
     refetch,
   } = useMarketsQuery({
@@ -142,47 +137,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     };
   }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup]);
 
-  const {
-    data: marketRateEnrichments = EMPTY_RATE_ENRICHMENTS,
-    pendingChainIds: rateEnrichmentPendingChainIds,
-    isLoading: isRateEnrichmentQueryLoading,
-    isFetching: isRateEnrichmentFetching,
-    isRefetching: isRateEnrichmentRefetching,
-  } = useMarketRateEnrichmentQuery(enableRateEnrichment ? processedData.allMarkets : []);
-
-  const isRateEnrichmentLoading =
-    enableRateEnrichment &&
-    processedData.allMarkets.length > 0 &&
-    marketRateEnrichments.size === 0 &&
-    rateEnrichmentPendingChainIds.size > 0 &&
-    (isRateEnrichmentQueryLoading || isRateEnrichmentFetching);
-
-  const allMarketsWithRates = useMemo<Market[]>(() => {
-    if (!enableRateEnrichment) {
-      return processedData.allMarkets;
-    }
-
-    if (!processedData.allMarkets.length || marketRateEnrichments.size === 0) {
-      return processedData.allMarkets;
-    }
-
-    return processedData.allMarkets.map((market) => {
-      const enrichment = marketRateEnrichments.get(getMarketRateEnrichmentKey(market.uniqueKey, market.morphoBlue.chain.id));
-      if (!enrichment) {
-        return market;
-      }
-
-      return {
-        ...market,
-        state: {
-          ...market.state,
-          ...enrichment,
-        },
-      };
-    });
-  }, [enableRateEnrichment, processedData.allMarkets, marketRateEnrichments]);
-
-  const { markets: allMarketsWithUsd, isLoading: isUsdEnrichmentLoading } = useUsdEnrichedMarkets(allMarketsWithRates, {
+  const { markets: allMarketsWithUsd, isLoading: isUsdEnrichmentLoading } = useUsdEnrichedMarkets(processedData.allMarkets, {
     enabled: enableUsdEnrichment,
   });
 
@@ -196,15 +151,15 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   }, [showUnwhitelistedMarkets, allMarketsWithUsd, whitelistedMarketsWithUsd]);
 
   return {
+    rawMarketsFromQuery,
     ...processedData,
     allMarkets: allMarketsWithUsd,
     whitelistedMarkets: whitelistedMarketsWithUsd,
     markets, // Computed from setting (backward compatible with old context)
-    isRateEnrichmentLoading,
+    dataUpdatedAt,
     isUsdEnrichmentLoading,
-    rateEnrichmentPendingChainIds: enableRateEnrichment ? rateEnrichmentPendingChainIds : EMPTY_PENDING_CHAIN_IDS,
     loading: isLoading,
-    isRefetching: isRefetching || (enableRateEnrichment && isRateEnrichmentRefetching),
+    isRefetching,
     error,
     refetch,
   };

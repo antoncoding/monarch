@@ -23,10 +23,8 @@ export const parseNumericThreshold = (rawValue: string | undefined | null): numb
   return Math.max(parsed, 0);
 };
 
-export const isMarketVisibleWithWhitelistGuard = (
-  market: Market,
-  availableWhitelistChainIds: ReadonlySet<number>,
-): boolean => !availableWhitelistChainIds.has(market.morphoBlue.chain.id) || market.whitelisted;
+export const isMarketVisibleWithWhitelistGuard = (market: Market, availableWhitelistChainIds: ReadonlySet<number>): boolean =>
+  !availableWhitelistChainIds.has(market.morphoBlue.chain.id) || market.whitelisted;
 
 const normalizeAddress = (value: string | undefined | null): string => value?.toLowerCase() ?? '';
 const isValidRegistryAddress = (value: string): boolean => value.length > 0 && isAddress(value);

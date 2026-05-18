@@ -19,6 +19,8 @@ const localTokensWithSource: ERC20Token[] = supportedTokens.map((token) => ({
   ...token,
   source: 'local',
 }));
+const TOKEN_METADATA_STALE_TIME = 30 * 60 * 1000;
+const TOKEN_METADATA_REFETCH_INTERVAL = 30 * 60 * 1000;
 
 async function fetchPendleAssets(chainId: number): Promise<PendleAsset[]> {
   const response = await fetch(`https://api-v2.pendle.finance/core/v1/${chainId}/assets/all`);
@@ -82,8 +84,8 @@ export const useTokensQuery = () => {
 
       return [...localTokensWithSource, ...filteredPendleTokens];
     },
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
+    staleTime: TOKEN_METADATA_STALE_TIME,
+    refetchInterval: TOKEN_METADATA_REFETCH_INTERVAL,
     refetchOnWindowFocus: true,
   });
 

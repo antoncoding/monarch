@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 
 /**
@@ -182,12 +183,19 @@ function transformToRecord(data: OracleMetadataFile | null | undefined): OracleM
  * Hook to fetch oracle metadata from the centralized Gist
  * Uses React Query's select option to transform raw data to address-keyed record
  */
-export function useOracleMetadata(chainId: SupportedNetworks | number | undefined) {
+type OracleMetadataQueryOptions = {
+  enabled?: boolean;
+  defer?: boolean;
+};
+
+export function useOracleMetadata(chainId: SupportedNetworks | number | undefined, options?: OracleMetadataQueryOptions) {
+  const enabled = useDeferredQueryEnable(Boolean(chainId) && (options?.enabled ?? true), options?.defer ?? false, 2500);
+
   return useQuery({
     queryKey: ['oracle-metadata', ORACLE_GIST_BASE_URL ?? 'unset', chainId],
     queryFn: () => (chainId ? fetchOracleMetadata(chainId) : Promise.resolve(null)),
     select: transformToRecord,
-    enabled: !!chainId,
+    enabled,
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
   });
@@ -254,11 +262,14 @@ export function getMetaOracleDataFromMetadata(
  * Hook to fetch oracle metadata for ALL supported networks
  * Returns a merged record with all oracles from all chains
  */
-export function useAllOracleMetadata() {
+export function useAllOracleMetadata(options?: OracleMetadataQueryOptions) {
+  const enabled = useDeferredQueryEnable(options?.enabled ?? true, options?.defer ?? false, 2500);
+
   const queries = useQueries({
     queries: ALL_SUPPORTED_NETWORKS.map((chainId) => ({
       queryKey: ['oracle-metadata', ORACLE_GIST_BASE_URL ?? 'unset', chainId],
       queryFn: () => fetchOracleMetadata(chainId),
+      enabled,
       staleTime: 1000 * 60 * 30,
       gcTime: 1000 * 60 * 60,
     })),

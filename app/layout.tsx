@@ -12,8 +12,8 @@ import { DataPrefetcher } from '@/components/DataPrefetcher';
 
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';
-import { inter, zen, monospace } from './fonts';
 import type { Metadata } from 'next';
+import { inter, monospace, zen } from './fonts';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',

@@ -72,6 +72,9 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
 - Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
+- Large optional metadata or enrichment queries used only for secondary badges, warnings, filters, or tooltips must be gated or deferred so core table rendering does not wait on them during cold start.
+- Expensive queries must not start with placeholder dependency data that immediately invalidates the same query. Gate on prerequisite readiness, or use a stable query key that does not refetch equivalent work.
+- Expensive enrichment queries derived from filtered, sorted, or paginated rows must wait for the inputs that can change those rows, such as USD price enrichment, before they start.
 - Portfolio and position analysis must preserve transaction-discovered market IDs even when current on-chain balances are zero; list-level hide settings must not remove those markets from summary or history inputs.
 - Supplied-position surfaces must distinguish active supply (`supplyShares`/`supplyAssets`) and historical supply (`MarketSupply`/`MarketWithdraw`) from borrow shares and collateral.
 - Shared components/modals launched from multiple pages may receive prefetched data, but every launcher must be verified to provide the same canonical data source and field completeness; do not let one route skip fields required by shared limits, previews, or transaction availability.
@@ -92,6 +95,8 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Avoid repeated large UI blocks; extract or reuse only when it reduces real duplication.
 - Validate loading, empty, disabled, error, and success states for changed flows; period-derived metrics must not show stale values while recalculating.
 - Cold-start loading for optional metadata or enrichment must not trigger warning/error banners; warn only after a source is partial, stale, or unavailable.
+- Product routes must not add render-blocking external font CSS or multi-megabyte custom font assets to the app shell; prefer system font stacks or prove a small subset budget.
+- Font performance changes must preserve the intended design-token font families. Optimize with self-hosted subsets or scoped loading, not by silently mapping custom font utilities to system stacks.
 - Dismissible data-quality warnings must be keyed per failing source and use a bounded TTL, so dismissing one source does not hide unrelated failures.
 - Do not use Next.js raw image patterns where the project expects `next/image`.
 - Components using Radix `Slot`/`asChild` must pass exactly one child; do not append loading spinners, icons, or other siblings beside the slotted child.

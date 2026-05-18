@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { monarchGraphqlFetcher } from '@/data-sources/monarch-api/fetchers';
+import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
 import { useMarketPreferences, type CustomTagConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
 import { DATA_API_BASE_URL } from '@/utils/urls';
 
@@ -62,12 +62,6 @@ export type MarketMetricsResponse = {
   markets: MarketMetrics[];
 };
 
-type MarketLiquidationPresenceResponse = {
-  data?: {
-    Morpho_Liquidate?: Array<{ id: string }>;
-  };
-};
-
 // Composite key for market lookup
 export const getMetricsKey = (chainId: number, uniqueKey: string): string => `${chainId}-${uniqueKey.toLowerCase()}`;
 
@@ -76,6 +70,7 @@ type MarketMetricsParams = {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   enabled?: boolean;
+  defer?: boolean;
 };
 
 const PAGE_SIZE = 1000;
@@ -93,21 +88,6 @@ const getMarketMetricsClientUrl = (searchParams?: URLSearchParams): string => {
 
   return `${baseUrl}?${searchParams.toString()}`;
 };
-
-const MARKET_LIQUIDATION_PRESENCE_QUERY = `
-  query MarketLiquidationPresence($chainId: Int!, $marketId: String!) {
-    Morpho_Liquidate(
-      where: {
-        chainId: { _eq: $chainId }
-        market_id: { _eq: $marketId }
-      }
-      limit: 1
-      order_by: [{ timestamp: desc }, { id: desc }]
-    ) {
-      id
-    }
-  }
-`;
 
 const fetchMarketMetricsPage = async (params: MarketMetricsParams, limit: number, offset: number): Promise<MarketMetricsResponse> => {
   const searchParams = new URLSearchParams();
@@ -168,15 +148,6 @@ const fetchAllMarketMetrics = async (params: MarketMetricsParams): Promise<Marke
   };
 };
 
-const fetchMarketLiquidationPresence = async (chainId: number, marketId: string): Promise<boolean> => {
-  const response = await monarchGraphqlFetcher<MarketLiquidationPresenceResponse>(MARKET_LIQUIDATION_PRESENCE_QUERY, {
-    chainId,
-    marketId: marketId.toLowerCase(),
-  });
-
-  return (response.data?.Morpho_Liquidate?.length ?? 0) > 0;
-};
-
 /**
  * Fetches enhanced market metrics from the Monarch monitoring API.
  * Pre-fetched and cached for 15 minutes.
@@ -189,7 +160,8 @@ const fetchMarketLiquidationPresence = async (chainId: number, marketId: string)
  * - Market scores (future)
  */
 export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
-  const { chainId, sortBy, sortOrder, enabled = true } = params;
+  const { chainId, sortBy, sortOrder, enabled = true, defer = false } = params;
+  const queryEnabled = useDeferredQueryEnable(enabled, defer, 2000);
 
   return useQuery({
     queryKey: ['market-metrics', { chainId, sortBy, sortOrder }],
@@ -197,17 +169,7 @@ export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
     staleTime: MARKET_METRICS_REFRESH_MS,
     refetchInterval: MARKET_METRICS_REFRESH_MS,
     refetchOnWindowFocus: false, // Don't refetch on focus since data is slow-changing
-    enabled,
-  });
-};
-
-export const useMarketLiquidationPresence = (chainId: number, uniqueKey: string, enabled = true) => {
-  return useQuery({
-    queryKey: ['market-liquidation-presence', chainId, uniqueKey.toLowerCase()],
-    queryFn: () => fetchMarketLiquidationPresence(chainId, uniqueKey),
-    staleTime: 15 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    enabled,
+    enabled: queryEnabled,
   });
 };
 
@@ -300,8 +262,8 @@ export const isMarketTrending = matchesCustomTag;
  * Returns a Set of market keys that are officially trending (backend-computed).
  * Uses isTrending field from Monarch API.
  */
-export const useOfficialTrendingMarketKeys = () => {
-  const { metricsMap } = useMarketMetricsMap();
+export const useOfficialTrendingMarketKeys = (params: Pick<MarketMetricsParams, 'enabled' | 'defer'> = {}) => {
+  const { metricsMap } = useMarketMetricsMap(params);
 
   return useMemo(() => {
     const keys = new Set<string>();
@@ -317,8 +279,8 @@ export const useOfficialTrendingMarketKeys = () => {
 /**
  * Returns a Set of market keys matching user's custom tag config.
  */
-export const useCustomTagMarketKeys = () => {
-  const { metricsMap } = useMarketMetricsMap();
+export const useCustomTagMarketKeys = (params: Pick<MarketMetricsParams, 'enabled' | 'defer'> = {}) => {
+  const { metricsMap } = useMarketMetricsMap(params);
   const { customTagConfig } = useMarketPreferences();
 
   return useMemo(() => {
@@ -336,18 +298,3 @@ export const useCustomTagMarketKeys = () => {
 
 // Legacy alias - now returns official trending (breaking change, but intended)
 export const useTrendingMarketKeys = useOfficialTrendingMarketKeys;
-
-/**
- * Returns whether a market has ever been liquidated.
- */
-export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean => {
-  const { metricsMap, isLoading: isMetricsLoading } = useMarketMetricsMap();
-  const metrics = metricsMap.get(getMetricsKey(chainId, uniqueKey));
-  const { data: hasLiquidationPresence = false } = useMarketLiquidationPresence(
-    chainId,
-    uniqueKey,
-    !metrics?.everLiquidated && !isMetricsLoading,
-  );
-
-  return Boolean(metrics?.everLiquidated) || hasLiquidationPresence;
-};

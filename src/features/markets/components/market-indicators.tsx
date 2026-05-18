@@ -6,14 +6,7 @@ import { IoWarningOutline } from 'react-icons/io5';
 import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CustomTagIcon } from '@/components/shared/custom-tag-icons';
-import {
-  useOfficialTrendingMarketKeys,
-  useCustomTagMarketKeys,
-  getMetricsKey,
-  useEverLiquidated,
-  useMarketMetricsMap,
-  type FlowTimeWindow,
-} from '@/hooks/queries/useMarketMetricsQuery';
+import { getMetricsKey, useMarketMetricsMap, matchesCustomTag, type FlowTimeWindow } from '@/hooks/queries/useMarketMetricsQuery';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketPreferences, type CustomTagConfig } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
@@ -73,20 +66,20 @@ type MarketIndicatorsProps = {
 };
 
 export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
-  const hasLiquidationProtection = useEverLiquidated(market.morphoBlue.chain.id, market.uniqueKey);
   const { showOfficialTrending, customTagConfig } = useMarketPreferences();
-  const { metricsMap } = useMarketMetricsMap();
+  const shouldLoadMetrics = showOfficialTrending || customTagConfig.enabled;
+  const { metricsMap } = useMarketMetricsMap({ enabled: shouldLoadMetrics, defer: true });
 
   const marketKey = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
+  const metrics = metricsMap.get(marketKey);
+  const hasLiquidationProtection = Boolean(metrics?.everLiquidated);
 
   // Official trending (backend-computed)
-  const officialTrendingKeys = useOfficialTrendingMarketKeys();
-  const isOfficialTrending = showOfficialTrending && officialTrendingKeys.has(marketKey);
-  const trendingReason = metricsMap.get(marketKey)?.trendingReason;
+  const isOfficialTrending = showOfficialTrending && Boolean(metrics?.isTrending);
+  const trendingReason = metrics?.trendingReason;
 
   // User's custom tag
-  const customTagKeys = useCustomTagMarketKeys();
-  const hasCustomTag = customTagConfig.enabled && customTagKeys.has(marketKey);
+  const hasCustomTag = customTagConfig.enabled && metrics ? matchesCustomTag(metrics, customTagConfig) : false;
 
   const marketWarnings = useMarketWarnings(showRisk ? market : null);
   const warnings = showRisk ? marketWarnings : [];
@@ -193,7 +186,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
       {/* User's Custom Tag */}
       {hasCustomTag &&
         (() => {
-          const metrics = metricsMap.get(marketKey);
           const tooltipDetail = buildCustomTagDetail(customTagConfig, metrics?.flows, metrics?.currentState?.borrowUsd ?? 0);
           return (
             <Tooltip

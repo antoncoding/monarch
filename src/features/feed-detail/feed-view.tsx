@@ -63,7 +63,6 @@ export default function FeedContent() {
     marketsRefetchInterval: false,
     marketsRefetchOnWindowFocus: false,
     enableMorphoMetadata: false,
-    enableRateEnrichment: false,
     enableUsdEnrichment: false,
   });
 

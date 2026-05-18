@@ -11,7 +11,7 @@ import { getMarketWarningsWithDetail } from '@/utils/warnings';
  */
 export const useMarketWarnings = (market: Market | null | undefined): WarningWithDetail[] => {
   const chainId = market?.morphoBlue?.chain?.id;
-  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const { data: oracleMetadataMap } = useOracleMetadata(chainId, { defer: true });
   const { findToken } = useTokensQuery();
 
   return useMemo(() => {

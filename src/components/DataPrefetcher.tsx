@@ -3,18 +3,16 @@
 import { usePathname } from 'next/navigation';
 import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
-import { useMerklCampaignsQuery } from '@/hooks/queries/useMerklCampaignsQuery';
 
 function DataPrefetcherContent() {
   useMorphoWhitelistStatusQuery();
   useTokensQuery();
-  useMerklCampaignsQuery();
 
   return null;
 }
 
 /**
- * Triggeres data prefetching for tokens, whitelist metadata, and Merkl campaigns.
+ * Triggers data prefetching for tokens and whitelist metadata.
  * These hooks use React Query under the hood, which will cache the data for future use.
  * @returns
  */

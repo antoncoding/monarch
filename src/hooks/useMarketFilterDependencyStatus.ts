@@ -60,7 +60,7 @@ export const useMarketFilterDependencyStatus = () => {
   const { showUnwhitelistedMarkets } = useAppSettings();
   const tokenQuery = useTokensQuery();
   const whitelistQuery = useMorphoWhitelistStatusQuery();
-  const oracleQuery = useAllOracleMetadata();
+  const oracleQuery = useAllOracleMetadata({ enabled: !showUnknownOracle, defer: true });
 
   const oracleMetadataMap = oracleQuery.data;
   const oracleChainIds = useMemo(() => {

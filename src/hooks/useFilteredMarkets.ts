@@ -24,8 +24,14 @@ type UseFilteredMarketsOptions = {
 
 type UseFilteredMarketsResult = {
   markets: Market[];
+  rawMarkets: Market[] | undefined;
   marketDataNotices: MarketDataNotice[];
   rateEnrichmentPendingChainIds: Set<number>;
+  rateEnrichmentLoading: boolean;
+  loading: boolean;
+  isRefetching: boolean;
+  dataUpdatedAt: number;
+  refetch: () => Promise<unknown>;
 };
 
 export type MarketDataNotice = {
@@ -98,6 +104,11 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const persistedFilters = useMarketFilterPreferences();
   const isHistoricalRateSort = HISTORICAL_RATE_SORT_COLUMNS.has(preferences.sortColumn);
   const isRateAtTargetSort = preferences.sortColumn === SortColumn.RateAtTarget;
+  const isUsdSensitiveSort =
+    preferences.sortColumn === SortColumn.Supply ||
+    preferences.sortColumn === SortColumn.Borrow ||
+    preferences.sortColumn === SortColumn.Liquidity;
+  const hasActiveUsdFilter = preferences.minSupplyEnabled || preferences.minBorrowEnabled || preferences.minLiquidityEnabled;
   const requiresGlobalRateSort = isHistoricalRateSort || isRateAtTargetSort;
   const historicalRateColumnsVisible =
     preferences.columnVisibility.dailySupplyAPY ||
@@ -115,17 +126,25 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       : preferences.columnVisibility.rateAtTarget || isRateAtTargetSort
         ? 'Target Rate'
         : '24h/7d/30d APY columns';
-  const { allMarkets } = useProcessedMarkets({
-    enableRateEnrichment: false,
+  const {
+    allMarkets,
+    rawMarketsFromQuery: rawMarkets,
+    loading,
+    isRefetching,
+    dataUpdatedAt,
+    isUsdEnrichmentLoading,
+    refetch,
+  } = useProcessedMarkets({
     includeUnknownTokens: preferences.includeUnknownTokens,
   });
+  const shouldWaitForRateTargetUsd = isUsdEnrichmentLoading && (isUsdSensitiveSort || hasActiveUsdFilter);
   const { canEvaluateUnknownTokenGuard, oracleMetadataMap, whitelistChainIds } = useMarketFilterDependencyStatus();
   const filters = useMarketsFilters();
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();
-  const officialTrendingKeys = useOfficialTrendingMarketKeys();
-  const customTagKeys = useCustomTagMarketKeys();
+  const officialTrendingKeys = useOfficialTrendingMarketKeys({ enabled: filters.trendingMode, defer: true });
+  const customTagKeys = useCustomTagMarketKeys({ enabled: filters.customTagMode, defer: true });
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const filteredCandidates = useMemo(() => {
@@ -239,6 +258,13 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       return [];
     }
 
+    // The page-level enrichment target is chosen from sorted/filtered rows.
+    // If that order depends on USD values, wait for USD enrichment so we do
+    // not fetch rates for a transient first page and then immediately refetch.
+    if (shouldWaitForRateTargetUsd) {
+      return [];
+    }
+
     if (requiresGlobalRateSort) {
       return filteredCandidates;
     }
@@ -248,6 +274,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     return sortedCandidates.slice(startIndex, startIndex + preferences.entriesPerPage);
   }, [
     shouldEnableRateEnrichment,
+    shouldWaitForRateTargetUsd,
     requiresGlobalRateSort,
     filteredCandidates,
     sortedCandidates,
@@ -259,7 +286,10 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     data: marketRateEnrichments,
     pendingChainIds: rateEnrichmentPendingChainIds,
     morphoRateFailedChainIds,
+    isLoading: isRateEnrichmentLoading,
+    isFetching: isRateEnrichmentFetching,
   } = useMarketRateEnrichmentQuery(rateEnrichmentTargets);
+  const rateEnrichmentLoading = shouldEnableRateEnrichment && (shouldWaitForRateTargetUsd || isRateEnrichmentLoading || isRateEnrichmentFetching);
 
   const marketDataNotices = useMemo<MarketDataNotice[]>(() => {
     if (!shouldEnableRateEnrichment || morphoRateFailedChainIds.size === 0) {
@@ -305,7 +335,13 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
 
   return {
     markets,
+    rawMarkets,
     marketDataNotices,
     rateEnrichmentPendingChainIds: shouldEnableRateEnrichment ? rateEnrichmentPendingChainIds : EMPTY_PENDING_CHAIN_IDS,
+    rateEnrichmentLoading,
+    loading,
+    isRefetching,
+    dataUpdatedAt,
+    refetch,
   };
 };
