@@ -45,7 +45,7 @@ export const useMerklCampaignsQuery = () => {
 
   return {
     campaigns: query.data ?? [],
-    loading: query.isLoading,
+    loading: !enabled || query.isLoading,
     error: query.error?.message ?? null,
     refetch: query.refetch,
   };
