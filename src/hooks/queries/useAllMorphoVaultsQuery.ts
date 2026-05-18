@@ -12,7 +12,7 @@ type UseAllMorphoVaultsQueryOptions = {
  *
  * Cache behavior:
  * - staleTime: 5 minutes (data considered fresh)
- * - Auto-refetch: Every 5 minutes in background
+ * - Auto-refetch: Every 5 minutes while the tab is visible
  * - Refetch on window focus: enabled
  *
  * @example
@@ -33,7 +33,7 @@ export const useAllMorphoVaultsQuery = (options?: UseAllMorphoVaultsQueryOptions
     },
     enabled: options?.enabled ?? true,
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
-    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes in background
+    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes while visible
     refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 };

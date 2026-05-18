@@ -105,6 +105,7 @@ const queryClient = new QueryClient({
       // From ClientProviders - good for caching and UX
       staleTime: 30_000, // 30 seconds
       refetchOnWindowFocus: false,
+      refetchIntervalInBackground: false,
 
       retry: (failureCount, error) => {
         // Don't retry on GraphQL errors, network errors, or client errors
