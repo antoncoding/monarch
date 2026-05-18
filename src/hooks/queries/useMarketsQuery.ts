@@ -36,7 +36,7 @@ type UseMarketsQueryOptions = {
  *
  * Cache behavior:
  * - staleTime: 5 minutes (data considered fresh)
- * - Auto-refetch: Every 5 minutes in background
+ * - Auto-refetch: Every 5 minutes while the tab is visible
  * - Refetch on window focus: enabled
  *
  * @example
@@ -165,7 +165,7 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
       return filtered;
     },
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
-    refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes in background by default
+    refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes while visible by default
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
     placeholderData: keepPreviousData,
     enabled: tokensReady,
