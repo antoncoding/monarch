@@ -12,10 +12,15 @@ import type { Market } from '@/utils/types';
 const EMPTY_ENRICHMENT_MAP: MarketRateEnrichmentMap = new Map();
 const EMPTY_PENDING_CHAIN_IDS = new Set<number>();
 const EMPTY_FAILED_CHAIN_IDS = new Set<number>();
+const EMPTY_MARKETS_BY_CHAIN: [SupportedNetworks, Market[]][] = [];
 
 export const useMarketRateEnrichmentQuery = (markets: Market[]) => {
   const { customRpcUrls } = useCustomRpcContext();
   const marketsByChain = useMemo(() => {
+    if (markets.length === 0) {
+      return EMPTY_MARKETS_BY_CHAIN;
+    }
+
     const grouped = new Map<SupportedNetworks, Market[]>();
 
     markets.forEach((market) => {

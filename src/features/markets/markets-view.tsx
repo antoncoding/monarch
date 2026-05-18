@@ -7,13 +7,12 @@ import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { parseMarketFilterUrlState } from '@/features/markets/market-filter-url-state';
 import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
-import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useMarketFilterPreferences } from '@/stores/useMarketFilterPreferences';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { usePagination } from '@/hooks/usePagination';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
-import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
+import type { UnknownERC20Token } from '@/utils/tokens';
 
 import { CompactFilterBar } from './components/filters/compact-filter-bar';
 import { MarketFilterDependencyBanner } from './components/filter-dependency-banner';
@@ -26,23 +25,24 @@ export default function Markets() {
   const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
   const { currentPage, setCurrentPage, resetPage } = usePagination();
 
-  // Data fetching with React Query
+  // Keep the markets pipeline owned by the page. The table receives data as
+  // props so it cannot accidentally duplicate fetch/filter/rate-enrichment work.
   const {
-    data: rawMarkets,
-    isLoading: loading,
+    markets,
+    rawMarkets,
+    marketDataNotices,
+    rateEnrichmentPendingChainIds,
+    rateEnrichmentLoading,
+    loading,
+    isRefetching,
+    dataUpdatedAt,
     refetch,
-  } = useMarketsQuery({
-    includeUnknownTokens,
-  });
-  const { markets, marketDataNotices } = useFilteredMarkets({ currentPage });
+  } = useFilteredMarkets({ currentPage });
 
   const filters = useMarketsFilters();
   const persistedFilters = useMarketFilterPreferences();
   const urlFilterState = useMemo(() => parseMarketFilterUrlState(new URLSearchParams(currentSearchParams)), [currentSearchParams]);
 
-  // UI state
-  const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
-  const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
   // Store hooks
@@ -69,9 +69,13 @@ export default function Markets() {
   const isTableFallbackState = !rawMarkets || markets.length === 0;
   const shouldUseFullWidthTableLayout = isLoadingTableState || isTableFallbackState || effectiveTableViewMode === 'compact';
 
-  // Compute unique collaterals and loan assets for filter dropdowns
-  useEffect(() => {
-    if (!rawMarkets) return;
+  const { uniqueCollaterals, uniqueLoanAssets } = useMemo(() => {
+    if (!rawMarkets) {
+      return {
+        uniqueCollaterals: [],
+        uniqueLoanAssets: [],
+      };
+    }
 
     const processTokens = (
       tokenInfoList: {
@@ -128,8 +132,10 @@ export default function Markets() {
       decimals: m.loanAsset.decimals,
     }));
 
-    setUniqueCollaterals(processTokens(collatList));
-    setUniqueLoanAssets(processTokens(loanList));
+    return {
+      uniqueCollaterals: processTokens(collatList),
+      uniqueLoanAssets: processTokens(loanList),
+    };
   }, [rawMarkets, includeUnknownTokens, allTokens]);
 
   useLayoutEffect(() => {
@@ -230,6 +236,13 @@ export default function Markets() {
           <MarketsTable
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
+            markets={markets}
+            rawMarkets={rawMarkets}
+            loading={loading}
+            isRefetching={isRefetching}
+            dataUpdatedAt={dataUpdatedAt}
+            rateEnrichmentPendingChainIds={rateEnrichmentPendingChainIds}
+            rateEnrichmentLoading={rateEnrichmentLoading}
             className={shouldUseFullWidthTableLayout ? 'w-full' : 'w-fit'}
             tableClassName={shouldUseFullWidthTableLayout ? 'w-full min-w-full' : 'w-fit'}
             onRefresh={handleRefresh}

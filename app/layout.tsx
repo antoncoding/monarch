@@ -13,7 +13,7 @@ import { DataPrefetcher } from '@/components/DataPrefetcher';
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';
 import type { Metadata } from 'next';
-import { inter, victorMono, zen } from './fonts';
+import { inter, monospace, zen } from './fonts';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${zen.variable} ${victorMono.variable}`}
+      className={`${zen.variable} ${inter.variable} ${monospace.variable}`}
     >
       <body suppressHydrationWarning>
         <ThemeProviders>

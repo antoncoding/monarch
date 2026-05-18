@@ -1,5 +1,6 @@
 import React from 'react';
 import { GoStarFill, GoStar } from 'react-icons/go';
+import { PulseLoader } from 'react-spinners';
 import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
@@ -25,6 +26,7 @@ type MarketTableBodyProps = {
   setExpandedRowId: (id: string | null) => void;
   trustedVaultMap: Map<string, TrustedVault>;
   rateEnrichmentPendingChainIds: Set<number>;
+  rateEnrichmentLoading: boolean;
 };
 
 type HistoricalRateField = Exclude<keyof MarketRateEnrichment, 'apyAtTarget' | 'rateAtTarget'>;
@@ -35,6 +37,7 @@ export function MarketTableBody({
   setExpandedRowId,
   trustedVaultMap,
   rateEnrichmentPendingChainIds,
+  rateEnrichmentLoading,
 }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
@@ -42,14 +45,24 @@ export function MarketTableBody({
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
+  const renderRateLoading = () => (
+    <PulseLoader
+      size={4}
+      color="#f45f2d"
+      margin={3}
+    />
+  );
+
+  const shouldShowRateLoader = (market: Market) => rateEnrichmentLoading || rateEnrichmentPendingChainIds.has(market.morphoBlue.chain.id);
+
   const renderHistoricalRateCell = (market: Market, field: HistoricalRateField) => {
     const value = market.state[field];
     if (value != null) {
       return <RateFormatted value={value} />;
     }
 
-    if (rateEnrichmentPendingChainIds.has(market.morphoBlue.chain.id)) {
-      return '...';
+    if (shouldShowRateLoader(market)) {
+      return renderRateLoading();
     }
 
     return '—';
@@ -224,7 +237,9 @@ export function MarketTableBody({
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
-                  <p className="text-sm">{item.state.apyAtTarget != null ? <RateFormatted value={item.state.apyAtTarget} /> : '—'}</p>
+                  <div className="flex justify-center text-sm">
+                    {item.state.apyAtTarget != null ? <RateFormatted value={item.state.apyAtTarget} /> : shouldShowRateLoader(item) ? renderRateLoading() : '—'}
+                  </div>
                 </TableCell>
               )}
               {columnVisibility.utilizationRate && (

@@ -5,13 +5,12 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
-import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap, buildTrustedVaultMetadata } from '@/utils/vaults';
 import { SortColumn } from '../constants';
 import { MarketTableBody } from './market-table-body';
@@ -21,13 +20,34 @@ import { MarketsTableActions } from './markets-table-actions';
 type MarketsTableProps = {
   currentPage: number;
   setCurrentPage: (value: number) => void;
+  markets: Market[];
+  rawMarkets: Market[] | undefined;
+  loading: boolean;
+  isRefetching: boolean;
+  dataUpdatedAt: number;
+  rateEnrichmentPendingChainIds: Set<number>;
+  rateEnrichmentLoading: boolean;
   className?: string;
   tableClassName?: string;
   onRefresh: () => void;
   isMobile: boolean;
 };
 
-function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, onRefresh, isMobile }: MarketsTableProps) {
+function MarketsTable({
+  currentPage,
+  setCurrentPage,
+  markets,
+  rawMarkets,
+  loading,
+  isRefetching,
+  dataUpdatedAt,
+  rateEnrichmentPendingChainIds,
+  rateEnrichmentLoading,
+  className,
+  tableClassName,
+  onRefresh,
+  isMobile,
+}: MarketsTableProps) {
   const {
     columnVisibility,
     sortColumn,
@@ -44,25 +64,11 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
     starredMarkets,
   } = useMarketPreferences();
 
-  // Get loading states directly from query (no prop drilling!)
-  const {
-    isLoading: loading,
-    isRefetching,
-    data: rawMarkets,
-    dataUpdatedAt,
-  } = useMarketsQuery({
-    includeUnknownTokens,
-  });
-
-  // Get trusted vaults directly from store (no prop drilling!)
   const { vaults: trustedVaults } = useTrustedVaults();
   const trustedVaultCount = trustedVaults.length;
   const shouldLoadTrustedVaultMetadata = columnVisibility.trustedBy && trustedVaultCount > 0;
   const { data: morphoVaults = [] } = useAllMorphoVaultsQuery({ enabled: shouldLoadTrustedVaultMetadata });
 
-  const { markets, rateEnrichmentPendingChainIds } = useFilteredMarkets({
-    currentPage,
-  });
   const isEmpty = !rawMarkets;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
@@ -353,6 +359,7 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
               setExpandedRowId={setExpandedRowId}
               trustedVaultMap={trustedVaultMap}
               rateEnrichmentPendingChainIds={rateEnrichmentPendingChainIds}
+              rateEnrichmentLoading={rateEnrichmentLoading}
             />
           </Table>
         )}

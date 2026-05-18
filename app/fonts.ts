@@ -1,29 +1,10 @@
 import localFont from 'next/font/local';
 
-export const inter = localFont({
-  src: '../src/fonts/optimized/Inter-Latin.woff2',
-  display: 'swap',
-  variable: '--font-family-inter',
-  preload: false,
-  fallback: [
-    '-apple-system',
-    'BlinkMacSystemFont',
-    'Segoe UI',
-    'system-ui',
-    'sans-serif',
-  ],
-});
-
 export const zen = localFont({
   src: [
     {
       path: '../src/fonts/optimized/ZenKakuGothicNew-Regular-Latin.woff2',
       weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../src/fonts/optimized/ZenKakuGothicNew-Medium-Latin.woff2',
-      weight: '500',
       style: 'normal',
     },
     {
@@ -33,7 +14,7 @@ export const zen = localFont({
     },
   ],
   display: 'swap',
-  variable: '--font-family-zen',
+  variable: '--font-zen',
   preload: false,
   fallback: [
     '-apple-system',
@@ -44,10 +25,24 @@ export const zen = localFont({
   ],
 });
 
-export const victorMono = localFont({
+export const inter = localFont({
+  src: '../src/fonts/optimized/Inter-Latin.woff2',
+  display: 'swap',
+  variable: '--font-inter',
+  preload: false,
+  fallback: [
+    '-apple-system',
+    'BlinkMacSystemFont',
+    'Segoe UI',
+    'system-ui',
+    'sans-serif',
+  ],
+});
+
+export const monospace = localFont({
   src: '../src/fonts/optimized/VictorMono-Latin.woff2',
   display: 'swap',
-  variable: '--font-family-monospace',
+  variable: '--font-monospace',
   preload: false,
   fallback: [
     'ui-monospace',

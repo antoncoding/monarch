@@ -144,9 +144,7 @@ function renderHistoricalRateValue(value: number | null | undefined, isRateEnric
 }
 
 export function BorrowedMorphoBlueRowDetail({ row }: BorrowedMorphoBlueRowDetailProps) {
-  const { allMarkets } = useProcessedMarkets({
-    enableRateEnrichment: false,
-  });
+  const { allMarkets } = useProcessedMarkets();
   const marketIdentityKey = useMemo(
     () => getMarketIdentityKey(row.market.morphoBlue.chain.id, row.market.uniqueKey),
     [row.market.morphoBlue.chain.id, row.market.uniqueKey],

@@ -70,17 +70,9 @@
 
 /* Font families - use @theme inline to reference Next.js font CSS variables */
 @theme inline {
-  --font-inter:
-    var(--font-family-inter, Inter), -apple-system, blinkmacsystemfont,
-    "Segoe UI", system-ui, sans-serif;
-  --font-zen:
-    var(--font-family-zen, "Zen Kaku Gothic New"),
-    var(--font-family-inter, Inter), -apple-system, blinkmacsystemfont,
-    "Segoe UI", system-ui, sans-serif;
-  --font-monospace:
-    var(--font-family-monospace, "Victor Mono"), ui-monospace,
-    sfmono-regular, menlo, monaco, consolas, "Liberation Mono",
-    "Courier New", monospace;
+  --font-inter: var(--font-inter);
+  --font-zen: var(--font-zen);
+  --font-monospace: var(--font-monospace);
 }
 
 @layer base {
@@ -329,9 +321,7 @@ body {
   margin: 0;
   background-color: var(--color-background);
   color: var(--color-text);
-  font-family:
-    var(--font-family-inter, Inter), -apple-system, BlinkMacSystemFont,
-    "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-inter), Inter, sans-serif;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -436,9 +426,8 @@ kbd,
 samp,
 pre {
   font-family:
-    var(--font-family-monospace, "Victor Mono"), ui-monospace, Inter,
-    SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+    var(--font-monospace), ui-monospace, Inter, SFMono-Regular, Menlo,
+    Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-feature-settings: normal;
   font-size: 14px;
   font-variation-settings: normal;
