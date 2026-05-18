@@ -2,12 +2,11 @@ import { useMemo } from 'react';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import type { SupportedNetworks } from '@/utils/networks';
-import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
-import { MarketView } from './allocations/allocations/market-view';
+import { VaultMarketAllocationsTable } from '@/features/vault/components/vault-market-allocations-table';
 
 type VaultMarketAllocationsProps = {
   vaultAddress: Address;
@@ -27,7 +26,6 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
   });
 
   const isLoading = vaultDataLoading || allocationsLoading;
-  const { loading: marketsLoading } = useProcessedMarkets();
 
   // Calculate total allocation from market allocations (canonical source)
   const totalAllocation = useMemo(() => {
@@ -37,13 +35,8 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
 
   const hasAnyAllocations = useMemo(() => totalAllocation > 0n, [totalAllocation]);
 
-  const viewDescription = useMemo(() => {
-    if (!vaultData) return '';
-    return `See where your ${vaultData.tokenSymbol} supply is deployed across markets.`;
-  }, [vaultData]);
-
-  // Show loading state when either allocations or markets context is still loading
-  if (isLoading || marketsLoading) {
+  // Show loading state while vault metadata, cap markets, or allocation reads are loading.
+  if (isLoading) {
     return (
       <div className="bg-surface rounded-md font-zen shadow-sm">
         <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
@@ -69,7 +62,6 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
   return (
     <TableContainerWithDescription
       title={hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}
-      description={viewDescription}
     >
       {hasNoAllocations ? (
         <div className="p-10 flex flex-col items-center justify-center font-zen">
@@ -80,12 +72,13 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
           </p>
         </div>
       ) : (
-        <MarketView
-          allocations={marketAllocations}
-          totalAllocation={totalAllocation}
-          vaultAssetSymbol={vaultData.tokenSymbol}
-          vaultAssetDecimals={vaultData.tokenDecimals}
+        <VaultMarketAllocationsTable
+          marketAllocations={marketAllocations}
+          totalAssets={totalAllocation}
           chainId={chainId}
+          allocationAssetSymbol={vaultData.tokenSymbol}
+          allocationAssetDecimals={vaultData.tokenDecimals}
+          showExplorerLink
         />
       )}
     </TableContainerWithDescription>

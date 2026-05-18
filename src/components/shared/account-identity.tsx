@@ -21,7 +21,7 @@ import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import type { VaultAccountIdentity } from '@/contexts/VaultRegistryContext';
 import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
-import { formatVaultAdapterType } from '@/utils/vaults';
+import { formatVaultAdapterType, getMonarchVaultHref } from '@/utils/vaults';
 import type { Address } from 'viem';
 
 const ACCOUNT_IDENTITY_LABEL_MAX_WIDTH_CLASS = 'max-w-[22rem]';
@@ -119,10 +119,13 @@ export function AccountIdentity({
       );
     }
     if (linkTo === 'profile') {
+      if (vaultIdentity?.kind === 'vault-v2') {
+        return getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress);
+      }
       return `/positions/${address}`;
     }
     return null;
-  }, [linkTo, address, showActions, chainId, vaultIdentity?.chainId]);
+  }, [linkTo, address, showActions, chainId, vaultIdentity?.chainId, vaultIdentity?.kind, vaultIdentity?.vaultAddress]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -154,8 +157,11 @@ export function AccountIdentity({
     ) : null;
   const linkedVaultHref =
     vaultIdentity?.kind === 'vault-adapter' && vaultIdentity.vaultAddress.toLowerCase() !== address.toLowerCase()
-      ? `/positions/${vaultIdentity.vaultAddress}`
+      ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress)
       : undefined;
+  const actionsProfileHref =
+    vaultIdentity?.kind === 'vault-v2' ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress) : `/positions/${address}`;
+  const actionsProfileLabel = vaultIdentity?.kind === 'vault-v2' ? 'View Vault' : 'View Portfolio';
 
   // Badge variant - minimal inline badge (no avatar)
   if (variant === 'badge') {
@@ -236,6 +242,8 @@ export function AccountIdentity({
         <AccountActionsPopover
           address={address}
           chainId={chainId ?? vaultIdentity?.chainId}
+          profileHref={actionsProfileHref}
+          profileLabel={actionsProfileLabel}
         >
           {badgeElement}
         </AccountActionsPopover>
@@ -332,6 +340,8 @@ export function AccountIdentity({
         <AccountActionsPopover
           address={address}
           chainId={chainId ?? vaultIdentity?.chainId}
+          profileHref={actionsProfileHref}
+          profileLabel={actionsProfileLabel}
         >
           {compactElement}
         </AccountActionsPopover>
@@ -480,6 +490,8 @@ export function AccountIdentity({
     <AccountActionsPopover
       address={address}
       chainId={chainId ?? vaultIdentity?.chainId}
+      profileHref={actionsProfileHref}
+      profileLabel={actionsProfileLabel}
     >
       {identityTrigger}
     </AccountActionsPopover>

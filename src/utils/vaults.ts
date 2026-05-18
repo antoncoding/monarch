@@ -2,6 +2,10 @@ import { type TrustedVault, getVaultKey, known_vaults } from '@/constants/vaults
 import type { MorphoVault } from '@/data-sources/morpho-api/vaults';
 import type { Market } from '@/utils/types';
 
+export function getMonarchVaultHref(chainId: number, address: string): string {
+  return `/vault/${chainId}/${address}`;
+}
+
 export function morphoVaultToTrustedVault(vault: MorphoVault): TrustedVault {
   return {
     address: vault.address as `0x${string}`,

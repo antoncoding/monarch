@@ -761,32 +761,16 @@ export function useVaultV2({
 
   /**
    * Withdraw from a specific market.
-   * Sets liquidityAdapter to deallocate from the specified market before withdrawing.
-   * Optionally sets caller as allocator if they're not already.
+   * Allocator-only: sets liquidityAdapter to deallocate from the specified market before withdrawing.
    */
   const withdrawFromMarket = useCallback(
-    async (amount: bigint, receiver: Address, market: Market, liquidityAdapter: Address, setSelfAsAllocator: boolean): Promise<boolean> => {
+    async (amount: bigint, receiver: Address, market: Market, liquidityAdapter: Address): Promise<boolean> => {
       if (!account || !vaultAddress) return false;
 
       const txs: `0x${string}`[] = [];
 
       try {
-        // Step 1: Set self as allocator if needed
-        if (setSelfAsAllocator) {
-          const setAllocatorTx = encodeFunctionData({
-            abi: vaultv2Abi,
-            functionName: 'setIsAllocator',
-            args: [account, true],
-          });
-          const submitSetAllocatorTx = encodeFunctionData({
-            abi: vaultv2Abi,
-            functionName: 'submit',
-            args: [setAllocatorTx],
-          });
-          txs.push(submitSetAllocatorTx, setAllocatorTx);
-        }
-
-        // Step 2: Set liquidity adapter to deallocate from the market
+        // Step 1: Set liquidity adapter to deallocate from the market
         const liquidityAdapterTx = encodeFunctionData({
           abi: vaultv2Abi,
           functionName: 'setLiquidityAdapterAndData',
@@ -794,7 +778,7 @@ export function useVaultV2({
         });
         txs.push(liquidityAdapterTx);
 
-        // Step 3: Execute the withdraw
+        // Step 2: Execute the withdraw
         const withdrawTx = encodeFunctionData({
           abi: vaultv2Abi,
           functionName: 'withdraw',

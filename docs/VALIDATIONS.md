@@ -73,6 +73,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
 - Large optional metadata or enrichment queries used only for secondary badges, warnings, filters, or tooltips must be gated or deferred so core table rendering does not wait on them during cold start.
+- Vault-scoped pages with configured cap or market IDs must use targeted market reads for first render; do not wait on the global market registry when the vault metadata already identifies the relevant markets.
 - Expensive queries must not start with placeholder dependency data that immediately invalidates the same query. Gate on prerequisite readiness, or use a stable query key that does not refetch equivalent work.
 - Expensive enrichment queries derived from filtered, sorted, or paginated rows must wait for the inputs that can change those rows, such as USD price enrichment, before they start.
 - Periodic refreshes for RPC or API data must use React Query polling with background refetch disabled, or explicitly pause when `document.visibilityState` is hidden. Do not use raw `setInterval` for mounted data refresh unless hidden-tab behavior is handled.
@@ -107,8 +108,10 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Relationship metadata must not link to the current page's own account again; only link to counterpart accounts, external protocol pages, or expandable details.
 - V2 vault position pages must not render native vault-address market or vault tables when the meaningful market exposure is held by a linked adapter.
 - Vault and adapter relationship UI should prefer short chips, address badges, and structural grouping over explanatory paragraphs.
+- Vault identity and vault action links should resolve to Monarch's canonical `/vault/:chainId/:address` route by default; external Morpho vault links belong only in explicit "View on Morpho" actions.
 - Use available entity icons in compact metadata chips before adding extra explanatory text.
 - Dense product headers should use compact chips, short address links, icon buttons, and tooltips for secondary navigation; avoid long text buttons unless they are the primary action.
+- Downstream detail-panel empty states must not contradict confirmed parent/header metadata; if a relationship is configured but no child detail exists, hide the optional panel or use neutral child-specific copy.
 - Make sure Mobile view is considered.
 - Simplify wording to provide a clear call to action; remove unnecessary explanations. Focus on what a user should do and what they should see, not what you want to say.
 - Modals should let the main panel own vertical scrolling; avoid nested scroll regions inside sections unless the content needs an independent fixed context.

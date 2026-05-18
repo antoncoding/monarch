@@ -18,6 +18,7 @@ import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { formatCompactTokenAmount } from '@/utils/token-amount-format';
 import { getNetworkName } from '@/utils/networks';
 import { getDeployedVaults } from '@/utils/vault-storage';
+import { getMonarchVaultHref } from '@/utils/vaults';
 import { DeploymentModal } from './components/deployment/deployment-modal';
 import { SectionTag, FeatureCard } from '@/components/landing';
 
@@ -123,7 +124,7 @@ export default function AutovaultListContent() {
   }, [address, userVaultsQuery.data]);
 
   const handleManageVault = (vaultAddress: string, networkId: number) => {
-    router.push(`/autovault/${networkId}/${vaultAddress}`);
+    router.push(getMonarchVaultHref(networkId, vaultAddress));
   };
 
   const hasVaults = mergedVaults.length > 0;

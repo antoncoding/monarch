@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import moment from 'moment';
 import { formatUnits } from 'viem';
-import { motion } from 'framer-motion';
+import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { IoIosArrowRoundForward } from 'react-icons/io';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
@@ -20,28 +21,40 @@ import type { Market } from '@/utils/types';
 type TransactionHistoryPreviewProps = {
   account: string;
   chainId: number;
-  isVaultAdapter?: boolean;
   emptyMessage?: string;
+  markets?: Market[];
+  marketsLoading?: boolean;
   viewAllHref?: string;
 };
 
 export function TransactionHistoryPreview({
   account,
   chainId,
-  isVaultAdapter = false,
   emptyMessage,
+  markets: providedMarkets,
+  marketsLoading: providedMarketsLoading,
   viewAllHref,
 }: TransactionHistoryPreviewProps) {
-  const [isViewAllHovered, setIsViewAllHovered] = useState(false);
-  const { allMarkets } = useProcessedMarkets();
+  const { allMarkets: processedMarkets, loading: processedMarketsLoading } = useProcessedMarkets({
+    enableUsdEnrichment: false,
+    enabled: providedMarkets === undefined,
+  });
+  const allMarkets = providedMarkets ?? processedMarkets;
+  const marketsLoading = providedMarketsLoading ?? processedMarketsLoading;
+  const scopedMarketUniqueKeys = useMemo(
+    () => (providedMarkets ? providedMarkets.map((market) => market.uniqueKey) : undefined),
+    [providedMarkets],
+  );
+  const canLoadTransactions = Boolean(account) && (scopedMarketUniqueKeys ? scopedMarketUniqueKeys.length > 0 : allMarkets.length > 0);
 
   const { data, isLoading: loading } = useUserTransactionsQuery({
     filters: {
       userAddress: account ? [account] : [],
+      marketUniqueKeys: scopedMarketUniqueKeys,
       skip: 0,
       chainId,
     },
-    enabled: Boolean(account) && allMarkets.length > 0,
+    enabled: canLoadTransactions,
     pageSize: 20,
   });
 
@@ -50,7 +63,7 @@ export function TransactionHistoryPreview({
     return groupTransactionsByHash(data.items).slice(0, 5);
   }, [data]);
 
-  const isInitialized = !loading;
+  const isPreviewLoading = marketsLoading || (canLoadTransactions && loading);
 
   const historyLink = useMemo(() => {
     if (viewAllHref) return viewAllHref;
@@ -58,29 +71,17 @@ export function TransactionHistoryPreview({
   }, [account, viewAllHref]);
 
   const actions = (
-    <Link
-      href={historyLink}
-      className="text-xs text-secondary hover:text-primary no-underline inline-flex items-center gap-1"
-      onMouseEnter={() => setIsViewAllHovered(true)}
-      onMouseLeave={() => setIsViewAllHovered(false)}
+    <Button
+      asChild
+      variant="ghost"
+      size="sm"
+      className="min-w-0 px-2 text-secondary no-underline hover:text-primary hover:no-underline"
     >
-      <motion.span
-        animate={{ x: isViewAllHovered ? -2 : 0 }}
-        transition={{ duration: 0.2 }}
-      >
+      <Link href={historyLink}>
         Details
-      </motion.span>
-      <motion.span
-        initial={{ opacity: 0, x: -4 }}
-        animate={{
-          opacity: isViewAllHovered ? 1 : 0,
-          x: isViewAllHovered ? 0 : -4,
-        }}
-        transition={{ duration: 0.2 }}
-      >
-        <IoIosArrowRoundForward className="h-4 w-4" />
-      </motion.span>
-    </Link>
+        <ArrowRightIcon className="h-3.5 w-3.5" />
+      </Link>
+    </Button>
   );
 
   return (
@@ -98,10 +99,10 @@ export function TransactionHistoryPreview({
           </TableRow>
         </TableHeader>
         <TableBody className="space-y-2">
-          {!isInitialized || loading ? (
-            [1, 2, 3].map((i) => (
+          {isPreviewLoading ? (
+            ['activity-1', 'activity-2', 'activity-3'].map((key) => (
               <TableRow
-                key={i}
+                key={key}
                 className="rounded bg-hovered/20"
               >
                 <TableCell className="p-3 rounded-l">

@@ -5,28 +5,172 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
+import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
+import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
+import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
+import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings';
+import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
+import { VaultAdapterPositionOverview } from '@/features/vault/components/vault-adapter-position-overview';
+import { useModal } from '@/hooks/useModal';
+import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
+import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { useVaultPage } from '@/hooks/useVaultPage';
 import { useVaultQueryRefresh } from '@/hooks/useVaultQueryRefresh';
-import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
-import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
-import { useVaultAllocations } from '@/hooks/useVaultAllocations';
-import { getSlicedAddress } from '@/utils/address';
-import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { parseCapIdParams } from '@/utils/morpho';
-import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
-import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
-import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings';
-import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
-import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
-import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
-import { useModal } from '@/hooks/useModal';
+import { usePositionDetailPreferences } from '@/stores/usePositionDetailPreferences';
+import type { EarningsPeriod } from '@/stores/usePositionsFilters';
+import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import { formatBalance } from '@/utils/balance';
+import { getSlicedAddress } from '@/utils/address';
+import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
+import { parseCapIdParams } from '@/utils/morpho';
+import { groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
+import { ALL_SUPPORTED_NETWORKS, getNetworkConfig, SupportedNetworks } from '@/utils/networks';
 
-import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+type VaultAdapterPositionDetailProps = {
+  adapterAddress?: Address;
+  assetAddress?: Address;
+  chainId: SupportedNetworks;
+  isResolvingAdapter: boolean;
+  period: EarningsPeriod;
+  setPeriod: (period: EarningsPeriod) => void;
+  totalAssets?: bigint;
+  vaultAddress: Address;
+};
+
+function VaultStatusPanel({ message }: { message: string }) {
+  return <div className="rounded border border-border bg-surface px-6 py-10 text-center text-sm text-secondary shadow-sm">{message}</div>;
+}
+
+function VaultPositionLoadingState() {
+  const marketPlaceholders = ['market-1', 'market-2', 'market-3'];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <div className="h-8 w-[110px] animate-pulse rounded bg-hovered" />
+      </div>
+      <div className="rounded border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-4 h-4 w-36 animate-pulse rounded bg-hovered" />
+        <div className="h-52 animate-pulse rounded bg-hovered/70" />
+      </div>
+      <div className="rounded border border-border bg-surface shadow-sm">
+        <div className="border-b border-border px-4 py-3">
+          <div className="h-4 w-40 animate-pulse rounded bg-hovered" />
+        </div>
+        <div className="divide-y divide-border">
+          {marketPlaceholders.map((key) => (
+            <div
+              key={key}
+              className="flex items-center gap-4 px-4 py-3"
+            >
+              <div className="h-8 w-48 animate-pulse rounded bg-hovered" />
+              <div className="ml-auto h-4 w-16 animate-pulse rounded bg-hovered" />
+              <div className="h-4 w-20 animate-pulse rounded bg-hovered" />
+              <div className="h-7 w-20 animate-pulse rounded bg-hovered" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VaultAdapterPositionDetail({
+  adapterAddress,
+  assetAddress,
+  chainId,
+  isResolvingAdapter,
+  period,
+  setPeriod,
+  totalAssets,
+  vaultAddress,
+}: VaultAdapterPositionDetailProps) {
+  const hasAdapterPositionTarget = Boolean(adapterAddress && assetAddress);
+  const { marketAllocations, loading: marketHintsLoading } = useVaultAllocations({
+    vaultAddress,
+    chainId,
+    enabled: hasAdapterPositionTarget,
+  });
+  const marketHints = useMemo(
+    () =>
+      marketAllocations.map((allocation) => ({
+        marketUniqueKey: allocation.market.uniqueKey,
+        chainId: allocation.market.morphoBlue.chain.id,
+        market: allocation.market,
+      })),
+    [marketAllocations],
+  );
+
+  const {
+    positions,
+    isPositionsLoading,
+    isEarningsLoading,
+    actualBlockData,
+    transactions,
+    snapshotsByChain,
+  } = useUserPositionsSummaryData(adapterAddress, period, [chainId], {
+    enabled: hasAdapterPositionTarget && marketHints.length > 0,
+    marketHints,
+    showEmpty: true,
+  });
+
+  const groupedPositions = useMemo(() => {
+    const grouped = groupPositionsByLoanAsset(positions ?? [], actualBlockData);
+    return processCollaterals(grouped);
+  }, [positions, actualBlockData]);
+
+  const currentPosition = useMemo(() => {
+    if (!assetAddress) return undefined;
+    return groupedPositions.find(
+      (position) => position.chainId === chainId && position.loanAssetAddress.toLowerCase() === assetAddress.toLowerCase(),
+    );
+  }, [assetAddress, chainId, groupedPositions]);
+
+  const relevantTransactions = useMemo(() => {
+    if (!currentPosition) return [];
+    const marketKeys = new Set(currentPosition.markets.map((marketPosition) => marketPosition.market.uniqueKey.toLowerCase()));
+    return transactions.filter((tx) => tx.data.market && marketKeys.has(tx.data.market.uniqueKey.toLowerCase()));
+  }, [currentPosition, transactions]);
+
+  if (!adapterAddress && !isResolvingAdapter) {
+    return <VaultStatusPanel message="No connected Morpho market adapter found for this vault." />;
+  }
+
+  const isLoading = isResolvingAdapter || marketHintsLoading || isPositionsLoading;
+
+  if (!isLoading && !currentPosition) {
+    return null;
+  }
+
+  return (
+    <>
+      {isLoading && !currentPosition && <VaultPositionLoadingState />}
+
+      {currentPosition && adapterAddress && (
+        <VaultAdapterPositionOverview
+          groupedPosition={currentPosition}
+          chainId={chainId}
+          adapterAddress={adapterAddress}
+          isEarningsLoading={isEarningsLoading}
+          actualBlockData={actualBlockData}
+          period={period}
+          setPeriod={setPeriod}
+          transactions={relevantTransactions}
+          snapshotsByChain={snapshotsByChain}
+          marketAllocations={marketAllocations}
+          totalAssets={totalAssets}
+        />
+      )}
+    </>
+  );
+}
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -38,6 +182,8 @@ export default function VaultContent() {
   const [hasMounted, setHasMounted] = useState(false);
   const { open: openModal } = useModal();
   const { findToken } = useTokensQuery();
+  const period = usePositionDetailPreferences((state) => state.period);
+  const setPeriod = usePositionDetailPreferences((state) => state.setPeriod);
 
   useEffect(() => {
     setHasMounted(true);
@@ -61,7 +207,6 @@ export default function VaultContent() {
     }
   }, [chainId]);
 
-  // Pull minimal data for vault-view itself
   const vaultDataQuery = useVaultV2Data({ vaultAddress: vaultAddressValue, chainId });
   const vaultContract = useVaultV2({
     vaultAddress: vaultAddressValue,
@@ -70,8 +215,6 @@ export default function VaultContent() {
     onTransactionSuccess: vaultDataQuery.refetch,
   });
   const adapterQuery = useMorphoMarketAdapters({ vaultAddress: vaultAddressValue, chainId });
-
-  // Only use useVaultPage for complex computed state
   const { vaultAPY, isVaultInitialized, needsInitialization } = useVaultPage({
     vaultAddress: vaultAddressValue,
     chainId,
@@ -87,29 +230,27 @@ export default function VaultContent() {
     void refetchVaultQueries({ includeRetries: true });
   }, [refetchVaultQueries, vaultContract]);
 
-  const isRefetching = vaultDataQuery.isRefetching || vaultContract.isRefetching || adapterQuery.isRefetching || isRefetchingVaultQueries;
-
-  // Extract minimal data for vault-view rendering
   const vaultData = vaultDataQuery.data;
   const hasError = vaultDataQuery.isError;
   const vaultDataLoading = vaultDataQuery.isLoading;
-  const title = vaultData?.displayName ?? `Vault ${getSlicedAddress(vaultAddressValue)}`;
+  const title = vaultData?.displayName || `Vault ${getSlicedAddress(vaultAddressValue)}`;
   const symbolToDisplay = vaultData?.displaySymbol;
   const tokenDecimals = vaultData?.tokenDecimals;
   const tokenSymbol = vaultData?.tokenSymbol;
   const assetAddress = vaultData?.assetAddress as Address | undefined;
   const adapterAddress = adapterQuery.primaryAdapter;
-
   const adapterPortfolioHref = useMemo(() => {
     if (!adapterAddress || !assetAddress) return undefined;
     return `/position/${chainId}/${assetAddress}/${adapterAddress}`;
   }, [adapterAddress, assetAddress, chainId]);
+  const morphoVaultHref = useMemo(() => {
+    if (!supportsMorphoAppLinks(chainId)) return undefined;
+    return getVaultURL(vaultAddressValue, chainId);
+  }, [chainId, vaultAddressValue]);
 
-  // UI state from Zustand stores (for vault-view banners only)
   const { open: openSettings } = useVaultSettingsModalStore();
   const { open: openInitialization } = useVaultInitializationModalStore();
 
-  // Computed state flags for vault-view banners
   const hasNoAllocators = Boolean(vaultData?.capsData) && (vaultData?.allocators ?? []).length === 0;
   const capsUninitialized = vaultData?.capsData?.needSetupCaps === true;
   const capsInitialized = vaultData?.capsData?.needSetupCaps === false;
@@ -123,7 +264,8 @@ export default function VaultContent() {
     [activityMarketAllocations],
   );
 
-  // Format APY for APY card in vault-view
+  const isRefetching = vaultDataQuery.isRefetching || vaultContract.isRefetching || adapterQuery.isRefetching || isRefetchingVaultQueries;
+
   const apyLabel = useMemo(() => {
     if (vaultAPY === null || vaultAPY === undefined) return '0%';
     return `${(vaultAPY * 100).toFixed(2)}%`;
@@ -157,20 +299,19 @@ export default function VaultContent() {
     }
   }, [tokenDecimals, tokenSymbol, vaultContract.userAssets]);
 
-  // Extract collateral addresses from caps for header
   const collateralAddresses = useMemo(() => {
     return (vaultData?.capsData?.collateralCaps ?? [])
       .map((cap) => {
-        const addr = parseCapIdParams(cap.idParams).collateralToken;
-        if (!addr) return null;
-        const token = findToken(addr, chainId);
+        const collateralToken = parseCapIdParams(cap.idParams).collateralToken;
+        if (!collateralToken) return null;
+        const token = findToken(collateralToken, chainId);
         return {
-          address: addr,
+          address: collateralToken,
           symbol: token?.symbol ?? 'Unknown',
-          amount: 1, // Use 1 as placeholder since we're just showing presence
+          amount: 1,
         };
       })
-      .filter((c): c is { address: Address; symbol: string; amount: number } => !!c);
+      .filter((collateral): collateral is { address: Address; symbol: string; amount: number } => !!collateral);
   }, [vaultData?.capsData?.collateralCaps, findToken, chainId]);
 
   const handleDeposit = useCallback(() => {
@@ -201,15 +342,22 @@ export default function VaultContent() {
     });
   }, [assetAddress, tokenSymbol, tokenDecimals, vaultAddressValue, title, chainId, openModal, handleRefreshVault]);
 
-  // Show error state if data failed to load
   if (hasError) {
     return (
       <div className="flex w-full flex-col font-zen">
         <Header />
         <div className="container h-full px-[4%] py-12">
+          <div className="mb-6">
+            <Breadcrumbs
+              items={[
+                { label: 'Vault' },
+                { label: `Vault ${getSlicedAddress(vaultAddressValue)}`, isCurrent: true },
+              ]}
+            />
+          </div>
           <div className="mx-auto max-w-md rounded bg-surface p-8 text-center shadow-sm">
             <h2 className="mb-4 text-xl">Vault data unavailable</h2>
-            <p className="mb-6 text-secondary">We could not load this autovault right now. Please retry in a few minutes.</p>
+            <p className="mb-6 text-secondary">We could not load this vault right now. Please retry in a few minutes.</p>
             <Link href="/autovault">
               <Button variant="primary">Back to Autovaults</Button>
             </Link>
@@ -222,9 +370,17 @@ export default function VaultContent() {
   return (
     <div className="flex w-full flex-col font-zen">
       <Header />
-      <div className="mx-auto container flex-1 pb-12 rounded">
+      <div className="mx-auto container flex-1 rounded pb-12">
         <div className="space-y-8">
-          {/* Unified Vault Header */}
+          <div className="mt-6">
+            <Breadcrumbs
+              items={[
+                { label: 'Vault' },
+                { label: title, isCurrent: true },
+              ]}
+            />
+          </div>
+
           <VaultHeader
             vaultAddress={vaultAddressValue}
             chainId={chainId}
@@ -236,18 +392,22 @@ export default function VaultContent() {
             apyLabel={apyLabel}
             userShareBalance={userShareBalanceLabel}
             allocators={vaultData?.allocators}
+            sentinels={vaultData?.sentinels}
+            owner={vaultData?.owner}
             collaterals={collateralAddresses}
             curator={vaultData?.curator}
             adapter={adapterAddress}
+            adapters={adapterQuery.adapters}
             onDeposit={handleDeposit}
             onWithdraw={handleWithdraw}
             onRefresh={handleRefreshVault}
             onSettings={() => openSettings('general')}
+            showWithdrawWhenEmpty
             isRefetching={isRefetching}
             isLoading={vaultDataLoading || vaultContract.isLoading}
+            morphoHref={morphoVaultHref}
           />
 
-          {/* Setup Banner - Show if vault needs initialization */}
           {needsInitialization && vaultContract.isOwner && networkConfig?.vaultConfig?.marketAdapterFactory && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
@@ -267,7 +427,6 @@ export default function VaultContent() {
             </div>
           )}
 
-          {/* Only show allocator/caps banners if vault IS initialized */}
           {isVaultInitialized && hasNoAllocators && vaultContract.isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
@@ -304,26 +463,28 @@ export default function VaultContent() {
             </div>
           )}
 
-          {/* Market Allocations */}
-          <VaultMarketAllocations
-            vaultAddress={vaultAddressValue}
+          <VaultAdapterPositionDetail
+            adapterAddress={adapterAddress}
+            assetAddress={assetAddress}
             chainId={chainId}
-            needsInitialization={needsInitialization}
+            vaultAddress={vaultAddressValue}
+            isResolvingAdapter={vaultDataLoading || adapterQuery.isLoading || adapterQuery.isFetching || !vaultData}
+            period={period}
+            setPeriod={setPeriod}
+            totalAssets={vaultContract.totalAssets}
           />
 
-          {/* Transaction History Preview - only show when vault is fully set up */}
           {adapterAddress && isVaultInitialized && capsInitialized && (
             <TransactionHistoryPreview
               account={adapterAddress}
               chainId={chainId}
-              emptyMessage="Setup complete, your automated rebalance will show up here once it's triggered."
+              emptyMessage="Setup complete, automated rebalance activity will show up here once it is triggered."
               markets={activityMarkets}
               marketsLoading={activityMarketsLoading}
               viewAllHref={adapterPortfolioHref}
             />
           )}
 
-          {/* Settings Modal - Pulls own data */}
           <VaultSettingsModal
             vaultAddress={vaultAddressValue}
             chainId={chainId}
@@ -331,7 +492,6 @@ export default function VaultContent() {
         </div>
       </div>
 
-      {/* Initialization Modal - Pulls own data from URL params */}
       {networkConfig?.vaultConfig?.marketAdapterFactory && <VaultInitializationModal />}
     </div>
   );

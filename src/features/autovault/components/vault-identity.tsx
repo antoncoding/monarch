@@ -3,11 +3,10 @@
 import { useMemo, type ReactNode } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Link from 'next/link';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { AddressIdentity } from '@/components/shared/address-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
+import { getMonarchVaultHref } from '@/utils/vaults';
 import { VaultIcon } from './vault-icon';
 
 type VaultIdentityVariant = 'chip' | 'inline' | 'icon';
@@ -45,8 +44,7 @@ export function VaultIdentity({
   tooltipSecondaryDetail,
   showAddressInTooltip = true,
 }: VaultIdentityProps) {
-  const vaultHref = useMemo(() => getVaultURL(address, chainId), [address, chainId]);
-  const canLinkToMorpho = useMemo(() => supportsMorphoAppLinks(chainId), [chainId]);
+  const vaultHref = useMemo(() => getMonarchVaultHref(chainId, address), [address, chainId]);
   const formattedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   const displayName = vaultName ?? formattedAddress;
   const iconAlt = `${displayName} logo`;
@@ -90,11 +88,9 @@ export function VaultIdentity({
   })();
 
   const interactiveContent =
-    showLink && canLinkToMorpho ? (
+    showLink ? (
       <Link
         href={vaultHref}
-        target="_blank"
-        rel="noopener noreferrer"
         className="no-underline"
         onClick={(e) => e.stopPropagation()}
       >
@@ -141,9 +137,6 @@ export function VaultIdentity({
           title={tooltipTitle}
           detail={resolvedDetail}
           secondaryDetail={resolvedSecondaryDetail}
-          actionIcon={<ExternalLinkIcon className="h-4 w-4" />}
-          actionHref={vaultHref}
-          onActionClick={(e) => e.stopPropagation()}
         />
       }
     >

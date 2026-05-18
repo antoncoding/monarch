@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, formatUnits } from 'viem';
+import type { Address } from 'viem';
 import type { SupportedNetworks } from '@/utils/networks';
 import { useMorphoMarketAdapters } from './useMorphoMarketAdapters';
-import useUserPositionsSummaryData from './useUserPositionsSummaryData';
 import { useVaultAllocations } from './useVaultAllocations';
 import { useVaultV2 } from './useVaultV2';
 import { useVaultV2Data } from './useVaultV2Data';
+import { formatBalance } from '@/utils/balance';
 
 type UseVaultPageArgs = {
   vaultAddress: Address;
@@ -51,46 +51,26 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     [adapterQuery.primaryAdapter, hasResolvedAdapterState],
   );
 
-  // Fetch adapter positions for APY calculation
-  const { positions: adapterPositions, isEarningsLoading: isAPYLoading } = useUserPositionsSummaryData(
-    needsAdapterDeployment ? undefined : adapterQuery.primaryAdapter,
-    'day',
-    [chainId],
-  );
-
-  // Expensive computation: vaultAPY (weighted average across positions)
+  // Weighted average across configured market allocations. This avoids position
+  // discovery and historical RPC reads on the first vault paint.
   const vaultAPY = useMemo(() => {
-    if (!adapterPositions || adapterPositions.length === 0) return null;
+    if (allocationsQuery.marketAllocations.length === 0) return null;
 
-    let totalSuppliedNorm = 0;
+    const tokenDecimals = vaultDataQuery.data?.tokenDecimals ?? 18;
+    let totalAllocated = 0;
     let weightedAPY = 0;
 
-    for (const position of adapterPositions) {
-      const suppliedNorm = Number(formatUnits(BigInt(position.state.supplyAssets), position.market.loanAsset.decimals));
-      if (suppliedNorm <= 0) continue;
+    for (const allocation of allocationsQuery.marketAllocations) {
+      if (allocation.allocation <= 0n) continue;
 
-      const apy = position.market.state.supplyApy ?? 0;
-      totalSuppliedNorm += suppliedNorm;
-      weightedAPY += suppliedNorm * apy;
+      const allocated = formatBalance(allocation.allocation, tokenDecimals);
+      totalAllocated += allocated;
+      weightedAPY += allocated * (allocation.market.state.supplyApy ?? 0);
     }
 
-    if (totalSuppliedNorm === 0) return null;
-    return weightedAPY / totalSuppliedNorm;
-  }, [adapterPositions]);
-
-  // Calculate total 24h earnings
-  const vault24hEarnings = useMemo(() => {
-    if (!adapterPositions || adapterPositions.length === 0) return null;
-
-    let total = 0n;
-    for (const position of adapterPositions) {
-      if (position.earned) {
-        total += BigInt(position.earned);
-      }
-    }
-
-    return total;
-  }, [adapterPositions]);
+    if (totalAllocated === 0) return null;
+    return weightedAPY / totalAllocated;
+  }, [allocationsQuery.marketAllocations, vaultDataQuery.data?.tokenDecimals]);
 
   // Complex derived state: needsInitialization
   const needsInitialization = useMemo(() => {
@@ -123,8 +103,8 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     needsAdapterDeployment,
     needsInitialization,
     vaultAPY,
-    vault24hEarnings,
-    isAPYLoading,
+    vault24hEarnings: null,
+    isAPYLoading: allocationsQuery.loading,
 
     // Aggregated utilities
     refetchAll,

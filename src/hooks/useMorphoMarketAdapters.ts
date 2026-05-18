@@ -55,6 +55,7 @@ export function useMorphoMarketAdapters({ vaultAddress, chainId }: { vaultAddres
     primaryAdapterType,
     primaryFactoryAddress,
     adapters,
+    isFetching: query.isFetching,
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

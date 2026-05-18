@@ -215,7 +215,6 @@ export default function Positions() {
           {!isVaultsLoading && hasVaults && (
             <UserVaultsTable
               vaults={vaultsWithApy}
-              account={account}
               period={period}
               isEarningsLoading={isVaultApyLoading}
               refetch={() => void refetchVaults()}
