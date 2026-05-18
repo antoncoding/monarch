@@ -147,14 +147,6 @@ export function VaultHeader({
                     <span>Curator: {getSlicedAddress(curator as Address)}</span>
                   </>
                 )}
-                {adapterRows.length > 0 && (
-                  <>
-                    <span className="text-border">·</span>
-                    <span>
-                      {adapterRows.length} adapter{adapterRows.length === 1 ? '' : 's'}
-                    </span>
-                  </>
-                )}
                 {knownAllocators.length > 0 && (
                   <>
                     <span className="text-border">·</span>
