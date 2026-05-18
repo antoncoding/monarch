@@ -243,14 +243,14 @@ export function useVaultAllocations({
   }, [allocations]);
 
   // Merge allocations with parsed collateral data
-  const collateralAllocations = useMemo(
-    () =>
-      parsedCollateralCaps.map((cap) => ({
-        ...cap,
-        allocation: allocationMap.get(cap.capId) ?? 0n,
-      })),
-    [parsedCollateralCaps, allocationMap],
-  );
+  const collateralAllocations = useMemo(() => {
+    if (!includeCollateralAllocations) return [];
+
+    return parsedCollateralCaps.map((cap) => ({
+      ...cap,
+      allocation: allocationMap.get(cap.capId) ?? 0n,
+    }));
+  }, [includeCollateralAllocations, parsedCollateralCaps, allocationMap]);
 
   // Merge allocations with parsed market data
   const marketAllocations = useMemo(

@@ -45,12 +45,10 @@ export function VaultWithdrawModal({
   const [inputError, setInputError] = useState<string | null>(null);
 
   // Fetch vault data
-  const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
-  const { marketAllocations, loading: allocationsLoading } = useVaultAllocations({ vaultAddress, chainId });
-  const { primaryAdapter, isLoading: adaptersLoading } = useMorphoMarketAdapters({ vaultAddress, chainId });
+  const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
 
   // Vault hook for transactions
-  const { withdrawFromMarket, isWithdrawing, isOwner } = useVaultV2({
+  const { withdraw, withdrawFromMarket, isWithdrawing, userAssets } = useVaultV2({
     vaultAddress,
     chainId,
     connectedAddress,
@@ -65,21 +63,33 @@ export function VaultWithdrawModal({
     if (!connectedAddress || !vaultData?.allocators) return false;
     return vaultData.allocators.some((a) => a.toLowerCase() === connectedAddress.toLowerCase());
   }, [connectedAddress, vaultData?.allocators]);
+  const { marketAllocations, loading: allocationsLoading } = useVaultAllocations({
+    vaultAddress,
+    chainId,
+    enabled: isAllocator,
+  });
+  const { primaryAdapter, isLoading: adaptersLoading } = useMorphoMarketAdapters({
+    vaultAddress,
+    chainId,
+  });
 
   // Filter markets with positive allocations
   const marketsWithAllocation = useMemo(() => {
+    if (!isAllocator) return [];
     return marketAllocations.filter((m) => m.allocation > 0n);
-  }, [marketAllocations]);
+  }, [isAllocator, marketAllocations]);
 
-  // Calculate max withdrawable for selected market (min of allocation and liquidity)
+  // Allocators can route through a market; regular users withdraw through the vault's configured liquidity path.
   const maxWithdrawable = useMemo(() => {
-    if (!selectedMarket) return BigInt(0);
+    const userAssetBalance = userAssets ?? 0n;
+    if (!isAllocator || !selectedMarket) return userAssetBalance;
 
     const allocation = selectedMarket.allocation;
     const liquidity = BigInt(selectedMarket.market.state?.liquidityAssets ?? '0');
+    const marketLimit = allocation < liquidity ? allocation : liquidity;
 
-    return allocation < liquidity ? allocation : liquidity;
-  }, [selectedMarket]);
+    return marketLimit < userAssetBalance ? marketLimit : userAssetBalance;
+  }, [isAllocator, selectedMarket, userAssets]);
 
   // Handle market selection
   const handleSelectMarket = useCallback((market: MarketAllocation) => {
@@ -90,15 +100,24 @@ export function VaultWithdrawModal({
 
   // Handle withdraw
   const handleWithdraw = useCallback(async () => {
-    if (!connectedAddress || !selectedMarket || !primaryAdapter) return;
+    if (!connectedAddress) return;
 
-    // Determine if we need to set self as allocator
-    const needsAllocatorSetup = isOwner && !isAllocator;
+    if (isAllocator && selectedMarket && primaryAdapter) {
+      await withdrawFromMarket(withdrawAmount, connectedAddress, selectedMarket.market, primaryAdapter);
+      return;
+    }
 
-    await withdrawFromMarket(withdrawAmount, connectedAddress, selectedMarket.market, primaryAdapter, needsAllocatorSetup);
-  }, [connectedAddress, selectedMarket, isOwner, isAllocator, withdrawFromMarket, withdrawAmount, primaryAdapter]);
+    await withdraw(withdrawAmount, connectedAddress);
+  }, [connectedAddress, isAllocator, selectedMarket, primaryAdapter, withdrawFromMarket, withdrawAmount, withdraw]);
 
-  const isLoading = allocationsLoading || adaptersLoading;
+  const isLoading = vaultDataLoading || (isAllocator && (allocationsLoading || adaptersLoading));
+  const showMarketSelection = isAllocator;
+  const showAmountInput = !showMarketSelection || selectedMarket !== null;
+  const isWithdrawDisabled =
+    inputError !== null ||
+    withdrawAmount === 0n ||
+    (showMarketSelection && (!selectedMarket || !primaryAdapter)) ||
+    maxWithdrawable === 0n;
 
   return (
     <Modal
@@ -121,52 +140,54 @@ export function VaultWithdrawModal({
           <div className="flex items-center justify-center py-8">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
-        ) : marketsWithAllocation.length === 0 ? (
+        ) : showMarketSelection && marketsWithAllocation.length === 0 ? (
           <div className="py-8 text-center text-secondary">No markets with allocations to withdraw from.</div>
         ) : (
           <div className="space-y-6">
             {/* Market Selection */}
-            <div>
-              <div className="mb-3 text-sm text-secondary">Select market to withdraw from</div>
-              <div className="space-y-2">
-                {marketsWithAllocation.map((marketAllocation) => {
-                  const isSelected = selectedMarket?.marketId === marketAllocation.marketId;
-                  const liquidity = BigInt(marketAllocation.market.state?.liquidityAssets ?? '0');
+            {showMarketSelection && (
+              <div>
+                <div className="mb-3 text-sm text-secondary">Select market to withdraw from</div>
+                <div className="space-y-2">
+                  {marketsWithAllocation.map((marketAllocation) => {
+                    const isSelected = selectedMarket?.marketId === marketAllocation.marketId;
+                    const liquidity = BigInt(marketAllocation.market.state?.liquidityAssets ?? '0');
 
-                  return (
-                    <button
-                      key={marketAllocation.marketId}
-                      type="button"
-                      onClick={() => handleSelectMarket(marketAllocation)}
-                      className={`w-full rounded border p-3 text-left transition-colors ${
-                        isSelected
-                          ? 'border-primary bg-primary/5'
-                          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <MarketIdentity
-                          market={marketAllocation.market}
-                          chainId={chainId}
-                          mode={MarketIdentityMode.Normal}
-                        />
-                        <div className="text-right">
-                          <div className="text-sm">
-                            {formatBalance(marketAllocation.allocation, assetDecimals).toFixed(4)} {assetSymbol}
-                          </div>
-                          <div className="text-xs text-secondary">
-                            Global Liquidity: {formatReadable(formatBalance(liquidity, assetDecimals))}
+                    return (
+                      <button
+                        key={marketAllocation.marketId}
+                        type="button"
+                        onClick={() => handleSelectMarket(marketAllocation)}
+                        className={`w-full rounded border p-3 text-left transition-colors ${
+                          isSelected
+                            ? 'border-primary bg-primary/5'
+                            : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <MarketIdentity
+                            market={marketAllocation.market}
+                            chainId={chainId}
+                            mode={MarketIdentityMode.Normal}
+                          />
+                          <div className="text-right">
+                            <div className="text-sm">
+                              {formatBalance(marketAllocation.allocation, assetDecimals).toFixed(4)} {assetSymbol}
+                            </div>
+                            <div className="text-xs text-secondary">
+                              Global Liquidity: {formatReadable(formatBalance(liquidity, assetDecimals))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Amount Input - only show when market is selected */}
-            {selectedMarket && (
+            {showAmountInput && (
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-secondary">Withdraw amount</span>
@@ -185,7 +206,7 @@ export function VaultWithdrawModal({
                       exceedMaxErrMessage="Exceeds available amount"
                     />
                     {inputError && <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>}
-                    {!primaryAdapter && (
+                    {showMarketSelection && !primaryAdapter && (
                       <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
                         Vault adapter unavailable. Refresh and try again.
                       </p>
@@ -196,7 +217,7 @@ export function VaultWithdrawModal({
                     targetChainId={chainId}
                     onClick={handleWithdraw}
                     isLoading={isWithdrawing}
-                    disabled={!primaryAdapter || inputError !== null || !withdrawAmount || withdrawAmount === 0n}
+                    disabled={isWithdrawDisabled}
                     variant="primary"
                     className="ml-2 min-w-32"
                   >
