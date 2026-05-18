@@ -75,7 +75,7 @@ export function TransactionHistoryPreview({
       asChild
       variant="ghost"
       size="sm"
-      className="min-w-0 px-2 text-secondary hover:text-primary"
+      className="min-w-0 px-2 text-secondary no-underline hover:text-primary hover:no-underline"
     >
       <Link href={historyLink}>
         Details

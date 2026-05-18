@@ -160,7 +160,7 @@ function ChartContent({
       <div className="flex flex-col sm:flex-row items-stretch">
         {/* Stacked Area Chart - Left side */}
         <div className="flex-1 min-w-0 flex flex-col self-stretch">
-          <div className="px-4 pt-3 pb-3">
+          <div className="border-b border-gray-200 px-6 py-3 dark:border-gray-800">
             <h3 className="font-monospace text-xs uppercase text-secondary">Position History</h3>
           </div>
           <div
