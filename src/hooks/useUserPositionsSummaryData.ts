@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { SupportedNetworks } from '@/utils/networks';
-import useUserPositions, { positionKeys } from './useUserPositions';
+import useUserPositions, { positionKeys, type UserPositionMarketHint } from './useUserPositions';
 import { useCurrentBlocks } from './queries/useCurrentBlocks';
 import { useBlockTimestamps } from './queries/useBlockTimestamps';
 import { usePositionSnapshots } from './queries/usePositionSnapshots';
@@ -15,6 +15,8 @@ export type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
 type UseUserPositionsSummaryDataOptions = {
   enabled?: boolean;
+  marketHints?: UserPositionMarketHint[];
+  showEmpty?: boolean;
 };
 
 const useUserPositionsSummaryData = (
@@ -27,7 +29,14 @@ const useUserPositionsSummaryData = (
   const enabled = options.enabled ?? true;
   const activeUser = enabled ? user : undefined;
 
-  const { data: positions, loading: positionsLoading, isRefetching, positionsError } = useUserPositions(activeUser, true, chainIds);
+  const {
+    data: positions,
+    loading: positionsLoading,
+    isRefetching,
+    positionsError,
+  } = useUserPositions(activeUser, options.showEmpty ?? true, chainIds, {
+    marketHints: options.marketHints,
+  });
 
   const uniqueChainIds = useMemo(
     () => chainIds ?? [...new Set(positions?.map((p) => p.market.morphoBlue.chain.id as SupportedNetworks) ?? [])],

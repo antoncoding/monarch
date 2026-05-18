@@ -15,6 +15,8 @@ type AccountActionsPopoverProps = {
   address: Address;
   children?: ReactNode;
   chainId?: number;
+  profileHref?: string;
+  profileLabel?: string;
 };
 
 /**
@@ -23,7 +25,13 @@ type AccountActionsPopoverProps = {
  * - View account (positions page)
  * - View on Etherscan
  */
-export function AccountActionsPopover({ address, chainId, children }: AccountActionsPopoverProps) {
+export function AccountActionsPopover({
+  address,
+  chainId,
+  children,
+  profileHref = `/positions/${address}`,
+  profileLabel = 'View Portfolio',
+}: AccountActionsPopoverProps) {
   const toast = useStyledToast();
   const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
   const isBookmarked = isAddressBookmarked(address);
@@ -38,8 +46,8 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
   }, [address, toast]);
 
   const handleViewAccount = useCallback(() => {
-    window.location.href = `/positions/${address}`;
-  }, [address]);
+    window.location.href = profileHref;
+  }, [profileHref]);
 
   const handleViewExplorer = useCallback(() => {
     const explorerUrl = getExplorerURL(address, (chainId ?? SupportedNetworks.Mainnet) as SupportedNetworks);
@@ -60,7 +68,7 @@ export function AccountActionsPopover({ address, chainId, children }: AccountAct
           onClick={handleViewAccount}
           startContent={<LuUser className="h-4 w-4" />}
         >
-          View Portfolio
+          {profileLabel}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => toggleAddressBookmark(address)}

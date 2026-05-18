@@ -20,6 +20,8 @@ import type { Address } from 'viem';
 import { AgentIcon } from '@/components/shared/agent-icon';
 import { findAgent } from '@/utils/monarch-agent';
 import { CollateralIconsDisplay } from '@/features/positions/components/collateral-icons-display';
+import { getSlicedAddress } from '@/utils/address';
+import { formatVaultAdapterType } from '@/utils/vaults';
 
 type VaultHeaderProps = {
   vaultAddress: Address;
@@ -32,13 +34,17 @@ type VaultHeaderProps = {
   apyLabel: string;
   userShareBalance?: string;
   allocators?: string[];
+  sentinels?: string[];
+  owner?: string;
   collaterals?: { address: string; symbol: string; amount: number }[];
   curator?: string;
   adapter?: string;
+  adapters?: { adapter: Address; adapterType?: string }[];
   onDeposit: () => void;
   onWithdraw: () => void;
   onRefresh: () => void;
   onSettings: () => void;
+  showWithdrawWhenEmpty?: boolean;
   isRefetching: boolean;
   isLoading: boolean;
 };
@@ -54,13 +60,17 @@ export function VaultHeader({
   apyLabel,
   userShareBalance,
   allocators = [],
+  sentinels = [],
+  owner,
   collaterals = [],
   curator,
   adapter,
+  adapters = [],
   onDeposit,
   onWithdraw,
   onRefresh,
   onSettings,
+  showWithdrawWhenEmpty = false,
   isRefetching,
   isLoading,
 }: VaultHeaderProps) {
@@ -79,6 +89,7 @@ export function VaultHeader({
 
   // Filter for known agents
   const knownAllocators = allocators.filter((addr) => findAgent(addr) !== undefined);
+  const adapterRows = adapters.length > 0 ? adapters : adapter ? [{ adapter: adapter as Address }] : [];
 
   return (
     <div className="mt-6 mb-6 space-y-4">
@@ -126,6 +137,20 @@ export function VaultHeader({
                   <>
                     <span className="text-border">·</span>
                     <span>Asset: {assetSymbol}</span>
+                  </>
+                )}
+                {curator && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span>Curator: {getSlicedAddress(curator as Address)}</span>
+                  </>
+                )}
+                {adapterRows.length > 0 && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span>
+                      {adapterRows.length} adapter{adapterRows.length === 1 ? '' : 's'}
+                    </span>
                   </>
                 )}
                 {knownAllocators.length > 0 && (
@@ -215,12 +240,12 @@ export function VaultHeader({
               >
                 Deposit
               </Button>
-              {userShareBalance && (
+              {(userShareBalance || showWithdrawWhenEmpty) && (
                 <Button
                   variant="default"
                   size="sm"
                   onClick={onWithdraw}
-                  disabled={isLoading}
+                  disabled={isLoading || !userShareBalance}
                 >
                   Withdraw
                 </Button>
@@ -292,6 +317,15 @@ export function VaultHeader({
                     <div className="flex items-center gap-2">
                       <h4 className="text-xs uppercase tracking-wider text-secondary">Configuration</h4>
                     </div>
+                    {owner && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-secondary">Owner:</span>
+                        <AddressIdentity
+                          address={owner}
+                          chainId={chainId}
+                        />
+                      </div>
+                    )}
                     {curator && (
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-secondary">Curator:</span>
@@ -301,13 +335,23 @@ export function VaultHeader({
                         />
                       </div>
                     )}
-                    {adapter && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-secondary">Adapter:</span>
-                        <AddressIdentity
-                          address={adapter}
-                          chainId={chainId}
-                        />
+                    {adapterRows.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-xs text-secondary">Adapters:</span>
+                        <div className="flex flex-col gap-1.5">
+                          {adapterRows.map((row) => (
+                            <div
+                              key={row.adapter}
+                              className="flex flex-wrap items-center gap-1.5"
+                            >
+                              <span className="text-xs text-secondary">{formatVaultAdapterType(row.adapterType)}:</span>
+                              <AddressIdentity
+                                address={row.adapter}
+                                chainId={chainId}
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -318,6 +362,24 @@ export function VaultHeader({
                         <h4 className="text-xs uppercase tracking-wider text-secondary">Allocators</h4>
                         <div className="flex flex-col gap-1.5">
                           {allocators.map((addr) => (
+                            <div
+                              key={addr}
+                              className="flex items-center gap-1.5"
+                            >
+                              <AddressIdentity
+                                address={addr}
+                                chainId={chainId}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {sentinels.length > 0 && (
+                      <div className="space-y-1.5">
+                        <h4 className="text-xs uppercase tracking-wider text-secondary">Sentinels</h4>
+                        <div className="flex flex-col gap-1.5">
+                          {sentinels.map((addr) => (
                             <div
                               key={addr}
                               className="flex items-center gap-1.5"

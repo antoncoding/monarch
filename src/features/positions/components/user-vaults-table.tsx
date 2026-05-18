@@ -39,7 +39,6 @@ const formatRate = (rate: number | null | undefined, isApr: boolean): string => 
 
 type UserVaultsTableProps = {
   vaults: UserVaultV2[];
-  account: string;
   period: EarningsPeriod;
   isEarningsLoading?: boolean;
   refetch?: () => void;
@@ -48,7 +47,6 @@ type UserVaultsTableProps = {
 
 export function UserVaultsTable({
   vaults,
-  account,
   period,
   isEarningsLoading = false,
   refetch,
@@ -242,7 +240,6 @@ export function UserVaultsTable({
                           <VaultActionsDropdown
                             vaultAddress={vault.address}
                             chainId={vault.networkId}
-                            account={account}
                           />
                         </div>
                       </TableCell>

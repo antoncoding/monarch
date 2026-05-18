@@ -9,6 +9,7 @@ import { isForceUnwhitelisted, isMarketVisibleWithWhitelistGuard } from '@/utils
 import type { Market } from '@/utils/types';
 
 type UseProcessedMarketsOptions = {
+  enabled?: boolean;
   marketsRefetchInterval?: number | false;
   marketsRefetchOnWindowFocus?: boolean;
   enableMorphoMetadata?: boolean;
@@ -62,6 +63,7 @@ const hasSameSupplyingVaults = (current: Market['supplyingVaults'], next: Market
  * ```
  */
 export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
+  const enabled = options?.enabled ?? true;
   const enableUsdEnrichment = options?.enableUsdEnrichment ?? true;
   const enableMorphoMetadata = options?.enableMorphoMetadata ?? true;
   const {
@@ -72,12 +74,13 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     error,
     refetch,
   } = useMarketsQuery({
+    enabled,
     refetchInterval: options?.marketsRefetchInterval,
     refetchOnWindowFocus: options?.marketsRefetchOnWindowFocus,
     includeUnknownTokens: options?.includeUnknownTokens,
   });
   const { whitelistLookup, supplyingVaultsLookup, availableWhitelistChainIds } = useMorphoWhitelistStatusQuery({
-    enabled: enableMorphoMetadata,
+    enabled: enabled && enableMorphoMetadata,
   });
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
   const { showUnwhitelistedMarkets } = useAppSettings();
@@ -138,7 +141,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup]);
 
   const { markets: allMarketsWithUsd, isLoading: isUsdEnrichmentLoading } = useUsdEnrichedMarkets(processedData.allMarkets, {
-    enabled: enableUsdEnrichment,
+    enabled: enabled && enableUsdEnrichment,
   });
 
   const whitelistedMarketsWithUsd = useMemo(() => {

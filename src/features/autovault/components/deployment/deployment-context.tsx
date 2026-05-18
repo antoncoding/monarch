@@ -114,7 +114,7 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
 
   const navigateToVault = useCallback(() => {
     if (deployedVaultAddress && selectedTokenAndNetwork) {
-      router.push(`/autovault/${selectedTokenAndNetwork.networkId}/${deployedVaultAddress}`);
+      router.push(`/vault/${selectedTokenAndNetwork.networkId}/${deployedVaultAddress}`);
     }
   }, [deployedVaultAddress, selectedTokenAndNetwork, router]);
 

@@ -1,18 +1,25 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
+import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
+import { fetchMonarchMarket } from '@/data-sources/monarch-api';
+import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
+import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
 import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
+import { supportsMorphoApi } from '@/config/dataSources';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
+import type { Market } from '@/utils/types';
 import { useAllocationsQuery } from './queries/useAllocations';
-import { useProcessedMarkets } from './useProcessedMarkets';
 import { useVaultV2Data } from './useVaultV2Data';
 
 type UseVaultAllocationsArgs = {
   vaultAddress: Address;
   chainId: SupportedNetworks;
   enabled?: boolean;
+  includeCollateralAllocations?: boolean;
 };
 
 type UseVaultAllocationsReturn = {
@@ -21,6 +28,37 @@ type UseVaultAllocationsReturn = {
   loading: boolean;
   error: Error | null;
   refetch: () => void;
+};
+
+const EMPTY_MARKET_MAP = new Map<string, Market>();
+
+const fetchVaultCapMarket = async (
+  marketId: string,
+  chainId: SupportedNetworks,
+  customRpcUrls: Partial<Record<SupportedNetworks, string>>,
+): Promise<Market | null> => {
+  try {
+    const monarchMarket = await fetchMonarchMarket(marketId, chainId, customRpcUrls);
+    if (monarchMarket) return monarchMarket;
+  } catch (error) {
+    console.warn(`[VaultAllocations] Failed to fetch Monarch market ${marketId} on ${chainId}:`, error);
+  }
+
+  if (supportsMorphoApi(chainId)) {
+    try {
+      const morphoMarket = await fetchMorphoMarket(marketId, chainId);
+      if (morphoMarket) return morphoMarket;
+    } catch (error) {
+      console.warn(`[VaultAllocations] Failed to fetch Morpho market ${marketId} on ${chainId}:`, error);
+    }
+  }
+
+  try {
+    return await fetchSubgraphMarket(marketId, chainId);
+  } catch (error) {
+    console.warn(`[VaultAllocations] Failed to fetch Subgraph market ${marketId} on ${chainId}:`, error);
+    return null;
+  }
 };
 
 /**
@@ -34,8 +72,14 @@ type UseVaultAllocationsReturn = {
  * 4. Fetches on-chain allocations only for valid caps
  * 5. Returns typed, ready-to-use allocation structures
  */
-export function useVaultAllocations({ vaultAddress, chainId, enabled = true }: UseVaultAllocationsArgs): UseVaultAllocationsReturn {
-  const { allMarkets, loading: marketsLoading } = useProcessedMarkets();
+export function useVaultAllocations({
+  vaultAddress,
+  chainId,
+  enabled = true,
+  includeCollateralAllocations = false,
+}: UseVaultAllocationsArgs): UseVaultAllocationsReturn {
+  const { customRpcUrls } = useCustomRpcContext();
+  const rpcIdentity = useMemo(() => Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right)), [customRpcUrls]);
 
   // Pull vault data directly - TanStack Query handles deduplication
   const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
@@ -74,38 +118,93 @@ export function useVaultAllocations({ vaultAddress, chainId, enabled = true }: U
     return { validCollateralCaps: valid, parsedCollateralCaps: parsed };
   }, [collateralCaps, chainId]);
 
+  const marketCapEntries = useMemo(() => {
+    const entries: { cap: VaultV2Cap; marketId: string }[] = [];
+
+    for (const cap of marketCaps) {
+      const params = parseCapIdParams(cap.idParams);
+      if (params.type === 'market' && params.marketId) {
+        entries.push({ cap, marketId: params.marketId });
+      }
+    }
+
+    return entries;
+  }, [marketCaps]);
+
+  const marketIds = useMemo(() => {
+    const seen = new Set<string>();
+    const ids: string[] = [];
+
+    for (const entry of marketCapEntries) {
+      const normalizedId = entry.marketId.toLowerCase();
+      if (seen.has(normalizedId)) continue;
+      seen.add(normalizedId);
+      ids.push(entry.marketId);
+    }
+
+    return ids;
+  }, [marketCapEntries]);
+
+  const marketIdsKey = useMemo(() => marketIds.map((marketId) => marketId.toLowerCase()).sort().join(','), [marketIds]);
+
+  const {
+    data: capMarketsById = EMPTY_MARKET_MAP,
+    isLoading: capMarketsLoading,
+  } = useQuery({
+    queryKey: ['vault-cap-markets', vaultAddress.toLowerCase(), chainId, marketIdsKey, rpcIdentity],
+    queryFn: async () => {
+      const results = await Promise.allSettled(
+        marketIds.map(async (marketId) => ({
+          marketId,
+          market: await fetchVaultCapMarket(marketId, chainId, customRpcUrls),
+        })),
+      );
+      const nextMarkets = new Map<string, Market>();
+
+      for (const result of results) {
+        if (result.status !== 'fulfilled' || !result.value.market) {
+          continue;
+        }
+
+        nextMarkets.set(result.value.marketId.toLowerCase(), result.value.market);
+      }
+
+      return nextMarkets;
+    },
+    enabled: enabled && marketIds.length > 0,
+    staleTime: 30_000,
+  });
+
   // Parse and filter market caps
   const { validMarketCaps, parsedMarketCaps } = useMemo(() => {
     const valid: VaultV2Cap[] = [];
     const parsed: Omit<MarketAllocation, 'allocation'>[] = [];
 
-    marketCaps.forEach((cap) => {
-      const params = parseCapIdParams(cap.idParams);
+    for (const { cap, marketId } of marketCapEntries) {
+      const market = capMarketsById.get(marketId.toLowerCase());
 
-      // Only include if this is a market cap with a valid market ID
-      if (params.type === 'market' && params.marketId) {
-        const market = allMarkets.find((m) => m.uniqueKey.toLowerCase() === params.marketId?.toLowerCase());
-
-        // Only include if we can find the market
-        if (market) {
-          valid.push(cap);
-          parsed.push({
-            type: 'market',
-            capId: cap.capId,
-            marketId: params.marketId,
-            market,
-            relativeCap: cap.relativeCap,
-            absoluteCap: cap.absoluteCap,
-          });
-        }
+      // Only include if we can find the market
+      if (market) {
+        valid.push(cap);
+        parsed.push({
+          type: 'market',
+          capId: cap.capId,
+          marketId,
+          market,
+          relativeCap: cap.relativeCap,
+          absoluteCap: cap.absoluteCap,
+        });
       }
-    });
+    }
 
     return { validMarketCaps: valid, parsedMarketCaps: parsed };
-  }, [marketCaps, allMarkets]);
+  }, [capMarketsById, marketCapEntries]);
 
   // Combine all valid caps for fetching allocations
-  const allValidCaps = useMemo(() => [...validCollateralCaps, ...validMarketCaps], [validCollateralCaps, validMarketCaps]);
+  const allValidCaps = useMemo(
+    () => [...(includeCollateralAllocations ? validCollateralCaps : []), ...validMarketCaps],
+    [includeCollateralAllocations, validCollateralCaps, validMarketCaps],
+  );
 
   // Fetch allocations only for valid, recognized caps
   const {
@@ -121,7 +220,7 @@ export function useVaultAllocations({ vaultAddress, chainId, enabled = true }: U
   });
 
   // Loading if any dependency is loading
-  const loading = marketsLoading || vaultDataLoading || allocationsLoading;
+  const loading = vaultDataLoading || capMarketsLoading || allocationsLoading;
 
   // Create allocation map for efficient lookup
   const allocationMap = useMemo(() => {

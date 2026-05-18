@@ -1,7 +1,10 @@
-import type { Address } from 'viem';
+import { maxUint128, type Address } from 'viem';
 import { vaultv2Abi } from '@/abis/vaultv2';
+import { formatBalance, formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
+
+export const RELATIVE_CAP_SCALE = 1e16;
 
 export const getVaultReadKey = (address: Address | string, networkId: SupportedNetworks) => `${address.toLowerCase()}-${networkId}`;
 
@@ -12,6 +15,28 @@ export function calculateAllocationPercent(amount: bigint, total: bigint): strin
   if (total === 0n) return '0.00';
   const percent = (Number(amount) / Number(total)) * 100;
   return percent.toFixed(2);
+}
+
+export function parseRelativeCap(cap: string): number | undefined {
+  try {
+    return Number(BigInt(cap)) / RELATIVE_CAP_SCALE;
+  } catch (_error) {
+    return undefined;
+  }
+}
+
+export function formatVaultAbsoluteCap(cap: string, tokenDecimals: number, tokenSymbol: string): string {
+  if (!cap) return 'No absolute cap';
+
+  try {
+    const capValue = BigInt(cap);
+    if (capValue === 0n || capValue >= maxUint128) return 'No absolute cap';
+
+    const formattedCap = formatReadable(formatBalance(capValue, tokenDecimals).toString());
+    return `${formattedCap} ${tokenSymbol}`;
+  } catch (_error) {
+    return 'No absolute cap';
+  }
 }
 
 const groupVaultsByNetwork = (vaults: { address: Address; networkId: SupportedNetworks }[]): Record<SupportedNetworks, Address[]> => {

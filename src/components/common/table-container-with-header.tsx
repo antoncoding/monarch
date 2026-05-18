@@ -78,7 +78,7 @@ export function TableContainerWithDescription({
     <div className={`bg-surface rounded-md font-zen shadow-sm ${className}`}>
       <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-4">
         <div className="flex-1">
-          <h3 className="text-sm font-medium mb-1">{title}</h3>
+          <h3 className="mb-1 font-monospace text-xs uppercase text-secondary">{title}</h3>
           {description && <p className="text-xs text-secondary">{description}</p>}
         </div>
         {actions && <div className="flex items-center gap-2 ml-4">{actions}</div>}

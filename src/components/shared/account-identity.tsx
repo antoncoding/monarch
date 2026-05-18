@@ -154,7 +154,7 @@ export function AccountIdentity({
     ) : null;
   const linkedVaultHref =
     vaultIdentity?.kind === 'vault-adapter' && vaultIdentity.vaultAddress.toLowerCase() !== address.toLowerCase()
-      ? `/positions/${vaultIdentity.vaultAddress}`
+      ? `/vault/${vaultIdentity.chainId}/${vaultIdentity.vaultAddress}`
       : undefined;
 
   // Badge variant - minimal inline badge (no avatar)

@@ -15,6 +15,7 @@ const toError = (error: unknown): Error => {
 };
 
 type UseMarketsQueryOptions = {
+  enabled?: boolean;
   refetchInterval?: number | false;
   refetchOnWindowFocus?: boolean;
   /**
@@ -49,6 +50,7 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
   const { allTokens, hasFetchedTokens, isError: isTokenQueryError } = useTokensQuery();
   const rpcIdentity = Object.entries(customRpcUrls).sort(([left], [right]) => Number(left) - Number(right));
   const includeUnknownTokens = options?.includeUnknownTokens ?? true;
+  const enabled = options?.enabled ?? true;
   // Wait for token readiness so the costly market registry fetch does not run
   // once with bootstrap tokens and immediately restart with the full token list.
   const tokensReady = hasFetchedTokens || isTokenQueryError;
@@ -168,12 +170,12 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
     refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes while visible by default
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
     placeholderData: keepPreviousData,
-    enabled: tokensReady,
+    enabled: enabled && tokensReady,
   });
 
   return {
     ...query,
     // Preserve the existing loading UI while the query is intentionally gated.
-    isLoading: !tokensReady || query.isLoading,
+    isLoading: enabled && (!tokensReady || query.isLoading),
   };
 };

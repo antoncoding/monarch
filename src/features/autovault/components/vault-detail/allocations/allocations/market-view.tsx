@@ -1,13 +1,13 @@
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityFocus } from '@/features/markets/components/market-identity';
+import { AllocationCell } from '@/features/positions/components/allocation-cell';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import type { MarketAllocation } from '@/types/vaultAllocations';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';
-import { calculateAllocationPercent } from '@/utils/vaultAllocation';
-import { AllocationCell } from '@/features/positions/components/allocation-cell';
+import { calculateAllocationPercent, formatVaultAbsoluteCap, parseRelativeCap } from '@/utils/vaultAllocation';
 
 type MarketViewProps = {
   allocations: MarketAllocation[];
@@ -33,10 +33,9 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
       <TableHeader>
         <TableRow className="text-xs text-secondary">
           <TableHead className="pb-3 text-left font-normal">Market</TableHead>
-          <TableHead className="pb-3 text-right font-normal">{rateLabel}</TableHead>
-          <TableHead className="pb-3 text-right font-normal">Total Supply</TableHead>
-          <TableHead className="pb-3 text-right font-normal">Liquidity</TableHead>
           <TableHead className="pb-3 text-right font-normal">Allocation</TableHead>
+          <TableHead className="pb-3 text-right font-normal">{rateLabel}</TableHead>
+          <TableHead className="pb-3 text-right font-normal">Liquidity</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody className="space-y-2">
@@ -45,10 +44,10 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
           const percentage = totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(allocation, totalAllocation)) : 0;
           const displayRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy;
           const supplyRate = (displayRate * 100).toFixed(2);
-          const totalSupply = formatReadable(formatBalance(BigInt(market.state.supplyAssets || 0), market.loanAsset.decimals).toString());
           const liquidity = formatReadable(formatBalance(BigInt(market.state.liquidityAssets || 0), market.loanAsset.decimals).toString());
-          // Calculate amount as number for AllocationCell
           const allocatedAmount = formatBalance(allocation, vaultAssetDecimals);
+          const relativeCap = parseRelativeCap(item.relativeCap);
+          const capLabel = `${relativeCap === undefined ? '-' : `${relativeCap.toFixed(2)}%`} / ${formatVaultAbsoluteCap(item.absoluteCap, vaultAssetDecimals, vaultAssetSymbol)}`;
 
           return (
             <TableRow
@@ -56,7 +55,7 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
               className="rounded bg-hovered/20"
             >
               {/* Market Info Column */}
-              <TableCell className="p-3 rounded-l">
+              <TableCell className="rounded-l px-3 py-2">
                 <MarketIdentity
                   showId
                   market={market}
@@ -64,28 +63,27 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
                   focus={MarketIdentityFocus.Collateral}
                   showLltv
                   showOracle
-                  iconSize={20}
+                  iconSize={18}
                   showExplorerLink
                 />
               </TableCell>
 
-              {/* APY/APR */}
-              <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">{supplyRate}%</TableCell>
-
-              {/* Total Supply */}
-              <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">{totalSupply}</TableCell>
-
-              {/* Liquidity */}
-              <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">{liquidity}</TableCell>
-
               {/* Allocation */}
-              <TableCell className="p-3 rounded-r align-middle text-sm">
+              <TableCell className="px-3 py-2 align-middle text-sm">
                 <AllocationCell
                   amount={allocatedAmount}
                   symbol={vaultAssetSymbol}
                   percentage={percentage}
+                  capPercentage={relativeCap}
+                  capLabel={capLabel}
                 />
               </TableCell>
+
+              {/* APY/APR */}
+              <TableCell className="px-3 py-2 text-right text-xs text-secondary whitespace-nowrap">{supplyRate}%</TableCell>
+
+              {/* Liquidity */}
+              <TableCell className="rounded-r px-3 py-2 text-right text-xs text-secondary whitespace-nowrap">{liquidity}</TableCell>
             </TableRow>
           );
         })}

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
@@ -23,6 +23,14 @@ type PositionMarket = {
   marketUniqueKey: string;
   chainId: number;
   hasSupplyHistory?: boolean;
+};
+
+export type UserPositionMarketHint = PositionMarket & {
+  market?: Market;
+};
+
+type UseUserPositionsOptions = {
+  marketHints?: UserPositionMarketHint[];
 };
 
 type PositionsFetchSource = 'morpho-api' | 'subgraph' | 'combined';
@@ -181,6 +189,8 @@ const appendUniquePositionMarkets = (markets: PositionMarket[], positionMarkets:
   }
 };
 
+const getPositionMarketKey = (market: PositionMarket): string => `${market.marketUniqueKey.toLowerCase()}-${market.chainId}`;
+
 const fetchSupplyTransactionMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarket[]> => {
   const networksToFetch = chainIds ?? ALL_SUPPORTED_NETWORKS;
   // Closed supply positions have zero current state, so all-time supply/withdraw history is
@@ -259,9 +269,24 @@ const fetchPositionMarketShell = async (
 
 // --- Main Hook --- //
 
-const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?: SupportedNetworks[]) => {
+const useUserPositions = (
+  user: string | undefined,
+  showEmpty = false,
+  chainIds?: SupportedNetworks[],
+  options: UseUserPositionsOptions = {},
+) => {
   const queryClient = useQueryClient();
-  const { allMarkets, rawMarketsUnfiltered } = useProcessedMarkets();
+  const marketHints = options.marketHints ?? [];
+  const hasMarketHints = marketHints.length > 0;
+  const marketHintsSignature = useMemo(
+    () =>
+      marketHints
+        .map((hint) => getPositionMarketKey(hint))
+        .sort()
+        .join(','),
+    [marketHints],
+  );
+  const { allMarkets, rawMarketsUnfiltered, loading: marketsLoading } = useProcessedMarkets({ enabled: !hasMarketHints });
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
   const { customRpcUrls } = useCustomRpc();
@@ -274,19 +299,21 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
     error: initialError,
   } = useQuery<InitialDataResponse>({
     // Note: Removed MarketsContextType type assertion
-    queryKey: [...positionKeys.initialData(user ?? ''), showEmpty ? 'include-empty' : 'active-only', chainIds?.join(',') ?? 'all'],
+    queryKey: [
+      ...positionKeys.initialData(user ?? ''),
+      showEmpty ? 'include-empty' : 'active-only',
+      chainIds?.join(',') ?? 'all',
+      marketHintsSignature,
+    ],
     queryFn: async () => {
       // User is guaranteed non-null here due to the 'enabled' flag
       if (!user) throw new Error('Assertion failed: User should be defined here.');
 
-      // Fetch keys from API/Subgraph. Closed supply positions need transaction-discovered market IDs
-      // before hooks like useUserTransactionsQuery can be enabled from the resulting position set.
-      const [sourceMarketKeys, transactionMarketKeys] = await Promise.all([
-        fetchSourceMarketKeys(user, chainIds),
-        showEmpty ? fetchSupplyTransactionMarketKeys(user, chainIds) : Promise.resolve<PositionMarket[]>([]),
-      ]);
+      const [sourceMarketKeys, transactionMarketKeys] = hasMarketHints
+        ? [marketHints, []]
+        : await Promise.all([fetchSourceMarketKeys(user, chainIds), showEmpty ? fetchSupplyTransactionMarketKeys(user, chainIds) : []]);
       // Get keys from cache and filter by chainIds if provided
-      const cachedMarkets = getUserMarkets();
+      const cachedMarkets = hasMarketHints ? [] : getUserMarkets();
       const filteredCachedMarkets = chainIds
         ? cachedMarkets.filter((m) => chainIds.includes(m.chainId as SupportedNetworks))
         : cachedMarkets;
@@ -300,7 +327,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
       const finalMarketKeys = Array.from(uniqueMarketsMap.values());
       return { finalMarketKeys };
     },
-    enabled: !!user && (allMarkets.length > 0 || rawMarketsUnfiltered.length > 0),
+    enabled: !!user && (hasMarketHints || allMarkets.length > 0 || rawMarketsUnfiltered.length > 0),
     staleTime: 0,
   });
 
@@ -324,8 +351,13 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
         marketsByChain.set(marketInfo.chainId, existing);
       }
 
-      // Build market data map from the complete market registry.
+      // Build market data map from either targeted hints or the complete market registry.
       const marketDataMap = new Map<string, Market>();
+      for (const hint of marketHints) {
+        if (hint.market) {
+          marketDataMap.set(getMarketIdentityKey(hint.chainId, hint.marketUniqueKey), hint.market);
+        }
+      }
       for (const market of allMarkets) {
         marketDataMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
       }
@@ -367,7 +399,8 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
 
           const marketInputs: PositionMarketOracleInput[] = markets.map((marketInfo) => ({
             marketUniqueKey: marketInfo.marketUniqueKey,
-            oracleAddress: marketDataMap.get(getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey))?.oracleAddress ?? null,
+            oracleAddress:
+              marketDataMap.get(getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey))?.oracleAddress ?? null,
           }));
           const { snapshots, oraclePrices } = await fetchLatestPositionSnapshotsWithOraclePrices(
             marketInputs,
@@ -450,7 +483,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
   const isRefetching = isRefetchingInitialData || isRefetchingEnhanced;
 
   // Combine loading states: loading is true if either the initial data OR the enhanced data is loading for the first time.
-  const loading = isLoadingInitialData || isLoadingEnhanced;
+  const loading = Boolean(user) && ((!hasMarketHints && marketsLoading) || isLoadingInitialData || isLoadingEnhanced);
 
   return {
     data: enhancedPositions ?? [],

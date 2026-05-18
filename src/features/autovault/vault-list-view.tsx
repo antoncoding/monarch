@@ -123,7 +123,7 @@ export default function AutovaultListContent() {
   }, [address, userVaultsQuery.data]);
 
   const handleManageVault = (vaultAddress: string, networkId: number) => {
-    router.push(`/autovault/${networkId}/${vaultAddress}`);
+    router.push(`/vault/${networkId}/${vaultAddress}`);
   };
 
   const hasVaults = mergedVaults.length > 0;

@@ -7,14 +7,14 @@ import { IoEllipsisVertical } from 'react-icons/io5';
 import { GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { getMonarchVaultHref } from '@/utils/vaults';
 
 type VaultActionsDropdownProps = {
   vaultAddress: string;
   chainId: number;
-  account: string;
 };
 
-export function VaultActionsDropdown({ vaultAddress, chainId, account }: VaultActionsDropdownProps) {
+export function VaultActionsDropdown({ vaultAddress, chainId }: VaultActionsDropdownProps) {
   const router = useRouter();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -27,7 +27,7 @@ export function VaultActionsDropdown({ vaultAddress, chainId, account }: VaultAc
   };
 
   const handleManageClick = () => {
-    router.push(`/autovault/${chainId}/${vaultAddress}`);
+    router.push(getMonarchVaultHref(chainId, vaultAddress));
   };
 
   // const handleHistoryClick = () => {

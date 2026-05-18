@@ -12,8 +12,8 @@ import { Tooltip } from '@/components/ui/tooltip';
 import type { VaultAccountIdentity } from '@/contexts/VaultRegistryContext';
 import { useVaultAccountIdentity } from '@/hooks/useVaultAccountIdentity';
 import { useVaultV2Data, type VaultV2Data } from '@/hooks/useVaultV2Data';
-import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { getNetworkName, type SupportedNetworks } from '@/utils/networks';
+import { getMonarchVaultHref } from '@/utils/vaults';
 
 type AccountVaultInfoProps = {
   account: Address;
@@ -52,9 +52,7 @@ function VaultInfoRow({ vaultIdentity, vaultData }: { vaultIdentity: VaultAccoun
   const assetAddress = vaultIdentity.assetAddress ?? vaultData?.assetAddress;
   const assetSymbol = vaultIdentity.assetSymbol ?? vaultData?.tokenSymbol;
   const displayName = vaultData?.displayName || vaultIdentity.displayName;
-  const morphoVaultHref = supportsMorphoAppLinks(vaultIdentity.chainId)
-    ? getVaultURL(vaultIdentity.vaultAddress, vaultIdentity.chainId)
-    : undefined;
+  const monarchVaultHref = getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress);
   const networkName = getNetworkName(vaultIdentity.chainId) ?? `Chain ${vaultIdentity.chainId}`;
 
   return (
@@ -80,12 +78,12 @@ function VaultInfoRow({ vaultIdentity, vaultData }: { vaultIdentity: VaultAccoun
           {assetSymbol}
         </span>
       )}
-      {morphoVaultHref && (
+      {vaultIdentity.kind === 'vault-v2' && (
         <Tooltip
           content={
             <TooltipContent
-              title="Open in Morpho"
-              detail={`View ${displayName} on the Morpho app.`}
+              title="Open vault"
+              detail={`View ${displayName} on Monarch.`}
             />
           }
         >
@@ -96,10 +94,8 @@ function VaultInfoRow({ vaultIdentity, vaultData }: { vaultIdentity: VaultAccoun
             className="h-6 min-w-0 px-1.5 text-secondary hover:text-primary"
           >
             <Link
-              href={morphoVaultHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open vault in Morpho"
+              href={monarchVaultHref}
+              aria-label="Open vault"
             >
               <ExternalLinkIcon className="h-3.5 w-3.5" />
             </Link>
