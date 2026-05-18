@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import type { Address } from 'viem';
-import { Card } from '@/components/ui/card';
+import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useChartColors } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
@@ -155,14 +155,14 @@ function ChartContent({
   const isHistorical = hoveredIndex !== null && hoveredIndex < dataPoints.length - 1;
 
   return (
-    <Card className="mb-4 overflow-hidden border border-border bg-surface">
+    <TableContainerWithDescription
+      title="Position History"
+      className="mb-4 overflow-hidden"
+    >
       {/* Responsive: stack vertically on mobile, side-by-side on larger screens */}
-      <div className="flex flex-col sm:flex-row items-stretch">
+      <div className="flex flex-col sm:flex-row items-stretch py-4">
         {/* Stacked Area Chart - Left side */}
         <div className="flex-1 min-w-0 flex flex-col self-stretch">
-          <div className="border-b border-gray-200 px-6 py-3 dark:border-gray-800">
-            <h3 className="font-monospace text-xs uppercase text-secondary">Position History</h3>
-          </div>
           <div
             className="w-full px-2 flex-1"
             style={{ minHeight: height }}
@@ -345,7 +345,7 @@ function ChartContent({
           </div>
         </div>
       </div>
-    </Card>
+    </TableContainerWithDescription>
   );
 }
 
