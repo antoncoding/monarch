@@ -162,19 +162,26 @@ export function createLegendClickHandler<T extends Record<string, boolean>>({ vi
       }
 
       const dataKey = String(entry.dataKey) as keyof T;
-      setVisibleLines((prev) => ({
-        ...prev,
-        [dataKey]: !prev[dataKey],
-      }));
+      setVisibleLines((prev) => {
+        if (!(dataKey in prev)) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          [dataKey]: !prev[dataKey],
+        };
+      });
     },
     formatter: (value: string, entry: { dataKey?: unknown }) => {
       const dataKey = entry.dataKey == null ? null : (String(entry.dataKey) as keyof T);
+      const isVisible = dataKey === null || !(dataKey in visibleLines) || visibleLines[dataKey];
 
       return (
         <span
           className="text-xs"
           style={{
-            color: dataKey === null || visibleLines[dataKey] ? 'var(--color-text-secondary)' : '#666',
+            color: isVisible ? 'var(--color-text-secondary)' : '#666',
           }}
         >
           {value}
