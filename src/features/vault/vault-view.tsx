@@ -8,13 +8,13 @@ import { useConnection } from 'wagmi';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
-import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
 import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings';
 import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
 import { VaultAdapterPositionOverview } from '@/features/vault/components/vault-adapter-position-overview';
+import { VaultSharePriceChart } from '@/features/vault/components/vault-share-price-chart';
 import { useModal } from '@/hooks/useModal';
-import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
+import { type VaultMarketAdapter, useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
@@ -32,16 +32,23 @@ import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { parseCapIdParams } from '@/utils/morpho';
 import { groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { ALL_SUPPORTED_NETWORKS, getNetworkConfig, SupportedNetworks } from '@/utils/networks';
+import { formatVaultAdapterType } from '@/utils/vaults';
 
 type VaultAdapterPositionDetailProps = {
   adapterAddress?: Address;
+  adapterType?: string;
   assetAddress?: Address;
   chainId: SupportedNetworks;
   isResolvingAdapter: boolean;
   period: EarningsPeriod;
   setPeriod: (period: EarningsPeriod) => void;
+  showAdapterLabel?: boolean;
   totalAssets?: bigint;
   vaultAddress: Address;
+};
+
+type VaultAdaptersPositionDetailProps = Omit<VaultAdapterPositionDetailProps, 'adapterAddress' | 'adapterType' | 'showAdapterLabel'> & {
+  adapters: VaultMarketAdapter[];
 };
 
 function VaultStatusPanel({ message }: { message: string }) {
@@ -84,11 +91,13 @@ function VaultPositionLoadingState() {
 
 function VaultAdapterPositionDetail({
   adapterAddress,
+  adapterType,
   assetAddress,
   chainId,
   isResolvingAdapter,
   period,
   setPeriod,
+  showAdapterLabel = false,
   totalAssets,
   vaultAddress,
 }: VaultAdapterPositionDetailProps) {
@@ -154,21 +163,54 @@ function VaultAdapterPositionDetail({
       {isLoading && !currentPosition && <VaultPositionLoadingState />}
 
       {currentPosition && adapterAddress && (
-        <VaultAdapterPositionOverview
-          groupedPosition={currentPosition}
-          chainId={chainId}
-          adapterAddress={adapterAddress}
-          isEarningsLoading={isEarningsLoading}
-          actualBlockData={actualBlockData}
-          period={period}
-          setPeriod={setPeriod}
-          transactions={relevantTransactions}
-          snapshotsByChain={snapshotsByChain}
-          marketAllocations={marketAllocations}
-          totalAssets={totalAssets}
-        />
+        <div className="space-y-3">
+          {showAdapterLabel && (
+            <div className="flex flex-wrap items-center gap-2 text-xs text-secondary">
+              <span className="uppercase tracking-wider">{formatVaultAdapterType(adapterType)}</span>
+              <span className="rounded-sm bg-hovered px-2 py-1 font-mono">{getSlicedAddress(adapterAddress)}</span>
+            </div>
+          )}
+          <VaultAdapterPositionOverview
+            groupedPosition={currentPosition}
+            chainId={chainId}
+            adapterAddress={adapterAddress}
+            isEarningsLoading={isEarningsLoading}
+            actualBlockData={actualBlockData}
+            period={period}
+            setPeriod={setPeriod}
+            transactions={relevantTransactions}
+            snapshotsByChain={snapshotsByChain}
+            marketAllocations={marketAllocations}
+            totalAssets={totalAssets}
+          />
+        </div>
       )}
     </>
+  );
+}
+
+function VaultAdaptersPositionDetail({ adapters, ...props }: VaultAdaptersPositionDetailProps) {
+  if (adapters.length === 0) {
+    return (
+      <VaultAdapterPositionDetail
+        {...props}
+        adapterAddress={undefined}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {adapters.map((adapter) => (
+        <VaultAdapterPositionDetail
+          key={adapter.id}
+          {...props}
+          adapterAddress={adapter.adapter}
+          adapterType={adapter.adapterType}
+          showAdapterLabel={adapters.length > 1}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -238,11 +280,8 @@ export default function VaultContent() {
   const tokenDecimals = vaultData?.tokenDecimals;
   const tokenSymbol = vaultData?.tokenSymbol;
   const assetAddress = vaultData?.assetAddress as Address | undefined;
-  const adapterAddress = adapterQuery.primaryAdapter;
-  const adapterPortfolioHref = useMemo(() => {
-    if (!adapterAddress || !assetAddress) return undefined;
-    return `/position/${chainId}/${assetAddress}/${adapterAddress}`;
-  }, [adapterAddress, assetAddress, chainId]);
+  const positionAdapters = adapterQuery.configuredAdapters.length > 0 ? adapterQuery.configuredAdapters : adapterQuery.adapters;
+  const adapterAddress = positionAdapters[0]?.adapter ?? adapterQuery.primaryAdapter;
   const morphoVaultHref = useMemo(() => {
     if (!supportsMorphoAppLinks(chainId)) return undefined;
     return getVaultURL(vaultAddressValue, chainId);
@@ -253,16 +292,6 @@ export default function VaultContent() {
 
   const hasNoAllocators = Boolean(vaultData?.capsData) && (vaultData?.allocators ?? []).length === 0;
   const capsUninitialized = vaultData?.capsData?.needSetupCaps === true;
-  const capsInitialized = vaultData?.capsData?.needSetupCaps === false;
-  const { marketAllocations: activityMarketAllocations, loading: activityMarketsLoading } = useVaultAllocations({
-    vaultAddress: vaultAddressValue,
-    chainId,
-    enabled: Boolean(adapterAddress && isVaultInitialized && capsInitialized),
-  });
-  const activityMarkets = useMemo(
-    () => activityMarketAllocations.map((allocation) => allocation.market),
-    [activityMarketAllocations],
-  );
 
   const isRefetching = vaultDataQuery.isRefetching || vaultContract.isRefetching || adapterQuery.isRefetching || isRefetchingVaultQueries;
 
@@ -398,6 +427,7 @@ export default function VaultContent() {
             curator={vaultData?.curator}
             adapter={adapterAddress}
             adapters={adapterQuery.adapters}
+            capsAdapters={positionAdapters}
             onDeposit={handleDeposit}
             onWithdraw={handleWithdraw}
             onRefresh={handleRefreshVault}
@@ -463,8 +493,15 @@ export default function VaultContent() {
             </div>
           )}
 
-          <VaultAdapterPositionDetail
-            adapterAddress={adapterAddress}
+          <VaultSharePriceChart
+            vaultAddress={vaultAddressValue}
+            chainId={chainId}
+            assetDecimals={tokenDecimals}
+            assetSymbol={tokenSymbol}
+          />
+
+          <VaultAdaptersPositionDetail
+            adapters={positionAdapters}
             assetAddress={assetAddress}
             chainId={chainId}
             vaultAddress={vaultAddressValue}
@@ -473,17 +510,6 @@ export default function VaultContent() {
             setPeriod={setPeriod}
             totalAssets={vaultContract.totalAssets}
           />
-
-          {adapterAddress && isVaultInitialized && capsInitialized && (
-            <TransactionHistoryPreview
-              account={adapterAddress}
-              chainId={chainId}
-              emptyMessage="Setup complete, automated rebalance activity will show up here once it is triggered."
-              markets={activityMarkets}
-              marketsLoading={activityMarketsLoading}
-              viewAllHref={adapterPortfolioHref}
-            />
-          )}
 
           <VaultSettingsModal
             vaultAddress={vaultAddressValue}

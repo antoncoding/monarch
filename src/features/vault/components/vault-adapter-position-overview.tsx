@@ -102,18 +102,20 @@ export function VaultAdapterPositionOverview({
 }: VaultAdapterPositionOverviewProps) {
   const periodLabel = PERIOD_LABELS[period];
   const detailHref = `/position/${chainId}/${groupedPosition.loanAssetAddress}/${adapterAddress}`;
+  const periodSelector = (
+    <div className="flex items-center gap-2">
+      <span className="hidden text-xs uppercase tracking-wider text-secondary sm:inline">Period</span>
+      <PositionPeriodSelector
+        period={period}
+        onPeriodChange={setPeriod}
+        className="h-8 w-[110px] text-xs"
+        contentClassName="z-[3600]"
+      />
+    </div>
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end gap-2">
-        <span className="text-xs uppercase tracking-wider text-secondary">Period</span>
-        <PositionPeriodSelector
-          period={period}
-          onPeriodChange={setPeriod}
-          className="h-8 w-[110px] text-xs"
-          contentClassName="z-[3600]"
-        />
-      </div>
       <UserPositionsChart
         variant="grouped"
         groupedPosition={groupedPosition}
@@ -121,6 +123,7 @@ export function VaultAdapterPositionOverview({
         snapshotsByChain={snapshotsByChain}
         chainBlockData={actualBlockData}
         height={220}
+        actions={periodSelector}
       />
       <VaultMarketBreakdownTable
         positions={groupedPosition.markets}

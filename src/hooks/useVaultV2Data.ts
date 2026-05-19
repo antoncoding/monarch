@@ -8,6 +8,7 @@ import { getSlicedAddress } from '@/utils/address';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
+import { hasPositiveVaultCap } from '@/utils/vaultAllocation';
 
 type UseVaultV2DataArgs = {
   vaultAddress?: Address;
@@ -16,6 +17,7 @@ type UseVaultV2DataArgs = {
 
 export type CapData = {
   adapterCap: VaultV2Cap | null;
+  adapterCaps: VaultV2Cap[];
   collateralCaps: VaultV2Cap[];
   marketCaps: VaultV2Cap[];
   needSetupCaps: boolean;
@@ -128,14 +130,14 @@ export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
       }
 
       const caps = monarchVault?.caps ?? [];
-      let adapterCap: VaultV2Cap | null = null;
+      const adapterCaps: VaultV2Cap[] = [];
       const collateralCaps: VaultV2Cap[] = [];
       const marketCaps: VaultV2Cap[] = [];
 
       for (const cap of caps) {
         const parsed = parseCapIdParams(cap.idParams);
         if (parsed.type === 'adapter') {
-          adapterCap = cap;
+          adapterCaps.push(cap);
           continue;
         }
         if (parsed.type === 'collateral') {
@@ -146,6 +148,10 @@ export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
           marketCaps.push(cap);
         }
       }
+      const adapterCap = adapterCaps.find(hasPositiveVaultCap) ?? adapterCaps[0] ?? null;
+      const hasPositiveAdapterCap = adapterCaps.some(hasPositiveVaultCap);
+      const hasPositiveCollateralCap = collateralCaps.some(hasPositiveVaultCap);
+      const hasPositiveMarketCap = marketCaps.some(hasPositiveVaultCap);
 
       const assetAddress = monarchVault?.asset || rpcFallback?.assetAddress || '';
       const token = assetAddress ? findToken(assetAddress, chainId) : undefined;
@@ -155,9 +161,10 @@ export function useVaultV2Data({ vaultAddress, chainId }: UseVaultV2DataArgs) {
       const capsData = monarchVault
         ? {
             adapterCap,
+            adapterCaps,
             collateralCaps,
             marketCaps,
-            needSetupCaps: !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0,
+            needSetupCaps: !hasPositiveAdapterCap || !hasPositiveCollateralCap || !hasPositiveMarketCap,
           }
         : undefined;
 

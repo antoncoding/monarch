@@ -39,6 +39,14 @@ export function formatVaultAbsoluteCap(cap: string, tokenDecimals: number, token
   }
 }
 
+export function hasPositiveVaultCap(cap: { relativeCap: string; absoluteCap: string }): boolean {
+  try {
+    return BigInt(cap.relativeCap) > 0n || BigInt(cap.absoluteCap) > 0n;
+  } catch (_error) {
+    return false;
+  }
+}
+
 const groupVaultsByNetwork = (vaults: { address: Address; networkId: SupportedNetworks }[]): Record<SupportedNetworks, Address[]> => {
   return vaults.reduce(
     (acc, vault) => {

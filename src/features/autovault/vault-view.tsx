@@ -12,14 +12,13 @@ import { useVaultQueryRefresh } from '@/hooks/useVaultQueryRefresh';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
-import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { getSlicedAddress } from '@/utils/address';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { parseCapIdParams } from '@/utils/morpho';
 import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
 import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings';
-import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
+import { VaultSharePriceChart } from '@/features/vault/components/vault-share-price-chart';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
@@ -98,12 +97,8 @@ export default function VaultContent() {
   const tokenDecimals = vaultData?.tokenDecimals;
   const tokenSymbol = vaultData?.tokenSymbol;
   const assetAddress = vaultData?.assetAddress as Address | undefined;
-  const adapterAddress = adapterQuery.primaryAdapter;
-
-  const adapterPortfolioHref = useMemo(() => {
-    if (!adapterAddress || !assetAddress) return undefined;
-    return `/position/${chainId}/${assetAddress}/${adapterAddress}`;
-  }, [adapterAddress, assetAddress, chainId]);
+  const positionAdapters = adapterQuery.configuredAdapters.length > 0 ? adapterQuery.configuredAdapters : adapterQuery.adapters;
+  const adapterAddress = positionAdapters[0]?.adapter ?? adapterQuery.primaryAdapter;
 
   // UI state from Zustand stores (for vault-view banners only)
   const { open: openSettings } = useVaultSettingsModalStore();
@@ -112,16 +107,6 @@ export default function VaultContent() {
   // Computed state flags for vault-view banners
   const hasNoAllocators = Boolean(vaultData?.capsData) && (vaultData?.allocators ?? []).length === 0;
   const capsUninitialized = vaultData?.capsData?.needSetupCaps === true;
-  const capsInitialized = vaultData?.capsData?.needSetupCaps === false;
-  const { marketAllocations: activityMarketAllocations, loading: activityMarketsLoading } = useVaultAllocations({
-    vaultAddress: vaultAddressValue,
-    chainId,
-    enabled: Boolean(adapterAddress && isVaultInitialized && capsInitialized),
-  });
-  const activityMarkets = useMemo(
-    () => activityMarketAllocations.map((allocation) => allocation.market),
-    [activityMarketAllocations],
-  );
 
   // Format APY for APY card in vault-view
   const apyLabel = useMemo(() => {
@@ -239,6 +224,8 @@ export default function VaultContent() {
             collaterals={collateralAddresses}
             curator={vaultData?.curator}
             adapter={adapterAddress}
+            adapters={adapterQuery.adapters}
+            capsAdapters={positionAdapters}
             onDeposit={handleDeposit}
             onWithdraw={handleWithdraw}
             onRefresh={handleRefreshVault}
@@ -304,24 +291,19 @@ export default function VaultContent() {
             </div>
           )}
 
+          <VaultSharePriceChart
+            vaultAddress={vaultAddressValue}
+            chainId={chainId}
+            assetDecimals={tokenDecimals}
+            assetSymbol={tokenSymbol}
+          />
+
           {/* Market Allocations */}
           <VaultMarketAllocations
             vaultAddress={vaultAddressValue}
             chainId={chainId}
             needsInitialization={needsInitialization}
           />
-
-          {/* Transaction History Preview - only show when vault is fully set up */}
-          {adapterAddress && isVaultInitialized && capsInitialized && (
-            <TransactionHistoryPreview
-              account={adapterAddress}
-              chainId={chainId}
-              emptyMessage="Setup complete, your automated rebalance will show up here once it's triggered."
-              markets={activityMarkets}
-              marketsLoading={activityMarketsLoading}
-              viewAllHref={adapterPortfolioHref}
-            />
-          )}
 
           {/* Settings Modal - Pulls own data */}
           <VaultSettingsModal

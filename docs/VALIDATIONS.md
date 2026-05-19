@@ -74,6 +74,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
 - Large optional metadata or enrichment queries used only for secondary badges, warnings, filters, or tooltips must be gated or deferred so core table rendering does not wait on them during cold start.
 - Vault-scoped pages with configured cap or market IDs must use targeted market reads for first render; do not wait on the global market registry when the vault metadata already identifies the relevant markets.
+- Vault adapter selection must be cap-aware when a vault has multiple active adapters; do not let list order alone choose the adapter used for positions, activity, withdrawals, or settings.
 - Expensive queries must not start with placeholder dependency data that immediately invalidates the same query. Gate on prerequisite readiness, or use a stable query key that does not refetch equivalent work.
 - Expensive enrichment queries derived from filtered, sorted, or paginated rows must wait for the inputs that can change those rows, such as USD price enrichment, before they start.
 - Periodic refreshes for RPC or API data must use React Query polling with background refetch disabled, or explicitly pause when `document.visibilityState` is hidden. Do not use raw `setInterval` for mounted data refresh unless hidden-tab behavior is handled.

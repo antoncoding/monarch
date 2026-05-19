@@ -43,3 +43,16 @@ export const vaultApysQuery = `
     }
   }
 `;
+
+export const vaultV2SharePriceHistoryQuery = `
+  query VaultV2SharePriceHistory($address: String!, $chainId: Int!, $options: TimeseriesOptions!) {
+    vaultV2ByAddress(address: $address, chainId: $chainId) {
+      historicalState {
+        sharePrice(options: $options) {
+          x
+          y
+        }
+      }
+    }
+  }
+`;

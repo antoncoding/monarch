@@ -20,6 +20,7 @@ import type { Market } from '@/utils/types';
 
 type TransactionHistoryPreviewProps = {
   account: string;
+  accounts?: string[];
   chainId: number;
   emptyMessage?: string;
   markets?: Market[];
@@ -29,6 +30,7 @@ type TransactionHistoryPreviewProps = {
 
 export function TransactionHistoryPreview({
   account,
+  accounts,
   chainId,
   emptyMessage,
   markets: providedMarkets,
@@ -41,15 +43,30 @@ export function TransactionHistoryPreview({
   });
   const allMarkets = providedMarkets ?? processedMarkets;
   const marketsLoading = providedMarketsLoading ?? processedMarketsLoading;
+  const transactionAccounts = useMemo(() => {
+    const sourceAccounts = accounts ?? (account ? [account] : []);
+    const seen = new Set<string>();
+
+    return sourceAccounts.flatMap((sourceAccount) => {
+      const normalizedAccount = sourceAccount.toLowerCase();
+      if (!normalizedAccount || seen.has(normalizedAccount)) {
+        return [];
+      }
+
+      seen.add(normalizedAccount);
+      return [normalizedAccount];
+    });
+  }, [account, accounts]);
   const scopedMarketUniqueKeys = useMemo(
     () => (providedMarkets ? providedMarkets.map((market) => market.uniqueKey) : undefined),
     [providedMarkets],
   );
-  const canLoadTransactions = Boolean(account) && (scopedMarketUniqueKeys ? scopedMarketUniqueKeys.length > 0 : allMarkets.length > 0);
+  const canLoadTransactions =
+    transactionAccounts.length > 0 && (scopedMarketUniqueKeys ? scopedMarketUniqueKeys.length > 0 : allMarkets.length > 0);
 
   const { data, isLoading: loading } = useUserTransactionsQuery({
     filters: {
-      userAddress: account ? [account] : [],
+      userAddress: transactionAccounts,
       marketUniqueKeys: scopedMarketUniqueKeys,
       skip: 0,
       chainId,
