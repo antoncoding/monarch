@@ -71,7 +71,6 @@ function selectNearestMorphoPoints(
   points: MorphoVaultSharePricePoint[],
   targetTimestamps: number[],
 ): VaultSharePricePoint[] {
-  const usedIndexes = new Set<number>();
   const selected: VaultSharePricePoint[] = [];
 
   for (const targetTimestamp of targetTimestamps) {
@@ -79,8 +78,6 @@ function selectNearestMorphoPoints(
     let nearestDistance = Number.POSITIVE_INFINITY;
 
     for (const [index, point] of points.entries()) {
-      if (usedIndexes.has(index)) continue;
-
       const distance = Math.abs(point.timestamp - targetTimestamp);
       if (distance < nearestDistance) {
         nearestDistance = distance;
@@ -90,7 +87,6 @@ function selectNearestMorphoPoints(
 
     if (nearestIndex === -1) continue;
 
-    usedIndexes.add(nearestIndex);
     const point = points[nearestIndex];
     if (!point) continue;
 

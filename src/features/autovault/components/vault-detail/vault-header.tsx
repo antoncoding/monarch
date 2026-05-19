@@ -99,7 +99,7 @@ export function VaultHeader({
   // Filter for known agents
   const knownAllocators = allocators.filter((addr) => findAgent(addr) !== undefined);
   const adapterRows = adapters.length > 0 ? adapters : adapter ? [{ adapter: adapter as Address }] : [];
-  const capsAdapterRows = capsAdapters.length > 0 ? capsAdapters : adapter ? [{ adapter: adapter as Address }] : [];
+  const capsAdapterRows = capsAdapters;
   const capsAdapterKeys = new Set(capsAdapterRows.map((row) => row.adapter.toLowerCase()));
   const showCapsAdapter = adapterRows.length > 1 && capsAdapterRows.length > 0;
   const capsAdapterLabel =

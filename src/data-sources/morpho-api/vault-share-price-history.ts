@@ -9,7 +9,7 @@ export type MorphoVaultSharePricePoint = {
 };
 
 type RawSharePricePoint = {
-  x: number;
+  x: unknown;
   y: unknown;
 };
 
@@ -64,13 +64,14 @@ export async function fetchMorphoVaultV2SharePriceHistory({
 
     const normalizedPoints = points
       .map((point) => {
+        const timestamp = Number(point.x);
         const sharePrice = normalizeSharePrice(point.y);
-        if (sharePrice === null) {
+        if (!Number.isFinite(timestamp) || sharePrice === null) {
           return null;
         }
 
         return {
-          timestamp: point.x,
+          timestamp,
           sharePrice,
         };
       })

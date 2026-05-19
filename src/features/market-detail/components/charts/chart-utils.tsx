@@ -157,22 +157,30 @@ type ChartLegendProps<T extends Record<string, boolean>> = {
 export function createLegendClickHandler<T extends Record<string, boolean>>({ visibleLines, setVisibleLines }: ChartLegendProps<T>) {
   return {
     onClick: (entry: { dataKey?: unknown }) => {
+      if (entry.dataKey == null) {
+        return;
+      }
+
       const dataKey = String(entry.dataKey) as keyof T;
       setVisibleLines((prev) => ({
         ...prev,
         [dataKey]: !prev[dataKey],
       }));
     },
-    formatter: (value: string, entry: { dataKey?: unknown }) => (
-      <span
-        className="text-xs"
-        style={{
-          color: visibleLines[String(entry.dataKey) as keyof T] ? 'var(--color-text-secondary)' : '#666',
-        }}
-      >
-        {value}
-      </span>
-    ),
+    formatter: (value: string, entry: { dataKey?: unknown }) => {
+      const dataKey = entry.dataKey == null ? null : (String(entry.dataKey) as keyof T);
+
+      return (
+        <span
+          className="text-xs"
+          style={{
+            color: dataKey === null || visibleLines[dataKey] ? 'var(--color-text-secondary)' : '#666',
+          }}
+        >
+          {value}
+        </span>
+      );
+    },
   };
 }
 

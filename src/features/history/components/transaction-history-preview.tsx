@@ -48,7 +48,7 @@ export function TransactionHistoryPreview({
     const seen = new Set<string>();
 
     return sourceAccounts.flatMap((sourceAccount) => {
-      const normalizedAccount = sourceAccount.toLowerCase();
+      const normalizedAccount = sourceAccount.trim().toLowerCase();
       if (!normalizedAccount || seen.has(normalizedAccount)) {
         return [];
       }
