@@ -13,6 +13,7 @@ import { VaultSettingsModal } from '@/features/autovault/components/vault-detail
 import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
 import {
   VaultAnalyticsPeriodControl,
+  vaultAnalyticsPeriodToTimeframe,
   vaultAnalyticsTimeframeToEarningsPeriod,
 } from '@/features/vault/components/vault-analytics-period-control';
 import { VaultAdapterPositionOverview } from '@/features/vault/components/vault-adapter-position-overview';
@@ -27,7 +28,7 @@ import { useVaultQueryRefresh } from '@/hooks/useVaultQueryRefresh';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
-import { type ChartTimeframe, useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
+import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import { formatBalance } from '@/utils/balance';
@@ -234,8 +235,8 @@ export default function VaultContent() {
   }, []);
 
   const handleAnalyticsPeriodChange = useCallback(
-    (timeframe: ChartTimeframe) => {
-      setAnalyticsTimeframe(timeframe);
+    (period: typeof analyticsPeriod) => {
+      setAnalyticsTimeframe(vaultAnalyticsPeriodToTimeframe[period]);
     },
     [setAnalyticsTimeframe],
   );
@@ -504,7 +505,7 @@ export default function VaultContent() {
 
           <div className="space-y-4">
             <VaultAnalyticsPeriodControl
-              value={selectedAnalyticsTimeframe}
+              value={analyticsPeriod}
               onChange={handleAnalyticsPeriodChange}
             />
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConnection } from 'wagmi';
+import { PeriodSelector } from '@/components/common/period-selector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
@@ -15,7 +16,6 @@ import { PositionBreadcrumbs } from './components/position-breadcrumbs';
 import { PositionHeader } from './components/position-header';
 import { OverviewTab } from './components/overview-tab';
 import { HistoryTab } from './components/history-tab';
-import { PositionPeriodSelector } from './components/position-period-selector';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
@@ -159,7 +159,7 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
             </TabsList>
             <div className="flex items-center gap-2 pb-1">
               <span className="text-xs uppercase tracking-wider text-secondary">Period</span>
-              <PositionPeriodSelector
+              <PeriodSelector
                 period={period}
                 onPeriodChange={setPeriod}
                 className="h-8 w-[110px] text-xs"
