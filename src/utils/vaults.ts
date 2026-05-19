@@ -115,9 +115,10 @@ export function isMarketTrustedByVault(market: Market, trustedVaultMap: Map<stri
 }
 
 export function formatVaultAdapterType(adapterType?: string): string {
-  if (!adapterType) {
-    return 'Morpho market adapter';
+  const trimmedAdapterType = adapterType?.trim();
+  if (!trimmedAdapterType) {
+    return 'Vault adapter';
   }
 
-  return adapterType.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\bV\s+(\d+)\b/g, 'V$1');
+  return trimmedAdapterType.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/\bV\s+(\d+)\b/g, 'V$1');
 }

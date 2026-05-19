@@ -25,6 +25,7 @@ type VaultSharePriceChartProps = {
   chainId: SupportedNetworks;
   assetDecimals?: number;
   assetSymbol?: string;
+  showPeriodControl?: boolean;
 };
 
 type VaultSharePriceChartPoint = {
@@ -39,7 +40,6 @@ const SHARE_PRICE_DOMAIN_GROWTH_BY_TIMEFRAME: Record<ChartTimeframe, number> = {
   '3m': 0.03,
   '6m': 0.06,
 };
-const LOWER_DOMAIN_PADDING_RATIO = 0.12;
 
 function getSharePriceDomain(chartData: VaultSharePriceChartPoint[], timeframe: ChartTimeframe): [number, number] {
   if (chartData.length === 0) {
@@ -51,10 +51,12 @@ function getSharePriceDomain(chartData: VaultSharePriceChartPoint[], timeframe: 
   const dataMin = Math.min(...values);
   const dataMax = Math.max(...values);
   const minimumGrowth = Math.max(Math.abs(baseline) * SHARE_PRICE_DOMAIN_GROWTH_BY_TIMEFRAME[timeframe], Number.EPSILON);
-  const lower = Math.min(dataMin, baseline - minimumGrowth * LOWER_DOMAIN_PADDING_RATIO);
+  // Center normal period moves around the starting share price so low-growth vaults do not sit on the chart floor.
+  const lower = Math.min(dataMin, baseline - minimumGrowth);
   const upper = Math.max(dataMax, baseline + minimumGrowth);
 
-  return [Math.max(0, lower), upper];
+  const safeLower = Math.max(0, lower);
+  return upper > safeLower ? [safeLower, upper] : [safeLower, safeLower + Number.EPSILON];
 }
 
 function formatSharePrice(value: number, assetSymbol?: string): string {
@@ -87,7 +89,13 @@ function changeTextColor(value: number | null): string {
   return value >= 0 ? 'text-emerald-500' : 'text-rose-500';
 }
 
-export function VaultSharePriceChart({ vaultAddress, chainId, assetDecimals, assetSymbol }: VaultSharePriceChartProps) {
+export function VaultSharePriceChart({
+  vaultAddress,
+  chainId,
+  assetDecimals,
+  assetSymbol,
+  showPeriodControl = true,
+}: VaultSharePriceChartProps) {
   const selectedTimeframe = useMarketDetailChartState((state) => state.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((state) => state.selectedTimeRange);
   const setTimeframe = useMarketDetailChartState((state) => state.setTimeframe);
@@ -136,7 +144,7 @@ export function VaultSharePriceChart({ vaultAddress, chainId, assetDecimals, ass
   const yAxisDomain = useMemo(() => getSharePriceDomain(chartData, selectedTimeframe), [chartData, selectedTimeframe]);
   const isInitialLoading = isLoading;
   const isUnavailable = data?.isUnsupportedNetwork || isError || (!isInitialLoading && chartData.length < 2);
-  const chartActions = (
+  const chartActions = showPeriodControl || (isFetching && !isInitialLoading) ? (
     <div className="flex items-center gap-2">
       {isFetching && !isInitialLoading ? (
         <div className="flex items-center gap-2 rounded-full border border-border/60 bg-surface px-2 py-1 text-[11px] text-secondary">
@@ -144,23 +152,25 @@ export function VaultSharePriceChart({ vaultAddress, chainId, assetDecimals, ass
           <span>Updating</span>
         </div>
       ) : null}
-      <Select
-        value={selectedTimeframe}
-        onValueChange={(value) => setTimeframe(value as ChartTimeframe)}
-      >
-        <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
-          <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="1d">1D</SelectItem>
-          <SelectItem value="7d">7D</SelectItem>
-          <SelectItem value="30d">30D</SelectItem>
-          <SelectItem value="3m">3M</SelectItem>
-          <SelectItem value="6m">6M</SelectItem>
-        </SelectContent>
-      </Select>
+      {showPeriodControl && (
+        <Select
+          value={selectedTimeframe}
+          onValueChange={(value) => setTimeframe(value as ChartTimeframe)}
+        >
+          <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
+            <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1d">1D</SelectItem>
+            <SelectItem value="7d">7D</SelectItem>
+            <SelectItem value="30d">30D</SelectItem>
+            <SelectItem value="3m">3M</SelectItem>
+            <SelectItem value="6m">6M</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
     </div>
-  );
+  ) : undefined;
 
   return (
     <TableContainerWithDescription

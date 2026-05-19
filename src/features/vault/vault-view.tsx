@@ -11,6 +11,10 @@ import Header from '@/components/layout/header/Header';
 import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings';
 import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
+import {
+  VaultAnalyticsPeriodControl,
+  vaultAnalyticsTimeframeToEarningsPeriod,
+} from '@/features/vault/components/vault-analytics-period-control';
 import { VaultAdapterPositionOverview } from '@/features/vault/components/vault-adapter-position-overview';
 import { VaultSharePriceChart } from '@/features/vault/components/vault-share-price-chart';
 import { useModal } from '@/hooks/useModal';
@@ -23,7 +27,7 @@ import { useVaultQueryRefresh } from '@/hooks/useVaultQueryRefresh';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
-import { usePositionDetailPreferences } from '@/stores/usePositionDetailPreferences';
+import { type ChartTimeframe, useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import { formatBalance } from '@/utils/balance';
@@ -41,7 +45,6 @@ type VaultAdapterPositionDetailProps = {
   chainId: SupportedNetworks;
   isResolvingAdapter: boolean;
   period: EarningsPeriod;
-  setPeriod: (period: EarningsPeriod) => void;
   showAdapterLabel?: boolean;
   totalAssets?: bigint;
   vaultAddress: Address;
@@ -96,7 +99,6 @@ function VaultAdapterPositionDetail({
   chainId,
   isResolvingAdapter,
   period,
-  setPeriod,
   showAdapterLabel = false,
   totalAssets,
   vaultAddress,
@@ -149,7 +151,7 @@ function VaultAdapterPositionDetail({
   }, [currentPosition, transactions]);
 
   if (!adapterAddress && !isResolvingAdapter) {
-    return <VaultStatusPanel message="No connected Morpho market adapter found for this vault." />;
+    return <VaultStatusPanel message="No connected vault adapter found for this vault." />;
   }
 
   const isLoading = isResolvingAdapter || marketHintsLoading || isPositionsLoading;
@@ -177,7 +179,6 @@ function VaultAdapterPositionDetail({
             isEarningsLoading={isEarningsLoading}
             actualBlockData={actualBlockData}
             period={period}
-            setPeriod={setPeriod}
             transactions={relevantTransactions}
             snapshotsByChain={snapshotsByChain}
             marketAllocations={marketAllocations}
@@ -224,12 +225,20 @@ export default function VaultContent() {
   const [hasMounted, setHasMounted] = useState(false);
   const { open: openModal } = useModal();
   const { findToken } = useTokensQuery();
-  const period = usePositionDetailPreferences((state) => state.period);
-  const setPeriod = usePositionDetailPreferences((state) => state.setPeriod);
+  const selectedAnalyticsTimeframe = useMarketDetailChartState((state) => state.selectedTimeframe);
+  const setAnalyticsTimeframe = useMarketDetailChartState((state) => state.setTimeframe);
+  const analyticsPeriod = vaultAnalyticsTimeframeToEarningsPeriod[selectedAnalyticsTimeframe];
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
+
+  const handleAnalyticsPeriodChange = useCallback(
+    (timeframe: ChartTimeframe) => {
+      setAnalyticsTimeframe(timeframe);
+    },
+    [setAnalyticsTimeframe],
+  );
 
   const connectedAddress = hasMounted ? address : undefined;
 
@@ -493,23 +502,30 @@ export default function VaultContent() {
             </div>
           )}
 
-          <VaultSharePriceChart
-            vaultAddress={vaultAddressValue}
-            chainId={chainId}
-            assetDecimals={tokenDecimals}
-            assetSymbol={tokenSymbol}
-          />
+          <div className="space-y-4">
+            <VaultAnalyticsPeriodControl
+              value={selectedAnalyticsTimeframe}
+              onChange={handleAnalyticsPeriodChange}
+            />
 
-          <VaultAdaptersPositionDetail
-            adapters={positionAdapters}
-            assetAddress={assetAddress}
-            chainId={chainId}
-            vaultAddress={vaultAddressValue}
-            isResolvingAdapter={vaultDataLoading || adapterQuery.isLoading || adapterQuery.isFetching || !vaultData}
-            period={period}
-            setPeriod={setPeriod}
-            totalAssets={vaultContract.totalAssets}
-          />
+            <VaultSharePriceChart
+              vaultAddress={vaultAddressValue}
+              chainId={chainId}
+              assetDecimals={tokenDecimals}
+              assetSymbol={tokenSymbol}
+              showPeriodControl={false}
+            />
+
+            <VaultAdaptersPositionDetail
+              adapters={positionAdapters}
+              assetAddress={assetAddress}
+              chainId={chainId}
+              vaultAddress={vaultAddressValue}
+              isResolvingAdapter={vaultDataLoading || adapterQuery.isLoading || adapterQuery.isFetching || !vaultData}
+              period={analyticsPeriod}
+              totalAssets={vaultContract.totalAssets}
+            />
+          </div>
 
           <VaultSettingsModal
             vaultAddress={vaultAddressValue}

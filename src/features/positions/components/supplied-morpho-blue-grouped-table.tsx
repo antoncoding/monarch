@@ -385,6 +385,7 @@ export function SuppliedMorphoBlueGroupedTable({
     day: '1D',
     week: '7D',
     month: '30D',
+    threemonth: '3M',
     sixmonth: '6M',
     all: 'All',
   };

@@ -6,7 +6,6 @@ import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
-import { PositionPeriodSelector } from '@/features/position-detail/components/position-period-selector';
 import { VaultMarketAllocationsTable } from '@/features/vault/components/vault-market-allocations-table';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import type { MarketAllocation } from '@/types/vaultAllocations';
@@ -18,6 +17,7 @@ const PERIOD_LABELS: Record<EarningsPeriod, string> = {
   day: '24h',
   week: '7d',
   month: '30d',
+  threemonth: '3mo',
   sixmonth: '6mo',
   all: 'All time',
 };
@@ -29,7 +29,6 @@ type VaultAdapterPositionOverviewProps = {
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   period: EarningsPeriod;
-  setPeriod: (period: EarningsPeriod) => void;
   transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   marketAllocations: MarketAllocation[];
@@ -94,7 +93,6 @@ export function VaultAdapterPositionOverview({
   isEarningsLoading,
   actualBlockData,
   period,
-  setPeriod,
   transactions,
   snapshotsByChain,
   marketAllocations,
@@ -102,17 +100,6 @@ export function VaultAdapterPositionOverview({
 }: VaultAdapterPositionOverviewProps) {
   const periodLabel = PERIOD_LABELS[period];
   const detailHref = `/position/${chainId}/${groupedPosition.loanAssetAddress}/${adapterAddress}`;
-  const periodSelector = (
-    <div className="flex items-center gap-2">
-      <span className="hidden text-xs uppercase tracking-wider text-secondary sm:inline">Period</span>
-      <PositionPeriodSelector
-        period={period}
-        onPeriodChange={setPeriod}
-        className="h-8 w-[110px] text-xs"
-        contentClassName="z-[3600]"
-      />
-    </div>
-  );
 
   return (
     <div className="space-y-4">
@@ -123,7 +110,6 @@ export function VaultAdapterPositionOverview({
         snapshotsByChain={snapshotsByChain}
         chainBlockData={actualBlockData}
         height={220}
-        actions={periodSelector}
       />
       <VaultMarketBreakdownTable
         positions={groupedPosition.markets}

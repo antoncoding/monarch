@@ -18,7 +18,7 @@ export type VaultAdapterDetails = {
 };
 
 export type VaultAdapterAlias = {
-  adapterType: string;
+  adapterType?: string;
   address: string;
   chainId: SupportedNetworks;
   vaultAddress: string;
@@ -132,6 +132,20 @@ type MonarchAdapterLookupResponse = {
 type MonarchAdapterAliasesResponse = {
   data?: {
     Adapter?: MonarchAdapterAliasRecord[];
+  };
+};
+
+type MonarchVaultAdapterAliasRecord = {
+  vaultAddress: string;
+  chainId: number;
+  name: string | null;
+  symbol: string | null;
+  adapters: MonarchVaultAdapter[];
+};
+
+type MonarchVaultAdapterAliasesResponse = {
+  data?: {
+    Vault?: MonarchVaultAdapterAliasRecord[];
   };
 };
 
@@ -278,6 +292,26 @@ const adapterAliasesQuery = `
   }
 `;
 
+const activeVaultAdapterAliasesQuery = `
+  query MonarchActiveVaultAdapterAliases($limit: Int!, $offset: Int!) {
+    Vault(
+      where: { adapters: { isActive: { _eq: true } } }
+      order_by: [{ chainId: asc }, { vaultAddress: asc }]
+      limit: $limit
+      offset: $offset
+    ) {
+      vaultAddress
+      chainId
+      name
+      symbol
+      adapters {
+        adapterAddress
+        isActive
+      }
+    }
+  }
+`;
+
 export const fetchUserVaultV2DetailsAllNetworks = async (owner: string): Promise<UserVaultV2[]> => {
   const response = await monarchGraphqlFetcher<MonarchVaultsResponse>(userVaultsQuery, {
     owner: owner.toLowerCase(),
@@ -359,10 +393,36 @@ const transformAdapterAliasRecord = (adapter: MonarchAdapterAliasRecord): VaultA
   };
 };
 
+const transformVaultAdapterAliasRecord = (vault: MonarchVaultAdapterAliasRecord): VaultAdapterAlias[] => {
+  const chainId = toSupportedNetwork(vault.chainId);
+  const vaultAddress = normalizeAddress(vault.vaultAddress);
+  const vaultName = vault.name?.trim() || vault.symbol?.trim() || '';
+  if (!chainId || !vaultAddress || !vaultName) {
+    return [];
+  }
+
+  return vault.adapters
+    .filter((adapter) => adapter.isActive)
+    .map((adapter) => normalizeAddress(adapter.adapterAddress))
+    .filter(Boolean)
+    .map((address) => ({
+      address,
+      chainId,
+      vaultAddress,
+      vaultName,
+    }));
+};
+
 export const fetchMonarchVaultAdapterAliases = async (): Promise<VaultAdapterAlias[]> => {
   try {
-    const aliases: VaultAdapterAlias[] = [];
-    const seenKeys = new Set<string>();
+    const aliasesByKey = new Map<string, VaultAdapterAlias>();
+    const addAlias = (alias: VaultAdapterAlias) => {
+      const key = `${alias.chainId}:${alias.address}`;
+      const existing = aliasesByKey.get(key);
+      if (!existing || (!existing.adapterType && alias.adapterType)) {
+        aliasesByKey.set(key, alias);
+      }
+    };
 
     for (let page = 0; page < MONARCH_ADAPTER_ALIAS_MAX_PAGES; page++) {
       const response = await monarchGraphqlFetcher<MonarchAdapterAliasesResponse>(adapterAliasesQuery, {
@@ -378,13 +438,7 @@ export const fetchMonarchVaultAdapterAliases = async (): Promise<VaultAdapterAli
           continue;
         }
 
-        const key = `${alias.chainId}:${alias.address}`;
-        if (seenKeys.has(key)) {
-          continue;
-        }
-
-        seenKeys.add(key);
-        aliases.push(alias);
+        addAlias(alias);
       }
 
       if (records.length < MONARCH_ADAPTER_ALIAS_PAGE_SIZE) {
@@ -392,7 +446,25 @@ export const fetchMonarchVaultAdapterAliases = async (): Promise<VaultAdapterAli
       }
     }
 
-    return aliases;
+    for (let page = 0; page < MONARCH_ADAPTER_ALIAS_MAX_PAGES; page++) {
+      const response = await monarchGraphqlFetcher<MonarchVaultAdapterAliasesResponse>(activeVaultAdapterAliasesQuery, {
+        limit: MONARCH_ADAPTER_ALIAS_PAGE_SIZE,
+        offset: page * MONARCH_ADAPTER_ALIAS_PAGE_SIZE,
+      });
+
+      const records = response.data?.Vault ?? [];
+      for (const record of records) {
+        for (const alias of transformVaultAdapterAliasRecord(record)) {
+          addAlias(alias);
+        }
+      }
+
+      if (records.length < MONARCH_ADAPTER_ALIAS_PAGE_SIZE) {
+        break;
+      }
+    }
+
+    return Array.from(aliasesByKey.values());
   } catch (error) {
     console.warn('Error fetching Monarch vault adapter aliases:', error);
     return [];

@@ -164,7 +164,7 @@ export function VaultHeader({
                 {showCapsAdapter && (
                   <>
                     <span className="text-border">·</span>
-                    <span>Caps source: {capsAdapterLabel}</span>
+                    <span>Caps: {capsAdapterLabel}</span>
                   </>
                 )}
                 {knownAllocators.length > 0 && (
@@ -372,8 +372,8 @@ export function VaultHeader({
                                 chainId={chainId}
                               />
                               {capsAdapterKeys.has(row.adapter.toLowerCase()) && (
-                                <span className="rounded-sm bg-hovered px-1.5 py-0.5 text-[10px] uppercase tracking-[0.14em] text-secondary/80">
-                                  Caps source
+                                <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-400/10 dark:text-green-300">
+                                  Active
                                 </span>
                               )}
                             </div>

@@ -35,7 +35,7 @@ type AddressLabel = {
 
 type AdapterAddressAlias = {
   adapterAddress: string;
-  adapterType: string;
+  adapterType?: string;
   chainId: number;
   vaultAddress: string;
   vaultName: string;

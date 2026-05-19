@@ -78,15 +78,15 @@ function selectNearestMorphoPoints(
     let nearestIndex = -1;
     let nearestDistance = Number.POSITIVE_INFINITY;
 
-    points.forEach((point, index) => {
-      if (usedIndexes.has(index)) return;
+    for (const [index, point] of points.entries()) {
+      if (usedIndexes.has(index)) continue;
 
       const distance = Math.abs(point.timestamp - targetTimestamp);
       if (distance < nearestDistance) {
         nearestDistance = distance;
         nearestIndex = index;
       }
-    });
+    }
 
     if (nearestIndex === -1) continue;
 
