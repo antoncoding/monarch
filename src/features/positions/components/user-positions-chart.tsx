@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import type { Address } from 'viem';
 import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -20,6 +21,7 @@ type BaseChartProps = {
   mode?: ChartMode;
   height?: number;
   debug?: boolean;
+  actions?: ReactNode;
 };
 
 // Props for using with GroupedPosition (positions page)
@@ -66,11 +68,13 @@ function ChartContent({
   markets,
   loanAssetSymbol,
   height,
+  actions,
 }: {
   dataPoints: PositionHistoryDataPoint[];
   markets: MarketInfo[];
   loanAssetSymbol: string;
   height: number;
+  actions?: ReactNode;
 }) {
   const chartColors = useChartColors();
 
@@ -158,6 +162,7 @@ function ChartContent({
     <TableContainerWithDescription
       title="Position History"
       className="mb-4 overflow-hidden"
+      actions={actions}
     >
       {/* Responsive: stack vertically on mobile, side-by-side on larger screens */}
       <div className="flex flex-col sm:flex-row items-stretch py-4">
@@ -425,6 +430,7 @@ export function UserPositionsChart(props: UserPositionsChartProps) {
       markets={marketInfoList}
       loanAssetSymbol={chartParams.loanAssetSymbol}
       height={height}
+      actions={props.actions}
     />
   );
 }

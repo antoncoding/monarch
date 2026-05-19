@@ -23,6 +23,11 @@ import { CollateralIconsDisplay } from '@/features/positions/components/collater
 import { getSlicedAddress } from '@/utils/address';
 import { formatVaultAdapterType } from '@/utils/vaults';
 
+type VaultHeaderAdapterRow = {
+  adapter: Address;
+  adapterType?: string;
+};
+
 type VaultHeaderProps = {
   vaultAddress: Address;
   chainId: SupportedNetworks;
@@ -39,7 +44,8 @@ type VaultHeaderProps = {
   collaterals?: { address: string; symbol: string; amount: number }[];
   curator?: string;
   adapter?: string;
-  adapters?: { adapter: Address; adapterType?: string }[];
+  adapters?: VaultHeaderAdapterRow[];
+  capsAdapters?: VaultHeaderAdapterRow[];
   onDeposit: () => void;
   onWithdraw: () => void;
   onRefresh: () => void;
@@ -67,6 +73,7 @@ export function VaultHeader({
   curator,
   adapter,
   adapters = [],
+  capsAdapters = [],
   onDeposit,
   onWithdraw,
   onRefresh,
@@ -92,6 +99,13 @@ export function VaultHeader({
   // Filter for known agents
   const knownAllocators = allocators.filter((addr) => findAgent(addr) !== undefined);
   const adapterRows = adapters.length > 0 ? adapters : adapter ? [{ adapter: adapter as Address }] : [];
+  const capsAdapterRows = capsAdapters;
+  const capsAdapterKeys = new Set(capsAdapterRows.map((row) => row.adapter.toLowerCase()));
+  const showCapsAdapter = adapterRows.length > 1 && capsAdapterRows.length > 0;
+  const capsAdapterLabel =
+    capsAdapterRows.length === 1
+      ? `${formatVaultAdapterType(capsAdapterRows[0].adapterType)} ${getSlicedAddress(capsAdapterRows[0].adapter)}`
+      : `${capsAdapterRows.length} configured adapters`;
 
   return (
     <div className="mt-6 mb-6 space-y-4">
@@ -145,6 +159,12 @@ export function VaultHeader({
                   <>
                     <span className="text-border">·</span>
                     <span>Curator: {getSlicedAddress(curator as Address)}</span>
+                  </>
+                )}
+                {showCapsAdapter && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span>Caps: {capsAdapterLabel}</span>
                   </>
                 )}
                 {knownAllocators.length > 0 && (
@@ -351,6 +371,11 @@ export function VaultHeader({
                                 address={row.adapter}
                                 chainId={chainId}
                               />
+                              {capsAdapterKeys.has(row.adapter.toLowerCase()) && (
+                                <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-800 dark:bg-green-400/10 dark:text-green-300">
+                                  Active
+                                </span>
+                              )}
                             </div>
                           ))}
                         </div>

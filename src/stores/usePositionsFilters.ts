@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 /**
  * Earnings calculation periods for the positions summary page.
  */
-export type EarningsPeriod = 'day' | 'week' | 'month' | 'sixmonth' | 'all';
+export type EarningsPeriod = 'day' | 'week' | 'month' | 'threemonth' | 'sixmonth' | 'all';
 
 type PositionsFiltersState = {
   /** Currently selected earnings period */

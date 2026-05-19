@@ -74,6 +74,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
 - Large optional metadata or enrichment queries used only for secondary badges, warnings, filters, or tooltips must be gated or deferred so core table rendering does not wait on them during cold start.
 - Vault-scoped pages with configured cap or market IDs must use targeted market reads for first render; do not wait on the global market registry when the vault metadata already identifies the relevant markets.
+- Vault adapter selection must be cap-aware when a vault has multiple active adapters; do not let list order alone choose the adapter used for positions, activity, withdrawals, or settings.
 - Expensive queries must not start with placeholder dependency data that immediately invalidates the same query. Gate on prerequisite readiness, or use a stable query key that does not refetch equivalent work.
 - Expensive enrichment queries derived from filtered, sorted, or paginated rows must wait for the inputs that can change those rows, such as USD price enrichment, before they start.
 - Periodic refreshes for RPC or API data must use React Query polling with background refetch disabled, or explicitly pause when `document.visibilityState` is hidden. Do not use raw `setInterval` for mounted data refresh unless hidden-tab behavior is handled.
@@ -96,6 +97,8 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 
 - Avoid repeated large UI blocks; extract or reuse only when it reduces real duplication.
 - Validate loading, empty, disabled, error, and success states for changed flows; period-derived metrics must not show stale values while recalculating.
+- Related analytics sections that share period-dependent data should expose one period control at the shared container level, not competing child-level dropdowns.
+- Yield, rate, and share-price charts must use period-aware minimum y-axis bands when comparing growth; do not let data-only auto-fit scaling make materially different APRs look visually identical.
 - Cold-start loading for optional metadata or enrichment must not trigger warning/error banners; warn only after a source is partial, stale, or unavailable.
 - Product routes must not add render-blocking external font CSS or multi-megabyte custom font assets to the app shell; prefer system font stacks or prove a small subset budget.
 - Font performance changes must preserve the intended design-token font families. Optimize with self-hosted subsets or scoped loading, not by silently mapping custom font utilities to system stacks.
@@ -108,6 +111,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Relationship metadata must not link to the current page's own account again; only link to counterpart accounts, external protocol pages, or expandable details.
 - V2 vault position pages must not render native vault-address market or vault tables when the meaningful market exposure is held by a linked adapter.
 - Vault and adapter relationship UI should prefer short chips, address badges, and structural grouping over explanatory paragraphs.
+- Vault adapter labels must come from confirmed adapter type metadata or fall back to a generic "vault adapter" label; do not infer protocol-specific adapter types from a missing `adapterType`.
 - Vault identity and vault action links should resolve to Monarch's canonical `/vault/:chainId/:address` route by default; external Morpho vault links belong only in explicit "View on Morpho" actions.
 - Use available entity icons in compact metadata chips before adding extra explanatory text.
 - Dense product headers should use compact chips, short address links, icon buttons, and tooltips for secondary navigation; avoid long text buttons unless they are the primary action.

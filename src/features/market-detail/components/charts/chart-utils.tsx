@@ -79,16 +79,29 @@ export function createConcentrationGradient(color: string): GradientConfig[] {
   return [{ id: 'concentrationGradient', color }];
 }
 
+export function createSharePriceChartGradients(colors: ReturnType<typeof useChartColors>): GradientConfig[] {
+  return [{ id: 'sharePriceGradient', color: colors.supply.stroke }];
+}
+
 type ChartTooltipContentProps = {
   active?: boolean;
-  payload?: any[];
+  payload?: Array<{
+    color?: string;
+    dataKey?: unknown;
+    name?: unknown;
+    payload?: {
+      blockNumber?: number;
+      isStateRead?: boolean;
+    };
+    value?: unknown;
+  }>;
   label?: number;
   formatValue: (value: number) => string;
 };
 
 export function ChartTooltipContent({ active, payload, label, formatValue }: ChartTooltipContentProps) {
   if (!active || !payload) return null;
-  const pointMeta = payload[0]?.payload as { isStateRead?: boolean } | undefined;
+  const pointMeta = payload[0]?.payload;
 
   return (
     <div className="rounded-lg border border-border bg-background p-3 shadow-lg">
@@ -107,24 +120,30 @@ export function ChartTooltipContent({ active, payload, label, formatValue }: Cha
               State Read
             </span>
           ) : null}
+          {pointMeta?.blockNumber ? <span>Block {pointMeta.blockNumber.toLocaleString()}</span> : null}
         </div>
       </div>
       <div className="space-y-1">
-        {payload.map((entry: any) => (
-          <div
-            key={entry.dataKey}
-            className="flex items-center justify-between gap-6 text-sm"
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-secondary">{entry.name}</span>
+        {payload.map((entry) => {
+          if (typeof entry.value !== 'number') return null;
+          const key = String(entry.dataKey ?? entry.name ?? entry.value);
+
+          return (
+            <div
+              key={key}
+              className="flex items-center justify-between gap-6 text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-secondary">{String(entry.name ?? entry.dataKey ?? '')}</span>
+              </div>
+              <span className="tabular-nums">{formatValue(entry.value)}</span>
             </div>
-            <span className="tabular-nums">{formatValue(entry.value)}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -137,23 +156,38 @@ type ChartLegendProps<T extends Record<string, boolean>> = {
 
 export function createLegendClickHandler<T extends Record<string, boolean>>({ visibleLines, setVisibleLines }: ChartLegendProps<T>) {
   return {
-    onClick: (e: any) => {
-      const dataKey = e.dataKey as keyof T;
-      setVisibleLines((prev) => ({
-        ...prev,
-        [dataKey]: !prev[dataKey],
-      }));
+    onClick: (entry: { dataKey?: unknown }) => {
+      if (entry.dataKey == null) {
+        return;
+      }
+
+      const dataKey = String(entry.dataKey) as keyof T;
+      setVisibleLines((prev) => {
+        if (!(dataKey in prev)) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          [dataKey]: !prev[dataKey],
+        };
+      });
     },
-    formatter: (value: string, entry: any) => (
-      <span
-        className="text-xs"
-        style={{
-          color: visibleLines[entry.dataKey as keyof T] ? 'var(--color-text-secondary)' : '#666',
-        }}
-      >
-        {value}
-      </span>
-    ),
+    formatter: (value: string, entry: { dataKey?: unknown }) => {
+      const dataKey = entry.dataKey == null ? null : (String(entry.dataKey) as keyof T);
+      const isVisible = dataKey === null || !(dataKey in visibleLines) || visibleLines[dataKey];
+
+      return (
+        <span
+          className="text-xs"
+          style={{
+            color: isVisible ? 'var(--color-text-secondary)' : '#666',
+          }}
+        >
+          {value}
+        </span>
+      );
+    },
   };
 }
 

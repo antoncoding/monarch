@@ -1,24 +1,37 @@
 'use client';
 
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
-type PositionPeriodSelectorProps = {
-  period: EarningsPeriod;
-  onPeriodChange: (period: EarningsPeriod) => void;
-  className?: string;
-  contentClassName?: string;
+export type PeriodSelectorOption = {
+  value: EarningsPeriod;
+  label: string;
 };
 
-const PERIOD_OPTIONS: { value: EarningsPeriod; label: string }[] = [
+export const EARNINGS_PERIOD_OPTIONS: readonly PeriodSelectorOption[] = [
   { value: 'day', label: '24h' },
   { value: 'week', label: '7 days' },
   { value: 'month', label: '30 days' },
+  { value: 'threemonth', label: '3 months' },
   { value: 'sixmonth', label: '6 months' },
   { value: 'all', label: 'All time' },
 ];
 
-export function PositionPeriodSelector({ period, onPeriodChange, className, contentClassName }: PositionPeriodSelectorProps) {
+type PeriodSelectorProps = {
+  period: EarningsPeriod;
+  onPeriodChange: (period: EarningsPeriod) => void;
+  options?: readonly PeriodSelectorOption[];
+  className?: string;
+  contentClassName?: string;
+};
+
+export function PeriodSelector({
+  period,
+  onPeriodChange,
+  options = EARNINGS_PERIOD_OPTIONS,
+  className,
+  contentClassName,
+}: PeriodSelectorProps) {
   return (
     <Select
       value={period}
@@ -28,7 +41,7 @@ export function PositionPeriodSelector({ period, onPeriodChange, className, cont
         <SelectValue />
       </SelectTrigger>
       <SelectContent className={contentClassName}>
-        {PERIOD_OPTIONS.map((option) => (
+        {options.map((option) => (
           <SelectItem
             key={option.value}
             value={option.value}

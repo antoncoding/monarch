@@ -22,7 +22,6 @@ export type VaultMarketAllocationsTableMode = 'summary' | 'position';
 type VaultMarketAllocationsTableRow = {
   market: Market;
   allocation: MarketAllocation;
-  currentSupplyAssets?: bigint;
   earnedAssets?: bigint;
   realizedApy?: number | null;
 };
@@ -40,10 +39,10 @@ type VaultMarketAllocationsTableProps = {
   showExplorerLink?: boolean;
 };
 
-const sortRows = (rows: VaultMarketAllocationsTableRow[], mode: VaultMarketAllocationsTableMode) => {
+const sortRows = (rows: VaultMarketAllocationsTableRow[]) => {
   return [...rows].sort((a, b) => {
-    const aValue = mode === 'position' ? (a.currentSupplyAssets ?? a.allocation.allocation) : a.allocation.allocation;
-    const bValue = mode === 'position' ? (b.currentSupplyAssets ?? b.allocation.allocation) : b.allocation.allocation;
+    const aValue = a.allocation.allocation;
+    const bValue = b.allocation.allocation;
     return bValue > aValue ? 1 : bValue < aValue ? -1 : 0;
   });
 };
@@ -81,14 +80,13 @@ export function VaultMarketAllocationsTable({
       return {
         market,
         allocation,
-        currentSupplyAssets: position ? BigInt(position.state.supplyAssets) : allocation.allocation,
         earnedAssets: position?.earned ? BigInt(position.earned) : 0n,
         realizedApy: position?.actualApy,
       };
     });
-  }, [chainId, marketAllocations, positionByMarket]);
+  }, [marketAllocations, positionByMarket]);
 
-  const sortedRows = useMemo(() => sortRows(rows, mode), [rows, mode]);
+  const sortedRows = useMemo(() => sortRows(rows), [rows]);
   const totalAllocation = useMemo(() => {
     if (totalAssets !== undefined) return totalAssets;
     return marketAllocations.reduce((sum, allocation) => sum + allocation.allocation, 0n);
@@ -103,7 +101,7 @@ export function VaultMarketAllocationsTable({
           <TableHead className="px-4 py-3 text-right font-normal">Allocation</TableHead>
           {isPositionMode ? (
             <>
-              <TableHead className="px-4 py-3 text-right font-normal">Current Supply</TableHead>
+              <TableHead className="px-4 py-3 text-right font-normal">Liquidity</TableHead>
               <TableHead className="px-4 py-3 text-right font-normal">
                 <Tooltip
                   content={
@@ -156,8 +154,6 @@ export function VaultMarketAllocationsTable({
             assetSymbol,
           )}`;
           const displayRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy;
-          const currentSupplyAssets = row.currentSupplyAssets ?? allocation.allocation;
-          const currentSupply = formatBalance(currentSupplyAssets, market.loanAsset.decimals);
           const realizedRate = isAprDisplay ? convertApyToApr(row.realizedApy ?? 0) : row.realizedApy ?? 0;
           const earnedAssets = row.earnedAssets ?? 0n;
           const liquidity = formatReadable(formatBalance(BigInt(market.state.liquidityAssets || 0), market.loanAsset.decimals).toString());
@@ -199,19 +195,10 @@ export function VaultMarketAllocationsTable({
               {isPositionMode ? (
                 <>
                   <TableCell
-                    className="px-4 py-3 text-right"
+                    className="px-4 py-3 text-right text-xs text-secondary whitespace-nowrap"
                     style={{ minWidth: '130px' }}
                   >
-                    <div className="flex items-center justify-end gap-1.5">
-                      <span>{formatReadable(currentSupply)}</span>
-                      <TokenIcon
-                        address={market.loanAsset.address}
-                        chainId={chainId}
-                        symbol={market.loanAsset.symbol}
-                        width={16}
-                        height={16}
-                      />
-                    </div>
+                    {liquidity}
                   </TableCell>
                   <TableCell
                     className="px-4 py-3 text-right"

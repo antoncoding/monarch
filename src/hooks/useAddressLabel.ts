@@ -12,7 +12,7 @@ type UseAddressLabelReturn = {
 
 /**
  * Hook to resolve address labels in priority order:
- * 1. Vault name (if address is a known vault or recognized vault adapter)
+ * 1. Vault name (if address is a known vault or confirmed vault adapter)
  * 2. ENS name (handled by Name component)
  * 3. Shortened address (0x1234...5678)
  */
