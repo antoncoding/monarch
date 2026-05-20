@@ -141,6 +141,7 @@ export function AccountIdentity({
   }, [address, toast]);
 
   const labelClasses = clsx('min-w-0 truncate', ACCOUNT_IDENTITY_LABEL_MAX_WIDTH_CLASS);
+  // Kleros name tag for contracts, only used when not official vaults.
   const klerosLabel = vaultName ? undefined : formatKlerosAddressTagLabel(klerosTag);
   const klerosTitle = klerosLabel ? [klerosLabel, klerosTag?.publicNote].filter(Boolean).join('\n') : undefined;
   const primaryLabel = vaultName ?? klerosLabel;
