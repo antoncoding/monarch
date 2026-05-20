@@ -1,9 +1,13 @@
+import { useMemo } from 'react';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { AddressIdentity } from '@/components/shared/address-identity';
+import { KlerosTagBadge } from '@/components/shared/kleros-tag-badge';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MarketOracleFeedInfo } from '@/features/markets/components/oracle';
 import { Tooltip } from '@/components/ui/tooltip';
+import { formatKlerosAddressTagLabel, getKlerosAddressTagKey } from '@/data-sources/kleros/address-tags';
 import { useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { useKlerosAddressTagsQuery } from '@/hooks/queries/useKlerosAddressTagsQuery';
 import { getOracleType, getOracleTypeDescription, OracleType } from '@/utils/oracle';
 import { MetaOracleInfo } from './MetaOracleInfo';
 
@@ -17,8 +21,12 @@ type OracleTypeInfoProps = {
 
 export function OracleTypeInfo({ oracleAddress, chainId, showCustom, useBadge, variant }: OracleTypeInfoProps) {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const oracleAddresses = useMemo(() => [oracleAddress], [oracleAddress]);
+  const { data: klerosAddressTags } = useKlerosAddressTagsQuery(chainId, oracleAddresses);
   const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
   const typeDescription = getOracleTypeDescription(oracleType);
+  const klerosTag = klerosAddressTags?.[getKlerosAddressTagKey(chainId, oracleAddress)];
+  const klerosLabel = formatKlerosAddressTagLabel(klerosTag);
 
   return (
     <>
@@ -30,6 +38,14 @@ export function OracleTypeInfo({ oracleAddress, chainId, showCustom, useBadge, v
             chainId={chainId}
             label={typeDescription}
           />
+          {klerosLabel && (
+            <span className="inline-flex max-w-[16rem] items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">
+              <KlerosTagBadge
+                label={klerosLabel}
+                publicNote={klerosTag?.publicNote}
+              />
+            </span>
+          )}
           {oracleType === OracleType.Meta && !useBadge && (
             <Tooltip
               content={

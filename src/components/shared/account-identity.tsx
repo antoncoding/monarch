@@ -12,9 +12,11 @@ import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { useConnection, useEnsName } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountActionsPopover } from '@/components/shared/account-actions-popover';
+import { KlerosTagBadge } from '@/components/shared/kleros-tag-badge';
 import { Name } from '@/components/shared/name';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Tooltip } from '@/components/ui/tooltip';
+import { formatKlerosAddressTagLabel, type KlerosAddressTag } from '@/data-sources/kleros/address-tags';
 import { useAddressLabel } from '@/hooks/useAddressLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
@@ -37,10 +39,12 @@ type AccountIdentityProps = {
   showActions?: boolean;
   showAdapterBadge?: boolean;
   showBookmark?: boolean;
+  // AccountIdentity does not fetch Kleros data; list views should batch visible addresses and pass the matching tag.
+  klerosTag?: KlerosAddressTag | null;
   className?: string;
 };
 
-type MainTagKind = 'adapter' | 'ens' | 'vault';
+type MainTagKind = 'adapter' | 'ens' | 'kleros' | 'vault';
 
 const getMainTagClassName = (kind: MainTagKind) =>
   clsx(
@@ -63,8 +67,8 @@ const getEntityBadgeLabel = (vaultIdentity: VaultAccountIdentity): string | unde
 /**
  * Unified component for displaying account identities across the app.
  *
- * Badge & Compact: Show vault name → ENS name → shortened address
- * Full: Always show address badge + optional extra badges (connected, ENS, vault)
+ * Badge & Compact: Show vault name → Kleros tag → ENS name → shortened address
+ * Full: Always show address badge + optional extra badges (connected, ENS, vault, Kleros)
  *
  * Variants:
  * - badge: Minimal inline badge (no avatar)
@@ -82,6 +86,7 @@ export function AccountIdentity({
   showActions = true,
   showAdapterBadge = false,
   showBookmark = false,
+  klerosTag,
   className,
 }: AccountIdentityProps) {
   const { address: connectedAddress, isConnected } = useConnection();
@@ -94,6 +99,7 @@ export function AccountIdentity({
     address: address as `0x${string}`,
     chainId: 1,
   });
+  const isVaultV2Identity = vaultIdentity?.kind === 'vault-v2';
 
   useEffect(() => {
     setMounted(true);
@@ -119,13 +125,13 @@ export function AccountIdentity({
       );
     }
     if (linkTo === 'profile') {
-      if (vaultIdentity?.kind === 'vault-v2') {
+      if (isVaultV2Identity) {
         return getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress);
       }
       return `/positions/${address}`;
     }
     return null;
-  }, [linkTo, address, showActions, chainId, vaultIdentity?.chainId, vaultIdentity?.kind, vaultIdentity?.vaultAddress]);
+  }, [linkTo, address, showActions, chainId, isVaultV2Identity, vaultIdentity?.chainId, vaultIdentity?.vaultAddress]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -137,6 +143,11 @@ export function AccountIdentity({
   }, [address, toast]);
 
   const labelClasses = clsx('min-w-0 truncate', ACCOUNT_IDENTITY_LABEL_MAX_WIDTH_CLASS);
+  // Kleros name tag for contracts, only used when not official vaults.
+  const klerosLabel = vaultName ? undefined : formatKlerosAddressTagLabel(klerosTag);
+  const klerosTitle = klerosLabel ? [klerosLabel, klerosTag?.publicNote].filter(Boolean).join('\n') : undefined;
+  const primaryLabel = vaultName ?? klerosLabel;
+  const primaryLabelTitle = vaultName ?? klerosTitle;
   const adapterTypeLabel = vaultIdentity?.kind === 'vault-adapter' ? formatVaultAdapterType(vaultIdentity.adapterType) : undefined;
   const mainTag = vaultIdentity
     ? {
@@ -144,6 +155,8 @@ export function AccountIdentity({
         label: adapterTypeLabel ?? vaultIdentity.displayName,
         title: adapterTypeLabel ?? vaultIdentity.displayName,
       }
+    : klerosLabel
+      ? { kind: 'kleros' as const, label: klerosLabel, title: klerosTitle ?? klerosLabel }
     : showAddress && ensName
       ? { kind: 'ens' as const, label: ensName, title: ensName }
       : undefined;
@@ -159,20 +172,42 @@ export function AccountIdentity({
     vaultIdentity?.kind === 'vault-adapter' && vaultIdentity.vaultAddress.toLowerCase() !== address.toLowerCase()
       ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress)
       : undefined;
-  const actionsProfileHref =
-    vaultIdentity?.kind === 'vault-v2' ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress) : `/positions/${address}`;
-  const actionsProfileLabel = vaultIdentity?.kind === 'vault-v2' ? 'View Vault' : 'View Portfolio';
+  const actionsProfileHref = isVaultV2Identity
+    ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress)
+    : `/positions/${address}`;
+  const actionsProfileLabel = isVaultV2Identity ? 'View Vault' : 'View Portfolio';
+  const actionLinks = useMemo(() => {
+    const links: { href: string; label: string }[] = [];
+
+    if (linkedVaultHref) {
+      links.push({ href: linkedVaultHref, label: 'View Vault' });
+    }
+
+    if (klerosLabel) {
+      if (klerosTag?.dataOriginLink) {
+        links.push({ href: klerosTag.dataOriginLink, label: 'View Tag Source' });
+      }
+    }
+
+    return links;
+  }, [klerosLabel, klerosTag?.dataOriginLink, linkedVaultHref]);
 
   // Badge variant - minimal inline badge (no avatar)
   if (variant === 'badge') {
     const content = (
       <>
-        {vaultName ? (
+        {klerosLabel ? (
+          <KlerosTagBadge
+            label={klerosLabel}
+            publicNote={klerosTag?.publicNote}
+            labelClassName={clsx('font-zen', labelClasses)}
+          />
+        ) : primaryLabel ? (
           <span
             className={clsx('font-zen', labelClasses)}
-            title={vaultName}
+            title={primaryLabelTitle}
           >
-            {vaultName}
+            {primaryLabel}
           </span>
         ) : (
           <Name
@@ -242,6 +277,7 @@ export function AccountIdentity({
         <AccountActionsPopover
           address={address}
           chainId={chainId ?? vaultIdentity?.chainId}
+          extraLinks={actionLinks}
           profileHref={actionsProfileHref}
           profileLabel={actionsProfileLabel}
         >
@@ -262,12 +298,18 @@ export function AccountIdentity({
           size={16}
         />
         <span className="min-w-0 text-xs">
-          {vaultName ? (
+          {klerosLabel ? (
+            <KlerosTagBadge
+              label={klerosLabel}
+              publicNote={klerosTag?.publicNote}
+              labelClassName={clsx('block font-zen', labelClasses)}
+            />
+          ) : primaryLabel ? (
             <span
               className={clsx('block font-zen', labelClasses)}
-              title={vaultName}
+              title={primaryLabelTitle}
             >
-              {vaultName}
+              {primaryLabel}
             </span>
           ) : (
             <Name
@@ -340,6 +382,7 @@ export function AccountIdentity({
         <AccountActionsPopover
           address={address}
           chainId={chainId ?? vaultIdentity?.chainId}
+          extraLinks={actionLinks}
           profileHref={actionsProfileHref}
           profileLabel={actionsProfileLabel}
         >
@@ -426,6 +469,14 @@ export function AccountIdentity({
             </span>
           </span>
         </Tooltip>
+      ) : mainTag?.kind === 'kleros' ? (
+        <span className={getMainTagClassName(mainTag.kind)}>
+          <KlerosTagBadge
+            label={mainTag.label}
+            publicNote={klerosTag?.publicNote}
+            labelClassName={labelClasses}
+          />
+        </span>
       ) : mainTag ? (
         <span className={getMainTagClassName(mainTag.kind)}>
           <span
@@ -490,6 +541,7 @@ export function AccountIdentity({
     <AccountActionsPopover
       address={address}
       chainId={chainId ?? vaultIdentity?.chainId}
+      extraLinks={actionLinks}
       profileHref={actionsProfileHref}
       profileLabel={actionsProfileLabel}
     >
