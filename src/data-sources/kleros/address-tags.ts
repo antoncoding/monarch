@@ -151,6 +151,10 @@ type FetchKlerosAddressTagsParams = {
   signal?: AbortSignal;
 };
 
+/**
+ * Fetches at most MAX_ADDRESSES_PER_REQUEST Kleros tags; callers that need more
+ * addresses should split requests into page-sized batches.
+ */
 export async function fetchKlerosAddressTags({
   addresses,
   chainId,
