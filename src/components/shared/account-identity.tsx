@@ -99,6 +99,7 @@ export function AccountIdentity({
     address: address as `0x${string}`,
     chainId: 1,
   });
+  const isVaultV2Identity = vaultIdentity?.kind === 'vault-v2';
 
   useEffect(() => {
     setMounted(true);
@@ -124,13 +125,13 @@ export function AccountIdentity({
       );
     }
     if (linkTo === 'profile') {
-      if (vaultIdentity && vaultIdentity.kind !== 'vault-adapter') {
+      if (isVaultV2Identity) {
         return getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress);
       }
       return `/positions/${address}`;
     }
     return null;
-  }, [linkTo, address, showActions, chainId, vaultIdentity?.chainId, vaultIdentity?.kind, vaultIdentity?.vaultAddress]);
+  }, [linkTo, address, showActions, chainId, isVaultV2Identity, vaultIdentity?.chainId, vaultIdentity?.vaultAddress]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -171,11 +172,10 @@ export function AccountIdentity({
     vaultIdentity?.kind === 'vault-adapter' && vaultIdentity.vaultAddress.toLowerCase() !== address.toLowerCase()
       ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress)
       : undefined;
-  const actionsProfileHref =
-    vaultIdentity && vaultIdentity.kind !== 'vault-adapter'
-      ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress)
-      : `/positions/${address}`;
-  const actionsProfileLabel = vaultIdentity && vaultIdentity.kind !== 'vault-adapter' ? 'View Vault' : 'View Portfolio';
+  const actionsProfileHref = isVaultV2Identity
+    ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress)
+    : `/positions/${address}`;
+  const actionsProfileLabel = isVaultV2Identity ? 'View Vault' : 'View Portfolio';
   const actionLinks = useMemo(() => {
     const links: { href: string; label: string }[] = [];
 
