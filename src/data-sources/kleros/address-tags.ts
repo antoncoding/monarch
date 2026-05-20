@@ -14,6 +14,7 @@ export type KlerosAddressTagsByKey = Record<string, KlerosAddressTag>;
 
 const KLEROS_SCOUT_ADDRESS_TAGS_URL = 'https://scout-api.kleros.link/api/address-tags';
 const MAX_ADDRESSES_PER_REQUEST = 50;
+const KLEROS_ADDRESS_TAGS_TIMEOUT_MS = 8_000;
 
 export const KLEROS_ADDRESS_TAGS_STALE_TIME_MS = 6 * 60 * 60 * 1000;
 export const KLEROS_ADDRESS_TAGS_GC_TIME_MS = 24 * 60 * 60 * 1000;
@@ -69,6 +70,10 @@ function readText(value: unknown): string | undefined {
   return text.length > 0 ? text : undefined;
 }
 
+function readChainId(value: unknown): string | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : readText(value);
+}
+
 function readHttpUrl(value: unknown): string | undefined {
   const text = readText(value);
 
@@ -85,7 +90,7 @@ function readHttpUrl(value: unknown): string | undefined {
 }
 
 function parseScoutTag(address: KlerosAddressTag['address'], chainId: number, value: unknown): KlerosAddressTag | null {
-  if (!isRecord(value) || readText(value.chain_id) !== String(chainId)) {
+  if (!isRecord(value) || readChainId(value.chain_id) !== String(chainId)) {
     return null;
   }
 
@@ -157,7 +162,21 @@ export async function fetchKlerosAddressTags({
     return {};
   }
 
+  const controller = new AbortController();
+  let didTimeout = false;
+  const handleAbort = () => controller.abort();
+  const timeoutId = setTimeout(() => {
+    didTimeout = true;
+    controller.abort();
+  }, KLEROS_ADDRESS_TAGS_TIMEOUT_MS);
+
   try {
+    if (signal?.aborted) {
+      controller.abort();
+    }
+
+    signal?.addEventListener('abort', handleAbort, { once: true });
+
     const response = await fetch(KLEROS_SCOUT_ADDRESS_TAGS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -165,7 +184,7 @@ export async function fetchKlerosAddressTags({
         addresses: normalizedAddresses,
         chains: [String(chainId)],
       }),
-      signal,
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -175,11 +194,18 @@ export async function fetchKlerosAddressTags({
 
     return normalizeScoutResponse((await response.json()) as unknown, chainId);
   } catch (error) {
-    if (signal?.aborted) {
+    if (signal?.aborted && !didTimeout) {
       throw error;
     }
 
-    console.warn('[kleros-address-tags] Scout request failed', error);
+    const message = didTimeout
+      ? `[kleros-address-tags] Scout request timed out after ${KLEROS_ADDRESS_TAGS_TIMEOUT_MS}ms`
+      : '[kleros-address-tags] Scout request failed';
+
+    console.warn(message, error);
     return {};
+  } finally {
+    clearTimeout(timeoutId);
+    signal?.removeEventListener('abort', handleAbort);
   }
 }

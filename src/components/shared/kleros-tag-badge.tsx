@@ -47,6 +47,7 @@ export function KlerosTagBadge({ label, publicNote, className, labelClassName }:
       <span
         className={clsx('inline-flex min-w-0 items-center gap-1.5', className)}
         aria-label={`${label}, tagged by Kleros`}
+        tabIndex={0}
       >
         <KlerosBadgeLogo />
         <span className={clsx('min-w-0 truncate', labelClassName)}>{label}</span>
