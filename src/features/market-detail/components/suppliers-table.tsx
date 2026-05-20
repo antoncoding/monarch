@@ -11,6 +11,8 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
+import { getKlerosAddressTagKey } from '@/data-sources/kleros/address-tags';
+import { useKlerosAddressTagsQuery } from '@/hooks/queries/useKlerosAddressTagsQuery';
 import { useMarketSuppliers } from '@/hooks/useMarketSuppliers';
 import { formatSimple } from '@/utils/balance';
 import type { Market } from '@/utils/types';
@@ -52,6 +54,9 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
       };
     });
   }, [suppliers, market?.state]);
+
+  const supplierAddresses = useMemo(() => suppliersWithAssets.map((supplier) => supplier.userAddress), [suppliersWithAssets]);
+  const { data: klerosAddressTags } = useKlerosAddressTagsQuery(chainId, supplierAddresses);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -136,6 +141,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                           variant="compact"
                           linkTo="profile"
                           showAdapterBadge
+                          klerosTag={klerosAddressTags?.[getKlerosAddressTagKey(chainId, supplier.userAddress)]}
                         />
                       </TableCell>
                       <TableCell className="text-sm">

@@ -218,6 +218,7 @@ Market metrics: external data API via `/v1/markets/metrics`
 | Vault allocations | On-chain multicall | 30s | `useAllocationsQuery` |
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
 | Oracle metadata | Scanner Gist | 30 min | `useOracleMetadata` / `useAllOracleMetadata` |
+| Account contract tags | Kleros Scout API via `/api/kleros/address-tags` | 6h stale | `useKlerosAddressTagsQuery` |
 | User rewards and distributions | Morpho rewards REST + Merkl API | 30s | `useUserRewardsQuery` |
 | Reward campaigns | Merkl API | 5 min stale | `useMerklCampaignsQuery` |
 | Market liquidations | Monarch GraphQL + Morpho API/Subgraph fallback | 5 min stale | `useMarketLiquidations` |

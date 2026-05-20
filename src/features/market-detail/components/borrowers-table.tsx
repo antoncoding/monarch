@@ -14,6 +14,8 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useMarketDetailPreferences } from '@/stores/useMarketDetailPreferences';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
+import { getKlerosAddressTagKey } from '@/data-sources/kleros/address-tags';
+import { useKlerosAddressTagsQuery } from '@/hooks/queries/useKlerosAddressTagsQuery';
 import { useMarketBorrowers } from '@/hooks/useMarketBorrowers';
 import { formatSimple } from '@/utils/balance';
 import type { Market } from '@/utils/types';
@@ -143,6 +145,9 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
       };
     });
   }, [borrowers, oraclePrice, market]);
+
+  const borrowerAddresses = useMemo(() => borrowersWithMetrics.map((borrower) => borrower.userAddress), [borrowersWithMetrics]);
+  const { data: klerosAddressTags } = useKlerosAddressTagsQuery(chainId, borrowerAddresses);
 
   const emptyStateColSpan =
     5 + (showHealthScore ? 1 : 0) + (showDaysToLiquidation ? 1 : 0) + (showLiquidationPrice ? 1 : 0) + (showDeveloperOptions ? 1 : 0);
@@ -289,6 +294,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                           variant="compact"
                           linkTo="profile"
                           showAdapterBadge
+                          klerosTag={klerosAddressTags?.[getKlerosAddressTagKey(chainId, borrower.userAddress)]}
                         />
                       </TableCell>
                       <TableCell className="text-sm">
