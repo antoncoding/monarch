@@ -531,10 +531,11 @@ export function groupPositionsByLoanAsset(
     .filter(hasSupplyPositionHistory)
     .reduce((acc: GroupedPosition[], position) => {
       const loanAssetAddress = position.market.loanAsset.address;
+      const loanAssetKey = loanAssetAddress.toLowerCase();
       const loanAssetDecimals = position.market.loanAsset.decimals;
       const chainId = position.market.morphoBlue.chain.id;
 
-      let groupedPosition = acc.find((gp) => gp.loanAssetAddress === loanAssetAddress && gp.chainId === chainId);
+      let groupedPosition = acc.find((gp) => gp.loanAssetAddress.toLowerCase() === loanAssetKey && gp.chainId === chainId);
 
       if (!groupedPosition) {
         groupedPosition = {
