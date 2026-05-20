@@ -39,6 +39,7 @@ type AccountIdentityProps = {
   showActions?: boolean;
   showAdapterBadge?: boolean;
   showBookmark?: boolean;
+  // AccountIdentity does not fetch Kleros data; list views should batch visible addresses and pass the matching tag.
   klerosTag?: KlerosAddressTag | null;
   className?: string;
 };

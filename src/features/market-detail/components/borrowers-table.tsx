@@ -146,6 +146,7 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
     });
   }, [borrowers, oraclePrice, market]);
 
+  // Batch Kleros tags for the current page instead of letting each AccountIdentity fetch one address.
   const borrowerAddresses = useMemo(() => borrowersWithMetrics.map((borrower) => borrower.userAddress), [borrowersWithMetrics]);
   const { data: klerosAddressTags } = useKlerosAddressTagsQuery(chainId, borrowerAddresses);
 

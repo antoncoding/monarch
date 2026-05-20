@@ -55,6 +55,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
     });
   }, [suppliers, market?.state]);
 
+  // Batch Kleros tags for the current page instead of letting each AccountIdentity fetch one address.
   const supplierAddresses = useMemo(() => suppliersWithAssets.map((supplier) => supplier.userAddress), [suppliersWithAssets]);
   const { data: klerosAddressTags } = useKlerosAddressTagsQuery(chainId, supplierAddresses);
 
