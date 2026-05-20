@@ -1,5 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
+import { getKlerosAddressTagKey } from '@/data-sources/kleros/address-tags';
+import { useKlerosAddressTagsQuery } from '@/hooks/queries/useKlerosAddressTagsQuery';
 import { useFeedLastUpdatedByChain } from '@/hooks/useFeedLastUpdatedByChain';
 import { getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { FeedEntry } from './FeedEntry';
@@ -21,6 +24,15 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
   const baseFeedTwo = oracleData?.baseFeedTwo ?? null;
   const quoteFeedOne = oracleData?.quoteFeedOne ?? null;
   const quoteFeedTwo = oracleData?.quoteFeedTwo ?? null;
+  const feedAddresses = useMemo(
+    () =>
+      [baseFeedOne?.address, baseFeedTwo?.address, quoteFeedOne?.address, quoteFeedTwo?.address].filter(
+        (address): address is string => Boolean(address),
+      ),
+    [baseFeedOne?.address, baseFeedTwo?.address, quoteFeedOne?.address, quoteFeedTwo?.address],
+  );
+  // Batch Kleros tags for the visible oracle feeds; FeedEntry only renders them as fallback identity for unclassified feeds.
+  const { data: klerosAddressTags } = useKlerosAddressTagsQuery(chainId, feedAddresses);
 
   const hasAnyFeed = baseFeedOne || baseFeedTwo || quoteFeedOne || quoteFeedTwo;
   const hasAnyVault = baseVault || quoteVault;
@@ -46,6 +58,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={baseFeedOne}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                klerosTag={klerosAddressTags?.[getKlerosAddressTagKey(chainId, baseFeedOne.address)]}
               />
             )}
             {baseFeedTwo && (
@@ -53,6 +66,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={baseFeedTwo}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                klerosTag={klerosAddressTags?.[getKlerosAddressTagKey(chainId, baseFeedTwo.address)]}
               />
             )}
           </div>
@@ -74,6 +88,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={quoteFeedOne}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                klerosTag={klerosAddressTags?.[getKlerosAddressTagKey(chainId, quoteFeedOne.address)]}
               />
             )}
             {quoteFeedTwo && (
@@ -81,6 +96,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={quoteFeedTwo}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                klerosTag={klerosAddressTags?.[getKlerosAddressTagKey(chainId, quoteFeedTwo.address)]}
               />
             )}
           </div>

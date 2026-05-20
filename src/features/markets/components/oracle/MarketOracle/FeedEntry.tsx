@@ -3,7 +3,9 @@ import Link from 'next/link';
 import type { Address } from 'viem';
 import { useReadContracts } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
+import { KlerosTagBadge } from '@/components/shared/kleros-tag-badge';
 import { Tooltip } from '@/components/ui/tooltip';
+import { formatKlerosAddressTagLabel, type KlerosAddressTag } from '@/data-sources/kleros/address-tags';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
@@ -29,9 +31,10 @@ type FeedEntryProps = {
   feed: EnrichedFeed | null;
   chainId: number;
   feedSnapshotsByAddress?: FeedSnapshotByAddress;
+  klerosTag?: KlerosAddressTag | null;
 };
 
-export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryProps): JSX.Element | null {
+export function FeedEntry({ feed, chainId, feedSnapshotsByAddress, klerosTag }: FeedEntryProps): JSX.Element | null {
   const feedVendorResult = useMemo(() => {
     return detectFeedVendorFromMetadata(feed);
   }, [feed]);
@@ -84,6 +87,8 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
 
   // Don't show asset pair if it's unknown
   const showAssetPair = !(assetPair.baseAsset === 'Unknown' && assetPair.quoteAsset === 'Unknown');
+  const klerosLabel = formatKlerosAddressTagLabel(klerosTag);
+  const klerosFallbackLabel = showAssetPair ? undefined : klerosLabel;
 
   const vendorIcon = OracleVendorIcons[vendor];
   const hasKnownVendorIcon = vendor !== PriceFeedVendors.Unknown && Boolean(vendorIcon);
@@ -164,6 +169,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
             feed={feed}
             chainId={chainId}
             feedFreshness={freshness}
+            klerosTag={klerosTag}
           />
         );
 
@@ -174,6 +180,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
               feed={feed}
               chainId={chainId}
               feedFreshness={freshness}
+              klerosTag={klerosTag}
             />
           );
         }
@@ -182,6 +189,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
             feed={feed}
             chainId={chainId}
             feedFreshness={freshness}
+            klerosTag={klerosTag}
           />
         );
 
@@ -191,6 +199,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
             feed={feed}
             chainId={chainId}
             feedFreshness={freshness}
+            klerosTag={klerosTag}
           />
         );
     }
@@ -217,7 +226,17 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
           </div>
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-1">
-            <span className="text-xs font-medium text-gray-500">Unknown Feed</span>
+            {klerosFallbackLabel ? (
+              <KlerosTagBadge
+                label={klerosFallbackLabel}
+                publicNote={klerosTag?.publicNote}
+                className="text-gray-600 dark:text-gray-400"
+                labelClassName="max-w-[8rem] text-xs font-medium"
+                showTooltip={false}
+              />
+            ) : (
+              <span className="text-xs font-medium text-gray-500">Unknown Feed</span>
+            )}
           </div>
         )}
 

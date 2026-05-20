@@ -13,6 +13,7 @@ type KlerosTagBadgeProps = {
   publicNote?: string;
   className?: string;
   labelClassName?: string;
+  showTooltip?: boolean;
 };
 
 function KlerosBadgeLogo({ size = 14 }: { size?: number }) {
@@ -33,7 +34,22 @@ function KlerosBadgeLogo({ size = 14 }: { size?: number }) {
   );
 }
 
-export function KlerosTagBadge({ label, publicNote, className, labelClassName }: KlerosTagBadgeProps) {
+export function KlerosTagBadge({ label, publicNote, className, labelClassName, showTooltip = true }: KlerosTagBadgeProps) {
+  const badge = (
+    <span
+      className={clsx('inline-flex min-w-0 items-center gap-1.5', className)}
+      aria-label={`${label}, tagged by Kleros`}
+      tabIndex={showTooltip ? 0 : undefined}
+    >
+      <KlerosBadgeLogo />
+      <span className={clsx('min-w-0 truncate', labelClassName)}>{label}</span>
+    </span>
+  );
+
+  if (!showTooltip) {
+    return badge;
+  }
+
   return (
     <Tooltip
       content={
@@ -44,14 +60,7 @@ export function KlerosTagBadge({ label, publicNote, className, labelClassName }:
         />
       }
     >
-      <span
-        className={clsx('inline-flex min-w-0 items-center gap-1.5', className)}
-        aria-label={`${label}, tagged by Kleros`}
-        tabIndex={0}
-      >
-        <KlerosBadgeLogo />
-        <span className={clsx('min-w-0 truncate', labelClassName)}>{label}</span>
-      </span>
+      {badge}
     </Tooltip>
   );
 }

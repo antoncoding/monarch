@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
+import { formatKlerosAddressTagLabel, type KlerosAddressTag } from '@/data-sources/kleros/address-tags';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
@@ -12,14 +13,18 @@ type GeneralFeedTooltipProps = {
   feed: EnrichedFeed;
   chainId: number;
   feedFreshness?: FeedFreshnessStatus;
+  klerosTag?: KlerosAddressTag | null;
 };
 
-export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeedTooltipProps) {
+export function GeneralFeedTooltip({ feed, chainId, feedFreshness, klerosTag }: GeneralFeedTooltipProps) {
   const baseAsset = feed.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair[1] ?? 'Unknown';
+  const showAssetPair = !(baseAsset === 'Unknown' && quoteAsset === 'Unknown');
 
   const vendor = feed.provider ? mapProviderToVendor(feed.provider) : PriceFeedVendors.Unknown;
   const vendorIcon = OracleVendorIcons[vendor] || OracleVendorIcons[PriceFeedVendors.Unknown];
+  const klerosLabel = formatKlerosAddressTagLabel(klerosTag);
+  const showKlerosFallback = vendor === PriceFeedVendors.Unknown && Boolean(klerosLabel);
 
   return (
     <div className="flex w-fit max-w-[22rem] flex-col gap-3">
@@ -35,15 +40,20 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
             />
           </div>
         )}
-        <div className="font-zen font-bold">{feed.provider ?? 'Price'} Feed</div>
+        <div>
+          <div className="font-zen font-bold">{showKlerosFallback ? klerosLabel : `${feed.provider ?? 'Price'} Feed`}</div>
+          {showKlerosFallback && <div className="font-zen text-xs text-secondary">Name tag from Kleros Scout</div>}
+        </div>
       </div>
 
       {/* Feed pair name */}
-      <div className="flex items-center gap-2">
-        <div className="font-zen text-base font-semibold text-gray-800 dark:text-gray-200">
-          {baseAsset} / {quoteAsset}
+      {showAssetPair && (
+        <div className="flex items-center gap-2">
+          <div className="font-zen text-base font-semibold text-gray-800 dark:text-gray-200">
+            {baseAsset} / {quoteAsset}
+          </div>
         </div>
-      </div>
+      )}
 
       <FeedTypeSection feed={feed} />
 
@@ -75,6 +85,16 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
             />
             Explorer
           </Link>
+          {showKlerosFallback && klerosTag?.dataOriginLink && (
+            <Link
+              href={klerosTag.dataOriginLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
+            >
+              View Tag Source
+            </Link>
+          )}
         </div>
       </div>
     </div>
