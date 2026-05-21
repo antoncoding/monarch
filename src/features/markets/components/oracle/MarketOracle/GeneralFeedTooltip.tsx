@@ -48,7 +48,7 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
           {isMonarchVerified && (
             <Badge
               size="sm"
-              className="gap-1 border border-primary/20 bg-primary/10 text-primary dark:bg-primary/10"
+              className="gap-1 border border-primary/20 bg-primary/10 text-[var(--color-primary)] dark:bg-primary/10"
             >
               <MonarchVerifiedIcon size={12} />
               Monarch verified

@@ -5,7 +5,7 @@ export function MonarchVerifiedIcon({ className, size = 16 }: { className?: stri
   return (
     <MdVerified
       size={size}
-      className={cn('shrink-0 text-primary', className)}
+      className={cn('shrink-0 text-[var(--color-primary)]', className)}
       aria-hidden="true"
     />
   );

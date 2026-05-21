@@ -31,7 +31,7 @@ export function MonarchVerifiedBadge({ compact = false }: { compact?: boolean })
   return (
     <Badge
       size="sm"
-      className="gap-1 border border-primary/20 bg-primary/10 text-primary dark:bg-primary/10"
+      className="gap-1 border border-primary/20 bg-primary/10 text-[var(--color-primary)] dark:bg-primary/10"
     >
       <MonarchVerifiedIcon size={12} />
       {compact ? 'Verified' : 'Monarch verified'}
