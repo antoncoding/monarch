@@ -75,7 +75,7 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
 
   const normalizedProvider = provider.trim().toLowerCase();
 
-  if (normalizedProvider.includes('monarchverified') || normalizedProvider.includes('monarch verified')) {
+  if (isMonarchVerifiedProvider(provider)) {
     return PriceFeedVendors.Unknown;
   }
   if (normalizedProvider.includes('chronicle')) return PriceFeedVendors.Chronicle;
