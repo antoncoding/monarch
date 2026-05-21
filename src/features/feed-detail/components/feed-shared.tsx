@@ -3,19 +3,40 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { LuCopy, LuInfo } from 'react-icons/lu';
+import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { FeedTypeBadge, getFeedTypeInfo } from '@/features/markets/components/oracle/MarketOracle/FeedTypeBadge';
-import { getChainlinkFeedUrl, getChronicleFeedUrl, mapProviderToVendor, OracleVendorIcons, PriceFeedVendors } from '@/utils/oracle';
+import {
+  getChainlinkFeedUrl,
+  getChronicleFeedUrl,
+  isMonarchVerifiedFeed,
+  mapProviderToVendor,
+  OracleVendorIcons,
+  PriceFeedVendors,
+} from '@/utils/oracle';
 import { FEED_TYPE_PAGE_COPY } from '../feed-detail-constants';
 import { getFeedPairLabel, getFeedProviderLabel, type FeedDependencyLeg, type FeedDependencyOccurrence } from '../feed-detail-utils';
 
 export function getFeedVendorIcon(leg: FeedDependencyLeg | null): string {
   if (!leg) return '';
+  if (isMonarchVerifiedFeed(leg)) return '';
   const vendor = leg.provider ? mapProviderToVendor(leg.provider) : PriceFeedVendors.Unknown;
   return OracleVendorIcons[vendor] || '';
+}
+
+export function MonarchVerifiedBadge({ compact = false }: { compact?: boolean }) {
+  return (
+    <Badge
+      size="sm"
+      className="gap-1 border border-primary/20 bg-primary/10 text-[var(--color-primary)] dark:bg-primary/10"
+    >
+      <MonarchVerifiedIcon size={12} />
+      {compact ? 'Verified' : 'Monarch verified'}
+    </Badge>
+  );
 }
 
 function getVendorUrl(leg: FeedDependencyLeg | null, chainId: number): string {
@@ -98,6 +119,24 @@ export function ProviderLink({ leg, chainId, className }: { leg: FeedDependencyL
       {content}
       <ExternalLinkIcon className="h-3 w-3" />
     </Link>
+  );
+}
+
+export function FeedProvenanceBadges({ leg }: { leg: FeedDependencyLeg | null }) {
+  if (!leg) return null;
+
+  return (
+    <>
+      {isMonarchVerifiedFeed(leg) && <MonarchVerifiedBadge />}
+      {leg.noAdmin && (
+        <Badge
+          size="sm"
+          className="border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+        >
+          No admin
+        </Badge>
+      )}
+    </>
   );
 }
 

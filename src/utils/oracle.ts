@@ -25,6 +25,7 @@ import { TokenPeg, supportedTokens } from './tokens';
 type VendorInfo = {
   coreVendors: PriceFeedVendors[]; // Well-known vendors (Chainlink, Redstone, etc.)
   taggedVendors: string[]; // Known provider names without a core vendor badge/icon yet
+  hasMonarchVerified: boolean; // Monarch allowlist status, separate from vendor filtering
   hasCompletelyUnknown: boolean; // True unknown feeds (no data found)
   hasTaggedUnknown: boolean; // Provider is tagged, but not widely used enough for a core vendor type
   // Legacy properties for backward compatibility
@@ -74,6 +75,9 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
 
   const normalizedProvider = provider.trim().toLowerCase();
 
+  if (isMonarchVerifiedProvider(provider)) {
+    return PriceFeedVendors.Unknown;
+  }
   if (normalizedProvider.includes('chronicle')) return PriceFeedVendors.Chronicle;
   if (normalizedProvider.includes('pendle')) return PriceFeedVendors.Pendle;
   if (normalizedProvider.includes('midas')) return PriceFeedVendors.Midas;
@@ -92,6 +96,18 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
   };
 
   return mapping[normalizedProvider] ?? PriceFeedVendors.Unknown;
+}
+
+export function isMonarchVerifiedProvider(provider: OracleFeedProvider | undefined): boolean {
+  if (!provider) return false;
+  const normalizedProvider = provider.trim().toLowerCase();
+  return normalizedProvider === 'monarchverified' || normalizedProvider === 'monarch verified';
+}
+
+export function isMonarchVerifiedFeed(
+  feed: { provider?: OracleFeedProvider | undefined; tier?: string | undefined } | null | undefined,
+): boolean {
+  return isMonarchVerifiedProvider(feed?.provider) || feed?.tier?.trim().toLowerCase() === 'monarch_verified';
 }
 
 /**
@@ -207,6 +223,7 @@ function emptyVendorInfo(): VendorInfo {
   return {
     coreVendors: [],
     taggedVendors: [],
+    hasMonarchVerified: false,
     hasCompletelyUnknown: false,
     hasTaggedUnknown: false,
     vendors: [],
@@ -230,11 +247,17 @@ export function parsePriceFeedVendors(oracleData: OracleOutputData | null | unde
 function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
   const coreVendors = new Set<PriceFeedVendors>();
   const taggedVendors = new Set<string>();
+  let hasMonarchVerified = false;
   let hasCompletelyUnknown = false;
   let hasTaggedUnknown = false;
 
   for (const feed of feeds) {
     if (feed?.address) {
+      if (isMonarchVerifiedFeed(feed)) {
+        hasMonarchVerified = true;
+        continue;
+      }
+
       const feedResult = detectFeedVendorFromMetadata(feed);
 
       if (feedResult.vendor === PriceFeedVendors.Unknown) {
@@ -256,6 +279,7 @@ function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
   return {
     coreVendors: Array.from(coreVendors),
     taggedVendors: Array.from(taggedVendors),
+    hasMonarchVerified,
     hasCompletelyUnknown,
     hasTaggedUnknown,
     vendors: legacyVendors,

@@ -29,6 +29,8 @@ export type EnrichedFeed = {
   pair: [string, string] | [];
   provider: OracleFeedProvider;
   vendor?: string;
+  builtBy?: string;
+  noAdmin?: boolean;
   decimals?: number;
   tier?: string; // Chainlink feed category: "verified", "high", "medium", "low", "custom", etc.
   heartbeat?: number;

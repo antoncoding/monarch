@@ -7,6 +7,7 @@ import {
   type OracleOutput,
   type OracleOutputData,
 } from '@/hooks/useOracleMetadata';
+import { isMonarchVerifiedFeed } from '@/utils/oracle';
 import type { Market } from '@/utils/types';
 
 export type FeedDependencyKind = 'feed' | 'vault';
@@ -18,6 +19,8 @@ export type FeedDependencyLeg = (EnrichedFeed | EnrichedVault) & {
   description?: string;
   provider?: string | null;
   vendor?: string;
+  builtBy?: string;
+  noAdmin?: boolean;
   feedType?: string;
   decimals?: number;
   tier?: string;
@@ -242,6 +245,10 @@ export function getFeedTitle(leg: FeedDependencyLeg | null, address: string): st
 }
 
 export function getFeedProviderLabel(leg: FeedDependencyLeg | null): string {
+  if (isMonarchVerifiedFeed(leg)) {
+    return leg?.builtBy ?? 'Monarch verified';
+  }
+
   return leg?.provider ?? leg?.vendor ?? 'Unknown provider';
 }
 
