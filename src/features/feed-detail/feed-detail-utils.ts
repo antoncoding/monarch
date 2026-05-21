@@ -7,6 +7,7 @@ import {
   type OracleOutput,
   type OracleOutputData,
 } from '@/hooks/useOracleMetadata';
+import { isMonarchVerifiedProvider } from '@/utils/oracle';
 import type { Market } from '@/utils/types';
 
 export type FeedDependencyKind = 'feed' | 'vault';
@@ -244,8 +245,8 @@ export function getFeedTitle(leg: FeedDependencyLeg | null, address: string): st
 }
 
 export function getFeedProviderLabel(leg: FeedDependencyLeg | null): string {
-  if (leg?.provider?.trim().toLowerCase() === 'monarchverified') {
-    return leg.vendor ?? 'Monarch Verified';
+  if (isMonarchVerifiedProvider(leg?.provider)) {
+    return leg?.vendor ?? 'Monarch Verified';
   }
 
   return leg?.provider ?? leg?.vendor ?? 'Unknown provider';
