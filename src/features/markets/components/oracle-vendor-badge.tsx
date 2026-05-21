@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoWarningOutline, IoHelpCircleOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
-import { OracleType, OracleVendorIcons, getOracleVendorInfo, type PriceFeedVendors, getOracleType } from '@/utils/oracle';
+import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
+import { Tooltip } from '@/components/ui/tooltip';
 import { getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { OracleType, OracleVendorIcons, getOracleVendorInfo, type PriceFeedVendors, getOracleType } from '@/utils/oracle';
 
 type OracleVendorBadgeProps = {
   chainId: number;
@@ -46,10 +47,16 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
     (standardOracleData?.baseVault || standardOracleData?.quoteVault);
 
   const vendorInfo = getOracleVendorInfo(oracleAddress, chainId, oracleMetadataMap);
-  const { coreVendors, taggedVendors, hasCompletelyUnknown, hasTaggedUnknown } = vendorInfo;
-  const displayNames = hasCompletelyUnknown ? [...coreVendors, ...taggedVendors, 'Unknown'] : [...coreVendors, ...taggedVendors];
-  const showTaggedFallbackIcon = !isCustom && !isVaultOnly && coreVendors.length === 0 && taggedVendors.length > 0;
-  const showGenericFallbackIcon = !isCustom && !isVaultOnly && coreVendors.length === 0 && taggedVendors.length === 0;
+  const { coreVendors, taggedVendors, hasMonarchVerified, hasCompletelyUnknown, hasTaggedUnknown } = vendorInfo;
+  const displayNames = [
+    ...(hasMonarchVerified ? ['Monarch verified'] : []),
+    ...coreVendors,
+    ...taggedVendors,
+    ...(hasCompletelyUnknown ? ['Unknown'] : []),
+  ];
+  const showTaggedFallbackIcon = !isCustom && !isVaultOnly && !hasMonarchVerified && coreVendors.length === 0 && taggedVendors.length > 0;
+  const showGenericFallbackIcon =
+    !isCustom && !isVaultOnly && !hasMonarchVerified && coreVendors.length === 0 && taggedVendors.length === 0;
 
   const content = (
     <div className="flex items-center space-x-1 rounded p-1">
@@ -71,8 +78,9 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
         />
       ) : hasCompletelyUnknown ? (
         <>
-          {coreVendors.map((vendor, index) => (
-            <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>
+          {hasMonarchVerified && <MonarchVerifiedIcon size={16} />}
+          {coreVendors.map((vendor) => (
+            <React.Fragment key={vendor}>{renderVendorIcon(vendor)}</React.Fragment>
           ))}
           <IoHelpCircleOutline
             className="text-secondary"
@@ -80,7 +88,12 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
           />
         </>
       ) : (
-        coreVendors.map((vendor, index) => <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>)
+        <>
+          {hasMonarchVerified && <MonarchVerifiedIcon size={16} />}
+          {coreVendors.map((vendor) => (
+            <React.Fragment key={vendor}>{renderVendorIcon(vendor)}</React.Fragment>
+          ))}
+        </>
       )}
     </div>
   );
@@ -122,12 +135,17 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
           ? hasCompletelyUnknown
             ? `${allKnownVendors.join(', ')} and unknown feeds`
             : allKnownVendors.join(', ')
-          : 'unknown or unclassified feeds';
+          : hasCompletelyUnknown
+            ? 'unknown feeds'
+            : hasMonarchVerified
+              ? ''
+              : 'unknown or unclassified feeds';
 
       return (
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-primary font-zen">{oracleLabel}</p>
-          <p className="text-xs text-secondary font-zen">Uses feeds from {feedSummary}.</p>
+          {feedSummary && <p className="text-xs text-secondary font-zen">Uses feeds from {feedSummary}.</p>}
+          {hasMonarchVerified && <p className="text-xs text-secondary font-zen">Includes feed metadata verified by Monarch.</p>}
           {hasTaggedUnknown && (
             <p className="text-xs text-secondary font-zen">
               {taggedVendors.join(', ')} {taggedVendors.length === 1 ? 'is' : 'are'} tagged, but not widely used.

@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
 import { Badge } from '@/components/ui/badge';
+import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
@@ -38,6 +39,7 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
             />
           </div>
         )}
+        {isMonarchVerified && <MonarchVerifiedIcon size={16} />}
         <div className="font-zen font-bold">{providerLabel} Feed</div>
       </div>
 
@@ -46,8 +48,9 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
           {isMonarchVerified && (
             <Badge
               size="sm"
-              className="border border-orange-500/20 bg-orange-500/10 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300"
+              className="gap-1 border border-primary/20 bg-primary/10 text-primary dark:bg-primary/10"
             >
+              <MonarchVerifiedIcon size={12} />
               Monarch verified
             </Badge>
           )}

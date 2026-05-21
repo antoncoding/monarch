@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { LuCopy, LuInfo } from 'react-icons/lu';
+import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -21,6 +22,7 @@ import { getFeedPairLabel, getFeedProviderLabel, type FeedDependencyLeg, type Fe
 
 export function getFeedVendorIcon(leg: FeedDependencyLeg | null): string {
   if (!leg) return '';
+  if (isMonarchVerifiedFeed(leg)) return '';
   const vendor = leg.provider ? mapProviderToVendor(leg.provider) : PriceFeedVendors.Unknown;
   return OracleVendorIcons[vendor] || '';
 }
@@ -29,8 +31,9 @@ export function MonarchVerifiedBadge({ compact = false }: { compact?: boolean })
   return (
     <Badge
       size="sm"
-      className="border border-orange-500/20 bg-orange-500/10 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300"
+      className="gap-1 border border-primary/20 bg-primary/10 text-primary dark:bg-primary/10"
     >
+      <MonarchVerifiedIcon size={12} />
       {compact ? 'Verified' : 'Monarch verified'}
     </Badge>
   );

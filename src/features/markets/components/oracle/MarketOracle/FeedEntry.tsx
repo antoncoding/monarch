@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { Address } from 'viem';
 import { useReadContracts } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
+import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
@@ -14,6 +15,7 @@ import {
   formatOraclePrice,
   getFeedFreshnessStatus,
   getTruncatedAssetName,
+  isMonarchVerifiedFeed,
   OracleVendorIcons,
   PriceFeedVendors,
 } from '@/utils/oracle';
@@ -87,6 +89,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
 
   const vendorIcon = OracleVendorIcons[vendor];
   const hasKnownVendorIcon = vendor !== PriceFeedVendors.Unknown && Boolean(vendorIcon);
+  const isMonarchVerified = isMonarchVerifiedFeed(feed);
   const feedAddressKey = feed.address.toLowerCase();
   const snapshot = feedSnapshotsByAddress?.[feedAddressKey];
   const directAnswer =
@@ -159,7 +162,6 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
       case PriceFeedVendors.Midas:
       case PriceFeedVendors.Oval:
       case PriceFeedVendors.Lido:
-      case PriceFeedVendors.MonarchVerified:
         return (
           <GeneralFeedTooltip
             feed={feed}
@@ -223,7 +225,9 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
         )}
 
         <div className="flex flex-shrink-0 items-center gap-1">
-          {hasKnownVendorIcon ? (
+          {isMonarchVerified ? (
+            <MonarchVerifiedIcon size={14} />
+          ) : hasKnownVendorIcon ? (
             <Image
               src={vendorIcon}
               alt="Oracle"

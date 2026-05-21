@@ -25,6 +25,7 @@ import { TokenPeg, supportedTokens } from './tokens';
 type VendorInfo = {
   coreVendors: PriceFeedVendors[]; // Well-known vendors (Chainlink, Redstone, etc.)
   taggedVendors: string[]; // Known provider names without a core vendor badge/icon yet
+  hasMonarchVerified: boolean; // Monarch allowlist status, separate from vendor filtering
   hasCompletelyUnknown: boolean; // True unknown feeds (no data found)
   hasTaggedUnknown: boolean; // Provider is tagged, but not widely used enough for a core vendor type
   // Legacy properties for backward compatibility
@@ -47,7 +48,6 @@ export enum PriceFeedVendors {
   Compound = 'Compound',
   Lido = 'Lido',
   Pendle = 'Pendle',
-  MonarchVerified = 'Monarch Verified',
   API3 = 'API3',
   Midas = 'Midas',
   Unknown = 'Unknown',
@@ -62,7 +62,6 @@ export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
   [PriceFeedVendors.Compound]: require('../imgs/oracles/compound.webp') as string,
   [PriceFeedVendors.Lido]: require('../imgs/oracles/lido.png') as string,
   [PriceFeedVendors.Pendle]: require('../imgs/oracles/pendle.png') as string,
-  [PriceFeedVendors.MonarchVerified]: require('../components/imgs/logo.png') as string,
   [PriceFeedVendors.API3]: require('../imgs/oracles/api3.svg') as string,
   [PriceFeedVendors.Midas]: require('../imgs/oracles/midas.png') as string,
   [PriceFeedVendors.Unknown]: '',
@@ -77,7 +76,7 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
   const normalizedProvider = provider.trim().toLowerCase();
 
   if (normalizedProvider.includes('monarchverified') || normalizedProvider.includes('monarch verified')) {
-    return PriceFeedVendors.MonarchVerified;
+    return PriceFeedVendors.Unknown;
   }
   if (normalizedProvider.includes('chronicle')) return PriceFeedVendors.Chronicle;
   if (normalizedProvider.includes('pendle')) return PriceFeedVendors.Pendle;
@@ -92,8 +91,6 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
     lido: PriceFeedVendors.Lido,
     oval: PriceFeedVendors.Oval,
     pyth: PriceFeedVendors.PythNetwork,
-    monarchverified: PriceFeedVendors.MonarchVerified,
-    'monarch verified': PriceFeedVendors.MonarchVerified,
     api3: PriceFeedVendors.API3,
     midas: PriceFeedVendors.Midas,
   };
@@ -226,6 +223,7 @@ function emptyVendorInfo(): VendorInfo {
   return {
     coreVendors: [],
     taggedVendors: [],
+    hasMonarchVerified: false,
     hasCompletelyUnknown: false,
     hasTaggedUnknown: false,
     vendors: [],
@@ -249,11 +247,17 @@ export function parsePriceFeedVendors(oracleData: OracleOutputData | null | unde
 function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
   const coreVendors = new Set<PriceFeedVendors>();
   const taggedVendors = new Set<string>();
+  let hasMonarchVerified = false;
   let hasCompletelyUnknown = false;
   let hasTaggedUnknown = false;
 
   for (const feed of feeds) {
     if (feed?.address) {
+      if (isMonarchVerifiedFeed(feed)) {
+        hasMonarchVerified = true;
+        continue;
+      }
+
       const feedResult = detectFeedVendorFromMetadata(feed);
 
       if (feedResult.vendor === PriceFeedVendors.Unknown) {
@@ -275,6 +279,7 @@ function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
   return {
     coreVendors: Array.from(coreVendors),
     taggedVendors: Array.from(taggedVendors),
+    hasMonarchVerified,
     hasCompletelyUnknown,
     hasTaggedUnknown,
     vendors: legacyVendors,
