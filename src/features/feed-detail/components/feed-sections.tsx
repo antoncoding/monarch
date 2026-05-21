@@ -61,7 +61,8 @@ export function FeedHero({
 }) {
   const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
   const networkImg = getNetworkImg(chainId);
-  const hasProviderBadge = Boolean(leg?.provider || leg?.vendor);
+  const isMonarchVerified = isMonarchVerifiedFeed(leg);
+  const hasProviderBadge = !isMonarchVerified && Boolean(leg?.provider || leg?.vendor);
   const statValue = (value: string): string => (isStatsLoading ? 'Calculating' : value);
 
   return (
@@ -144,6 +145,7 @@ export function FeedMetadataSection({
 }) {
   const description = getDistinctFeedDescription(leg);
   const isVault = kind === 'vault';
+  const isMonarchVerified = isMonarchVerifiedFeed(leg);
 
   return (
     <SectionShell title={isVault ? 'Vault Conversion' : 'Feed Overview'}>
@@ -175,16 +177,18 @@ export function FeedMetadataSection({
             value={leg.assetSymbol}
           />
         )}
-        <DetailRow
-          label="Provider"
-          value={
-            <ProviderLink
-              leg={leg}
-              chainId={chainId}
-              className="inline-flex items-center justify-end gap-1.5 text-primary no-underline hover:underline"
-            />
-          }
-        />
+        {!isMonarchVerified && (
+          <DetailRow
+            label="Provider"
+            value={
+              <ProviderLink
+                leg={leg}
+                chainId={chainId}
+                className="inline-flex items-center justify-end gap-1.5 text-primary no-underline hover:underline"
+              />
+            }
+          />
+        )}
         {leg?.conversionSample && (
           <DetailRow
             label="Conversion sample"
@@ -270,26 +274,22 @@ export function FeedInspectionSection({
             label="Type"
             value={<FeedTypeValue leg={leg} />}
           />
-          <DetailRow
-            label="Provider"
-            value={
-              <ProviderLink
-                leg={leg}
-                chainId={chainId}
-                className="inline-flex items-center justify-end gap-1.5 text-primary no-underline hover:underline"
-              />
-            }
-          />
+          {!isMonarchVerified && (
+            <DetailRow
+              label="Provider"
+              value={
+                <ProviderLink
+                  leg={leg}
+                  chainId={chainId}
+                  className="inline-flex items-center justify-end gap-1.5 text-primary no-underline hover:underline"
+                />
+              }
+            />
+          )}
           {isMonarchVerified && (
             <DetailRow
               label="Verification"
               value={<MonarchVerifiedBadge />}
-            />
-          )}
-          {isMonarchVerified && leg?.vendor && (
-            <DetailRow
-              label="Vendor"
-              value={leg.vendor}
             />
           )}
           {leg?.builtBy && (

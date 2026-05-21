@@ -23,7 +23,7 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
 
   const vendor = feed.provider ? mapProviderToVendor(feed.provider) : PriceFeedVendors.Unknown;
   const vendorIcon = OracleVendorIcons[vendor] || OracleVendorIcons[PriceFeedVendors.Unknown];
-  const providerLabel = isMonarchVerified ? (feed.vendor ?? 'Monarch verified') : (feed.provider ?? 'Price');
+  const tooltipTitle = isMonarchVerified ? 'Monarch verified feed' : `${feed.provider ?? 'Price'} Feed`;
 
   return (
     <div className="flex w-fit max-w-[22rem] flex-col gap-3">
@@ -40,7 +40,7 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
           </div>
         )}
         {isMonarchVerified && <MonarchVerifiedIcon size={16} />}
-        <div className="font-zen font-bold">{providerLabel} Feed</div>
+        <div className="font-zen font-bold">{tooltipTitle}</div>
       </div>
 
       {(isMonarchVerified || feed.noAdmin) && (
