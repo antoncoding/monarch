@@ -47,6 +47,7 @@ export enum PriceFeedVendors {
   Compound = 'Compound',
   Lido = 'Lido',
   Pendle = 'Pendle',
+  MonarchVerified = 'Monarch Verified',
   API3 = 'API3',
   Midas = 'Midas',
   Unknown = 'Unknown',
@@ -61,6 +62,7 @@ export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
   [PriceFeedVendors.Compound]: require('../imgs/oracles/compound.webp') as string,
   [PriceFeedVendors.Lido]: require('../imgs/oracles/lido.png') as string,
   [PriceFeedVendors.Pendle]: require('../imgs/oracles/pendle.png') as string,
+  [PriceFeedVendors.MonarchVerified]: require('../components/imgs/logo.png') as string,
   [PriceFeedVendors.API3]: require('../imgs/oracles/api3.svg') as string,
   [PriceFeedVendors.Midas]: require('../imgs/oracles/midas.png') as string,
   [PriceFeedVendors.Unknown]: '',
@@ -74,6 +76,9 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
 
   const normalizedProvider = provider.trim().toLowerCase();
 
+  if (normalizedProvider.includes('monarchverified') || normalizedProvider.includes('monarch verified')) {
+    return PriceFeedVendors.MonarchVerified;
+  }
   if (normalizedProvider.includes('chronicle')) return PriceFeedVendors.Chronicle;
   if (normalizedProvider.includes('pendle')) return PriceFeedVendors.Pendle;
   if (normalizedProvider.includes('midas')) return PriceFeedVendors.Midas;
@@ -87,11 +92,25 @@ export function mapProviderToVendor(provider: OracleFeedProvider): PriceFeedVend
     lido: PriceFeedVendors.Lido,
     oval: PriceFeedVendors.Oval,
     pyth: PriceFeedVendors.PythNetwork,
+    monarchverified: PriceFeedVendors.MonarchVerified,
+    'monarch verified': PriceFeedVendors.MonarchVerified,
     api3: PriceFeedVendors.API3,
     midas: PriceFeedVendors.Midas,
   };
 
   return mapping[normalizedProvider] ?? PriceFeedVendors.Unknown;
+}
+
+export function isMonarchVerifiedProvider(provider: OracleFeedProvider | undefined): boolean {
+  if (!provider) return false;
+  const normalizedProvider = provider.trim().toLowerCase();
+  return normalizedProvider === 'monarchverified' || normalizedProvider === 'monarch verified';
+}
+
+export function isMonarchVerifiedFeed(
+  feed: { provider?: OracleFeedProvider | undefined; tier?: string | undefined } | null | undefined,
+): boolean {
+  return isMonarchVerifiedProvider(feed?.provider) || feed?.tier?.trim().toLowerCase() === 'monarch_verified';
 }
 
 /**

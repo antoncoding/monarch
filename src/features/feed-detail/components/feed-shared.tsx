@@ -8,7 +8,14 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { FeedTypeBadge, getFeedTypeInfo } from '@/features/markets/components/oracle/MarketOracle/FeedTypeBadge';
-import { getChainlinkFeedUrl, getChronicleFeedUrl, mapProviderToVendor, OracleVendorIcons, PriceFeedVendors } from '@/utils/oracle';
+import {
+  getChainlinkFeedUrl,
+  getChronicleFeedUrl,
+  isMonarchVerifiedFeed,
+  mapProviderToVendor,
+  OracleVendorIcons,
+  PriceFeedVendors,
+} from '@/utils/oracle';
 import { FEED_TYPE_PAGE_COPY } from '../feed-detail-constants';
 import { getFeedPairLabel, getFeedProviderLabel, type FeedDependencyLeg, type FeedDependencyOccurrence } from '../feed-detail-utils';
 
@@ -16,6 +23,17 @@ export function getFeedVendorIcon(leg: FeedDependencyLeg | null): string {
   if (!leg) return '';
   const vendor = leg.provider ? mapProviderToVendor(leg.provider) : PriceFeedVendors.Unknown;
   return OracleVendorIcons[vendor] || '';
+}
+
+export function MonarchVerifiedBadge({ compact = false }: { compact?: boolean }) {
+  return (
+    <Badge
+      size="sm"
+      className="border border-orange-500/20 bg-orange-500/10 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300"
+    >
+      {compact ? 'Verified' : 'Monarch verified'}
+    </Badge>
+  );
 }
 
 function getVendorUrl(leg: FeedDependencyLeg | null, chainId: number): string {
@@ -98,6 +116,24 @@ export function ProviderLink({ leg, chainId, className }: { leg: FeedDependencyL
       {content}
       <ExternalLinkIcon className="h-3 w-3" />
     </Link>
+  );
+}
+
+export function FeedProvenanceBadges({ leg }: { leg: FeedDependencyLeg | null }) {
+  if (!leg) return null;
+
+  return (
+    <>
+      {isMonarchVerifiedFeed(leg) && <MonarchVerifiedBadge />}
+      {leg.noAdmin && (
+        <Badge
+          size="sm"
+          className="border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+        >
+          No admin
+        </Badge>
+      )}
+    </>
   );
 }
 

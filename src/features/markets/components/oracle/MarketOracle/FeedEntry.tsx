@@ -159,6 +159,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
       case PriceFeedVendors.Midas:
       case PriceFeedVendors.Oval:
       case PriceFeedVendors.Lido:
+      case PriceFeedVendors.MonarchVerified:
         return (
           <GeneralFeedTooltip
             feed={feed}

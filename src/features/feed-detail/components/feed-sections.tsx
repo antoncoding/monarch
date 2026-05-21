@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { FeedTypeBadge } from '@/features/markets/components/oracle/MarketOracle/FeedTypeBadge';
-import { formatOracleDuration, formatOraclePrice } from '@/utils/oracle';
+import { formatOracleDuration, formatOraclePrice, isMonarchVerifiedFeed } from '@/utils/oracle';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { MARKETS_PAGE_SIZE, ORACLE_CONTRACTS_PAGE_SIZE } from '../feed-detail-constants';
 import { formatOptionalTimestamp, formatScannerTimestamp } from '../feed-detail-formatters';
@@ -30,9 +30,11 @@ import {
   CopyAddressButton,
   DependencyTypeValue,
   DetailRow,
+  FeedProvenanceBadges,
   FeedTypeValue,
   getDistinctFeedDescription,
   isChainlinkFeedLeg,
+  MonarchVerifiedBadge,
   ProviderLink,
   SectionShell,
   StatTile,
@@ -80,6 +82,7 @@ export function FeedHero({
               feedType={leg?.feedType}
               showUnknown
             />
+            <FeedProvenanceBadges leg={leg} />
           </div>
 
           <h1 className="mt-4 break-words !py-0 !text-[1.625rem] !font-normal !leading-tight !text-foreground">
@@ -247,6 +250,7 @@ export function FeedInspectionSection({
   const heartbeat = leg?.heartbeat ?? leg?.updateInterval ?? null;
   const deviationThreshold = leg?.deviationThreshold ?? leg?.updateSpread ?? null;
   const isChainlink = isChainlinkFeedLeg(leg);
+  const isMonarchVerified = isMonarchVerifiedFeed(leg);
   const formattedAnswer = answer != null && decimals != null ? formatOraclePrice(answer, decimals) : 'Unavailable';
 
   return (
@@ -276,7 +280,31 @@ export function FeedInspectionSection({
               />
             }
           />
-          {leg?.tier && (
+          {isMonarchVerified && (
+            <DetailRow
+              label="Verification"
+              value={<MonarchVerifiedBadge />}
+            />
+          )}
+          {isMonarchVerified && leg?.vendor && (
+            <DetailRow
+              label="Vendor"
+              value={leg.vendor}
+            />
+          )}
+          {leg?.builtBy && (
+            <DetailRow
+              label="Built by"
+              value={leg.builtBy}
+            />
+          )}
+          {leg?.noAdmin && (
+            <DetailRow
+              label="Admin controls"
+              value="No admin"
+            />
+          )}
+          {leg?.tier && !isMonarchVerified && (
             <DetailRow
               label={isChainlink ? 'Chainlink risk tier' : 'Risk tier'}
               value={`${leg.tier.toUpperCase()} risk`}
