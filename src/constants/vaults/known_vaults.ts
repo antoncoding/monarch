@@ -6,9 +6,10 @@ export type TrustedVault = {
   featured?: boolean;
   metadataDescription?: string;
   metadataImage?: string;
-  source?: 'monarch' | 'morpho';
   version?: 'v1' | 'v2';
 };
+
+export const getVaultKey = (address: string, chainId: number) => `${chainId}:${address.toLowerCase()}`;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const known_vaults: TrustedVault[] = [
@@ -17,12 +18,6 @@ export const known_vaults: TrustedVault[] = [
     chainId: 8453,
     name: 'Spark USDC Vault',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  },
-  {
-    address: '0xd63070114470f685b75B74D60EEc7c1113d33a3D',
-    chainId: 1,
-    name: 'MEV Capital USDC',
-    asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   },
   {
     address: '0xdd0f28e19C1780eb6396170735D45153D261490d',
@@ -43,10 +38,54 @@ export const known_vaults: TrustedVault[] = [
     asset: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
   },
   {
-    address: '0x4Ff4186188f8406917293A9e01A1ca16d3cf9E59',
+    address: '0x8c106EEDAd96553e64287A5A6839c3Cc78afA3D0',
     chainId: 1,
-    name: 'SwissBorg Morpho USDC',
+    name: 'Gauntlet USDC Prime',
     asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    version: 'v2',
+  },
+  {
+    address: '0x610D151aE40662AE148cdBaaE1Ea5904b6AFAE78',
+    chainId: 42_161,
+    name: 'Gauntlet USDC Prime',
+    asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    version: 'v2',
+  },
+  // Wintermute Prime
+  {
+    address: '0x5dc53a23AdC9f2Bed98de6F59F7F309a7c71FF2B',
+    chainId: 1,
+    name: 'Wintermute USDC Prime',
+    asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    version: 'v2',
+  },
+  {
+    address: '0x4Ef53d2cAa51C447fdFEEedee8F07FD1962C9ee6',
+    chainId: 1,
+    name: 'KPK USDC Prime',
+    asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    version: 'v2',
+  },
+  {
+    address: '0xe479bCbc98579bA3E1a1261f7bE85C4C10303d88',
+    chainId: 1,
+    name: 'Sentora PYUSD Core V2',
+    asset: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+    version: 'v2',
+  },
+  {
+    address: '0xC21b08C16458202593D4D9B26b9984Ee67b38BbD',
+    chainId: 1,
+    name: 'Sentora PRIME Main',
+    asset: '0x6c3ea9036406852006290770BEdFcAbA0e23A0e8',
+    version: 'v2',
+  },
+  {
+    address: '0x6dC58a0FdfC8D694e571DC59B9A52EEEa780E6bf',
+    chainId: 1,
+    name: 'Sentora RLUSD Main',
+    asset: '0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD',
+    version: 'v2',
   },
   {
     address: '0x781FB7F6d845E3bE129289833b04d43Aa8558c42',
@@ -79,22 +118,10 @@ export const known_vaults: TrustedVault[] = [
     asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   },
   {
-    address: '0xBEeFFF209270748ddd194831b3fa287a5386f5bC',
-    chainId: 1,
-    name: 'Smokehouse USDC',
-    asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  },
-  {
     address: '0x5c0C306Aaa9F877de636f4d5822cA9F2E81563BA',
     chainId: 42_161,
     name: 'Steakhouse High Yield USDC',
     asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-  },
-  {
-    address: '0xCBeeF01994E24a60f7DCB8De98e75AD8BD4Ad60d',
-    chainId: 8453,
-    name: 'Steakhouse High Yield USDC',
-    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   },
   {
     address: '0xBEEFA7B88064FeEF0cEe02AAeBBd95D30df3878F',
@@ -103,52 +130,30 @@ export const known_vaults: TrustedVault[] = [
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   },
   {
-    address: '0x6D4e530B8431a52FFDA4516BA4Aadc0951897F8C',
-    chainId: 1,
-    name: 'Steakhouse USDC RWA',
-    asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  },
-  {
-    address: '0xBEEf1f5Bd88285E5B239B6AAcb991d38ccA23Ac9',
-    chainId: 1,
-    name: 'Steakhouse infiniFi USDC',
-    asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  },
-  {
     address: '0xBEEFE94c8aD530842bfE7d8B397938fFc1cb83b2',
     chainId: 8453,
     name: 'Steakhouse Prime USDC',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   },
   {
-    address: '0x87DEAE530841A9671326C9D5B9f91bdB11F3162c',
-    chainId: 42_161,
-    name: 'Yearn OG USDC',
-    asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    address: '0xbeef088055857739C12CD3765F20b7679Def0f51',
+    chainId: 1,
+    name: 'Steakhouse Prime USDC',
+    asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    version: 'v2',
   },
   {
-    address: '0xef417a2512C5a41f69AE4e021648b69a7CdE5D03',
-    chainId: 8453,
-    name: 'Yearn OG USDC',
-    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    address: '0xbeef003C68896c7D2c3c60d363e8d71a49Ab2bf9',
+    chainId: 1,
+    name: 'Steakhouse Prime USDT',
+    asset: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    version: 'v2',
   },
   {
     address: '0x43e623Ff7D14d5b105F7bE9c488F36dbF11D1F46',
     chainId: 8453,
     name: 'Clearstar Boring USDC',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  },
-  {
-    address: '0xc1256Ae5FF1cf2719D4937adb3bbCCab2E00A2Ca',
-    chainId: 8453,
-    name: 'Moonwell Flagship USDC',
-    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  },
-  {
-    address: '0xa0E430870c4604CcfC7B38Ca7845B1FF653D0ff1',
-    chainId: 8453,
-    name: 'Moonwell Flagship WETH',
-    asset: '0x4200000000000000000000000000000000000006',
   },
   {
     address: '0x8A862fD6c12f9ad34C9c2ff45AB2b6712e8CEa27',
@@ -170,4 +175,8 @@ export const known_vaults: TrustedVault[] = [
   },
 ];
 
-export const getVaultKey = (address: string, chainId: number) => `${chainId}:${address.toLowerCase()}`;
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const monarch_suggested_vaults: TrustedVault[] = known_vaults.map((vault) => ({
+  ...vault,
+  version: vault.version ?? 'v1',
+}));

@@ -8,13 +8,19 @@ type VaultVersionBadgeProps = {
 };
 
 export function VaultVersionBadge({ vault }: VaultVersionBadgeProps) {
-  if (!isTrustedVaultV2(vault)) {
+  if (!vault.version) {
     return null;
   }
 
+  const isV2 = isTrustedVaultV2(vault);
+
   return (
-    <span className="inline-flex shrink-0 rounded-sm bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary">
-      v2
+    <span
+      className={`inline-flex shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-medium leading-none ${
+        isV2 ? 'bg-primary/10 text-primary' : 'bg-hovered text-secondary'
+      }`}
+    >
+      {vault.version}
     </span>
   );
 }

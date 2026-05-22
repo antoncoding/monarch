@@ -116,6 +116,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Use available entity icons in compact metadata chips before adding extra explanatory text.
 - Dense product headers should use compact chips, short address links, icon buttons, and tooltips for secondary navigation; avoid long text buttons unless they are the primary action.
 - Downstream detail-panel empty states must not contradict confirmed parent/header metadata; if a relationship is configured but no child detail exists, hide the optional panel or use neutral child-specific copy.
+- Selection lists should expose the inverse action at the selection point; a selected row should not become a disabled dead end when the only removal path is elsewhere.
 - Make sure Mobile view is considered.
 - Simplify wording to provide a clear call to action; remove unnecessary explanations. Focus on what a user should do and what they should see, not what you want to say.
 - Modals should let the main panel own vertical scrolling; avoid nested scroll regions inside sections unless the content needs an independent fixed context.

@@ -18,9 +18,9 @@ import type { MarketV2SupplyingVault } from '@/data-sources/monarch-api/vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useMarketFilterDependencyStatus } from '@/hooks/useMarketFilterDependencyStatus';
 import { useModal } from '@/hooks/useModal';
+import { useEffectiveTrustedVaults } from '@/hooks/useEffectiveTrustedVaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useTrustedVaultMetadata } from '@/hooks/useTrustedVaultMetadata';
-import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
@@ -336,7 +336,7 @@ export function MarketsTableWithSameLoanAsset({
     columnVisibility,
   } = useMarketPreferences();
 
-  const { vaults: userTrustedVaults } = useTrustedVaults();
+  const userTrustedVaults = useEffectiveTrustedVaults();
   const shouldLoadTrustedVaultMetadata = columnVisibility.trustedBy && userTrustedVaults.length > 0;
   const { trustedVaultMap } = useTrustedVaultMetadata({
     enabled: shouldLoadTrustedVaultMetadata,

@@ -14,7 +14,6 @@ type AppSettingsState = {
   isAprDisplay: boolean;
 
   // UI dismissals
-  trustedVaultsWarningDismissed: boolean;
   specialBundlerWarningAcknowledgements: Record<string, boolean>;
 
   // Developer options
@@ -36,7 +35,6 @@ type AppSettingsActions = {
   setShowUnwhitelistedMarkets: (show: boolean) => void;
   setShowFullRewardAPY: (show: boolean) => void;
   setIsAprDisplay: (isApr: boolean) => void;
-  setTrustedVaultsWarningDismissed: (dismissed: boolean) => void;
   setSpecialBundlerWarningAcknowledged: (warningStorageKey: string, acknowledged: boolean) => void;
   setShowDeveloperOptions: (show: boolean) => void;
   setUsePublicAllocator: (show: boolean) => void;
@@ -67,7 +65,6 @@ export const useAppSettings = create<AppSettingsStore>()(
       showUnwhitelistedMarkets: false,
       showFullRewardAPY: true,
       isAprDisplay: false,
-      trustedVaultsWarningDismissed: false,
       specialBundlerWarningAcknowledgements: {},
       showDeveloperOptions: false,
       usePublicAllocator: true,
@@ -80,7 +77,6 @@ export const useAppSettings = create<AppSettingsStore>()(
       setShowUnwhitelistedMarkets: (show) => set({ showUnwhitelistedMarkets: show }),
       setShowFullRewardAPY: (show) => set({ showFullRewardAPY: show }),
       setIsAprDisplay: (isApr) => set({ isAprDisplay: isApr }),
-      setTrustedVaultsWarningDismissed: (dismissed) => set({ trustedVaultsWarningDismissed: dismissed }),
       setSpecialBundlerWarningAcknowledged: (warningStorageKey, acknowledged) =>
         set((state) => ({
           specialBundlerWarningAcknowledgements: {

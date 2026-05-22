@@ -4,6 +4,7 @@ import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults'
 
 type TrustedVaultsState = {
   vaults: TrustedVault[];
+  includeMonarchSuggestedVaults: boolean;
 };
 
 type TrustedVaultsActions = {
@@ -12,6 +13,8 @@ type TrustedVaultsActions = {
   removeVault: (address: string, chainId: number) => void;
 
   setVaults: (vaults: TrustedVault[]) => void;
+
+  setIncludeMonarchSuggestedVaults: (include: boolean) => void;
 
   isVaultTrusted: (address: string, chainId: number) => boolean;
 };
@@ -37,6 +40,7 @@ export const useTrustedVaults = create<TrustedVaultsStore>()(
   persist(
     (set, get) => ({
       vaults: [],
+      includeMonarchSuggestedVaults: false,
 
       addVault: (vault) => {
         const { vaults } = get();
@@ -61,6 +65,10 @@ export const useTrustedVaults = create<TrustedVaultsStore>()(
 
       setVaults: (vaults) => {
         set({ vaults });
+      },
+
+      setIncludeMonarchSuggestedVaults: (include) => {
+        set({ includeMonarchSuggestedVaults: include });
       },
 
       isVaultTrusted: (address, chainId) => {
