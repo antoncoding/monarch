@@ -1,5 +1,7 @@
 import { type TrustedVault, getVaultKey, known_vaults } from '@/constants/vaults/known_vaults';
-import type { MorphoVault } from '@/data-sources/morpho-api/vaults';
+import type { MorphoVault, MorphoVaultV2Metadata } from '@/data-sources/morpho-api/vaults';
+import type { MarketV2SupplyingVault } from '@/data-sources/monarch-api/vaults';
+import { getMarketIdentityKey } from '@/utils/market-identity';
 import type { Market } from '@/utils/types';
 
 export function getMonarchVaultHref(chainId: number, address: string): string {
@@ -19,6 +21,20 @@ export function morphoVaultToTrustedVault(vault: MorphoVault): TrustedVault {
   };
 }
 
+export function morphoVaultV2MetadataToTrustedVault(vault: MorphoVaultV2Metadata): TrustedVault {
+  return {
+    address: vault.address as `0x${string}`,
+    asset: vault.assetAddress as `0x${string}`,
+    chainId: vault.chainId,
+    featured: vault.listed,
+    metadataDescription: vault.metadataDescription,
+    metadataImage: vault.metadataImage,
+    name: vault.name || vault.symbol || `Vault ${vault.address.slice(0, 6)}...${vault.address.slice(-4)}`,
+    source: 'morpho',
+    version: 'v2',
+  };
+}
+
 function mergeTrustedVaultMetadata(vault: TrustedVault, metadata: TrustedVault): TrustedVault {
   return {
     ...vault,
@@ -28,14 +44,21 @@ function mergeTrustedVaultMetadata(vault: TrustedVault, metadata: TrustedVault):
     metadataDescription: metadata.metadataDescription ?? vault.metadataDescription,
     metadataImage: metadata.metadataImage ?? vault.metadataImage,
     source: vault.source ?? metadata.source,
+    version: metadata.version ?? vault.version,
   };
 }
 
-export function buildTrustedVaultMetadata(morphoVaults: MorphoVault[]): TrustedVault[] {
+export function buildTrustedVaultMetadata(morphoVaults: MorphoVault[], metadataVaults: TrustedVault[] = []): TrustedVault[] {
   const metadataByKey = new Map<string, TrustedVault>();
 
   for (const vault of known_vaults) {
     metadataByKey.set(getVaultKey(vault.address, vault.chainId), vault);
+  }
+
+  for (const vault of metadataVaults) {
+    const key = getVaultKey(vault.address, vault.chainId);
+    const existing = metadataByKey.get(key);
+    metadataByKey.set(key, existing ? mergeTrustedVaultMetadata(existing, vault) : vault);
   }
 
   for (const morphoVault of morphoVaults) {
@@ -72,46 +95,72 @@ export function buildTrustedVaultMap(vaults: TrustedVault[], metadataVaults: Tru
   return map;
 }
 
-export function getTrustedVaultsForMarket(market: Market, trustedVaultMap: Map<string, TrustedVault>): TrustedVault[] {
-  if (!market.supplyingVaults?.length || trustedVaultMap.size === 0) {
+const marketV2SupplyingVaultToTrustedVault = (vault: MarketV2SupplyingVault): TrustedVault | null => {
+  if (!vault.asset) {
+    return null;
+  }
+
+  return {
+    address: vault.vaultAddress as `0x${string}`,
+    asset: vault.asset,
+    chainId: vault.chainId,
+    metadataDescription: vault.metadataDescription,
+    metadataImage: vault.metadataImage,
+    name: vault.vaultName,
+    source: 'monarch',
+    version: 'v2',
+  };
+};
+
+export function isTrustedVaultV2(vault: TrustedVault): boolean {
+  return vault.version === 'v2';
+}
+
+export function getTrustedVaultsForMarket(
+  market: Market,
+  trustedVaultMap: Map<string, TrustedVault>,
+  v2SupplyingVaultsLookup?: Map<string, MarketV2SupplyingVault[]>,
+): TrustedVault[] {
+  if (trustedVaultMap.size === 0) {
     return [];
   }
 
   const chainId = market.morphoBlue.chain.id;
-  const seen = new Set<string>();
-  const matches: TrustedVault[] = [];
+  const marketIdentityKey = getMarketIdentityKey(chainId, market.uniqueKey);
+  const matchesByKey = new Map<string, TrustedVault>();
 
-  for (const vault of market.supplyingVaults) {
+  for (const vault of market.supplyingVaults ?? []) {
     if (vault.address) {
       const key = getVaultKey(vault.address, chainId);
-      if (!seen.has(key)) {
-        seen.add(key);
+      if (matchesByKey.has(key)) {
+        continue;
+      }
 
-        const trusted = trustedVaultMap.get(key);
-        if (trusted) {
-          matches.push(trusted);
-        }
+      const trusted = trustedVaultMap.get(key);
+      if (trusted) {
+        matchesByKey.set(key, trusted);
       }
     }
   }
 
-  return matches.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-export function isMarketTrustedByVault(market: Market, trustedVaultMap: Map<string, TrustedVault>): boolean {
-  if (!market.supplyingVaults?.length || trustedVaultMap.size === 0) {
-    return false;
-  }
-
-  const chainId = market.morphoBlue.chain.id;
-
-  for (const vault of market.supplyingVaults) {
-    if (vault.address && trustedVaultMap.has(getVaultKey(vault.address, chainId))) {
-      return true;
+  for (const supplyingVault of v2SupplyingVaultsLookup?.get(marketIdentityKey) ?? []) {
+    const vault = marketV2SupplyingVaultToTrustedVault(supplyingVault);
+    if (!vault) {
+      continue;
     }
+
+    const key = getVaultKey(vault.address, vault.chainId);
+    const trusted = trustedVaultMap.get(key);
+    if (!trusted) {
+      continue;
+    }
+
+    const metadataVault = mergeTrustedVaultMetadata(trusted, vault);
+    const existing = matchesByKey.get(key);
+    matchesByKey.set(key, existing ? mergeTrustedVaultMetadata(existing, metadataVault) : metadataVault);
   }
 
-  return false;
+  return Array.from(matchesByKey.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function formatVaultAdapterType(adapterType?: string): string {

@@ -17,7 +17,6 @@ import { useModal } from '@/hooks/useModal';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
-import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { formatReadable } from '@/utils/balance';
 import { parseNumericThreshold } from '@/utils/markets';
 
@@ -27,7 +26,7 @@ type MarketFilterProps = {
   zIndex?: ModalZIndex;
 };
 
-type DetailViewType = 'filter-thresholds' | 'trusted-vaults' | 'custom-tag-config';
+type DetailViewType = 'filter-thresholds' | 'custom-tag-config';
 
 const isGuardAffected = (guard: MarketFilterGuardStatus | undefined): guard is MarketFilterGuardStatus =>
   Boolean(guard?.active && guard.readiness !== 'ready');
@@ -72,8 +71,6 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
     setShowUnknownOracle,
     showLockedMarkets,
     setShowLockedMarkets,
-    trustedVaultsOnly,
-    setTrustedVaultsOnly,
     minSupplyEnabled,
     setMinSupplyEnabled,
     minBorrowEnabled,
@@ -90,14 +87,11 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
 
   const { trendingMode, toggleTrendingMode, customTagMode, toggleCustomTagMode, starredOnly, toggleStarredOnly } = useMarketsFilters();
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useAppSettings();
-  const { vaults: trustedVaults } = useTrustedVaults();
   const { guardStatuses, hasAffectedGuards } = useMarketFilterDependencyStatus();
   const guardStatusById = useMemo(() => new Map(guardStatuses.map((guard) => [guard.id, guard])), [guardStatuses]);
   const unknownTokensGuard = guardStatusById.get('unknown-tokens');
   const unknownOraclesGuard = guardStatusById.get('unknown-oracles');
   const unwhitelistedMarketsGuard = guardStatusById.get('unwhitelisted-markets');
-  const trustedVaultCount = trustedVaults.length;
-  const hasTrustedVaults = trustedVaultCount > 0;
   const starredCount = starredMarkets.length;
 
   // Navigate to a specific detail view, then reopen filter when settings closes
@@ -112,16 +106,12 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
   // Guards are active when the "show" flags are FALSE (meaning risky content is hidden)
   const anyGuardActive = !includeUnknownTokens || !showUnknownOracle || !showUnwhitelistedMarkets || !showLockedMarkets;
   const advancedFilterActive =
-    trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode || starredOnly;
+    minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode || starredOnly;
   const hasActiveFilters = advancedFilterActive || anyGuardActive;
 
   const isButtonVariant = variant === 'button';
 
   const formatThreshold = (value: string) => `>= $${formatReadable(parseNumericThreshold(value))}`;
-  const trustedVaultsDescription = hasTrustedVaults
-    ? `Show markets supplied by your ${trustedVaultCount} trusted vault${trustedVaultCount !== 1 ? 's' : ''}`
-    : 'Set up trusted vaults to use this filter.';
-
   return (
     <div className={className}>
       <Tooltip
@@ -317,29 +307,6 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
                     thumbIconOff={GoStar}
                     disabled={starredCount === 0}
                   />
-                </FilterRow>
-                <FilterRow
-                  title="Trusted vaults"
-                  description={trustedVaultsDescription}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      variant="ghost"
-                      size={hasTrustedVaults ? 'icon' : 'xs'}
-                      onClick={() => handleOpenDetailView('trusted-vaults')}
-                      aria-label={hasTrustedVaults ? 'Configure trusted vaults' : 'Set up trusted vaults'}
-                      className={hasTrustedVaults ? 'h-6 w-6' : 'h-6'}
-                    >
-                      <GoGear className="h-3.5 w-3.5" />
-                      {!hasTrustedVaults && <span>Set up</span>}
-                    </Button>
-                    <IconSwitch
-                      selected={trustedVaultsOnly}
-                      onChange={setTrustedVaultsOnly}
-                      size="xs"
-                      disabled={!hasTrustedVaults && !trustedVaultsOnly}
-                    />
-                  </div>
                 </FilterRow>
                 {/* Official Trending Filter (backend-computed) */}
                 {showOfficialTrending && (

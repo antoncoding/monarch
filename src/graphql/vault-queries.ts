@@ -56,3 +56,27 @@ export const vaultV2SharePriceHistoryQuery = `
     }
   }
 `;
+
+export const vaultV2MetadataQuery = `
+  query VaultV2Metadata($first: Int, $skip: Int, $where: VaultV2sFilters) {
+    vaultV2s(first: $first, skip: $skip, where: $where) {
+      items {
+        address
+        chain {
+          id
+        }
+        name
+        symbol
+        listed
+        metadata {
+          description
+          image
+        }
+        asset {
+          address
+          symbol
+        }
+      }
+    }
+  }
+`;

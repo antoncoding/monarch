@@ -3,7 +3,9 @@
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
+import { VaultVersionBadge } from '@/features/autovault/components/vault-version-badge';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
+import { isTrustedVaultV2 } from '@/utils/vaults';
 
 const TRUSTED_BY_ICON_SIZE = 16;
 
@@ -32,6 +34,28 @@ type TrustedByCellProps = {
   badgeSize?: number;
 };
 
+function TrustedVaultTooltipRow({ vault }: { vault: TrustedVault }) {
+  const showVaultLink = isTrustedVaultV2(vault);
+
+  return (
+    <div className="flex items-center gap-2">
+      <VaultIdentity
+        address={vault.address}
+        asset={vault.asset}
+        chainId={vault.chainId}
+        description={vault.metadataDescription}
+        imageSrc={vault.metadataImage}
+        vaultName={vault.name}
+        variant="inline"
+        showAddressInTooltip={false}
+        showLink={showVaultLink}
+        showTooltip={false}
+      />
+      <VaultVersionBadge vault={vault} />
+    </div>
+  );
+}
+
 export function TrustedByCell({ vaults, badgeSize = TRUSTED_BY_ICON_SIZE }: TrustedByCellProps) {
   if (!vaults.length) {
     return <span className="text-xs text-secondary">-</span>;
@@ -48,17 +72,9 @@ export function TrustedByCell({ vaults, badgeSize = TRUSTED_BY_ICON_SIZE }: Trus
           detail={
             <div className="flex flex-col gap-2">
               {vaults.map((vault) => (
-                <VaultIdentity
+                <TrustedVaultTooltipRow
                   key={`${vault.address}-${vault.chainId}`}
-                  address={vault.address}
-                  asset={vault.asset}
-                  chainId={vault.chainId}
-                  description={vault.metadataDescription}
-                  imageSrc={vault.metadataImage}
-                  vaultName={vault.name}
-                  variant="inline"
-                  showAddressInTooltip={false}
-                  showTooltip={false}
+                  vault={vault}
                 />
               ))}
             </div>
@@ -84,6 +100,7 @@ export function TrustedByCell({ vaults, badgeSize = TRUSTED_BY_ICON_SIZE }: Trus
               iconSize={badgeSize}
               className="rounded-full border border-background/40 bg-surface transition-transform duration-150 hover:-translate-y-1"
               showAddressInTooltip={false}
+              showLink={isTrustedVaultV2(vault)}
               showTooltip={false}
             />
           </div>

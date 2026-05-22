@@ -5,13 +5,13 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
+import { useMarketV2SupplyingVaultsQuery } from '@/hooks/queries/useMarketV2SupplyingVaultsQuery';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useTrustedVaultMetadata } from '@/hooks/useTrustedVaultMetadata';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import type { Market } from '@/utils/types';
-import { buildTrustedVaultMap, buildTrustedVaultMetadata } from '@/utils/vaults';
 import { SortColumn } from '../constants';
 import { MarketTableBody } from './market-table-body';
 import { HTSortable } from './market-table-utils';
@@ -57,7 +57,6 @@ function MarketsTable({
     entriesPerPage,
     includeUnknownTokens,
     showUnknownOracle,
-    trustedVaultsOnly,
     minSupplyEnabled,
     minBorrowEnabled,
     minLiquidityEnabled,
@@ -67,7 +66,10 @@ function MarketsTable({
   const { vaults: trustedVaults } = useTrustedVaults();
   const trustedVaultCount = trustedVaults.length;
   const shouldLoadTrustedVaultMetadata = columnVisibility.trustedBy && trustedVaultCount > 0;
-  const { data: morphoVaults = [] } = useAllMorphoVaultsQuery({ enabled: shouldLoadTrustedVaultMetadata });
+  const { trustedVaultMap } = useTrustedVaultMetadata({
+    enabled: shouldLoadTrustedVaultMetadata,
+    trustedVaults,
+  });
 
   const isEmpty = !rawMarkets;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
@@ -95,12 +97,14 @@ function MarketsTable({
     [sortColumn, sortDirection, setSortColumn, setSortDirection],
   );
 
-  const trustedVaultMetadata = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
-  const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults, trustedVaultMetadata), [trustedVaults, trustedVaultMetadata]);
-
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
   const currentEntries = markets.slice(indexOfFirstEntry, indexOfLastEntry);
+  const { lookup: v2SupplyingVaultsLookup } = useMarketV2SupplyingVaultsQuery({
+    enabled: shouldLoadTrustedVaultMetadata,
+    markets: currentEntries,
+    trustedVaults,
+  });
 
   const totalPages = Math.ceil(markets.length / entriesPerPage);
   const shouldUseFullWidthState = loading || isEmpty || markets.length === 0;
@@ -127,12 +131,6 @@ function MarketsTable({
     }
     if (!showUnknownOracle) {
       return "Try disabling 'Hide Unknown Oracles' guard in filters.";
-    }
-    if (trustedVaultsOnly) {
-      if (trustedVaultCount === 0) {
-        return 'No trusted vaults selected. Set up trusted vaults, or turn off the trusted vaults filter.';
-      }
-      return 'No markets match your trusted vaults. Add more vaults or turn off the trusted vaults filter.';
     }
     if (minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled) {
       return 'Try disabling USD filters in settings, or adjust your filter thresholds.';
@@ -205,13 +203,7 @@ function MarketsTable({
                   targetColumn={SortColumn.LLTV}
                 />
                 {columnVisibility.trustedBy && (
-                  <HTSortable
-                    label="Trusted By"
-                    sortColumn={sortColumn}
-                    titleOnclick={titleOnclick}
-                    sortDirection={sortDirection}
-                    targetColumn={SortColumn.TrustedBy}
-                  />
+                  <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Trusted By</TableHead>
                 )}
                 {columnVisibility.totalSupply && (
                   <HTSortable
@@ -358,6 +350,7 @@ function MarketsTable({
               expandedRowId={expandedRowId}
               setExpandedRowId={setExpandedRowId}
               trustedVaultMap={trustedVaultMap}
+              v2SupplyingVaultsLookup={v2SupplyingVaultsLookup}
               rateEnrichmentPendingChainIds={rateEnrichmentPendingChainIds}
               rateEnrichmentLoading={rateEnrichmentLoading}
             />

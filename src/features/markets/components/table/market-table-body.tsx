@@ -9,6 +9,7 @@ import { MarketRiskIndicators } from '@/features/markets/components/market-risk-
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
+import type { MarketV2SupplyingVault } from '@/data-sources/monarch-api/vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -25,6 +26,7 @@ type MarketTableBodyProps = {
   expandedRowId: string | null;
   setExpandedRowId: (id: string | null) => void;
   trustedVaultMap: Map<string, TrustedVault>;
+  v2SupplyingVaultsLookup: Map<string, MarketV2SupplyingVault[]>;
   rateEnrichmentPendingChainIds: Set<number>;
   rateEnrichmentLoading: boolean;
 };
@@ -36,6 +38,7 @@ export function MarketTableBody({
   expandedRowId,
   setExpandedRowId,
   trustedVaultMap,
+  v2SupplyingVaultsLookup,
   rateEnrichmentPendingChainIds,
   rateEnrichmentLoading,
 }: MarketTableBodyProps) {
@@ -171,7 +174,7 @@ export function MarketTableBody({
                   className="z-50 text-center"
                   style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}
                 >
-                  <TrustedByCell vaults={getTrustedVaultsForMarket(item, trustedVaultMap)} />
+                  <TrustedByCell vaults={getTrustedVaultsForMarket(item, trustedVaultMap, v2SupplyingVaultsLookup)} />
                 </TableCell>
               )}
               {columnVisibility.totalSupply && (
