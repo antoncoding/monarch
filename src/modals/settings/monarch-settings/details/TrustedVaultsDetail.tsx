@@ -298,7 +298,6 @@ export function TrustedVaultsDetail() {
 
   const setMonarchSuggestedVaultsEnabled = (enabled: boolean) => {
     if (enabled) {
-      setUserTrustedVaults(userTrustedVaults.filter((vault) => !isMonarchSuggestedVault(vault)));
       setTrustedByColumnVisible(true);
     }
     setIncludeMonarchSuggestedVaults(enabled);

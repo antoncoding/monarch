@@ -11,8 +11,12 @@ export type TrustedVault = {
 
 export const getVaultKey = (address: string, chainId: number) => `${chainId}:${address.toLowerCase()}`;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const known_vaults: TrustedVault[] = [
+const withDefaultVersion = (vault: TrustedVault): TrustedVault => ({
+  ...vault,
+  version: vault.version ?? 'v1',
+});
+
+const rawKnownVaults: TrustedVault[] = [
   {
     address: '0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A',
     chainId: 8453,
@@ -176,7 +180,7 @@ export const known_vaults: TrustedVault[] = [
 ];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const monarch_suggested_vaults: TrustedVault[] = known_vaults.map((vault) => ({
-  ...vault,
-  version: vault.version ?? 'v1',
-}));
+export const known_vaults: TrustedVault[] = rawKnownVaults.map(withDefaultVersion);
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const monarch_suggested_vaults: TrustedVault[] = known_vaults;

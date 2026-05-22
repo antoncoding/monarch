@@ -61,6 +61,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Do not use `window.localStorage` directly. If direct storage access is unavoidable, isolate it in one shared utility or store layer and document why.
 - Use `useAppSettings` or an existing dedicated persisted Zustand store when it fits the state.
 - Validate SSR/client boundaries when persistence touches browser-only APIs.
+- Preset or subscription toggles must not delete user-owned persisted selections. Preserve the raw user list and dedupe or hide preset overlaps in derived views unless the user explicitly removes them.
 
 ## Data And Domain Flows
 
