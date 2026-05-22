@@ -9,29 +9,27 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { NetworkIcon } from '@/components/shared/network-icon';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
-import { getVaultKey, known_vaults, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { VaultVersionBadge } from '@/features/autovault/components/vault-version-badge';
+import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
+import { useListedMorphoVaultV2MetadataQuery } from '@/hooks/queries/useMorphoVaultV2MetadataQuery';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
-import { buildTrustedVaultMap, buildTrustedVaultMetadata, morphoVaultToTrustedVault } from '@/utils/vaults';
-
-type VaultSourceId = 'monarch' | 'morpho';
-type SourceFilter = 'all' | VaultSourceId;
-type BrowseVault = TrustedVault & { sourceIds: VaultSourceId[] };
-type DisplayTrustedVault = TrustedVault & { sourceIds?: VaultSourceId[] };
-
-const SOURCE_LABELS: Record<VaultSourceId, string> = {
-  monarch: 'Monarch',
-  morpho: 'Morpho',
-};
+import {
+  buildTrustedVaultMap,
+  buildTrustedVaultMetadata,
+  isTrustedVaultV2,
+  morphoVaultToTrustedVault,
+  morphoVaultV2MetadataToTrustedVault,
+} from '@/utils/vaults';
 
 type AddVaultRowProps = {
-  vault: BrowseVault;
+  vault: TrustedVault;
   trusted: boolean;
   onAdd: () => void;
 };
 
 type TrustedVaultRowProps = {
-  vault: DisplayTrustedVault;
+  vault: TrustedVault;
   onRemove: () => void;
 };
 
@@ -47,9 +45,10 @@ function TrustedVaultRow({ vault, onRemove }: TrustedVaultRowProps) {
           description={vault.metadataDescription}
           imageSrc={vault.metadataImage}
           vaultName={vault.name}
-          showLink
+          showLink={isTrustedVaultV2(vault)}
           variant="inline"
         />
+        <VaultVersionBadge vault={vault} />
       </div>
       <Button
         size="xs"
@@ -75,9 +74,10 @@ function AddVaultRow({ vault, trusted, onAdd }: AddVaultRowProps) {
           description={vault.metadataDescription}
           imageSrc={vault.metadataImage}
           vaultName={vault.name}
-          showLink
+          showLink={isTrustedVaultV2(vault)}
           variant="inline"
         />
+        <VaultVersionBadge vault={vault} />
       </div>
       <Button
         size="xs"
@@ -102,12 +102,12 @@ function AddVaultRow({ vault, trusted, onAdd }: AddVaultRowProps) {
 type SourceVaultsContentProps = {
   isLoading: boolean;
   loadingLabel?: string;
-  vaults: BrowseVault[];
+  vaults: TrustedVault[];
   searchQuery: string;
   emptyLabel: string;
   noMatchesLabel: string;
-  isVaultTrusted: (vault: BrowseVault) => boolean;
-  addVault: (vault: BrowseVault) => void;
+  isVaultTrusted: (vault: TrustedVault) => boolean;
+  addVault: (vault: TrustedVault) => void;
 };
 
 function SourceVaultsContent({
@@ -150,21 +150,19 @@ function SourceVaultsContent({
 
 const vaultKey = (v: TrustedVault) => getVaultKey(v.address, v.chainId);
 
-const addBrowseVault = (vaultsByKey: Map<string, BrowseVault>, vault: TrustedVault, sourceId: VaultSourceId) => {
+const addBrowseVault = (vaultsByKey: Map<string, TrustedVault>, vault: TrustedVault) => {
   const key = vaultKey(vault);
   const existing = vaultsByKey.get(key);
   if (!existing) {
-    vaultsByKey.set(key, { ...vault, sourceIds: [sourceId] });
+    vaultsByKey.set(key, vault);
     return;
   }
 
-  const sourceIds = existing.sourceIds.includes(sourceId) ? existing.sourceIds : [...existing.sourceIds, sourceId];
   vaultsByKey.set(key, {
     ...existing,
     featured: existing.featured ?? vault.featured,
     metadataDescription: existing.metadataDescription ?? vault.metadataDescription,
     metadataImage: existing.metadataImage ?? vault.metadataImage,
-    sourceIds,
   });
 };
 
@@ -172,42 +170,36 @@ export function TrustedVaultsDetail() {
   const { vaults: userTrustedVaults, setVaults: setUserTrustedVaults } = useTrustedVaults();
   const { trustedVaultsWarningDismissed, setTrustedVaultsWarningDismissed } = useAppSettings();
   const [searchQuery, setSearchQuery] = useState('');
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [trustedVaultsOpen, setTrustedVaultsOpen] = useState(false);
 
   const { data: morphoVaults = [], isLoading: morphoLoading } = useAllMorphoVaultsQuery();
+  const { data: morphoV2VaultMetadata = [], isLoading: morphoV2MetadataLoading } = useListedMorphoVaultV2MetadataQuery();
+  const v2Vaults = useMemo(() => morphoV2VaultMetadata.map(morphoVaultV2MetadataToTrustedVault), [morphoV2VaultMetadata]);
 
-  const mergedVaults = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
+  const mergedVaults = useMemo(() => buildTrustedVaultMetadata(morphoVaults, v2Vaults), [morphoVaults, v2Vaults]);
   const mergedVaultsByKey = useMemo(() => new Map(mergedVaults.map((vault) => [vaultKey(vault), vault])), [mergedVaults]);
 
-  const morphoListedVaults = useMemo<TrustedVault[]>(() => {
-    return morphoVaults.map((morphoVault) => {
+  const browseVaults = useMemo<TrustedVault[]>(() => {
+    const vaultsByKey = new Map<string, TrustedVault>();
+
+    for (const morphoVault of morphoVaults) {
       const vault = morphoVaultToTrustedVault(morphoVault);
-      return {
+      addBrowseVault(vaultsByKey, {
         ...(mergedVaultsByKey.get(vaultKey(vault)) ?? vault),
         source: 'morpho',
-      };
-    });
-  }, [morphoVaults, mergedVaultsByKey]);
-  const monarchVaults = useMemo<TrustedVault[]>(() => {
-    return known_vaults.map((vault) => {
-      return {
-        ...(mergedVaultsByKey.get(vaultKey(vault)) ?? vault),
-        source: 'monarch',
-      };
-    });
-  }, [mergedVaultsByKey]);
+      });
+    }
 
-  const browseVaults = useMemo<BrowseVault[]>(() => {
-    const vaultsByKey = new Map<string, BrowseVault>();
-    for (const vault of monarchVaults) {
-      addBrowseVault(vaultsByKey, vault, 'monarch');
+    for (const vault of v2Vaults) {
+      const key = vaultKey(vault);
+      addBrowseVault(vaultsByKey, {
+        ...(mergedVaultsByKey.get(key) ?? vault),
+        source: 'morpho',
+      });
     }
-    for (const vault of morphoListedVaults) {
-      addBrowseVault(vaultsByKey, vault, 'morpho');
-    }
+
     return Array.from(vaultsByKey.values());
-  }, [monarchVaults, morphoListedVaults]);
+  }, [mergedVaultsByKey, morphoVaults, v2Vaults]);
 
   const browseVaultsByKey = useMemo(() => new Map(browseVaults.map((vault) => [vaultKey(vault), vault])), [browseVaults]);
   const trustedVaultKeys = useMemo(() => new Set(userTrustedVaults.map(vaultKey)), [userTrustedVaults]);
@@ -236,7 +228,6 @@ export function TrustedVaultsDetail() {
             ...vault,
             metadataDescription: browseVault.metadataDescription ?? vault.metadataDescription,
             metadataImage: browseVault.metadataImage ?? vault.metadataImage,
-            sourceIds: browseVault.sourceIds,
           }
         : vault;
     });
@@ -247,24 +238,14 @@ export function TrustedVaultsDetail() {
   }, [enrichedTrustedVaults]);
 
   const filteredBrowseVaults = useMemo(() => {
-    const sourceFilteredVaults =
-      sourceFilter === 'all' ? browseVaults : browseVaults.filter((vault) => vault.sourceIds.includes(sourceFilter));
-    return sortVaults(sourceFilteredVaults.filter(matchesSearch));
-  }, [browseVaults, sourceFilter, searchQuery]);
+    return sortVaults(browseVaults.filter(matchesSearch));
+  }, [browseVaults, searchQuery]);
 
   const visibleNewCount = useMemo(
     () => filteredBrowseVaults.filter((vault) => !trustedVaultKeys.has(vaultKey(vault))).length,
     [filteredBrowseVaults, trustedVaultKeys],
   );
-  const isMorphoSourceLoading = morphoLoading && sourceFilter === 'morpho';
-  const sourceFilterOptions = useMemo(
-    () => [
-      { id: 'all' as const, label: 'All', count: browseVaults.length },
-      { id: 'monarch' as const, label: SOURCE_LABELS.monarch, count: monarchVaults.length },
-      { id: 'morpho' as const, label: SOURCE_LABELS.morpho, count: morphoListedVaults.length },
-    ],
-    [browseVaults.length, monarchVaults.length, morphoListedVaults.length],
-  );
+  const isVaultDiscoveryLoading = morphoLoading || morphoV2MetadataLoading;
 
   const addVault = (vault: TrustedVault) => {
     if (isVaultTrusted(vault)) return;
@@ -305,7 +286,7 @@ export function TrustedVaultsDetail() {
                 </button>
               )}
             </div>
-            <p className="text-xs text-secondary">Used by Trusted By columns and the trusted vaults filter.</p>
+            <p className="text-xs text-secondary">Used by Trusted By columns.</p>
           </div>
           <Button
             size="xs"
@@ -355,16 +336,16 @@ export function TrustedVaultsDetail() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1">
             <h3 className="text-xs uppercase text-secondary">Add vaults</h3>
-            <p className="text-xs text-secondary">Choose from Monarch or Morpho.</p>
+            <p className="text-xs text-secondary">Choose from Morpho-listed vaults.</p>
           </div>
           <Button
             size="xs"
             variant="default"
             onClick={() => addVaultsToTrustedList(filteredBrowseVaults)}
-            disabled={isMorphoSourceLoading || visibleNewCount === 0}
+            disabled={isVaultDiscoveryLoading || visibleNewCount === 0}
             className="w-28 shrink-0 self-start"
           >
-            {isMorphoSourceLoading ? (
+            {isVaultDiscoveryLoading ? (
               'Loading'
             ) : filteredBrowseVaults.length === 0 ? (
               'None'
@@ -379,21 +360,6 @@ export function TrustedVaultsDetail() {
           </Button>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {sourceFilterOptions.map((option) => (
-            <Button
-              key={option.id}
-              size="xs"
-              variant={sourceFilter === option.id ? 'default' : 'ghost'}
-              onClick={() => setSourceFilter(option.id)}
-              className="gap-1.5"
-            >
-              <span>{option.label}</span>
-              <span className="font-monospace text-[10px] opacity-70">{option.count}</span>
-            </Button>
-          ))}
-        </div>
-
         <Input
           placeholder="Search vaults"
           value={searchQuery}
@@ -403,11 +369,11 @@ export function TrustedVaultsDetail() {
         />
 
         <SourceVaultsContent
-          isLoading={isMorphoSourceLoading}
+          isLoading={isVaultDiscoveryLoading}
           loadingLabel="Loading Morpho vaults"
           vaults={filteredBrowseVaults}
           searchQuery={searchQuery}
-          emptyLabel="No vaults in this source."
+          emptyLabel="No Morpho-listed vaults found."
           noMatchesLabel="No vaults match your search."
           isVaultTrusted={isVaultTrusted}
           addVault={addVault}

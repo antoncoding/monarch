@@ -50,7 +50,6 @@ type MarketPreferencesState = {
   includeUnknownTokens: boolean;
   showUnknownOracle: boolean;
   showLockedMarkets: boolean;
-  trustedVaultsOnly: boolean;
   columnVisibility: ColumnVisibility;
   tableViewMode: 'compact' | 'expanded';
 
@@ -86,7 +85,6 @@ type MarketPreferencesActions = {
   setIncludeUnknownTokens: (include: boolean) => void;
   setShowUnknownOracle: (show: boolean) => void;
   setShowLockedMarkets: (show: boolean) => void;
-  setTrustedVaultsOnly: (only: boolean) => void;
   setColumnVisibility: (visibilityOrUpdater: ColumnVisibility | ((prev: ColumnVisibility) => ColumnVisibility)) => void;
   setTableViewMode: (mode: 'compact' | 'expanded') => void;
 
@@ -142,7 +140,6 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       includeUnknownTokens: false,
       showUnknownOracle: false,
       showLockedMarkets: false,
-      trustedVaultsOnly: false,
       columnVisibility: DEFAULT_COLUMN_VISIBILITY,
       tableViewMode: 'compact',
       starredMarkets: [],
@@ -161,7 +158,6 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       setIncludeUnknownTokens: (include) => set({ includeUnknownTokens: include }),
       setShowUnknownOracle: (show) => set({ showUnknownOracle: show }),
       setShowLockedMarkets: (show) => set({ showLockedMarkets: show }),
-      setTrustedVaultsOnly: (only) => set({ trustedVaultsOnly: only }),
       setColumnVisibility: (visibilityOrUpdater) =>
         set((state) => ({
           columnVisibility: typeof visibilityOrUpdater === 'function' ? visibilityOrUpdater(state.columnVisibility) : visibilityOrUpdater,

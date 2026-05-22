@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { RiSparkling2Fill } from 'react-icons/ri';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
-import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
+import { useTrustedVaultMetadata } from '@/hooks/useTrustedVaultMetadata';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
-import { buildTrustedVaultMap, buildTrustedVaultMetadata } from '@/utils/vaults';
+import { isTrustedVaultV2 } from '@/utils/vaults';
 import { SettingActionItem, SettingToggleItem } from '../SettingItem';
 import type { DetailView } from '../constants';
 
@@ -19,17 +19,18 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
   const { rebalanceDefaultMode, setRebalanceDefaultMode } = useAppSettings();
   const [mounted, setMounted] = useState(false);
   const trustedVaultCount = userTrustedVaults.length;
-  const { data: morphoVaults = [] } = useAllMorphoVaultsQuery({ enabled: trustedVaultCount > 0 });
+  const { trustedVaultMap } = useTrustedVaultMetadata({
+    enabled: trustedVaultCount > 0,
+    trustedVaults: userTrustedVaults,
+  });
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const trustedVaultMetadata = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
-
   const sortedTrustedVaults = useMemo(() => {
-    return Array.from(buildTrustedVaultMap(userTrustedVaults, trustedVaultMetadata).values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [userTrustedVaults, trustedVaultMetadata]);
+    return Array.from(trustedVaultMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [trustedVaultMap]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,8 +52,8 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
           title="Manage Trusted Vaults"
           description={
             trustedVaultCount === 0
-              ? 'Used by Trusted By columns and the trusted vaults filter.'
-              : `${trustedVaultCount} selected for market columns and filters.`
+              ? 'Used by Trusted By columns.'
+              : `${trustedVaultCount} selected for market columns.`
           }
           buttonLabel={trustedVaultCount === 0 ? 'Set up' : 'Edit'}
           onClick={() => onNavigateToDetail?.('trusted-vaults')}
@@ -81,7 +82,7 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
                       variant="icon"
                       iconSize={20}
                       showTooltip
-                      showLink
+                      showLink={isTrustedVaultV2(vault)}
                     />
                   ))}
                   {trustedVaultCount > 10 && (

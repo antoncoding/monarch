@@ -17,10 +17,24 @@ export type VaultAdapterDetails = {
   factoryAddress: string;
 };
 
-export type VaultAdapterAlias = {
+export type VaultAdapterRelation = {
+  adapterAddress: string;
   adapterType?: string;
-  address: string;
+  asset?: Address;
   chainId: SupportedNetworks;
+  vaultAddress: string;
+  vaultName: string;
+};
+
+export type MarketV2SupplyingVault = {
+  adapterAddress: string;
+  adapterType?: string;
+  asset?: Address;
+  chainId: SupportedNetworks;
+  marketId: string;
+  metadataDescription?: string;
+  metadataImage?: string;
+  supplyShares: string;
   vaultAddress: string;
   vaultName: string;
 };
@@ -101,9 +115,10 @@ type MonarchAdapterRecord = {
   vaultAddress: string;
 };
 
-type MonarchAdapterAliasRecord = MonarchAdapterRecord & {
+type MonarchAdapterRelationRecord = MonarchAdapterRecord & {
   vault: {
     vaultAddress: string;
+    asset: string;
     chainId: number;
     name: string | null;
     symbol: string | null;
@@ -129,28 +144,43 @@ type MonarchAdapterLookupResponse = {
   };
 };
 
-type MonarchAdapterAliasesResponse = {
+type MonarchAdapterRelationsResponse = {
   data?: {
-    Adapter?: MonarchAdapterAliasRecord[];
+    Adapter?: MonarchAdapterRelationRecord[];
   };
 };
 
-type MonarchVaultAdapterAliasRecord = {
+type MonarchVaultAdapterRelationRecord = {
   vaultAddress: string;
+  asset: string;
   chainId: number;
   name: string | null;
   symbol: string | null;
   adapters: MonarchVaultAdapter[];
 };
 
-type MonarchVaultAdapterAliasesResponse = {
+type MonarchVaultAdapterRelationsResponse = {
   data?: {
-    Vault?: MonarchVaultAdapterAliasRecord[];
+    Vault?: MonarchVaultAdapterRelationRecord[];
   };
 };
 
-const MONARCH_ADAPTER_ALIAS_PAGE_SIZE = 1000;
-const MONARCH_ADAPTER_ALIAS_MAX_PAGES = 20;
+type MonarchMarketV2AdapterPositionRecord = {
+  marketId: string;
+  supplyShares: string;
+  user: string;
+};
+
+type MonarchMarketV2AdapterPositionsResponse = {
+  data?: {
+    Position?: MonarchMarketV2AdapterPositionRecord[];
+  };
+};
+
+const MONARCH_ADAPTER_RELATION_PAGE_SIZE = 1000;
+const MONARCH_ADAPTER_RELATION_MAX_PAGES = 20;
+const MONARCH_MARKET_V2_POSITIONS_PAGE_SIZE = 1000;
+const MONARCH_MARKET_V2_POSITIONS_MAX_PAGES = 20;
 
 const MONARCH_VAULT_FIELDS = `
   id
@@ -270,8 +300,8 @@ const adaptersByAddressQuery = `
   }
 `;
 
-const adapterAliasesQuery = `
-  query MonarchVaultAdapterAliases($adapterTypes: [String!]!, $limit: Int!, $offset: Int!) {
+const adapterRelationsQuery = `
+  query MonarchVaultAdapterRelations($adapterTypes: [String!]!, $limit: Int!, $offset: Int!) {
     Adapter(
       where: { adapterType: { _in: $adapterTypes } }
       order_by: [{ createdAt: desc }]
@@ -284,6 +314,7 @@ const adapterAliasesQuery = `
       vaultAddress
       vault {
         vaultAddress
+        asset
         chainId
         name
         symbol
@@ -292,8 +323,8 @@ const adapterAliasesQuery = `
   }
 `;
 
-const activeVaultAdapterAliasesQuery = `
-  query MonarchActiveVaultAdapterAliases($limit: Int!, $offset: Int!) {
+const activeVaultAdapterRelationsQuery = `
+  query MonarchActiveVaultAdapterRelations($limit: Int!, $offset: Int!) {
     Vault(
       where: { adapters: { isActive: { _eq: true } } }
       order_by: [{ chainId: asc }, { vaultAddress: asc }]
@@ -301,6 +332,7 @@ const activeVaultAdapterAliasesQuery = `
       offset: $offset
     ) {
       vaultAddress
+      asset
       chainId
       name
       symbol
@@ -308,6 +340,33 @@ const activeVaultAdapterAliasesQuery = `
         adapterAddress
         isActive
       }
+    }
+  }
+`;
+
+const marketV2AdapterPositionsQuery = `
+  query MonarchMarketV2AdapterPositions(
+    $chainId: Int!
+    $marketIds: [String!]!
+    $adapterAddresses: [String!]!
+    $minShares: numeric!
+    $limit: Int!
+    $offset: Int!
+  ) {
+    Position(
+      where: {
+        chainId: { _eq: $chainId }
+        marketId: { _in: $marketIds }
+        user: { _in: $adapterAddresses }
+        supplyShares: { _gt: $minShares }
+      }
+      order_by: [{ marketId: asc }, { user: asc }]
+      limit: $limit
+      offset: $offset
+    ) {
+      marketId
+      user
+      supplyShares
     }
   }
 `;
@@ -368,7 +427,7 @@ export const fetchMonarchAdaptersByAddress = async (
   });
 };
 
-const transformAdapterAliasRecord = (adapter: MonarchAdapterAliasRecord): VaultAdapterAlias | null => {
+const transformAdapterRelationRecord = (adapter: MonarchAdapterRelationRecord): VaultAdapterRelation | null => {
   if (!isRecognizedMorphoMarketAdapterType(adapter.adapterType)) {
     return null;
   }
@@ -379,94 +438,188 @@ const transformAdapterAliasRecord = (adapter: MonarchAdapterAliasRecord): VaultA
   }
 
   const vaultAddress = normalizeAddress(adapter.vault?.vaultAddress ?? adapter.vaultAddress);
-  const vaultName = adapter.vault?.name?.trim() || adapter.vault?.symbol?.trim() || '';
-  if (!vaultName) {
+  if (!vaultAddress) {
     return null;
   }
 
+  const vaultName =
+    adapter.vault?.name?.trim() || adapter.vault?.symbol?.trim() || `Vault ${vaultAddress.slice(0, 6)}...${vaultAddress.slice(-4)}`;
+  const asset = normalizeAddress(adapter.vault?.asset) as Address;
+
   return {
-    address: normalizeAddress(adapter.adapterAddress),
+    adapterAddress: normalizeAddress(adapter.adapterAddress),
     adapterType: adapter.adapterType,
+    asset: asset || undefined,
     chainId,
     vaultAddress,
     vaultName,
   };
 };
 
-const transformVaultAdapterAliasRecord = (vault: MonarchVaultAdapterAliasRecord): VaultAdapterAlias[] => {
+const transformVaultAdapterRelationRecord = (vault: MonarchVaultAdapterRelationRecord): VaultAdapterRelation[] => {
   const chainId = toSupportedNetwork(vault.chainId);
   const vaultAddress = normalizeAddress(vault.vaultAddress);
-  const vaultName = vault.name?.trim() || vault.symbol?.trim() || '';
-  if (!chainId || !vaultAddress || !vaultName) {
+  if (!chainId || !vaultAddress) {
     return [];
   }
+
+  const vaultName =
+    vault.name?.trim() || vault.symbol?.trim() || `Vault ${vaultAddress.slice(0, 6)}...${vaultAddress.slice(-4)}`;
+  const asset = normalizeAddress(vault.asset) as Address;
 
   return vault.adapters
     .filter((adapter) => adapter.isActive)
     .map((adapter) => normalizeAddress(adapter.adapterAddress))
     .filter(Boolean)
-    .map((address) => ({
-      address,
+    .map((adapterAddress) => ({
+      adapterAddress,
+      asset: asset || undefined,
       chainId,
       vaultAddress,
       vaultName,
     }));
 };
 
-export const fetchMonarchVaultAdapterAliases = async (): Promise<VaultAdapterAlias[]> => {
+export const fetchMonarchVaultAdapterRelations = async (): Promise<VaultAdapterRelation[]> => {
   try {
-    const aliasesByKey = new Map<string, VaultAdapterAlias>();
-    const addAlias = (alias: VaultAdapterAlias) => {
-      const key = `${alias.chainId}:${alias.address}`;
-      const existing = aliasesByKey.get(key);
-      if (!existing || (!existing.adapterType && alias.adapterType)) {
-        aliasesByKey.set(key, alias);
+    const relationsByKey = new Map<string, VaultAdapterRelation>();
+    const addRelation = (relation: VaultAdapterRelation) => {
+      const key = `${relation.chainId}:${relation.adapterAddress}`;
+      const existing = relationsByKey.get(key);
+      if (!existing || (!existing.adapterType && relation.adapterType)) {
+        relationsByKey.set(key, relation);
       }
     };
 
-    for (let page = 0; page < MONARCH_ADAPTER_ALIAS_MAX_PAGES; page++) {
-      const response = await monarchGraphqlFetcher<MonarchAdapterAliasesResponse>(adapterAliasesQuery, {
+    for (let page = 0; page < MONARCH_ADAPTER_RELATION_MAX_PAGES; page++) {
+      const response = await monarchGraphqlFetcher<MonarchAdapterRelationsResponse>(adapterRelationsQuery, {
         adapterTypes: MORPHO_MARKET_ADAPTER_TYPES,
-        limit: MONARCH_ADAPTER_ALIAS_PAGE_SIZE,
-        offset: page * MONARCH_ADAPTER_ALIAS_PAGE_SIZE,
+        limit: MONARCH_ADAPTER_RELATION_PAGE_SIZE,
+        offset: page * MONARCH_ADAPTER_RELATION_PAGE_SIZE,
       });
 
       const records = response.data?.Adapter ?? [];
       for (const record of records) {
-        const alias = transformAdapterAliasRecord(record);
-        if (!alias) {
+        const relation = transformAdapterRelationRecord(record);
+        if (!relation) {
           continue;
         }
 
-        addAlias(alias);
+        addRelation(relation);
       }
 
-      if (records.length < MONARCH_ADAPTER_ALIAS_PAGE_SIZE) {
+      if (records.length < MONARCH_ADAPTER_RELATION_PAGE_SIZE) {
         break;
       }
     }
 
-    for (let page = 0; page < MONARCH_ADAPTER_ALIAS_MAX_PAGES; page++) {
-      const response = await monarchGraphqlFetcher<MonarchVaultAdapterAliasesResponse>(activeVaultAdapterAliasesQuery, {
-        limit: MONARCH_ADAPTER_ALIAS_PAGE_SIZE,
-        offset: page * MONARCH_ADAPTER_ALIAS_PAGE_SIZE,
+    for (let page = 0; page < MONARCH_ADAPTER_RELATION_MAX_PAGES; page++) {
+      const response = await monarchGraphqlFetcher<MonarchVaultAdapterRelationsResponse>(activeVaultAdapterRelationsQuery, {
+        limit: MONARCH_ADAPTER_RELATION_PAGE_SIZE,
+        offset: page * MONARCH_ADAPTER_RELATION_PAGE_SIZE,
       });
 
       const records = response.data?.Vault ?? [];
       for (const record of records) {
-        for (const alias of transformVaultAdapterAliasRecord(record)) {
-          addAlias(alias);
+        for (const relation of transformVaultAdapterRelationRecord(record)) {
+          addRelation(relation);
         }
       }
 
-      if (records.length < MONARCH_ADAPTER_ALIAS_PAGE_SIZE) {
+      if (records.length < MONARCH_ADAPTER_RELATION_PAGE_SIZE) {
         break;
       }
     }
 
-    return Array.from(aliasesByKey.values());
+    return Array.from(relationsByKey.values());
   } catch (error) {
-    console.warn('Error fetching Monarch vault adapter aliases:', error);
+    console.warn('Error fetching Monarch vault adapter relations:', error);
     return [];
   }
+};
+
+export const fetchMonarchMarketV2SupplyingVaults = async ({
+  adapterRelations,
+  chainId,
+  marketIds,
+}: {
+  adapterRelations: VaultAdapterRelation[];
+  chainId: SupportedNetworks;
+  marketIds: string[];
+}): Promise<MarketV2SupplyingVault[]> => {
+  const normalizedMarketIds = Array.from(
+    new Set(marketIds.map((marketId) => normalizeAddress(marketId)).filter(Boolean)),
+  );
+  if (normalizedMarketIds.length === 0 || adapterRelations.length === 0) {
+    return [];
+  }
+
+  const relationsByAdapterAddress = new Map<string, VaultAdapterRelation>();
+  for (const relation of adapterRelations) {
+    if (relation.chainId !== chainId) {
+      continue;
+    }
+
+    const adapterAddress = normalizeAddress(relation.adapterAddress);
+    if (!adapterAddress) {
+      continue;
+    }
+
+    relationsByAdapterAddress.set(adapterAddress, relation);
+  }
+
+  const adapterAddresses = Array.from(relationsByAdapterAddress.keys());
+  if (adapterAddresses.length === 0) {
+    return [];
+  }
+
+  const positions: MonarchMarketV2AdapterPositionRecord[] = [];
+  for (let page = 0; page < MONARCH_MARKET_V2_POSITIONS_MAX_PAGES; page++) {
+    const response = await monarchGraphqlFetcher<MonarchMarketV2AdapterPositionsResponse>(marketV2AdapterPositionsQuery, {
+      adapterAddresses,
+      chainId,
+      limit: MONARCH_MARKET_V2_POSITIONS_PAGE_SIZE,
+      marketIds: normalizedMarketIds,
+      minShares: '0',
+      offset: page * MONARCH_MARKET_V2_POSITIONS_PAGE_SIZE,
+    });
+
+    const records = response.data?.Position ?? [];
+    positions.push(...records);
+
+    if (records.length < MONARCH_MARKET_V2_POSITIONS_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  const seen = new Set<string>();
+  const vaults: MarketV2SupplyingVault[] = [];
+
+  for (const position of positions) {
+    const adapterAddress = normalizeAddress(position.user);
+    const relation = relationsByAdapterAddress.get(adapterAddress);
+    if (!relation) {
+      continue;
+    }
+
+    const marketId = normalizeAddress(position.marketId);
+    const key = `${chainId}:${marketId}:${relation.vaultAddress}:${adapterAddress}`;
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    vaults.push({
+      adapterAddress,
+      adapterType: relation.adapterType,
+      asset: relation.asset,
+      chainId,
+      marketId,
+      supplyShares: position.supplyShares,
+      vaultAddress: relation.vaultAddress,
+      vaultName: relation.vaultName,
+    });
+  }
+
+  return vaults;
 };

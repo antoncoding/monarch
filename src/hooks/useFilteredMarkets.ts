@@ -6,7 +6,6 @@ import { useMarketFilterDependencyStatus } from '@/hooks/useMarketFilterDependen
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
-import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
@@ -15,7 +14,6 @@ import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/util
 import { isMarketVisibleWithWhitelistGuard } from '@/utils/markets';
 import { getNetworkName } from '@/utils/networks';
 import type { Market } from '@/utils/types';
-import { buildTrustedVaultMap, isMarketTrustedByVault } from '@/utils/vaults';
 
 type UseFilteredMarketsOptions = {
   currentPage?: number;
@@ -101,13 +99,12 @@ const mergeRateEnrichments = (markets: Market[], marketRateEnrichments: MarketRa
 
 export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilteredMarketsResult => {
   const preferences = useMarketPreferences();
+  const sortColumn = preferences.sortColumn === SortColumn.TrustedBy ? SortColumn.Supply : preferences.sortColumn;
   const persistedFilters = useMarketFilterPreferences();
-  const isHistoricalRateSort = HISTORICAL_RATE_SORT_COLUMNS.has(preferences.sortColumn);
-  const isRateAtTargetSort = preferences.sortColumn === SortColumn.RateAtTarget;
+  const isHistoricalRateSort = HISTORICAL_RATE_SORT_COLUMNS.has(sortColumn);
+  const isRateAtTargetSort = sortColumn === SortColumn.RateAtTarget;
   const isUsdSensitiveSort =
-    preferences.sortColumn === SortColumn.Supply ||
-    preferences.sortColumn === SortColumn.Borrow ||
-    preferences.sortColumn === SortColumn.Liquidity;
+    sortColumn === SortColumn.Supply || sortColumn === SortColumn.Borrow || sortColumn === SortColumn.Liquidity;
   const hasActiveUsdFilter = preferences.minSupplyEnabled || preferences.minBorrowEnabled || preferences.minLiquidityEnabled;
   const requiresGlobalRateSort = isHistoricalRateSort || isRateAtTargetSort;
   const historicalRateColumnsVisible =
@@ -141,11 +138,9 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const { canEvaluateUnknownTokenGuard, oracleMetadataMap, whitelistChainIds } = useMarketFilterDependencyStatus();
   const filters = useMarketsFilters();
   const { showUnwhitelistedMarkets } = useAppSettings();
-  const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys({ enabled: filters.trendingMode, defer: true });
   const customTagKeys = useCustomTagMarketKeys({ enabled: filters.customTagMode, defer: true });
-  const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const filteredCandidates = useMemo(() => {
     // Morpho fallback markets start unwhitelisted until metadata overlays them.
@@ -182,10 +177,6 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       oracleMetadataMap,
     });
 
-    if (preferences.trustedVaultsOnly) {
-      filteredMarkets = filteredMarkets.filter((market) => isMarketTrustedByVault(market, trustedVaultMap));
-    }
-
     // Official trending filter (backend-computed)
     if (filters.trendingMode && officialTrendingKeys.size > 0) {
       filteredMarkets = filteredMarkets.filter((market) => {
@@ -217,7 +208,6 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     filters,
     persistedFilters,
     preferences,
-    trustedVaultMap,
     findToken,
     officialTrendingKeys,
     customTagKeys,
@@ -229,29 +219,17 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       return filteredCandidates;
     }
 
-    if (preferences.sortColumn === SortColumn.Starred) {
+    if (sortColumn === SortColumn.Starred) {
       return sortMarkets(filteredCandidates, createStarredSort(preferences.starredMarkets), 1);
     }
 
-    if (preferences.sortColumn === SortColumn.TrustedBy) {
-      return sortMarkets(
-        filteredCandidates,
-        (a, b) => {
-          const aHasTrusted = isMarketTrustedByVault(a, trustedVaultMap);
-          const bHasTrusted = isMarketTrustedByVault(b, trustedVaultMap);
-          return Number(aHasTrusted) - Number(bHasTrusted);
-        },
-        preferences.sortDirection as 1 | -1,
-      );
-    }
-
-    const propertyPath = getSortPropertyPath(preferences.sortColumn);
+    const propertyPath = getSortPropertyPath(sortColumn);
     if (propertyPath) {
       return sortMarkets(filteredCandidates, createPropertySort(propertyPath), preferences.sortDirection as 1 | -1);
     }
 
     return filteredCandidates;
-  }, [filteredCandidates, preferences.sortColumn, preferences.sortDirection, preferences.starredMarkets, trustedVaultMap]);
+  }, [filteredCandidates, sortColumn, preferences.sortDirection, preferences.starredMarkets]);
 
   const rateEnrichmentTargets = useMemo(() => {
     if (!shouldEnableRateEnrichment) {
@@ -316,7 +294,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     }
 
     const enrichedCandidates = mergeRateEnrichments(filteredCandidates, marketRateEnrichments);
-    const propertyPath = getSortPropertyPath(preferences.sortColumn);
+    const propertyPath = getSortPropertyPath(sortColumn);
 
     if (!propertyPath) {
       return enrichedCandidates;
@@ -329,7 +307,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     sortedCandidates,
     requiresGlobalRateSort,
     filteredCandidates,
-    preferences.sortColumn,
+    sortColumn,
     preferences.sortDirection,
   ]);
 

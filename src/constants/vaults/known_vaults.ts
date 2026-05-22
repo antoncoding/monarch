@@ -7,6 +7,7 @@ export type TrustedVault = {
   metadataDescription?: string;
   metadataImage?: string;
   source?: 'monarch' | 'morpho';
+  version?: 'v1' | 'v2';
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

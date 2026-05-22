@@ -10,14 +10,16 @@ import { MarketFilter } from '@/features/positions/components/markets-filter-com
 import type { ModalZIndex } from '@/components/common/Modal';
 import { ClearFiltersButton } from '@/components/shared/clear-filters-button';
 import { TablePagination } from '@/components/shared/table-pagination';
-import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
+import { useMarketV2SupplyingVaultsQuery } from '@/hooks/queries/useMarketV2SupplyingVaultsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
+import type { MarketV2SupplyingVault } from '@/data-sources/monarch-api/vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useMarketFilterDependencyStatus } from '@/hooks/useMarketFilterDependencyStatus';
 import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useTrustedVaultMetadata } from '@/hooks/useTrustedVaultMetadata';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -28,7 +30,7 @@ import { getOracleVendorInfo, type PriceFeedVendors } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
 import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
-import { buildTrustedVaultMap, buildTrustedVaultMetadata, getTrustedVaultsForMarket, isMarketTrustedByVault } from '@/utils/vaults';
+import { getTrustedVaultsForMarket } from '@/utils/vaults';
 import { MarketIdBadge } from './market-id-badge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from './market-identity';
 import { MarketIndicators } from './market-indicators';
@@ -69,8 +71,7 @@ enum SortColumn {
   BorrowAPY = 5,
   RateAtTarget = 6,
   Risk = 7,
-  TrustedBy = 8,
-  UtilizationRate = 9,
+  UtilizationRate = 8,
 }
 
 function HTSortable({
@@ -107,6 +108,7 @@ function MarketRow({
   disabled,
   showSelectColumn,
   trustedVaultMap,
+  v2SupplyingVaultsLookup,
   supplyRateLabel,
   borrowRateLabel,
   isAprDisplay,
@@ -116,6 +118,7 @@ function MarketRow({
   disabled: boolean;
   showSelectColumn: boolean;
   trustedVaultMap: Map<string, TrustedVault>;
+  v2SupplyingVaultsLookup: Map<string, MarketV2SupplyingVault[]>;
   supplyRateLabel: string;
   borrowRateLabel: string;
   isAprDisplay: boolean;
@@ -127,8 +130,8 @@ function MarketRow({
     if (!columnVisibility.trustedBy) {
       return [];
     }
-    return getTrustedVaultsForMarket(market, trustedVaultMap);
-  }, [columnVisibility.trustedBy, market, trustedVaultMap]);
+    return getTrustedVaultsForMarket(market, trustedVaultMap, v2SupplyingVaultsLookup);
+  }, [columnVisibility.trustedBy, market, trustedVaultMap, v2SupplyingVaultsLookup]);
 
   return (
     <tr
@@ -324,7 +327,6 @@ export function MarketsTableWithSameLoanAsset({
     entriesPerPage,
     includeUnknownTokens,
     showUnknownOracle,
-    trustedVaultsOnly,
     usdMinSupply,
     usdMinBorrow,
     usdMinLiquidity,
@@ -336,19 +338,10 @@ export function MarketsTableWithSameLoanAsset({
 
   const { vaults: userTrustedVaults } = useTrustedVaults();
   const shouldLoadTrustedVaultMetadata = columnVisibility.trustedBy && userTrustedVaults.length > 0;
-  const { data: morphoVaults = [] } = useAllMorphoVaultsQuery({ enabled: shouldLoadTrustedVaultMetadata });
-
-  const trustedVaultMetadata = useMemo(() => buildTrustedVaultMetadata(morphoVaults), [morphoVaults]);
-  const trustedVaultMap = useMemo(() => {
-    return buildTrustedVaultMap(userTrustedVaults, trustedVaultMetadata);
-  }, [userTrustedVaults, trustedVaultMetadata]);
-
-  const hasTrustedVault = useCallback(
-    (market: Market) => {
-      return isMarketTrustedByVault(market, trustedVaultMap);
-    },
-    [trustedVaultMap],
-  );
+  const { trustedVaultMap } = useTrustedVaultMetadata({
+    enabled: shouldLoadTrustedVaultMetadata,
+    trustedVaults: userTrustedVaults,
+  });
 
   // Create memoized usdFilters object from individual localStorage values
   const usdFilters = useMemo(
@@ -468,10 +461,6 @@ export function MarketsTableWithSameLoanAsset({
       filtered = filtered.filter((market) => !whitelistChainIds.has(market.morphoBlue.chain.id) || market.whitelisted);
     }
 
-    if (trustedVaultsOnly) {
-      filtered = filtered.filter(hasTrustedVault);
-    }
-
     // Sort using the shared utility
     const sortPropertyMap: Record<SortColumn, string> = {
       [SortColumn.COLLATSYMBOL]: 'collateralAsset.symbol',
@@ -482,14 +471,11 @@ export function MarketsTableWithSameLoanAsset({
       [SortColumn.BorrowAPY]: 'state.borrowApy',
       [SortColumn.RateAtTarget]: 'state.apyAtTarget',
       [SortColumn.Risk]: '', // No sorting for risk
-      [SortColumn.TrustedBy]: '',
       [SortColumn.UtilizationRate]: 'state.utilization',
     };
 
     const propertyPath = sortPropertyMap[sortColumn];
-    if (sortColumn === SortColumn.TrustedBy) {
-      filtered = sortMarkets(filtered, (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)), sortDirection);
-    } else if (propertyPath && sortColumn !== SortColumn.Risk) {
+    if (propertyPath && sortColumn !== SortColumn.Risk) {
       filtered = sortMarkets(filtered, createPropertySort(propertyPath), sortDirection);
     }
 
@@ -514,10 +500,8 @@ export function MarketsTableWithSameLoanAsset({
     minLiquidityEnabled,
     usdFilters,
     findToken,
-    hasTrustedVault,
     oracleMetadataMap,
     whitelistChainIds,
-    trustedVaultsOnly,
   ]);
 
   // Pagination with guards to prevent invalid states
@@ -526,6 +510,11 @@ export function MarketsTableWithSameLoanAsset({
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
   const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
+  const { lookup: v2SupplyingVaultsLookup } = useMarketV2SupplyingVaultsQuery({
+    enabled: shouldLoadTrustedVaultMetadata,
+    markets: paginatedMarkets.map((marketWithSelection) => marketWithSelection.market),
+    trustedVaults: userTrustedVaults,
+  });
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -630,13 +619,12 @@ export function MarketsTableWithSameLoanAsset({
                   onSort={handleSort}
                 />
                 {columnVisibility.trustedBy && (
-                  <HTSortable
-                    label="Trusted By"
-                    column={SortColumn.TrustedBy}
-                    sortColumn={sortColumn}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
+                  <th
+                    className="text-center font-normal px-2 py-2"
+                    style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}
+                  >
+                    Trusted By
+                  </th>
                 )}
                 {columnVisibility.totalSupply && (
                   <HTSortable
@@ -718,6 +706,7 @@ export function MarketsTableWithSameLoanAsset({
                   disabled={disabled}
                   showSelectColumn={showSelectColumn}
                   trustedVaultMap={trustedVaultMap}
+                  v2SupplyingVaultsLookup={v2SupplyingVaultsLookup}
                   supplyRateLabel={supplyRateLabel}
                   borrowRateLabel={borrowRateLabel}
                   isAprDisplay={isAprDisplay}
