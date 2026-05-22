@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { RiSparkling2Fill } from 'react-icons/ri';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
+import { useEffectiveTrustedVaults } from '@/hooks/useEffectiveTrustedVaults';
 import { useTrustedVaultMetadata } from '@/hooks/useTrustedVaultMetadata';
 import { useAppSettings } from '@/stores/useAppSettings';
-import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { isTrustedVaultV2 } from '@/utils/vaults';
 import { SettingActionItem, SettingToggleItem } from '../SettingItem';
 import type { DetailView } from '../constants';
@@ -15,13 +15,13 @@ type PreferencesPanelProps = {
 };
 
 export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) {
-  const { vaults: userTrustedVaults } = useTrustedVaults();
+  const effectiveTrustedVaults = useEffectiveTrustedVaults();
   const { rebalanceDefaultMode, setRebalanceDefaultMode } = useAppSettings();
   const [mounted, setMounted] = useState(false);
-  const trustedVaultCount = userTrustedVaults.length;
+  const trustedVaultCount = effectiveTrustedVaults.length;
   const { trustedVaultMap } = useTrustedVaultMetadata({
     enabled: trustedVaultCount > 0,
-    trustedVaults: userTrustedVaults,
+    trustedVaults: effectiveTrustedVaults,
   });
 
   useEffect(() => {
@@ -52,14 +52,14 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
           title="Manage Trusted Vaults"
           description={
             trustedVaultCount === 0
-              ? 'Used by Trusted By columns.'
-              : `${trustedVaultCount} selected for market columns.`
+              ? 'Choose the vaults shown in Trusted By columns.'
+              : `${trustedVaultCount} active for Trusted By columns.`
           }
-          buttonLabel={trustedVaultCount === 0 ? 'Set up' : 'Edit'}
+          buttonLabel={trustedVaultCount === 0 ? 'Set up' : 'Manage'}
           onClick={() => onNavigateToDetail?.('trusted-vaults')}
           badge={
             trustedVaultCount === 0 ? (
-              <span className="rounded-sm bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-medium text-orange-500">0 selected</span>
+              <span className="rounded-sm bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-medium text-orange-500">0 active</span>
             ) : undefined
           }
         />
@@ -67,7 +67,7 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
           <div className="flex flex-wrap gap-2">
             {mounted ? (
               trustedVaultCount === 0 ? (
-                <div className="text-xs text-secondary">No trusted vaults selected.</div>
+                <div className="text-xs text-secondary">No trusted vaults active.</div>
               ) : (
                 <>
                   {sortedTrustedVaults.slice(0, 10).map((vault) => (

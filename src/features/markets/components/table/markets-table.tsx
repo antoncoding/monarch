@@ -6,11 +6,11 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { useMarketV2SupplyingVaultsQuery } from '@/hooks/queries/useMarketV2SupplyingVaultsQuery';
+import { useEffectiveTrustedVaults } from '@/hooks/useEffectiveTrustedVaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useTrustedVaultMetadata } from '@/hooks/useTrustedVaultMetadata';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
-import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import type { Market } from '@/utils/types';
 import { SortColumn } from '../constants';
 import { MarketTableBody } from './market-table-body';
@@ -63,7 +63,7 @@ function MarketsTable({
     starredMarkets,
   } = useMarketPreferences();
 
-  const { vaults: trustedVaults } = useTrustedVaults();
+  const trustedVaults = useEffectiveTrustedVaults();
   const trustedVaultCount = trustedVaults.length;
   const shouldLoadTrustedVaultMetadata = columnVisibility.trustedBy && trustedVaultCount > 0;
   const { trustedVaultMap } = useTrustedVaultMetadata({

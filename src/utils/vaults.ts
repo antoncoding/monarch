@@ -17,7 +17,7 @@ export function morphoVaultToTrustedVault(vault: MorphoVault): TrustedVault {
     featured: vault.featured,
     metadataDescription: vault.metadataDescription,
     metadataImage: vault.metadataImage,
-    source: 'morpho',
+    version: 'v1',
   };
 }
 
@@ -30,7 +30,6 @@ export function morphoVaultV2MetadataToTrustedVault(vault: MorphoVaultV2Metadata
     metadataDescription: vault.metadataDescription,
     metadataImage: vault.metadataImage,
     name: vault.name || vault.symbol || `Vault ${vault.address.slice(0, 6)}...${vault.address.slice(-4)}`,
-    source: 'morpho',
     version: 'v2',
   };
 }
@@ -43,7 +42,6 @@ function mergeTrustedVaultMetadata(vault: TrustedVault, metadata: TrustedVault):
     featured: metadata.featured ?? vault.featured,
     metadataDescription: metadata.metadataDescription ?? vault.metadataDescription,
     metadataImage: metadata.metadataImage ?? vault.metadataImage,
-    source: vault.source ?? metadata.source,
     version: metadata.version ?? vault.version,
   };
 }
@@ -107,7 +105,6 @@ const marketV2SupplyingVaultToTrustedVault = (vault: MarketV2SupplyingVault): Tr
     metadataDescription: vault.metadataDescription,
     metadataImage: vault.metadataImage,
     name: vault.vaultName,
-    source: 'monarch',
     version: 'v2',
   };
 };

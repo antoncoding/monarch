@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Input } from '@/components/ui/input';
 import { Modal, ModalBody, ModalHeader, type ModalZIndex } from '@/components/common/Modal';
+import { useEffectiveTrustedVaults } from '@/hooks/useEffectiveTrustedVaults';
 import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
-import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { COLUMN_DESCRIPTIONS, COLUMN_LABELS, DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from './column-visibility';
 
 type MarketSettingsModalProps = {
@@ -37,7 +37,7 @@ function SettingItem({ title, description, children }: SettingItemProps) {
 
 export default function MarketSettingsModal({ isOpen, onOpenChange, zIndex = 'settings' }: MarketSettingsModalProps) {
   const { columnVisibility, setColumnVisibility, entriesPerPage, setEntriesPerPage } = useMarketPreferences();
-  const { vaults: trustedVaults } = useTrustedVaults();
+  const trustedVaults = useEffectiveTrustedVaults();
   const { open: openModal } = useModal();
   const { short: rateShort } = useRateLabel();
 

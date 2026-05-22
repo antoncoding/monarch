@@ -68,7 +68,7 @@ export function TrustedByCell({ vaults, badgeSize = TRUSTED_BY_ICON_SIZE }: Trus
     <Tooltip
       content={
         <TooltipContent
-          title={<span className="text-sm font-semibold">Trusted vaults</span>}
+          title={<span className="text-sm font-semibold">Trusted By</span>}
           detail={
             <div className="flex flex-col gap-2">
               {vaults.map((vault) => (
