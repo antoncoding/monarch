@@ -53,6 +53,13 @@ type TrustedByColumnToggleProps = {
   className?: string;
 };
 
+type MonarchSuggestedVaultsToggleProps = {
+  selected: boolean;
+  description: string;
+  onChange: (enabled: boolean) => void;
+  className?: string;
+};
+
 const vaultKey = (vault: TrustedVault) => getVaultKey(vault.address, vault.chainId);
 
 const MONARCH_SUGGESTED_VAULT_KEYS = new Set(monarch_suggested_vaults.map(vaultKey));
@@ -74,6 +81,30 @@ function TrustedByColumnToggle({ selected, onChange, className }: TrustedByColum
         size="xs"
         color="primary"
         aria-label="Toggle Trusted By column"
+        className="shrink-0"
+      />
+    </div>
+  );
+}
+
+function MonarchSuggestedVaultsToggle({
+  selected,
+  description,
+  onChange,
+  className,
+}: MonarchSuggestedVaultsToggleProps) {
+  return (
+    <div className={cn('flex items-center justify-between gap-4', className)}>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-primary">Use default Monarch list</p>
+        <p className="mt-1 text-xs text-secondary">{description}</p>
+      </div>
+      <IconSwitch
+        selected={selected}
+        onChange={onChange}
+        size="xs"
+        color="primary"
+        aria-label="Toggle Monarch suggested vault list"
         className="shrink-0"
       />
     </div>
@@ -405,21 +436,12 @@ export function TrustedVaultsDetail() {
         </div>
 
         {!hasTrustedVaultSetup ? (
-          <div className="flex flex-col gap-3 rounded bg-surface-soft p-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0 flex flex-col gap-1">
-                <p className="text-sm font-medium text-primary">Use default Monarch list</p>
-                <p className="text-xs text-secondary">{monarchListDescription}</p>
-              </div>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => setMonarchSuggestedVaultsEnabled(true)}
-                className="shrink-0"
-              >
-                Turn on
-              </Button>
-            </div>
+          <div className="flex flex-col gap-3">
+            <MonarchSuggestedVaultsToggle
+              selected={includeMonarchSuggestedVaults}
+              description={monarchListDescription}
+              onChange={setMonarchSuggestedVaultsEnabled}
+            />
             <Button
               size="sm"
               variant="ghost"
@@ -442,20 +464,11 @@ export function TrustedVaultsDetail() {
 
       {hasTrustedVaultSetup ? (
         <div className="flex flex-col gap-4 rounded bg-surface p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-primary">Use default Monarch list</p>
-              <p className="mt-1 text-xs text-secondary">{monarchListDescription}</p>
-            </div>
-            <IconSwitch
-              selected={includeMonarchSuggestedVaults}
-              onChange={setMonarchSuggestedVaultsEnabled}
-              size="xs"
-              color="primary"
-              aria-label="Toggle Monarch suggested vault list"
-              className="shrink-0"
-            />
-          </div>
+          <MonarchSuggestedVaultsToggle
+            selected={includeMonarchSuggestedVaults}
+            description={monarchListDescription}
+            onChange={setMonarchSuggestedVaultsEnabled}
+          />
 
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
