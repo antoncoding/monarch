@@ -16,9 +16,24 @@ type GeneralFeedTooltipProps = {
   feedFreshness?: FeedFreshnessStatus;
 };
 
+function getSafeCustomLink(link: { label: string; url: string }): { label: string; url: string } | null {
+  const label = link.label.trim();
+  const candidate = link.url.trim();
+  if (!label || !candidate) return null;
+
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    return { label, url: url.toString() };
+  } catch {
+    return null;
+  }
+}
+
 export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeedTooltipProps) {
   const baseAsset = feed.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair[1] ?? 'Unknown';
+  const customLinks = feed.links?.map(getSafeCustomLink).filter((link): link is { label: string; url: string } => link != null) ?? [];
   const isMonarchVerified = isMonarchVerifiedFeed(feed);
 
   const vendor = feed.provider ? mapProviderToVendor(feed.provider) : PriceFeedVendors.Unknown;
@@ -119,6 +134,17 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
             />
             Explorer
           </Link>
+          {customLinks.map((link) => (
+            <Link
+              key={`${link.label}-${link.url}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
       </div>
     </div>
