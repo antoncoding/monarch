@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { PharosAssetRiskBadge } from '@/components/shared/pharos-asset-risk-badge';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { useAssetRiskEntry } from '@/hooks/queries/useAssetRiskQuery';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { getExplorerUrl } from '@/utils/networks';
 
@@ -33,8 +35,8 @@ export function TokenIcon({
   disableTooltip = false,
 }: TokenIconProps) {
   const { findToken } = useTokensQuery();
-
   const token = useMemo(() => findToken(address, chainId), [address, chainId, findToken]);
+  const { assetRisk } = useAssetRiskEntry(address, chainId, !disableTooltip && Boolean(token?.img));
 
   // If we have a token with an image, use that
   if (token?.img) {
@@ -74,6 +76,7 @@ export function TokenIcon({
             title={title}
             detail={detail}
             secondaryDetail={secondaryDetail}
+            footer={<PharosAssetRiskBadge assetRisk={assetRisk} />}
             actionIcon={explorerUrl ? <ExternalLinkIcon className="h-4 w-4" /> : undefined}
             actionHref={explorerUrl ?? undefined}
             onActionClick={(e) => e.stopPropagation()}
@@ -85,7 +88,6 @@ export function TokenIcon({
     );
   }
 
-  // Fallback to placeholder
   return (
     <div
       className="rounded-full bg-gray-300 dark:bg-gray-700"
