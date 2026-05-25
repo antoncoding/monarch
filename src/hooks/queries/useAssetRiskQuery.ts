@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
-import { toChainAssetKey } from '@/utils/chain-asset-key';
 import { DATA_API_BASE_URL } from '@/utils/urls';
 
 export type AssetRiskEntry = {
@@ -26,6 +25,8 @@ type AssetRiskResponse = {
 
 const ASSET_RISK_REFRESH_MS = 15 * 60 * 1000;
 
+const getAssetRiskResponseKey = (address: string, chainId: number): string => `${chainId}:${address.toLowerCase()}`;
+
 const fetchAssetRisk = async (chainId: number): Promise<AssetRiskResponse> => {
   const response = await fetch(`${DATA_API_BASE_URL}/v1/risk/assets?chain_id=${chainId}`);
 
@@ -46,7 +47,7 @@ export const useAssetRiskEntry = (address: string, chainId: number, enabled = tr
   });
 
   return {
-    assetRisk: query.data?.assets[toChainAssetKey(address, chainId)],
+    assetRisk: query.data?.assets[getAssetRiskResponseKey(address, chainId)],
     ...query,
   };
 };
