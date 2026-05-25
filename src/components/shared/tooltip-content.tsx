@@ -6,6 +6,7 @@ type TooltipContentProps = {
   detail?: ReactNode;
   secondaryDetail?: ReactNode;
   footer?: ReactNode;
+  action?: ReactNode;
   className?: string;
   actionIcon?: ReactNode;
   actionHref?: string;
@@ -18,12 +19,26 @@ export function TooltipContent({
   detail,
   secondaryDetail,
   footer,
+  action,
   className = '',
   actionIcon,
   actionHref,
   onActionClick,
 }: TooltipContentProps) {
   const contentClassName = `max-w-[min(22rem,calc(100vw-2rem))] overflow-hidden break-words ${className}`;
+  const actionNode =
+    action ??
+    (actionIcon && actionHref ? (
+      <a
+        href={actionHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onActionClick}
+        className="text-secondary hover:text-primary transition-colors"
+      >
+        {actionIcon}
+      </a>
+    ) : null);
 
   // Simple tooltip with just an icon and title
   if (!detail && !secondaryDetail && !footer) {
@@ -31,17 +46,7 @@ export function TooltipContent({
       <div className={`flex items-center gap-2 ${contentClassName}`}>
         {icon && <div className="flex items-center">{icon}</div>}
         <span className="min-w-0 font-zen text-primary">{title}</span>
-        {actionIcon && actionHref && (
-          <a
-            href={actionHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={onActionClick}
-            className="ml-auto text-secondary hover:text-primary transition-colors text-sm"
-          >
-            {actionIcon}
-          </a>
-        )}
+        {actionNode && <div className="ml-auto flex shrink-0 items-center text-sm">{actionNode}</div>}
       </div>
     );
   }
@@ -57,17 +62,7 @@ export function TooltipContent({
           {secondaryDetail && <div className="whitespace-pre-line font-zen text-xs text-secondary">{secondaryDetail}</div>}
           {footer}
         </div>
-        {actionIcon && actionHref && (
-          <a
-            href={actionHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={onActionClick}
-            className="flex-shrink-0 self-start text-secondary hover:text-primary transition-colors"
-          >
-            {actionIcon}
-          </a>
-        )}
+        {actionNode && <div className="flex shrink-0 items-center self-start">{actionNode}</div>}
       </div>
     </div>
   );

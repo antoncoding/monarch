@@ -6,6 +6,9 @@ export type AssetRiskEntry = {
   token: {
     symbol: string;
   };
+  source?: {
+    assetId?: string | null;
+  };
   scores: {
     overallGrade: string | null;
     overallScore: number | null;
