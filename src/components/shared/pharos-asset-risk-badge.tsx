@@ -1,6 +1,4 @@
 import type { MouseEventHandler } from 'react';
-import Image from 'next/image';
-import pharosIcon from '@/imgs/integrations/pharos-icon.png';
 import type { AssetRiskEntry } from '@/hooks/queries/useAssetRiskQuery';
 
 type PharosAssetRiskBadgeProps = {
@@ -17,16 +15,24 @@ const formatScore = (score: number | null | undefined): string => {
   return `${Math.round(score)}/100`;
 };
 
-const getGradeClassName = (grade: string, hasActiveDepeg: boolean, recentlyDegraded: boolean): string => {
-  if (hasActiveDepeg || grade.startsWith('D') || grade.startsWith('F')) {
-    return 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300 hover:border-red-500/50';
+const getGradeClassName = (grade: string): string => {
+  if (grade.startsWith('F')) {
+    return 'border-red-500/60 text-red-600 hover:border-red-500 dark:text-red-300';
   }
 
-  if (recentlyDegraded || grade.startsWith('C')) {
-    return 'border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 hover:border-yellow-500/50';
+  if (grade.startsWith('D')) {
+    return 'border-orange-500/60 text-orange-700 hover:border-orange-500 dark:text-orange-300';
   }
 
-  return 'border-border bg-surface text-primary hover:border-primary/30';
+  if (grade.startsWith('C')) {
+    return 'border-yellow-500/60 text-yellow-700 hover:border-yellow-500 dark:text-yellow-300';
+  }
+
+  if (grade.startsWith('A') || grade.startsWith('B')) {
+    return 'border-emerald-500/60 text-emerald-700 hover:border-emerald-500 dark:text-emerald-300';
+  }
+
+  return 'border-border text-secondary hover:border-primary/30 hover:text-primary';
 };
 
 export const getPharosAssetUrl = (assetRisk?: AssetRiskEntry): string | null => {
@@ -68,20 +74,11 @@ export function PharosAssetRiskBadge({ assetRisk, href, onClick }: PharosAssetRi
       onClick={onClick}
       title={title}
       aria-label={title}
-      className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-1.5 text-[11px] font-semibold leading-none tabular-nums transition-colors ${getGradeClassName(
+      className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full border bg-surface px-1.5 font-zen text-xs font-normal leading-none no-underline transition-colors hover:no-underline focus:no-underline ${getGradeClassName(
         grade,
-        activeDepeg,
-        recentlyDegraded,
       )}`}
     >
-      <span>{grade}</span>
-      <Image
-        src={pharosIcon}
-        alt=""
-        width={13}
-        height={13}
-        className="rounded-sm opacity-80"
-      />
+      {grade}
     </a>
   );
 }
