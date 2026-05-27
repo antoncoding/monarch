@@ -41,10 +41,6 @@ type MapMonarchMarketRowsOptions = {
   trustedTokens?: ERC20Token[];
 };
 
-type MapMonarchMarketOptions = {
-  warnOnMissingTokenInfo?: boolean;
-};
-
 const MONARCH_MARKETS_PAGE_SIZE = 1_000;
 const MONARCH_MARKETS_TIMEOUT_MS = 15_000;
 const MONARCH_MARKETS_ZERO_ADDRESS = zeroAddress.toLowerCase();
@@ -140,7 +136,6 @@ const getMarketTokenInputs = (markets: MonarchMarketRow[]): TokenAddressInput[] 
 const mapMonarchMarketToMarket = (
   market: MonarchMarketRow,
   tokenInfos: Map<string, ResolvedTokenInfo>,
-  options: MapMonarchMarketOptions = {},
 ): Market | null => {
   if (!isSupportedChain(market.chainId)) {
     return null;
@@ -164,9 +159,6 @@ const mapMonarchMarketToMarket = (
   const collateralAsset = tokenInfos.get(infoToKey(collateralAssetAddress, chainId));
 
   if (!loanAsset || !collateralAsset) {
-    if (options.warnOnMissingTokenInfo ?? true) {
-      console.warn(`Skipping Monarch market ${market.marketId} on chain ${chainId}: token decimals could not be resolved.`);
-    }
     return null;
   }
 
@@ -240,11 +232,7 @@ const mapMonarchMarketRows = async (
   });
 
   return rows
-    .map((market) =>
-      mapMonarchMarketToMarket(market, tokenInfos, {
-        warnOnMissingTokenInfo: shouldResolveUnknownTokens,
-      }),
-    )
+    .map((market) => mapMonarchMarketToMarket(market, tokenInfos))
     .filter((market): market is Market => market !== null);
 };
 
