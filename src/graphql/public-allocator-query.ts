@@ -22,7 +22,7 @@ export const publicAllocatorVaultsQuery = `
             maxIn
             maxOut
             market {
-              uniqueKey
+              uniqueKey: marketId
             }
           }
         }
@@ -33,7 +33,7 @@ export const publicAllocatorVaultsQuery = `
           totalAssets
           allocation {
             market {
-              uniqueKey
+              uniqueKey: marketId
               loanAsset {
                 address
                 symbol

@@ -1,6 +1,6 @@
 const commonMarketFields = `
 lltv
-uniqueKey
+uniqueKey: marketId
 irmAddress
 oracle {
   address
@@ -97,7 +97,7 @@ export const marketsQuery = `
     
   fragment MarketFields on Market {
     lltv
-    uniqueKey
+    uniqueKey: marketId
     irmAddress
     oracle {
       address
@@ -163,7 +163,7 @@ export const marketsWhitelistStatusQuery = `
   query getMarketsWhitelistStatus($first: Int, $skip: Int, $where: MarketFilters) {
     markets(first: $first, skip: $skip, where: $where) {
       items {
-        uniqueKey
+        uniqueKey: marketId
         listed
         supplyingVaults {
           address
@@ -185,7 +185,7 @@ export const marketsRateFieldsQuery = `
   query getMarketsRateFields($first: Int, $skip: Int, $where: MarketFilters) {
     markets(first: $first, skip: $skip, where: $where) {
       items {
-        uniqueKey
+        uniqueKey: marketId
         state {
           apyAtTarget
           rateAtTarget
@@ -243,7 +243,7 @@ export const userPositionMarketsQuery = `
           collateral
         }
         market {
-          uniqueKey
+          uniqueKey: marketId
           morphoBlue {
             chain {
               id
@@ -281,8 +281,8 @@ export const userPositionForMarketQuery = `
 `;
 
 export const marketDetailQuery = `
-  query getMarketDetail($uniqueKey: String!, $chainId: Int) {
-    marketByUniqueKey(uniqueKey: $uniqueKey, chainId: $chainId) {
+  query getMarketDetail($uniqueKey: String!, $chainId: Int!) {
+    marketByUniqueKey: marketById(marketId: $uniqueKey, chainId: $chainId) {
       ...MarketFields
     }
   }
@@ -290,8 +290,8 @@ export const marketDetailQuery = `
 `;
 
 export const marketHistoricalDataQuery = `
-  query getMarketHistoricalData($uniqueKey: String!, $options: TimeseriesOptions!, $chainId: Int) {
-    marketByUniqueKey(uniqueKey: $uniqueKey, chainId: $chainId) {
+  query getMarketHistoricalData($uniqueKey: String!, $options: TimeseriesOptions!, $chainId: Int!) {
+    marketByUniqueKey: marketById(marketId: $uniqueKey, chainId: $chainId) {
       historicalState {
         supplyApy(options: $options) {
           x
@@ -352,7 +352,7 @@ export const userTransactionsQuery = `
             shares
             assets
             market {
-              uniqueKey
+              uniqueKey: marketId
             }
           }
         }
