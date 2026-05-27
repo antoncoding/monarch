@@ -49,7 +49,7 @@ const useUserPositionsSummaryData = (
   const currentBlockChainIds = enabled ? uniqueChainIds : [];
   const { data: currentBlocks } = useCurrentBlocks(currentBlockChainIds);
 
-  const selectedRange = useMemo((): EarningsTimeRange => {
+  const validatedCustomRange = useMemo((): EarningsTimeRange | null => {
     const nowTimestamp = Math.floor(Date.now() / 1000);
 
     if (
@@ -58,19 +58,31 @@ const useUserPositionsSummaryData = (
       Number.isFinite(customRange.endTimestamp) &&
       customRange.startTimestamp < customRange.endTimestamp
     ) {
-      return {
-        startTimestamp: Math.max(0, Math.floor(customRange.startTimestamp)),
-        endTimestamp: Math.min(Math.floor(customRange.endTimestamp), nowTimestamp),
-      };
+      const startTimestamp = Math.max(0, Math.floor(customRange.startTimestamp));
+      const endTimestamp = Math.min(Math.floor(customRange.endTimestamp), nowTimestamp);
+
+      if (startTimestamp < endTimestamp) {
+        return { startTimestamp, endTimestamp };
+      }
+    }
+
+    return null;
+  }, [customRange?.startTimestamp, customRange?.endTimestamp]);
+
+  const selectedRange = useMemo((): EarningsTimeRange => {
+    const nowTimestamp = Math.floor(Date.now() / 1000);
+
+    if (validatedCustomRange) {
+      return validatedCustomRange;
     }
 
     return {
       startTimestamp: getPeriodTimestamp(period, nowTimestamp),
       endTimestamp: nowTimestamp,
     };
-  }, [period, customRange?.startTimestamp, customRange?.endTimestamp]);
+  }, [period, validatedCustomRange]);
 
-  const hasCustomRange = Boolean(customRange);
+  const hasCustomRange = Boolean(validatedCustomRange);
 
   const snapshotBlocks = useMemo(() => {
     if (!currentBlocks) return {};

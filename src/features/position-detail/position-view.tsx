@@ -87,9 +87,9 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
   });
 
   const isLoading = isMarketsLoading || isPositionsLoading;
-  const periodLabel = customRange ? formatReportRangeLabel(customRange) : PERIOD_LABELS[period];
-  const reportRange = earningsRangesByChain[chainId];
   const hasCustomRange = Boolean(reportCustomRange);
+  const periodLabel = hasCustomRange && customRange ? formatReportRangeLabel(customRange) : PERIOD_LABELS[period];
+  const reportRange = earningsRangesByChain[chainId];
 
   // Filter transactions relevant to this position's markets
   const relevantTransactions = useMemo(() => {
@@ -180,7 +180,7 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
               <PeriodSelector
                 period={period}
                 onPeriodChange={handlePeriodChange}
-                className={`h-8 w-[110px] text-xs ${customRange ? 'border-border/60 bg-hovered/40 text-secondary opacity-70' : ''}`}
+                className={`h-8 w-[110px] text-xs ${hasCustomRange ? 'border-border/60 bg-hovered/40 text-secondary opacity-70' : ''}`}
                 contentClassName="z-[3600]"
               />
               <ReportRangePicker
