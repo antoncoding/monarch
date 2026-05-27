@@ -339,22 +339,25 @@ export const marketHistoricalDataQuery = `
 `;
 
 export const userTransactionsQuery = `
-  query getUserTransactions($where: TransactionFilters, $first: Int, $skip: Int) {
-    transactions(where: $where, first: $first, skip: $skip) {
+  query getUserTransactions($where: MarketTransactionFilters, $first: Int, $skip: Int) {
+    transactions: marketTransactions(where: $where, first: $first, skip: $skip) {
       items {
-        id
-        hash
+        hash: txHash
+        logIndex
         timestamp
         type
         data {
           __typename
-          ... on MarketTransferTransactionData {
+          ... on MarketTransactionTransferData {
             shares
             assets
-            market {
-              uniqueKey: marketId
-            }
           }
+          ... on MarketTransactionCollateralTransferData {
+            assets
+          }
+        }
+        market {
+          uniqueKey: marketId
         }
       }
       pageInfo {
@@ -367,19 +370,19 @@ export const userTransactionsQuery = `
 
 export const marketLiquidationsQuery = `
   query getMarketLiquidations($uniqueKey: String!, $first: Int, $skip: Int) {
-  transactions (where: {
+  transactions: marketTransactions (where: {
     marketUniqueKey_in: [$uniqueKey],
-    type_in: [MarketLiquidation]
+    type_in: [Liquidation]
   },
   first: $first,
   skip: $skip
   ) {
       items {
-        hash
+        hash: txHash
         timestamp
         type
         data {
-          ... on MarketLiquidationTransactionData {
+          ... on MarketTransactionLiquidationData {
             repaidAssets
             seizedAssets
             liquidator
@@ -399,20 +402,20 @@ export const marketLiquidationsQuery = `
 
 export const marketSuppliesQuery = `
   query getMarketSupplyActivities($uniqueKey: String!, $minAssets: BigInt!,  $first: Int, $skip: Int) {
-    transactions (where: {
+    transactions: marketTransactions (where: {
       marketUniqueKey_in: [$uniqueKey],
       assets_gte: $minAssets,
-      type_in: [MarketSupply, MarketWithdraw]
+      type_in: [Supply, Withdraw]
     },
     first: $first,
     skip: $skip
     ) {
       items {
         type
-        hash
+        hash: txHash
         timestamp
         data {
-          ... on MarketTransferTransactionData {
+          ... on MarketTransactionTransferData {
             assets
             shares
           }
@@ -433,20 +436,20 @@ export const marketSuppliesQuery = `
 
 export const marketBorrowsQuery = `
   query getMarketBorrowActivities($uniqueKey: String!, $minAssets: BigInt, $first: Int, $skip: Int) {
-    transactions (where: {
+    transactions: marketTransactions (where: {
       marketUniqueKey_in: [$uniqueKey],
       assets_gte: $minAssets,
-      type_in: [MarketBorrow, MarketRepay]
+      type_in: [Borrow, Repay]
     },
     first: $first,
     skip: $skip
     ) {
       items {
         type
-        hash
+        hash: txHash
         timestamp
         data {
-          ... on MarketTransferTransactionData {
+          ... on MarketTransactionTransferData {
             assets
             shares
           }
@@ -536,7 +539,9 @@ export const assetPricesQuery = `
         chain {
           id
         }
-        priceUsd
+        price {
+          usd
+        }
       }
     }
   }

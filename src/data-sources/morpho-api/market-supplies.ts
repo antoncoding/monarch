@@ -8,7 +8,7 @@ type MorphoAPISuppliesResponse = {
     // Mark data as optional to align with fetcher's generic handling
     transactions?: {
       items?: {
-        type: 'MarketSupply' | 'MarketWithdraw';
+        type: 'Supply' | 'Withdraw';
         hash: string;
         timestamp: number;
         data: {
@@ -67,7 +67,7 @@ export const fetchMorphoMarketSupplies = async (
 
     // Map to unified type
     const mappedItems = items.map((item) => ({
-      type: item.type,
+      type: item.type === 'Supply' ? ('MarketSupply' as const) : ('MarketWithdraw' as const),
       hash: item.hash,
       timestamp: item.timestamp,
       amount: item.data.assets,
