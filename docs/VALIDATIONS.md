@@ -67,6 +67,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 
 - Data fetching should use existing React Query hooks and established cache keys where possible.
 - Please respect the setting in "useCustomRPC" whenever a request is RPC-related.
+- Shared Morpho API callers must gate requested chain IDs with the Morpho API support helper before building GraphQL variables; Monarch-supported chains are not always Morpho-API-supported chains.
 - Grouped fetching via RPC must be bundled with `multicall` to increase efficiency if they're on the same chain or block.
 - Domain matching, token resolution, unit conversion, entity ID normalization, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
