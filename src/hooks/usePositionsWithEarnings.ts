@@ -5,24 +5,35 @@ import { hasActiveSupplyPosition, initializePositionWithEmptyEarnings, type Posi
 import { isSupplyPositionTransaction } from '@/utils/transactionGrouping';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
+export type EarningsTimeRange = {
+  startTimestamp: number;
+  endTimestamp: number;
+};
+
+type UsePositionsWithEarningsOptions = {
+  endSnapshotsByChain?: Record<number, Map<string, PositionSnapshot>>;
+  endBlockData?: Record<number, { block: number; timestamp: number }>;
+  fallbackEndTimestamp?: number;
+  requiresEndSnapshots?: boolean;
+};
+
 // Simple helper for the period timestamp calculation
-export const getPeriodTimestamp = (period: EarningsPeriod): number => {
-  const now = Math.floor(Date.now() / 1000);
+export const getPeriodTimestamp = (period: EarningsPeriod, endTimestamp: number = Math.floor(Date.now() / 1000)): number => {
   switch (period) {
     case 'day':
-      return now - 86_400;
+      return endTimestamp - 86_400;
     case 'week':
-      return now - 7 * 86_400;
+      return endTimestamp - 7 * 86_400;
     case 'month':
-      return now - 30 * 86_400;
+      return endTimestamp - 30 * 86_400;
     case 'threemonth':
-      return now - 90 * 86_400;
+      return endTimestamp - 90 * 86_400;
     case 'sixmonth':
-      return now - 180 * 86_400;
+      return endTimestamp - 180 * 86_400;
     case 'all':
       return 0;
     default:
-      return now - 86_400;
+      return endTimestamp - 86_400;
   }
 };
 
@@ -31,9 +42,10 @@ export const usePositionsWithEarnings = (
   transactions: UserTransaction[],
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>,
   chainBlockData: Record<number, { block: number; timestamp: number }>,
+  options: UsePositionsWithEarningsOptions = {},
 ): MarketPositionWithEarnings[] => {
   return useMemo(() => {
-    const endTimestamp = Math.floor(Date.now() / 1000);
+    const defaultEndTimestamp = options.fallbackEndTimestamp ?? Math.floor(Date.now() / 1000);
 
     return positions.map((position) => {
       const chainId = position.market.morphoBlue.chain.id;
@@ -48,7 +60,17 @@ export const usePositionsWithEarnings = (
       }
 
       const startTimestamp = chainData.timestamp;
-      const currentBalance = BigInt(position.state.supplyAssets);
+      const endTimestamp = options.endBlockData?.[chainId]?.timestamp ?? defaultEndTimestamp;
+      if (endTimestamp <= startTimestamp) {
+        return initializePositionWithEmptyEarnings(position, hasSupplyHistory);
+      }
+
+      const endSnapshot = options.endSnapshotsByChain?.[chainId]?.get(marketIdLower);
+      if (options.requiresEndSnapshots && !endSnapshot) {
+        return initializePositionWithEmptyEarnings(position, hasSupplyHistory);
+      }
+
+      const endingBalance = BigInt(endSnapshot?.supplyAssets ?? position.state.supplyAssets);
 
       // Get past balance from snapshot
       const chainSnapshots = snapshotsByChain[chainId];
@@ -59,7 +81,7 @@ export const usePositionsWithEarnings = (
 
       const pastBalance = BigInt(pastSnapshot.supplyAssets);
 
-      const earnings = calculateEarningsFromSnapshot(currentBalance, pastBalance, marketTxs, startTimestamp, endTimestamp);
+      const earnings = calculateEarningsFromSnapshot(endingBalance, pastBalance, marketTxs, startTimestamp, endTimestamp);
 
       return {
         ...position,
@@ -72,5 +94,14 @@ export const usePositionsWithEarnings = (
         hasSupplyHistory,
       };
     });
-  }, [positions, transactions, snapshotsByChain, chainBlockData]);
+  }, [
+    positions,
+    transactions,
+    snapshotsByChain,
+    chainBlockData,
+    options.endSnapshotsByChain,
+    options.endBlockData,
+    options.fallbackEndTimestamp,
+    options.requiresEndSnapshots,
+  ]);
 };
