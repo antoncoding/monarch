@@ -16,6 +16,12 @@ import { PositionBreadcrumbs } from './components/position-breadcrumbs';
 import { PositionHeader } from './components/position-header';
 import { OverviewTab } from './components/overview-tab';
 import { HistoryTab } from './components/history-tab';
+import {
+  formatReportRangeLabel,
+  getReportRangeTimestamps,
+  ReportRangePicker,
+  type ReportCustomRange,
+} from './components/report-range-picker';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
@@ -40,11 +46,13 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
   const _router = useRouter();
   const { address: connectedAddress } = useConnection();
   const [selectedTab, setSelectedTab] = useState<PositionDetailTab>('analysis');
+  const [customRange, setCustomRange] = useState<ReportCustomRange | null>(null);
   const { addVisitedAddress, addVisitedPosition } = usePortfolioBookmarks();
 
   // Preferences (period)
   const period = usePositionDetailPreferences((s) => s.period);
   const setPeriod = usePositionDetailPreferences((s) => s.setPeriod);
+  const reportCustomRange = useMemo(() => getReportRangeTimestamps(customRange), [customRange]);
 
   // Check if current user is the position owner
   const isOwner = connectedAddress === userAddress;
@@ -68,15 +76,20 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
     actualBlockData,
     transactions,
     snapshotsByChain,
+    endSnapshotsByChain,
+    earningsRangesByChain,
   } = usePositionDetailData({
     chainId: chainId as SupportedNetworks,
     loanAssetAddress,
     userAddress,
     period,
+    customRange: reportCustomRange,
   });
 
   const isLoading = isMarketsLoading || isPositionsLoading;
-  const periodLabel = PERIOD_LABELS[period];
+  const hasCustomRange = Boolean(reportCustomRange);
+  const periodLabel = hasCustomRange && customRange ? formatReportRangeLabel(customRange) : PERIOD_LABELS[period];
+  const reportRange = earningsRangesByChain[chainId];
 
   // Filter transactions relevant to this position's markets
   const relevantTransactions = useMemo(() => {
@@ -88,6 +101,11 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
   // Handle refetch
   const handleRefetch = () => {
     refetch();
+  };
+
+  const handlePeriodChange = (nextPeriod: EarningsPeriod) => {
+    setCustomRange(null);
+    setPeriod(nextPeriod);
   };
 
   useEffect(() => {
@@ -157,13 +175,18 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
                 History
               </TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-2 pb-1">
+            <div className="flex flex-wrap items-center gap-2 pb-1 sm:justify-end">
               <span className="text-xs uppercase tracking-wider text-secondary">Period</span>
               <PeriodSelector
                 period={period}
-                onPeriodChange={setPeriod}
-                className="h-8 w-[110px] text-xs"
+                onPeriodChange={handlePeriodChange}
+                className={`h-8 w-[110px] text-xs ${hasCustomRange ? 'border-border/60 bg-hovered/40 text-secondary opacity-70' : ''}`}
                 contentClassName="z-[3600]"
+              />
+              <ReportRangePicker
+                value={customRange}
+                onChange={setCustomRange}
+                onClear={() => setCustomRange(null)}
               />
             </div>
           </div>
@@ -194,7 +217,8 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
                   chainId={chainId as SupportedNetworks}
                   isEarningsLoading={isEarningsLoading}
                   actualBlockData={actualBlockData}
-                  period={period}
+                  periodLabel={periodLabel}
+                  reportRange={reportRange}
                   isOwner={isOwner}
                   onRefetch={handleRefetch}
                   isRefetching={isRefetching}
@@ -208,7 +232,10 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
                   userAddress={userAddress}
                   transactions={relevantTransactions}
                   snapshotsByChain={snapshotsByChain}
+                  endSnapshotsByChain={endSnapshotsByChain}
                   actualBlockData={actualBlockData}
+                  reportRange={reportRange}
+                  requiresEndSnapshots={hasCustomRange}
                 />
               </TabsContent>
             </>

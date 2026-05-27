@@ -526,6 +526,7 @@ export function getGroupedActualApy(
 export function groupPositionsByLoanAsset(
   positions: MarketPositionWithEarnings[],
   chainBlockData: Record<number, { block: number; timestamp: number }>,
+  endTimestampsByChain: Record<number, number> = {},
 ): GroupedPosition[] {
   return positions
     .filter(hasSupplyPositionHistory)
@@ -589,7 +590,7 @@ export function groupPositionsByLoanAsset(
         groupedPosition.totalWeightedApy = 0; // Avoid division by zero
       }
       // Calculate weighted actual APY across markets
-      groupedPosition.actualApy = getGroupedActualApy(groupedPosition, chainBlockData);
+      groupedPosition.actualApy = getGroupedActualApy(groupedPosition, chainBlockData, endTimestampsByChain[groupedPosition.chainId]);
       return groupedPosition;
     })
     .sort((a, b) => b.totalSupply - a.totalSupply);

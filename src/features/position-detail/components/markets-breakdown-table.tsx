@@ -19,6 +19,7 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { convertApyToApr } from '@/utils/rateMath';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
+import type { EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
 
 export type MarketsBreakdownTableProps = {
   markets: MarketPositionWithEarnings[];
@@ -26,6 +27,7 @@ export type MarketsBreakdownTableProps = {
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   periodLabel: string;
+  reportRange?: EarningsTimeRange;
   isOwner: boolean;
   onRefetch: () => void;
   isRefetching: boolean;
@@ -270,6 +272,7 @@ export function MarketsBreakdownTable({
   isEarningsLoading,
   actualBlockData,
   periodLabel,
+  reportRange,
   isOwner,
   onRefetch,
   isRefetching,
@@ -292,6 +295,9 @@ export function MarketsBreakdownTable({
       return total + avgCapital * BigInt(position.effectiveTime);
     }, 0n);
   }, [sortedMarkets]);
+
+  const reportStartTimestamp = reportRange?.startTimestamp ?? actualBlockData[chainId]?.timestamp;
+  const reportEndTimestamp = reportRange?.endTimestamp ?? Math.floor(Date.now() / 1000);
 
   const headerActions = (
     <>
@@ -359,11 +365,10 @@ export function MarketsBreakdownTable({
             >
               <Tooltip
                 content={(() => {
-                  const blockData = actualBlockData[chainId];
-                  if (!blockData) return 'Loading timestamp data...';
+                  if (!reportStartTimestamp) return 'Loading timestamp data...';
 
-                  const startTimestamp = blockData.timestamp * 1000;
-                  const endTimestamp = Date.now();
+                  const startTimestamp = reportStartTimestamp * 1000;
+                  const endTimestamp = reportEndTimestamp * 1000;
 
                   return (
                     <TooltipContent

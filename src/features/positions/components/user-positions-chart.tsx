@@ -31,6 +31,9 @@ type GroupedPositionChartProps = BaseChartProps & {
   transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   chainBlockData: Record<number, { block: number; timestamp: number }>;
+  endSnapshotsByChain?: Record<number, Map<string, PositionSnapshot>>;
+  endTimestamp?: number;
+  requiresEndSnapshots?: boolean;
 };
 
 // Props for standalone usage (history page)
@@ -361,6 +364,7 @@ function useChartParams(props: UserPositionsChartProps) {
       const { groupedPosition, transactions, snapshotsByChain, chainBlockData } = props;
       const chainId = groupedPosition.chainId;
       const chainSnapshots = snapshotsByChain[chainId];
+      const chainEndSnapshots = props.endSnapshotsByChain?.[chainId];
       const blockData = chainBlockData[chainId];
 
       if (!blockData) {
@@ -368,13 +372,15 @@ function useChartParams(props: UserPositionsChartProps) {
       }
 
       const startTimestamp = blockData.timestamp;
-      const endTimestamp = Math.floor(Date.now() / 1000);
+      const endTimestamp = props.endTimestamp ?? Math.floor(Date.now() / 1000);
 
       const markets = groupedPosition.markets.map((position) => ({
         uniqueKey: position.market.uniqueKey,
         collateralSymbol: position.market.collateralAsset?.symbol ?? 'Unknown',
         collateralAddress: position.market.collateralAsset?.address ?? '',
-        currentSupplyAssets: position.state.supplyAssets,
+        currentSupplyAssets:
+          chainEndSnapshots?.get(position.market.uniqueKey.toLowerCase())?.supplyAssets ??
+          (props.requiresEndSnapshots ? '0' : position.state.supplyAssets),
       }));
 
       return {

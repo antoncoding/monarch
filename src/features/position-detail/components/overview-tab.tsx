@@ -5,26 +5,18 @@ import { YieldAnalysisDistribution } from './yield-analysis-distribution';
 import { YieldAnalysisYieldBreakdown } from './yield-analysis-yield-breakdown';
 import type { GroupedPosition } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
-import type { EarningsPeriod } from '@/stores/usePositionsFilters';
+import type { EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
 
 type OverviewTabProps = {
   groupedPosition: GroupedPosition;
   chainId: SupportedNetworks;
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
-  period: EarningsPeriod;
+  periodLabel: string;
+  reportRange?: EarningsTimeRange;
   isOwner: boolean;
   onRefetch: () => void;
   isRefetching: boolean;
-};
-
-const PERIOD_LABELS: Record<EarningsPeriod, string> = {
-  day: '24h',
-  week: '7d',
-  month: '30d',
-  threemonth: '3M',
-  sixmonth: '6mo',
-  all: 'All time',
 };
 
 export function OverviewTab({
@@ -32,13 +24,12 @@ export function OverviewTab({
   chainId,
   isEarningsLoading,
   actualBlockData,
-  period,
+  periodLabel,
+  reportRange,
   isOwner,
   onRefetch,
   isRefetching,
 }: OverviewTabProps) {
-  const periodLabel = PERIOD_LABELS[period];
-
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
@@ -59,6 +50,7 @@ export function OverviewTab({
         isEarningsLoading={isEarningsLoading}
         actualBlockData={actualBlockData}
         periodLabel={periodLabel}
+        reportRange={reportRange}
         isOwner={isOwner}
         onRefetch={onRefetch}
         isRefetching={isRefetching}

@@ -29,6 +29,7 @@ import { actionTypeToText } from '@/utils/morpho';
 import type { GroupedPosition, UserTransaction } from '@/utils/types';
 import type { PositionSnapshot } from '@/utils/positions';
 import type { SupportedNetworks } from '@/utils/networks';
+import type { EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
 
 const PAGE_SIZE = 10;
 
@@ -40,10 +41,23 @@ type HistoryTabProps = {
   userAddress: string;
   transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  endSnapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
+  reportRange?: EarningsTimeRange;
+  requiresEndSnapshots?: boolean;
 };
 
-export function HistoryTab({ groupedPosition, chainId, userAddress, transactions, snapshotsByChain, actualBlockData }: HistoryTabProps) {
+export function HistoryTab({
+  groupedPosition,
+  chainId,
+  userAddress,
+  transactions,
+  snapshotsByChain,
+  endSnapshotsByChain,
+  actualBlockData,
+  reportRange,
+  requiresEndSnapshots,
+}: HistoryTabProps) {
   const toast = useStyledToast();
 
   const [startDate, setStartDate] = useState<ZonedDateTime | null>(null);
@@ -258,7 +272,10 @@ export function HistoryTab({ groupedPosition, chainId, userAddress, transactions
         groupedPosition={groupedPosition}
         transactions={transactions}
         snapshotsByChain={snapshotsByChain}
+        endSnapshotsByChain={endSnapshotsByChain}
         chainBlockData={actualBlockData}
+        endTimestamp={reportRange?.endTimestamp}
+        requiresEndSnapshots={requiresEndSnapshots}
         height={220}
       />
       <TableContainerWithHeader
