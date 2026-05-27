@@ -23,7 +23,7 @@ type MorphoMarketTransaction = {
 // Define the expected shape of the GraphQL response for transactions
 type MorphoTransactionsApiResponse = {
   data?: {
-    transactions?: Omit<TransactionResponse, 'items'> & {
+    transactions?: Pick<TransactionResponse, 'pageInfo'> & {
       items: MorphoMarketTransaction[];
     };
   };
@@ -74,6 +74,7 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
     whereClause.timestamp_lte = filters.timestampLte;
   }
   if (filters.hash) {
+    // Morpho exposes transaction hashes as txHash, but MarketTransactionFilters still uses hash.
     whereClause.hash = filters.hash;
   }
   if (filters.assetIds && filters.assetIds.length > 0) {
@@ -108,6 +109,7 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
     return {
       ...transactions,
       items: transactions.items.map(toUserTransaction),
+      error: null,
     };
   } catch (err) {
     console.error('Error fetching Morpho API transactions:', err);

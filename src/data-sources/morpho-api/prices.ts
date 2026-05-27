@@ -18,8 +18,8 @@ type AssetPriceItem = {
   chain: {
     id: number;
   };
-  price: {
-    usd: number;
+  price?: {
+    usd?: number | null;
   } | null;
 };
 
@@ -115,7 +115,7 @@ export const fetchTokenPrices = async (tokens: TokenPriceInput[]): Promise<Map<s
 
           // Process each asset and add to price map
           for (const asset of response.data.assets.items) {
-            if (asset.price !== null) {
+            if (asset.price?.usd != null) {
               const key = getTokenPriceKey(asset.address, asset.chain.id);
               priceMap.set(key, asset.price.usd);
             }
