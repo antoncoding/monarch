@@ -8,7 +8,7 @@ type MorphoAPIBorrowsResponse = {
   data?: {
     transactions?: {
       items?: {
-        type: 'MarketBorrow' | 'MarketRepay'; // Specific types for this query
+        type: 'Borrow' | 'Repay';
         hash: string;
         timestamp: number;
         data: {
@@ -64,7 +64,7 @@ export const fetchMorphoMarketBorrows = async (
 
     // Map to unified type (reusing MarketActivityTransaction)
     const mappedItems = items.map((item) => ({
-      type: item.type, // Directly use 'MarketBorrow' or 'MarketRepay'
+      type: item.type === 'Borrow' ? ('MarketBorrow' as const) : ('MarketRepay' as const),
       hash: item.hash,
       timestamp: item.timestamp,
       amount: item.data.assets, // Map 'assets' to 'amount'
