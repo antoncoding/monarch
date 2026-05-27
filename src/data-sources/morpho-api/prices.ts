@@ -1,3 +1,4 @@
+import { supportsMorphoApiChainId } from '@/config/dataSources';
 import { assetPricesQuery } from '@/graphql/morpho-api-queries';
 import { morphoGraphqlFetcher } from './fetchers';
 
@@ -55,7 +56,12 @@ export const fetchTokenPrices = async (tokens: TokenPriceInput[]): Promise<Map<s
 
   // Group tokens by chain for efficient querying
   const tokensByChain = new Map<number, string[]>();
-  tokens.forEach((token) => {
+  for (const token of tokens) {
+    // Morpho Blue rejects unsupported chains at GraphQL validation time.
+    if (!supportsMorphoApiChainId(token.chainId)) {
+      continue;
+    }
+
     const existing = tokensByChain.get(token.chainId) ?? [];
     // Deduplicate and lowercase addresses
     const normalizedAddress = token.address.toLowerCase();
@@ -63,7 +69,11 @@ export const fetchTokenPrices = async (tokens: TokenPriceInput[]): Promise<Map<s
       existing.push(normalizedAddress);
     }
     tokensByChain.set(token.chainId, existing);
-  });
+  }
+
+  if (tokensByChain.size === 0) {
+    return new Map();
+  }
 
   // Fetch prices for all chains in parallel
   const priceMap = new Map<string, number>();
