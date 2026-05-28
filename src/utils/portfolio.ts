@@ -289,19 +289,22 @@ export const calculateAssetBreakdown = (
 
   // Aggregate positions by token
   for (const position of positions) {
+    const supplyAssets = BigInt(position.state.supplyAssets);
+    if (supplyAssets <= 0n) continue;
+
     const { address, symbol, decimals } = position.market.loanAsset;
     const chainId = position.market.morphoBlue.chain.id;
     const key = getTokenPriceKey(address, chainId);
     const existing = aggregated.get(key);
 
     if (existing) {
-      existing.balance += BigInt(position.state.supplyAssets);
+      existing.balance += supplyAssets;
     } else {
       aggregated.set(key, {
         symbol,
         tokenAddress: address,
         chainId,
-        balance: BigInt(position.state.supplyAssets),
+        balance: supplyAssets,
         decimals,
       });
     }
@@ -335,9 +338,13 @@ export const calculateAssetBreakdown = (
   // Convert to breakdown items with USD values
   const items: AssetBreakdownItem[] = [];
   for (const [key, data] of aggregated) {
+    if (data.balance <= 0n) continue;
+
     const price = prices.get(key) ?? 0;
     const balance = Number.parseFloat(formatUnits(data.balance, data.decimals));
     const usdValue = balance * price;
+
+    if (!Number.isFinite(balance) || balance <= 0) continue;
 
     items.push({
       symbol: data.symbol,

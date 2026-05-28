@@ -1,7 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { IconSwitch } from '@/components/ui/icon-switch';
-import { Divider } from '@/components/ui/divider';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
 import { GearIcon } from '@radix-ui/react-icons';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
@@ -360,7 +359,6 @@ export function SuppliedMorphoBlueGroupedTable({
 }: SuppliedMorphoBlueGroupedTableProps) {
   const { address } = useConnection();
   const period = usePositionsFilters((s) => s.period);
-  const setPeriod = usePositionsFilters((s) => s.setPeriod);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const {
@@ -817,31 +815,6 @@ export function SuppliedMorphoBlueGroupedTable({
                     size="xs"
                   />
                 </FilterRow>
-              </FilterSection>
-
-              <Divider />
-
-              <FilterSection
-                title="Time Period"
-                helper="Select the time period for interest accrued calculations"
-              >
-                <div className="flex flex-col gap-2">
-                  {Object.entries(periodLabels).map(([periodKey, label]) => (
-                    <label
-                      key={periodKey}
-                      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-gray-50"
-                    >
-                      <span className="text-sm font-medium">{label}</span>
-                      <input
-                        type="radio"
-                        name="earningsPeriod"
-                        checked={period === periodKey}
-                        onChange={() => setPeriod(periodKey as EarningsPeriod)}
-                        className="h-4 w-4 cursor-pointer"
-                      />
-                    </label>
-                  ))}
-                </div>
               </FilterSection>
             </ModalBody>
             <ModalFooter className="justify-end">
