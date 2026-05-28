@@ -11,7 +11,7 @@ import { formatReadable } from '@/utils/balance';
 import { formatUsdValue, type AssetBreakdownItem, type PortfolioAnalytics } from '@/utils/portfolio';
 import { PortfolioValueBadge } from './portfolio-value-badge';
 import { AccountVaultInfo } from './account-vault-info';
-import { getPositionsPeriodLabel, getPositionsPeriodShortLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
+import { getPositionsPeriodLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
 
 type PortfolioAnalyticsBannerProps = {
   account: string;
@@ -34,7 +34,8 @@ type PortfolioAnalyticsBannerProps = {
   onSwap: () => void;
 };
 
-const SUPPORT_VALUE_CLASS = 'font-zen text-sm font-normal tabular-nums text-primary';
+const PRIMARY_VALUE_CLASS = 'font-zen text-2xl font-normal tabular-nums sm:text-2xl';
+const SECONDARY_VALUE_CLASS = 'font-zen text-xs font-normal tabular-nums text-primary';
 
 function formatRate(value: number | null): string {
   if (value === null || !Number.isFinite(value)) {
@@ -56,8 +57,9 @@ function getPricingCoverageLabel(analytics: PortfolioAnalytics): string {
   return 'Current prices';
 }
 
-function SupportingMetric({
+function PortfolioRateMetric({
   label,
+  periodLabel,
   tooltipTitle,
   value,
   caption,
@@ -65,6 +67,7 @@ function SupportingMetric({
   isLoading,
 }: {
   label: string;
+  periodLabel: string;
   tooltipTitle: string;
   value: string;
   caption?: string;
@@ -72,7 +75,7 @@ function SupportingMetric({
   isLoading: boolean;
 }) {
   return (
-    <div className="min-w-[116px]">
+    <div className="min-w-[140px]">
       <Tooltip
         content={
           <TooltipContent
@@ -83,9 +86,12 @@ function SupportingMetric({
         placement="bottom"
       >
         <div className="cursor-help">
-          <div className="text-xs text-secondary">{label}</div>
+          <div className="flex items-baseline gap-1.5 text-xs text-secondary">
+            <span>{label}</span>
+            <span>{periodLabel}</span>
+          </div>
           {isLoading ? (
-            <div className={`${SUPPORT_VALUE_CLASS} flex min-h-5 items-center`}>
+            <div className={`${PRIMARY_VALUE_CLASS} flex min-h-8 items-center sm:min-h-9`}>
               <PulseLoader
                 size={4}
                 color="#f45f2d"
@@ -93,12 +99,53 @@ function SupportingMetric({
               />
             </div>
           ) : (
-            <div className={SUPPORT_VALUE_CLASS}>{value}</div>
+            <div className={PRIMARY_VALUE_CLASS}>{value}</div>
           )}
           {caption && <div className="truncate text-xs text-secondary">{caption}</div>}
         </div>
       </Tooltip>
     </div>
+  );
+}
+
+function SecondaryPortfolioDetail({
+  label,
+  tooltipTitle,
+  value,
+  detail,
+  isLoading,
+}: {
+  label: string;
+  tooltipTitle: string;
+  value: string;
+  detail: string;
+  isLoading: boolean;
+}) {
+  return (
+    <Tooltip
+      content={
+        <TooltipContent
+          title={tooltipTitle}
+          detail={detail}
+        />
+      }
+      placement="bottom"
+    >
+      <div className="flex cursor-help items-center gap-1.5 text-xs text-secondary lg:justify-end">
+        <span>{label}</span>
+        {isLoading ? (
+          <span className={`${SECONDARY_VALUE_CLASS} flex min-h-4 items-center`}>
+            <PulseLoader
+              size={3}
+              color="#f45f2d"
+              margin={1}
+            />
+          </span>
+        ) : (
+          <span className={SECONDARY_VALUE_CLASS}>{value}</span>
+        )}
+      </div>
+    </Tooltip>
   );
 }
 
@@ -126,7 +173,6 @@ export function PortfolioAnalyticsBanner({
   const displayRate = isAprDisplay ? portfolioAnalytics.annualizedApr : portfolioAnalytics.annualizedApy;
   const pricingCoverageLabel = getPricingCoverageLabel(portfolioAnalytics);
   const selectedPeriodLabel = getPositionsPeriodLabel(period);
-  const selectedPeriodShortLabel = getPositionsPeriodShortLabel(period);
   const averageRateTitle = `Average ${rateLabel} over ${selectedPeriodLabel}`;
   const rateDetail = `${rateLabel} uses current token prices to normalize Morpho Blue supply earnings and supplied capital over ${selectedPeriodLabel}. Exited supplies from the period are included.`;
   const earningsDetail = `Net interest earned by Morpho Blue supply positions over ${selectedPeriodLabel}, converted with current token prices.`;
@@ -173,34 +219,35 @@ export function PortfolioAnalyticsBanner({
 
       {showPortfolioStats && (
         <div className="mt-3 border-t border-dashed border-border/70 pt-3">
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <PortfolioValueBadge
-              totalUsd={totalUsd}
-              totalDebtUsd={totalDebtUsd}
-              assetBreakdown={assetBreakdown}
-              debtBreakdown={debtBreakdown}
-              isLoading={isValueLoading}
-              error={valueError}
-              align="start"
-              className="min-w-0"
-            />
-            <div className="flex flex-wrap items-end gap-x-5 gap-y-2 md:justify-end">
-              <SupportingMetric
-                label={`Portfolio ${rateLabel} (${selectedPeriodShortLabel})`}
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-8">
+              <PortfolioValueBadge
+                totalUsd={totalUsd}
+                totalDebtUsd={totalDebtUsd}
+                assetBreakdown={assetBreakdown}
+                debtBreakdown={debtBreakdown}
+                isLoading={isValueLoading}
+                error={valueError}
+                align="start"
+                className="min-w-0"
+              />
+              <PortfolioRateMetric
+                label={`Portfolio ${rateLabel}`}
+                periodLabel={selectedPeriodLabel}
                 tooltipTitle={averageRateTitle}
                 value={valueError ? '—' : formatRate(displayRate)}
                 caption={pricingCoverageLabel}
                 detail={rateDetail}
                 isLoading={analyticsLoading}
               />
-              <SupportingMetric
-                label={`Interest (${selectedPeriodShortLabel})`}
-                tooltipTitle={`Interest earned over ${selectedPeriodLabel}`}
-                value={valueError ? '—' : formatUsdValue(portfolioAnalytics.totalEarningsUsd)}
-                detail={earningsDetail}
-                isLoading={analyticsLoading}
-              />
             </div>
+            <SecondaryPortfolioDetail
+              label={`Interest earned ${selectedPeriodLabel.toLowerCase()}`}
+              tooltipTitle={`Interest earned over ${selectedPeriodLabel}`}
+              value={valueError ? '—' : formatUsdValue(portfolioAnalytics.totalEarningsUsd)}
+              detail={earningsDetail}
+              isLoading={analyticsLoading}
+            />
           </div>
         </div>
       )}
