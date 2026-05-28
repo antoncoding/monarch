@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { type AssetBreakdownItem, formatUsdValue } from '@/utils/portfolio';
@@ -12,6 +13,7 @@ type PortfolioValueBadgeProps = {
   error: Error | null;
   align?: 'start' | 'end';
   className?: string;
+  depositInlineMetric?: ReactNode;
 };
 
 const VALUE_TEXT_CLASS = 'font-zen text-2xl font-normal leading-none tabular-nums sm:text-2xl';
@@ -68,15 +70,18 @@ function ValueBlock({
   isLoading,
   error,
   align,
+  inlineMetric,
 }: {
   label: string;
   value: number;
   isLoading: boolean;
   error: Error | null;
   align: 'start' | 'end';
+  inlineMetric?: ReactNode;
 }) {
   const alignmentClass = align === 'start' ? 'items-start' : 'items-end';
   const loaderAlignmentClass = align === 'start' ? 'justify-start' : 'justify-end';
+  const valueAlignmentClass = align === 'start' ? 'justify-start' : 'justify-end';
 
   return (
     <div className={`flex flex-col gap-1 ${alignmentClass}`}>
@@ -92,7 +97,10 @@ function ValueBlock({
       ) : error ? (
         <span className={`${VALUE_TEXT_CLASS} text-secondary`}>—</span>
       ) : (
-        <span className={VALUE_TEXT_CLASS}>{formatUsdValue(value)}</span>
+        <span className={`flex flex-wrap items-baseline gap-x-2 gap-y-1 ${valueAlignmentClass}`}>
+          <span className={VALUE_TEXT_CLASS}>{formatUsdValue(value)}</span>
+          {inlineMetric}
+        </span>
       )}
     </div>
   );
@@ -107,6 +115,7 @@ export function PortfolioValueBadge({
   error,
   align = 'end',
   className = '',
+  depositInlineMetric,
 }: PortfolioValueBadgeProps) {
   const valueContent = (
     <ValueBlock
@@ -115,6 +124,7 @@ export function PortfolioValueBadge({
       isLoading={isLoading}
       error={error}
       align={align}
+      inlineMetric={depositInlineMetric}
     />
   );
 

@@ -3,15 +3,13 @@ import { IoIosSwap } from 'react-icons/io';
 import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { PulseLoader } from 'react-spinners';
 import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
 import { AccountIdentity } from '@/components/shared/account-identity';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { formatReadable } from '@/utils/balance';
-import { formatUsdValue, type AssetBreakdownItem, type PortfolioAnalytics } from '@/utils/portfolio';
+import type { AssetBreakdownItem, PortfolioAnalytics } from '@/utils/portfolio';
 import { PortfolioValueBadge } from './portfolio-value-badge';
 import { AccountVaultInfo } from './account-vault-info';
-import { getPositionsPeriodLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
+import { getPositionsPeriodShortLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
 
 type PortfolioAnalyticsBannerProps = {
   account: string;
@@ -34,7 +32,7 @@ type PortfolioAnalyticsBannerProps = {
   onSwap: () => void;
 };
 
-const RATE_VALUE_CLASS = 'font-zen text-xl font-normal leading-none tabular-nums text-primary';
+const INLINE_RATE_VALUE_CLASS = 'font-zen text-sm font-normal leading-none tabular-nums text-primary';
 
 function formatRate(value: number | null): string {
   if (value === null || !Number.isFinite(value)) {
@@ -44,66 +42,30 @@ function formatRate(value: number | null): string {
   return `${formatReadable(value * 100)}%`;
 }
 
-function getPricingCoverageLabel(analytics: PortfolioAnalytics): string {
-  if (analytics.totalPositionCount === 0) {
-    return 'No supply history';
-  }
-
-  if (analytics.unpricedPositionCount > 0) {
-    return `${analytics.pricedPositionCount}/${analytics.totalPositionCount} markets priced`;
-  }
-
-  return 'Current prices';
-}
-
-function PortfolioRateMetric({
+function PortfolioRateInlineMetric({
   label,
-  periodLabel,
-  tooltipTitle,
   value,
-  caption,
-  detail,
   isLoading,
 }: {
   label: string;
-  periodLabel: string;
-  tooltipTitle: string;
   value: string;
-  caption?: string;
-  detail: string;
   isLoading: boolean;
 }) {
   return (
-    <div className="min-w-[128px]">
-      <Tooltip
-        content={
-          <TooltipContent
-            title={tooltipTitle}
-            detail={detail}
+    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-sm bg-hovered px-1.5 py-0.5 text-xs leading-none text-secondary">
+      <span>{label}</span>
+      {isLoading ? (
+        <span className={`${INLINE_RATE_VALUE_CLASS} inline-flex min-h-4 items-center`}>
+          <PulseLoader
+            size={3}
+            color="#f45f2d"
+            margin={1}
           />
-        }
-        placement="bottom"
-      >
-        <div className="flex cursor-help flex-col gap-1">
-          <div className="text-xs leading-4 text-secondary">{label}</div>
-          {isLoading ? (
-            <div className={`${RATE_VALUE_CLASS} flex min-h-6 items-center`}>
-              <PulseLoader
-                size={4}
-                color="#f45f2d"
-                margin={2}
-              />
-            </div>
-          ) : (
-            <div className={RATE_VALUE_CLASS}>{value}</div>
-          )}
-          <div className="truncate text-xs leading-4 text-secondary">
-            {periodLabel}
-            {caption ? `, ${caption}` : ''}
-          </div>
-        </div>
-      </Tooltip>
-    </div>
+        </span>
+      ) : (
+        <span className={INLINE_RATE_VALUE_CLASS}>{value}</span>
+      )}
+    </span>
   );
 }
 
@@ -129,11 +91,7 @@ export function PortfolioAnalyticsBanner({
 }: PortfolioAnalyticsBannerProps) {
   const analyticsLoading = isValueLoading || isEarningsLoading;
   const displayRate = isAprDisplay ? portfolioAnalytics.annualizedApr : portfolioAnalytics.annualizedApy;
-  const pricingCoverageLabel = getPricingCoverageLabel(portfolioAnalytics);
-  const selectedPeriodLabel = getPositionsPeriodLabel(period);
-  const averageRateTitle = `Average ${rateLabel} over ${selectedPeriodLabel}`;
-  const earningsValue = valueError ? '—' : formatUsdValue(portfolioAnalytics.totalEarningsUsd);
-  const rateDetail = `${rateLabel} uses current token prices to normalize Morpho Blue supply earnings and supplied capital over ${selectedPeriodLabel}. Exited supplies from the period are included. Interest earned: ${earningsValue}.`;
+  const selectedPeriodShortLabel = getPositionsPeriodShortLabel(period);
 
   return (
     <div className="flex flex-col gap-4 font-zen sm:flex-row sm:items-start sm:justify-between">
@@ -170,15 +128,13 @@ export function PortfolioAnalyticsBanner({
               error={valueError}
               align="start"
               className="min-w-0"
-            />
-            <PortfolioRateMetric
-              label={`Portfolio ${rateLabel}`}
-              periodLabel={selectedPeriodLabel}
-              tooltipTitle={averageRateTitle}
-              value={valueError ? '—' : formatRate(displayRate)}
-              caption={pricingCoverageLabel}
-              detail={rateDetail}
-              isLoading={analyticsLoading}
+              depositInlineMetric={
+                <PortfolioRateInlineMetric
+                  label={`${selectedPeriodShortLabel} ${rateLabel}`}
+                  value={valueError ? '—' : formatRate(displayRate)}
+                  isLoading={analyticsLoading}
+                />
+              }
             />
           </div>
         )}
