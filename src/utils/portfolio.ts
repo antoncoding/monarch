@@ -487,11 +487,21 @@ export const calculatePortfolioAnalytics = (
 
     const decimals = position.market.loanAsset.decimals;
     const earned = formatSignedUnits(toAmount(position.earned), decimals);
+    /*
+     * `avgCapital` is averaged only over seconds when this market had supply.
+     * Portfolio APY uses the full selected period as the denominator, so a
+     * position active for half of a 30d window should contribute half its
+     * held-time average capital. Without this scaling, partial-window positions
+     * would receive the same denominator weight as positions held for the full
+     * period and would dilute the portfolio-level rate.
+     */
     const heldTimeAverageCapital = formatSignedUnits(toAmount(position.avgCapital), decimals);
+    // Active supplied seconds for this market inside the selected period.
     const effectiveTime = Math.max(0, position.effectiveTime ?? 0);
+    // Full selected analytics window for this chain, normally 24h/7d/30d.
     const windowSeconds = getPositionWindowSeconds(position, earningsRangesByChain);
+    // Fraction of the selected window this market actually contributed capital.
     const windowWeight = windowSeconds && effectiveTime > 0 ? Math.min(effectiveTime / windowSeconds, 1) : 1;
-    // avgCapital is averaged over active supply time; scale it to the whole selected window.
     const averageCapitalOverWindow = heldTimeAverageCapital * windowWeight;
     const earnedUsd = earned * price;
     const averageCapitalUsd = averageCapitalOverWindow * price;
