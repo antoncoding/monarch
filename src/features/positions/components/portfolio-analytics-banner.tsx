@@ -34,7 +34,7 @@ type PortfolioAnalyticsBannerProps = {
   onSwap: () => void;
 };
 
-const PRIMARY_VALUE_CLASS = 'font-zen text-2xl font-normal tabular-nums sm:text-2xl';
+const PRIMARY_VALUE_CLASS = 'font-zen text-2xl font-normal leading-none tabular-nums sm:text-2xl';
 const SECONDARY_VALUE_CLASS = 'font-zen text-xs font-normal tabular-nums text-primary';
 
 function formatRate(value: number | null): string {
@@ -85,8 +85,8 @@ function PortfolioRateMetric({
         }
         placement="bottom"
       >
-        <div className="cursor-help">
-          <div className="flex items-baseline gap-1.5 text-xs text-secondary">
+        <div className="flex cursor-help flex-col gap-1">
+          <div className="flex items-baseline gap-1.5 text-xs leading-4 text-secondary">
             <span>{label}</span>
             <span>{periodLabel}</span>
           </div>
@@ -101,7 +101,7 @@ function PortfolioRateMetric({
           ) : (
             <div className={PRIMARY_VALUE_CLASS}>{value}</div>
           )}
-          {caption && <div className="truncate text-xs text-secondary">{caption}</div>}
+          {caption && <div className="truncate text-xs leading-4 text-secondary">{caption}</div>}
         </div>
       </Tooltip>
     </div>
@@ -220,7 +220,7 @@ export function PortfolioAnalyticsBanner({
       {showPortfolioStats && (
         <div className="mt-3 border-t border-dashed border-border/70 pt-3">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-8">
               <PortfolioValueBadge
                 totalUsd={totalUsd}
                 totalDebtUsd={totalDebtUsd}

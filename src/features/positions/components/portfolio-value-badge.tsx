@@ -14,7 +14,7 @@ type PortfolioValueBadgeProps = {
   className?: string;
 };
 
-const VALUE_TEXT_CLASS = 'font-zen text-2xl font-normal tabular-nums sm:text-2xl';
+const VALUE_TEXT_CLASS = 'font-zen text-2xl font-normal leading-none tabular-nums sm:text-2xl';
 
 function formatBalance(value: number): string {
   if (value === 0) return '0';
@@ -80,7 +80,7 @@ function ValueBlock({
 
   return (
     <div className={`flex flex-col gap-1 ${alignmentClass}`}>
-      <span className="text-xs text-secondary">{label}</span>
+      <span className="text-xs leading-4 text-secondary">{label}</span>
       {isLoading ? (
         <div className={`${VALUE_TEXT_CLASS} min-h-8 sm:min-h-9 flex items-center ${loaderAlignmentClass}`}>
           <PulseLoader
