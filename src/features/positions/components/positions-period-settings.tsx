@@ -1,7 +1,5 @@
 import { CheckIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
@@ -41,24 +39,15 @@ export function PositionsPeriodSettingsButton({ period, onPeriodChange, classNam
 
   return (
     <>
-      <Tooltip
-        content={
-          <TooltipContent
-            title="Analytics period"
-            detail={`Currently ${selectedLabel}. Applies to portfolio, Market Supplies, and Auto Vaults.`}
-          />
-        }
+      <Button
+        variant="surface"
+        size="xs"
+        className={cn('h-5 min-w-0 px-1.5 text-[11px] font-normal leading-none text-secondary shadow-none', className)}
+        onClick={onOpen}
+        aria-label={`Analytics period settings, currently ${selectedLabel}`}
       >
-        <Button
-          variant="surface"
-          size="xs"
-          className={cn('h-5 min-w-0 px-1.5 text-[11px] font-normal leading-none text-secondary shadow-none', className)}
-          onClick={onOpen}
-          aria-label={`Analytics period settings, currently ${selectedLabel}`}
-        >
-          {selectedShortLabel}
-        </Button>
-      </Tooltip>
+        {selectedShortLabel}
+      </Button>
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
@@ -71,7 +60,6 @@ export function PositionsPeriodSettingsButton({ period, onPeriodChange, classNam
             <ModalHeader
               variant="compact"
               title="Analytics Period"
-              description="Applies to portfolio, Market Supplies, and Auto Vault earnings."
               onClose={close}
             />
             <ModalBody
