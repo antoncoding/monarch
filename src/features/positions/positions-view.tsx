@@ -70,10 +70,15 @@ export default function Positions() {
   // Merge APY data into vaults
   const vaultsWithApy = useMemo(() => {
     if (!vaultApyData) return vaults;
-    return vaults.map((vault) => ({
-      ...vault,
-      actualApy: vaultApyData.get(vault.address.toLowerCase())?.actualApy,
-    }));
+    return vaults.map((vault) => {
+      const periodData = vaultApyData.get(vault.address.toLowerCase());
+
+      return {
+        ...vault,
+        actualApy: periodData?.actualApy,
+        earnedAssets: periodData?.earnedAssets,
+      };
+    });
   }, [vaults, vaultApyData]);
 
   // Calculate portfolio value from positions and vaults

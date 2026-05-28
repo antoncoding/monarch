@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
-import { GearIcon } from '@radix-ui/react-icons';
+import { MixerHorizontalIcon } from '@radix-ui/react-icons';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -25,7 +25,6 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useModalStore } from '@/stores/useModalStore';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import type { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { formatTokenAmountPreview } from '@/utils/token-amount-format';
@@ -47,6 +46,7 @@ import { PositionActionsDropdown } from './position-actions-dropdown';
 import { SuppliedMarketPositionActionsDropdown } from './supplied-market-position-actions-dropdown';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
+import { getPositionsPeriodShortLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
 import { RiArrowRightLine, RiSparklingFill } from 'react-icons/ri';
 import type { MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
 import type { PositionSnapshot } from '@/utils/positions';
@@ -359,6 +359,7 @@ export function SuppliedMorphoBlueGroupedTable({
 }: SuppliedMorphoBlueGroupedTableProps) {
   const { address } = useConnection();
   const period = usePositionsFilters((s) => s.period);
+  const setPeriod = usePositionsFilters((s) => s.setPeriod);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const {
@@ -379,15 +380,7 @@ export function SuppliedMorphoBlueGroupedTable({
 
   const toast = useStyledToast();
 
-  const periodLabels: Record<EarningsPeriod, string> = {
-    day: '1D',
-    week: '7D',
-    month: '30D',
-    threemonth: '3M',
-    sixmonth: '6M',
-    all: 'All',
-  };
-  const selectedPeriodLabel = periodLabels[period] ?? period;
+  const selectedPeriodLabel = getPositionsPeriodShortLabel(period);
 
   const supplyPositions = useMemo(() => positions.filter(hasSupplyPositionHistory), [positions]);
   const visiblePositions = useMemo(
@@ -492,11 +485,15 @@ export function SuppliedMorphoBlueGroupedTable({
           </Button>
         </span>
       </Tooltip>
+      <PositionsPeriodSettingsButton
+        period={period}
+        onPeriodChange={setPeriod}
+      />
       <Tooltip
         content={
           <TooltipContent
-            title="Settings"
-            detail="Configure view settings"
+            title="View settings"
+            detail="Configure Market Supplies display options"
           />
         }
       >
@@ -505,9 +502,9 @@ export function SuppliedMorphoBlueGroupedTable({
           size="sm"
           className="relative text-secondary min-w-0 px-2"
           onClick={handleSettingsOpen}
-          aria-label={hasNewSettings ? 'Settings with new options' : 'Settings'}
+          aria-label={hasNewSettings ? 'Market Supplies view settings with new options' : 'Market Supplies view settings'}
         >
-          <GearIcon className="h-3 w-3" />
+          <MixerHorizontalIcon className="h-3.5 w-3.5" />
           {hasNewSettings && (
             <span
               aria-hidden="true"
@@ -762,9 +759,9 @@ export function SuppliedMorphoBlueGroupedTable({
           <>
             <ModalHeader
               variant="compact"
-              title="View Settings"
-              description="Configure how morpho blue lending positions are displayed"
-              mainIcon={<GearIcon />}
+              title="Market Supplies"
+              description="Configure how Morpho Blue lending positions are displayed."
+              mainIcon={<MixerHorizontalIcon />}
               onClose={close}
             />
             <ModalBody

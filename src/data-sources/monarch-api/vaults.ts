@@ -67,6 +67,7 @@ export type UserVaultV2 = VaultV2Details & {
   totalAssets?: bigint;
   adapter?: Address;
   actualApy?: number;
+  earnedAssets?: bigint;
 };
 
 type MonarchVaultAllocator = {
