@@ -1,13 +1,17 @@
+import type { ReactNode } from 'react';
 import type { Address } from 'viem';
 import { IoIosSwap } from 'react-icons/io';
 import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { PulseLoader } from 'react-spinners';
 import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 import { AccountIdentity } from '@/components/shared/account-identity';
+import { TokenIcon } from '@/components/shared/token-icon';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
-import { formatReadable } from '@/utils/balance';
-import type { AssetBreakdownItem, PortfolioAnalytics } from '@/utils/portfolio';
-import { PortfolioValueBadge } from './portfolio-value-badge';
+import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
+import { cn } from '@/utils/components';
+import { type AssetBreakdownItem, formatUsdValue, type PortfolioAnalytics } from '@/utils/portfolio';
 import { AccountVaultInfo } from './account-vault-info';
 import { getPositionsPeriodShortLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
 
@@ -22,6 +26,8 @@ type PortfolioAnalyticsBannerProps = {
   isAprDisplay: boolean;
   totalUsd: number;
   totalDebtUsd: number;
+  depositPositionCount: number;
+  debtMarketCount: number;
   assetBreakdown: AssetBreakdownItem[];
   debtBreakdown: AssetBreakdownItem[];
   portfolioAnalytics: PortfolioAnalytics;
@@ -32,7 +38,7 @@ type PortfolioAnalyticsBannerProps = {
   onSwap: () => void;
 };
 
-const INLINE_RATE_VALUE_CLASS = 'font-zen text-sm font-normal leading-none tabular-nums text-primary';
+const METRIC_VALUE_CLASS = 'font-zen text-xl font-normal leading-none tabular-nums text-primary';
 
 function formatRate(value: number | null): string {
   if (value === null || !Number.isFinite(value)) {
@@ -42,30 +48,103 @@ function formatRate(value: number | null): string {
   return `${formatReadable(value * 100)}%`;
 }
 
-function PortfolioRateInlineMetric({
+function formatCountCaption(count: number, noun: string): string {
+  if (count <= 0) return `No active ${noun}s`;
+
+  return `from ${count} ${count === 1 ? noun : `${noun}s`}`;
+}
+
+function formatAnalyticsCaption(portfolioAnalytics: PortfolioAnalytics, periodLabel: string): string {
+  if (portfolioAnalytics.totalPositionCount <= 0) {
+    return `${periodLabel}, no history`;
+  }
+
+  if (portfolioAnalytics.unpricedPositionCount > 0) {
+    return `${periodLabel}, ${portfolioAnalytics.pricedPositionCount}/${portfolioAnalytics.totalPositionCount} priced`;
+  }
+
+  return `${periodLabel}, ${formatCountCaption(portfolioAnalytics.totalPositionCount, 'market')}`;
+}
+
+function BreakdownTooltipContent({ items, emptyLabel = 'No active positions' }: { items: AssetBreakdownItem[]; emptyLabel?: string }) {
+  if (items.length === 0) {
+    return <span className="text-xs text-secondary">{emptyLabel}</span>;
+  }
+
+  return (
+    <div className="min-w-[180px] space-y-2">
+      {items.map((item) => (
+        <div
+          key={`${item.tokenAddress}-${item.chainId}`}
+          className="flex items-center justify-between text-xs"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <TokenIcon
+              address={item.tokenAddress}
+              chainId={item.chainId}
+              symbol={item.symbol}
+              width={16}
+              height={16}
+            />
+            <span className="truncate">
+              {formatReadableTokenAmount(item.balance, { precision: 2, minDisplayDecimals: 2 })} {item.symbol}
+            </span>
+          </div>
+          <span className="ml-4 shrink-0 text-secondary">{formatUsdValue(item.usdValue)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PortfolioMetricBox({
   label,
   value,
+  caption,
   isLoading,
+  error,
+  muted = false,
+  tooltip,
 }: {
   label: string;
   value: string;
+  caption: string;
   isLoading: boolean;
+  error?: Error | null;
+  muted?: boolean;
+  tooltip?: ReactNode;
 }) {
-  return (
-    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-sm bg-hovered px-1.5 py-0.5 text-xs leading-none text-secondary">
-      <span>{label}</span>
-      {isLoading ? (
-        <span className={`${INLINE_RATE_VALUE_CLASS} inline-flex min-h-4 items-center`}>
+  const content = (
+    <div className="flex min-h-[5.25rem] min-w-0 flex-col justify-between rounded-sm border border-border bg-surface px-3 py-2.5 shadow-sm">
+      <span className="truncate text-xs leading-4 text-secondary">{label}</span>
+      <div className="mt-1.5 flex min-h-6 items-center">
+        {isLoading ? (
           <PulseLoader
-            size={3}
+            size={4}
             color="#f45f2d"
-            margin={1}
+            margin={2}
           />
-        </span>
-      ) : (
-        <span className={INLINE_RATE_VALUE_CLASS}>{value}</span>
-      )}
-    </span>
+        ) : error ? (
+          <span className={cn(METRIC_VALUE_CLASS, 'text-secondary')}>—</span>
+        ) : (
+          <span className={cn(METRIC_VALUE_CLASS, muted && 'text-secondary')}>{value}</span>
+        )}
+      </div>
+      <span className="mt-1 truncate text-xs leading-4 text-secondary">{caption}</span>
+    </div>
+  );
+
+  if (!tooltip || isLoading) {
+    return content;
+  }
+
+  return (
+    <Tooltip
+      content={tooltip}
+      placement="bottom"
+    >
+      <div className="cursor-help">{content}</div>
+    </Tooltip>
   );
 }
 
@@ -80,6 +159,8 @@ export function PortfolioAnalyticsBanner({
   isAprDisplay,
   totalUsd,
   totalDebtUsd,
+  depositPositionCount,
+  debtMarketCount,
   assetBreakdown,
   debtBreakdown,
   portfolioAnalytics,
@@ -92,10 +173,11 @@ export function PortfolioAnalyticsBanner({
   const analyticsLoading = isValueLoading || isEarningsLoading;
   const displayRate = isAprDisplay ? portfolioAnalytics.annualizedApr : portfolioAnalytics.annualizedApy;
   const selectedPeriodShortLabel = getPositionsPeriodShortLabel(period);
+  const averageRateLabel = `Average ${rateLabel}`;
 
   return (
-    <div className="flex flex-col gap-4 font-zen sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
+    <div className="flex flex-col gap-4 font-zen lg:flex-row lg:items-start lg:justify-between">
+      <div className="min-w-0 shrink-0">
         <div className="flex min-w-0 items-center gap-2">
           <AccountIdentity
             address={account as Address}
@@ -116,31 +198,62 @@ export function PortfolioAnalyticsBanner({
         <AccountVaultInfo account={account as Address} />
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-end">
+      <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-start lg:justify-end">
         {showPortfolioStats && (
-          <div className="flex flex-wrap items-start gap-x-6 gap-y-3 sm:justify-end">
-            <PortfolioValueBadge
-              totalUsd={totalUsd}
-              totalDebtUsd={totalDebtUsd}
-              assetBreakdown={assetBreakdown}
-              debtBreakdown={debtBreakdown}
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-3 lg:max-w-[38rem]">
+            <PortfolioMetricBox
+              label="Total Deposit"
+              value={formatUsdValue(totalUsd)}
+              caption={formatCountCaption(depositPositionCount, 'position')}
               isLoading={isValueLoading}
               error={valueError}
-              align="start"
-              className="min-w-0"
-              depositInlineMetric={
-                <PortfolioRateInlineMetric
-                  label={`${selectedPeriodShortLabel} ${rateLabel}`}
-                  value={valueError ? '—' : formatRate(displayRate)}
-                  isLoading={analyticsLoading}
+              tooltip={<BreakdownTooltipContent items={assetBreakdown} />}
+            />
+            <PortfolioMetricBox
+              label={averageRateLabel}
+              value={formatRate(displayRate)}
+              caption={formatAnalyticsCaption(portfolioAnalytics, selectedPeriodShortLabel)}
+              isLoading={analyticsLoading}
+              error={valueError}
+              tooltip={
+                <TooltipContent
+                  title={`${averageRateLabel} (${selectedPeriodShortLabel})`}
+                  detail={
+                    portfolioAnalytics.totalPositionCount > 0
+                      ? `Calculated from ${portfolioAnalytics.pricedPositionCount} priced supply ${
+                          portfolioAnalytics.pricedPositionCount === 1 ? 'market' : 'markets'
+                        }.`
+                      : 'No supply history in the selected period.'
+                  }
+                  secondaryDetail={
+                    portfolioAnalytics.unpricedPositionCount > 0
+                      ? `${portfolioAnalytics.unpricedPositionCount} ${
+                          portfolioAnalytics.unpricedPositionCount === 1 ? 'market is' : 'markets are'
+                        } missing a current price.`
+                      : undefined
+                  }
+                />
+              }
+            />
+            <PortfolioMetricBox
+              label="Total Debt"
+              value={formatUsdValue(totalDebtUsd)}
+              caption={formatCountCaption(debtMarketCount, 'market')}
+              isLoading={isValueLoading}
+              error={valueError}
+              muted={totalDebtUsd <= 0}
+              tooltip={
+                <BreakdownTooltipContent
+                  items={debtBreakdown}
+                  emptyLabel="No active debt"
                 />
               }
             />
           </div>
         )}
         <div
-          className={`flex flex-wrap items-center gap-2 sm:justify-end ${
-            showPortfolioStats ? 'sm:ml-2 sm:border-l sm:border-dashed sm:border-border/70 sm:pl-6' : ''
+          className={`flex shrink-0 flex-wrap items-center gap-2 lg:justify-end ${
+            showPortfolioStats ? 'lg:ml-1 lg:border-l lg:border-dashed lg:border-border/70 lg:pl-3' : ''
           }`}
         >
           <PositionsPeriodSettingsButton
