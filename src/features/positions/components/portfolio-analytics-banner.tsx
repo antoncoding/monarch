@@ -161,7 +161,7 @@ function PortfolioMetricBox({
   tooltip?: ReactNode;
 }) {
   const content = (
-    <div className="flex h-full min-h-[5.5rem] min-w-0 flex-col rounded border border-border bg-surface px-3 py-2.5 shadow-sm">
+    <div className="flex h-full min-h-[5.5rem] min-w-0 flex-col rounded border border-border bg-surface px-3 py-2.5 shadow-[0_1px_1px_rgb(0_0_0_/_0.025)] dark:shadow-none">
       <div className="flex min-w-0 items-center justify-between gap-2">
         <span className="truncate font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{label}</span>
         {action}
