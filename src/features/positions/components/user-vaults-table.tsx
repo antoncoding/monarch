@@ -13,7 +13,7 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAppSettings } from '@/stores/useAppSettings';
-import { usePositionsFilters, type EarningsPeriod } from '@/stores/usePositionsFilters';
+import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { formatTokenAmountPreview } from '@/utils/token-amount-format';
@@ -23,7 +23,7 @@ import { convertApyToApr } from '@/utils/rateMath';
 import { VaultAllocationDetail } from './vault-allocation-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { VaultActionsDropdown } from './vault-actions-dropdown';
-import { getPositionsPeriodShortLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
+import { getPositionsPeriodShortLabel } from './positions-period-settings';
 
 const formatRate = (rate: number | null | undefined, isApr: boolean): string => {
   if (rate === null || rate === undefined) return '-';
@@ -95,7 +95,6 @@ export function UserVaultsTable({
   const { findToken } = useTokensQuery();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
-  const setPeriod = usePositionsFilters((s) => s.setPeriod);
   const selectedPeriodLabel = getPositionsPeriodShortLabel(period);
 
   const toggleRow = (rowKey: string) => {
@@ -117,37 +116,28 @@ export function UserVaultsTable({
     return null;
   }
 
-  // Header actions
-  const headerActions = (
-    <>
-      {refetch && (
-        <Tooltip
-          content={
-            <TooltipContent
-              title="Refresh"
-              detail="Fetch latest vault data"
-            />
-          }
+  const headerActions = refetch ? (
+    <Tooltip
+      content={
+        <TooltipContent
+          title="Refresh"
+          detail="Fetch latest vault data"
+        />
+      }
+    >
+      <span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={refetch}
+          disabled={isRefetching}
+          className="text-secondary min-w-0 px-2"
         >
-          <span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={refetch}
-              disabled={isRefetching}
-              className="text-secondary min-w-0 px-2"
-            >
-              <RefetchIcon isLoading={isRefetching} />
-            </Button>
-          </span>
-        </Tooltip>
-      )}
-      <PositionsPeriodSettingsButton
-        period={period}
-        onPeriodChange={setPeriod}
-      />
-    </>
-  );
+          <RefetchIcon isLoading={isRefetching} />
+        </Button>
+      </span>
+    </Tooltip>
+  ) : undefined;
 
   return (
     <div className="space-y-4 overflow-x-auto">

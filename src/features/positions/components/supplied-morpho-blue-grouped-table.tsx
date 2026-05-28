@@ -46,7 +46,7 @@ import { PositionActionsDropdown } from './position-actions-dropdown';
 import { SuppliedMarketPositionActionsDropdown } from './supplied-market-position-actions-dropdown';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
-import { getPositionsPeriodShortLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
+import { getPositionsPeriodShortLabel } from './positions-period-settings';
 import { RiArrowRightLine, RiSparklingFill } from 'react-icons/ri';
 import type { MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
 import type { PositionSnapshot } from '@/utils/positions';
@@ -359,7 +359,6 @@ export function SuppliedMorphoBlueGroupedTable({
 }: SuppliedMorphoBlueGroupedTableProps) {
   const { address } = useConnection();
   const period = usePositionsFilters((s) => s.period);
-  const setPeriod = usePositionsFilters((s) => s.setPeriod);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const {
@@ -485,10 +484,6 @@ export function SuppliedMorphoBlueGroupedTable({
           </Button>
         </span>
       </Tooltip>
-      <PositionsPeriodSettingsButton
-        period={period}
-        onPeriodChange={setPeriod}
-      />
       <Tooltip
         content={
           <TooltipContent

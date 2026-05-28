@@ -1,4 +1,4 @@
-import { CheckIcon, GearIcon } from '@radix-ui/react-icons';
+import { CheckIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -37,6 +37,7 @@ type PositionsPeriodSettingsButtonProps = {
 export function PositionsPeriodSettingsButton({ period, onPeriodChange, className }: PositionsPeriodSettingsButtonProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const selectedLabel = getPositionsPeriodLabel(period);
+  const selectedShortLabel = getPositionsPeriodShortLabel(period);
 
   return (
     <>
@@ -49,13 +50,13 @@ export function PositionsPeriodSettingsButton({ period, onPeriodChange, classNam
         }
       >
         <Button
-          variant="ghost"
-          size="icon"
-          className={cn('text-secondary', className)}
+          variant="surface"
+          size="xs"
+          className={cn('h-5 min-w-0 px-1.5 text-[11px] font-normal leading-none text-secondary shadow-none', className)}
           onClick={onOpen}
           aria-label={`Analytics period settings, currently ${selectedLabel}`}
         >
-          <GearIcon className="h-3.5 w-3.5" />
+          {selectedShortLabel}
         </Button>
       </Tooltip>
       <Modal
@@ -69,19 +70,18 @@ export function PositionsPeriodSettingsButton({ period, onPeriodChange, classNam
           <>
             <ModalHeader
               variant="compact"
-              title="Portfolio Settings"
-              description="Analytics period applies across portfolio APY, Market Supplies, and Auto Vault earnings."
-              mainIcon={<GearIcon />}
+              title="Analytics Period"
+              description="Applies to portfolio, Market Supplies, and Auto Vault earnings."
               onClose={close}
             />
             <ModalBody
               variant="compact"
-              className="gap-3"
+              className="gap-2"
             >
               <div
                 role="radiogroup"
                 aria-label="Analytics period"
-                className="grid grid-cols-2 gap-2"
+                className="flex flex-col gap-1"
               >
                 {POSITIONS_PERIOD_OPTIONS.map((option) => {
                   const selected = option.value === period;
@@ -94,14 +94,12 @@ export function PositionsPeriodSettingsButton({ period, onPeriodChange, classNam
                       aria-checked={selected}
                       onClick={() => onPeriodChange(option.value)}
                       className={cn(
-                        'flex items-center justify-between rounded-sm border px-3 py-2 text-left transition-colors',
-                        selected
-                          ? 'border-[var(--palette-orange)] bg-hovered text-primary'
-                          : 'border-border text-secondary hover:bg-hovered',
+                        'flex items-center justify-between rounded-sm px-3 py-2 text-left transition-colors',
+                        selected ? 'bg-hovered text-primary' : 'text-secondary hover:bg-hovered',
                       )}
                     >
                       <span className="text-sm">{option.label}</span>
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-sm text-xs">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-sm text-xs text-secondary">
                         {selected ? <CheckIcon className="h-3.5 w-3.5 text-[var(--palette-orange)]" /> : option.shortLabel}
                       </span>
                     </button>

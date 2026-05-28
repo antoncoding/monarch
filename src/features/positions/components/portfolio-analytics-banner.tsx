@@ -13,7 +13,7 @@ import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { cn } from '@/utils/components';
 import { type AssetBreakdownItem, formatUsdValue, type PortfolioAnalytics } from '@/utils/portfolio';
 import { AccountVaultInfo } from './account-vault-info';
-import { getPositionsPeriodShortLabel, PositionsPeriodSettingsButton } from './positions-period-settings';
+import { PositionsPeriodSettingsButton } from './positions-period-settings';
 
 type PortfolioAnalyticsBannerProps = {
   account: string;
@@ -49,28 +49,24 @@ function formatRate(value: number | null): string {
 }
 
 function formatCountCaption(count: number, noun: string): string {
-  if (count <= 0) return `No active ${noun}s`;
+  if (count <= 0) return '';
 
   return `from ${count} ${count === 1 ? noun : `${noun}s`}`;
 }
 
-function formatAnalyticsCaption(portfolioAnalytics: PortfolioAnalytics, periodLabel: string): string {
+function formatAnalyticsCaption(portfolioAnalytics: PortfolioAnalytics): string {
   if (portfolioAnalytics.totalPositionCount <= 0) {
-    return `${periodLabel}, no history`;
+    return '';
   }
 
   if (portfolioAnalytics.unpricedPositionCount > 0) {
-    return `${periodLabel}, ${portfolioAnalytics.pricedPositionCount}/${portfolioAnalytics.totalPositionCount} priced`;
+    return `${portfolioAnalytics.pricedPositionCount}/${portfolioAnalytics.totalPositionCount} priced`;
   }
 
-  return `${periodLabel}, ${formatCountCaption(portfolioAnalytics.totalPositionCount, 'market')}`;
+  return formatCountCaption(portfolioAnalytics.totalPositionCount, 'market');
 }
 
-function BreakdownTooltipContent({ items, emptyLabel = 'No active positions' }: { items: AssetBreakdownItem[]; emptyLabel?: string }) {
-  if (items.length === 0) {
-    return <span className="text-xs text-secondary">{emptyLabel}</span>;
-  }
-
+function BreakdownTooltipContent({ items }: { items: AssetBreakdownItem[] }) {
   return (
     <div className="min-w-[180px] space-y-2">
       {items.map((item) => (
@@ -101,6 +97,7 @@ function PortfolioMetricBox({
   label,
   value,
   caption,
+  action,
   isLoading,
   error,
   muted = false,
@@ -109,6 +106,7 @@ function PortfolioMetricBox({
   label: string;
   value: string;
   caption: string;
+  action?: ReactNode;
   isLoading: boolean;
   error?: Error | null;
   muted?: boolean;
@@ -116,7 +114,10 @@ function PortfolioMetricBox({
 }) {
   const content = (
     <div className="flex min-h-[5.25rem] min-w-0 flex-col justify-between rounded-sm border border-border bg-surface px-3 py-2.5 shadow-sm">
-      <span className="truncate text-xs leading-4 text-secondary">{label}</span>
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <span className="truncate text-xs leading-4 text-secondary">{label}</span>
+        {action}
+      </div>
       <div className="mt-1.5 flex min-h-6 items-center">
         {isLoading ? (
           <PulseLoader
@@ -130,7 +131,14 @@ function PortfolioMetricBox({
           <span className={cn(METRIC_VALUE_CLASS, muted && 'text-secondary')}>{value}</span>
         )}
       </div>
-      <span className="mt-1 truncate text-xs leading-4 text-secondary">{caption}</span>
+      {caption ? (
+        <span className="mt-1 truncate text-xs leading-4 text-secondary">{caption}</span>
+      ) : (
+        <span
+          className="mt-1 h-4"
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 
@@ -172,7 +180,6 @@ export function PortfolioAnalyticsBanner({
 }: PortfolioAnalyticsBannerProps) {
   const analyticsLoading = isValueLoading || isEarningsLoading;
   const displayRate = isAprDisplay ? portfolioAnalytics.annualizedApr : portfolioAnalytics.annualizedApy;
-  const selectedPeriodShortLabel = getPositionsPeriodShortLabel(period);
   const averageRateLabel = `Average ${rateLabel}`;
 
   return (
@@ -194,11 +201,30 @@ export function PortfolioAnalyticsBanner({
           >
             {isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
           </Button>
+          <Tooltip
+            content={
+              <TooltipContent
+                title="Swap"
+                detail="Open swap"
+              />
+            }
+          >
+            <Button
+              variant="surface"
+              size="xs"
+              className="h-7 min-w-0 px-2 text-xs font-normal text-secondary"
+              onClick={onSwap}
+              aria-label="Swap tokens"
+            >
+              <IoIosSwap className="h-3.5 w-3.5" />
+              Swap
+            </Button>
+          </Tooltip>
         </div>
         <AccountVaultInfo account={account as Address} />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-start lg:justify-end">
+      <div className="flex min-w-0 flex-1 lg:justify-end">
         {showPortfolioStats && (
           <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-3 lg:max-w-[38rem]">
             <PortfolioMetricBox
@@ -207,33 +233,20 @@ export function PortfolioAnalyticsBanner({
               caption={formatCountCaption(depositPositionCount, 'position')}
               isLoading={isValueLoading}
               error={valueError}
-              tooltip={<BreakdownTooltipContent items={assetBreakdown} />}
+              tooltip={assetBreakdown.length > 0 ? <BreakdownTooltipContent items={assetBreakdown} /> : undefined}
             />
             <PortfolioMetricBox
               label={averageRateLabel}
               value={formatRate(displayRate)}
-              caption={formatAnalyticsCaption(portfolioAnalytics, selectedPeriodShortLabel)}
-              isLoading={analyticsLoading}
-              error={valueError}
-              tooltip={
-                <TooltipContent
-                  title={`${averageRateLabel} (${selectedPeriodShortLabel})`}
-                  detail={
-                    portfolioAnalytics.totalPositionCount > 0
-                      ? `Calculated from ${portfolioAnalytics.pricedPositionCount} priced supply ${
-                          portfolioAnalytics.pricedPositionCount === 1 ? 'market' : 'markets'
-                        }.`
-                      : 'No supply history in the selected period.'
-                  }
-                  secondaryDetail={
-                    portfolioAnalytics.unpricedPositionCount > 0
-                      ? `${portfolioAnalytics.unpricedPositionCount} ${
-                          portfolioAnalytics.unpricedPositionCount === 1 ? 'market is' : 'markets are'
-                        } missing a current price.`
-                      : undefined
-                  }
+              caption={formatAnalyticsCaption(portfolioAnalytics)}
+              action={
+                <PositionsPeriodSettingsButton
+                  period={period}
+                  onPeriodChange={onPeriodChange}
                 />
               }
+              isLoading={analyticsLoading}
+              error={valueError}
             />
             <PortfolioMetricBox
               label="Total Debt"
@@ -242,33 +255,10 @@ export function PortfolioAnalyticsBanner({
               isLoading={isValueLoading}
               error={valueError}
               muted={totalDebtUsd <= 0}
-              tooltip={
-                <BreakdownTooltipContent
-                  items={debtBreakdown}
-                  emptyLabel="No active debt"
-                />
-              }
+              tooltip={debtBreakdown.length > 0 ? <BreakdownTooltipContent items={debtBreakdown} /> : undefined}
             />
           </div>
         )}
-        <div
-          className={`flex shrink-0 flex-wrap items-center gap-2 lg:justify-end ${
-            showPortfolioStats ? 'lg:ml-1 lg:border-l lg:border-dashed lg:border-border/70 lg:pl-3' : ''
-          }`}
-        >
-          <PositionsPeriodSettingsButton
-            period={period}
-            onPeriodChange={onPeriodChange}
-          />
-          <Button
-            variant="default"
-            onClick={onSwap}
-            title="Swap tokens"
-          >
-            <IoIosSwap className="h-4 w-4" />
-            Swap
-          </Button>
-        </div>
       </div>
     </div>
   );
