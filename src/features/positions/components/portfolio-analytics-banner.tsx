@@ -161,12 +161,12 @@ function PortfolioMetricBox({
   tooltip?: ReactNode;
 }) {
   const content = (
-    <div className="flex h-[5.5rem] min-w-0 flex-col justify-between rounded-sm border border-border bg-surface px-3 py-2.5 shadow-sm">
+    <div className="flex h-full min-h-[5.5rem] min-w-0 flex-col rounded-sm border border-border bg-surface px-3 py-2.5 shadow-sm">
       <div className="flex min-w-0 items-center justify-between gap-2">
         <span className="truncate font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{label}</span>
         {action}
       </div>
-      <div className="mt-1.5 flex min-h-6 items-center">
+      <div className="mt-2 flex min-h-6 items-center">
         {isLoading ? (
           <PulseLoader
             size={4}
@@ -180,10 +180,10 @@ function PortfolioMetricBox({
         )}
       </div>
       {caption ? (
-        <span className="mt-1 truncate text-xs leading-4 text-secondary">{caption}</span>
+        <span className="mt-1 break-words text-xs leading-4 text-secondary">{caption}</span>
       ) : (
         <span
-          className="mt-1 h-4"
+          className="mt-1 min-h-4"
           aria-hidden="true"
         />
       )}
@@ -191,7 +191,7 @@ function PortfolioMetricBox({
   );
 
   if (!tooltip || isLoading) {
-    return content;
+    return <div className="h-full min-w-0">{content}</div>;
   }
 
   return (
@@ -199,7 +199,7 @@ function PortfolioMetricBox({
       content={tooltip}
       placement="bottom"
     >
-      <div className="h-full cursor-help">{content}</div>
+      <div className="h-full min-w-0 cursor-help">{content}</div>
     </Tooltip>
   );
 }
@@ -264,7 +264,7 @@ export function PortfolioAnalyticsBanner({
       </div>
 
       {showPortfolioStats && (
-        <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-2 sm:grid-cols-3">
           <PortfolioMetricBox
             label="TOTAL DEPOSIT"
             value={formatUsdValue(totalUsd)}
