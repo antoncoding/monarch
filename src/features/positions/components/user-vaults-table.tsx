@@ -16,27 +16,65 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
+import { formatTokenAmountPreview } from '@/utils/token-amount-format';
 import { getNetworkImg } from '@/utils/networks';
 import { parseCapIdParams } from '@/utils/morpho';
 import { convertApyToApr } from '@/utils/rateMath';
 import { VaultAllocationDetail } from './vault-allocation-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { VaultActionsDropdown } from './vault-actions-dropdown';
-
-const periodLabels: Record<EarningsPeriod, string> = {
-  day: '1D',
-  week: '7D',
-  month: '30D',
-  threemonth: '3M',
-  sixmonth: '6M',
-  all: 'All',
-};
+import { getPositionsPeriodShortLabel } from './positions-period-settings';
 
 const formatRate = (rate: number | null | undefined, isApr: boolean): string => {
   if (rate === null || rate === undefined) return '-';
   const displayRate = isApr ? convertApyToApr(rate) : rate;
   return `${formatReadable((displayRate * 100).toString())}%`;
 };
+
+function VaultInterestAccruedDisplay({
+  earnedAssets,
+  decimals,
+  symbol,
+  isLoading,
+  periodLabel,
+}: {
+  earnedAssets?: bigint;
+  decimals?: number;
+  symbol?: string;
+  isLoading: boolean;
+  periodLabel: string;
+}) {
+  if (isLoading) {
+    return (
+      <PulseLoader
+        size={4}
+        color="#f45f2d"
+        margin={3}
+      />
+    );
+  }
+
+  if (!earnedAssets || earnedAssets === 0n || decimals === undefined || !symbol) {
+    return <span className="font-medium">-</span>;
+  }
+
+  const earningsPreview = formatTokenAmountPreview(earnedAssets, decimals);
+
+  return (
+    <Tooltip
+      content={
+        <TooltipContent
+          title={`Interest accrued (${periodLabel})`}
+          detail="Estimated from vault share price change over the selected period and current vault shares."
+        />
+      }
+    >
+      <span className="cursor-help font-medium">
+        {earningsPreview.compact} {symbol}
+      </span>
+    </Tooltip>
+  );
+}
 
 type UserVaultsTableProps = {
   vaults: UserVaultV2[];
@@ -57,6 +95,7 @@ export function UserVaultsTable({
   const { findToken } = useTokensQuery();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
+  const selectedPeriodLabel = getPositionsPeriodShortLabel(period);
 
   const toggleRow = (rowKey: string) => {
     setExpandedRows((prev) => {
@@ -77,7 +116,6 @@ export function UserVaultsTable({
     return null;
   }
 
-  // Header actions (refresh button)
   const headerActions = refetch ? (
     <Tooltip
       content={
@@ -114,9 +152,9 @@ export function UserVaultsTable({
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
               <TableHead>
-                {rateLabel} ({periodLabels[period]})
+                {rateLabel} ({selectedPeriodLabel})
               </TableHead>
-              <TableHead>Interest Accrued ({periodLabels[period]})</TableHead>
+              <TableHead>Interest Accrued ({selectedPeriodLabel})</TableHead>
               <TableHead>Collateral</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -195,7 +233,7 @@ export function UserVaultsTable({
                       </TableCell>
 
                       {/* Historical APY/APR */}
-                      <TableCell data-label={`${rateLabel} (${periodLabels[period]})`}>
+                      <TableCell data-label={`${rateLabel} (${selectedPeriodLabel})`}>
                         <div className="flex items-center justify-center">
                           {isEarningsLoading ? (
                             <PulseLoader
@@ -208,7 +246,7 @@ export function UserVaultsTable({
                               content={
                                 <TooltipContent
                                   title={`Historical ${rateLabel}`}
-                                  detail={`Annualized yield derived from share price change over the last ${periodLabels[period]}.`}
+                                  detail={`Annualized yield derived from share price change over the last ${selectedPeriodLabel}.`}
                                 />
                               }
                             >
@@ -219,9 +257,15 @@ export function UserVaultsTable({
                       </TableCell>
 
                       {/* Interest Accrued */}
-                      <TableCell data-label={`Interest Accrued (${periodLabels[period]})`}>
+                      <TableCell data-label={`Interest Accrued (${selectedPeriodLabel})`}>
                         <div className="flex items-center justify-center">
-                          <span className="font-medium">-</span>
+                          <VaultInterestAccruedDisplay
+                            earnedAssets={vault.earnedAssets}
+                            decimals={token?.decimals}
+                            symbol={token?.symbol}
+                            isLoading={isEarningsLoading}
+                            periodLabel={selectedPeriodLabel}
+                          />
                         </div>
                       </TableCell>
 

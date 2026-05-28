@@ -16,6 +16,8 @@ const ONE_SHARE = 10n ** 18n;
 
 type VaultApyData = {
   actualApy: number;
+  earnedAssets?: bigint;
+  periodSeconds: number;
 };
 
 /**
@@ -139,10 +141,15 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
                 const periodsPerYear = (365 * 86400) / periodSeconds;
                 const priceRatio = Number(currentSharePrice) / Number(pastSharePrice);
                 const apy = priceRatio ** periodsPerYear - 1;
+                // vault.balance is current redeemable assets, not vault shares.
+                const earnedAssets =
+                  vault.balance && currentSharePrice >= pastSharePrice
+                    ? (vault.balance * (currentSharePrice - pastSharePrice)) / currentSharePrice
+                    : undefined;
 
                 // Only include valid, non-negative APY
                 if (Number.isFinite(apy) && apy >= 0) {
-                  results.set(vault.address.toLowerCase(), { actualApy: apy });
+                  results.set(vault.address.toLowerCase(), { actualApy: apy, earnedAssets, periodSeconds });
                 }
               }
             }

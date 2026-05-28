@@ -31,7 +31,7 @@ type TableContainerWithHeaderProps = {
  */
 export function TableContainerWithHeader({ title, actions, children, className = '' }: TableContainerWithHeaderProps) {
   return (
-    <div className={`bg-surface rounded-md font-zen shadow-sm ${className}`}>
+    <div className={`rounded border border-border bg-surface font-zen shadow-sm ${className}`}>
       <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-3">
         <h3 className="font-monospace text-xs uppercase text-secondary">{title}</h3>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
@@ -75,7 +75,7 @@ export function TableContainerWithDescription({
   className = '',
 }: TableContainerWithDescriptionProps) {
   return (
-    <div className={`bg-surface rounded-md font-zen shadow-sm ${className}`}>
+    <div className={`rounded border border-border bg-surface font-zen shadow-sm ${className}`}>
       <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-4">
         <div className="flex-1">
           <h3 className="mb-1 font-monospace text-xs uppercase text-secondary">{title}</h3>

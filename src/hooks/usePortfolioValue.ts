@@ -4,9 +4,13 @@ import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import {
   type AssetBreakdownItem,
+  type PortfolioAnalytics,
+  type PortfolioAnalyticsRange,
   calculateAssetBreakdown,
   calculateDebtBreakdown,
+  calculatePortfolioAnalytics,
   calculatePortfolioValue,
+  EMPTY_PORTFOLIO_ANALYTICS,
   extractTokensFromPositions,
   extractTokensFromVaults,
 } from '@/utils/portfolio';
@@ -19,6 +23,7 @@ type UsePortfolioValueReturn = {
   vaultsUsd: number;
   assetBreakdown: AssetBreakdownItem[];
   debtBreakdown: AssetBreakdownItem[];
+  portfolioAnalytics: PortfolioAnalytics;
   isLoading: boolean;
   error: Error | null;
 };
@@ -29,7 +34,11 @@ type UsePortfolioValueReturn = {
  * @param vaults - Optional array of user vaults
  * @returns Portfolio value breakdown and loading/error states
  */
-export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vaults?: UserVaultV2[]): UsePortfolioValueReturn => {
+export const usePortfolioValue = (
+  positions: MarketPositionWithEarnings[],
+  vaults?: UserVaultV2[],
+  earningsRangesByChain: Record<number, PortfolioAnalyticsRange> = {},
+): UsePortfolioValueReturn => {
   const { findToken } = useTokensQuery();
 
   // Extract unique tokens from all sources
@@ -43,8 +52,8 @@ export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vault
   const { prices, isLoading, error } = useTokenPrices(tokens);
 
   // Calculate portfolio value and breakdown (memoized)
-  const { portfolioValue, assetBreakdown, debtBreakdown } = useMemo(() => {
-    if (isLoading || prices.size === 0) {
+  const { portfolioValue, assetBreakdown, debtBreakdown, portfolioAnalytics } = useMemo(() => {
+    if (isLoading) {
       return {
         portfolioValue: {
           total: 0,
@@ -52,6 +61,19 @@ export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vault
         },
         assetBreakdown: [],
         debtBreakdown: [],
+        portfolioAnalytics: EMPTY_PORTFOLIO_ANALYTICS,
+      };
+    }
+
+    if (prices.size === 0) {
+      return {
+        portfolioValue: {
+          total: 0,
+          breakdown: { nativeSupplies: 0, nativeBorrows: 0, vaults: 0 },
+        },
+        assetBreakdown: [],
+        debtBreakdown: [],
+        portfolioAnalytics: calculatePortfolioAnalytics(positions, vaults, prices, findToken, earningsRangesByChain),
       };
     }
 
@@ -59,8 +81,9 @@ export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vault
       portfolioValue: calculatePortfolioValue(positions, vaults, prices, findToken),
       assetBreakdown: calculateAssetBreakdown(positions, vaults, prices, findToken),
       debtBreakdown: calculateDebtBreakdown(positions, prices),
+      portfolioAnalytics: calculatePortfolioAnalytics(positions, vaults, prices, findToken, earningsRangesByChain),
     };
-  }, [positions, vaults, prices, isLoading, findToken]);
+  }, [positions, vaults, prices, isLoading, findToken, earningsRangesByChain]);
 
   return {
     totalUsd: portfolioValue.total,
@@ -69,6 +92,7 @@ export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vault
     vaultsUsd: portfolioValue.breakdown.vaults,
     assetBreakdown,
     debtBreakdown,
+    portfolioAnalytics,
     isLoading,
     error,
   };

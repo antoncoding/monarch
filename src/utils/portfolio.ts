@@ -3,6 +3,8 @@ import { getTokenPriceKey, type TokenPriceInput } from '@/data-sources/morpho-ap
 import type { MarketPositionWithEarnings } from './types';
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 
+const ONE_YEAR_IN_SECONDS = 86_400 * 365;
+
 // Normalized balance type for all position sources
 export type TokenBalance = {
   tokenAddress: string;
@@ -24,14 +26,109 @@ export type PortfolioValue = {
   breakdown: PortfolioBreakdown;
 };
 
+type AssetBreakdownSourceCounts = {
+  supplyMarketCount: number;
+  vaultCount: number;
+  borrowMarketCount: number;
+};
+
+type AssetBreakdownAggregate = AssetBreakdownSourceCounts & {
+  symbol: string;
+  tokenAddress: string;
+  chainId: number;
+  balance: bigint;
+  decimals: number;
+};
+
 // Per-asset breakdown item for tooltip display
-export type AssetBreakdownItem = {
+export type AssetBreakdownItem = AssetBreakdownSourceCounts & {
   symbol: string;
   tokenAddress: string;
   chainId: number;
   balance: number;
   price: number;
   usdValue: number;
+};
+
+export type PortfolioAnalyticsRange = {
+  startTimestamp: number;
+  endTimestamp: number;
+};
+
+export type PortfolioAnalytics = {
+  totalEarningsUsd: number;
+  averageSupplyUsd: number;
+  periodReturn: number | null;
+  annualizedApr: number | null;
+  annualizedApy: number | null;
+  periodSeconds: number | null;
+  pricedSourceCount: number;
+  unpricedSourceCount: number;
+  totalSourceCount: number;
+  supplyMarketCount: number;
+  vaultCount: number;
+};
+
+export const EMPTY_PORTFOLIO_ANALYTICS: PortfolioAnalytics = {
+  totalEarningsUsd: 0,
+  averageSupplyUsd: 0,
+  periodReturn: null,
+  annualizedApr: null,
+  annualizedApy: null,
+  periodSeconds: null,
+  pricedSourceCount: 0,
+  unpricedSourceCount: 0,
+  totalSourceCount: 0,
+  supplyMarketCount: 0,
+  vaultCount: 0,
+};
+
+const toAmount = (value: string | number | bigint | null | undefined): bigint => {
+  if (value === null || value === undefined || value === '') {
+    return 0n;
+  }
+
+  try {
+    return BigInt(value);
+  } catch {
+    return 0n;
+  }
+};
+
+const formatSignedUnits = (value: bigint, decimals: number): number => {
+  const sign = value < 0n ? -1 : 1;
+  const absoluteValue = value < 0n ? -value : value;
+  const parsed = Number(formatUnits(absoluteValue, decimals));
+
+  return Number.isFinite(parsed) ? parsed * sign : 0;
+};
+
+const hasSupplyAnalyticsHistory = (position: MarketPositionWithEarnings): boolean =>
+  position.hasSupplyHistory ||
+  toAmount(position.state.supplyAssets) > 0n ||
+  toAmount(position.earned) !== 0n ||
+  toAmount(position.totalDeposits) > 0n ||
+  toAmount(position.totalWithdraws) > 0n ||
+  toAmount(position.avgCapital) > 0n;
+
+const getPositionWindowSeconds = (
+  position: MarketPositionWithEarnings,
+  earningsRangesByChain: Record<number, PortfolioAnalyticsRange> = {},
+): number | null => {
+  const chainId = position.market.morphoBlue.chain.id;
+  const range = earningsRangesByChain[chainId];
+
+  if (
+    range &&
+    Number.isFinite(range.startTimestamp) &&
+    Number.isFinite(range.endTimestamp) &&
+    range.endTimestamp > range.startTimestamp
+  ) {
+    return range.endTimestamp - range.startTimestamp;
+  }
+
+  const effectiveTime = Math.max(0, position.effectiveTime ?? 0);
+  return effectiveTime > 0 ? effectiveTime : null;
 };
 
 /**
@@ -206,24 +303,31 @@ export const calculateAssetBreakdown = (
   prices: Map<string, number>,
   findToken?: (address: string, chainId: number) => { decimals: number; symbol?: string } | undefined,
 ): AssetBreakdownItem[] => {
-  const aggregated = new Map<string, { symbol: string; tokenAddress: string; chainId: number; balance: bigint; decimals: number }>();
+  const aggregated = new Map<string, AssetBreakdownAggregate>();
 
   // Aggregate positions by token
   for (const position of positions) {
+    const supplyAssets = BigInt(position.state.supplyAssets);
+    if (supplyAssets <= 0n) continue;
+
     const { address, symbol, decimals } = position.market.loanAsset;
     const chainId = position.market.morphoBlue.chain.id;
     const key = getTokenPriceKey(address, chainId);
     const existing = aggregated.get(key);
 
     if (existing) {
-      existing.balance += BigInt(position.state.supplyAssets);
+      existing.balance += supplyAssets;
+      existing.supplyMarketCount += 1;
     } else {
       aggregated.set(key, {
         symbol,
         tokenAddress: address,
         chainId,
-        balance: BigInt(position.state.supplyAssets),
+        balance: supplyAssets,
         decimals,
+        supplyMarketCount: 1,
+        vaultCount: 0,
+        borrowMarketCount: 0,
       });
     }
   }
@@ -241,6 +345,7 @@ export const calculateAssetBreakdown = (
 
       if (existing) {
         existing.balance += vault.balance;
+        existing.vaultCount += 1;
       } else {
         aggregated.set(key, {
           symbol,
@@ -248,6 +353,9 @@ export const calculateAssetBreakdown = (
           chainId: vault.networkId,
           balance: vault.balance,
           decimals,
+          supplyMarketCount: 0,
+          vaultCount: 1,
+          borrowMarketCount: 0,
         });
       }
     }
@@ -256,9 +364,13 @@ export const calculateAssetBreakdown = (
   // Convert to breakdown items with USD values
   const items: AssetBreakdownItem[] = [];
   for (const [key, data] of aggregated) {
+    if (data.balance <= 0n) continue;
+
     const price = prices.get(key) ?? 0;
     const balance = Number.parseFloat(formatUnits(data.balance, data.decimals));
     const usdValue = balance * price;
+
+    if (!Number.isFinite(balance) || balance <= 0) continue;
 
     items.push({
       symbol: data.symbol,
@@ -267,6 +379,9 @@ export const calculateAssetBreakdown = (
       balance,
       price,
       usdValue,
+      supplyMarketCount: data.supplyMarketCount,
+      vaultCount: data.vaultCount,
+      borrowMarketCount: data.borrowMarketCount,
     });
   }
 
@@ -279,7 +394,7 @@ export const calculateAssetBreakdown = (
  * Aggregates borrowed amounts by loan token across positions
  */
 export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], prices: Map<string, number>): AssetBreakdownItem[] => {
-  const aggregated = new Map<string, { symbol: string; tokenAddress: string; chainId: number; balance: bigint; decimals: number }>();
+  const aggregated = new Map<string, AssetBreakdownAggregate>();
 
   for (const position of positions) {
     const borrowAssets = BigInt(position.state.borrowAssets);
@@ -292,6 +407,7 @@ export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], 
 
     if (existing) {
       existing.balance += borrowAssets;
+      existing.borrowMarketCount += 1;
     } else {
       aggregated.set(key, {
         symbol,
@@ -299,6 +415,9 @@ export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], 
         chainId,
         balance: borrowAssets,
         decimals,
+        supplyMarketCount: 0,
+        vaultCount: 0,
+        borrowMarketCount: 1,
       });
     }
   }
@@ -316,10 +435,159 @@ export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], 
       balance,
       price,
       usdValue,
+      supplyMarketCount: data.supplyMarketCount,
+      vaultCount: data.vaultCount,
+      borrowMarketCount: data.borrowMarketCount,
     });
   }
 
   return items.sort((a, b) => b.usdValue - a.usdValue);
+};
+
+/**
+ * Current-price portfolio yield: native-token earnings stay pure until this
+ * aggregation step, then both earnings and time-weighted capital are converted
+ * with current token prices so mixed-asset positions share one denominator.
+ */
+export const calculatePortfolioAnalytics = (
+  positions: MarketPositionWithEarnings[],
+  vaults: UserVaultV2[] | undefined,
+  prices: Map<string, number>,
+  findToken?: (address: string, chainId: number) => { decimals: number } | undefined,
+  earningsRangesByChain: Record<number, PortfolioAnalyticsRange> = {},
+): PortfolioAnalytics => {
+  let totalEarningsUsd = 0;
+  let averageSupplyUsd = 0;
+  let weightedWindowSeconds = 0;
+  let averageSupplyUsdWithWindow = 0;
+  let pricedSourceCount = 0;
+  let unpricedSourceCount = 0;
+  let totalSourceCount = 0;
+  let supplyMarketCount = 0;
+  let vaultCount = 0;
+
+  for (const position of positions) {
+    if (!hasSupplyAnalyticsHistory(position)) {
+      continue;
+    }
+
+    totalSourceCount += 1;
+    supplyMarketCount += 1;
+
+    const chainId = position.market.morphoBlue.chain.id;
+    const priceKey = getTokenPriceKey(position.market.loanAsset.address, chainId);
+    const price = prices.get(priceKey);
+
+    if (!price || !Number.isFinite(price) || price <= 0) {
+      unpricedSourceCount += 1;
+      continue;
+    }
+
+    pricedSourceCount += 1;
+
+    const decimals = position.market.loanAsset.decimals;
+    const earned = formatSignedUnits(toAmount(position.earned), decimals);
+    /*
+     * `avgCapital` is averaged only over seconds when this market had supply.
+     * Portfolio APY uses the full selected period as the denominator, so a
+     * position active for half of a 30d window should contribute half its
+     * held-time average capital. Without this scaling, partial-window positions
+     * would receive the same denominator weight as positions held for the full
+     * period and would dilute the portfolio-level rate.
+     */
+    const heldTimeAverageCapital = formatSignedUnits(toAmount(position.avgCapital), decimals);
+    // Active supplied seconds for this market inside the selected period.
+    const effectiveTime = Math.max(0, position.effectiveTime ?? 0);
+    // Full selected analytics window for this chain, normally 24h/7d/30d.
+    const windowSeconds = getPositionWindowSeconds(position, earningsRangesByChain);
+    // Fraction of the selected window this market actually contributed capital.
+    const windowWeight = windowSeconds && effectiveTime > 0 ? Math.min(effectiveTime / windowSeconds, 1) : 1;
+    const averageCapitalOverWindow = heldTimeAverageCapital * windowWeight;
+    const earnedUsd = earned * price;
+    const averageCapitalUsd = averageCapitalOverWindow * price;
+
+    if (Number.isFinite(earnedUsd)) {
+      totalEarningsUsd += earnedUsd;
+    }
+
+    if (Number.isFinite(averageCapitalUsd) && averageCapitalUsd > 0) {
+      averageSupplyUsd += averageCapitalUsd;
+
+      if (windowSeconds && Number.isFinite(windowSeconds) && windowSeconds > 0) {
+        weightedWindowSeconds += averageCapitalUsd * windowSeconds;
+        averageSupplyUsdWithWindow += averageCapitalUsd;
+      }
+    }
+  }
+
+  if (vaults && findToken) {
+    for (const vault of vaults) {
+      if (!vault.balance || vault.balance <= 0n) continue;
+
+      totalSourceCount += 1;
+      vaultCount += 1;
+
+      const priceKey = getTokenPriceKey(vault.asset, vault.networkId);
+      const price = prices.get(priceKey);
+      const token = findToken(vault.asset, vault.networkId);
+      const windowSeconds = vault.earningsPeriodSeconds;
+
+      if (!token || !price || !Number.isFinite(price) || price <= 0 || !windowSeconds || windowSeconds <= 0) {
+        unpricedSourceCount += 1;
+        continue;
+      }
+
+      pricedSourceCount += 1;
+
+      const earned = formatSignedUnits(vault.earnedAssets ?? 0n, token.decimals);
+      const currentAssets = formatSignedUnits(vault.balance, token.decimals);
+      const startingAssets = Math.max(currentAssets - earned, 0);
+      const earnedUsd = earned * price;
+      const averageCapitalUsd = startingAssets * price;
+
+      if (Number.isFinite(earnedUsd)) {
+        totalEarningsUsd += earnedUsd;
+      }
+
+      if (Number.isFinite(averageCapitalUsd) && averageCapitalUsd > 0) {
+        averageSupplyUsd += averageCapitalUsd;
+        weightedWindowSeconds += averageCapitalUsd * windowSeconds;
+        averageSupplyUsdWithWindow += averageCapitalUsd;
+      }
+    }
+  }
+
+  if (averageSupplyUsd <= 0) {
+    return {
+      ...EMPTY_PORTFOLIO_ANALYTICS,
+      totalEarningsUsd,
+      pricedSourceCount,
+      unpricedSourceCount,
+      totalSourceCount,
+      supplyMarketCount,
+      vaultCount,
+    };
+  }
+
+  const periodReturn = totalEarningsUsd / averageSupplyUsd;
+  const periodSeconds = averageSupplyUsdWithWindow > 0 ? weightedWindowSeconds / averageSupplyUsdWithWindow : null;
+  const annualization = periodSeconds && periodSeconds > 0 ? ONE_YEAR_IN_SECONDS / periodSeconds : null;
+  const annualizedApr = annualization === null ? null : periodReturn * annualization;
+  const annualizedApy = annualization === null ? null : periodReturn <= -1 ? -1 : (1 + periodReturn) ** annualization - 1;
+
+  return {
+    totalEarningsUsd,
+    averageSupplyUsd,
+    periodReturn,
+    annualizedApr: annualizedApr !== null && Number.isFinite(annualizedApr) ? annualizedApr : null,
+    annualizedApy: annualizedApy !== null && Number.isFinite(annualizedApy) ? annualizedApy : null,
+    periodSeconds,
+    pricedSourceCount,
+    unpricedSourceCount,
+    totalSourceCount,
+    supplyMarketCount,
+    vaultCount,
+  };
 };
 
 /**

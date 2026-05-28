@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { cn } from '@/utils/components';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import type { GroupedPosition } from '@/utils/types';
 
@@ -127,7 +126,7 @@ export function PositionBreadcrumbs({
   }, [searchOpen]);
 
   return (
-    <nav className="flex items-center gap-2 text-sm text-secondary flex-nowrap overflow-x-auto leading-none py-1 font-zen">
+    <nav className="flex min-w-0 max-w-full items-center gap-2 overflow-hidden py-1 font-zen text-sm leading-none text-secondary">
       <Link
         href={rootHref}
         className="no-underline hover:no-underline text-secondary hover:text-primary"
@@ -145,22 +144,9 @@ export function PositionBreadcrumbs({
       {hasAddress && <span className="text-primary/60">/</span>}
 
       {hasAddress && (
-        <div className="flex items-center gap-1.5 self-center">
-          <div className="relative">
-            <div className={cn('transition-opacity duration-200', searchOpen ? 'opacity-0 pointer-events-none absolute' : 'opacity-100')}>
-              <Link
-                href={`/${addressPath}/${addressValue}`}
-                className="no-underline hover:no-underline text-secondary hover:text-primary border-b border-dotted border-secondary/60 hover:border-solid hover:border-secondary hover:underline hover:underline-offset-2"
-              >
-                {addressValue}
-              </Link>
-            </div>
-            <div
-              className={cn(
-                'overflow-hidden transition-all duration-200 ease-out',
-                searchOpen ? 'max-w-[260px] opacity-100' : 'max-w-0 opacity-0 pointer-events-none h-0',
-              )}
-            >
+        <div className="flex min-w-0 items-center gap-1.5 self-center">
+          <div className="min-w-0">
+            {searchOpen ? (
               <Input
                 ref={inputRef}
                 value={inputAddress}
@@ -170,9 +156,17 @@ export function PositionBreadcrumbs({
                 placeholder="0x..."
                 variant="filled"
                 size="sm"
-                className="w-[260px] align-middle"
+                className="w-48 align-middle sm:w-[260px]"
               />
-            </div>
+            ) : (
+              <Link
+                href={`/${addressPath}/${addressValue}`}
+                title={addressValue}
+                className="block max-w-56 truncate border-secondary/60 border-b border-dotted text-secondary no-underline hover:border-secondary hover:border-solid hover:text-primary hover:underline hover:underline-offset-2 sm:max-w-none"
+              >
+                {addressValue}
+              </Link>
+            )}
           </div>
           <Button
             variant="ghost"
