@@ -77,6 +77,7 @@ export default function Positions() {
         ...vault,
         actualApy: periodData?.actualApy,
         earnedAssets: periodData?.earnedAssets,
+        earningsPeriodSeconds: periodData?.periodSeconds,
       };
     });
   }, [vaults, vaultApyData]);
@@ -90,7 +91,7 @@ export default function Positions() {
     portfolioAnalytics,
     isLoading: isPricesLoading,
     error: pricesError,
-  } = usePortfolioValue(marketPositions, vaults, earningsRangesByChain);
+  } = usePortfolioValue(marketPositions, vaultsWithApy, earningsRangesByChain);
 
   const loading = !canEvaluateVaultIdentity || (showNativeAccountSections && (isMarketsLoading || isPositionsLoading));
 
@@ -141,7 +142,7 @@ export default function Positions() {
             debtBreakdown={debtBreakdown}
             portfolioAnalytics={portfolioAnalytics}
             isValueLoading={isPricesLoading}
-            isEarningsLoading={isEarningsLoading}
+            isEarningsLoading={isEarningsLoading || isVaultApyLoading}
             valueError={pricesError}
             showPortfolioStats={showHeaderPortfolio}
             onSwap={() => open('bridgeSwap', {})}

@@ -62,9 +62,11 @@ export type PortfolioAnalytics = {
   annualizedApr: number | null;
   annualizedApy: number | null;
   periodSeconds: number | null;
-  pricedPositionCount: number;
-  unpricedPositionCount: number;
-  totalPositionCount: number;
+  pricedSourceCount: number;
+  unpricedSourceCount: number;
+  totalSourceCount: number;
+  supplyMarketCount: number;
+  vaultCount: number;
 };
 
 export const EMPTY_PORTFOLIO_ANALYTICS: PortfolioAnalytics = {
@@ -74,9 +76,11 @@ export const EMPTY_PORTFOLIO_ANALYTICS: PortfolioAnalytics = {
   annualizedApr: null,
   annualizedApy: null,
   periodSeconds: null,
-  pricedPositionCount: 0,
-  unpricedPositionCount: 0,
-  totalPositionCount: 0,
+  pricedSourceCount: 0,
+  unpricedSourceCount: 0,
+  totalSourceCount: 0,
+  supplyMarketCount: 0,
+  vaultCount: 0,
 };
 
 const toAmount = (value: string | number | bigint | null | undefined): bigint => {
@@ -447,41 +451,48 @@ export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], 
  */
 export const calculatePortfolioAnalytics = (
   positions: MarketPositionWithEarnings[],
+  vaults: UserVaultV2[] | undefined,
   prices: Map<string, number>,
+  findToken?: (address: string, chainId: number) => { decimals: number } | undefined,
   earningsRangesByChain: Record<number, PortfolioAnalyticsRange> = {},
 ): PortfolioAnalytics => {
   let totalEarningsUsd = 0;
   let averageSupplyUsd = 0;
   let weightedWindowSeconds = 0;
-  let pricedPositionCount = 0;
-  let unpricedPositionCount = 0;
-  let totalPositionCount = 0;
+  let averageSupplyUsdWithWindow = 0;
+  let pricedSourceCount = 0;
+  let unpricedSourceCount = 0;
+  let totalSourceCount = 0;
+  let supplyMarketCount = 0;
+  let vaultCount = 0;
 
   for (const position of positions) {
     if (!hasSupplyAnalyticsHistory(position)) {
       continue;
     }
 
-    totalPositionCount += 1;
+    totalSourceCount += 1;
+    supplyMarketCount += 1;
 
     const chainId = position.market.morphoBlue.chain.id;
     const priceKey = getTokenPriceKey(position.market.loanAsset.address, chainId);
     const price = prices.get(priceKey);
 
     if (!price || !Number.isFinite(price) || price <= 0) {
-      unpricedPositionCount += 1;
+      unpricedSourceCount += 1;
       continue;
     }
 
-    pricedPositionCount += 1;
+    pricedSourceCount += 1;
 
     const decimals = position.market.loanAsset.decimals;
     const earned = formatSignedUnits(toAmount(position.earned), decimals);
-    const averageCapital = formatSignedUnits(toAmount(position.avgCapital), decimals);
+    const heldTimeAverageCapital = formatSignedUnits(toAmount(position.avgCapital), decimals);
     const effectiveTime = Math.max(0, position.effectiveTime ?? 0);
     const windowSeconds = getPositionWindowSeconds(position, earningsRangesByChain);
     const windowWeight = windowSeconds && effectiveTime > 0 ? Math.min(effectiveTime / windowSeconds, 1) : 1;
-    const averageCapitalOverWindow = averageCapital * windowWeight;
+    // avgCapital is averaged over active supply time; scale it to the whole selected window.
+    const averageCapitalOverWindow = heldTimeAverageCapital * windowWeight;
     const earnedUsd = earned * price;
     const averageCapitalUsd = averageCapitalOverWindow * price;
 
@@ -494,6 +505,44 @@ export const calculatePortfolioAnalytics = (
 
       if (windowSeconds && Number.isFinite(windowSeconds) && windowSeconds > 0) {
         weightedWindowSeconds += averageCapitalUsd * windowSeconds;
+        averageSupplyUsdWithWindow += averageCapitalUsd;
+      }
+    }
+  }
+
+  if (vaults && findToken) {
+    for (const vault of vaults) {
+      if (!vault.balance || vault.balance <= 0n) continue;
+
+      totalSourceCount += 1;
+      vaultCount += 1;
+
+      const priceKey = getTokenPriceKey(vault.asset, vault.networkId);
+      const price = prices.get(priceKey);
+      const token = findToken(vault.asset, vault.networkId);
+      const windowSeconds = vault.earningsPeriodSeconds;
+
+      if (!token || !price || !Number.isFinite(price) || price <= 0 || !windowSeconds || windowSeconds <= 0) {
+        unpricedSourceCount += 1;
+        continue;
+      }
+
+      pricedSourceCount += 1;
+
+      const earned = formatSignedUnits(vault.earnedAssets ?? 0n, token.decimals);
+      const currentAssets = formatSignedUnits(vault.balance, token.decimals);
+      const startingAssets = Math.max(currentAssets - earned, 0);
+      const earnedUsd = earned * price;
+      const averageCapitalUsd = startingAssets * price;
+
+      if (Number.isFinite(earnedUsd)) {
+        totalEarningsUsd += earnedUsd;
+      }
+
+      if (Number.isFinite(averageCapitalUsd) && averageCapitalUsd > 0) {
+        averageSupplyUsd += averageCapitalUsd;
+        weightedWindowSeconds += averageCapitalUsd * windowSeconds;
+        averageSupplyUsdWithWindow += averageCapitalUsd;
       }
     }
   }
@@ -502,14 +551,16 @@ export const calculatePortfolioAnalytics = (
     return {
       ...EMPTY_PORTFOLIO_ANALYTICS,
       totalEarningsUsd,
-      pricedPositionCount,
-      unpricedPositionCount,
-      totalPositionCount,
+      pricedSourceCount,
+      unpricedSourceCount,
+      totalSourceCount,
+      supplyMarketCount,
+      vaultCount,
     };
   }
 
   const periodReturn = totalEarningsUsd / averageSupplyUsd;
-  const periodSeconds = weightedWindowSeconds > 0 ? weightedWindowSeconds / averageSupplyUsd : null;
+  const periodSeconds = averageSupplyUsdWithWindow > 0 ? weightedWindowSeconds / averageSupplyUsdWithWindow : null;
   const annualization = periodSeconds && periodSeconds > 0 ? ONE_YEAR_IN_SECONDS / periodSeconds : null;
   const annualizedApr = annualization === null ? null : periodReturn * annualization;
   const annualizedApy = annualization === null ? null : periodReturn <= -1 ? -1 : (1 + periodReturn) ** annualization - 1;
@@ -521,9 +572,11 @@ export const calculatePortfolioAnalytics = (
     annualizedApr: annualizedApr !== null && Number.isFinite(annualizedApr) ? annualizedApr : null,
     annualizedApy: annualizedApy !== null && Number.isFinite(annualizedApy) ? annualizedApy : null,
     periodSeconds,
-    pricedPositionCount,
-    unpricedPositionCount,
-    totalPositionCount,
+    pricedSourceCount,
+    unpricedSourceCount,
+    totalSourceCount,
+    supplyMarketCount,
+    vaultCount,
   };
 };
 

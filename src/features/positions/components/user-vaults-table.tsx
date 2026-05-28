@@ -39,8 +39,8 @@ function VaultInterestAccruedDisplay({
   periodLabel,
 }: {
   earnedAssets?: bigint;
-  decimals: number;
-  symbol: string;
+  decimals?: number;
+  symbol?: string;
   isLoading: boolean;
   periodLabel: string;
 }) {
@@ -54,7 +54,7 @@ function VaultInterestAccruedDisplay({
     );
   }
 
-  if (!earnedAssets || earnedAssets === 0n) {
+  if (!earnedAssets || earnedAssets === 0n || decimals === undefined || !symbol) {
     return <span className="font-medium">-</span>;
   }
 
@@ -261,8 +261,8 @@ export function UserVaultsTable({
                         <div className="flex items-center justify-center">
                           <VaultInterestAccruedDisplay
                             earnedAssets={vault.earnedAssets}
-                            decimals={token?.decimals ?? 18}
-                            symbol={token?.symbol ?? vault.symbol}
+                            decimals={token?.decimals}
+                            symbol={token?.symbol}
                             isLoading={isEarningsLoading}
                             periodLabel={selectedPeriodLabel}
                           />

@@ -93,15 +93,18 @@ function formatAssetSourceDetail(item: AssetBreakdownItem): string {
 }
 
 function formatAnalyticsCaption(portfolioAnalytics: PortfolioAnalytics): string {
-  if (portfolioAnalytics.totalPositionCount <= 0) {
+  if (portfolioAnalytics.totalSourceCount <= 0) {
     return '';
   }
 
-  if (portfolioAnalytics.unpricedPositionCount > 0) {
-    return `${portfolioAnalytics.pricedPositionCount}/${portfolioAnalytics.totalPositionCount} priced markets`;
+  if (portfolioAnalytics.unpricedSourceCount > 0) {
+    return `${portfolioAnalytics.pricedSourceCount}/${portfolioAnalytics.totalSourceCount} priced sources`;
   }
 
-  return formatSourceCount(portfolioAnalytics.totalPositionCount, 'market') ?? '';
+  return joinSourceCounts([
+    formatSourceCount(portfolioAnalytics.supplyMarketCount, 'market'),
+    formatSourceCount(portfolioAnalytics.vaultCount, 'Auto Vault'),
+  ]);
 }
 
 function BreakdownTooltipContent({ title, items }: { title: string; items: AssetBreakdownItem[] }) {

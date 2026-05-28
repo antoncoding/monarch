@@ -73,7 +73,7 @@ export const usePortfolioValue = (
         },
         assetBreakdown: [],
         debtBreakdown: [],
-        portfolioAnalytics: calculatePortfolioAnalytics(positions, prices, earningsRangesByChain),
+        portfolioAnalytics: calculatePortfolioAnalytics(positions, vaults, prices, findToken, earningsRangesByChain),
       };
     }
 
@@ -81,7 +81,7 @@ export const usePortfolioValue = (
       portfolioValue: calculatePortfolioValue(positions, vaults, prices, findToken),
       assetBreakdown: calculateAssetBreakdown(positions, vaults, prices, findToken),
       debtBreakdown: calculateDebtBreakdown(positions, prices),
-      portfolioAnalytics: calculatePortfolioAnalytics(positions, prices, earningsRangesByChain),
+      portfolioAnalytics: calculatePortfolioAnalytics(positions, vaults, prices, findToken, earningsRangesByChain),
     };
   }, [positions, vaults, prices, isLoading, findToken, earningsRangesByChain]);
 
