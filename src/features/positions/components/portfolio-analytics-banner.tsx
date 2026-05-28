@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { cn } from '@/utils/components';
@@ -115,7 +114,7 @@ function PortfolioMetricBox({
   const content = (
     <div className="flex min-h-[5.25rem] min-w-0 flex-col justify-between rounded-sm border border-border bg-surface px-3 py-2.5 shadow-sm">
       <div className="flex min-w-0 items-center justify-between gap-2">
-        <span className="truncate text-xs leading-4 text-secondary">{label}</span>
+        <span className="truncate font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{label}</span>
         {action}
       </div>
       <div className="mt-1.5 flex min-h-6 items-center">
@@ -180,86 +179,77 @@ export function PortfolioAnalyticsBanner({
 }: PortfolioAnalyticsBannerProps) {
   const analyticsLoading = isValueLoading || isEarningsLoading;
   const displayRate = isAprDisplay ? portfolioAnalytics.annualizedApr : portfolioAnalytics.annualizedApy;
-  const averageRateLabel = `Average ${rateLabel}`;
+  const averageRateLabel = `AVERAGE ${rateLabel}`;
 
   return (
-    <div className="flex flex-col gap-4 font-zen lg:flex-row lg:items-start lg:justify-between">
-      <div className="min-w-0 shrink-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <AccountIdentity
-            address={account as Address}
-            variant="full"
-            showAddress
-            chainId={accountChainId}
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="min-w-0 px-1 text-secondary hover:bg-transparent hover:text-primary"
-            aria-label={isBookmarked ? 'Remove address bookmark' : 'Bookmark address'}
-            onClick={onToggleBookmark}
-          >
-            {isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
-          </Button>
-          <Tooltip
-            content={
-              <TooltipContent
-                title="Swap"
-                detail="Open swap"
-              />
-            }
-          >
+    <div className="flex flex-col gap-3 font-zen">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+            <AccountIdentity
+              address={account as Address}
+              variant="full"
+              showAddress
+              chainId={accountChainId}
+            />
             <Button
-              variant="surface"
-              size="xs"
-              className="h-7 min-w-0 px-2 text-xs font-normal text-secondary"
-              onClick={onSwap}
-              aria-label="Swap tokens"
+              variant="ghost"
+              size="sm"
+              className="min-w-0 px-1 text-secondary hover:bg-transparent hover:text-primary"
+              aria-label={isBookmarked ? 'Remove address bookmark' : 'Bookmark address'}
+              onClick={onToggleBookmark}
             >
-              <IoIosSwap className="h-3.5 w-3.5" />
-              Swap
+              {isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
             </Button>
-          </Tooltip>
+          </div>
+          <AccountVaultInfo account={account as Address} />
         </div>
-        <AccountVaultInfo account={account as Address} />
+
+        <Button
+          variant="primary"
+          onClick={onSwap}
+          title="Swap tokens"
+          className="shrink-0 self-start"
+        >
+          <IoIosSwap className="h-4 w-4" />
+          Swap
+        </Button>
       </div>
 
-      <div className="flex min-w-0 flex-1 lg:justify-end">
-        {showPortfolioStats && (
-          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-3 lg:max-w-[38rem]">
-            <PortfolioMetricBox
-              label="Total Deposit"
-              value={formatUsdValue(totalUsd)}
-              caption={formatCountCaption(depositPositionCount, 'position')}
-              isLoading={isValueLoading}
-              error={valueError}
-              tooltip={assetBreakdown.length > 0 ? <BreakdownTooltipContent items={assetBreakdown} /> : undefined}
-            />
-            <PortfolioMetricBox
-              label={averageRateLabel}
-              value={formatRate(displayRate)}
-              caption={formatAnalyticsCaption(portfolioAnalytics)}
-              action={
-                <PositionsPeriodSettingsButton
-                  period={period}
-                  onPeriodChange={onPeriodChange}
-                />
-              }
-              isLoading={analyticsLoading}
-              error={valueError}
-            />
-            <PortfolioMetricBox
-              label="Total Debt"
-              value={formatUsdValue(totalDebtUsd)}
-              caption={formatCountCaption(debtMarketCount, 'market')}
-              isLoading={isValueLoading}
-              error={valueError}
-              muted={totalDebtUsd <= 0}
-              tooltip={debtBreakdown.length > 0 ? <BreakdownTooltipContent items={debtBreakdown} /> : undefined}
-            />
-          </div>
-        )}
-      </div>
+      {showPortfolioStats && (
+        <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-3">
+          <PortfolioMetricBox
+            label="TOTAL DEPOSIT"
+            value={formatUsdValue(totalUsd)}
+            caption={formatCountCaption(depositPositionCount, 'position')}
+            isLoading={isValueLoading}
+            error={valueError}
+            tooltip={assetBreakdown.length > 0 ? <BreakdownTooltipContent items={assetBreakdown} /> : undefined}
+          />
+          <PortfolioMetricBox
+            label={averageRateLabel}
+            value={formatRate(displayRate)}
+            caption={formatAnalyticsCaption(portfolioAnalytics)}
+            action={
+              <PositionsPeriodSettingsButton
+                period={period}
+                onPeriodChange={onPeriodChange}
+              />
+            }
+            isLoading={analyticsLoading}
+            error={valueError}
+          />
+          <PortfolioMetricBox
+            label="TOTAL DEBT"
+            value={formatUsdValue(totalDebtUsd)}
+            caption={formatCountCaption(debtMarketCount, 'market')}
+            isLoading={isValueLoading}
+            error={valueError}
+            muted={totalDebtUsd <= 0}
+            tooltip={debtBreakdown.length > 0 ? <BreakdownTooltipContent items={debtBreakdown} /> : undefined}
+          />
+        </div>
+      )}
     </div>
   );
 }
