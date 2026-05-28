@@ -3,6 +3,8 @@ import { getTokenPriceKey, type TokenPriceInput } from '@/data-sources/morpho-ap
 import type { MarketPositionWithEarnings } from './types';
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 
+const ONE_YEAR_IN_SECONDS = 86_400 * 365;
+
 // Normalized balance type for all position sources
 export type TokenBalance = {
   tokenAddress: string;
@@ -32,6 +34,83 @@ export type AssetBreakdownItem = {
   balance: number;
   price: number;
   usdValue: number;
+};
+
+export type PortfolioAnalyticsRange = {
+  startTimestamp: number;
+  endTimestamp: number;
+};
+
+export type PortfolioAnalytics = {
+  totalEarningsUsd: number;
+  averageSupplyUsd: number;
+  periodReturn: number | null;
+  annualizedApr: number | null;
+  annualizedApy: number | null;
+  periodSeconds: number | null;
+  pricedPositionCount: number;
+  unpricedPositionCount: number;
+  totalPositionCount: number;
+};
+
+export const EMPTY_PORTFOLIO_ANALYTICS: PortfolioAnalytics = {
+  totalEarningsUsd: 0,
+  averageSupplyUsd: 0,
+  periodReturn: null,
+  annualizedApr: null,
+  annualizedApy: null,
+  periodSeconds: null,
+  pricedPositionCount: 0,
+  unpricedPositionCount: 0,
+  totalPositionCount: 0,
+};
+
+const toAmount = (value: string | number | bigint | null | undefined): bigint => {
+  if (value === null || value === undefined || value === '') {
+    return 0n;
+  }
+
+  try {
+    return BigInt(value);
+  } catch {
+    return 0n;
+  }
+};
+
+const formatSignedUnits = (value: bigint, decimals: number): number => {
+  const sign = value < 0n ? -1 : 1;
+  const absoluteValue = value < 0n ? -value : value;
+  const parsed = Number(formatUnits(absoluteValue, decimals));
+
+  return Number.isFinite(parsed) ? parsed * sign : 0;
+};
+
+const hasSupplyAnalyticsHistory = (position: MarketPositionWithEarnings): boolean =>
+  position.hasSupplyHistory ||
+  toAmount(position.state.supplyAssets) > 0n ||
+  toAmount(position.earned) !== 0n ||
+  toAmount(position.totalDeposits) > 0n ||
+  toAmount(position.totalWithdraws) > 0n ||
+  toAmount(position.avgCapital) > 0n;
+
+const getPositionWindowSeconds = (
+  position: MarketPositionWithEarnings,
+  earningsRangesByChain: Record<number, PortfolioAnalyticsRange> = {},
+): number | null => {
+  const chainId = position.market.morphoBlue.chain.id;
+  const range = earningsRangesByChain[chainId];
+
+  if (
+    range &&
+    Number.isFinite(range.startTimestamp) &&
+    Number.isFinite(range.endTimestamp) &&
+    range.endTimestamp > range.startTimestamp
+  ) {
+    return range.endTimestamp - range.startTimestamp;
+  }
+
+  const effectiveTime = Math.max(0, position.effectiveTime ?? 0);
+  return effectiveTime > 0 ? effectiveTime : null;
 };
 
 /**
@@ -320,6 +399,93 @@ export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], 
   }
 
   return items.sort((a, b) => b.usdValue - a.usdValue);
+};
+
+/**
+ * Current-price portfolio yield: native-token earnings stay pure until this
+ * aggregation step, then both earnings and time-weighted capital are converted
+ * with current token prices so mixed-asset positions share one denominator.
+ */
+export const calculatePortfolioAnalytics = (
+  positions: MarketPositionWithEarnings[],
+  prices: Map<string, number>,
+  earningsRangesByChain: Record<number, PortfolioAnalyticsRange> = {},
+): PortfolioAnalytics => {
+  let totalEarningsUsd = 0;
+  let averageSupplyUsd = 0;
+  let weightedWindowSeconds = 0;
+  let pricedPositionCount = 0;
+  let unpricedPositionCount = 0;
+  let totalPositionCount = 0;
+
+  for (const position of positions) {
+    if (!hasSupplyAnalyticsHistory(position)) {
+      continue;
+    }
+
+    totalPositionCount += 1;
+
+    const chainId = position.market.morphoBlue.chain.id;
+    const priceKey = getTokenPriceKey(position.market.loanAsset.address, chainId);
+    const price = prices.get(priceKey);
+
+    if (!price || !Number.isFinite(price) || price <= 0) {
+      unpricedPositionCount += 1;
+      continue;
+    }
+
+    pricedPositionCount += 1;
+
+    const decimals = position.market.loanAsset.decimals;
+    const earned = formatSignedUnits(toAmount(position.earned), decimals);
+    const averageCapital = formatSignedUnits(toAmount(position.avgCapital), decimals);
+    const effectiveTime = Math.max(0, position.effectiveTime ?? 0);
+    const windowSeconds = getPositionWindowSeconds(position, earningsRangesByChain);
+    const windowWeight = windowSeconds && effectiveTime > 0 ? Math.min(effectiveTime / windowSeconds, 1) : 1;
+    const averageCapitalOverWindow = averageCapital * windowWeight;
+    const earnedUsd = earned * price;
+    const averageCapitalUsd = averageCapitalOverWindow * price;
+
+    if (Number.isFinite(earnedUsd)) {
+      totalEarningsUsd += earnedUsd;
+    }
+
+    if (Number.isFinite(averageCapitalUsd) && averageCapitalUsd > 0) {
+      averageSupplyUsd += averageCapitalUsd;
+
+      if (windowSeconds && Number.isFinite(windowSeconds) && windowSeconds > 0) {
+        weightedWindowSeconds += averageCapitalUsd * windowSeconds;
+      }
+    }
+  }
+
+  if (averageSupplyUsd <= 0) {
+    return {
+      ...EMPTY_PORTFOLIO_ANALYTICS,
+      totalEarningsUsd,
+      pricedPositionCount,
+      unpricedPositionCount,
+      totalPositionCount,
+    };
+  }
+
+  const periodReturn = totalEarningsUsd / averageSupplyUsd;
+  const periodSeconds = weightedWindowSeconds > 0 ? weightedWindowSeconds / averageSupplyUsd : null;
+  const annualization = periodSeconds && periodSeconds > 0 ? ONE_YEAR_IN_SECONDS / periodSeconds : null;
+  const annualizedApr = annualization === null ? null : periodReturn * annualization;
+  const annualizedApy = annualization === null ? null : periodReturn <= -1 ? -1 : (1 + periodReturn) ** annualization - 1;
+
+  return {
+    totalEarningsUsd,
+    averageSupplyUsd,
+    periodReturn,
+    annualizedApr: annualizedApr !== null && Number.isFinite(annualizedApr) ? annualizedApr : null,
+    annualizedApy: annualizedApy !== null && Number.isFinite(annualizedApy) ? annualizedApy : null,
+    periodSeconds,
+    pricedPositionCount,
+    unpricedPositionCount,
+    totalPositionCount,
+  };
 };
 
 /**

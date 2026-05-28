@@ -2,11 +2,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { IoIosSwap } from 'react-icons/io';
-import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import type { Address } from 'viem';
-import { Button } from '@/components/ui/button';
-import { AccountIdentity } from '@/components/shared/account-identity';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
@@ -20,11 +16,12 @@ import { useVaultRegistry } from '@/contexts/VaultRegistryContext';
 import { useModal } from '@/hooks/useModal';
 import { usePositionsFilters } from '@/stores/usePositionsFilters';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
+import { useAppSettings } from '@/stores/useAppSettings';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 import { BorrowedMorphoBlueTable } from './components/borrowed-morpho-blue-table';
-import { PortfolioValueBadge } from './components/portfolio-value-badge';
+import { PortfolioAnalyticsBanner } from './components/portfolio-analytics-banner';
 import { UserVaultsTable } from './components/user-vaults-table';
-import { AccountVaultInfo } from './components/account-vault-info';
 import { VaultManagedExposures } from './components/adapter-managed-exposure';
 import { PositionBreadcrumbs } from '@/features/position-detail/components/position-breadcrumbs';
 import { hasSupplyPositionHistory } from '@/utils/positions';
@@ -33,7 +30,10 @@ export default function Positions() {
   const { account } = useParams<{ account: string }>();
   const { open } = useModal();
   const period = usePositionsFilters((s) => s.period);
+  const setPeriod = usePositionsFilters((s) => s.setPeriod);
   const { addVisitedAddress, toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
+  const { isAprDisplay } = useAppSettings();
+  const { short: rateLabel } = useRateLabel();
   const { loading: isVaultRegistryLoading } = useVaultRegistry();
   const accountVaultIdentity = useVaultAccountIdentity(account);
   const isV2VaultPage = accountVaultIdentity?.kind === 'vault-v2';
@@ -53,6 +53,7 @@ export default function Positions() {
     actualBlockData,
     transactions,
     snapshotsByChain,
+    earningsRangesByChain,
   } = useUserPositionsSummaryData(account, period, undefined, { enabled: shouldFetchNativeAccountData });
 
   // Fetch user's auto vaults
@@ -81,9 +82,10 @@ export default function Positions() {
     totalDebtUsd,
     assetBreakdown,
     debtBreakdown,
+    portfolioAnalytics,
     isLoading: isPricesLoading,
     error: pricesError,
-  } = usePortfolioValue(marketPositions, vaults);
+  } = usePortfolioValue(marketPositions, vaults, earningsRangesByChain);
 
   const loading = !canEvaluateVaultIdentity || (showNativeAccountSections && (isMarketsLoading || isPositionsLoading));
 
@@ -118,49 +120,27 @@ export default function Positions() {
             showPosition={false}
           />
         </div>
-        <div className="mt-3 flex flex-col gap-4 pb-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <AccountIdentity
-                address={account as Address}
-                variant="full"
-                showAddress
-                chainId={accountVaultIdentity?.chainId}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="min-w-0 px-1 text-secondary hover:text-primary hover:bg-transparent"
-                aria-label={isBookmarked ? 'Remove address bookmark' : 'Bookmark address'}
-                onClick={() => toggleAddressBookmark(account as Address)}
-              >
-                {isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
-              </Button>
-            </div>
-            <AccountVaultInfo account={account as Address} />
-          </div>
-          <div className="flex flex-wrap items-center gap-0">
-            {showHeaderPortfolio && (
-              <PortfolioValueBadge
-                totalUsd={totalUsd}
-                totalDebtUsd={totalDebtUsd}
-                assetBreakdown={assetBreakdown}
-                debtBreakdown={debtBreakdown}
-                isLoading={isPricesLoading}
-                error={pricesError}
-              />
-            )}
-            <div className={`flex items-center gap-2 ${showHeaderPortfolio ? 'ml-8 border-l border-dashed border-border/70 pl-8' : ''}`}>
-              <Button
-                variant="default"
-                onClick={() => open('bridgeSwap', {})}
-                title="Swap tokens"
-              >
-                <IoIosSwap className="h-4 w-4" />
-                Swap
-              </Button>
-            </div>
-          </div>
+        <div className="mt-3 pb-4">
+          <PortfolioAnalyticsBanner
+            account={account}
+            accountChainId={accountVaultIdentity?.chainId}
+            isBookmarked={isBookmarked}
+            onToggleBookmark={() => toggleAddressBookmark(account as Address)}
+            period={period}
+            onPeriodChange={setPeriod}
+            rateLabel={rateLabel}
+            isAprDisplay={isAprDisplay}
+            totalUsd={totalUsd}
+            totalDebtUsd={totalDebtUsd}
+            assetBreakdown={assetBreakdown}
+            debtBreakdown={debtBreakdown}
+            portfolioAnalytics={portfolioAnalytics}
+            isValueLoading={isPricesLoading}
+            isEarningsLoading={isEarningsLoading}
+            valueError={pricesError}
+            showPortfolioStats={showHeaderPortfolio}
+            onSwap={() => open('bridgeSwap', {})}
+          />
         </div>
 
         {accountVaultIdentity?.kind === 'vault-v2' && (

@@ -10,6 +10,8 @@ type PortfolioValueBadgeProps = {
   debtBreakdown: AssetBreakdownItem[];
   isLoading: boolean;
   error: Error | null;
+  align?: 'start' | 'end';
+  className?: string;
 };
 
 const VALUE_TEXT_CLASS = 'font-zen text-2xl font-normal tabular-nums sm:text-2xl';
@@ -60,12 +62,27 @@ function BreakdownTooltipContent({ items, emptyLabel = 'No holdings' }: { items:
   );
 }
 
-function ValueBlock({ label, value, isLoading, error }: { label: string; value: number; isLoading: boolean; error: Error | null }) {
+function ValueBlock({
+  label,
+  value,
+  isLoading,
+  error,
+  align,
+}: {
+  label: string;
+  value: number;
+  isLoading: boolean;
+  error: Error | null;
+  align: 'start' | 'end';
+}) {
+  const alignmentClass = align === 'start' ? 'items-start' : 'items-end';
+  const loaderAlignmentClass = align === 'start' ? 'justify-start' : 'justify-end';
+
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className={`flex flex-col gap-1 ${alignmentClass}`}>
       <span className="text-xs text-secondary">{label}</span>
       {isLoading ? (
-        <div className={`${VALUE_TEXT_CLASS} min-h-8 sm:min-h-9 flex items-center justify-end`}>
+        <div className={`${VALUE_TEXT_CLASS} min-h-8 sm:min-h-9 flex items-center ${loaderAlignmentClass}`}>
           <PulseLoader
             size={4}
             color="#f45f2d"
@@ -81,13 +98,23 @@ function ValueBlock({ label, value, isLoading, error }: { label: string; value: 
   );
 }
 
-export function PortfolioValueBadge({ totalUsd, totalDebtUsd, assetBreakdown, debtBreakdown, isLoading, error }: PortfolioValueBadgeProps) {
+export function PortfolioValueBadge({
+  totalUsd,
+  totalDebtUsd,
+  assetBreakdown,
+  debtBreakdown,
+  isLoading,
+  error,
+  align = 'end',
+  className = '',
+}: PortfolioValueBadgeProps) {
   const valueContent = (
     <ValueBlock
       label="Total Deposit"
       value={totalUsd}
       isLoading={isLoading}
       error={error}
+      align={align}
     />
   );
 
@@ -98,11 +125,12 @@ export function PortfolioValueBadge({ totalUsd, totalDebtUsd, assetBreakdown, de
         value={totalDebtUsd}
         isLoading={false}
         error={null}
+        align={align}
       />
     ) : null;
 
   return (
-    <div className="flex items-start gap-8">
+    <div className={`flex items-start gap-8 ${className}`}>
       {isLoading || error ? (
         valueContent
       ) : (
