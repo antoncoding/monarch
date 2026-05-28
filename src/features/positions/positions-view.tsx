@@ -24,7 +24,7 @@ import { PortfolioAnalyticsBanner } from './components/portfolio-analytics-banne
 import { UserVaultsTable } from './components/user-vaults-table';
 import { VaultManagedExposures } from './components/adapter-managed-exposure';
 import { PositionBreadcrumbs } from '@/features/position-detail/components/position-breadcrumbs';
-import { hasActiveSupplyPosition, hasSupplyPositionHistory } from '@/utils/positions';
+import { hasSupplyPositionHistory } from '@/utils/positions';
 
 export default function Positions() {
   const { account } = useParams<{ account: string }>();
@@ -105,17 +105,6 @@ export default function Positions() {
     showNativeAccountSections &&
     marketPositions.some((position) => BigInt(position.state.borrowShares) > 0n || BigInt(position.state.collateral) > 0n);
   const hasVaults = showNativeAccountSections && vaults && vaults.length > 0;
-  const activeDepositPositionCount = useMemo(() => {
-    const activeMarketSupplyCount = marketPositions.filter(hasActiveSupplyPosition).length;
-    const activeVaultCount = vaults.filter((vault) => vault.balance !== undefined && vault.balance > 0n).length;
-
-    return activeMarketSupplyCount + activeVaultCount;
-  }, [marketPositions, vaults]);
-  const activeDebtMarketCount = useMemo(
-    () =>
-      marketPositions.filter((position) => BigInt(position.state.borrowShares) > 0n || BigInt(position.state.borrowAssets) > 0n).length,
-    [marketPositions],
-  );
   const showEmpty = showNativeAccountSections && !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasBorrowPositions && !hasVaults;
   const isBookmarked = isAddressBookmarked(account as Address);
   const showHeaderPortfolio = showNativeAccountSections && !loading;
@@ -148,8 +137,6 @@ export default function Positions() {
             isAprDisplay={isAprDisplay}
             totalUsd={totalUsd}
             totalDebtUsd={totalDebtUsd}
-            depositPositionCount={activeDepositPositionCount}
-            debtMarketCount={activeDebtMarketCount}
             assetBreakdown={assetBreakdown}
             debtBreakdown={debtBreakdown}
             portfolioAnalytics={portfolioAnalytics}

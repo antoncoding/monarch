@@ -26,8 +26,22 @@ export type PortfolioValue = {
   breakdown: PortfolioBreakdown;
 };
 
+type AssetBreakdownSourceCounts = {
+  supplyMarketCount: number;
+  vaultCount: number;
+  borrowMarketCount: number;
+};
+
+type AssetBreakdownAggregate = AssetBreakdownSourceCounts & {
+  symbol: string;
+  tokenAddress: string;
+  chainId: number;
+  balance: bigint;
+  decimals: number;
+};
+
 // Per-asset breakdown item for tooltip display
-export type AssetBreakdownItem = {
+export type AssetBreakdownItem = AssetBreakdownSourceCounts & {
   symbol: string;
   tokenAddress: string;
   chainId: number;
@@ -285,7 +299,7 @@ export const calculateAssetBreakdown = (
   prices: Map<string, number>,
   findToken?: (address: string, chainId: number) => { decimals: number; symbol?: string } | undefined,
 ): AssetBreakdownItem[] => {
-  const aggregated = new Map<string, { symbol: string; tokenAddress: string; chainId: number; balance: bigint; decimals: number }>();
+  const aggregated = new Map<string, AssetBreakdownAggregate>();
 
   // Aggregate positions by token
   for (const position of positions) {
@@ -299,6 +313,7 @@ export const calculateAssetBreakdown = (
 
     if (existing) {
       existing.balance += supplyAssets;
+      existing.supplyMarketCount += 1;
     } else {
       aggregated.set(key, {
         symbol,
@@ -306,6 +321,9 @@ export const calculateAssetBreakdown = (
         chainId,
         balance: supplyAssets,
         decimals,
+        supplyMarketCount: 1,
+        vaultCount: 0,
+        borrowMarketCount: 0,
       });
     }
   }
@@ -323,6 +341,7 @@ export const calculateAssetBreakdown = (
 
       if (existing) {
         existing.balance += vault.balance;
+        existing.vaultCount += 1;
       } else {
         aggregated.set(key, {
           symbol,
@@ -330,6 +349,9 @@ export const calculateAssetBreakdown = (
           chainId: vault.networkId,
           balance: vault.balance,
           decimals,
+          supplyMarketCount: 0,
+          vaultCount: 1,
+          borrowMarketCount: 0,
         });
       }
     }
@@ -353,6 +375,9 @@ export const calculateAssetBreakdown = (
       balance,
       price,
       usdValue,
+      supplyMarketCount: data.supplyMarketCount,
+      vaultCount: data.vaultCount,
+      borrowMarketCount: data.borrowMarketCount,
     });
   }
 
@@ -365,7 +390,7 @@ export const calculateAssetBreakdown = (
  * Aggregates borrowed amounts by loan token across positions
  */
 export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], prices: Map<string, number>): AssetBreakdownItem[] => {
-  const aggregated = new Map<string, { symbol: string; tokenAddress: string; chainId: number; balance: bigint; decimals: number }>();
+  const aggregated = new Map<string, AssetBreakdownAggregate>();
 
   for (const position of positions) {
     const borrowAssets = BigInt(position.state.borrowAssets);
@@ -378,6 +403,7 @@ export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], 
 
     if (existing) {
       existing.balance += borrowAssets;
+      existing.borrowMarketCount += 1;
     } else {
       aggregated.set(key, {
         symbol,
@@ -385,6 +411,9 @@ export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], 
         chainId,
         balance: borrowAssets,
         decimals,
+        supplyMarketCount: 0,
+        vaultCount: 0,
+        borrowMarketCount: 1,
       });
     }
   }
@@ -402,6 +431,9 @@ export const calculateDebtBreakdown = (positions: MarketPositionWithEarnings[], 
       balance,
       price,
       usdValue,
+      supplyMarketCount: data.supplyMarketCount,
+      vaultCount: data.vaultCount,
+      borrowMarketCount: data.borrowMarketCount,
     });
   }
 

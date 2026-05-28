@@ -25,8 +25,6 @@ type PortfolioAnalyticsBannerProps = {
   isAprDisplay: boolean;
   totalUsd: number;
   totalDebtUsd: number;
-  depositPositionCount: number;
-  debtMarketCount: number;
   assetBreakdown: AssetBreakdownItem[];
   debtBreakdown: AssetBreakdownItem[];
   portfolioAnalytics: PortfolioAnalytics;
@@ -47,10 +45,51 @@ function formatRate(value: number | null): string {
   return `${formatReadable(value * 100)}%`;
 }
 
-function formatCountCaption(count: number, noun: string): string {
-  if (count <= 0) return '';
+function formatSourceCount(count: number, noun: string, plural = `${noun}s`): string | null {
+  if (count <= 0) return null;
 
-  return `from ${count} ${count === 1 ? noun : `${noun}s`}`;
+  return `${count} ${count === 1 ? noun : plural}`;
+}
+
+function joinSourceCounts(parts: Array<string | null>): string {
+  return parts.filter((part): part is string => Boolean(part)).join(' + ');
+}
+
+function getBreakdownSourceCounts(items: AssetBreakdownItem[]) {
+  let supplyMarketCount = 0;
+  let vaultCount = 0;
+  let borrowMarketCount = 0;
+
+  for (const item of items) {
+    supplyMarketCount += item.supplyMarketCount;
+    vaultCount += item.vaultCount;
+    borrowMarketCount += item.borrowMarketCount;
+  }
+
+  return { supplyMarketCount, vaultCount, borrowMarketCount };
+}
+
+function formatDepositSourceCaption(items: AssetBreakdownItem[]): string {
+  const { supplyMarketCount, vaultCount } = getBreakdownSourceCounts(items);
+
+  return joinSourceCounts([
+    formatSourceCount(supplyMarketCount, 'market'),
+    formatSourceCount(vaultCount, 'Auto Vault'),
+  ]);
+}
+
+function formatDebtSourceCaption(items: AssetBreakdownItem[]): string {
+  const { borrowMarketCount } = getBreakdownSourceCounts(items);
+
+  return formatSourceCount(borrowMarketCount, 'borrow market') ?? '';
+}
+
+function formatAssetSourceDetail(item: AssetBreakdownItem): string {
+  return joinSourceCounts([
+    formatSourceCount(item.supplyMarketCount, 'Morpho market'),
+    formatSourceCount(item.vaultCount, 'Auto Vault'),
+    formatSourceCount(item.borrowMarketCount, 'borrow market'),
+  ]);
 }
 
 function formatAnalyticsCaption(portfolioAnalytics: PortfolioAnalytics): string {
@@ -59,35 +98,45 @@ function formatAnalyticsCaption(portfolioAnalytics: PortfolioAnalytics): string 
   }
 
   if (portfolioAnalytics.unpricedPositionCount > 0) {
-    return `${portfolioAnalytics.pricedPositionCount}/${portfolioAnalytics.totalPositionCount} priced`;
+    return `${portfolioAnalytics.pricedPositionCount}/${portfolioAnalytics.totalPositionCount} priced markets`;
   }
 
-  return formatCountCaption(portfolioAnalytics.totalPositionCount, 'market');
+  return formatSourceCount(portfolioAnalytics.totalPositionCount, 'market') ?? '';
 }
 
-function BreakdownTooltipContent({ items }: { items: AssetBreakdownItem[] }) {
+function BreakdownTooltipContent({ title, items }: { title: string; items: AssetBreakdownItem[] }) {
   return (
-    <div className="min-w-[180px] space-y-2">
-      {items.map((item) => (
-        <div
-          key={`${item.tokenAddress}-${item.chainId}`}
-          className="flex items-center justify-between text-xs"
-        >
-          <div className="flex min-w-0 items-center gap-2">
-            <TokenIcon
-              address={item.tokenAddress}
-              chainId={item.chainId}
-              symbol={item.symbol}
-              width={16}
-              height={16}
-            />
-            <span className="truncate">
-              {formatReadableTokenAmount(item.balance, { precision: 2, minDisplayDecimals: 2 })} {item.symbol}
-            </span>
-          </div>
-          <span className="ml-4 shrink-0 text-secondary">{formatUsdValue(item.usdValue)}</span>
-        </div>
-      ))}
+    <div className="min-w-[220px] space-y-3">
+      <div className="font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{title}</div>
+      <div className="space-y-2">
+        {items.map((item) => {
+          const sourceDetail = formatAssetSourceDetail(item);
+
+          return (
+            <div
+              key={`${item.tokenAddress}-${item.chainId}`}
+              className="flex items-start justify-between gap-4 text-xs"
+            >
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-2">
+                  <TokenIcon
+                    address={item.tokenAddress}
+                    chainId={item.chainId}
+                    symbol={item.symbol}
+                    width={16}
+                    height={16}
+                  />
+                  <span className="truncate">
+                    {formatReadableTokenAmount(item.balance, { precision: 2, minDisplayDecimals: 2 })} {item.symbol}
+                  </span>
+                </div>
+                {sourceDetail && <div className="mt-0.5 pl-6 text-[11px] leading-4 text-secondary">{sourceDetail}</div>}
+              </div>
+              <span className="shrink-0 text-secondary">{formatUsdValue(item.usdValue)}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -112,7 +161,7 @@ function PortfolioMetricBox({
   tooltip?: ReactNode;
 }) {
   const content = (
-    <div className="flex min-h-[5.25rem] min-w-0 flex-col justify-between rounded-sm border border-border bg-surface px-3 py-2.5 shadow-sm">
+    <div className="flex h-[5.5rem] min-w-0 flex-col justify-between rounded-sm border border-border bg-surface px-3 py-2.5 shadow-sm">
       <div className="flex min-w-0 items-center justify-between gap-2">
         <span className="truncate font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{label}</span>
         {action}
@@ -150,7 +199,7 @@ function PortfolioMetricBox({
       content={tooltip}
       placement="bottom"
     >
-      <div className="cursor-help">{content}</div>
+      <div className="h-full cursor-help">{content}</div>
     </Tooltip>
   );
 }
@@ -166,8 +215,6 @@ export function PortfolioAnalyticsBanner({
   isAprDisplay,
   totalUsd,
   totalDebtUsd,
-  depositPositionCount,
-  debtMarketCount,
   assetBreakdown,
   debtBreakdown,
   portfolioAnalytics,
@@ -221,10 +268,17 @@ export function PortfolioAnalyticsBanner({
           <PortfolioMetricBox
             label="TOTAL DEPOSIT"
             value={formatUsdValue(totalUsd)}
-            caption={formatCountCaption(depositPositionCount, 'position')}
+            caption={formatDepositSourceCaption(assetBreakdown)}
             isLoading={isValueLoading}
             error={valueError}
-            tooltip={assetBreakdown.length > 0 ? <BreakdownTooltipContent items={assetBreakdown} /> : undefined}
+            tooltip={
+              assetBreakdown.length > 0 ? (
+                <BreakdownTooltipContent
+                  title="Deposit sources"
+                  items={assetBreakdown}
+                />
+              ) : undefined
+            }
           />
           <PortfolioMetricBox
             label={averageRateLabel}
@@ -242,11 +296,18 @@ export function PortfolioAnalyticsBanner({
           <PortfolioMetricBox
             label="TOTAL DEBT"
             value={formatUsdValue(totalDebtUsd)}
-            caption={formatCountCaption(debtMarketCount, 'market')}
+            caption={formatDebtSourceCaption(debtBreakdown)}
             isLoading={isValueLoading}
             error={valueError}
             muted={totalDebtUsd <= 0}
-            tooltip={debtBreakdown.length > 0 ? <BreakdownTooltipContent items={debtBreakdown} /> : undefined}
+            tooltip={
+              debtBreakdown.length > 0 ? (
+                <BreakdownTooltipContent
+                  title="Debt sources"
+                  items={debtBreakdown}
+                />
+              ) : undefined
+            }
           />
         </div>
       )}
