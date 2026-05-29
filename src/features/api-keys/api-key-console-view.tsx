@@ -100,8 +100,7 @@ export function ApiKeyConsoleView() {
   const handleCopy = async () => {
     if (!createdKey) return;
 
-    await navigator.clipboard.writeText(createdKey.apiKey);
-    setCopied(true);
+    setCopied(await copyText(createdKey.apiKey));
   };
 
   return (
@@ -218,4 +217,31 @@ function createRequestNonce() {
   }
 
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+}
+
+async function copyText(value: string): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // Fall back to the textarea path below for non-secure contexts.
+    }
+  }
+
+  if (typeof document === 'undefined') return false;
+
+  const textArea = document.createElement('textarea');
+  textArea.value = value;
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    return document.execCommand('copy');
+  } finally {
+    document.body.removeChild(textArea);
+  }
 }

@@ -14,6 +14,7 @@ const MESSAGE_LINES = {
   issuedAt: 'Issued At',
   nonce: 'Nonce',
 } as const;
+const LINE_ENDING_PATTERN = /\r\n?/g;
 
 export function buildApiKeyRequestMessage({ wallet, chainId, origin, issuedAt, nonce }: ApiKeyRequestMessage) {
   return [
@@ -28,7 +29,7 @@ export function buildApiKeyRequestMessage({ wallet, chainId, origin, issuedAt, n
 }
 
 export function parseApiKeyRequestMessage(message: string): ApiKeyRequestMessage | null {
-  const lines = message.split('\n');
+  const lines = message.replace(LINE_ENDING_PATTERN, '\n').split('\n');
   if (lines[0] !== MESSAGE_TITLE) return null;
 
   const fields = new Map<string, string>();

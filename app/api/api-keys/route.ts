@@ -9,6 +9,9 @@ const DEFAULT_ADMIN_ENDPOINT = 'https://api.monarchlend.xyz/admin/api-keys';
 const REQUEST_TTL_MS = 10 * 60 * 1000;
 const REQUEST_CLOCK_SKEW_MS = 60 * 1000;
 const ADMIN_REQUEST_TIMEOUT_MS = 10_000;
+const VERCEL_PREVIEW_HOST_SUFFIX = '.vercel.app';
+const FIRST_PARTY_HOSTS = new Set(['monarchlend.xyz', 'www.monarchlend.xyz']);
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 const VERIFICATION_CHAINS: Record<SupportedNetworks, Chain> = {
   [SupportedNetworks.Mainnet]: mainnet,
@@ -70,8 +73,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Signed wallet does not match connected wallet.' }, { status: 400 });
   }
 
-  const requestOrigin = getRequestOrigin(request);
-  if (requestOrigin && parsedMessage.origin !== requestOrigin) {
+  const applicationOrigin = getApplicationOrigin(request);
+  if (!applicationOrigin) {
+    return NextResponse.json({ error: 'Unsupported application origin.' }, { status: 403 });
+  }
+
+  if (parsedMessage.origin !== applicationOrigin) {
     return NextResponse.json({ error: 'Signed origin does not match request origin.' }, { status: 400 });
   }
 
@@ -255,15 +262,23 @@ function verifyWalletSignature({
   });
 }
 
-function getRequestOrigin(request: NextRequest): string | null {
-  const origin = request.headers.get('origin');
-  if (origin) return origin.replace(/\/+$/, '');
-
-  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+function getApplicationOrigin(request: NextRequest): string | null {
+  const host = readForwardedHeader(request.headers.get('x-forwarded-host')) ?? request.headers.get('host');
   if (!host) return null;
 
-  const protocol = request.headers.get('x-forwarded-proto') ?? 'https';
+  if (!isAllowedApplicationHost(host)) return null;
+
+  const protocol = readForwardedHeader(request.headers.get('x-forwarded-proto')) ?? new URL(request.url).protocol.replace(/:$/, '');
   return `${protocol}://${host}`.replace(/\/+$/, '');
+}
+
+function readForwardedHeader(value: string | null): string | null {
+  return value?.split(',')[0]?.trim() || null;
+}
+
+function isAllowedApplicationHost(host: string): boolean {
+  const hostname = host.toLowerCase().replace(/:\d+$/, '');
+  return FIRST_PARTY_HOSTS.has(hostname) || hostname.endsWith(VERCEL_PREVIEW_HOST_SUFFIX) || LOOPBACK_HOSTS.has(hostname);
 }
 
 function isFreshTimestamp(value: string): boolean {
