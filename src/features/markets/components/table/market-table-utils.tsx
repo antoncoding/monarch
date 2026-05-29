@@ -52,7 +52,7 @@ export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; 
           href={getAssetURL(asset, chainId)}
           target="_blank"
           onClick={(e) => e.stopPropagation()}
-          rel="noopener"
+          rel="noopener noreferrer"
         >
           <p className="text-sm whitespace-nowrap">{symbol.length > 5 ? `${symbol.slice(0, 5)}...` : symbol}</p>
           <p className="opacity-0 group-hover:opacity-100">

@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useAppKit } from '@reown/appkit/react';
 import Link from 'next/link';
-import { RiCheckLine, RiExternalLinkLine, RiFileCopyLine, RiKey2Line, RiPlayLine, RiWallet3Line } from 'react-icons/ri';
+import { RiCheckLine, RiFileCopyLine, RiKey2Line } from 'react-icons/ri';
 import { getAddress } from 'viem';
-import { useConnection, useSignMessage } from 'wagmi';
+import { useChainId, useConnection, useSignMessage } from 'wagmi';
+import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,29 +19,16 @@ type CreatedApiKey = {
   };
 };
 
-type TestResult = {
-  ok: boolean;
-  status?: number;
-  endpoint?: string;
-  total?: number | null;
-  sampleCount?: number | null;
-  error?: string;
-};
-
 type CreationState = 'idle' | 'signing' | 'creating' | 'created' | 'error';
-type TestState = 'idle' | 'testing' | 'success' | 'error';
 
 export function ApiKeyConsoleView() {
-  const { open } = useAppKit();
   const { address, isConnected } = useConnection();
+  const chainId = useChainId();
   const { signMessageAsync } = useSignMessage();
   const [keyName, setKeyName] = useState('Default API key');
-  const [apiKeyInput, setApiKeyInput] = useState('');
   const [createdKey, setCreatedKey] = useState<CreatedApiKey | null>(null);
   const [creationState, setCreationState] = useState<CreationState>('idle');
-  const [testState, setTestState] = useState<TestState>('idle');
   const [creationError, setCreationError] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [copied, setCopied] = useState(false);
 
   const normalizedAddress = useMemo(() => {
@@ -55,26 +42,24 @@ export function ApiKeyConsoleView() {
   }, [address]);
 
   const isCreating = creationState === 'signing' || creationState === 'creating';
-  const isTesting = testState === 'testing';
 
   const handleCreateKey = async () => {
     if (!isConnected || !normalizedAddress) {
-      open();
       return;
     }
 
     setCreationError(null);
     setCopied(false);
     setCreatedKey(null);
-    setTestResult(null);
 
     try {
       setCreationState('signing');
       const message = buildApiKeyRequestMessage({
         wallet: normalizedAddress,
+        chainId,
         origin: window.location.origin,
         issuedAt: new Date().toISOString(),
-        nonce: crypto.randomUUID(),
+        nonce: createRequestNonce(),
       });
       const signature = await signMessageAsync({ message });
 
@@ -105,7 +90,6 @@ export function ApiKeyConsoleView() {
         key: body.key,
       };
       setCreatedKey(nextCreatedKey);
-      setApiKeyInput(nextCreatedKey.apiKey);
       setCreationState('created');
     } catch (caught) {
       setCreationState('error');
@@ -120,48 +104,13 @@ export function ApiKeyConsoleView() {
     setCopied(true);
   };
 
-  const handleApiKeyInputChange = (value: string) => {
-    setApiKeyInput(value);
-    setTestResult(null);
-    setTestState('idle');
-  };
-
-  const handleTestKey = async () => {
-    setTestState('testing');
-    setTestResult(null);
-
-    try {
-      const response = await fetch('/api/api-keys/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ apiKey: apiKeyInput }),
-      });
-      const body = (await response.json().catch(() => ({}))) as TestResult;
-
-      if (!response.ok || !body.ok) {
-        throw new Error(body.error ?? 'API key test failed.');
-      }
-
-      setTestResult(body);
-      setTestState('success');
-    } catch (caught) {
-      setTestResult({
-        ok: false,
-        error: caught instanceof Error ? caught.message : 'API key test failed.',
-      });
-      setTestState('error');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <main className="px-4 pb-16 pt-28 font-zen sm:px-6 lg:px-8">
         <section className="mx-auto flex max-w-3xl flex-col gap-5">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 px-5">
             <div className="flex items-center gap-2 font-monospace text-xs uppercase tracking-[0.18em] text-secondary">
               <RiKey2Line className="h-4 w-4 text-primary" />
               API Access
@@ -169,67 +118,52 @@ export function ApiKeyConsoleView() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h1 className="font-zen text-3xl font-normal leading-tight text-primary sm:text-4xl">API Keys</h1>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-secondary">Generate a key, copy it, then test one request.</p>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-secondary">Generate a key, copy it, and store it securely.</p>
               </div>
-              <Button
-                asChild
-                variant="surface"
-                size="sm"
+              <Link
+                href={EXTERNAL_LINKS.docs}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-secondary no-underline transition-colors hover:text-primary hover:no-underline"
               >
-                <Link
-                  href={EXTERNAL_LINKS.docs}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Docs
-                  <RiExternalLinkLine />
-                </Link>
-              </Button>
+                Docs
+              </Link>
             </div>
           </div>
 
           <section className="rounded border border-border bg-surface shadow-sm">
             <div className="flex flex-col gap-5 p-5">
-              <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                <Input
-                  id="api-key-name"
-                  label="Key name"
-                  value={keyName}
-                  onValueChange={setKeyName}
-                  placeholder="Production dashboard"
-                  maxLength={120}
-                />
-                <Button
-                  type="button"
-                  variant="surface"
-                  size="md"
-                  onClick={() => open()}
-                >
-                  <RiWallet3Line />
-                  {normalizedAddress ? 'Switch wallet' : 'Connect wallet'}
-                </Button>
-              </div>
-
-              {normalizedAddress ? (
-                <div className="truncate rounded bg-background px-3 py-2 font-monospace text-xs text-secondary">{normalizedAddress}</div>
-              ) : null}
+              <Input
+                id="api-key-name"
+                label="Key name"
+                value={keyName}
+                onValueChange={setKeyName}
+                placeholder="Production dashboard"
+                maxLength={120}
+              />
 
               {creationError ? (
                 <div className="rounded border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500">{creationError}</div>
               ) : null}
 
-              <Button
-                type="button"
-                variant="primary"
-                size="lg"
-                isLoading={isCreating}
-                disabled={isCreating}
-                onClick={handleCreateKey}
-                className="w-full sm:w-fit"
-              >
-                <RiKey2Line />
-                {getActionLabel({ isConnected, state: creationState })}
-              </Button>
+              {isConnected ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  isLoading={isCreating}
+                  disabled={isCreating}
+                  onClick={handleCreateKey}
+                  className="w-full sm:w-fit"
+                >
+                  <RiKey2Line />
+                  {getActionLabel(creationState)}
+                </Button>
+              ) : (
+                <div className="[&>div]:flex-grow-0">
+                  <AccountConnect onConnectPath="api-keys" />
+                </div>
+              )}
 
               {createdKey ? (
                 <div className="rounded border border-border bg-background">
@@ -257,61 +191,31 @@ export function ApiKeyConsoleView() {
               ) : null}
             </div>
           </section>
-
-          <section className="rounded border border-border bg-surface shadow-sm">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="text-base font-medium text-primary">Test key</h2>
-            </div>
-            <div className="flex flex-col gap-4 p-5">
-              <Input
-                id="api-key-test"
-                label="API key"
-                value={apiKeyInput}
-                onValueChange={handleApiKeyInputChange}
-                placeholder="mk_live_..."
-                autoComplete="off"
-              />
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Button
-                  type="button"
-                  variant="surface"
-                  size="md"
-                  isLoading={isTesting}
-                  disabled={isTesting || !apiKeyInput.trim()}
-                  onClick={handleTestKey}
-                  className="w-full sm:w-fit"
-                >
-                  <RiPlayLine />
-                  Run test query
-                </Button>
-                <code className="break-all font-monospace text-xs text-secondary">GET /v1/markets/metrics?limit=1&amp;offset=0</code>
-              </div>
-
-              {testResult ? (
-                <div
-                  className={
-                    testState === 'success'
-                      ? 'rounded border border-green-500/30 bg-green-500/5 px-4 py-3 text-sm text-green-600 dark:text-green-400'
-                      : 'rounded border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500'
-                  }
-                >
-                  {testState === 'success'
-                    ? `OK ${testResult.status}. Returned ${testResult.sampleCount ?? 0} sample market out of ${testResult.total ?? 'unknown'}.`
-                    : testResult.error}
-                </div>
-              ) : null}
-            </div>
-          </section>
         </section>
       </main>
     </div>
   );
 }
 
-function getActionLabel({ isConnected, state }: { isConnected: boolean; state: CreationState }) {
-  if (!isConnected) return 'Connect wallet';
+function getActionLabel(state: CreationState) {
   if (state === 'signing') return 'Sign in wallet';
   if (state === 'creating') return 'Creating key';
   if (state === 'created') return 'Generate another';
   return 'Generate key';
+}
+
+function createRequestNonce() {
+  if (typeof crypto === 'undefined') {
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+  }
+
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+
+  if (typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 }

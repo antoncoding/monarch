@@ -392,10 +392,9 @@ Fallback Strategy:
 
 - Page: `/api-keys`
 - Navigation: desktop and mobile More menus
-- Wallet proof: client signs a short message with `useSignMessage`; the message includes wallet address, browser origin, issued timestamp, and nonce.
+- Wallet proof: client signs a short message with `useSignMessage`; the message includes wallet address, chain ID, browser origin, issued timestamp, and nonce.
 - Server route: `POST /api/api-keys`
-- Verification: the Next.js route parses the signed message, checks origin and timestamp freshness, verifies the EIP-191 signature with `viem.verifyMessage`, then calls the data gateway admin API using the server-only `MONARCH_API_KEYS_ADMIN_TOKEN`.
-- Test route: `POST /api/api-keys/test` runs one fixed server-side request against `GET https://api.monarchlend.xyz/v1/markets/metrics?limit=1&offset=0` with the submitted API key. This avoids a misleading first-party browser test, because Monarch production origins can call the API without key validation.
+- Verification: the Next.js route parses the signed message, checks origin and timestamp freshness, verifies the signature through a viem public client so contract wallets can use ERC-1271, then calls the data gateway admin API using the server-only `MONARCH_API_KEYS_ADMIN_TOKEN`.
 - Created keys use the `mk_live` prefix, `data.read,indexer.query` scopes, and the free rate-limit tier. Existing-key listing and revocation are not exposed in the Monarch UI yet.
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):

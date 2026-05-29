@@ -1,5 +1,6 @@
 export type ApiKeyRequestMessage = {
   wallet: string;
+  chainId: number;
   origin: string;
   issuedAt: string;
   nonce: string;
@@ -8,16 +9,18 @@ export type ApiKeyRequestMessage = {
 const MESSAGE_TITLE = 'Monarch API key request';
 const MESSAGE_LINES = {
   wallet: 'Wallet',
+  chainId: 'Chain ID',
   origin: 'Origin',
   issuedAt: 'Issued At',
   nonce: 'Nonce',
 } as const;
 
-export function buildApiKeyRequestMessage({ wallet, origin, issuedAt, nonce }: ApiKeyRequestMessage) {
+export function buildApiKeyRequestMessage({ wallet, chainId, origin, issuedAt, nonce }: ApiKeyRequestMessage) {
   return [
     MESSAGE_TITLE,
     '',
     `${MESSAGE_LINES.wallet}: ${wallet}`,
+    `${MESSAGE_LINES.chainId}: ${chainId}`,
     `${MESSAGE_LINES.origin}: ${origin}`,
     `${MESSAGE_LINES.issuedAt}: ${issuedAt}`,
     `${MESSAGE_LINES.nonce}: ${nonce}`,
@@ -36,14 +39,19 @@ export function parseApiKeyRequestMessage(message: string): ApiKeyRequestMessage
   }
 
   const wallet = fields.get(MESSAGE_LINES.wallet);
+  const chainId = fields.get(MESSAGE_LINES.chainId);
   const origin = fields.get(MESSAGE_LINES.origin);
   const issuedAt = fields.get(MESSAGE_LINES.issuedAt);
   const nonce = fields.get(MESSAGE_LINES.nonce);
 
-  if (!wallet || !origin || !issuedAt || !nonce) return null;
+  if (!wallet || !chainId || !origin || !issuedAt || !nonce) return null;
+
+  const parsedChainId = Number(chainId);
+  if (!Number.isSafeInteger(parsedChainId) || parsedChainId <= 0) return null;
 
   return {
     wallet,
+    chainId: parsedChainId,
     origin,
     issuedAt,
     nonce,

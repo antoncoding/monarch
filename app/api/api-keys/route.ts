@@ -1,10 +1,38 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { getAddress, isAddress, verifyMessage } from 'viem';
+import { createPublicClient, getAddress, http, isAddress, type Address, type Chain } from 'viem';
+import { verifyMessage } from 'viem/actions';
+import { arbitrum, base, etherlink, hyperEvm, mainnet, monad, optimism, polygon, unichain } from 'viem/chains';
 import { parseApiKeyRequestMessage } from '@/utils/apiKeyRequest';
+import { SupportedNetworks, isSupportedNetwork } from '@/utils/supported-networks';
 
 const DEFAULT_ADMIN_ENDPOINT = 'https://api.monarchlend.xyz/admin/api-keys';
 const REQUEST_TTL_MS = 10 * 60 * 1000;
 const REQUEST_CLOCK_SKEW_MS = 60 * 1000;
+const ADMIN_REQUEST_TIMEOUT_MS = 10_000;
+
+const VERIFICATION_CHAINS: Record<SupportedNetworks, Chain> = {
+  [SupportedNetworks.Mainnet]: mainnet,
+  [SupportedNetworks.Optimism]: optimism,
+  [SupportedNetworks.Base]: base,
+  [SupportedNetworks.Polygon]: polygon,
+  [SupportedNetworks.Unichain]: unichain,
+  [SupportedNetworks.Arbitrum]: arbitrum,
+  [SupportedNetworks.Etherlink]: etherlink,
+  [SupportedNetworks.HyperEVM]: hyperEvm,
+  [SupportedNetworks.Monad]: monad,
+};
+
+const RPC_ENV_BY_CHAIN: Partial<Record<SupportedNetworks, string | undefined>> = {
+  [SupportedNetworks.Mainnet]: process.env.NEXT_PUBLIC_ETHEREUM_RPC,
+  [SupportedNetworks.Optimism]: process.env.NEXT_PUBLIC_OPTIMISM_RPC,
+  [SupportedNetworks.Base]: process.env.NEXT_PUBLIC_BASE_RPC,
+  [SupportedNetworks.Polygon]: process.env.NEXT_PUBLIC_POLYGON_RPC,
+  [SupportedNetworks.Unichain]: process.env.NEXT_PUBLIC_UNICHAIN_RPC,
+  [SupportedNetworks.Arbitrum]: process.env.NEXT_PUBLIC_ARBITRUM_RPC,
+  [SupportedNetworks.Etherlink]: process.env.NEXT_PUBLIC_ETHERLINK_RPC,
+  [SupportedNetworks.HyperEVM]: process.env.NEXT_PUBLIC_HYPEREVM_RPC,
+  [SupportedNetworks.Monad]: process.env.NEXT_PUBLIC_MONAD_RPC,
+};
 
 type CreateApiKeyRequestBody = {
   address?: unknown;
@@ -55,11 +83,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature nonce.' }, { status: 400 });
   }
 
-  const signatureValid = await verifyMessage({
-    address,
-    message: body.message,
-    signature: body.signature as `0x${string}`,
-  });
+  if (!isSupportedNetwork(parsedMessage.chainId)) {
+    return NextResponse.json({ error: 'Unsupported signature chain.' }, { status: 400 });
+  }
+
+  let signatureValid: boolean;
+  try {
+    signatureValid = await verifyWalletSignature({
+      address,
+      chainId: parsedMessage.chainId,
+      message: body.message,
+      signature: body.signature,
+    });
+  } catch {
+    return NextResponse.json({ error: 'Failed to verify wallet signature.' }, { status: 502 });
+  }
 
   if (!signatureValid) {
     return NextResponse.json({ error: 'Invalid wallet signature.' }, { status: 401 });
@@ -69,8 +107,10 @@ export async function POST(request: NextRequest) {
     adminToken,
     address,
     name: body.name,
+    chainId: parsedMessage.chainId,
     origin: parsedMessage.origin,
     issuedAt: parsedMessage.issuedAt,
+    nonce: parsedMessage.nonce,
   });
 
   return adminResponse;
@@ -88,6 +128,9 @@ async function readCreateApiKeyRequest(request: NextRequest): Promise<
   let body: CreateApiKeyRequestBody;
   try {
     body = (await request.json()) as CreateApiKeyRequestBody;
+    if (!isRecord(body)) {
+      return { error: 'Invalid JSON body.' };
+    }
   } catch {
     return { error: 'Invalid JSON body.' };
   }
@@ -101,7 +144,7 @@ async function readCreateApiKeyRequest(request: NextRequest): Promise<
     return { error: 'address, signature, and message are required.' };
   }
 
-  if (!/^0x[0-9a-fA-F]{130}$/.test(signature)) {
+  if (!/^0x(?:[0-9a-fA-F]{2})+$/.test(signature)) {
     return { error: 'Invalid signature format.' };
   }
 
@@ -117,38 +160,57 @@ async function createGatewayApiKey({
   adminToken,
   address,
   name,
+  chainId,
   origin,
   issuedAt,
+  nonce,
 }: {
   adminToken: string;
   address: string;
   name: string;
+  chainId: number;
   origin: string;
   issuedAt: string;
+  nonce: string;
 }) {
   const adminEndpoint = process.env.MONARCH_API_KEYS_ADMIN_URL?.trim() || DEFAULT_ADMIN_ENDPOINT;
-  const response = await fetch(adminEndpoint, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${adminToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      name,
-      environment: 'live',
-      scopes: ['data.read', 'indexer.query'],
-      tier: 'free',
-      rateLimitTier: 'free',
-      metadata: {
-        ownerAddress: address,
-        origin,
-        signedAt: issuedAt,
-        createdBy: 'monarch-api-key-console',
-      },
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ADMIN_REQUEST_TIMEOUT_MS);
+  let response: Response;
+  let body: AdminCreateApiKeyResponse;
 
-  const body = (await response.json().catch(() => ({}))) as AdminCreateApiKeyResponse;
+  try {
+    response = await fetch(adminEndpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name,
+        environment: 'live',
+        scopes: ['data.read', 'indexer.query'],
+        tier: 'free',
+        rateLimitTier: 'free',
+        metadata: {
+          ownerAddress: address,
+          chainId,
+          origin,
+          signedAt: issuedAt,
+          requestNonce: nonce,
+          createdBy: 'monarch-api-key-console',
+        },
+      }),
+      signal: controller.signal,
+    });
+    body = (await response.json().catch(() => ({}))) as AdminCreateApiKeyResponse;
+  } catch (error) {
+    const status = error instanceof Error && error.name === 'AbortError' ? 504 : 502;
+    return NextResponse.json({ error: status === 504 ? 'API gateway timed out.' : 'Failed to connect to the API gateway.' }, { status });
+  } finally {
+    clearTimeout(timeout);
+  }
+
   if (!response.ok) {
     return NextResponse.json(
       { error: typeof body.error === 'string' ? body.error : 'Failed to create API key.' },
@@ -167,6 +229,30 @@ async function createGatewayApiKey({
     },
     { status: 201 },
   );
+}
+
+function verifyWalletSignature({
+  address,
+  chainId,
+  message,
+  signature,
+}: {
+  address: string;
+  chainId: SupportedNetworks;
+  message: string;
+  signature: string;
+}) {
+  const rpcUrl = RPC_ENV_BY_CHAIN[chainId]?.trim() || undefined;
+  const client = createPublicClient({
+    chain: VERIFICATION_CHAINS[chainId],
+    transport: http(rpcUrl),
+  });
+
+  return verifyMessage(client, {
+    address: address as Address,
+    message,
+    signature: signature as `0x${string}`,
+  });
 }
 
 function getRequestOrigin(request: NextRequest): string | null {
@@ -199,4 +285,8 @@ function sanitizeKeyName(value: unknown): string {
   if (!trimmed) return 'Monarch API key';
 
   return trimmed.slice(0, 120);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
