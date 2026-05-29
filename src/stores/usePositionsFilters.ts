@@ -4,7 +4,9 @@ import { persist } from 'zustand/middleware';
 /**
  * Earnings calculation periods for the positions summary page.
  */
-export type EarningsPeriod = 'day' | 'week' | 'month' | 'threemonth' | 'sixmonth' | 'all';
+export const EARNINGS_PERIODS = ['day', 'week', 'month', 'threemonth', 'sixmonth', 'all'] as const;
+
+export type EarningsPeriod = (typeof EARNINGS_PERIODS)[number];
 
 type PositionsFiltersState = {
   /** Currently selected earnings period */
@@ -23,6 +25,21 @@ type PositionsFiltersStore = PositionsFiltersState & PositionsFiltersActions;
 
 const DEFAULT_STATE: PositionsFiltersState = {
   period: 'month',
+};
+
+const isEarningsPeriod = (value: unknown): value is EarningsPeriod =>
+  typeof value === 'string' && EARNINGS_PERIODS.includes(value as EarningsPeriod);
+
+const normalizePositionsFilters = (state: unknown): PositionsFiltersState => {
+  if (!state || typeof state !== 'object') {
+    return DEFAULT_STATE;
+  }
+
+  const period = (state as Partial<PositionsFiltersState>).period;
+
+  return {
+    period: isEarningsPeriod(period) ? period : DEFAULT_STATE.period,
+  };
 };
 
 /**
@@ -50,16 +67,9 @@ export const usePositionsFilters = create<PositionsFiltersStore>()(
     }),
     {
       name: 'monarch_store_positionsFilters',
-      version: 2,
-      migrate: (state, version) => {
-        if (!state || typeof state !== 'object') {
-          return DEFAULT_STATE;
-        }
-        if (version < 2) {
-          return { ...state, period: 'month' } as PositionsFiltersState;
-        }
-        return state as PositionsFiltersState;
-      },
+      version: 3,
+      partialize: (state) => ({ period: state.period }),
+      migrate: normalizePositionsFilters,
     },
   ),
 );
