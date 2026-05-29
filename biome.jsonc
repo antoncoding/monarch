@@ -4,7 +4,7 @@
 
   "formatter": {
     "enabled": true,
-    "lineWidth": 140  // Increased to 140 to allow longer one-line code
+    "lineWidth": 140
   },
 
   "javascript": {
@@ -49,6 +49,7 @@
         "noEnum": "off",
 
         // Allow nested ternaries (team decision)
+        "noNegationElse": "off",
         "noNestedTernary": "off",
 
         // Team allows non-null assertions when needed
@@ -58,6 +59,8 @@
 
         // Object shorthand - disable for gentle migration
         "useConsistentObjectDefinitions": "off",
+        "useConsistentTypeDefinitions": "off",
+        "useCollapsedIf": "off",
 
         // Catch mutable declarations that can be const
         "useConst": "error",
@@ -165,32 +168,32 @@
         "noNoninteractiveElementToInteractiveRole": "off",  // 11 errors
         "useSemanticElements": "off",  // 10 errors
         "useAriaPropsSupportedByRole": "off",  // 1 error
+        "noNoninteractiveTabindex": "off",
         "noRedundantRoles": "off",  // 1 error
         "noNoninteractiveElementInteractions": "off"  // 1 error
       },
 
       "nursery": {
-        // Disable aggressive nursery rules during migration
-        // "noShadow": "off",
-        "noUselessUndefined": "off",
-
         // Keep sorted classes off initially
         "useSortedClasses": "off",
 
         // These are too aggressive for migration
         "noLeakedRender": "off",
-        "useConsistentArrowReturn": "off",
         "noEqualsToNull": "off",
-        "noIncrementDecrement": "off",
-
-        // Disable for gentle migration
-        "useMaxParams": "off"  // 9 errors
+        "noIncrementDecrement": "off"
       }
     }
   },
 
   // Override ultracite's test file settings if needed
   "overrides": [
+    {
+      // Ultracite's wrapper formats this CSS with its core width even though raw Biome honors the repo width.
+      "includes": ["app/global.css"],
+      "formatter": {
+        "enabled": false
+      }
+    },
     {
       "includes": [
         "src/abis/**/*",

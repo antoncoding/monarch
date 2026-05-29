@@ -76,9 +76,7 @@ export async function POST(request: NextRequest) {
   return adminResponse;
 }
 
-async function readCreateApiKeyRequest(
-  request: NextRequest,
-): Promise<
+async function readCreateApiKeyRequest(request: NextRequest): Promise<
   | {
       address: string;
       signature: string;

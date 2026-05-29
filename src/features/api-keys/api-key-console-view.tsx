@@ -3,14 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useAppKit } from '@reown/appkit/react';
 import Link from 'next/link';
-import {
-  RiCheckLine,
-  RiExternalLinkLine,
-  RiFileCopyLine,
-  RiKey2Line,
-  RiPlayLine,
-  RiWallet3Line,
-} from 'react-icons/ri';
+import { RiCheckLine, RiExternalLinkLine, RiFileCopyLine, RiKey2Line, RiPlayLine, RiWallet3Line } from 'react-icons/ri';
 import { getAddress } from 'viem';
 import { useConnection, useSignMessage } from 'wagmi';
 import Header from '@/components/layout/header/Header';
@@ -176,9 +169,7 @@ export function ApiKeyConsoleView() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h1 className="font-zen text-3xl font-normal leading-tight text-primary sm:text-4xl">API Keys</h1>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-secondary">
-                  Generate a key, copy it, then test one request.
-                </p>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-secondary">Generate a key, copy it, then test one request.</p>
               </div>
               <Button
                 asChild
@@ -220,15 +211,11 @@ export function ApiKeyConsoleView() {
               </div>
 
               {normalizedAddress ? (
-                <div className="truncate rounded bg-background px-3 py-2 font-monospace text-xs text-secondary">
-                  {normalizedAddress}
-                </div>
+                <div className="truncate rounded bg-background px-3 py-2 font-monospace text-xs text-secondary">{normalizedAddress}</div>
               ) : null}
 
               {creationError ? (
-                <div className="rounded border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500">
-                  {creationError}
-                </div>
+                <div className="rounded border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500">{creationError}</div>
               ) : null}
 
               <Button
@@ -248,9 +235,7 @@ export function ApiKeyConsoleView() {
                 <div className="rounded border border-border bg-background">
                   <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-primary">
-                        {createdKey.key?.name ?? keyName}
-                      </div>
+                      <div className="truncate text-sm font-medium text-primary">{createdKey.key?.name ?? keyName}</div>
                       <div className="mt-1 text-xs text-secondary">Shown once. Store it now.</div>
                     </div>
                     <Button
@@ -299,9 +284,7 @@ export function ApiKeyConsoleView() {
                   <RiPlayLine />
                   Run test query
                 </Button>
-                <code className="break-all font-monospace text-xs text-secondary">
-                  GET /v1/markets/metrics?limit=1&amp;offset=0
-                </code>
+                <code className="break-all font-monospace text-xs text-secondary">GET /v1/markets/metrics?limit=1&amp;offset=0</code>
               </div>
 
               {testResult ? (
@@ -325,13 +308,7 @@ export function ApiKeyConsoleView() {
   );
 }
 
-function getActionLabel({
-  isConnected,
-  state,
-}: {
-  isConnected: boolean;
-  state: CreationState;
-}) {
+function getActionLabel({ isConnected, state }: { isConnected: boolean; state: CreationState }) {
   if (!isConnected) return 'Connect wallet';
   if (state === 'signing') return 'Sign in wallet';
   if (state === 'creating') return 'Creating key';

@@ -85,9 +85,7 @@ export function AccountActionsPopover({
     window.open(`https://debank.com/profile/${address}`, '_blank', 'noopener,noreferrer');
   }, [address]);
 
-  const openableExtraLinks = extraLinks
-    .map((link) => ({ ...link, href: link.href.trim() }))
-    .filter((link) => isOpenableHref(link.href));
+  const openableExtraLinks = extraLinks.map((link) => ({ ...link, href: link.href.trim() })).filter((link) => isOpenableHref(link.href));
 
   return (
     <DropdownMenu>
@@ -105,9 +103,7 @@ export function AccountActionsPopover({
           <DropdownMenuItem
             key={`${link.label}-${link.href}`}
             onClick={() => handleOpenLink(link.href)}
-            startContent={
-              isExternalHref(link.href) ? <LuExternalLink className="h-4 w-4" /> : <LuLink className="h-4 w-4" />
-            }
+            startContent={isExternalHref(link.href) ? <LuExternalLink className="h-4 w-4" /> : <LuLink className="h-4 w-4" />}
           >
             {link.label}
           </DropdownMenuItem>

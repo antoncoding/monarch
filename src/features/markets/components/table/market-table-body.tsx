@@ -241,7 +241,13 @@ export function MarketTableBody({
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <div className="flex justify-center text-sm">
-                    {item.state.apyAtTarget != null ? <RateFormatted value={item.state.apyAtTarget} /> : shouldShowRateLoader(item) ? renderRateLoading() : '—'}
+                    {item.state.apyAtTarget != null ? (
+                      <RateFormatted value={item.state.apyAtTarget} />
+                    ) : shouldShowRateLoader(item) ? (
+                      renderRateLoading()
+                    ) : (
+                      '—'
+                    )}
                   </div>
                 </TableCell>
               )}

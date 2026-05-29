@@ -9,11 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { NetworkIcon } from '@/components/shared/network-icon';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { VaultVersionBadge } from '@/features/autovault/components/vault-version-badge';
-import {
-  getVaultKey,
-  monarch_suggested_vaults,
-  type TrustedVault,
-} from '@/constants/vaults/known_vaults';
+import { getVaultKey, monarch_suggested_vaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
 import { useListedMorphoVaultV2MetadataQuery } from '@/hooks/queries/useMorphoVaultV2MetadataQuery';
 import { buildEffectiveTrustedVaults } from '@/hooks/useEffectiveTrustedVaults';
@@ -347,9 +343,7 @@ export function TrustedVaultsDetail() {
                 <p className="mt-1 text-xs text-secondary">Search Morpho-listed v1 and v2 vaults.</p>
               </div>
             </div>
-            <p className="text-xs text-secondary">
-              {isVaultDiscoveryLoading ? 'Loading' : `${filteredBrowseVaults.length} shown`}
-            </p>
+            <p className="text-xs text-secondary">{isVaultDiscoveryLoading ? 'Loading' : `${filteredBrowseVaults.length} shown`}</p>
           </div>
 
           <Input

@@ -16,13 +16,7 @@ export const zen = localFont({
   display: 'swap',
   variable: '--font-zen',
   preload: false,
-  fallback: [
-    '-apple-system',
-    'BlinkMacSystemFont',
-    'Segoe UI',
-    'system-ui',
-    'sans-serif',
-  ],
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'system-ui', 'sans-serif'],
 });
 
 export const inter = localFont({
@@ -30,13 +24,7 @@ export const inter = localFont({
   display: 'swap',
   variable: '--font-inter',
   preload: false,
-  fallback: [
-    '-apple-system',
-    'BlinkMacSystemFont',
-    'Segoe UI',
-    'system-ui',
-    'sans-serif',
-  ],
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'system-ui', 'sans-serif'],
 });
 
 export const monospace = localFont({
@@ -44,14 +32,5 @@ export const monospace = localFont({
   display: 'swap',
   variable: '--font-monospace',
   preload: false,
-  fallback: [
-    'ui-monospace',
-    'SFMono-Regular',
-    'Menlo',
-    'Monaco',
-    'Consolas',
-    'Liberation Mono',
-    'Courier New',
-    'monospace',
-  ],
+  fallback: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
 });

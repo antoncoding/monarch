@@ -145,7 +145,14 @@ export function useVaultAllocations({
     return ids;
   }, [marketCapEntries]);
 
-  const marketIdsKey = useMemo(() => marketIds.map((marketId) => marketId.toLowerCase()).sort().join(','), [marketIds]);
+  const marketIdsKey = useMemo(
+    () =>
+      marketIds
+        .map((marketId) => marketId.toLowerCase())
+        .sort()
+        .join(','),
+    [marketIds],
+  );
 
   const {
     data: capMarketsById = EMPTY_MARKET_MAP,

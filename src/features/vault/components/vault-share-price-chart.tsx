@@ -144,33 +144,34 @@ export function VaultSharePriceChart({
   const yAxisDomain = useMemo(() => getSharePriceDomain(chartData, selectedTimeframe), [chartData, selectedTimeframe]);
   const isInitialLoading = isLoading;
   const isUnavailable = data?.isUnsupportedNetwork || isError || (!isInitialLoading && chartData.length < 2);
-  const chartActions = showPeriodControl || (isFetching && !isInitialLoading) ? (
-    <div className="flex items-center gap-2">
-      {isFetching && !isInitialLoading ? (
-        <div className="flex items-center gap-2 rounded-full border border-border/60 bg-surface px-2 py-1 text-[11px] text-secondary">
-          <Spinner size={12} />
-          <span>Updating</span>
-        </div>
-      ) : null}
-      {showPeriodControl && (
-        <Select
-          value={selectedTimeframe}
-          onValueChange={(value) => setTimeframe(value as ChartTimeframe)}
-        >
-          <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
-            <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1d">1D</SelectItem>
-            <SelectItem value="7d">7D</SelectItem>
-            <SelectItem value="30d">30D</SelectItem>
-            <SelectItem value="3m">3M</SelectItem>
-            <SelectItem value="6m">6M</SelectItem>
-          </SelectContent>
-        </Select>
-      )}
-    </div>
-  ) : undefined;
+  const chartActions =
+    showPeriodControl || (isFetching && !isInitialLoading) ? (
+      <div className="flex items-center gap-2">
+        {isFetching && !isInitialLoading ? (
+          <div className="flex items-center gap-2 rounded-full border border-border/60 bg-surface px-2 py-1 text-[11px] text-secondary">
+            <Spinner size={12} />
+            <span>Updating</span>
+          </div>
+        ) : null}
+        {showPeriodControl && (
+          <Select
+            value={selectedTimeframe}
+            onValueChange={(value) => setTimeframe(value as ChartTimeframe)}
+          >
+            <SelectTrigger className="h-8 w-auto min-w-[60px] px-3 text-sm">
+              <SelectValue>{TIMEFRAME_LABELS[selectedTimeframe]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1d">1D</SelectItem>
+              <SelectItem value="7d">7D</SelectItem>
+              <SelectItem value="30d">30D</SelectItem>
+              <SelectItem value="3m">3M</SelectItem>
+              <SelectItem value="6m">6M</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+    ) : undefined;
 
   return (
     <TableContainerWithDescription

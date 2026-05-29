@@ -28,7 +28,7 @@ import {
 } from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
 import { useMerklHoldIncentivesQuery } from '@/hooks/queries/useMerklHoldIncentivesQuery';
-import { use4626VaultAPR } from '@/hooks/use4626VaultAPR';
+import { useErc4626VaultAPR } from '@/hooks/use4626VaultAPR';
 import { useLeverageQuote } from '@/hooks/useLeverageQuote';
 import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -216,7 +216,7 @@ export function AddCollateralAndLeverage({
   const hasChanges = isLeverageFeeReady;
   const rateLabel = isAprDisplay ? 'APR' : 'APY';
 
-  const vaultRateInsight = use4626VaultAPR({
+  const vaultRateInsight = useErc4626VaultAPR({
     market,
     vaultAddress: route?.kind === 'erc4626' ? route.collateralVault : undefined,
     projectedCollateralShares: projectedCollateralAssets,

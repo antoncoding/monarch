@@ -26,10 +26,7 @@ export function useTrustedVaultMetadata({ enabled = true, trustedVaults }: UseTr
     () => buildTrustedVaultMetadata(morphoVaults, trustedV2VaultMetadata),
     [morphoVaults, trustedV2VaultMetadata],
   );
-  const trustedVaultMap = useMemo(
-    () => buildTrustedVaultMap(trustedVaults, trustedVaultMetadata),
-    [trustedVaults, trustedVaultMetadata],
-  );
+  const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults, trustedVaultMetadata), [trustedVaults, trustedVaultMetadata]);
 
   return {
     trustedVaultMap,

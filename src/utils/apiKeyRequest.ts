@@ -13,12 +13,7 @@ const MESSAGE_LINES = {
   nonce: 'Nonce',
 } as const;
 
-export function buildApiKeyRequestMessage({
-  wallet,
-  origin,
-  issuedAt,
-  nonce,
-}: ApiKeyRequestMessage) {
+export function buildApiKeyRequestMessage({ wallet, origin, issuedAt, nonce }: ApiKeyRequestMessage) {
   return [
     MESSAGE_TITLE,
     '',

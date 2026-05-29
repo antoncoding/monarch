@@ -13,7 +13,7 @@ type TransactionIdentityProps = {
 const formatTxHash = (hash: string, showFull: boolean): string => {
   if (showFull) return hash;
   if (hash.length < 10) return hash;
-  return `${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
+  return `${hash.slice(0, 6)}...${hash.slice(hash.length - 4)}`;
 };
 
 export function TransactionIdentity({ txHash, chainId, showFullHash = false, className = '' }: TransactionIdentityProps) {

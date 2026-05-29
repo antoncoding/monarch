@@ -129,6 +129,7 @@ export function MarketDetailsBlock({
                   target="_blank"
                   className="ml-1 opacity-50 transition-opacity hover:opacity-100"
                   onClick={(e) => e.stopPropagation()}
+                  rel="noopener"
                 >
                   <ExternalLinkIcon className="h-3 w-3" />
                 </a>

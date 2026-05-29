@@ -157,9 +157,9 @@ export function AccountIdentity({
       }
     : klerosLabel
       ? { kind: 'kleros' as const, label: klerosLabel, title: klerosTitle ?? klerosLabel }
-    : showAddress && ensName
-      ? { kind: 'ens' as const, label: ensName, title: ensName }
-      : undefined;
+      : showAddress && ensName
+        ? { kind: 'ens' as const, label: ensName, title: ensName }
+        : undefined;
   const entityBadge = vaultIdentity ? getEntityBadgeLabel(vaultIdentity) : undefined;
   const metadataImageUrl = vaultIdentity?.metadataImage && !metadataImageFailed ? vaultIdentity.metadataImage : undefined;
   const adapterBadge =

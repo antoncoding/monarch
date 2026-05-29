@@ -131,6 +131,7 @@ Choose the narrowest useful set:
 
 - `npx ultracite fix` after code edits when formatting/lint auto-fixes are relevant.
 - `npx ultracite check` after code edits to verify formatting and lint.
+- For lint/tooling config changes, verify both `npx ultracite check` and the repo script that invokes the underlying tool, such as `pnpm lint:check`, so wrapper-specific behavior cannot hide a direct Biome failure.
 - Typecheck/build/test commands that cover the changed surface.
 
 If a relevant command cannot be run, state why and identify the residual risk.

@@ -72,10 +72,7 @@ function getBreakdownSourceCounts(items: AssetBreakdownItem[]) {
 function formatDepositSourceCaption(items: AssetBreakdownItem[]): string {
   const { supplyMarketCount, vaultCount } = getBreakdownSourceCounts(items);
 
-  return joinSourceCounts([
-    formatSourceCount(supplyMarketCount, 'market'),
-    formatSourceCount(vaultCount, 'Auto Vault'),
-  ]);
+  return joinSourceCounts([formatSourceCount(supplyMarketCount, 'market'), formatSourceCount(vaultCount, 'Auto Vault')]);
 }
 
 function formatDebtSourceCaption(items: AssetBreakdownItem[]): string {

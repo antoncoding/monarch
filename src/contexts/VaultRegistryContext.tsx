@@ -111,11 +111,7 @@ const adapterRelationToVaultIdentity = (relation: AdapterVaultRelation, morphoVa
 
 export function VaultRegistryProvider({ children }: { children: ReactNode }) {
   const { data: vaults = [], isLoading: vaultsLoading, error: vaultsError } = useAllMorphoVaultsQuery();
-  const {
-    data: adapterRelations = [],
-    isLoading: adapterRelationsLoading,
-    error: adapterRelationsError,
-  } = useVaultAdapterRelationsQuery();
+  const { data: adapterRelations = [], isLoading: adapterRelationsLoading, error: adapterRelationsError } = useVaultAdapterRelationsQuery();
 
   const vaultsByScopedAddress = useMemo(() => {
     const lookup = new Map<string, MorphoVault>();
@@ -162,7 +158,9 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
 
       const adapterRelation = chainId
         ? adapterRelationsByScopedAddress.get(getAddressKey(normalizedAddress, chainId))
-        : toOptionalAdapterVaultRelation(adapterRelations.find((candidate) => candidate.adapterAddress.toLowerCase() === normalizedAddress));
+        : toOptionalAdapterVaultRelation(
+            adapterRelations.find((candidate) => candidate.adapterAddress.toLowerCase() === normalizedAddress),
+          );
 
       if (adapterRelation) {
         return adapterRelationToAdapterIdentity(

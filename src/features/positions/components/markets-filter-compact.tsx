@@ -105,8 +105,7 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
 
   // Guards are active when the "show" flags are FALSE (meaning risky content is hidden)
   const anyGuardActive = !includeUnknownTokens || !showUnknownOracle || !showUnwhitelistedMarkets || !showLockedMarkets;
-  const advancedFilterActive =
-    minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode || starredOnly;
+  const advancedFilterActive = minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode || customTagMode || starredOnly;
   const hasActiveFilters = advancedFilterActive || anyGuardActive;
 
   const isButtonVariant = variant === 'button';
