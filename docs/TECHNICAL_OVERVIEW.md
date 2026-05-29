@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Base, Polygon, Arbitrum, Unichain, HyperEVM, Monad) and presents markets, vaults, and user positions in a unified interface. The app has **no backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads such as unresolved token metadata.
+Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Base, Polygon, Arbitrum, Unichain, HyperEVM, Monad) and presents markets, vaults, and user positions in a unified interface. The app has **no app-owned backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads or call protected infrastructure endpoints such as API-key creation.
 
 **Key Architectural Decisions:**
 - Next.js 15 App Router with React 18
@@ -170,23 +170,23 @@ NonStandardOracleOutput {
 Market registry / market shells:
                     Morpho API (https://blue-api.morpho.org/graphql)
                     ↓ (if unavailable or unsupported chain)
-                    Monarch GraphQL (https://api.monarchlend.xyz/graphql)
+                    Monarch GraphQL (https://indexer.monarchlend.xyz/graphql)
                     ↓
                     Subgraph (The Graph / Goldsky)
 
 Market detail live state + historical charts:
-                    Monarch GraphQL (https://api.monarchlend.xyz/graphql)
+                    Monarch GraphQL (https://indexer.monarchlend.xyz/graphql)
                     ↓ (for shell metadata fallback and optional USD backfill)
                     Morpho API / Subgraph
                     ↓ (fresh balances / shares / liquidity override)
                     On-chain RPC snapshot
 
-Autovault metadata: Monarch GraphQL (https://api.monarchlend.xyz/graphql)
+Autovault metadata: Monarch GraphQL (https://indexer.monarchlend.xyz/graphql)
                    ↓ (if indexer lag / API failure)
                    Narrow on-chain RPC fallback
 
 Market detail participants/activity + admin stats transactions:
-                    Monarch GraphQL (https://api.monarchlend.xyz/graphql)
+                    Monarch GraphQL (https://indexer.monarchlend.xyz/graphql)
                     ↓ (for market-detail fallback only)
                     Morpho API / Subgraph
 
@@ -266,7 +266,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `usePublicAllocatorVaults` | Public allocator config for supplying vaults in a market | Morpho API only | Intentionally Morpho-only today |
 | `useAllocationsQuery` | Live vault `allocation(capId)` values | Pure RPC multicall | No Envio gap |
 | `usePublicAllocatorLiveData` | Live flow caps, vault supply, and liquidity for allocator UX | Pure RPC multicall | No Envio gap |
-| `useVaultHistoricalApy` / `use4626VaultAPR` | Historical 4626 yield and expected carry calculations | Pure RPC share-price snapshots + RPC Morpho market reads | No Envio gap |
+| `useVaultHistoricalApy` / `useErc4626VaultAPR` | Historical 4626 yield and expected carry calculations | Pure RPC share-price snapshots + RPC Morpho market reads | No Envio gap |
 
 #### RPC Helpers And External Reads
 
@@ -387,6 +387,15 @@ Fallback Strategy:
 - Endpoint: `NEXT_PUBLIC_MONARCH_API_NEW`
 - Browser fetch against a public endpoint. Production Monarch origins do not send an API key; Vercel preview builds can set `NEXT_PUBLIC_MONARCH_PREVIEW_API_KEY`, which is only sent when the app runs on a `*.vercel.app` host.
 - Used as the primary read path for autovault V2 metadata, market-detail live state/history/activity, and admin transaction reads
+
+### API Key Console
+
+- Page: `/api-keys`
+- Navigation: desktop and mobile More menus
+- Wallet proof: client signs a short message with `useSignMessage`; the message includes wallet address, chain ID, browser origin, issued timestamp, and nonce.
+- Server route: `POST /api/api-keys`
+- Verification: the Next.js route parses the signed message, checks origin and timestamp freshness, verifies the signature through a viem public client so contract wallets can use ERC-1271, then calls the data gateway admin API using the server-only `MONARCH_API_KEYS_ADMIN_TOKEN`.
+- Created keys use the `mk_live` prefix, `data.read,indexer.query` scopes, and the free rate-limit tier. Existing-key listing and revocation are not exposed in the Monarch UI yet.
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
 - Configurable URL per network
