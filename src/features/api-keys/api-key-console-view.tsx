@@ -160,7 +160,7 @@ export function ApiKeyConsoleView() {
                 </Button>
               ) : (
                 <div className="[&>div]:flex-grow-0">
-                  <AccountConnect onConnectPath="api-keys" />
+                  <AccountConnect />
                 </div>
               )}
 
