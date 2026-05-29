@@ -1,3 +1,5 @@
+import { getMonarchApiAuthHeaders } from '@/utils/monarchApiAuth';
+
 type GraphQLVariables = Record<string, unknown>;
 
 type GraphQLError = {
@@ -9,7 +11,6 @@ type MonarchGraphqlFetcherOptions = {
 };
 
 const MONARCH_GRAPHQL_API_ENDPOINT = process.env.NEXT_PUBLIC_MONARCH_API_NEW;
-const MONARCH_GRAPHQL_API_KEY = process.env.NEXT_PUBLIC_MONARCH_API_KEY;
 
 export const monarchGraphqlFetcher = async <T extends Record<string, unknown>>(
   query: string,
@@ -22,11 +23,8 @@ export const monarchGraphqlFetcher = async <T extends Record<string, unknown>>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    ...getMonarchApiAuthHeaders(),
   };
-
-  if (MONARCH_GRAPHQL_API_KEY) {
-    headers.Authorization = `Bearer ${MONARCH_GRAPHQL_API_KEY}`;
-  }
 
   const response = await fetch(MONARCH_GRAPHQL_API_ENDPOINT, {
     method: 'POST',

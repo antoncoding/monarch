@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
 import { useMarketPreferences, type CustomTagConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
+import { getMonarchApiAuthHeaders } from '@/utils/monarchApiAuth';
 import { DATA_API_BASE_URL } from '@/utils/urls';
 
 // Re-export types for convenience
@@ -101,7 +102,9 @@ const fetchMarketMetricsPage = async (params: MarketMetricsParams, limit: number
   searchParams.set('limit', String(limit));
   searchParams.set('offset', String(offset));
 
-  const response = await fetch(getMarketMetricsClientUrl(searchParams));
+  const response = await fetch(getMarketMetricsClientUrl(searchParams), {
+    headers: getMonarchApiAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch market metrics');
