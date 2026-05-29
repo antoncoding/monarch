@@ -5,7 +5,7 @@ import { arbitrum, base, etherlink, hyperEvm, mainnet, monad, optimism, polygon,
 import { parseApiKeyRequestMessage } from '@/utils/apiKeyRequest';
 import { SupportedNetworks, isSupportedNetwork } from '@/utils/supported-networks';
 
-const DEFAULT_ADMIN_ENDPOINT = 'https://api.monarchlend.xyz/admin/api-keys';
+const DEFAULT_ADMIN_ENDPOINT = 'https://data-api-gateway-worker.antonassocareer.workers.dev/admin/api-keys';
 const REQUEST_TTL_MS = 10 * 60 * 1000;
 const REQUEST_CLOCK_SKEW_MS = 60 * 1000;
 const ADMIN_REQUEST_TIMEOUT_MS = 10_000;
@@ -220,7 +220,7 @@ async function createGatewayApiKey({
 
   if (!response.ok) {
     return NextResponse.json(
-      { error: typeof body.error === 'string' ? body.error : 'Failed to create API key.' },
+      { error: typeof body.error === 'string' ? body.error : `API gateway rejected the request with status ${response.status}.` },
       { status: response.status },
     );
   }
