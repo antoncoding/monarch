@@ -4,6 +4,7 @@ import type { SupportedNetworks } from './networks';
 import { getClient } from './rpc';
 import { findToken, infoToKey, type ERC20Token } from './tokens';
 import type { TokenInfo } from './types';
+import { getMonarchApiAuthHeaders } from './monarchApiAuth';
 import { DATA_API_BASE_URL } from './urls';
 
 export type TokenAddressInput = {
@@ -303,6 +304,7 @@ const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInpu
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getMonarchApiAuthHeaders(),
         },
         body: JSON.stringify({ tokens: tokenBatch }),
       });

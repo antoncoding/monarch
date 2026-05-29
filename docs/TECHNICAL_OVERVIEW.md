@@ -385,7 +385,7 @@ Fallback Strategy:
 
 **Monarch GraphQL** (`/src/data-sources/monarch-api/fetchers.ts`):
 - Endpoint: `NEXT_PUBLIC_MONARCH_API_NEW`
-- Browser fetch against a public endpoint; `NEXT_PUBLIC_MONARCH_API_KEY` is optional and only sent when configured
+- Browser fetch against a public endpoint. Production Monarch origins do not send an API key; Vercel preview builds can set `NEXT_PUBLIC_MONARCH_PREVIEW_API_KEY`, which is only sent when the app runs on a `*.vercel.app` host.
 - Used as the primary read path for autovault V2 metadata, market-detail live state/history/activity, and admin transaction reads
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):

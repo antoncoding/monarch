@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
+import { getMonarchApiAuthHeaders } from '@/utils/monarchApiAuth';
 import { DATA_API_BASE_URL } from '@/utils/urls';
 
 export type AssetRiskEntry = {
@@ -31,7 +32,9 @@ const ASSET_RISK_REFRESH_MS = 15 * 60 * 1000;
 const getAssetRiskResponseKey = (address: string, chainId: number): string => `${chainId}:${address.toLowerCase()}`;
 
 const fetchAssetRisk = async (chainId: number): Promise<AssetRiskResponse> => {
-  const response = await fetch(`${DATA_API_BASE_URL}/v1/risk/assets?chain_id=${chainId}`);
+  const response = await fetch(`${DATA_API_BASE_URL}/v1/risk/assets?chain_id=${chainId}`, {
+    headers: getMonarchApiAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch asset risk data');
