@@ -9,7 +9,16 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { LuSunMedium } from 'react-icons/lu';
-import { RiBookLine, RiDiscordFill, RiGithubFill, RiLineChartLine, RiBriefcaseLine, RiGiftLine, RiPieChart2Line } from 'react-icons/ri';
+import {
+  RiBookLine,
+  RiBriefcaseLine,
+  RiDiscordFill,
+  RiGiftLine,
+  RiGithubFill,
+  RiKey2Line,
+  RiLineChartLine,
+  RiPieChart2Line,
+} from 'react-icons/ri';
 import { useConnection } from 'wagmi';
 import {
   DropdownMenu,
@@ -105,6 +114,13 @@ export default function NavbarMobile() {
               className="py-3"
             >
               <span className="font-medium">Analysis</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              startContent={<RiKey2Line className="h-5 w-5" />}
+              onClick={() => handleNavigation('/api-keys')}
+              className="py-3"
+            >
+              <span className="font-medium">API Keys</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               startContent={<RiBriefcaseLine className="h-5 w-5" />}
