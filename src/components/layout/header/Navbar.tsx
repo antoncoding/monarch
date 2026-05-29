@@ -10,7 +10,7 @@ import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { GearIcon } from '@radix-ui/react-icons';
 import { LuSunMedium } from 'react-icons/lu';
-import { RiBookLine, RiDiscordFill, RiGithubFill, RiPieChart2Line } from 'react-icons/ri';
+import { RiBookLine, RiDiscordFill, RiGithubFill, RiKey2Line, RiPieChart2Line } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useModal } from '@/hooks/useModal';
@@ -173,6 +173,12 @@ export function Navbar() {
                 onClick={() => router.push('/analysis')}
               >
                 Analysis
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                endContent={<RiKey2Line className="h-4 w-4" />}
+                onClick={() => router.push('/api-keys')}
+              >
+                API Keys
               </DropdownMenuItem>
               <DropdownMenuItem
                 endContent={<RiBookLine className="h-4 w-4" />}
