@@ -28,7 +28,7 @@ const DEFAULT_STATE: PositionsFiltersState = {
 };
 
 const isEarningsPeriod = (value: unknown): value is EarningsPeriod =>
-  typeof value === 'string' && EARNINGS_PERIODS.includes(value as EarningsPeriod);
+  (EARNINGS_PERIODS as readonly unknown[]).includes(value);
 
 const normalizePositionsFilters = (state: unknown): PositionsFiltersState => {
   if (!state || typeof state !== 'object') {
