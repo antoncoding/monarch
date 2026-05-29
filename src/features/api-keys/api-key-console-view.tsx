@@ -120,12 +120,12 @@ export function ApiKeyConsoleView() {
                 <p className="mt-2 max-w-xl text-sm leading-6 text-secondary">Generate a key, copy it, and store it securely.</p>
               </div>
               <Link
-                href={EXTERNAL_LINKS.docs}
+                href={EXTERNAL_LINKS.apiDocs}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-secondary no-underline transition-colors hover:text-primary hover:no-underline"
               >
-                Docs
+                API Docs
               </Link>
             </div>
           </div>

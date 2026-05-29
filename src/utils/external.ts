@@ -71,8 +71,10 @@ export const getMerklCampaignURL = (chainId: number, type: string, identifier: s
 };
 
 export const MONARCH_DOCS_URL = 'https://docs.monarchlend.xyz';
+export const MONARCH_API_DOCS_URL = `${MONARCH_DOCS_URL}/docs/api/rest`;
 
 export const EXTERNAL_LINKS = {
+  apiDocs: MONARCH_API_DOCS_URL,
   docs: MONARCH_DOCS_URL,
   discord: 'https://discord.gg/Ur4dwN3aPS',
   github: 'https://github.com/monarch-xyz',
