@@ -8,6 +8,16 @@ interface ReferralCodeResponse {
   error?: unknown;
 }
 
+interface ReferralCodeErrorResponse {
+  error: string;
+  debug?: {
+    upstreamStatus: number;
+    upstreamContentType: string | null;
+    upstreamCfRay: string | null;
+    upstreamRailwayRequestId: string | null;
+  };
+}
+
 export async function POST(request: NextRequest) {
   let body: unknown;
 
@@ -28,10 +38,20 @@ export async function POST(request: NextRequest) {
     const data = (await response.json().catch(() => ({}))) as ReferralCodeResponse;
 
     if (!response.ok || typeof data.code !== 'string') {
-      return NextResponse.json(
-        { error: typeof data.error === 'string' ? data.error : 'Failed to create referral code.' },
-        { status: response.status || 502 },
-      );
+      const errorBody: ReferralCodeErrorResponse = {
+        error: typeof data.error === 'string' ? data.error : 'Failed to create referral code.',
+      };
+
+      if (process.env.VERCEL_ENV !== 'production') {
+        errorBody.debug = {
+          upstreamStatus: response.status,
+          upstreamContentType: response.headers.get('content-type'),
+          upstreamCfRay: response.headers.get('cf-ray'),
+          upstreamRailwayRequestId: response.headers.get('x-railway-request-id'),
+        };
+      }
+
+      return NextResponse.json(errorBody, { status: response.status || 502 });
     }
 
     return NextResponse.json({
