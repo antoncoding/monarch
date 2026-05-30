@@ -86,6 +86,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Current portfolio value and holdings breakdowns must use current positive balances only; history-preserved zero-balance positions belong in analytics/history inputs, not current holdings tooltips.
 - Shared components/modals launched from multiple pages may receive prefetched data, but every launcher must be verified to provide the same canonical data source and field completeness; do not let one route skip fields required by shared limits, previews, or transaction availability.
 - Server-to-server internal writes must use a server-only internal origin and service credential, not the public `NEXT_PUBLIC_DATA_API_BASE_URL`; browser-facing API gateway protections can challenge or block machine clients before the request reaches the trusted backend.
+- Never commit concrete private service origins, generated provider URLs, internal endpoints, secrets, tokens, account IDs, or credential-shaped examples in code, docs, env examples, defaults, or config. Use placeholders in git and set real values only in deployment secret managers or local untracked env files.
 
 
 ## Transactions And Wallet Flows
