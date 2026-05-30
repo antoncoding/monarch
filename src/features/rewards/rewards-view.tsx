@@ -22,7 +22,7 @@ import { MORPHO_LEGACY, MORPHO_TOKEN_BASE, MORPHO_TOKEN_MAINNET } from '@/utils/
 import type { MarketRewardType, RewardAmount, AggregatedRewardType } from '@/utils/types';
 import RewardTable from './components/reward-table';
 import { PositionBreadcrumbs } from '@/features/position-detail/components/position-breadcrumbs';
-import { ReferralRewardsBlock } from './referral-rewards-section';
+import { ReferralRewardsBlock } from './referral-rewards-block';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
