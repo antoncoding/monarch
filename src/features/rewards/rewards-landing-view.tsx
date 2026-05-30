@@ -16,7 +16,6 @@ import { PositionBreadcrumbs } from '@/features/position-detail/components/posit
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { cn } from '@/utils';
-import { ReferralRewardsSection } from './referral-rewards-section';
 
 export default function RewardsLandingView() {
   const router = useRouter();
@@ -189,8 +188,6 @@ export default function RewardsLandingView() {
             )}
           </div>
         </div>
-
-        <ReferralRewardsSection />
 
         <div className="mt-8 max-w-[720px] rounded border border-border bg-surface p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">

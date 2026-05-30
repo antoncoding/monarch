@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RiCheckLine, RiFileCopyLine, RiSparkling2Line } from 'react-icons/ri';
+import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import AccountConnect from '@/components/layout/header/AccountConnect';
 import { Button } from '@/components/ui/button';
 
 interface ReferralCodeResponse {
@@ -11,26 +11,33 @@ interface ReferralCodeResponse {
   error?: string;
 }
 
-export function ReferralRewardsSection() {
+interface ReferralRewardsBlockProps {
+  account: Address;
+}
+
+export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
   const { address } = useConnection();
-  const [isOpen, setIsOpen] = useState(false);
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const canCreateReferral = !!address && address.toLowerCase() === account.toLowerCase();
 
   const referralUrl = useMemo(() => {
     if (!code || typeof window === 'undefined') return null;
     return `${window.location.origin}/?ref=${code}`;
   }, [code]);
 
-  const handleOpen = async () => {
-    setIsOpen(true);
+  useEffect(() => {
+    setCode(null);
+    setError(null);
     setCopied(false);
+  }, [address, account]);
 
-    if (!address || code || isLoading) {
-      return;
-    }
+  const requestReferralCode = async (): Promise<string | null> => {
+    if (!address || isLoading) return null;
+    if (referralUrl) return referralUrl;
 
     setIsLoading(true);
     setError(null);
@@ -50,84 +57,49 @@ export function ReferralRewardsSection() {
       }
 
       setCode(body.code);
+      return `${window.location.origin}/?ref=${body.code}`;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to create referral code.');
+      return null;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCopy = async () => {
-    if (!referralUrl) return;
-    setCopied(await copyText(referralUrl));
+  const handleReferralClick = async () => {
+    setCopied(false);
+
+    const url = referralUrl ?? (await requestReferralCode());
+    if (url) {
+      setCopied(await copyText(url));
+    }
   };
 
   return (
-    <section className="mt-6 rounded border border-border bg-surface p-4 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-secondary">
-            <RiSparkling2Line className="h-4 w-4 text-primary" />
-            Referral Rewards
-          </div>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
-            Share Monarch. When referred wallets pay platform fees, your referral share will be tracked automatically.
-          </p>
-        </div>
-
-        <div className="grid min-w-0 grid-cols-2 gap-3 sm:min-w-[260px]">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-secondary">Earned</div>
-            <div className="mt-1 text-lg tabular-nums text-primary">$0.00</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wider text-secondary">Fee Share</div>
-            <div className="mt-1 text-lg tabular-nums text-primary">40%</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {address ? (
+    <div className="flex flex-col gap-1">
+      <span className="flex items-center gap-1 text-xs uppercase tracking-wider text-secondary">
+        <RiSparkling2Line className="h-3.5 w-3.5 text-primary" />
+        Referral Share
+      </span>
+      <div className="flex flex-wrap items-center gap-2 text-lg sm:justify-end">
+        <span className="tabular-nums">$0.00</span>
+        <span className="rounded bg-hovered px-2 py-0.5 text-xs text-secondary">40%</span>
+        {canCreateReferral ? (
           <Button
-            variant="primary"
-            size="md"
-            onClick={handleOpen}
+            variant="surface"
+            size="xs"
+            onClick={handleReferralClick}
             isLoading={isLoading}
             disabled={isLoading}
+            aria-label="Create or copy referral link"
           >
-            <RiSparkling2Line className="h-4 w-4" />
-            Create referral link
+            {copied ? <RiCheckLine className="h-4 w-4" /> : <RiFileCopyLine className="h-4 w-4" />}
+            {copied ? 'Copied' : code ? 'Copy link' : 'Create link'}
           </Button>
-        ) : (
-          <div className="[&>div]:flex-grow-0">
-            <AccountConnect onConnectPath="rewards" />
-          </div>
-        )}
-        <span className="text-xs text-secondary">Fee sharing is not live yet. Referral links can be created now.</span>
+        ) : null}
       </div>
-
-      {isOpen && address ? (
-        <div className="mt-4 border-t border-border pt-4">
-          {error ? <p className="text-sm text-red-500">{error}</p> : null}
-          {referralUrl ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <code className="min-w-0 flex-1 truncate rounded bg-hovered px-3 py-2 font-monospace text-xs text-primary">
-                {referralUrl}
-              </code>
-              <Button
-                variant="surface"
-                size="sm"
-                onClick={handleCopy}
-              >
-                {copied ? <RiCheckLine className="h-4 w-4" /> : <RiFileCopyLine className="h-4 w-4" />}
-                {copied ? 'Copied' : 'Copy'}
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </section>
+      {error ? <span className="text-xs text-red-500">{error}</span> : null}
+    </div>
   );
 }
 
@@ -137,9 +109,23 @@ async function copyText(value: string): Promise<boolean> {
       await navigator.clipboard.writeText(value);
       return true;
     } catch {
-      return false;
+      // Fall back to the textarea path below for non-secure contexts.
     }
   }
 
-  return false;
+  if (typeof document === 'undefined') return false;
+
+  const textArea = document.createElement('textarea');
+  textArea.value = value;
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    return document.execCommand('copy');
+  } finally {
+    document.body.removeChild(textArea);
+  }
 }
