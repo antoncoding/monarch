@@ -400,8 +400,10 @@ Fallback Strategy:
 ### Server-Only API Tokens
 
 - `MONARCH_API_KEYS_ADMIN_TOKEN`: used only by `/api/api-keys` to call the data gateway admin API and create user-facing `mk_live` / `mk_test` API keys.
-- `DATA_API_INTERNAL_ADMIN_KEY`: used by referral and platform-fee app routes to call data-api `/internal/*` endpoints through `NEXT_PUBLIC_DATA_API_BASE_URL`.
+- `DATA_API_INTERNAL_ORIGIN`: server-only origin used by referral and platform-fee app routes for data-api `/internal/*` writes. In deployed environments this should point directly at the data-api service origin, for example the Railway service URL, not the public Cloudflare API host.
+- `DATA_API_INTERNAL_ADMIN_KEY`: server-only key sent as `X-Internal-Admin-Key` to data-api `/internal/*` routes.
 - These keys are intentionally separate. The API-key admin token mints external user keys; the internal admin key writes trusted referral and fee records.
+- Public data reads still use `NEXT_PUBLIC_DATA_API_BASE_URL` and should continue to go through the Cloudflare data gateway. Internal writes do not use that public browser-facing origin because Cloudflare bot/WAF controls are designed for public edge traffic and can challenge server-to-server requests before they reach data-api. The internal write path relies on the direct service origin plus `DATA_API_INTERNAL_ADMIN_KEY`; Railway/data-api remains responsible for rejecting unauthenticated writes.
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
 - Configurable URL per network

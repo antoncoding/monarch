@@ -8,9 +8,9 @@ export async function callDataApiInternal(path: string, body: unknown): Promise<
     throw new Error('DATA_API_INTERNAL_ADMIN_KEY is not configured.');
   }
 
-  const origin = (process.env.NEXT_PUBLIC_DATA_API_BASE_URL ?? '').replace(/\/+$/, '');
+  const origin = (process.env.DATA_API_INTERNAL_ORIGIN ?? '').replace(/\/+$/, '');
   if (!origin) {
-    throw new Error('NEXT_PUBLIC_DATA_API_BASE_URL is not configured.');
+    throw new Error('DATA_API_INTERNAL_ORIGIN is not configured.');
   }
 
   return fetch(`${origin}${path}`, {
