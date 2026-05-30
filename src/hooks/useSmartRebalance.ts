@@ -13,6 +13,7 @@ import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useRebalanceExecution, type RebalanceExecutionStepType } from './useRebalanceExecution';
 import { useConnection } from 'wagmi';
 import { computeAssetUsdValue } from '@/utils/assetDisplay';
+import type { PlatformFeeEventInput } from './usePlatformFeeTracking';
 
 const FULL_RATE_PPM = 1_000_000n;
 const SMART_REBALANCE_SHARE_WITHDRAW_DUST_BUFFER = 1000n;
@@ -195,6 +196,20 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
     [feeBreakdown.isReady, feeBreakdown.totalFee, feeBreakdown.uncappedTotalFee],
   );
 
+  const platformFeeEvents = useMemo<PlatformFeeEventInput[]>(() => {
+    if (feeAmount == null || feeAmount <= 0n) {
+      return [];
+    }
+
+    return [
+      {
+        source: 'smart_rebalance',
+        tokenAddress: groupedPosition.loanAssetAddress,
+        amountRaw: feeAmount.toString(),
+      },
+    ];
+  }, [feeAmount, groupedPosition.loanAssetAddress]);
+
   const estimatedDailyEarningsUsd = useMemo(
     () => computeEstimatedDailyEarningsUsd(plan, groupedPosition.loanAssetDecimals, effectiveLoanAssetPriceUsd),
     [effectiveLoanAssetPriceUsd, groupedPosition.loanAssetDecimals, plan],
@@ -227,6 +242,7 @@ export const useSmartRebalance = (groupedPosition: GroupedPosition, plan: SmartR
     pendingText: 'Smart rebalancing positions',
     successText: 'Smart rebalance completed successfully',
     errorText: 'Failed to smart rebalance positions',
+    platformFeeEvents,
     onSuccess,
   });
 

@@ -10,6 +10,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { useBundlerAuthorizationStep } from './useBundlerAuthorizationStep';
 import { useERC20Approval } from './useERC20Approval';
 import { usePermit2 } from './usePermit2';
+import type { PlatformFeeEventInput } from './usePlatformFeeTracking';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionTracking } from './useTransactionTracking';
 import { useTransactionWithToast } from './useTransactionWithToast';
@@ -49,6 +50,7 @@ type UseRebalanceExecutionParams = {
   pendingText: string;
   successText: string;
   errorText: string;
+  platformFeeEvents?: PlatformFeeEventInput[];
   onSuccess?: () => void;
 };
 
@@ -122,6 +124,7 @@ export function useRebalanceExecution({
   pendingText,
   successText,
   errorText,
+  platformFeeEvents,
   onSuccess,
 }: UseRebalanceExecutionParams) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -191,6 +194,7 @@ export function useRebalanceExecution({
     errorText,
     chainId,
     onSuccess: handleTxConfirmed,
+    platformFeeEvents,
   });
 
   const waitForPermit2State = useCallback(async () => {

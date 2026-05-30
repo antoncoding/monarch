@@ -397,6 +397,12 @@ Fallback Strategy:
 - Verification: the Next.js route parses the signed message, checks origin and timestamp freshness, verifies the signature through a viem public client so contract wallets can use ERC-1271, then calls the data gateway admin API using the server-only `MONARCH_API_KEYS_ADMIN_TOKEN`.
 - Created keys use the `mk_live` prefix, `data.read,indexer.query` scopes, and the free rate-limit tier. Existing-key listing and revocation are not exposed in the Monarch UI yet.
 
+### Server-Only API Tokens
+
+- `MONARCH_API_KEYS_ADMIN_TOKEN`: used only by `/api/api-keys` to call the data gateway admin API and create user-facing `mk_live` / `mk_test` API keys.
+- `DATA_API_INTERNAL_ADMIN_KEY`: used by referral and platform-fee app routes to call data-api `/internal/*` endpoints through `NEXT_PUBLIC_DATA_API_BASE_URL`.
+- These keys are intentionally separate. The API-key admin token mints external user keys; the internal admin key writes trusted referral and fee records.
+
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
 - Configurable URL per network
 - Logs GraphQL errors but continues (lenient)

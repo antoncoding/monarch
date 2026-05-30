@@ -8,6 +8,7 @@ import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import type { PlatformFeeEventInput } from '@/hooks/usePlatformFeeTracking';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { leverageWithErc4626Deposit } from '@/hooks/leverage/leverageWithErc4626Deposit';
@@ -143,6 +144,30 @@ export function useLeverageTransaction({
     chainId: market.morphoBlue.chain.id,
   });
 
+  const platformFeeEvents = useMemo<PlatformFeeEventInput[]>(() => {
+    if (collateralAssetPriceUsd == null || !Number.isFinite(collateralAssetPriceUsd) || collateralAssetPriceUsd <= 0) {
+      return [];
+    }
+
+    const leverageFeeAmount = getLeverageFee({
+      amount: totalCollateralTokenAmountAdded,
+      assetPriceUsd: collateralAssetPriceUsd,
+      assetDecimals: market.collateralAsset.decimals,
+    });
+
+    if (leverageFeeAmount <= 0n) {
+      return [];
+    }
+
+    return [
+      {
+        source: 'leverage',
+        tokenAddress: market.collateralAsset.address,
+        amountRaw: leverageFeeAmount.toString(),
+      },
+    ];
+  }, [collateralAssetPriceUsd, market.collateralAsset.address, market.collateralAsset.decimals, totalCollateralTokenAmountAdded]);
+
   const { isConfirming: leveragePending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'leverage',
     pendingText: `Leveraging ${formatBalance(initialCapitalInputAmount, initialCapitalInputTokenDecimals)} ${initialCapitalInputTokenSymbol}`,
@@ -155,6 +180,7 @@ export function useLeverageTransaction({
       void refetchIsBundlerAuthorized();
       if (onSuccess) void onSuccess();
     },
+    platformFeeEvents,
   });
   const trackingMetadata = useMemo(
     () => ({

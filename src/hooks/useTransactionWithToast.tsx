@@ -7,8 +7,10 @@ import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors'
 import { cacheUserTransactionHistoryFromReceipt } from '@/utils/user-transaction-history-cache';
 import { getExplorerTxURL } from '../utils/external';
 import type { SupportedNetworks } from '../utils/networks';
+import { usePlatformFeeTracking, type PlatformFeeEventInput } from './usePlatformFeeTracking';
+import { useReferralAttributionTracking } from './useReferralAttributionTracking';
 
-type UseTransactionWithToastProps = {
+interface UseTransactionWithToastProps {
   toastId: string;
   pendingText: string;
   successText: string;
@@ -17,9 +19,11 @@ type UseTransactionWithToastProps = {
   pendingDescription?: string;
   successDescription?: string;
   onSuccess?: () => void;
-};
+  platformFeeEvents?: PlatformFeeEventInput[];
+}
 
 const MAX_TOAST_MESSAGE_LENGTH = 160;
+const NO_PLATFORM_FEE_EVENTS: PlatformFeeEventInput[] = [];
 
 const truncateToastMessage = (message: string): string => {
   if (message.length <= MAX_TOAST_MESSAGE_LENGTH) {
@@ -37,10 +41,13 @@ export function useTransactionWithToast({
   pendingDescription,
   successDescription,
   onSuccess,
+  platformFeeEvents = NO_PLATFORM_FEE_EVENTS,
 }: UseTransactionWithToastProps) {
   const { data: hash, mutate: sendTransaction, error: txError, mutateAsync: sendTransactionAsync } = useSendTransaction();
   const reportedErrorKeyRef = useRef<string | null>(null);
   const handledConfirmationHashRef = useRef<string | null>(null);
+  const { trackPlatformFeeEvents } = usePlatformFeeTracking();
+  const { trackReferralAttribution } = useReferralAttributionTracking();
 
   const {
     data: receipt,
@@ -118,6 +125,20 @@ export function useTransactionWithToast({
         });
       }
 
+      if (hash && chainId) {
+        // We intentionally record the submitted hash. Wallet replacement from gas bumps is rare enough
+        // to reconcile from chain data later; keeping this path simple is the right tradeoff for now.
+        void trackReferralAttribution({ chainId, txHash: hash }).catch(() => undefined);
+
+        if (platformFeeEvents.length > 0) {
+          void trackPlatformFeeEvents({
+            chainId,
+            txHash: hash,
+            events: platformFeeEvents,
+          }).catch(() => undefined);
+        }
+      }
+
       if (onSuccessRef.current) {
         onSuccessRef.current();
       }
@@ -177,6 +198,9 @@ export function useTransactionWithToast({
     onClick,
     chainId,
     pendingText,
+    platformFeeEvents,
+    trackPlatformFeeEvents,
+    trackReferralAttribution,
   ]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };

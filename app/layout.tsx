@@ -9,6 +9,7 @@ import OnchainProviders from '@/OnchainProviders';
 import { ModalRenderer } from '@/components/modals/ModalRenderer';
 import { GlobalTransactionModals } from '@/components/common/GlobalTransactionModals';
 import { DataPrefetcher } from '@/components/DataPrefetcher';
+import { ReferralTrackingProvider } from '@/components/providers/ReferralTrackingProvider';
 
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <VaultRegistryProvider>
                 <ClientProviders>
                   <DataPrefetcher />
+                  <ReferralTrackingProvider />
                   {children}
                   <RiskNotificationModal />
                   <ModalRenderer />
