@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { RiCheckLine, RiFileCopyLine, RiSparklingFill } from 'react-icons/ri';
+import { RiCheckLine, RiFileCopyLine, RiShieldCheckLine, RiSparklingFill } from 'react-icons/ri';
 import { getAddress, type Address } from 'viem';
 import { useChainId, useConnection, useSignMessage } from 'wagmi';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
@@ -18,7 +18,7 @@ interface ReferralRewardsBlockProps {
   account: Address;
 }
 
-type ReferralRequestState = 'idle' | 'signing' | 'creating';
+type ReferralRequestState = 'idle' | 'signing' | 'loading';
 
 export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
   const { address } = useConnection();
@@ -55,7 +55,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
     setIsModalOpen(false);
   }, [address, account]);
 
-  const requestReferralCode = async (): Promise<string | null> => {
+  const verifyAndLoadReferralLink = async (): Promise<string | null> => {
     if (!normalizedAddress || isRequesting) return null;
     if (referralUrl) return referralUrl;
 
@@ -68,7 +68,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
       });
       const signature = await signMessageAsync({ message });
 
-      setRequestState('creating');
+      setRequestState('loading');
       const response = await fetch('/api/referrals/code', {
         method: 'POST',
         headers: {
@@ -100,7 +100,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
   const handleReferralClick = async () => {
     setCopied(false);
 
-    const url = referralUrl ?? (await requestReferralCode());
+    const url = referralUrl ?? (await verifyAndLoadReferralLink());
     if (url) {
       setCopied(await copyText(url));
     }
@@ -176,7 +176,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
                 </button>
               ) : (
                 <p className="text-sm leading-6 text-secondary">
-                  Create a referral link now. Fee-share balances will show here when payouts go live.
+                  Sign once to show or create your referral link. Fee-share balances will show here when payouts go live.
                 </p>
               )}
 
@@ -190,7 +190,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
                 isLoading={isRequesting}
                 disabled={isRequesting}
               >
-                {copied ? <RiCheckLine className="h-4 w-4" /> : <RiFileCopyLine className="h-4 w-4" />}
+                {getReferralActionIcon({ copied, hasCode: Boolean(code) })}
                 {getReferralActionLabel({ copied, hasCode: Boolean(code), requestState })}
               </Button>
             </ModalFooter>
@@ -212,9 +212,15 @@ function getReferralActionLabel({
 }) {
   if (copied) return 'Copied';
   if (requestState === 'signing') return 'Sign in wallet';
-  if (requestState === 'creating') return 'Creating link';
+  if (requestState === 'loading') return 'Loading link';
   if (hasCode) return 'Copy link';
-  return 'Create link';
+  return 'Verify wallet';
+}
+
+function getReferralActionIcon({ copied, hasCode }: { copied: boolean; hasCode: boolean }) {
+  if (copied) return <RiCheckLine className="h-4 w-4" />;
+  if (hasCode) return <RiFileCopyLine className="h-4 w-4" />;
+  return <RiShieldCheckLine className="h-4 w-4" />;
 }
 
 async function copyText(value: string): Promise<boolean> {

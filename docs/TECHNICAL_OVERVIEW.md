@@ -402,7 +402,7 @@ Fallback Strategy:
 - Page: connected wallet rewards block on `/rewards/:account`.
 - Wallet proof: client signs a referral-specific message containing only the owner wallet address before creating or returning a referral link.
 - Server route: `POST /api/referrals/code`.
-- Verification: the Next.js route parses the signed message, verifies the signature for that wallet, then calls data-api `/internal/referrals/code` with the verified wallet as the referral-code owner. `chainId` is passed separately only as signature-verification context for contract wallets.
+- Verification: the Next.js route parses the signed message, verifies the signature for that wallet, then calls data-api `/internal/referrals/code` with the verified wallet as the referral-code owner. `chainId` is passed separately only as signature-verification context for contract wallets. There is no unsigned read route for referral links; returning an existing link uses the same signed POST.
 - Storage: data-api stores the owner wallet in `referral_codes.referrer_wallet`; later referral attribution and fee-share accounting use that owner wallet to determine claimable rewards.
 
 ### Server-Only API Tokens
