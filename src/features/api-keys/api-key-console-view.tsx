@@ -4,26 +4,25 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { RiCheckLine, RiFileCopyLine, RiKey2Line } from 'react-icons/ri';
 import { getAddress } from 'viem';
-import { useChainId, useConnection, useSignMessage } from 'wagmi';
+import { useConnection, useSignMessage } from 'wagmi';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { buildApiKeyRequestMessage } from '@/utils/apiKeyRequest';
 import { EXTERNAL_LINKS } from '@/utils/external';
+import { getWalletSignatureMessage } from '@/utils/walletSignature';
 
-type CreatedApiKey = {
+interface CreatedApiKey {
   apiKey: string;
   key?: {
     name?: string;
   };
-};
+}
 
 type CreationState = 'idle' | 'signing' | 'creating' | 'created' | 'error';
 
 export function ApiKeyConsoleView() {
   const { address, isConnected } = useConnection();
-  const chainId = useChainId();
   const { signMessageAsync } = useSignMessage();
   const [keyName, setKeyName] = useState('Default API key');
   const [createdKey, setCreatedKey] = useState<CreatedApiKey | null>(null);
@@ -54,12 +53,11 @@ export function ApiKeyConsoleView() {
 
     try {
       setCreationState('signing');
-      const message = buildApiKeyRequestMessage({
+      const timestamp = Date.now();
+      const message = getWalletSignatureMessage({
+        purpose: 'API key',
         wallet: normalizedAddress,
-        chainId,
-        origin: window.location.origin,
-        issuedAt: new Date().toISOString(),
-        nonce: createRequestNonce(),
+        timestamp,
       });
       const signature = await signMessageAsync({ message });
 
@@ -72,7 +70,7 @@ export function ApiKeyConsoleView() {
         body: JSON.stringify({
           address: normalizedAddress,
           signature,
-          message,
+          timestamp,
           name: keyName,
         }),
       });
@@ -201,22 +199,6 @@ function getActionLabel(state: CreationState) {
   if (state === 'creating') return 'Creating key';
   if (state === 'created') return 'Generate another';
   return 'Generate key';
-}
-
-function createRequestNonce() {
-  if (typeof crypto === 'undefined') {
-    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
-  }
-
-  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-
-  if (typeof crypto.getRandomValues === 'function') {
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  }
-
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 }
 
 async function copyText(value: string): Promise<boolean> {

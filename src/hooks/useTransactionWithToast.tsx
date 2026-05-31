@@ -3,12 +3,13 @@ import { toast } from 'react-toastify';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { StyledToast, TransactionToast } from '@/components/ui/styled-toast';
 import { reportHandledError } from '@/utils/sentry';
+import { clearStoredReferralCode, getStoredReferralCode } from '@/utils/referrals';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import { cacheUserTransactionHistoryFromReceipt } from '@/utils/user-transaction-history-cache';
 import { getExplorerTxURL } from '../utils/external';
 import type { SupportedNetworks } from '../utils/networks';
 
-type UseTransactionWithToastProps = {
+interface UseTransactionWithToastProps {
   toastId: string;
   pendingText: string;
   successText: string;
@@ -17,7 +18,7 @@ type UseTransactionWithToastProps = {
   pendingDescription?: string;
   successDescription?: string;
   onSuccess?: () => void;
-};
+}
 
 const MAX_TOAST_MESSAGE_LENGTH = 160;
 
@@ -116,6 +117,26 @@ export function useTransactionWithToast({
           txHash: hash,
           chainId,
         });
+      }
+
+      if (receipt && hash && chainId) {
+        const referralCode = getStoredReferralCode();
+        if (referralCode) {
+          void fetch('/api/referrals/attribute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              referredWallet: receipt.from,
+              referralCode,
+              chainId,
+              txHash: hash,
+            }),
+          })
+            .then((response) => {
+              if (response.ok) clearStoredReferralCode();
+            })
+            .catch(() => undefined);
+        }
       }
 
       if (onSuccessRef.current) {

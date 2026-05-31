@@ -392,10 +392,16 @@ Fallback Strategy:
 
 - Page: `/api-keys`
 - Navigation: desktop and mobile More menus
-- Wallet proof: client signs a short message with `useSignMessage`; the message includes wallet address, chain ID, browser origin, issued timestamp, and nonce.
+- Wallet proof: client signs a short message with `useSignMessage`; server reconstructs the message from wallet address, Mainnet chain ID, purpose, and current timestamp.
 - Server route: `POST /api/api-keys`
-- Verification: the Next.js route parses the signed message, checks origin and timestamp freshness, verifies the signature through a viem public client so contract wallets can use ERC-1271, then calls the data gateway admin API using the server-only `MONARCH_API_KEYS_ADMIN_TOKEN`.
+- Verification: the Next.js route verifies wallet ownership through a viem public client so contract wallets can use ERC-1271, then calls the data gateway admin API using server-only `MONARCH_API_KEYS_ADMIN_TOKEN` and `MONARCH_API_KEYS_ADMIN_URL`.
 - Created keys use the `mk_live` prefix, `data.read,indexer.query` scopes, and the free rate-limit tier. Existing-key listing and revocation are not exposed in the Monarch UI yet.
+
+### Referrals
+
+- Referral links are visible only on the connected wallet's own `/rewards/:account` page after signing the same Mainnet wallet-ownership proof shape used for API-key creation.
+- Referral attribution runs after transaction confirmation and never blocks transaction success UI.
+- Server routes use `DATA_API_INTERNAL_ORIGIN` and `DATA_API_INTERNAL_ADMIN_KEY` for data-api `/internal/*` writes. Real origins and credentials belong only in deployment secret managers or local untracked env files.
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
 - Configurable URL per network
