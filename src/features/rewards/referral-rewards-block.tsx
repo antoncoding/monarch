@@ -79,6 +79,11 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
     }
   };
 
+  const handleReferralUrlCopy = async () => {
+    if (!referralUrl) return;
+    setCopied(await copyText(referralUrl));
+  };
+
   if (!isConnectedWallet) return null;
 
   return (
@@ -131,7 +136,17 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
               </div>
 
               {referralUrl ? (
-                <code className="block truncate rounded bg-hovered px-3 py-2 font-monospace text-xs text-primary">{referralUrl}</code>
+                <button
+                  type="button"
+                  onClick={handleReferralUrlCopy}
+                  className="group flex min-w-0 items-center gap-2 rounded bg-hovered px-2.5 py-2 text-left transition hover:bg-hovered/80"
+                  aria-label={copied ? 'Referral link copied' : 'Copy referral link'}
+                >
+                  <code className="min-w-0 flex-1 truncate font-monospace text-[11px] leading-5 text-primary/80">{referralUrl}</code>
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center text-secondary transition group-hover:text-primary">
+                    {copied ? <RiCheckLine className="h-4 w-4" /> : <RiFileCopyLine className="h-4 w-4" />}
+                  </span>
+                </button>
               ) : (
                 <p className="text-sm leading-6 text-secondary">
                   Create a referral link now. Fee-share balances will show here when payouts go live.
