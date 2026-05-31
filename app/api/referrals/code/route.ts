@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
       code: data.code,
       referrerWallet: data.referrerWallet,
     });
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to create referral code.' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Failed to create referral code.' }, { status: 500 });
   }
 }
 

@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to record referral attribution.' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Failed to record referral attribution.' }, { status: 500 });
   }
 }
 
