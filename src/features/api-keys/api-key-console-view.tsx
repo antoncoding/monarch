@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { buildApiKeyRequestMessage } from '@/utils/apiKeyRequest';
 import { EXTERNAL_LINKS } from '@/utils/external';
-import { createRequestNonce } from '@/utils/requestNonce';
 
 interface CreatedApiKey {
   apiKey: string;
@@ -202,6 +201,26 @@ function getActionLabel(state: CreationState) {
   if (state === 'creating') return 'Creating key';
   if (state === 'created') return 'Generate another';
   return 'Generate key';
+}
+
+function createRequestNonce() {
+  if (typeof crypto === 'undefined') {
+    return createFallbackNonce();
+  }
+
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+
+  if (typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  return createFallbackNonce();
+}
+
+function createFallbackNonce() {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2).padEnd(16, '0')}`;
 }
 
 async function copyText(value: string): Promise<boolean> {

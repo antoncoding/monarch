@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { callDataApiInternal } from '@/utils/dataApiInternal';
 import { parseReferralCodeRequestMessage } from '@/utils/referralRequest';
-import { verifyReferralSignatureRequest } from '@/utils/referralSignatureRequest';
+import { verifyWalletMessage } from '@/utils/serverWalletSignature';
 
 interface ReferralCodeResponse {
   code?: unknown;
@@ -25,12 +25,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature message.' }, { status: 400 });
   }
 
-  const verification = await verifyReferralSignatureRequest({
+  const verification = await verifyWalletMessage({
     address: body.address,
+    signedWallet: parsedMessage.wallet,
     chainId: body.chainId,
     signature: body.signature,
     message: body.message,
-    parsedMessage,
   });
   if (!verification.ok) return NextResponse.json({ error: verification.error }, { status: verification.status });
 

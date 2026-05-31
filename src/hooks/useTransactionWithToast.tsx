@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useConnection, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { StyledToast, TransactionToast } from '@/components/ui/styled-toast';
 import { reportHandledError } from '@/utils/sentry';
+import { getStoredReferralCode } from '@/utils/referrals';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import { cacheUserTransactionHistoryFromReceipt } from '@/utils/user-transaction-history-cache';
 import { getExplorerTxURL } from '../utils/external';
 import type { SupportedNetworks } from '../utils/networks';
 import { usePlatformFeeTracking, type PlatformFeeEventInput } from './usePlatformFeeTracking';
-import { useReferralAttributionTracking } from './useReferralAttributionTracking';
 
 interface UseTransactionWithToastProps {
   toastId: string;
@@ -43,11 +43,11 @@ export function useTransactionWithToast({
   onSuccess,
   platformFeeEvents = NO_PLATFORM_FEE_EVENTS,
 }: UseTransactionWithToastProps) {
+  const { address } = useConnection();
   const { data: hash, mutate: sendTransaction, error: txError, mutateAsync: sendTransactionAsync } = useSendTransaction();
   const reportedErrorKeyRef = useRef<string | null>(null);
   const handledConfirmationHashRef = useRef<string | null>(null);
   const { trackPlatformFeeEvents } = usePlatformFeeTracking();
-  const { trackReferralAttribution } = useReferralAttributionTracking();
 
   const {
     data: receipt,
@@ -128,7 +128,21 @@ export function useTransactionWithToast({
       if (hash && chainId) {
         // We intentionally record the submitted hash. Wallet replacement from gas bumps is rare enough
         // to reconcile from chain data later; keeping this path simple is the right tradeoff for now.
-        void trackReferralAttribution({ chainId, txHash: hash }).catch(() => undefined);
+        const referralCode = getStoredReferralCode();
+        if (address && referralCode) {
+          void fetch('/api/referrals/attribute', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              referredWallet: address,
+              referralCode,
+              chainId,
+              txHash: hash,
+            }),
+          }).catch(() => undefined);
+        }
 
         if (platformFeeEvents.length > 0) {
           void trackPlatformFeeEvents({
@@ -197,10 +211,10 @@ export function useTransactionWithToast({
     toastId,
     onClick,
     chainId,
+    address,
     pendingText,
     platformFeeEvents,
     trackPlatformFeeEvents,
-    trackReferralAttribution,
   ]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };

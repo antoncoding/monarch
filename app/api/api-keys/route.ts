@@ -1,9 +1,15 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { parseApiKeyRequestMessage } from '@/utils/apiKeyRequest';
-import { verifyApiKeySignatureRequest } from '@/utils/apiKeySignatureRequest';
+import { verifyWalletMessage } from '@/utils/serverWalletSignature';
 
 const DEFAULT_ADMIN_ENDPOINT = 'https://data-api-gateway-worker.antonassocareer.workers.dev/admin/api-keys';
 const ADMIN_REQUEST_TIMEOUT_MS = 10_000;
+const REQUEST_TTL_MS = 10 * 60 * 1000;
+const REQUEST_CLOCK_SKEW_MS = 60 * 1000;
+const VERCEL_PREVIEW_HOST_SUFFIX = '.vercel.app';
+const FIRST_PARTY_HOSTS = new Set(['monarchlend.xyz', 'www.monarchlend.xyz']);
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const NONCE_PATTERN = /^[A-Za-z0-9-]{16,80}$/;
 
 interface CreateApiKeyRequestBody {
   address?: unknown;
@@ -32,12 +38,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature message.' }, { status: 400 });
   }
 
-  const verification = await verifyApiKeySignatureRequest({
-    request,
+  const applicationOrigin = getApplicationOrigin(request);
+  if (!applicationOrigin) {
+    return NextResponse.json({ error: 'Unsupported application origin.' }, { status: 403 });
+  }
+
+  if (parsedMessage.origin !== applicationOrigin) {
+    return NextResponse.json({ error: 'Signed origin does not match request origin.' }, { status: 400 });
+  }
+
+  if (!isFreshTimestamp(parsedMessage.issuedAt)) {
+    return NextResponse.json({ error: 'Signature request expired.' }, { status: 400 });
+  }
+
+  if (!NONCE_PATTERN.test(parsedMessage.nonce)) {
+    return NextResponse.json({ error: 'Invalid signature nonce.' }, { status: 400 });
+  }
+
+  const verification = await verifyWalletMessage({
     address: body.address,
+    signedWallet: parsedMessage.wallet,
+    chainId: parsedMessage.chainId,
     signature: body.signature,
     message: body.message,
-    parsedMessage,
   });
   if (!verification.ok) return NextResponse.json({ error: verification.error }, { status: verification.status });
 
@@ -46,9 +69,9 @@ export async function POST(request: NextRequest) {
     address: verification.address,
     name: body.name,
     chainId: verification.chainId,
-    origin: verification.origin,
-    issuedAt: verification.issuedAt,
-    nonce: verification.nonce,
+    origin: parsedMessage.origin,
+    issuedAt: parsedMessage.issuedAt,
+    nonce: parsedMessage.nonce,
   });
 
   return adminResponse;
@@ -176,6 +199,33 @@ function sanitizeKeyName(value: unknown): string {
   if (!trimmed) return 'Monarch API key';
 
   return trimmed.slice(0, 120);
+}
+
+function getApplicationOrigin(request: { headers: Headers; url: string }): string | null {
+  const host = readForwardedHeader(request.headers.get('x-forwarded-host')) ?? request.headers.get('host');
+  if (!host) return null;
+
+  if (!isAllowedApplicationHost(host)) return null;
+
+  const protocol = readForwardedHeader(request.headers.get('x-forwarded-proto')) ?? new URL(request.url).protocol.replace(/:$/, '');
+  return `${protocol}://${host}`.replace(/\/+$/, '');
+}
+
+function readForwardedHeader(value: string | null): string | null {
+  return value?.split(',')[0]?.trim() || null;
+}
+
+function isAllowedApplicationHost(host: string): boolean {
+  const hostname = host.toLowerCase().replace(/:\d+$/, '');
+  return FIRST_PARTY_HOSTS.has(hostname) || hostname.endsWith(VERCEL_PREVIEW_HOST_SUFFIX) || LOOPBACK_HOSTS.has(hostname);
+}
+
+function isFreshTimestamp(value: string): boolean {
+  const issuedAtMs = Date.parse(value);
+  if (!Number.isFinite(issuedAtMs)) return false;
+
+  const now = Date.now();
+  return issuedAtMs <= now + REQUEST_CLOCK_SKEW_MS && now - issuedAtMs <= REQUEST_TTL_MS;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

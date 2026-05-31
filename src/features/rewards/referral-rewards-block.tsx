@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { RiCheckLine, RiFileCopyLine, RiShieldCheckLine, RiSparklingFill } from 'react-icons/ri';
+import { RiCheckLine, RiFileCopyLine, RiSparklingFill } from 'react-icons/ri';
 import { getAddress, type Address } from 'viem';
 import { useChainId, useConnection, useSignMessage } from 'wagmi';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
@@ -106,11 +106,6 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
     }
   };
 
-  const handleReferralUrlCopy = async () => {
-    if (!referralUrl) return;
-    setCopied(await copyText(referralUrl));
-  };
-
   if (!isConnectedWallet) return null;
 
   return (
@@ -165,7 +160,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
               {referralUrl ? (
                 <button
                   type="button"
-                  onClick={handleReferralUrlCopy}
+                  onClick={handleReferralClick}
                   className="group flex min-w-0 items-center gap-2 rounded bg-hovered px-2.5 py-2 text-left transition hover:bg-hovered/80"
                   aria-label={copied ? 'Referral link copied' : 'Copy referral link'}
                 >
@@ -190,7 +185,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
                 isLoading={isRequesting}
                 disabled={isRequesting}
               >
-                {getReferralActionIcon({ copied, hasCode: Boolean(code) })}
+                {copied ? <RiCheckLine className="h-4 w-4" /> : <RiFileCopyLine className="h-4 w-4" />}
                 {getReferralActionLabel({ copied, hasCode: Boolean(code), requestState })}
               </Button>
             </ModalFooter>
@@ -215,12 +210,6 @@ function getReferralActionLabel({
   if (requestState === 'loading') return 'Loading link';
   if (hasCode) return 'Copy link';
   return 'Verify wallet';
-}
-
-function getReferralActionIcon({ copied, hasCode }: { copied: boolean; hasCode: boolean }) {
-  if (copied) return <RiCheckLine className="h-4 w-4" />;
-  if (hasCode) return <RiFileCopyLine className="h-4 w-4" />;
-  return <RiShieldCheckLine className="h-4 w-4" />;
 }
 
 async function copyText(value: string): Promise<boolean> {
