@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RiCheckLine, RiFileCopyLine, RiSparklingFill } from 'react-icons/ri';
 import { getAddress, type Address } from 'viem';
 import { useChainId, useConnection, useSignMessage } from 'wagmi';
@@ -31,20 +31,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isConnectedWallet = !!address && address.toLowerCase() === account.toLowerCase();
-  const normalizedAddress = useMemo(() => {
-    if (!address) return null;
-
-    try {
-      return getAddress(address);
-    } catch {
-      return null;
-    }
-  }, [address]);
-
-  const referralUrl = useMemo(() => {
-    if (!code || typeof window === 'undefined') return null;
-    return `${window.location.origin}/?ref=${code}`;
-  }, [code]);
+  const referralUrl = code && typeof window !== 'undefined' ? `${window.location.origin}/?ref=${code}` : null;
   const isRequesting = requestState !== 'idle';
 
   useEffect(() => {
@@ -56,15 +43,16 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
   }, [address, account]);
 
   const verifyAndLoadReferralLink = async (): Promise<string | null> => {
-    if (!normalizedAddress || isRequesting) return null;
+    if (!address || isRequesting) return null;
     if (referralUrl) return referralUrl;
 
     setError(null);
 
     try {
+      const wallet = getAddress(address);
       setRequestState('signing');
       const message = buildReferralCodeRequestMessage({
-        wallet: normalizedAddress,
+        wallet,
       });
       const signature = await signMessageAsync({ message });
 
@@ -75,7 +63,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          address: normalizedAddress,
+          address: wallet,
           chainId,
           signature,
           message,
@@ -213,28 +201,10 @@ function getReferralActionLabel({
 }
 
 async function copyText(value: string): Promise<boolean> {
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(value);
-      return true;
-    } catch {
-      // Fall back to the textarea path below for non-secure contexts.
-    }
-  }
-
-  if (typeof document === 'undefined') return false;
-
-  const textArea = document.createElement('textarea');
-  textArea.value = value;
-  textArea.style.position = 'fixed';
-  textArea.style.opacity = '0';
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
   try {
-    return document.execCommand('copy');
-  } finally {
-    document.body.removeChild(textArea);
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    return false;
   }
 }
