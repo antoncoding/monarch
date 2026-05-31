@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { RiCheckLine, RiFileCopyLine, RiSparklingFill } from 'react-icons/ri';
-import type { Address } from 'viem';
-import { useConnection } from 'wagmi';
+import { getAddress, type Address } from 'viem';
+import { useChainId, useConnection, useSignMessage } from 'wagmi';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
+import { buildReferralCodeRequestMessage } from '@/utils/referralRequest';
+import { createRequestNonce } from '@/utils/requestNonce';
 
 interface ReferralCodeResponse {
   code?: string;
@@ -17,42 +19,71 @@ interface ReferralRewardsBlockProps {
   account: Address;
 }
 
+type ReferralRequestState = 'idle' | 'signing' | 'creating';
+
 export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
   const { address } = useConnection();
+  const chainId = useChainId();
+  const { signMessageAsync } = useSignMessage();
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [requestState, setRequestState] = useState<ReferralRequestState>('idle');
   const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isConnectedWallet = !!address && address.toLowerCase() === account.toLowerCase();
+  const normalizedAddress = useMemo(() => {
+    if (!address) return null;
+
+    try {
+      return getAddress(address);
+    } catch {
+      return null;
+    }
+  }, [address]);
 
   const referralUrl = useMemo(() => {
     if (!code || typeof window === 'undefined') return null;
     return `${window.location.origin}/?ref=${code}`;
   }, [code]);
+  const isRequesting = requestState !== 'idle';
 
   useEffect(() => {
     setCode(null);
     setError(null);
+    setRequestState('idle');
     setCopied(false);
     setIsModalOpen(false);
   }, [address, account]);
 
   const requestReferralCode = async (): Promise<string | null> => {
-    if (!address || isLoading) return null;
+    if (!normalizedAddress || isRequesting) return null;
     if (referralUrl) return referralUrl;
 
-    setIsLoading(true);
     setError(null);
 
     try {
+      setRequestState('signing');
+      const message = buildReferralCodeRequestMessage({
+        wallet: normalizedAddress,
+        chainId,
+        origin: window.location.origin,
+        issuedAt: new Date().toISOString(),
+        nonce: createRequestNonce(),
+      });
+      const signature = await signMessageAsync({ message });
+
+      setRequestState('creating');
       const response = await fetch('/api/referrals/code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ referrerWallet: address }),
+        body: JSON.stringify({
+          address: normalizedAddress,
+          signature,
+          message,
+        }),
       });
       const body = (await response.json().catch(() => ({}))) as ReferralCodeResponse;
 
@@ -66,7 +97,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
       setError(caught instanceof Error ? caught.message : 'Unable to create referral code.');
       return null;
     } finally {
-      setIsLoading(false);
+      setRequestState('idle');
     }
   };
 
@@ -160,11 +191,11 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
                 variant="primary"
                 size="md"
                 onClick={handleReferralClick}
-                isLoading={isLoading}
-                disabled={isLoading}
+                isLoading={isRequesting}
+                disabled={isRequesting}
               >
                 {copied ? <RiCheckLine className="h-4 w-4" /> : <RiFileCopyLine className="h-4 w-4" />}
-                {copied ? 'Copied' : code ? 'Copy link' : 'Create link'}
+                {getReferralActionLabel({ copied, hasCode: Boolean(code), requestState })}
               </Button>
             </ModalFooter>
           </>
@@ -172,6 +203,22 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
       </Modal>
     </div>
   );
+}
+
+function getReferralActionLabel({
+  copied,
+  hasCode,
+  requestState,
+}: {
+  copied: boolean;
+  hasCode: boolean;
+  requestState: ReferralRequestState;
+}) {
+  if (copied) return 'Copied';
+  if (requestState === 'signing') return 'Sign in wallet';
+  if (requestState === 'creating') return 'Creating link';
+  if (hasCode) return 'Copy link';
+  return 'Create link';
 }
 
 async function copyText(value: string): Promise<boolean> {

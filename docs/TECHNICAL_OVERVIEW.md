@@ -397,13 +397,21 @@ Fallback Strategy:
 - Verification: the Next.js route parses the signed message, checks origin and timestamp freshness, verifies the signature through a viem public client so contract wallets can use ERC-1271, then calls the data gateway admin API using the server-only `MONARCH_API_KEYS_ADMIN_TOKEN`.
 - Created keys use the `mk_live` prefix, `data.read,indexer.query` scopes, and the free rate-limit tier. Existing-key listing and revocation are not exposed in the Monarch UI yet.
 
+### Referral Links
+
+- Page: connected wallet rewards block on `/rewards/:account`.
+- Wallet proof: client signs a referral-specific message before creating or returning a referral link.
+- Server route: `POST /api/referrals/code`.
+- Verification: the Next.js route parses the signed message, checks origin and timestamp freshness, verifies the wallet signature, then calls data-api `/internal/referrals/code` with the verified wallet as the referral-code owner.
+- Storage: data-api stores the owner wallet in `referral_codes.referrer_wallet`; later referral attribution and fee-share accounting use that owner wallet to determine claimable rewards.
+
 ### Server-Only API Tokens
 
 - `MONARCH_API_KEYS_ADMIN_TOKEN`: used only by `/api/api-keys` to call the data gateway admin API and create user-facing `mk_live` / `mk_test` API keys.
-- `DATA_API_INTERNAL_ORIGIN`: server-only origin used by referral and platform-fee app routes for data-api `/internal/*` writes. In deployed environments this should point directly at the data-api service origin, for example the Railway service URL, not the public Cloudflare API host.
+- `DATA_API_INTERNAL_ORIGIN`: server-only origin used by referral and platform-fee app routes for data-api `/internal/*` writes. In deployed environments this should be set only in the deployment secret manager and should not use the public Cloudflare API host.
 - `DATA_API_INTERNAL_ADMIN_KEY`: server-only key sent as `X-Internal-Admin-Key` to data-api `/internal/*` routes.
 - These keys are intentionally separate. The API-key admin token mints external user keys; the internal admin key writes trusted referral and fee records.
-- Public data reads still use `NEXT_PUBLIC_DATA_API_BASE_URL` and should continue to go through the Cloudflare data gateway. Internal writes do not use that public browser-facing origin because Cloudflare bot/WAF controls are designed for public edge traffic and can challenge server-to-server requests before they reach data-api. The internal write path relies on the direct service origin plus `DATA_API_INTERNAL_ADMIN_KEY`; Railway/data-api remains responsible for rejecting unauthenticated writes.
+- Public data reads still use `NEXT_PUBLIC_DATA_API_BASE_URL` and should continue to go through the Cloudflare data gateway. Internal writes do not use that public browser-facing origin because Cloudflare bot/WAF controls are designed for public edge traffic and can challenge server-to-server requests before they reach data-api. The internal write path relies on the private service origin plus `DATA_API_INTERNAL_ADMIN_KEY`; data-api remains responsible for rejecting unauthenticated writes.
 
 **Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
 - Configurable URL per network
