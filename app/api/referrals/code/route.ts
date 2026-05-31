@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { callDataApiInternal } from '@/utils/dataApiInternal';
 import { parseReferralCodeRequestMessage } from '@/utils/referralRequest';
-import { verifySignedWalletRequest } from '@/utils/signedWalletRequest';
+import { verifyReferralSignatureRequest } from '@/utils/referralSignatureRequest';
 
 interface ReferralCodeResponse {
   code?: unknown;
@@ -11,6 +11,7 @@ interface ReferralCodeResponse {
 
 interface ReferralCodeRequestBody {
   address?: unknown;
+  chainId?: unknown;
   signature?: unknown;
   message?: unknown;
 }
@@ -24,9 +25,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature message.' }, { status: 400 });
   }
 
-  const verification = await verifySignedWalletRequest({
-    request,
+  const verification = await verifyReferralSignatureRequest({
     address: body.address,
+    chainId: body.chainId,
     signature: body.signature,
     message: body.message,
     parsedMessage,
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok || typeof data.code !== 'string') {
       return NextResponse.json(
         { error: typeof data.error === 'string' ? data.error : 'Failed to create referral code.' },
-        { status: response.status || 502 },
+        { status: response.ok ? 502 : response.status || 502 },
       );
     }
 
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
 async function readReferralCodeRequest(request: NextRequest): Promise<
   | {
       address: string;
+      chainId: number;
       signature: string;
       message: string;
     }
@@ -74,15 +76,17 @@ async function readReferralCodeRequest(request: NextRequest): Promise<
   }
 
   const address = readRequiredString(body.address);
+  const chainId = readRequiredChainId(body.chainId);
   const signature = readRequiredString(body.signature);
   const message = readRequiredString(body.message);
 
-  if (!address || !signature || !message) {
-    return { error: 'address, signature, and message are required.' };
+  if (!address || !chainId || !signature || !message) {
+    return { error: 'address, chainId, signature, and message are required.' };
   }
 
   return {
     address,
+    chainId,
     signature,
     message,
   };
@@ -90,6 +94,10 @@ async function readReferralCodeRequest(request: NextRequest): Promise<
 
 function readRequiredString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function readRequiredChainId(value: unknown): number | null {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

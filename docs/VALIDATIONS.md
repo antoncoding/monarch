@@ -87,7 +87,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Shared components/modals launched from multiple pages may receive prefetched data, but every launcher must be verified to provide the same canonical data source and field completeness; do not let one route skip fields required by shared limits, previews, or transaction availability.
 - Server-to-server internal writes must use a server-only internal origin and service credential, not the public `NEXT_PUBLIC_DATA_API_BASE_URL`; browser-facing API gateway protections can challenge or block machine clients before the request reaches the trusted backend.
 - Never commit concrete private service origins, generated provider URLs, internal endpoints, secrets, tokens, account IDs, or credential-shaped examples in code, docs, env examples, defaults, or config. Use placeholders in git and set real values only in deployment secret managers or local untracked env files.
-- User-owned backend artifacts such as API keys or referral codes must be created only after a server-verified wallet signature that binds wallet address, chain ID, origin, timestamp, and nonce; do not trust a client-posted wallet address alone.
+- User-owned backend artifacts must be created only after the server verifies the requester controls the owner wallet; do not trust a client-posted wallet address alone. Use stricter request metadata only when the artifact grants broader external access, such as API-key creation.
 
 
 ## Transactions And Wallet Flows

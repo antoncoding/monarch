@@ -8,7 +8,6 @@ import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/
 import { Button } from '@/components/ui/button';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { buildReferralCodeRequestMessage } from '@/utils/referralRequest';
-import { createRequestNonce } from '@/utils/requestNonce';
 
 interface ReferralCodeResponse {
   code?: string;
@@ -66,10 +65,6 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
       setRequestState('signing');
       const message = buildReferralCodeRequestMessage({
         wallet: normalizedAddress,
-        chainId,
-        origin: window.location.origin,
-        issuedAt: new Date().toISOString(),
-        nonce: createRequestNonce(),
       });
       const signature = await signMessageAsync({ message });
 
@@ -81,6 +76,7 @@ export function ReferralRewardsBlock({ account }: ReferralRewardsBlockProps) {
         },
         body: JSON.stringify({
           address: normalizedAddress,
+          chainId,
           signature,
           message,
         }),

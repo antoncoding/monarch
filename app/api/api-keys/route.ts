@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { parseApiKeyRequestMessage } from '@/utils/apiKeyRequest';
-import { verifySignedWalletRequest } from '@/utils/signedWalletRequest';
+import { verifyApiKeySignatureRequest } from '@/utils/apiKeySignatureRequest';
 
 const DEFAULT_ADMIN_ENDPOINT = 'https://data-api-gateway-worker.antonassocareer.workers.dev/admin/api-keys';
 const ADMIN_REQUEST_TIMEOUT_MS = 10_000;
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature message.' }, { status: 400 });
   }
 
-  const verification = await verifySignedWalletRequest({
+  const verification = await verifyApiKeySignatureRequest({
     request,
     address: body.address,
     signature: body.signature,
