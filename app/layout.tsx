@@ -1,5 +1,6 @@
 import './global.css';
 
+import { Suspense } from 'react';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import { ClientProviders } from '@/components/providers/ClientProviders';
 import { QueryProvider } from '@/components/providers/QueryProvider';
@@ -9,6 +10,7 @@ import OnchainProviders from '@/OnchainProviders';
 import { ModalRenderer } from '@/components/modals/ModalRenderer';
 import { GlobalTransactionModals } from '@/components/common/GlobalTransactionModals';
 import { DataPrefetcher } from '@/components/DataPrefetcher';
+import { ReferralTrackingProvider } from '@/components/providers/ReferralTrackingProvider';
 
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';
@@ -40,6 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <VaultRegistryProvider>
                 <ClientProviders>
                   <DataPrefetcher />
+                  <Suspense fallback={null}>
+                    <ReferralTrackingProvider />
+                  </Suspense>
                   {children}
                   <RiskNotificationModal />
                   <ModalRenderer />

@@ -58,8 +58,10 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 
 ## State Persistence
 
-- Do not use `window.localStorage` directly. If direct storage access is unavoidable, isolate it in one shared utility or store layer and document why.
-- Use `useAppSettings` or an existing dedicated persisted Zustand store when it fits the state.
+- Do not call `window.localStorage` directly in new code.
+- Use an existing persisted Zustand store for user preferences or shared app state.
+- Use the project storage adapter (`local-storage-fallback`) only inside a small shared utility when the value is a browser-scoped hint or cache, not durable app state.
+- Storage utilities must namespace keys, normalize values, and catch unavailable-storage or quota failures.
 - Validate SSR/client boundaries when persistence touches browser-only APIs.
 - Preset or subscription toggles must not delete user-owned persisted selections. Preserve the raw user list and dedupe or hide preset overlaps in derived views unless the user explicitly removes them.
 
@@ -85,6 +87,8 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Portfolio and position analysis must preserve transaction-discovered market IDs even when current on-chain balances are zero; list-level hide settings must not remove those markets from summary or history inputs.
 - Current portfolio value and holdings breakdowns must use current positive balances only; history-preserved zero-balance positions belong in analytics/history inputs, not current holdings tooltips.
 - Shared components/modals launched from multiple pages may receive prefetched data, but every launcher must be verified to provide the same canonical data source and field completeness; do not let one route skip fields required by shared limits, previews, or transaction availability.
+- Keep private service origins, generated provider URLs, secrets, tokens, account IDs, and credential-shaped examples out of git. Use placeholders in committed examples and set real values only in deployment secret managers or local untracked env files.
+- Public routes that trigger user-owned backend artifacts must verify wallet ownership server-side. Use a server-reconstructed message and a single expected verification chain unless the product explicitly needs chain-specific ownership.
 
 
 ## Transactions And Wallet Flows
@@ -95,6 +99,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Use shared logic hooks like useBundlerAuthorizationStep, useTransactionWithToast, useTransactionProcessStore...etc. Look at a similar hook and try to follow the pattern instead of creating from scratch.
 - Validate chain IDs, token addresses, and allowance/permit assumptions at the transaction boundary.
 - Make sure chain switching and wallet connection are handled. Use shared component like `ExecuteTransactionButton`.
+- Post-confirmation referral attribution must be fire-and-forget; it must not block, fail, or change the user transaction success flow.
 
 
 ## UI And Accessibility
