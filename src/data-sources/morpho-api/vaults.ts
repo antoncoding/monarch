@@ -193,11 +193,7 @@ export const fetchMorphoVaultV2Metadata = async (vaults: VaultAddressByNetwork[]
   const uniqueVaults = Array.from(vaultsByKey.values());
   const addresses = Array.from(new Set(uniqueVaults.map((vault) => vault.address.toLowerCase())));
   const chainIds = Array.from(
-    new Set(
-      uniqueVaults
-        .map((vault) => getVaultNetworkId(vault))
-        .filter((chainId): chainId is number => typeof chainId === 'number'),
-    ),
+    new Set(uniqueVaults.map((vault) => getVaultNetworkId(vault)).filter((chainId): chainId is number => typeof chainId === 'number')),
   );
 
   const metadataByKey = new Map<string, MorphoVaultV2Metadata>();

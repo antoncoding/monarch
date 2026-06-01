@@ -103,8 +103,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const persistedFilters = useMarketFilterPreferences();
   const isHistoricalRateSort = HISTORICAL_RATE_SORT_COLUMNS.has(sortColumn);
   const isRateAtTargetSort = sortColumn === SortColumn.RateAtTarget;
-  const isUsdSensitiveSort =
-    sortColumn === SortColumn.Supply || sortColumn === SortColumn.Borrow || sortColumn === SortColumn.Liquidity;
+  const isUsdSensitiveSort = sortColumn === SortColumn.Supply || sortColumn === SortColumn.Borrow || sortColumn === SortColumn.Liquidity;
   const hasActiveUsdFilter = preferences.minSupplyEnabled || preferences.minBorrowEnabled || preferences.minLiquidityEnabled;
   const requiresGlobalRateSort = isHistoricalRateSort || isRateAtTargetSort;
   const historicalRateColumnsVisible =
@@ -267,7 +266,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     isLoading: isRateEnrichmentLoading,
     isFetching: isRateEnrichmentFetching,
   } = useMarketRateEnrichmentQuery(rateEnrichmentTargets);
-  const rateEnrichmentLoading = shouldEnableRateEnrichment && (shouldWaitForRateTargetUsd || isRateEnrichmentLoading || isRateEnrichmentFetching);
+  const rateEnrichmentLoading =
+    shouldEnableRateEnrichment && (shouldWaitForRateTargetUsd || isRateEnrichmentLoading || isRateEnrichmentFetching);
 
   const marketDataNotices = useMemo<MarketDataNotice[]>(() => {
     if (!shouldEnableRateEnrichment || morphoRateFailedChainIds.size === 0) {

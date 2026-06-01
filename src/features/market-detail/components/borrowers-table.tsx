@@ -283,8 +283,8 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                   const borrowerAssets = BigInt(borrower.borrowAssets);
                   const percentOfBorrow = totalBorrow > 0n ? (Number(borrowerAssets) / Number(totalBorrow)) * 100 : 0;
                   const percentDisplay = percentOfBorrow < 0.01 && percentOfBorrow > 0 ? '<0.01%' : `${percentOfBorrow.toFixed(2)}%`;
-                  const daysDisplay = borrower.daysToLiquidation !== null ? `${borrower.daysToLiquidation}` : '—';
-                  const ltvDisplay = borrower.ltvPercent !== null ? `${borrower.ltvPercent.toFixed(2)}%` : '∞';
+                  const daysDisplay = borrower.daysToLiquidation === null ? '—' : `${borrower.daysToLiquidation}`;
+                  const ltvDisplay = borrower.ltvPercent === null ? '∞' : `${borrower.ltvPercent.toFixed(2)}%`;
 
                   return (
                     <TableRow key={`borrower-${borrower.userAddress}`}>

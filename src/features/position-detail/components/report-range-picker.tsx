@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { FiCalendar } from 'react-icons/fi';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
@@ -68,16 +68,16 @@ type ReportRangePickerProps = {
 };
 
 export function ReportRangePicker({ value, onChange, onClear, className }: ReportRangePickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const [draftStart, setDraftStart] = React.useState<ZonedDateTime>(() => getDefaultRange().startDate);
-  const [draftEnd, setDraftEnd] = React.useState<ZonedDateTime>(() => getDefaultRange().endDate);
+  const [open, setOpen] = useState(false);
+  const [draftStart, setDraftStart] = useState<ZonedDateTime>(() => getDefaultRange().startDate);
+  const [draftEnd, setDraftEnd] = useState<ZonedDateTime>(() => getDefaultRange().endDate);
 
-  const maxDate = React.useMemo(() => now(getLocalTimeZone()), []);
+  const maxDate = useMemo(() => now(getLocalTimeZone()), []);
   const isInvalid = toTime(draftStart) >= Math.min(toTime(draftEnd), Date.now());
   const label = value ? formatReportRangeLabel(value) : 'Custom';
   const triggerLabel = value ? `Custom report range: ${label}` : 'Select custom report range';
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) return;
 
     const nextRange = value ?? getDefaultRange();

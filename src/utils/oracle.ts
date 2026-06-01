@@ -624,7 +624,7 @@ export function getFeedFreshnessStatus(
     updatedAt,
     ageSeconds,
     staleAfterSeconds,
-    isStale: staleAfterSeconds != null ? ageSeconds > staleAfterSeconds : false,
+    isStale: staleAfterSeconds == null ? false : ageSeconds > staleAfterSeconds,
     updateKind,
     normalizedPrice,
   };

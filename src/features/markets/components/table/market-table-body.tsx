@@ -223,13 +223,13 @@ export function MarketTableBody({
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <p className="text-sm">
-                    {item.state.borrowApy != null ? (
+                    {item.state.borrowApy == null ? (
+                      '—'
+                    ) : (
                       <APYCell
                         market={item}
                         mode="borrow"
                       />
-                    ) : (
-                      '—'
                     )}
                   </p>
                 </TableCell>
@@ -241,7 +241,15 @@ export function MarketTableBody({
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <div className="flex justify-center text-sm">
-                    {item.state.apyAtTarget != null ? <RateFormatted value={item.state.apyAtTarget} /> : shouldShowRateLoader(item) ? renderRateLoading() : '—'}
+                    {item.state.apyAtTarget == null ? (
+                      shouldShowRateLoader(item) ? (
+                        renderRateLoading()
+                      ) : (
+                        '—'
+                      )
+                    ) : (
+                      <RateFormatted value={item.state.apyAtTarget} />
+                    )}
                   </div>
                 </TableCell>
               )}

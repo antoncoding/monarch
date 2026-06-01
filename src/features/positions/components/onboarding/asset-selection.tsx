@@ -134,7 +134,7 @@ export function AssetSelection() {
                   <NetworkIcon networkId={token.network} />
                   <span className="text-sm text-secondary">
                     {token.markets.length} market
-                    {token.markets.length !== 1 ? 's' : ''}
+                    {token.markets.length === 1 ? '' : 's'}
                   </span>
                 </div>
               </div>

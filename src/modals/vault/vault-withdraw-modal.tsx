@@ -114,10 +114,7 @@ export function VaultWithdrawModal({
   const showMarketSelection = isAllocator;
   const showAmountInput = !showMarketSelection || selectedMarket !== null;
   const isWithdrawDisabled =
-    inputError !== null ||
-    withdrawAmount === 0n ||
-    (showMarketSelection && (!selectedMarket || !primaryAdapter)) ||
-    maxWithdrawable === 0n;
+    inputError !== null || withdrawAmount === 0n || (showMarketSelection && (!selectedMarket || !primaryAdapter)) || maxWithdrawable === 0n;
 
   return (
     <Modal

@@ -139,7 +139,7 @@ export function BlacklistedMarketsDetail() {
           </div>
           {filteredAvailableMarkets.length > 0 && (
             <span className="text-[11px] text-secondary">
-              {filteredAvailableMarkets.length} result{filteredAvailableMarkets.length !== 1 ? 's' : ''}
+              {filteredAvailableMarkets.length} result{filteredAvailableMarkets.length === 1 ? '' : 's'}
             </span>
           )}
         </div>

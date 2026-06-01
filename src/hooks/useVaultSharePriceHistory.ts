@@ -2,10 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatUnits, type Address, type PublicClient } from 'viem';
 import { erc4626Abi } from '@/abis/erc4626';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
-import {
-  fetchMorphoVaultV2SharePriceHistory,
-  type MorphoVaultSharePricePoint,
-} from '@/data-sources/morpho-api/vault-share-price-history';
+import { fetchMorphoVaultV2SharePriceHistory, type MorphoVaultSharePricePoint } from '@/data-sources/morpho-api/vault-share-price-history';
 import { TIMEFRAME_CONFIG, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
 import { fetchBlocksWithTimestamps, type BlockWithTimestamp } from '@/utils/blockEstimation';
 import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
@@ -67,10 +64,7 @@ function calculateSharePriceTimePoints(timeframe: ChartTimeframe, endTimestamp: 
   return points;
 }
 
-function selectNearestMorphoPoints(
-  points: MorphoVaultSharePricePoint[],
-  targetTimestamps: number[],
-): VaultSharePricePoint[] {
+function selectNearestMorphoPoints(points: MorphoVaultSharePricePoint[], targetTimestamps: number[]): VaultSharePricePoint[] {
   const selected: VaultSharePricePoint[] = [];
 
   for (const targetTimestamp of targetTimestamps) {

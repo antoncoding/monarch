@@ -64,7 +64,7 @@ export function StatsOverviewCards({
       <StatCard
         title="Total Transactions"
         value={totalTransactions.toLocaleString()}
-        subtitle={`Across ${activeChains} chain${activeChains !== 1 ? 's' : ''}`}
+        subtitle={`Across ${activeChains} chain${activeChains === 1 ? '' : 's'}`}
       />
     </div>
   );

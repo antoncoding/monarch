@@ -87,18 +87,17 @@ export function VaultIdentity({
     );
   })();
 
-  const interactiveContent =
-    showLink ? (
-      <Link
-        href={vaultHref}
-        className="no-underline"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {baseContent}
-      </Link>
-    ) : (
-      baseContent
-    );
+  const interactiveContent = showLink ? (
+    <Link
+      href={vaultHref}
+      className="no-underline"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {baseContent}
+    </Link>
+  ) : (
+    baseContent
+  );
 
   if (!showTooltip) {
     return interactiveContent;

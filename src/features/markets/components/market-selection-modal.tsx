@@ -91,7 +91,7 @@ export function MarketSelectionModal({
   const selectedCount = selectedMarkets.size;
   const buttonText =
     confirmButtonText ??
-    (multiSelect ? `Select ${selectedCount > 0 ? selectedCount : ''} Market${selectedCount !== 1 ? 's' : ''}` : 'Select Market');
+    (multiSelect ? `Select ${selectedCount > 0 ? selectedCount : ''} Market${selectedCount === 1 ? '' : 's'}` : 'Select Market');
 
   return (
     <Modal
@@ -139,7 +139,7 @@ export function MarketSelectionModal({
         {multiSelect ? (
           <>
             <p className="text-xs text-secondary mr-auto">
-              {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
+              {selectedCount} market{selectedCount === 1 ? '' : 's'} selected
             </p>
             <Button
               variant="default"

@@ -139,7 +139,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
       <div className="border-b border-border px-6 py-4">
         <h3 className="font-zen text-lg">Markets</h3>
         <p className="mt-1 text-sm text-secondary">
-          {sortedData.length} market{sortedData.length !== 1 ? 's' : ''}
+          {sortedData.length} market{sortedData.length === 1 ? '' : 's'}
         </p>
       </div>
       <div className="overflow-x-auto">

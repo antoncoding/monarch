@@ -53,7 +53,7 @@ const readBorrowIndex = (marketState: readonly bigint[] | null): bigint | null =
   return (totalBorrowAssets * BORROW_INDEX_SCALE) / totalBorrowShares;
 };
 
-export function use4626VaultAPR({
+export function useVault4626APR({
   market,
   vaultAddress,
   projectedCollateralShares,

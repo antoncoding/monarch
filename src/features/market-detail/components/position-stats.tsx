@@ -145,26 +145,26 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
         <div className="flex items-center justify-between">
           <span>{rateLabel}:</span>
           <div className="flex items-center gap-2">
-            {market.state.supplyApy != null ? (
+            {market.state.supplyApy == null ? (
+              <span>—</span>
+            ) : (
               <APYCell
                 market={market}
                 mode="supply"
               />
-            ) : (
-              <span>—</span>
             )}
           </div>
         </div>
         <div className="flex items-center justify-between">
           <span>{borrowRateLabel}:</span>
           <div className="flex items-center gap-2">
-            {market.state.borrowApy != null ? (
+            {market.state.borrowApy == null ? (
+              <span>—</span>
+            ) : (
               <APYCell
                 market={market}
                 mode="borrow"
               />
-            ) : (
-              <span>—</span>
             )}
           </div>
         </div>

@@ -28,7 +28,7 @@ import {
 } from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
 import { useMerklHoldIncentivesQuery } from '@/hooks/queries/useMerklHoldIncentivesQuery';
-import { use4626VaultAPR } from '@/hooks/use4626VaultAPR';
+import { useVault4626APR } from '@/hooks/use4626VaultAPR';
 import { useLeverageQuote } from '@/hooks/useLeverageQuote';
 import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -216,7 +216,7 @@ export function AddCollateralAndLeverage({
   const hasChanges = isLeverageFeeReady;
   const rateLabel = isAprDisplay ? 'APR' : 'APY';
 
-  const vaultRateInsight = use4626VaultAPR({
+  const vaultRateInsight = useVault4626APR({
     market,
     vaultAddress: route?.kind === 'erc4626' ? route.collateralVault : undefined,
     projectedCollateralShares: projectedCollateralAssets,
@@ -421,7 +421,7 @@ export function AddCollateralAndLeverage({
     return preview?.borrowApy ?? null;
   }, [hasChanges, market, quote.flashLoanAssetAmount]);
   const previewBorrowApy = projectedBorrowApy ?? fallbackBorrowApy;
-  const borrowRatePreviewLabel = projectedBorrowApy != null ? `Borrow ${rateLabel} (Est.)` : `Borrow ${rateLabel}`;
+  const borrowRatePreviewLabel = projectedBorrowApy == null ? `Borrow ${rateLabel}` : `Borrow ${rateLabel} (Est.)`;
   const vaultTokenApy = isErc4626Route ? vaultRateInsight.vaultApy3d : 0;
   const projectedLtvRatio = useMemo(() => {
     if (projectedBorrowAssets <= 0n) return 0;

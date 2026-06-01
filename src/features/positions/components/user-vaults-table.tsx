@@ -84,13 +84,7 @@ type UserVaultsTableProps = {
   isRefetching?: boolean;
 };
 
-export function UserVaultsTable({
-  vaults,
-  period,
-  isEarningsLoading = false,
-  refetch,
-  isRefetching = false,
-}: UserVaultsTableProps) {
+export function UserVaultsTable({ vaults, period, isEarningsLoading = false, refetch, isRefetching = false }: UserVaultsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { findToken } = useTokensQuery();
   const { isAprDisplay } = useAppSettings();

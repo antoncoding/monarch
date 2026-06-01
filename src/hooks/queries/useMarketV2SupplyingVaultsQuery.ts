@@ -81,10 +81,7 @@ const buildLookup = (vaults: MarketV2SupplyingVault[]): Map<string, MarketV2Supp
   return lookup;
 };
 
-const mergeMorphoV2Metadata = (
-  vaults: MarketV2SupplyingVault[],
-  morphoMetadata: MorphoVaultV2Metadata[],
-): MarketV2SupplyingVault[] => {
+const mergeMorphoV2Metadata = (vaults: MarketV2SupplyingVault[], morphoMetadata: MorphoVaultV2Metadata[]): MarketV2SupplyingVault[] => {
   if (vaults.length === 0 || morphoMetadata.length === 0) {
     return vaults;
   }

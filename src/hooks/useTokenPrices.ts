@@ -158,8 +158,8 @@ export const useTokenPrices = (tokens: TokenPriceInput[], options?: UseTokenPric
     enabled: tokensToFetch.length > 0,
     staleTime: TOKEN_PRICE_STALE_TIME,
     gcTime: TOKEN_PRICE_GC_TIME,
-    ...(options?.refetchOnWindowFocus !== undefined ? { refetchOnWindowFocus: options.refetchOnWindowFocus } : {}),
-    ...(options?.refetchOnReconnect !== undefined ? { refetchOnReconnect: options.refetchOnReconnect } : {}),
+    ...(options?.refetchOnWindowFocus === undefined ? {} : { refetchOnWindowFocus: options.refetchOnWindowFocus }),
+    ...(options?.refetchOnReconnect === undefined ? {} : { refetchOnReconnect: options.refetchOnReconnect }),
   });
 
   const priceEntries = useMemo(() => {
@@ -191,8 +191,8 @@ export const useTokenPrices = (tokens: TokenPriceInput[], options?: UseTokenPric
     enabled: needsMajorPrices,
     staleTime: 60_000,
     gcTime: 5 * 60 * 1000,
-    ...(options?.refetchOnWindowFocus !== undefined ? { refetchOnWindowFocus: options.refetchOnWindowFocus } : {}),
-    ...(options?.refetchOnReconnect !== undefined ? { refetchOnReconnect: options.refetchOnReconnect } : {}),
+    ...(options?.refetchOnWindowFocus === undefined ? {} : { refetchOnWindowFocus: options.refetchOnWindowFocus }),
+    ...(options?.refetchOnReconnect === undefined ? {} : { refetchOnReconnect: options.refetchOnReconnect }),
   });
 
   const basePrices = useMemo(() => {

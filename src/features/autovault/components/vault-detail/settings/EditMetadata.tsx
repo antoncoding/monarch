@@ -45,8 +45,8 @@ export function EditMetadata({
   const [metadataError, setMetadataError] = useState<string | null>(null);
 
   // Compute values during render - use default if not edited, otherwise use stored value
-  const computedNameInput = nameEdited.current ? nameInput : previousName !== '' ? previousName : defaultName;
-  const computedSymbolInput = symbolEdited.current ? symbolInput : previousSymbol !== '' ? previousSymbol : defaultSymbol;
+  const computedNameInput = nameEdited.current ? nameInput : previousName === '' ? defaultName : previousName;
+  const computedSymbolInput = symbolEdited.current ? symbolInput : previousSymbol === '' ? defaultSymbol : previousSymbol;
 
   const handleNameChange = useCallback((value: string) => {
     nameEdited.current = true;
@@ -98,7 +98,7 @@ export function EditMetadata({
       return;
     }
 
-    await onUpdate(trimmedName !== previousName ? trimmedName : undefined, trimmedSymbol !== previousSymbol ? trimmedSymbol : undefined);
+    await onUpdate(trimmedName === previousName ? undefined : trimmedName, trimmedSymbol === previousSymbol ? undefined : trimmedSymbol);
   }, [metadataChanged, onUpdate, previousName, previousSymbol, trimmedName, trimmedSymbol, needSwitchChain, switchToNetwork]);
 
   return (

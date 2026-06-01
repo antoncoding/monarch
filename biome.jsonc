@@ -48,6 +48,9 @@
         // Team uses enums
         "noEnum": "off",
 
+        // Team allows object-shape type aliases; forcing interface is noisy in this codebase.
+        "useConsistentTypeDefinitions": "off",
+
         // Allow nested ternaries (team decision)
         "noNestedTernary": "off",
 
@@ -62,11 +65,8 @@
         // Catch mutable declarations that can be const
         "useConst": "error",
 
-        // ENABLED - Safe, auto-fixable style improvements
-        "useImportType": {
-          "level": "warn",
-          "fix": "safe"  // Converts imports to type imports - safe & improves bundle size
-        },
+        // Team does not enforce type-only imports during migration.
+        "useImportType": "off",
 
         // Keep these OFF - more opinionated
         "useNumericSeparators": "off",  // 1_000_000 formatting
@@ -172,19 +172,12 @@
       "nursery": {
         // Disable aggressive nursery rules during migration
         // "noShadow": "off",
-        "noUselessUndefined": "off",
-
-        // Keep sorted classes off initially
         "useSortedClasses": "off",
 
         // These are too aggressive for migration
         "noLeakedRender": "off",
-        "useConsistentArrowReturn": "off",
         "noEqualsToNull": "off",
-        "noIncrementDecrement": "off",
-
-        // Disable for gentle migration
-        "useMaxParams": "off"  // 9 errors
+        "noIncrementDecrement": "off"
       }
     }
   },
@@ -207,6 +200,13 @@
         "enabled": false
       },
       "linter": {
+        "enabled": false
+      }
+    },
+    {
+      // Biome and Ultracite disagree on one CSS font-family wrap in this file.
+      "includes": ["app/global.css"],
+      "formatter": {
         "enabled": false
       }
     },

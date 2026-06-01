@@ -133,10 +133,7 @@ const getMarketTokenInputs = (markets: MonarchMarketRow[]): TokenAddressInput[] 
   return tokens;
 };
 
-const mapMonarchMarketToMarket = (
-  market: MonarchMarketRow,
-  tokenInfos: Map<string, ResolvedTokenInfo>,
-): Market | null => {
+const mapMonarchMarketToMarket = (market: MonarchMarketRow, tokenInfos: Map<string, ResolvedTokenInfo>): Market | null => {
   if (!isSupportedChain(market.chainId)) {
     return null;
   }
@@ -231,9 +228,7 @@ const mapMonarchMarketRows = async (
     trustedTokens: options.trustedTokens,
   });
 
-  return rows
-    .map((market) => mapMonarchMarketToMarket(market, tokenInfos))
-    .filter((market): market is Market => market !== null);
+  return rows.map((market) => mapMonarchMarketToMarket(market, tokenInfos)).filter((market): market is Market => market !== null);
 };
 
 // If `network` is omitted, this fetches the merged multi-chain market registry in one query path.

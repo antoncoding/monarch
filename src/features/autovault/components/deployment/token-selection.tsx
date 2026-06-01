@@ -237,7 +237,7 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
                     <NetworkIcon networkId={tokenNetwork.networkId} />
                     <span className="text-sm text-secondary">
                       {tokenNetwork.marketCount} market
-                      {tokenNetwork.marketCount !== 1 ? 's' : ''}
+                      {tokenNetwork.marketCount === 1 ? '' : 's'}
                     </span>
                   </div>
                 </div>

@@ -1,17 +1,10 @@
 import { useMemo } from 'react';
-import {
-  getVaultKey,
-  monarch_suggested_vaults,
-  type TrustedVault,
-} from '@/constants/vaults/known_vaults';
+import { getVaultKey, monarch_suggested_vaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 
 const vaultKey = (vault: TrustedVault) => getVaultKey(vault.address, vault.chainId);
 
-export function buildEffectiveTrustedVaults(
-  userTrustedVaults: TrustedVault[],
-  includeMonarchSuggestedVaults: boolean,
-) {
+export function buildEffectiveTrustedVaults(userTrustedVaults: TrustedVault[], includeMonarchSuggestedVaults: boolean) {
   const vaultsByKey = new Map<string, TrustedVault>();
 
   if (includeMonarchSuggestedVaults) {

@@ -129,6 +129,7 @@ export function MarketDetailsBlock({
                   target="_blank"
                   className="ml-1 opacity-50 transition-opacity hover:opacity-100"
                   onClick={(e) => e.stopPropagation()}
+                  rel="noopener"
                 >
                   <ExternalLinkIcon className="h-3 w-3" />
                 </a>
@@ -143,15 +144,15 @@ export function MarketDetailsBlock({
                   chainId={market.morphoBlue.chain.id}
                 />
                 <span>·</span>
-                {previewState !== null ? (
+                {previewState === null ? (
+                  <span>
+                    {getRate()}% {rateLabel}
+                  </span>
+                ) : (
                   <span>
                     <span className="line-through opacity-50">{getRate()}%</span>
                     {' → '}
                     <span className="font-semibold">{getPreviewRate()}%</span> {rateLabel}
-                  </span>
-                ) : (
-                  <span>
-                    {getRate()}% {rateLabel}
                   </span>
                 )}
                 <span>·</span>
@@ -197,14 +198,14 @@ export function MarketDetailsBlock({
                       <p className="font-zen text-sm opacity-50">
                         {mode === 'supply' ? 'Supply' : 'Borrow'} {rateLabel}:
                       </p>
-                      {previewState !== null ? (
+                      {previewState === null ? (
+                        <p className="text-right text-sm font-bold">{getRate()}%</p>
+                      ) : (
                         <p className="text-right text-sm font-bold">
                           <span className="line-through opacity-50">{getRate()}%</span>
                           {' → '}
                           <span>{getPreviewRate()}%</span>
                         </p>
-                      ) : (
-                        <p className="text-right text-sm font-bold">{getRate()}%</p>
                       )}
                     </div>
                     {showRewards && hasActiveRewards && (
@@ -229,7 +230,11 @@ export function MarketDetailsBlock({
                     )}
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Total Supply:</p>
-                      {previewState !== null ? (
+                      {previewState === null ? (
+                        <p className="text-right text-sm">
+                          {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
+                        </p>
+                      ) : (
                         <p className="text-right text-sm">
                           <span className="line-through opacity-50">
                             {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
@@ -237,26 +242,22 @@ export function MarketDetailsBlock({
                           {' → '}
                           <span>{formatReadable(formatBalance(previewState.totalSupplyAssets.toString(), market.loanAsset.decimals))}</span>
                         </p>
-                      ) : (
-                        <p className="text-right text-sm">
-                          {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
-                        </p>
                       )}
                     </div>
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Liquidity:</p>
                       <div className="flex items-center gap-1">
-                        {previewState !== null ? (
+                        {previewState === null ? (
+                          <p className="text-right font-zen text-sm">
+                            {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
+                          </p>
+                        ) : (
                           <p className="text-right font-zen text-sm">
                             <span className="line-through opacity-50">
                               {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
                             </span>
                             {' → '}
                             <span>{formatReadable(formatBalance(previewState.liquidityAssets.toString(), market.loanAsset.decimals))}</span>
-                          </p>
-                        ) : (
-                          <p className="text-right font-zen text-sm">
-                            {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
                           </p>
                         )}
                         {extraLiquidity != null && extraLiquidity > 0n && (
@@ -271,14 +272,14 @@ export function MarketDetailsBlock({
                     </div>
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Utilization:</p>
-                      {previewState !== null ? (
+                      {previewState === null ? (
+                        <p className="text-right text-sm">{formatReadable(market.state.utilization * 100)}%</p>
+                      ) : (
                         <p className="text-right text-sm">
                           <span className="line-through opacity-50">{formatReadable(market.state.utilization * 100)}%</span>
                           {' → '}
                           <span>{formatReadable(previewState.utilization * 100)}%</span>
                         </p>
-                      ) : (
-                        <p className="text-right text-sm">{formatReadable(market.state.utilization * 100)}%</p>
                       )}
                     </div>
                   </div>

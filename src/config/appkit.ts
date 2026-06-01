@@ -73,7 +73,7 @@ export const networks = [
 const metadata = {
   name: 'Monarch',
   description: 'Customized lending on Morpho Blue',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://monarchlend.xyz',
+  url: typeof window === 'undefined' ? 'https://monarchlend.xyz' : window.location.origin,
   icons: ['/logo.png'],
 };
 

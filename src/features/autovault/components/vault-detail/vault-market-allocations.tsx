@@ -60,9 +60,7 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
   const hasNoAllocations = marketAllocations.length === 0;
 
   return (
-    <TableContainerWithDescription
-      title={hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}
-    >
+    <TableContainerWithDescription title={hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}>
       {hasNoAllocations ? (
         <div className="p-10 flex flex-col items-center justify-center font-zen">
           <p className="text-sm text-center text-secondary">

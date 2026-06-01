@@ -8,7 +8,7 @@ type StatsOverviewCardsProps = {
 };
 
 function StatCard({ title, value, change, prefix = '' }: StatCardProps) {
-  const changeText = change !== undefined ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '';
+  const changeText = change === undefined ? '' : change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
   const changeColor = change === undefined ? 'text-gray-500' : change > 0 ? 'text-green-500' : 'text-red-500';
 
   return (
