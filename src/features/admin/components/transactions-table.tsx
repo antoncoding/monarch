@@ -189,7 +189,7 @@ export function TransactionsTable({
       <div className="border-b border-gray-200 px-6 py-4">
         <h3 className="font-zen text-lg">Transactions</h3>
         <p className="text-sm text-gray-500 mt-1">
-          {totalOperations} operation{totalOperations !== 1 ? 's' : ''} in selected timeframe
+          {totalOperations} operation{totalOperations === 1 ? '' : 's'} in selected timeframe
         </p>
       </div>
       <div className="overflow-x-auto">

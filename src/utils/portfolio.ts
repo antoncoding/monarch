@@ -118,12 +118,7 @@ const getPositionWindowSeconds = (
   const chainId = position.market.morphoBlue.chain.id;
   const range = earningsRangesByChain[chainId];
 
-  if (
-    range &&
-    Number.isFinite(range.startTimestamp) &&
-    Number.isFinite(range.endTimestamp) &&
-    range.endTimestamp > range.startTimestamp
-  ) {
+  if (range && Number.isFinite(range.startTimestamp) && Number.isFinite(range.endTimestamp) && range.endTimestamp > range.startTimestamp) {
     return range.endTimestamp - range.startTimestamp;
   }
 

@@ -157,8 +157,8 @@ function RateChart({ marketId, chainId, market }: RateChartProps) {
   const currentBorrowRate = toDisplayRate(market.state.borrowApy);
   const currentApyAtTarget = toDisplayRate(market.state.apyAtTarget);
   const currentUtilization = market.state.utilization;
-  const realizedSupplyRate = realizedRates?.supplyApy != null ? toDisplayRate(realizedRates.supplyApy) : null;
-  const realizedBorrowRate = realizedRates?.borrowApy != null ? toDisplayRate(realizedRates.borrowApy) : null;
+  const realizedSupplyRate = realizedRates?.supplyApy == null ? null : toDisplayRate(realizedRates.supplyApy);
+  const realizedBorrowRate = realizedRates?.borrowApy == null ? null : toDisplayRate(realizedRates.borrowApy);
 
   const legendHandlers = createLegendClickHandler({ visibleLines, setVisibleLines });
 

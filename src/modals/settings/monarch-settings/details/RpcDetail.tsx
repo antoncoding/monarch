@@ -142,7 +142,7 @@ export function RpcDetail() {
     resetAllRpcUrls();
     success(
       'All RPCs Reset',
-      `${customCount} custom RPC${customCount !== 1 ? 's' : ''} reset to default. Please refresh the page to apply changes.`,
+      `${customCount} custom RPC${customCount === 1 ? '' : 's'} reset to default. Please refresh the page to apply changes.`,
     );
 
     setSelectedNetwork(null);

@@ -203,7 +203,7 @@ export function CustomTagDetail() {
             <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-2">
               <span className="text-xs font-medium uppercase text-secondary">Preview</span>
               <span className="text-xs text-secondary">
-                {totalMatches > 0 ? `${totalMatches} match${totalMatches !== 1 ? 'es' : ''}` : 'No matches'}
+                {totalMatches > 0 ? `${totalMatches} match${totalMatches === 1 ? '' : 'es'}` : 'No matches'}
               </span>
             </div>
             <div className="p-4">

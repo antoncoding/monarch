@@ -157,9 +157,9 @@ export function AccountIdentity({
       }
     : klerosLabel
       ? { kind: 'kleros' as const, label: klerosLabel, title: klerosTitle ?? klerosLabel }
-    : showAddress && ensName
-      ? { kind: 'ens' as const, label: ensName, title: ensName }
-      : undefined;
+      : showAddress && ensName
+        ? { kind: 'ens' as const, label: ensName, title: ensName }
+        : undefined;
   const entityBadge = vaultIdentity ? getEntityBadgeLabel(vaultIdentity) : undefined;
   const metadataImageUrl = vaultIdentity?.metadataImage && !metadataImageFailed ? vaultIdentity.metadataImage : undefined;
   const adapterBadge =
@@ -183,10 +183,8 @@ export function AccountIdentity({
       links.push({ href: linkedVaultHref, label: 'View Vault' });
     }
 
-    if (klerosLabel) {
-      if (klerosTag?.dataOriginLink) {
-        links.push({ href: klerosTag.dataOriginLink, label: 'View Tag Source' });
-      }
+    if (klerosLabel && klerosTag?.dataOriginLink) {
+      links.push({ href: klerosTag.dataOriginLink, label: 'View Tag Source' });
     }
 
     return links;

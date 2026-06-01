@@ -465,8 +465,7 @@ const transformVaultAdapterRelationRecord = (vault: MonarchVaultAdapterRelationR
     return [];
   }
 
-  const vaultName =
-    vault.name?.trim() || vault.symbol?.trim() || `Vault ${vaultAddress.slice(0, 6)}...${vaultAddress.slice(-4)}`;
+  const vaultName = vault.name?.trim() || vault.symbol?.trim() || `Vault ${vaultAddress.slice(0, 6)}...${vaultAddress.slice(-4)}`;
   const asset = normalizeAddress(vault.asset) as Address;
 
   return vault.adapters
@@ -549,9 +548,7 @@ export const fetchMonarchMarketV2SupplyingVaults = async ({
   chainId: SupportedNetworks;
   marketIds: string[];
 }): Promise<MarketV2SupplyingVault[]> => {
-  const normalizedMarketIds = Array.from(
-    new Set(marketIds.map((marketId) => normalizeAddress(marketId)).filter(Boolean)),
-  );
+  const normalizedMarketIds = Array.from(new Set(marketIds.map((marketId) => normalizeAddress(marketId)).filter(Boolean)));
   if (normalizedMarketIds.length === 0 || adapterRelations.length === 0) {
     return [];
   }

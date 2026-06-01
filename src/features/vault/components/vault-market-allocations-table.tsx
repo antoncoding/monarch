@@ -146,7 +146,8 @@ export function VaultMarketAllocationsTable({
           const assetSymbol = allocationAssetSymbol ?? market.loanAsset.symbol;
           const assetDecimals = allocationAssetDecimals ?? market.loanAsset.decimals;
           const allocationValue = formatBalance(allocation.allocation, assetDecimals);
-          const percentage = totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(allocation.allocation, totalAllocation)) : 0;
+          const percentage =
+            totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(allocation.allocation, totalAllocation)) : 0;
           const relativeCap = parseRelativeCap(allocation.relativeCap);
           const capLabel = `${relativeCap === undefined ? '-' : `${relativeCap.toFixed(2)}%`} / ${formatVaultAbsoluteCap(
             allocation.absoluteCap,
@@ -154,7 +155,7 @@ export function VaultMarketAllocationsTable({
             assetSymbol,
           )}`;
           const displayRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy;
-          const realizedRate = isAprDisplay ? convertApyToApr(row.realizedApy ?? 0) : row.realizedApy ?? 0;
+          const realizedRate = isAprDisplay ? convertApyToApr(row.realizedApy ?? 0) : (row.realizedApy ?? 0);
           const earnedAssets = row.earnedAssets ?? 0n;
           const liquidity = formatReadable(formatBalance(BigInt(market.state.liquidityAssets || 0), market.loanAsset.decimals).toString());
 

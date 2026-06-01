@@ -24,8 +24,7 @@ type VaultV2SharePriceHistoryResponse = {
   errors?: { message: string }[];
 };
 
-const sortByTimestamp = (left: MorphoVaultSharePricePoint, right: MorphoVaultSharePricePoint): number =>
-  left.timestamp - right.timestamp;
+const sortByTimestamp = (left: MorphoVaultSharePricePoint, right: MorphoVaultSharePricePoint): number => left.timestamp - right.timestamp;
 
 function normalizeSharePrice(value: unknown): number | null {
   const numericValue = typeof value === 'string' ? Number(value) : value;

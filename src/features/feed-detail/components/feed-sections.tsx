@@ -318,13 +318,13 @@ export function FeedInspectionSection({
           )}
           {heartbeat != null && (
             <DetailRow
-              label={leg?.updateInterval != null ? 'Update interval' : 'Heartbeat'}
+              label={leg?.updateInterval == null ? 'Heartbeat' : 'Update interval'}
               value={formatOracleDuration(heartbeat)}
             />
           )}
           {deviationThreshold != null && (
             <DetailRow
-              label={leg?.updateSpread != null ? 'Update spread' : 'Deviation threshold'}
+              label={leg?.updateSpread == null ? 'Deviation threshold' : 'Update spread'}
               value={`${deviationThreshold}%`}
             />
           )}

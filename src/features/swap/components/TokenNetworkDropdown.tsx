@@ -126,9 +126,9 @@ export function TokenNetworkDropdown({
                   />
                 }
                 endContent={
-                  token.balance !== undefined ? (
+                  token.balance === undefined ? null : (
                     <span className="text-secondary text-xs">{Number(formatUnits(token.balance, token.decimals)).toFixed(4)}</span>
-                  ) : null
+                  )
                 }
               >
                 <div className="flex items-center gap-2">

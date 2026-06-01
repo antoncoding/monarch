@@ -29,8 +29,7 @@ export function AllocationCell({
 }: AllocationCellProps) {
   const isZero = amount === 0;
   const displayPercentage = Math.min(Math.max(percentage, 0), 100);
-  const displayCapPercentage =
-    capPercentage === undefined ? undefined : Math.min(Math.max(capPercentage, 0), 100);
+  const displayCapPercentage = capPercentage === undefined ? undefined : Math.min(Math.max(capPercentage, 0), 100);
 
   // Calculate SVG circle properties for progress indicator
   const radius = compact ? 6 : 8;
@@ -38,8 +37,7 @@ export function AllocationCell({
   const strokeWidth = compact ? 2 : 3;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (displayPercentage / 100) * circumference;
-  const capOffset =
-    displayCapPercentage === undefined ? undefined : circumference - (displayCapPercentage / 100) * circumference;
+  const capOffset = displayCapPercentage === undefined ? undefined : circumference - (displayCapPercentage / 100) * circumference;
   const amountLabel = `${isZero ? '0' : formatReadable(amount)}${symbol ? ` ${symbol}` : ''}`;
   const allocationLabel = `${percentage.toFixed(4)}%`;
   const justifyClass = align === 'start' ? 'justify-start' : 'justify-end';
@@ -63,9 +61,7 @@ export function AllocationCell({
   return (
     <div className={`flex items-center ${justifyClass} ${compact ? 'gap-1' : 'gap-2'}`}>
       {/* Amount and symbol */}
-      <span className={`${compact ? 'text-xs' : ''} ${isZero ? 'text-secondary' : ''}`}>
-        {amountLabel}
-      </span>
+      <span className={`${compact ? 'text-xs' : ''} ${isZero ? 'text-secondary' : ''}`}>{amountLabel}</span>
 
       <Tooltip
         content={

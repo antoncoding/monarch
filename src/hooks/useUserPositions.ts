@@ -399,8 +399,7 @@ const useUserPositions = (
 
           const marketInputs: PositionMarketOracleInput[] = markets.map((marketInfo) => ({
             marketUniqueKey: marketInfo.marketUniqueKey,
-            oracleAddress:
-              marketDataMap.get(getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey))?.oracleAddress ?? null,
+            oracleAddress: marketDataMap.get(getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey))?.oracleAddress ?? null,
           }));
           const { snapshots, oraclePrices } = await fetchLatestPositionSnapshotsWithOraclePrices(
             marketInputs,

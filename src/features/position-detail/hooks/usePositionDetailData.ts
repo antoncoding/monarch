@@ -51,7 +51,9 @@ export function usePositionDetailData({
   });
 
   const endTimestampsByChain = useMemo(() => {
-    return Object.fromEntries(Object.entries(earningsRangesByChain).map(([rangeChainId, range]) => [Number(rangeChainId), range.endTimestamp]));
+    return Object.fromEntries(
+      Object.entries(earningsRangesByChain).map(([rangeChainId, range]) => [Number(rangeChainId), range.endTimestamp]),
+    );
   }, [earningsRangesByChain]);
 
   // Group all positions across all chains

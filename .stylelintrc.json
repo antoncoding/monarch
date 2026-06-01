@@ -9,9 +9,27 @@
   "rules": {
     "alpha-value-notation": "number",
     "at-rule-no-unknown": [true, {
-      "ignoreAtRules": ["tailwind"]
+      "ignoreAtRules": [
+        "apply",
+        "config",
+        "custom-variant",
+        "plugin",
+        "reference",
+        "screen",
+        "source",
+        "tailwind",
+        "theme",
+        "utility",
+        "variant"
+      ]
     }],
+    "color-function-notation": null,
+    "declaration-empty-line-before": null,
+    "import-notation": null,
+    "keyframes-name-pattern": null,
+    "order/properties-order": null,
     "property-no-vendor-prefix": null,
+    "rule-empty-line-before": null,
     "selector-class-pattern": null
   }
 }

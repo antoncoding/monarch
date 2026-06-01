@@ -120,18 +120,16 @@ function VaultAdapterPositionDetail({
     [marketAllocations],
   );
 
-  const {
-    positions,
-    isPositionsLoading,
-    isEarningsLoading,
-    actualBlockData,
-    transactions,
-    snapshotsByChain,
-  } = useUserPositionsSummaryData(adapterAddress, period, [chainId], {
-    enabled: hasAdapterPositionTarget && marketHints.length > 0,
-    marketHints,
-    showEmpty: true,
-  });
+  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, transactions, snapshotsByChain } = useUserPositionsSummaryData(
+    adapterAddress,
+    period,
+    [chainId],
+    {
+      enabled: hasAdapterPositionTarget && marketHints.length > 0,
+      marketHints,
+      showEmpty: true,
+    },
+  );
 
   const groupedPositions = useMemo(() => {
     const grouped = groupPositionsByLoanAsset(positions ?? [], actualBlockData);
@@ -387,12 +385,7 @@ export default function VaultContent() {
         <Header />
         <div className="container h-full px-[4%] py-12">
           <div className="mb-6">
-            <Breadcrumbs
-              items={[
-                { label: 'Vault' },
-                { label: `Vault ${getSlicedAddress(vaultAddressValue)}`, isCurrent: true },
-              ]}
-            />
+            <Breadcrumbs items={[{ label: 'Vault' }, { label: `Vault ${getSlicedAddress(vaultAddressValue)}`, isCurrent: true }]} />
           </div>
           <div className="mx-auto max-w-md rounded bg-surface p-8 text-center shadow-sm">
             <h2 className="mb-4 text-xl">Vault data unavailable</h2>
@@ -412,12 +405,7 @@ export default function VaultContent() {
       <div className="mx-auto container flex-1 rounded pb-12">
         <div className="space-y-8">
           <div className="mt-6">
-            <Breadcrumbs
-              items={[
-                { label: 'Vault' },
-                { label: title, isCurrent: true },
-              ]}
-            />
+            <Breadcrumbs items={[{ label: 'Vault' }, { label: title, isCurrent: true }]} />
           </div>
 
           <VaultHeader

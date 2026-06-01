@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowDownIcon, ArrowUpIcon, GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
@@ -252,9 +252,9 @@ function MarketRow({
           style={{ minWidth: '110px' }}
         >
           <p className="text-sm">
-            {market.state.apyAtTarget != null
-              ? `${((isAprDisplay ? convertApyToApr(market.state.apyAtTarget) : market.state.apyAtTarget) * 100).toFixed(2)}%`
-              : '—'}
+            {market.state.apyAtTarget == null
+              ? '—'
+              : `${((isAprDisplay ? convertApyToApr(market.state.apyAtTarget) : market.state.apyAtTarget) * 100).toFixed(2)}%`}
           </p>
         </td>
       )}

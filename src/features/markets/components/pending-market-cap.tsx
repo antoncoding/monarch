@@ -32,7 +32,9 @@ export function PendingMarketCap({
       onRelativeCapChange(value);
 
       // Validate percentage (0-100)
-      if (value !== '') {
+      if (value === '') {
+        setError('');
+      } else {
         const numValue = Number.parseFloat(value);
         if (numValue > 100) {
           setError('Max 100%');
@@ -41,8 +43,6 @@ export function PendingMarketCap({
         } else {
           setError('');
         }
-      } else {
-        setError('');
       }
     }
   };

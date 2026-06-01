@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { GoStar, GoStarFill } from 'react-icons/go';
 import { Table, TableHeader, TableRow, TableHead } from '@/components/ui/table';
 import { TablePagination } from '@/components/shared/table-pagination';
@@ -202,9 +202,7 @@ function MarketsTable({
                   sortDirection={sortDirection}
                   targetColumn={SortColumn.LLTV}
                 />
-                {columnVisibility.trustedBy && (
-                  <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Trusted By</TableHead>
-                )}
+                {columnVisibility.trustedBy && <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Trusted By</TableHead>}
                 {columnVisibility.totalSupply && (
                   <HTSortable
                     label="Total Supply"

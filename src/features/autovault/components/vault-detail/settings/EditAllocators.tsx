@@ -123,7 +123,7 @@ export function EditAllocators({
             <p className="text-xs font-medium text-secondary">Current Allocators</p>
             {allocators.map((address) => {
               const agent = findAgent(address);
-              const feePercent = agent?.performanceFee !== undefined ? Number(agent.performanceFee) / 1e16 : null;
+              const feePercent = agent?.performanceFee === undefined ? null : Number(agent.performanceFee) / 1e16;
 
               return (
                 <div
@@ -172,10 +172,7 @@ export function EditAllocators({
           <div className="space-y-3">
             <p className="text-xs font-medium text-secondary">{allocators.length > 0 ? 'Available to Add' : 'Select Allocator'}</p>
             {availableAllocators.map((agent) => {
-              const feePercent =
-                agent.performanceFee !== undefined
-                  ? Number(agent.performanceFee) / 1e16 // Convert WAD to percentage
-                  : null;
+              const feePercent = agent.performanceFee === undefined ? null : Number(agent.performanceFee) / 1e16; // Convert WAD to percentage
 
               return (
                 <div

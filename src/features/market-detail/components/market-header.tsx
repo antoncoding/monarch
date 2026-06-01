@@ -96,7 +96,7 @@ function StatusBadge({ variant, count, label }: StatusBadgeProps): React.ReactNo
     alert: <MdError className="h-3 w-3" />,
   };
 
-  const displayLabel = count !== undefined ? `${count} ${label}${count > 1 ? 's' : ''}` : label;
+  const displayLabel = count === undefined ? label : `${count} ${label}${count > 1 ? 's' : ''}`;
 
   return (
     <span className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs ${styles[variant]}`}>

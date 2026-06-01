@@ -142,7 +142,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
     if (validAssetData.length === 0) return { current, netChangePercentage: 0, average: 0 };
 
     const startAsset = Number(formatUnits(BigInt(validAssetData[0].y ?? 0), market.loanAsset.decimals));
-    const netChangePercentage = startAsset !== 0 ? ((current - startAsset) / startAsset) * 100 : 0;
+    const netChangePercentage = startAsset === 0 ? 0 : ((current - startAsset) / startAsset) * 100;
 
     const validDisplayData = assetData.filter((point: AssetTimeseriesDataPoint) => point.y !== null);
     const average =

@@ -146,7 +146,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
           <div>
             <h3 className="font-zen text-lg">Recent Transactions</h3>
             <p className="mt-1 text-sm text-secondary">
-              {filteredData.length} transaction{filteredData.length !== 1 ? 's' : ''}
+              {filteredData.length} transaction{filteredData.length === 1 ? '' : 's'}
               {filteredData.length !== transactions.length && ` (filtered from ${transactions.length})`}
             </p>
           </div>

@@ -180,7 +180,7 @@ export default function Input({
             type="button"
             onClick={handleMax}
             className={`bg-surface absolute top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100 ${
-              endAdornment != null ? 'right-9' : 'right-2'
+              endAdornment == null ? 'right-2' : 'right-9'
             }`}
           >
             Max
