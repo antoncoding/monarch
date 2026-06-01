@@ -14,7 +14,7 @@ import { type AssetBreakdownItem, formatUsdValue, type PortfolioAnalytics } from
 import { AccountVaultInfo } from './account-vault-info';
 import { PositionsPeriodSettingsButton } from './positions-period-settings';
 
-type PortfolioAnalyticsBannerProps = {
+interface PortfolioAnalyticsBannerProps {
   account: string;
   accountChainId?: number;
   isBookmarked: boolean;
@@ -33,7 +33,7 @@ type PortfolioAnalyticsBannerProps = {
   valueError: Error | null;
   showPortfolioStats: boolean;
   onSwap: () => void;
-};
+}
 
 const METRIC_VALUE_CLASS = 'font-zen text-xl font-normal leading-none tabular-nums text-primary';
 
@@ -72,10 +72,7 @@ function getBreakdownSourceCounts(items: AssetBreakdownItem[]) {
 function formatDepositSourceCaption(items: AssetBreakdownItem[]): string {
   const { supplyMarketCount, vaultCount } = getBreakdownSourceCounts(items);
 
-  return joinSourceCounts([
-    formatSourceCount(supplyMarketCount, 'market'),
-    formatSourceCount(vaultCount, 'Auto Vault'),
-  ]);
+  return joinSourceCounts([formatSourceCount(supplyMarketCount, 'market'), formatSourceCount(vaultCount, 'Auto Vault')]);
 }
 
 function formatDebtSourceCaption(items: AssetBreakdownItem[]): string {
@@ -89,21 +86,6 @@ function formatAssetSourceDetail(item: AssetBreakdownItem): string {
     formatSourceCount(item.supplyMarketCount, 'Morpho market'),
     formatSourceCount(item.vaultCount, 'Auto Vault'),
     formatSourceCount(item.borrowMarketCount, 'borrow market'),
-  ]);
-}
-
-function formatAnalyticsCaption(portfolioAnalytics: PortfolioAnalytics): string {
-  if (portfolioAnalytics.totalSourceCount <= 0) {
-    return '';
-  }
-
-  if (portfolioAnalytics.unpricedSourceCount > 0) {
-    return `${portfolioAnalytics.pricedSourceCount}/${portfolioAnalytics.totalSourceCount} priced sources`;
-  }
-
-  return joinSourceCounts([
-    formatSourceCount(portfolioAnalytics.supplyMarketCount, 'market'),
-    formatSourceCount(portfolioAnalytics.vaultCount, 'Auto Vault'),
   ]);
 }
 
@@ -286,7 +268,7 @@ export function PortfolioAnalyticsBanner({
           <PortfolioMetricBox
             label={averageRateLabel}
             value={formatRate(displayRate)}
-            caption={formatAnalyticsCaption(portfolioAnalytics)}
+            caption=""
             action={
               <PositionsPeriodSettingsButton
                 period={period}
