@@ -112,26 +112,6 @@ export type RewardAmount = {
   claimed: string;
 };
 
-export type MarketRewardType = {
-  // shared
-  type: 'market-reward';
-  asset: AssetType;
-  user: string;
-  // specific
-  for_borrow: RewardAmount | null;
-  for_collateral: RewardAmount | null;
-  for_supply: RewardAmount | null;
-  program: {
-    creator: string;
-    start: string;
-    end: string;
-    created_at: string;
-    blacklist: string[];
-    market_id: string;
-    asset: AssetType;
-  };
-};
-
 export type UniformRewardType = {
   // shared
   type: 'uniform-reward';
@@ -142,34 +122,9 @@ export type UniformRewardType = {
   program_id: string;
 };
 
-export type VaultRewardType = {
-  // shared
-  type: 'vault-reward';
-  asset: AssetType;
-  user: string;
-  // specific
-  program: VaultProgramType;
-  for_supply: RewardAmount | null;
-};
+export type RewardResponseType = UniformRewardType;
 
-export type VaultProgramType = {
-  type: 'vault-reward';
-  asset: AssetType;
-  vault: string;
-  chain_id: number;
-  rate_per_year: string;
-  distributor: AssetType;
-  creator: string;
-  blacklist: string[];
-  start: string;
-  end: string;
-  created_at: string;
-  id: string;
-};
-
-export type RewardResponseType = MarketRewardType | UniformRewardType | VaultRewardType;
-
-export type RewardSource = 'merkl' | 'morpho-distributor';
+export type RewardSource = 'merkl';
 
 export type AggregatedRewardType = {
   asset: AssetType;

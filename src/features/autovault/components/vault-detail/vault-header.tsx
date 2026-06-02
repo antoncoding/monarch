@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { AddressIdentity } from '@/components/shared/address-identity';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getExplorerURL } from '@/utils/external';
@@ -28,6 +30,12 @@ type VaultHeaderAdapterRow = {
   adapterType?: string;
 };
 
+type VaultHeaderRewardRow = {
+  assetAddress: string;
+  assetSymbol: string;
+  apr: number;
+};
+
 type VaultHeaderProps = {
   vaultAddress: Address;
   chainId: SupportedNetworks;
@@ -37,6 +45,9 @@ type VaultHeaderProps = {
   assetSymbol?: string;
   totalAssetsLabel: string;
   apyLabel: string;
+  baseApyLabel?: string;
+  rewardAprLabel?: string;
+  rewards?: VaultHeaderRewardRow[];
   userShareBalance?: string;
   allocators?: string[];
   sentinels?: string[];
@@ -65,6 +76,9 @@ export function VaultHeader({
   assetSymbol,
   totalAssetsLabel,
   apyLabel,
+  baseApyLabel,
+  rewardAprLabel,
+  rewards = [],
   userShareBalance,
   allocators = [],
   sentinels = [],
@@ -106,6 +120,13 @@ export function VaultHeader({
     capsAdapterRows.length === 1
       ? `${formatVaultAdapterType(capsAdapterRows[0].adapterType)} ${getSlicedAddress(capsAdapterRows[0].adapter)}`
       : `${capsAdapterRows.length} configured adapters`;
+  const hasRewards = rewards.length > 0 && rewardAprLabel !== undefined;
+  const rewardsDetail = [
+    baseApyLabel ? `Base APY ${baseApyLabel}` : null,
+    ...rewards.map((reward) => `${reward.assetSymbol} reward +${(reward.apr * 100).toFixed(2)}%`),
+  ]
+    .filter((row): row is string => Boolean(row))
+    .join('\n');
 
   return (
     <div className="mt-6 mb-6 space-y-4">
@@ -223,6 +244,32 @@ export function VaultHeader({
                     <p className="tabular-nums text-lg font-medium text-primary">{apyLabel}</p>
                   )}
                 </div>
+                {!isLoading && hasRewards && (
+                  <Tooltip
+                    content={
+                      <TooltipContent
+                        title="Vault Rewards"
+                        detail={rewardsDetail}
+                      />
+                    }
+                  >
+                    <span className="mt-0.5 inline-flex cursor-help items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                      {rewardAprLabel}
+                      <span className="inline-flex -space-x-1">
+                        {rewards.slice(0, 3).map((reward) => (
+                          <TokenIcon
+                            key={`${reward.assetAddress}-${reward.assetSymbol}`}
+                            address={reward.assetAddress}
+                            chainId={chainId}
+                            symbol={reward.assetSymbol}
+                            width={14}
+                            height={14}
+                          />
+                        ))}
+                      </span>
+                    </span>
+                  </Tooltip>
+                )}
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-secondary">Total Assets</p>

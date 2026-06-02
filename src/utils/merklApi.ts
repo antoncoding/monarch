@@ -1,6 +1,6 @@
 import type { MerklCampaign, SimplifiedCampaign, MerklApiParams, MerklOpportunityLookupParams, MerklOpportunity } from './merklTypes';
 
-const MERKL_API_BASE_URL = 'https://api.merkl.xyz';
+const MERKL_API_PROXY_BASE_PATH = '/api/merkl';
 
 const MERKL_LIVE_STATUS = 'LIVE';
 const MERKL_HOLD_ACTION = 'HOLD';
@@ -14,22 +14,24 @@ type MerklApiResult<T> = {
 };
 
 const buildMerklUrl = (path: string, query: Record<string, MerklQueryValue | null | undefined> = {}): string => {
-  const url = new URL(path, MERKL_API_BASE_URL);
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const searchParams = new URLSearchParams();
 
   for (const [key, value] of Object.entries(query)) {
     if (value == null) continue;
 
     if (Array.isArray(value)) {
       for (const item of value) {
-        url.searchParams.append(key, String(item));
+        searchParams.append(key, String(item));
       }
       continue;
     }
 
-    url.searchParams.set(key, String(value));
+    searchParams.set(key, String(value));
   }
 
-  return url.toString();
+  const queryString = searchParams.toString();
+  return `${MERKL_API_PROXY_BASE_PATH}${normalizedPath}${queryString ? `?${queryString}` : ''}`;
 };
 
 export async function fetchMerklApi<T>(

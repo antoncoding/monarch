@@ -21,6 +21,7 @@ import { VaultSharePriceChart } from '@/features/vault/components/vault-share-pr
 import { useModal } from '@/hooks/useModal';
 import { type VaultMarketAdapter, useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { useVaultV2RewardsQuery } from '@/hooks/queries/useVaultV2RewardsQuery';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { useVaultPage } from '@/hooks/useVaultPage';
@@ -258,6 +259,11 @@ export default function VaultContent() {
   }, [chainId]);
 
   const vaultDataQuery = useVaultV2Data({ vaultAddress: vaultAddressValue, chainId });
+  const {
+    data: vaultRewardsData,
+    refetch: refetchVaultRewards,
+    isRefetching: isRefetchingVaultRewards,
+  } = useVaultV2RewardsQuery({ vaultAddress: vaultAddressValue, chainId });
   const vaultContract = useVaultV2({
     vaultAddress: vaultAddressValue,
     chainId,
@@ -277,8 +283,9 @@ export default function VaultContent() {
 
   const handleRefreshVault = useCallback(() => {
     void vaultContract.refetch();
+    void refetchVaultRewards();
     void refetchVaultQueries({ includeRetries: true });
-  }, [refetchVaultQueries, vaultContract]);
+  }, [refetchVaultQueries, refetchVaultRewards, vaultContract]);
 
   const vaultData = vaultDataQuery.data;
   const hasError = vaultDataQuery.isError;
@@ -301,12 +308,54 @@ export default function VaultContent() {
   const hasNoAllocators = Boolean(vaultData?.capsData) && (vaultData?.allocators ?? []).length === 0;
   const capsUninitialized = vaultData?.capsData?.needSetupCaps === true;
 
-  const isRefetching = vaultDataQuery.isRefetching || vaultContract.isRefetching || adapterQuery.isRefetching || isRefetchingVaultQueries;
+  const isRefetching =
+    vaultDataQuery.isRefetching ||
+    vaultContract.isRefetching ||
+    adapterQuery.isRefetching ||
+    isRefetchingVaultQueries ||
+    isRefetchingVaultRewards;
+
+  const vaultRewardRows = useMemo(
+    () =>
+      (vaultRewardsData?.rewards ?? [])
+        .filter((reward) => Number.isFinite(reward.supplyApr) && reward.supplyApr > 0)
+        .map((reward) => ({
+          assetAddress: reward.asset.address,
+          assetSymbol: reward.asset.symbol,
+          apr: reward.supplyApr,
+        })),
+    [vaultRewardsData?.rewards],
+  );
+
+  const vaultRewardApr = useMemo(() => vaultRewardRows.reduce((sum, reward) => sum + reward.apr, 0), [vaultRewardRows]);
+  const displayedVaultApy = useMemo(() => {
+    if (vaultRewardsData?.netApy !== null && vaultRewardsData?.netApy !== undefined) {
+      return vaultRewardsData.netApy;
+    }
+
+    if (vaultAPY === null || vaultAPY === undefined) {
+      return null;
+    }
+
+    return vaultAPY + vaultRewardApr;
+  }, [vaultAPY, vaultRewardApr, vaultRewardsData?.netApy]);
+
+  const baseVaultApy = vaultRewardsData?.apy ?? vaultAPY;
 
   const apyLabel = useMemo(() => {
-    if (vaultAPY === null || vaultAPY === undefined) return '0%';
-    return `${(vaultAPY * 100).toFixed(2)}%`;
-  }, [vaultAPY]);
+    if (displayedVaultApy === null || displayedVaultApy === undefined) return '0%';
+    return `${(displayedVaultApy * 100).toFixed(2)}%`;
+  }, [displayedVaultApy]);
+
+  const baseApyLabel = useMemo(() => {
+    if (baseVaultApy === null || baseVaultApy === undefined) return undefined;
+    return `${(baseVaultApy * 100).toFixed(2)}%`;
+  }, [baseVaultApy]);
+
+  const rewardAprLabel = useMemo(() => {
+    if (vaultRewardApr <= 0) return undefined;
+    return `+${(vaultRewardApr * 100).toFixed(2)}% rewards`;
+  }, [vaultRewardApr]);
 
   const totalAssetsLabel = useMemo(() => {
     if (vaultContract.totalAssets === undefined || tokenDecimals === undefined) return '--';
@@ -417,6 +466,9 @@ export default function VaultContent() {
             assetSymbol={tokenSymbol}
             totalAssetsLabel={totalAssetsLabel}
             apyLabel={apyLabel}
+            baseApyLabel={baseApyLabel}
+            rewardAprLabel={rewardAprLabel}
+            rewards={vaultRewardRows}
             userShareBalance={userShareBalanceLabel}
             allocators={vaultData?.allocators}
             sentinels={vaultData?.sentinels}

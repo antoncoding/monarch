@@ -32,6 +32,7 @@ const ACTIONABLE_QUERY_ROOT_KEYS = new Set<string>([
   'user-rewards',
   'user-transactions',
   'vault-historical-apy',
+  'vault-v2-rewards',
   'vault-v2-data',
   'vault-allocations',
 ]);

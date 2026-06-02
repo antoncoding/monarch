@@ -80,3 +80,23 @@ export const vaultV2MetadataQuery = `
     }
   }
 `;
+
+export const vaultV2RewardsQuery = `
+  query VaultV2Rewards($address: String!, $chainId: Int!) {
+    vaultV2ByAddress(address: $address, chainId: $chainId) {
+      address
+      apy
+      netApy
+      rewards {
+        supplyApr
+        asset {
+          address
+          symbol
+          price {
+            usd
+          }
+        }
+      }
+    }
+  }
+`;

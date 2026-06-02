@@ -5,17 +5,14 @@ import { RefetchIcon } from '@/components/ui/refetch-icon';
 import LoadingScreen from '@/components/status/loading-screen';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import Image from 'next/image';
-import type { Address } from 'viem';
-import { useConnection, useChainId, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { TokenIcon } from '@/components/shared/token-icon';
-import type { DistributionResponseType, MerklRewardWithProofs } from '@/hooks/queries/useUserRewardsQuery';
+import type { MerklRewardWithProofs } from '@/hooks/queries/useUserRewardsQuery';
 import { useClaimMerklRewards } from '@/hooks/useClaimMerklRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
@@ -24,7 +21,6 @@ import type { AggregatedRewardType } from '@/utils/types';
 type RewardTableProps = {
   account: string;
   rewards: AggregatedRewardType[];
-  distributions: DistributionResponseType[];
   merklRewardsWithProofs: MerklRewardWithProofs[];
   onRefresh: () => void;
   isRefetching: boolean;
@@ -40,31 +36,9 @@ function getMerklClaimButtonText(isClaiming: boolean, status: ClaimStatus): stri
   return 'Claim';
 }
 
-export default function RewardTable({
-  rewards,
-  distributions,
-  merklRewardsWithProofs,
-  account,
-  onRefresh,
-  isRefetching,
-  isLoading,
-}: RewardTableProps) {
-  const { chainId } = useConnection();
-  const currentChainId = useChainId();
+export default function RewardTable({ rewards, merklRewardsWithProofs, account, onRefresh, isRefetching, isLoading }: RewardTableProps) {
   const toast = useStyledToast();
   const [claimingRewardKey, setClaimingRewardKey] = useState<string | null>(null);
-  const { mutateAsync: switchChainAsync } = useSwitchChain();
-
-  const { sendTransaction } = useTransactionWithToast({
-    toastId: 'claim',
-    pendingText: 'Claiming Reward...',
-    successText: 'Reward Claimed!',
-    errorText: 'Failed to claim rewards',
-    chainId,
-    pendingDescription: 'Claiming rewards',
-    successDescription: 'Successfully claimed rewards',
-    onSuccess: onRefresh,
-  });
 
   // Initialize Merkl claiming hook
   const { claimSingleReward, claimStatus } = useClaimMerklRewards();
@@ -76,40 +50,6 @@ export default function RewardTable({
         return tokenReward.total.claimable > 0n;
       }),
     [rewards],
-  );
-
-  const handleClaim = useCallback(
-    async (distribution: DistributionResponseType | undefined) => {
-      if (!account) {
-        toast.error('No account connected', 'Please connect your wallet to continue.');
-        return;
-      }
-      if (!distribution) {
-        toast.error('No claim data', 'No claim data found for this reward please try again later.');
-        return;
-      }
-
-      try {
-        // Check if we need to switch chains
-        if (currentChainId !== distribution.distributor.chain_id) {
-          await switchChainAsync({ chainId: distribution.distributor.chain_id });
-        }
-
-        // Send the transaction
-        sendTransaction({
-          account: account as Address,
-          to: distribution.distributor.address as Address,
-          data: distribution.tx_data as `0x${string}`,
-          chainId: distribution.distributor.chain_id,
-        });
-      } catch (error) {
-        // User rejected chain switch or other error
-        if (error instanceof Error && !error.message.includes('User rejected')) {
-          toast.error('Claim Failed', error.message);
-        }
-      }
-    },
-    [account, currentChainId, switchChainAsync, toast, sendTransaction],
   );
 
   const handleMerklClaim = useCallback(
@@ -197,7 +137,6 @@ export default function RewardTable({
               <TableRow>
                 <TableHead className="text-left">Asset</TableHead>
                 <TableHead className="text-center">Chain</TableHead>
-                <TableHead className="text-center">Source</TableHead>
                 <TableHead className="text-right">Claimable</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -210,14 +149,6 @@ export default function RewardTable({
                   img: undefined,
                   decimals: 18,
                 };
-
-                const distribution = distributions.find(
-                  (d) =>
-                    d.asset.address.toLowerCase() === tokenReward.asset.address.toLowerCase() &&
-                    d.asset.chain_id === tokenReward.asset.chain_id,
-                );
-
-                const isMerklReward = tokenReward.source === 'merkl';
 
                 // Create unique key for tracking claim status
                 const rewardKey = `${tokenReward.asset.address.toLowerCase()}-${tokenReward.asset.chain_id}`;
@@ -255,19 +186,6 @@ export default function RewardTable({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center">
-                        <span
-                          className={`rounded px-2 py-0.5 text-xs ${
-                            isMerklReward
-                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                          }`}
-                        >
-                          {isMerklReward ? 'Merkl' : 'Morpho'}
-                        </span>
-                      </div>
-                    </TableCell>
                     <TableCell className="text-sm">
                       <div className="flex items-center justify-end gap-1">
                         <TokenIcon
@@ -281,26 +199,15 @@ export default function RewardTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end">
-                        {isMerklReward ? (
-                          <Button
-                            onClick={() => handleMerklClaim(tokenReward.asset.address, tokenReward.asset.chain_id)}
-                            variant="surface"
-                            size="sm"
-                            disabled={tokenReward.total.claimable === BigInt(0) || isThisRewardClaiming}
-                            isLoading={isThisRewardClaiming}
-                          >
-                            {getMerklClaimButtonText(isThisRewardClaiming, claimStatus)}
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={() => handleClaim(distribution)}
-                            variant="surface"
-                            size="sm"
-                            disabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
-                          >
-                            Claim
-                          </Button>
-                        )}
+                        <Button
+                          onClick={() => handleMerklClaim(tokenReward.asset.address, tokenReward.asset.chain_id)}
+                          variant="surface"
+                          size="sm"
+                          disabled={tokenReward.total.claimable === BigInt(0) || isThisRewardClaiming}
+                          isLoading={isThisRewardClaiming}
+                        >
+                          {getMerklClaimButtonText(isThisRewardClaiming, claimStatus)}
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
