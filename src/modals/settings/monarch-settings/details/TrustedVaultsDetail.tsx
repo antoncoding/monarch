@@ -274,7 +274,7 @@ export function TrustedVaultsDetail() {
     });
   }, [browsePriorityVaultKeySet, browseVaults, searchQuery]);
 
-  const isVaultDiscoveryLoading = morphoLoading || morphoV2MetadataLoading;
+  const isVaultDiscoveryLoading = browseVaults.length === 0 && (morphoLoading || morphoV2MetadataLoading);
   const hasTrustedVaultSetup = effectiveTrustedVaults.length > 0;
   const monarchListDescription = [
     `Monarch maintains a default vault list (${suggestedVaults.length} vaults) selected for conservative, relatively low-risk profiles.`,

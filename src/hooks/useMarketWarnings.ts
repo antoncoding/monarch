@@ -23,7 +23,7 @@ export const useMarketWarnings = (market: Market | null | undefined): WarningWit
     });
 
     // Filter out false "unrecognized asset" warnings
-    // The subgraph fetcher only checks static token list, but we have dynamic tokens too (Pendle, etc.)
+    // API market data may miss dynamic tokens that are present in the token query (Pendle, etc.).
     return warnings.filter((warning) => {
       if (warning.code === 'unrecognized_loan_asset' && market.loanAsset?.address) {
         const found = findToken(market.loanAsset.address, chainId ?? 0);

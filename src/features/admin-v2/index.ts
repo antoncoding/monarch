@@ -3,8 +3,6 @@
  *
  * Experimental cross-chain stats dashboard that uses the shared Monarch API.
  *
- * NOTE: This feature is experimental and may be removed if the API costs
- * prove too high. The original /admin/stats page should remain as a fallback.
  */
 
 export { PasswordGate } from './components/password-gate';

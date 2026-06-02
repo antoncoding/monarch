@@ -1,3 +1,4 @@
+import { supportsMorphoApi } from '@/config/dataSources';
 import { vaultV2SharePriceHistoryQuery } from '@/graphql/vault-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { TimeseriesOptions } from '@/utils/types';
@@ -45,6 +46,10 @@ export async function fetchMorphoVaultV2SharePriceHistory({
   chainId: SupportedNetworks;
   options: TimeseriesOptions;
 }): Promise<MorphoVaultSharePricePoint[] | null> {
+  if (!supportsMorphoApi(chainId)) {
+    return null;
+  }
+
   try {
     const response = await morphoGraphqlFetcher<VaultV2SharePriceHistoryResponse>(
       vaultV2SharePriceHistoryQuery,

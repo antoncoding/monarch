@@ -3,14 +3,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarketLiquidations } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketLiquidations } from '@/data-sources/morpho-api/market-liquidations';
-import { fetchSubgraphMarketLiquidations } from '@/data-sources/subgraph/market-liquidations';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketLiquidations } from '@/utils/types';
 
 /**
  * Hook to fetch liquidations for a specific market, using Monarch API as the primary source
- * with existing sources as fallback.
+ * with Morpho API as fallback.
  * @param marketId The ID or unique key of the market.
  * @param network The blockchain network.
  * @param page Current page number (1-indexed, defaults to 1).
@@ -42,14 +41,10 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
             ? [
                 {
                   provider: 'morpho-api' as const,
-                  fetch: () => fetchMorphoMarketLiquidations(marketId, pageSize, targetSkip),
+                  fetch: () => fetchMorphoMarketLiquidations(marketId, network, pageSize, targetSkip),
                 },
               ]
             : []),
-          {
-            provider: 'subgraph',
-            fetch: () => fetchSubgraphMarketLiquidations(marketId, network, pageSize, targetSkip),
-          },
         ],
       });
     },

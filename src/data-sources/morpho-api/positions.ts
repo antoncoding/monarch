@@ -1,3 +1,4 @@
+import { supportsMorphoApi } from '@/config/dataSources';
 import { userPositionMarketsQuery, userPositionsQuery, userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketPosition } from '@/utils/types';
@@ -128,6 +129,10 @@ export const fetchMorphoUserPositionMarkets = async (
   userAddress: string,
   network: SupportedNetworks,
 ): Promise<{ marketUniqueKey: string; chainId: number }[]> => {
+  if (!supportsMorphoApi(network)) {
+    return [];
+  }
+
   try {
     const result = await morphoGraphqlFetcher<MorphoUserPositionsApiResponse>(userPositionsQuery, {
       address: userAddress.toLowerCase(),
@@ -166,14 +171,15 @@ export const fetchMorphoUserPositionMarketsForNetworks = async (
   userAddress: string,
   networks: SupportedNetworks[],
 ): Promise<{ marketUniqueKey: string; chainId: number }[]> => {
-  if (networks.length === 0) {
+  const morphoApiNetworks = networks.filter((network) => supportsMorphoApi(network));
+  if (morphoApiNetworks.length === 0) {
     return [];
   }
 
   const positionMarkets = new Map<string, { marketUniqueKey: string; chainId: number }>();
   const firstResult = await morphoGraphqlFetcher<MorphoUserPositionMarketsApiResponse>(userPositionMarketsQuery, {
     address: userAddress.toLowerCase(),
-    chainIds: networks,
+    chainIds: morphoApiNetworks,
     first: MORPHO_POSITION_MARKETS_PAGE_SIZE,
     skip: 0,
   });
@@ -195,7 +201,7 @@ export const fetchMorphoUserPositionMarketsForNetworks = async (
     remainingOffsets.map((skip) =>
       morphoGraphqlFetcher<MorphoUserPositionMarketsApiResponse>(userPositionMarketsQuery, {
         address: userAddress.toLowerCase(),
-        chainIds: networks,
+        chainIds: morphoApiNetworks,
         first: MORPHO_POSITION_MARKETS_PAGE_SIZE,
         skip,
       }),
@@ -217,6 +223,10 @@ export const fetchMorphoUserPositionForMarket = async (
   userAddress: string,
   network: SupportedNetworks,
 ): Promise<MarketPosition | null> => {
+  if (!supportsMorphoApi(network)) {
+    return null;
+  }
+
   try {
     const result = await morphoGraphqlFetcher<MorphoUserMarketPositionApiResponse>(userPositionForMarketQuery, {
       address: userAddress.toLowerCase(),

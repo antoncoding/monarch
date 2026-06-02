@@ -1,3 +1,4 @@
+import { supportsMorphoApiChainId } from '@/config/dataSources';
 import { marketSuppliersQuery } from '@/graphql/morpho-api-queries';
 import type { PaginatedMarketSuppliers } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
@@ -42,6 +43,10 @@ export const fetchMorphoMarketSuppliers = async (
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketSuppliers> => {
+  if (!supportsMorphoApiChainId(chainId)) {
+    return { items: [], totalCount: 0 };
+  }
+
   const variables = {
     uniqueKey: marketId,
     chainId,

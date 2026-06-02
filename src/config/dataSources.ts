@@ -1,4 +1,4 @@
-import { isSupportedNetwork, SupportedNetworks } from '@/utils/supported-networks';
+import { ALL_SUPPORTED_NETWORKS, isSupportedNetwork, SupportedNetworks } from '@/utils/supported-networks';
 
 /**
  * Check if a network supports Morpho API as a data source
@@ -23,3 +23,5 @@ export const supportsMorphoApi = (network: SupportedNetworks): boolean => {
 export const supportsMorphoApiChainId = (chainId: number): chainId is SupportedNetworks => {
   return isSupportedNetwork(chainId) && supportsMorphoApi(chainId);
 };
+
+export const MORPHO_API_SUPPORTED_NETWORKS = ALL_SUPPORTED_NETWORKS.filter((network) => supportsMorphoApi(network));

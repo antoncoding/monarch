@@ -2,11 +2,11 @@
 
 ## Executive Summary
 
-Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Base, Polygon, Arbitrum, Unichain, HyperEVM, Monad) and presents markets, vaults, and user positions in a unified interface. The app has **no app-owned backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads or call protected infrastructure endpoints such as API-key creation.
+Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Optimism, Base, Polygon, Arbitrum, Unichain, HyperEVM, Monad) and presents markets, vaults, and user positions in a unified interface. The app has **no app-owned backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads or call protected infrastructure endpoints such as API-key creation.
 
 **Key Architectural Decisions:**
 - Next.js 15 App Router with React 18
-- Multi-source strategy: Morpho API + Monarch API + selective subgraph fallback
+- Multi-source strategy: Monarch API + Morpho API fallback + on-chain RPC snapshots
 - Zustand for client state, React Query for server state
 - All user data in localStorage (no backend DB)
 - Multi-chain support with custom RPC override capability
@@ -168,16 +168,14 @@ NonStandardOracleOutput {
 
 ```
 Market registry / market shells:
-                    Morpho API (https://blue-api.morpho.org/graphql)
-                    ↓ (if unavailable or unsupported chain)
                     Monarch GraphQL (https://indexer.monarchlend.xyz/graphql)
-                    ↓
-                    Subgraph (The Graph / Goldsky)
+                    ↓ (for missing supported chains)
+                    Morpho API (https://blue-api.morpho.org/graphql)
 
 Market detail live state + historical charts:
                     Monarch GraphQL (https://indexer.monarchlend.xyz/graphql)
                     ↓ (for shell metadata fallback and optional USD backfill)
-                    Morpho API / Subgraph
+                    Morpho API
                     ↓ (fresh balances / shares / liquidity override)
                     On-chain RPC snapshot
 
@@ -188,12 +186,12 @@ Autovault metadata: Monarch GraphQL (https://indexer.monarchlend.xyz/graphql)
 Market detail participants/activity + admin stats transactions:
                     Monarch GraphQL (https://indexer.monarchlend.xyz/graphql)
                     ↓ (for market-detail fallback only)
-                    Morpho API / Subgraph
+                    Morpho API
 
 Market metrics: external data API via `/v1/markets/metrics`
 ```
 
-**Morpho API Supported Chains:** Mainnet, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
+**App-supported Morpho API Chains:** Mainnet, Optimism, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
 
 ### Static Data (Build-time or cached)
 | Data Type | Source | Location |
@@ -204,30 +202,30 @@ Market metrics: external data API via `/v1/markets/metrics`
 ### Dynamic Data (Runtime fetched)
 | Data Type | Source | Refresh | Query Hook |
 |-----------|--------|---------|------------|
-| Markets list | Monarch multi-chain → Morpho per chain → Subgraph per chain | 5 min stale | `useMarketsQuery` |
+| Markets list | Monarch multi-chain → Morpho per supported missing chain | 5 min stale | `useMarketsQuery` |
 | Rolling market `24h/7d/30d` rates | Morpho API rolling fields → archive RPC snapshots + Morpho SDK math fallback | 15 min stale | `useMarketRateEnrichmentQuery` |
 | Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
-| Market state (APY, utilization, balances) | Monarch market state + Morpho/Subgraph shell + RPC snapshot | 30s stale | `useMarketData` |
-| Market historical chart series | Monarch GraphQL → Morpho API → Subgraph | 5 min stale | `useMarketHistoricalData` |
+| Market state (APY, utilization, balances) | Monarch market state + Morpho shell + RPC snapshot | 30s stale | `useMarketData` |
+| Market historical chart series | Monarch GraphQL → Morpho API | 5 min stale | `useMarketHistoricalData` |
 | User positions | Monarch position discovery + on-chain snapshots + market registry from `useProcessedMarkets` | 5 min | `useUserPositions` |
-| User transaction history | Monarch GraphQL → Morpho API → Subgraph (`assetIds` queries still skip Monarch) | 60s | `useUserTransactionsQuery` |
+| User transaction history | Monarch GraphQL → Morpho API (`assetIds` queries still skip Monarch) | 60s | `useUserTransactionsQuery` |
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
 | User autovault metadata | Monarch GraphQL + on-chain enrichment | 60s | `useUserVaultsV2Query` |
 | Vault detail/settings metadata | Monarch GraphQL + narrow RPC fallback | 30s | `useVaultV2Data` |
 | Vault V2 rewards | Morpho API rewards fields backed by Merkl | 5 min | `useVaultV2RewardsQuery` |
-| Market detail participants/activity | Monarch GraphQL + Morpho API/Subgraph fallback | 2-5 min stale | `useMarketSuppliers` / `useMarketBorrowers` / `useMarketSupplies` / `useMarketBorrows` |
+| Market detail participants/activity | Monarch GraphQL + Morpho API fallback | 2-5 min stale | `useMarketSuppliers` / `useMarketBorrowers` / `useMarketSupplies` / `useMarketBorrows` |
 | Vault allocations | On-chain multicall | 30s | `useAllocationsQuery` |
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
 | Oracle metadata | Scanner Gist | 30 min | `useOracleMetadata` / `useAllOracleMetadata` |
 | Account contract tags | Kleros Scout API | 6h stale | `useKlerosAddressTagsQuery` |
 | User claimable rewards | Merkl API via `/api/merkl` | 5 min stale, forced refresh on manual refetch | `useUserRewardsQuery` |
 | Reward campaigns | Merkl API via `/api/merkl` | 5 min stale | `useMerklCampaignsQuery` |
-| Market liquidations | Monarch GraphQL + Morpho API/Subgraph fallback | 5 min stale | `useMarketLiquidations` |
+| Market liquidations | Monarch GraphQL + Morpho API fallback | 5 min stale | `useMarketLiquidations` |
 | Admin stats transactions | Monarch GraphQL + market registry/token price enrichment | 2 min stale | `useMonarchTransactions` |
 
 ### Data Hook Responsibility Matrix
 
-This is the migration checklist for the Monarch API (Envio GraphQL endpoint). "Full Monarch support" here means the feature would still work if Morpho API and subgraph reads were unavailable.
+This is the migration checklist for the Monarch API (Envio GraphQL endpoint). "Full Monarch support" here means the feature would still work if Morpho API reads were unavailable.
 
 Hooks omitted from this matrix are local-state hooks or pure view/composition helpers that do not own remote transport reads.
 
@@ -235,14 +233,14 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 
 | Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
 |---------------|----------------|-------------|----------------------------------|
-| `useMarketsQuery` | Global market registry used across the app | Monarch multi-chain first, then Morpho per chain, then subgraph per chain | Optional metadata parity from Morpho plus any non-core enrichment we may keep outside the primary registry |
+| `useMarketsQuery` | Global market registry used across the app | Monarch multi-chain first, then Morpho per supported missing chain | Optional metadata parity from Morpho plus any non-core enrichment we may keep outside the primary registry |
 | `useProcessedMarkets` | Blacklist/filtering layer on top of market registry, plus RPC historical-rate enrichment and USD backfill | `useMarketsQuery` + RPC/archive snapshots + `useTokenPrices` | Inherits `useMarketsQuery`; also needs a Monarch-native token price source if we want to remove Morpho price reads |
-| `useMarketData` | Single-market detail shell with freshest live state | Monarch live-state overlay on Morpho/Subgraph shell, then RPC snapshot override | Whitelist, supplying-vault, and rolling-APY metadata parity if we want to remove the shell fallback entirely |
-| `useMarketHistoricalData` | Historical market chart series | Monarch historical snapshots first; Morpho API/Subgraph only for fallback | Already aligned for the current asset-only market charts |
+| `useMarketData` | Single-market detail shell with freshest live state | Monarch live-state overlay on Morpho shell, then RPC snapshot override | Whitelist, supplying-vault, and rolling-APY metadata parity if we want to remove the shell fallback entirely |
+| `useMarketHistoricalData` | Historical market chart series | Monarch historical snapshots first; Morpho API only for fallback | Already aligned for the current asset-only market charts |
 | `useTokenPrices` | Token USD price lookup and peg fallback used by markets/admin stats | Morpho price API + major price fallback | Intentionally Morpho/major-price backed today |
-| `useUserPositions` | Discover all markets where a user has positions, then attach live balances | Monarch batched `Position` discovery + RPC snapshots/oracle reads + market metadata from `useProcessedMarkets`; Morpho/Subgraph fallback for discovery | Monarch market registry/detail if position objects should no longer depend on Morpho/Subgraph market metadata |
-| `useUserPosition` | Single-market user position | RPC snapshot first; if snapshot unavailable, Monarch position state when local market exists; then Morpho/Subgraph fallback | Same market-registry/detail gap as `useUserPositions` |
-| `useUserTransactionsQuery` / `fetchUserTransactions` | User history across one or many chains | Monarch user-event tables first; fallback Morpho API, then subgraph; `assetIds` filter still bypasses Monarch | Asset-address filtered history support to fully back reports and any asset-scoped history views |
+| `useUserPositions` | Discover all markets where a user has positions, then attach live balances | Monarch batched `Position` discovery + RPC snapshots/oracle reads + market metadata from `useProcessedMarkets`; Morpho API fallback for discovery | Monarch market registry/detail if position objects should no longer depend on Morpho API market metadata |
+| `useUserPosition` | Single-market user position | RPC snapshot first; if snapshot unavailable, Monarch position state when local market exists; then Morpho API fallback | Same market-registry/detail gap as `useUserPositions` |
+| `useUserTransactionsQuery` / `fetchUserTransactions` | User history across one or many chains | Monarch user-event tables first; fallback Morpho API; `assetIds` filter still bypasses Monarch | Asset-address filtered history support to fully back reports and any asset-scoped history views |
 | `useUserPositionsSummaryData` | Portfolio earnings summary for active positions | `useUserPositions` + `useUserTransactionsQuery` + RPC block/snapshot helpers | Inherits the remaining `useUserPositions` and `useUserTransactionsQuery` gaps |
 | `usePositionReport` | Asset-scoped earnings/report generation | `fetchUserTransactions(assetIds=...)` + RPC block/snapshot helpers | Still blocked on Monarch support for `assetIds`-scoped user history |
 | `usePositionHistoryChart` | Derive chart points for one asset/market group | Pure derivation from transactions + snapshots already fetched elsewhere | No backend gap; inherits upstream history/snapshot gaps |
@@ -251,10 +249,10 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 
 | Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
 |---------------|----------------|-------------|----------------------------------|
-| `useMarketSuppliers` / `useMarketBorrowers` | Paginated open positions on one market | Monarch first, then Morpho API, then subgraph | Already Monarch-first; no new Envio schema gap identified |
-| `useAllMarketSuppliers` / `useAllMarketBorrowers` | Non-paginated top positions for concentration charts | Monarch first, then Morpho API, then subgraph | Already Monarch-first; no new Envio schema gap identified |
-| `useMarketSupplies` / `useMarketBorrows` | Paginated supply/withdraw and borrow/repay activity | Monarch first, then Morpho API, then subgraph | Already Monarch-first; no new Envio schema gap identified |
-| `useMarketLiquidations` | Paginated liquidations | Monarch first, then Morpho API, then subgraph | Already Monarch-first; no new Envio schema gap identified |
+| `useMarketSuppliers` / `useMarketBorrowers` | Paginated open positions on one market | Monarch first, then Morpho API | Already Monarch-first; no new Envio schema gap identified |
+| `useAllMarketSuppliers` / `useAllMarketBorrowers` | Non-paginated top positions for concentration charts | Monarch first, then Morpho API | Already Monarch-first; no new Envio schema gap identified |
+| `useMarketSupplies` / `useMarketBorrows` | Paginated supply/withdraw and borrow/repay activity | Monarch first, then Morpho API | Already Monarch-first; no new Envio schema gap identified |
+| `useMarketLiquidations` | Paginated liquidations | Monarch first, then Morpho API | Already Monarch-first; no new Envio schema gap identified |
 | `useMonarchTransactions` | Admin stats feed and aggregated flow dashboards | Monarch transactions + `useProcessedMarkets` + `useTokenPrices` | If admin stats should be fully independent, Monarch also needs market registry/metadata and a non-Morpho price source |
 
 #### Vaults And Allocators
@@ -292,7 +290,7 @@ Split: allMarkets vs whitelistedMarkets
 
 **Position Data Flow:**
 ```
-1. Discover market keys via Monarch batched `Position` reads when possible; fall back to Morpho API/Subgraph
+1. Discover market keys via Monarch batched `Position` reads when possible; fall back to Morpho API
 2. Fetch on-chain snapshots per market (`usePositionSnapshots`)
 3. Combine live balances with market metadata from `useProcessedMarkets`
 4. Group by loan asset
@@ -372,12 +370,12 @@ All hooks in `/src/hooks/queries/` follow React Query patterns:
 
 ```
 supportsMorphoApi(network) returns true for:
-- Mainnet, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
+- Mainnet, Optimism, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
 
 Fallback Strategy:
 1. `useMarketsQuery` tries one shared Monarch market-registry read first
 2. Any chain missing from that result falls back independently to Morpho API when supported
-3. If Morpho fails or is unsupported, that chain falls back to Subgraph
+3. Unsupported or failed Morpho API chains remain empty unless Monarch returned data
 4. Each network still fails independently (partial data OK)
 ```
 
@@ -408,11 +406,6 @@ Fallback Strategy:
 - Referral attribution runs after transaction confirmation and never blocks transaction success UI.
 - Server routes use `DATA_API_INTERNAL_ORIGIN` and `DATA_API_INTERNAL_ADMIN_KEY` for data-api `/internal/*` writes. Real origins and credentials belong only in deployment secret managers or local untracked env files.
 
-**Subgraph** (`/src/data-sources/subgraph/fetchers.ts`):
-- Configurable URL per network
-- Logs GraphQL errors but continues (lenient)
-- Adds price estimation for unknown tokens
-
 ### Complete Data Flow: Market Data
 
 ```
@@ -424,7 +417,7 @@ Fallback Strategy:
    ↓
 3. Market fetch:
    a. Start Monarch single-market state fetch
-   b. Start Morpho API / Subgraph shell fallback
+   b. Start Morpho API shell fallback
    c. Start on-chain snapshot (viem multicall)
    d. Merge Monarch live state into the shell when both exist
    e. Override balances / shares / liquidity with the RPC snapshot
@@ -438,7 +431,7 @@ Fallback Strategy:
 
 ### Key Patterns
 
-1. **Feature-Scoped Priority**: Monarch-first for market detail/history/activity and the global market registry core shell, Morpho/Subgraph fallback last
+1. **Feature-Scoped Priority**: Monarch-first for market detail/history/activity and the global market registry core shell, Morpho API fallback last
 2. **Parallel Execution**: `Promise.all()` for multi-network
 3. **Graceful Degradation**: Partial data > Error
 4. **Three-Phase Market Detail**: Monarch live state + fallback shell + RPC snapshot
@@ -454,7 +447,6 @@ Fallback Strategy:
 | Morpho API | `https://blue-api.morpho.org/graphql` | Markets, vaults, positions, Vault V2 reward APRs |
 | Monarch GraphQL | `https://api.monarchlend.xyz/graphql` | Autovault metadata, market live state, historical charts, market detail/activity, admin transactions |
 | Monarch Metrics | External data API `/v1/markets/metrics` | Market metrics and admin stats |
-| The Graph | Per-chain subgraph URLs | Fallback data, suppliers, borrowers |
 | Merkl API | `https://api.merkl.xyz` via `/api/merkl` | Reward campaigns, opportunities, and user claimable rewards with server-side API-key auth |
 | Velora API | `https://api.paraswap.io` | Swap quotes and executable tx payloads |
 | Alchemy | Per-chain RPC | Default RPC provider |
@@ -469,6 +461,7 @@ Fallback Strategy:
 | Network | Chain ID | Block Time |
 |---------|----------|------------|
 | Ethereum Mainnet | 1 | 12s |
+| Optimism | 10 | 2s |
 | Base | 8453 | 2s |
 | Polygon | 137 | 2s |
 | Arbitrum | 42161 | 0.25s |

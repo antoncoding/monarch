@@ -5,8 +5,6 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarket, fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoUserPositionMarkets, fetchMorphoUserPositionMarketsForNetworks } from '@/data-sources/morpho-api/positions';
-import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
-import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, type PositionMarketOracleInput } from '@/utils/positions';
@@ -33,7 +31,7 @@ type UseUserPositionsOptions = {
   marketHints?: UserPositionMarketHint[];
 };
 
-type PositionsFetchSource = 'morpho-api' | 'subgraph' | 'combined';
+type PositionsFetchSource = 'morpho-api';
 
 export class PositionsFetchError extends Error {
   network: SupportedNetworks;
@@ -89,35 +87,20 @@ export const positionKeys = {
 // --- Helper Fetch Function --- //
 
 const fetchSourceMarketKeysForNetwork = async (user: string, network: SupportedNetworks): Promise<PositionMarket[]> => {
-  let markets: PositionMarket[] = [];
-  let apiError = false;
-  const morphoApiSupported = supportsMorphoApi(network);
-  let morphoError: unknown;
-
-  if (morphoApiSupported) {
-    try {
-      markets = await fetchMorphoUserPositionMarkets(user, network);
-    } catch (error) {
-      console.error(`Failed to fetch positions via Morpho API for network ${network}:`, error);
-      apiError = true;
-      morphoError = error;
-    }
+  if (!supportsMorphoApi(network)) {
+    return [];
   }
 
-  if (markets.length === 0 && (!morphoApiSupported || apiError)) {
-    try {
-      markets = await fetchSubgraphUserPositionMarkets(user, network);
-    } catch (subgraphError) {
-      console.error(`Failed to fetch positions via Subgraph for network ${network}:`, subgraphError);
-      throw new PositionsFetchError({
-        network,
-        source: morphoApiSupported && apiError ? 'combined' : 'subgraph',
-        cause: morphoApiSupported && apiError ? { morphoError, subgraphError } : subgraphError,
-      });
-    }
+  try {
+    return await fetchMorphoUserPositionMarkets(user, network);
+  } catch (error) {
+    console.error(`Failed to fetch positions via Morpho API for network ${network}:`, error);
+    throw new PositionsFetchError({
+      network,
+      source: 'morpho-api',
+      cause: error,
+    });
   }
-
-  return markets;
 };
 
 const appendFulfilledPositionMarkets = (
@@ -135,21 +118,19 @@ const appendFulfilledPositionMarkets = (
   }
 };
 
-// Fetches market keys ONLY from API/Subgraph sources
+// Fetches market keys only from Monarch and Morpho API sources.
 const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarket[]> => {
   const networksToFetch = chainIds ?? ALL_SUPPORTED_NETWORKS;
 
   try {
     return await fetchMonarchUserPositionMarketsForNetworks(user, networksToFetch);
   } catch (error) {
-    console.error('[Positions] Failed batched Monarch position lookup, falling back to Morpho/subgraph strategy:', error);
+    console.error('[Positions] Failed batched Monarch position lookup, falling back to Morpho API strategy:', error);
   }
 
   const morphoApiNetworks = networksToFetch.filter((network) => supportsMorphoApi(network));
-  const fallbackNetworks = networksToFetch.filter((network) => !supportsMorphoApi(network));
   const sourcePositionMarkets: PositionMarket[] = [];
   const fetchErrors: Error[] = [];
-  const fallbackResultsPromise = Promise.allSettled(fallbackNetworks.map((network) => fetchSourceMarketKeysForNetwork(user, network)));
 
   if (morphoApiNetworks.length > 0) {
     const startedAt = Date.now();
@@ -167,9 +148,6 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
       appendFulfilledPositionMarkets(morphoResults, sourcePositionMarkets, fetchErrors);
     }
   }
-
-  const fallbackResults = await fallbackResultsPromise;
-  appendFulfilledPositionMarkets(fallbackResults, sourcePositionMarkets, fetchErrors);
 
   if (fetchErrors.length > 0) {
     throw fetchErrors[0];
@@ -259,12 +237,7 @@ const fetchPositionMarketShell = async (
     }
   }
 
-  try {
-    return await fetchSubgraphMarket(marketInfo.marketUniqueKey, chainId);
-  } catch (error) {
-    console.warn(`[Positions] Failed to fetch Subgraph market shell for ${marketInfo.marketUniqueKey} on ${chainId}:`, error);
-    return null;
-  }
+  return null;
 };
 
 // --- Main Hook --- //

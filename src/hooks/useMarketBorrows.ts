@@ -3,14 +3,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarketBorrows } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketBorrows } from '@/data-sources/morpho-api/market-borrows';
-import { fetchSubgraphMarketBorrows } from '@/data-sources/subgraph/market-borrows';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 
 /**
  * Hook to fetch borrow and repay activities for a specific market's loan asset,
- * using Monarch API as the primary source with existing sources as fallback.
+ * using Monarch API as the primary source with Morpho API as fallback.
  * Monarch API only loads the current page window instead of scanning the full event history.
  * @param marketId The ID or unique key of the market.
  * @param loanAssetId The address of the loan asset for the market.
@@ -53,14 +52,10 @@ export const useMarketBorrows = (
             ? [
                 {
                   provider: 'morpho-api' as const,
-                  fetch: () => fetchMorphoMarketBorrows(marketId, minAssets, pageSize, targetSkip),
+                  fetch: () => fetchMorphoMarketBorrows(marketId, network, minAssets, pageSize, targetSkip),
                 },
               ]
             : []),
-          {
-            provider: 'subgraph',
-            fetch: () => fetchSubgraphMarketBorrows(marketId, loanAssetId, network, minAssets, pageSize, targetSkip),
-          },
         ],
       });
     },

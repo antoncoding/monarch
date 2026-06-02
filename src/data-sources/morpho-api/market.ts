@@ -1,4 +1,5 @@
 import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
+import { supportsMorphoApi } from '@/config/dataSources';
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
 import { isMarketRegistryEntryAllowed } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -20,13 +21,13 @@ type MorphoApiMarketState = Omit<
 
 type MorphoApiMarket = Omit<Market, 'oracleAddress' | 'whitelisted' | 'state' | 'supplyingVaults'> & {
   oracle: { address: string } | null;
-  state: MorphoApiMarketState;
+  state: MorphoApiMarketState | null;
   supplyingVaults?: { address: string }[];
 };
 
 type MarketGraphQLResponse = {
   data?: {
-    marketByUniqueKey?: MorphoApiMarket;
+    marketByUniqueKey?: MorphoApiMarket | null;
   };
   errors?: { message: string }[];
 };
@@ -34,7 +35,7 @@ type MarketGraphQLResponse = {
 type MarketsGraphQLResponse = {
   data?: {
     markets?: {
-      items?: MorphoApiMarket[];
+      items?: (MorphoApiMarket | null)[];
       pageInfo?: {
         countTotal: number;
       };
@@ -44,6 +45,7 @@ type MarketsGraphQLResponse = {
 };
 
 type MorphoMarketsPage = {
+  fetchedCount: number;
   items: Market[];
   totalCount: number;
 };
@@ -88,8 +90,16 @@ const computeApyAtTarget = (market: MorphoApiMarket, state: MorphoApiMarketState
 };
 
 // Transform API response to internal Market type
-const processMarketData = (market: MorphoApiMarket): Market => {
+const processMarketData = (market: MorphoApiMarket | null): Market | null => {
+  if (!market) {
+    return null;
+  }
+
   const { oracle, state, supplyingVaults, ...rest } = market;
+  if (!state) {
+    return null;
+  }
+
   return {
     ...rest,
     oracleAddress: (oracle?.address ?? zeroAddress) as Address,
@@ -121,6 +131,10 @@ const filterRegistryMarkets = (markets: Market[]): Market[] =>
 
 // Fetcher for market details from Morpho API
 export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
+  if (!supportsMorphoApi(network)) {
+    return null;
+  }
+
   const response = await morphoGraphqlFetcher<MarketGraphQLResponse>(marketDetailQuery, {
     uniqueKey,
     chainId: network,
@@ -130,6 +144,9 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
   }
 
   const market = processMarketData(response.data.marketByUniqueKey);
+  if (!market) {
+    return null;
+  }
 
   return filterRegistryMarkets([market])[0] ?? null;
 };
@@ -158,14 +175,27 @@ const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, 
     return null;
   }
 
+  const items: Market[] = [];
+  for (const market of response.data.markets.items) {
+    const processedMarket = processMarketData(market);
+    if (processedMarket) {
+      items.push(processedMarket);
+    }
+  }
+
   return {
-    items: response.data.markets.items.map(processMarketData),
+    fetchedCount: response.data.markets.items.length,
+    items,
     totalCount: response.data.markets.pageInfo.countTotal,
   };
 };
 
 // Fetcher for multiple markets from Morpho API with pagination
 export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
+  if (!supportsMorphoApi(network)) {
+    return [];
+  }
+
   const allMarkets: Market[] = [];
   const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 
@@ -176,7 +206,7 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
 
   allMarkets.push(...firstPage.items);
 
-  const firstPageCount = firstPage.items.length;
+  const firstPageCount = firstPage.fetchedCount;
   const totalCount = firstPage.totalCount;
   if (firstPageCount === 0 && totalCount > 0) {
     console.warn('Received 0 items in the first page, but total count is positive. Returning first-page result only.');
