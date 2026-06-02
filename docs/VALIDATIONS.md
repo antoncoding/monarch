@@ -71,6 +71,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Please respect the setting in "useCustomRPC" whenever a request is RPC-related.
 - External GraphQL API field removals should be checked against the live schema or official changelog, then handled at the shared query/module boundary with aliases or shared mappers when preserving Monarch's internal domain contract.
 - Shared Morpho API callers must gate requested chain IDs with the Morpho API support helper before building GraphQL variables; Monarch-supported chains are not always Morpho-API-supported chains.
+- External API list mappers must isolate nullable or malformed records at the item boundary so one bad record does not fail an entire page, chain, or batch; pagination offsets should still use the raw API page size/count, not the post-filtered valid item count.
 - Grouped fetching via RPC must be bundled with `multicall` to increase efficiency if they're on the same chain or block.
 - Domain matching, token resolution, unit conversion, entity ID normalization, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
