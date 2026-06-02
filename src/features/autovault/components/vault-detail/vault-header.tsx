@@ -181,12 +181,6 @@ export function VaultHeader({
                     <span>Asset: {assetSymbol}</span>
                   </>
                 )}
-                {curator && (
-                  <>
-                    <span className="text-border">·</span>
-                    <span>Curator: {getSlicedAddress(curator as Address)}</span>
-                  </>
-                )}
                 {showCapsAdapter && (
                   <>
                     <span className="text-border">·</span>
