@@ -1,4 +1,5 @@
 import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
+import { supportsMorphoApi } from '@/config/dataSources';
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
 import { isMarketRegistryEntryAllowed } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -121,6 +122,10 @@ const filterRegistryMarkets = (markets: Market[]): Market[] =>
 
 // Fetcher for market details from Morpho API
 export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
+  if (!supportsMorphoApi(network)) {
+    return null;
+  }
+
   const response = await morphoGraphqlFetcher<MarketGraphQLResponse>(marketDetailQuery, {
     uniqueKey,
     chainId: network,
@@ -166,6 +171,10 @@ const fetchMorphoMarketsPage = async (network: SupportedNetworks, skip: number, 
 
 // Fetcher for multiple markets from Morpho API with pagination
 export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
+  if (!supportsMorphoApi(network)) {
+    return [];
+  }
+
   const allMarkets: Market[] = [];
   const pageSize = MORPHO_MARKETS_PAGE_SIZE;
 

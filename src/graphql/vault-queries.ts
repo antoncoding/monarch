@@ -3,8 +3,8 @@
 
 // Query for fetching listed Morpho vaults across supported chains
 export const allVaultsQuery = `
-  query AllVaults($first: Int, $where: VaultFilters) {
-    vaults(first: $first, where: $where) {
+  query AllVaults($first: Int, $skip: Int, $where: VaultFilters) {
+    vaults(first: $first, skip: $skip, where: $where) {
       items {
         address
         chain {
@@ -23,6 +23,9 @@ export const allVaultsQuery = `
           address
           symbol
         }
+      }
+      pageInfo {
+        countTotal
       }
     }
   }

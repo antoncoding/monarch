@@ -1,7 +1,7 @@
-import { supportsMorphoApi } from '@/config/dataSources';
+import { MORPHO_API_SUPPORTED_NETWORKS } from '@/config/dataSources';
 import { marketsWhitelistStatusQuery } from '@/graphql/morpho-api-queries';
 import { getMarketIdentityKey } from '@/utils/market-identity';
-import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { morphoGraphqlFetcher } from './fetchers';
 
 type MorphoWhitelistMarket = {
@@ -61,8 +61,6 @@ export type MorphoMarketMetadataRefresh = {
 const MORPHO_WHITELIST_PAGE_SIZE = 900;
 const MORPHO_WHITELIST_TIMEOUT_MS = 15_000;
 const MORPHO_WHITELIST_PAGE_BATCH_SIZE = 4;
-
-const MORPHO_SUPPORTED_NETWORKS = ALL_SUPPORTED_NETWORKS.filter((network) => supportsMorphoApi(network));
 
 const normalizeSupplyingVaults = (supplyingVaults: MorphoWhitelistMarket['supplyingVaults']): MorphoMarketMetadata['supplyingVaults'] => {
   const uniqueVaults = new Set<string>();
@@ -164,7 +162,7 @@ const fetchMorphoMarketMetadataForNetwork = async (network: SupportedNetworks): 
 
 export const fetchAllMorphoMarketMetadata = async (): Promise<MorphoMarketMetadataRefresh[]> => {
   const settledResults = await Promise.allSettled(
-    MORPHO_SUPPORTED_NETWORKS.map(async (network) => ({
+    MORPHO_API_SUPPORTED_NETWORKS.map(async (network) => ({
       network,
       metadata: await fetchMorphoMarketMetadataForNetwork(network),
     })),

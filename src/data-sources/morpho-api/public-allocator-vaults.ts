@@ -1,3 +1,4 @@
+import { supportsMorphoApi } from '@/config/dataSources';
 import { publicAllocatorVaultsQuery } from '@/graphql/public-allocator-query';
 import { PUBLIC_ALLOCATOR_ADDRESSES } from '@/constants/public-allocator';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -79,6 +80,7 @@ type PublicAllocatorVaultsApiResponse = {
  */
 export const fetchPublicAllocatorVaults = async (addresses: string[], chainId: SupportedNetworks): Promise<PublicAllocatorVault[]> => {
   if (addresses.length === 0) return [];
+  if (!supportsMorphoApi(chainId)) return [];
 
   const response = await morphoGraphqlFetcher<PublicAllocatorVaultsApiResponse>(publicAllocatorVaultsQuery, {
     addresses,

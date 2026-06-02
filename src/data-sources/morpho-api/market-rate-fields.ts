@@ -1,3 +1,4 @@
+import { supportsMorphoApi } from '@/config/dataSources';
 import { marketsRateFieldsQuery } from '@/graphql/morpho-api-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
@@ -50,6 +51,10 @@ export const getMorphoMarketRateFieldsKey = getMorphoRateFieldsKey;
 
 export const fetchMorphoMarketRateEnrichments = async (network: SupportedNetworks): Promise<Map<string, MorphoRateFields>> => {
   const enrichments = new Map<string, MorphoRateFields>();
+  if (!supportsMorphoApi(network)) {
+    return enrichments;
+  }
+
   let skip = 0;
 
   while (true) {

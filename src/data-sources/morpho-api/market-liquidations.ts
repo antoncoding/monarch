@@ -1,4 +1,6 @@
+import { supportsMorphoApi } from '@/config/dataSources';
 import { marketLiquidationsQuery } from '@/graphql/morpho-api-queries';
+import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketLiquidations } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
@@ -29,11 +31,22 @@ type MorphoAPILiquidationsResponse = {
 /**
  * Fetches market liquidation activities from the Morpho Blue API.
  * @param marketId The unique key or ID of the market.
+ * @param chainId The chain ID where the market exists.
  * @returns A promise resolving to paginated unified MarketLiquidationTransaction objects.
  */
-export const fetchMorphoMarketLiquidations = async (marketId: string, first = 8, skip = 0): Promise<PaginatedMarketLiquidations> => {
+export const fetchMorphoMarketLiquidations = async (
+  marketId: string,
+  chainId: SupportedNetworks,
+  first = 8,
+  skip = 0,
+): Promise<PaginatedMarketLiquidations> => {
+  if (!supportsMorphoApi(chainId)) {
+    return { items: [], totalCount: 0 };
+  }
+
   const variables = {
     uniqueKey: marketId,
+    chainId,
     first,
     skip,
   };

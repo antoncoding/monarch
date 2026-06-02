@@ -53,7 +53,7 @@ export const useMarketBorrows = (
             ? [
                 {
                   provider: 'morpho-api' as const,
-                  fetch: () => fetchMorphoMarketBorrows(marketId, minAssets, pageSize, targetSkip),
+                  fetch: () => fetchMorphoMarketBorrows(marketId, network, minAssets, pageSize, targetSkip),
                 },
               ]
             : []),

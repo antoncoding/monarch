@@ -1,3 +1,4 @@
+import { MORPHO_API_SUPPORTED_NETWORKS, supportsMorphoApiChainId } from '@/config/dataSources';
 import { allVaultsQuery, vaultApysQuery, vaultV2MetadataQuery, vaultV2RewardsQuery } from '@/graphql/vault-queries';
 import { morphoGraphqlFetcher } from './fetchers';
 
@@ -8,8 +9,8 @@ export type VaultAddressByNetwork = {
 };
 
 // Constants for Morpho listed vault fetching
-const MORPHO_SUPPORTED_CHAIN_IDS = [1, 10, 8453, 999, 137, 42_161, 130];
-const MAX_VAULTS_LIMIT = 500;
+const MORPHO_SUPPORTED_CHAIN_IDS = MORPHO_API_SUPPORTED_NETWORKS;
+const MAX_VAULTS_PAGE_SIZE = 500;
 const MAX_VAULT_V2_METADATA_PAGE_SIZE = 500;
 
 // Type for vault from Morpho API
@@ -80,6 +81,9 @@ type AllVaultsApiResponse = {
   data?: {
     vaults?: {
       items?: ApiVault[];
+      pageInfo?: {
+        countTotal: number;
+      };
     };
   };
   errors?: { message: string }[];
@@ -130,8 +134,12 @@ type VaultV2RewardsApiResponse = {
 
 const getVaultApyKey = (address: string, chainId: number) => `${address.toLowerCase()}-${chainId}`;
 const getVaultNetworkId = (vault: VaultAddressByNetwork) => vault.chainId ?? vault.networkId;
-const getVaultRequestKey = (vault: VaultAddressByNetwork) => {
+const getSupportedVaultNetworkId = (vault: VaultAddressByNetwork) => {
   const chainId = getVaultNetworkId(vault);
+  return chainId !== undefined && supportsMorphoApiChainId(chainId) ? chainId : null;
+};
+const getVaultRequestKey = (vault: VaultAddressByNetwork) => {
+  const chainId = getSupportedVaultNetworkId(vault);
   return chainId ? `${chainId}:${vault.address.toLowerCase()}` : null;
 };
 
@@ -173,24 +181,25 @@ function transformVaultV2Metadata(apiVault: ApiVaultV2): MorphoVaultV2Metadata {
  */
 export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
   try {
-    const variables = {
-      first: MAX_VAULTS_LIMIT,
-      where: {
-        listed: true,
-        chainId_in: MORPHO_SUPPORTED_CHAIN_IDS,
-      },
-    };
+    const vaults: ApiVault[] = [];
 
-    const response = await morphoGraphqlFetcher<AllVaultsApiResponse>(allVaultsQuery, variables);
+    for (let skip = 0; ; skip += MAX_VAULTS_PAGE_SIZE) {
+      const response = await morphoGraphqlFetcher<AllVaultsApiResponse>(allVaultsQuery, {
+        first: MAX_VAULTS_PAGE_SIZE,
+        skip,
+        where: {
+          listed: true,
+          chainId_in: MORPHO_SUPPORTED_CHAIN_IDS,
+        },
+      });
 
-    // Handle NOT_FOUND - return empty array
-    if (!response) {
-      return [];
-    }
+      const items = response?.data?.vaults?.items ?? [];
+      vaults.push(...items);
 
-    const vaults = response.data?.vaults?.items;
-    if (!vaults || vaults.length === 0) {
-      return [];
+      const totalCount = response?.data?.vaults?.pageInfo?.countTotal ?? vaults.length;
+      if (items.length === 0 || vaults.length >= totalCount) {
+        break;
+      }
     }
 
     return vaults.map(transformVault);
@@ -217,7 +226,7 @@ export const fetchMorphoVaultV2Metadata = async (vaults: VaultAddressByNetwork[]
   const uniqueVaults = Array.from(vaultsByKey.values());
   const addresses = Array.from(new Set(uniqueVaults.map((vault) => vault.address.toLowerCase())));
   const chainIds = Array.from(
-    new Set(uniqueVaults.map((vault) => getVaultNetworkId(vault)).filter((chainId): chainId is number => typeof chainId === 'number')),
+    new Set(uniqueVaults.map((vault) => getSupportedVaultNetworkId(vault)).filter((chainId): chainId is number => chainId !== null)),
   );
 
   const metadataByKey = new Map<string, MorphoVaultV2Metadata>();
@@ -285,6 +294,10 @@ export const fetchListedMorphoVaultV2Metadata = async (): Promise<MorphoVaultV2M
 };
 
 export const fetchMorphoVaultV2Rewards = async (vaultAddress: string, chainId: number): Promise<MorphoVaultV2Rewards | null> => {
+  if (!supportsMorphoApiChainId(chainId)) {
+    return null;
+  }
+
   try {
     const response = await morphoGraphqlFetcher<VaultV2RewardsApiResponse>(vaultV2RewardsQuery, {
       address: vaultAddress.toLowerCase(),
@@ -311,10 +324,11 @@ export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Pro
     return new Map();
   }
 
+  const supportedVaults = vaults.filter((vault) => getVaultRequestKey(vault));
   const requestedKeys = new Set(
-    vaults
+    supportedVaults
       .map((vault) => {
-        const chainId = getVaultNetworkId(vault);
+        const chainId = getSupportedVaultNetworkId(vault);
         return chainId ? getVaultApyKey(vault.address, chainId) : null;
       })
       .filter((key): key is string => Boolean(key)),
@@ -325,10 +339,14 @@ export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Pro
 
   try {
     const response = await morphoGraphqlFetcher<VaultApysApiResponse>(vaultApysQuery, {
-      first: vaults.length,
+      first: supportedVaults.length,
       where: {
-        address_in: vaults.map((vault) => vault.address.toLowerCase()),
-        chainId_in: [...new Set(vaults.map((vault) => getVaultNetworkId(vault)).filter((chainId): chainId is number => Boolean(chainId)))],
+        address_in: supportedVaults.map((vault) => vault.address.toLowerCase()),
+        chainId_in: [
+          ...new Set(
+            supportedVaults.map((vault) => getSupportedVaultNetworkId(vault)).filter((chainId): chainId is number => chainId !== null),
+          ),
+        ],
       },
     });
 

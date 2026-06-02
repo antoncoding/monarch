@@ -42,7 +42,7 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
             ? [
                 {
                   provider: 'morpho-api' as const,
-                  fetch: () => fetchMorphoMarketLiquidations(marketId, pageSize, targetSkip),
+                  fetch: () => fetchMorphoMarketLiquidations(marketId, network, pageSize, targetSkip),
                 },
               ]
             : []),

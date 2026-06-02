@@ -1,3 +1,4 @@
+import { supportsMorphoApi } from '@/config/dataSources';
 import { marketHistoricalDataQuery } from '@/graphql/morpho-api-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market, MarketRates, MarketVolumes, TimeseriesOptions } from '@/utils/types';
@@ -66,6 +67,10 @@ export const fetchMorphoMarketHistoricalData = async (
   network: SupportedNetworks,
   options: TimeseriesOptions,
 ): Promise<HistoricalDataSuccessResult | null> => {
+  if (!supportsMorphoApi(network)) {
+    return null;
+  }
+
   try {
     const response = await morphoGraphqlFetcher<HistoricalDataGraphQLResponse>(marketHistoricalDataQuery, {
       uniqueKey,

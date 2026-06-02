@@ -193,7 +193,7 @@ Market detail participants/activity + admin stats transactions:
 Market metrics: external data API via `/v1/markets/metrics`
 ```
 
-**Morpho API Supported Chains:** Mainnet, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
+**App-supported Morpho API Chains:** Mainnet, Optimism, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
 
 ### Static Data (Build-time or cached)
 | Data Type | Source | Location |

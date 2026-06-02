@@ -1,4 +1,6 @@
+import { supportsMorphoApi } from '@/config/dataSources';
 import { marketSuppliesQuery } from '@/graphql/morpho-api-queries';
+import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
@@ -34,6 +36,7 @@ type MorphoAPISuppliesResponse = {
  * Fetches market supply/withdraw activities from the Morpho Blue API.
  * Uses the shared Morpho API fetcher.
  * @param marketId The unique key or ID of the market.
+ * @param chainId The chain ID where the market exists.
  * @param minAssets Minimum asset amount to filter transactions (optional, defaults to 0).
  * @param first Number of items to fetch per page (optional, defaults to 8).
  * @param skip Number of items to skip for pagination (optional, defaults to 0).
@@ -41,12 +44,18 @@ type MorphoAPISuppliesResponse = {
  */
 export const fetchMorphoMarketSupplies = async (
   marketId: string,
+  chainId: SupportedNetworks,
   minAssets = '0',
   first = 8,
   skip = 0,
 ): Promise<PaginatedMarketActivityTransactions> => {
+  if (!supportsMorphoApi(chainId)) {
+    return { items: [], totalCount: 0 };
+  }
+
   const variables = {
     uniqueKey: marketId, // Ensure this matches the variable name in the query
+    chainId,
     minAssets,
     first,
     skip,

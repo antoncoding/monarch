@@ -2,10 +2,34 @@ type MorphoGraphqlFetcherOptions = {
   timeoutMs?: number;
 };
 
+type MorphoGraphqlError = {
+  message?: string;
+  path?: unknown[];
+  status?: string;
+};
+
+type MorphoGraphqlResponse<T> = T & {
+  errors?: MorphoGraphqlError[];
+};
+
 const MORPHO_BLUE_API_URL = 'https://blue-api.morpho.org/graphql';
 
+const formatGraphqlError = (error: MorphoGraphqlError): string => {
+  const parts = [error.message ?? 'Unknown GraphQL error'];
+
+  if (error.status) {
+    parts.push(`status=${error.status}`);
+  }
+
+  if (Array.isArray(error.path) && error.path.length > 0) {
+    parts.push(`path=${error.path.join('.')}`);
+  }
+
+  return parts.join(' ');
+};
+
 // Generic fetcher for Morpho API
-export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
+export const morphoGraphqlFetcher = async <T extends Record<string, unknown>>(
   query: string,
   variables: Record<string, unknown>,
   options: MorphoGraphqlFetcherOptions = {},
@@ -31,12 +55,12 @@ export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
       throw new Error(`Network response was not ok from Morpho API: ${response.status} ${response.statusText}`);
     }
 
-    const result = (await response.json()) as T;
+    const result = (await response.json()) as MorphoGraphqlResponse<T>;
 
     // Check for GraphQL errors
-    if ('errors' in result && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
+    if (Array.isArray(result.errors) && result.errors.length > 0) {
       // If it's known "NOT FOUND" error, handle gracefully
-      const notFoundError = (result as any).errors.find((err: { status?: string }) => err.status?.includes('NOT_FOUND'));
+      const notFoundError = result.errors.find((err) => err.status?.includes('NOT_FOUND'));
 
       if (notFoundError) {
         // Morpho API sometimes returns NOT_FOUND error alongside valid data
@@ -48,9 +72,9 @@ export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
       }
 
       // Log the full error for debugging
-      console.error('Morpho API GraphQL Error:', (result as any).errors);
+      console.error('Morpho API GraphQL Error:', result.errors);
 
-      throw new Error('Unknown GraphQL error from Morpho API');
+      throw new Error(`GraphQL error from Morpho API: ${result.errors.map(formatGraphqlError).join('; ')}`);
     }
 
     return result;
