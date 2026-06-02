@@ -51,7 +51,6 @@ export type MorphoVaultV2Reward = {
 export type MorphoVaultV2Rewards = {
   address: string;
   apy: number | null;
-  netApy: number | null;
   rewards: MorphoVaultV2Reward[];
 };
 

@@ -23,11 +23,13 @@ import { type VaultMarketAdapter, useMorphoMarketAdapters } from '@/hooks/useMor
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useVaultV2RewardsQuery } from '@/hooks/queries/useVaultV2RewardsQuery';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { useVaultPage } from '@/hooks/useVaultPage';
 import { useVaultQueryRefresh } from '@/hooks/useVaultQueryRefresh';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
@@ -37,6 +39,7 @@ import { getSlicedAddress } from '@/utils/address';
 import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { parseCapIdParams } from '@/utils/morpho';
 import { groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
+import { convertAprToApy, convertApyToApr } from '@/utils/rateMath';
 import { ALL_SUPPORTED_NETWORKS, getNetworkConfig, SupportedNetworks } from '@/utils/networks';
 import { formatVaultAdapterType } from '@/utils/vaults';
 
@@ -225,6 +228,8 @@ export default function VaultContent() {
   const [hasMounted, setHasMounted] = useState(false);
   const { open: openModal } = useModal();
   const { findToken } = useTokensQuery();
+  const { showFullRewardAPY, isAprDisplay } = useAppSettings();
+  const { short: rateLabel } = useRateLabel();
   const selectedAnalyticsTimeframe = useMarketDetailChartState((state) => state.selectedTimeframe);
   const setAnalyticsTimeframe = useMarketDetailChartState((state) => state.setTimeframe);
   const analyticsPeriod = vaultAnalyticsTimeframeToEarningsPeriod[selectedAnalyticsTimeframe];
@@ -322,40 +327,35 @@ export default function VaultContent() {
         .map((reward) => ({
           assetAddress: reward.asset.address,
           assetSymbol: reward.asset.symbol,
-          apr: reward.supplyApr,
+          rate: isAprDisplay ? reward.supplyApr : convertAprToApy(reward.supplyApr),
         })),
-    [vaultRewardsData?.rewards],
+    [isAprDisplay, vaultRewardsData?.rewards],
   );
 
-  const vaultRewardApr = useMemo(() => vaultRewardRows.reduce((sum, reward) => sum + reward.apr, 0), [vaultRewardRows]);
-  const displayedVaultApy = useMemo(() => {
-    if (vaultRewardsData?.netApy !== null && vaultRewardsData?.netApy !== undefined) {
-      return vaultRewardsData.netApy;
-    }
+  const vaultRewardRate = useMemo(() => vaultRewardRows.reduce((sum, reward) => sum + reward.rate, 0), [vaultRewardRows]);
+  const baseVaultApy = vaultRewardsData?.apy ?? vaultAPY;
+  const baseVaultRate = useMemo(() => {
+    if (baseVaultApy === null || baseVaultApy === undefined) return null;
+    return isAprDisplay ? convertApyToApr(baseVaultApy) : baseVaultApy;
+  }, [baseVaultApy, isAprDisplay]);
 
-    if (vaultAPY === null || vaultAPY === undefined) {
+  const displayedVaultRate = useMemo(() => {
+    if (baseVaultRate === null || baseVaultRate === undefined) {
       return null;
     }
 
-    return vaultAPY + vaultRewardApr;
-  }, [vaultAPY, vaultRewardApr, vaultRewardsData?.netApy]);
-
-  const baseVaultApy = vaultRewardsData?.apy ?? vaultAPY;
+    return showFullRewardAPY && vaultRewardRows.length > 0 ? baseVaultRate + vaultRewardRate : baseVaultRate;
+  }, [baseVaultRate, showFullRewardAPY, vaultRewardRate, vaultRewardRows.length]);
 
   const apyLabel = useMemo(() => {
-    if (displayedVaultApy === null || displayedVaultApy === undefined) return '0%';
-    return `${(displayedVaultApy * 100).toFixed(2)}%`;
-  }, [displayedVaultApy]);
+    if (displayedVaultRate === null || displayedVaultRate === undefined) return '0%';
+    return `${(displayedVaultRate * 100).toFixed(2)}%`;
+  }, [displayedVaultRate]);
 
-  const baseApyLabel = useMemo(() => {
-    if (baseVaultApy === null || baseVaultApy === undefined) return undefined;
-    return `${(baseVaultApy * 100).toFixed(2)}%`;
-  }, [baseVaultApy]);
-
-  const rewardAprLabel = useMemo(() => {
-    if (vaultRewardApr <= 0) return undefined;
-    return `+${(vaultRewardApr * 100).toFixed(2)}% rewards`;
-  }, [vaultRewardApr]);
+  const baseRateLabel = useMemo(() => {
+    if (baseVaultRate === null || baseVaultRate === undefined) return undefined;
+    return `${(baseVaultRate * 100).toFixed(2)}%`;
+  }, [baseVaultRate]);
 
   const totalAssetsLabel = useMemo(() => {
     if (vaultContract.totalAssets === undefined || tokenDecimals === undefined) return '--';
@@ -466,9 +466,10 @@ export default function VaultContent() {
             assetSymbol={tokenSymbol}
             totalAssetsLabel={totalAssetsLabel}
             apyLabel={apyLabel}
-            baseApyLabel={baseApyLabel}
-            rewardAprLabel={rewardAprLabel}
+            baseRateLabel={baseRateLabel}
+            rateLabel={rateLabel}
             rewards={vaultRewardRows}
+            showRewardSparkle={showFullRewardAPY && vaultRewardRows.length > 0}
             userShareBalance={userShareBalanceLabel}
             allocators={vaultData?.allocators}
             sentinels={vaultData?.sentinels}

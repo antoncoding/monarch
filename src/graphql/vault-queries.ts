@@ -86,7 +86,6 @@ export const vaultV2RewardsQuery = `
     vaultV2ByAddress(address: $address, chainId: $chainId) {
       address
       apy
-      netApy
       rewards {
         supplyApr
         asset {
