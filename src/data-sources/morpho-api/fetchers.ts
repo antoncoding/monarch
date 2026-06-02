@@ -55,7 +55,10 @@ export const morphoGraphqlFetcher = async <T extends Record<string, unknown>>(
       throw new Error(`Network response was not ok from Morpho API: ${response.status} ${response.statusText}`);
     }
 
-    const result = (await response.json()) as MorphoGraphqlResponse<T>;
+    const result = (await response.json()) as MorphoGraphqlResponse<T> | null;
+    if (!result) {
+      return null;
+    }
 
     // Check for GraphQL errors
     if (Array.isArray(result.errors) && result.errors.length > 0) {

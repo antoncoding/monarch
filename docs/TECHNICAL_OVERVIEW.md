@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Base, Polygon, Arbitrum, Unichain, HyperEVM, Monad) and presents markets, vaults, and user positions in a unified interface. The app has **no app-owned backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads or call protected infrastructure endpoints such as API-key creation.
+Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Optimism, Base, Polygon, Arbitrum, Unichain, HyperEVM, Monad) and presents markets, vaults, and user positions in a unified interface. The app has **no app-owned backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads or call protected infrastructure endpoints such as API-key creation.
 
 **Key Architectural Decisions:**
 - Next.js 15 App Router with React 18
@@ -372,7 +372,7 @@ All hooks in `/src/hooks/queries/` follow React Query patterns:
 
 ```
 supportsMorphoApi(network) returns true for:
-- Mainnet, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
+- Mainnet, Optimism, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad
 
 Fallback Strategy:
 1. `useMarketsQuery` tries one shared Monarch market-registry read first
@@ -469,6 +469,7 @@ Fallback Strategy:
 | Network | Chain ID | Block Time |
 |---------|----------|------------|
 | Ethereum Mainnet | 1 | 12s |
+| Optimism | 10 | 2s |
 | Base | 8453 | 2s |
 | Polygon | 137 | 2s |
 | Arbitrum | 42161 | 0.25s |
