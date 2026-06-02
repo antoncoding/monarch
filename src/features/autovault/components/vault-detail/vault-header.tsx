@@ -7,11 +7,15 @@ import { ChevronDownIcon, GearIcon } from '@radix-ui/react-icons';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { FiExternalLink } from 'react-icons/fi';
 import { LuCopy } from 'react-icons/lu';
+import { RiSparklingFill } from 'react-icons/ri';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { AddressIdentity } from '@/components/shared/address-identity';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getExplorerURL } from '@/utils/external';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
@@ -28,6 +32,12 @@ type VaultHeaderAdapterRow = {
   adapterType?: string;
 };
 
+type VaultHeaderRewardRow = {
+  assetAddress: string;
+  assetSymbol: string;
+  rate: number;
+};
+
 type VaultHeaderProps = {
   vaultAddress: Address;
   chainId: SupportedNetworks;
@@ -37,6 +47,10 @@ type VaultHeaderProps = {
   assetSymbol?: string;
   totalAssetsLabel: string;
   apyLabel: string;
+  baseRateLabel?: string;
+  rateLabel?: string;
+  rewards?: VaultHeaderRewardRow[];
+  showRewardSparkle?: boolean;
   userShareBalance?: string;
   allocators?: string[];
   sentinels?: string[];
@@ -65,6 +79,10 @@ export function VaultHeader({
   assetSymbol,
   totalAssetsLabel,
   apyLabel,
+  baseRateLabel,
+  rateLabel = 'APY',
+  rewards = [],
+  showRewardSparkle = false,
   userShareBalance,
   allocators = [],
   sentinels = [],
@@ -106,6 +124,14 @@ export function VaultHeader({
     capsAdapterRows.length === 1
       ? `${formatVaultAdapterType(capsAdapterRows[0].adapterType)} ${getSlicedAddress(capsAdapterRows[0].adapter)}`
       : `${capsAdapterRows.length} configured adapters`;
+  const hasRewards = rewards.length > 0;
+  const rewardsDetail = [
+    baseRateLabel ? `Base ${rateLabel} ${baseRateLabel}` : null,
+    ...rewards.map((reward) => `${reward.assetSymbol} reward +${(reward.rate * 100).toFixed(2)}%`),
+    `Net ${rateLabel} ${apyLabel}`,
+  ]
+    .filter((row): row is string => Boolean(row))
+    .join('\n');
 
   return (
     <div className="mt-6 mb-6 space-y-4">
@@ -153,12 +179,6 @@ export function VaultHeader({
                   <>
                     <span className="text-border">·</span>
                     <span>Asset: {assetSymbol}</span>
-                  </>
-                )}
-                {curator && (
-                  <>
-                    <span className="text-border">·</span>
-                    <span>Curator: {getSlicedAddress(curator as Address)}</span>
                   </>
                 )}
                 {showCapsAdapter && (
@@ -215,10 +235,33 @@ export function VaultHeader({
             {/* Key Stats */}
             <div className="flex items-center gap-6 border-r border-border pr-6">
               <div>
-                <p className="text-xs uppercase tracking-wider text-secondary">APY</p>
+                <p className="text-xs uppercase tracking-wider text-secondary">{rateLabel}</p>
                 <div className="flex items-center gap-2">
                   {isLoading ? (
                     <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
+                  ) : hasRewards ? (
+                    <Tooltip
+                      content={
+                        <TooltipContent
+                          title={`Vault ${rateLabel} Breakdown`}
+                          detail={rewardsDetail}
+                        />
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="inline-flex cursor-help items-center gap-1 rounded-sm tabular-nums text-lg font-medium text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+                        aria-label={`Show vault ${rateLabel.toLowerCase()} breakdown`}
+                      >
+                        <span>{apyLabel}</span>
+                        {showRewardSparkle && (
+                          <RiSparklingFill
+                            className="h-3 w-3"
+                            color={MONARCH_PRIMARY}
+                          />
+                        )}
+                      </button>
+                    </Tooltip>
                   ) : (
                     <p className="tabular-nums text-lg font-medium text-primary">{apyLabel}</p>
                   )}

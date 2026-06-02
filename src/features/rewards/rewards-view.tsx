@@ -19,14 +19,14 @@ import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHO_LEGACY, MORPHO_TOKEN_BASE, MORPHO_TOKEN_MAINNET } from '@/utils/tokens';
-import type { MarketRewardType, RewardAmount, AggregatedRewardType } from '@/utils/types';
+import type { AggregatedRewardType } from '@/utils/types';
 import RewardTable from './components/reward-table';
 import { PositionBreadcrumbs } from '@/features/position-detail/components/position-breadcrumbs';
 import { ReferralRewardsBlock } from './referral-rewards-block';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
-  const { rewards, distributions, merklRewardsWithProofs, isLoading, isRefetching, refetch } = useUserRewardsQuery(account);
+  const { rewards, merklRewardsWithProofs, isLoading, isRefetching, refetch } = useUserRewardsQuery(account);
   const { addVisitedAddress, toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
 
   const { data: morphoBalanceMainnet, refetch: refetchMainnet } = useReadContract({
@@ -67,68 +67,23 @@ export default function Rewards() {
 
   const allRewards = useMemo(() => {
     const result: AggregatedRewardType[] = [];
-    // For Morpho distributor rewards, aggregate by token+chain (they share one tx_data)
-    const morphoRewards: Record<string, AggregatedRewardType> = {};
 
     for (const reward of rewards) {
-      // Check if this is a Merkl reward
-      const isMerklReward = reward.type === 'uniform-reward' && reward.program_id === 'merkl';
-
-      if (isMerklReward) {
-        // Merkl rewards: add each as separate entry (already non-aggregated from useRewards)
-        const claimable = BigInt(reward.amount.claimable_now);
-        if (claimable > 0n) {
-          result.push({
-            asset: reward.asset,
-            total: {
-              claimable,
-              pendingAmount: BigInt(reward.amount.claimable_next),
-              claimed: BigInt(reward.amount.claimed),
-            },
-            source: 'merkl',
-          });
-        }
-      } else {
-        // Morpho distributor rewards: aggregate by token+chain
-        const key = `${reward.asset.address.toLowerCase()}-${reward.asset.chain_id}`;
-        if (!morphoRewards[key]) {
-          morphoRewards[key] = {
-            asset: reward.asset,
-            total: { claimable: 0n, pendingAmount: 0n, claimed: 0n },
-            source: 'morpho-distributor',
-          };
-        }
-
-        if (reward.type === 'uniform-reward') {
-          morphoRewards[key].total.claimable += BigInt(reward.amount.claimable_now);
-          morphoRewards[key].total.pendingAmount += BigInt(reward.amount.claimable_next);
-          morphoRewards[key].total.claimed += BigInt(reward.amount.claimed);
-        } else if (reward.type === 'market-reward' || reward.type === 'vault-reward') {
-          if (reward.for_supply) {
-            morphoRewards[key].total.claimable += BigInt(reward.for_supply.claimable_now);
-            morphoRewards[key].total.pendingAmount += BigInt(reward.for_supply.claimable_next);
-            morphoRewards[key].total.claimed += BigInt(reward.for_supply.claimed);
-          }
-          if ((reward as MarketRewardType).for_borrow) {
-            const borrow = (reward as MarketRewardType).for_borrow as RewardAmount;
-            morphoRewards[key].total.claimable += BigInt(borrow.claimable_now);
-            morphoRewards[key].total.pendingAmount += BigInt(borrow.claimable_next);
-            morphoRewards[key].total.claimed += BigInt(borrow.claimed);
-          }
-          if ((reward as MarketRewardType).for_collateral) {
-            const collateral = (reward as MarketRewardType).for_collateral as RewardAmount;
-            morphoRewards[key].total.claimable += BigInt(collateral.claimable_now);
-            morphoRewards[key].total.pendingAmount += BigInt(collateral.claimable_next);
-            morphoRewards[key].total.claimed += BigInt(collateral.claimed);
-          }
-        }
+      if (reward.program_id !== 'merkl') {
+        continue;
       }
-    }
 
-    // Add Morpho rewards with claimable > 0
-    for (const reward of Object.values(morphoRewards)) {
-      if (reward.total.claimable > 0n) {
-        result.push(reward);
+      const claimable = BigInt(reward.amount.claimable_now);
+      if (claimable > 0n) {
+        result.push({
+          asset: reward.asset,
+          total: {
+            claimable,
+            pendingAmount: BigInt(reward.amount.claimable_next),
+            claimed: BigInt(reward.amount.claimed),
+          },
+          source: 'merkl',
+        });
       }
     }
 
@@ -147,8 +102,6 @@ export default function Rewards() {
       return acc;
     }, 0n);
   }, [allRewards]);
-
-  const _canClaim = totalClaimable > 0n;
 
   const showLegacy = morphoBalanceLegacy !== undefined && morphoBalanceLegacy !== 0n;
   const isBookmarked = isAddressBookmarked(account as Address);
@@ -288,7 +241,6 @@ export default function Rewards() {
           <RewardTable
             account={account}
             rewards={allRewards}
-            distributions={distributions}
             merklRewardsWithProofs={merklRewardsWithProofs}
             onRefresh={handleRefresh}
             isRefetching={isRefetching}
