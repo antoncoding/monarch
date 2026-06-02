@@ -1,19 +1,8 @@
 import { getMetaOracleDataFromMetadata, getStandardOracleDataFromMetadata, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
-import type { Market, MarketWarning } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { monarchWhitelistedMarkets, getMarketOverrideWarnings } from './markets';
 import { getOracleType, OracleType, parsePriceFeedVendors, parseMetaOracleVendors, checkFeedsPath, checkEnrichedFeedsPath } from './oracle';
 import { WarningCategory, type WarningWithDetail } from './types';
-
-// Subgraph Warnings
-
-// Default subrgaph  has no oracle data attached!
-export const SUBGRAPH_NO_ORACLE = {
-  type: 'subgraph_unrecognized_oracle',
-  level: 'alert',
-  __typename: 'OracleWarning_MonarchAttached',
-};
-
-export const subgraphDefaultWarnings: MarketWarning[] = [SUBGRAPH_NO_ORACLE];
 
 export const UNRECOGNIZED_LOAN = {
   type: 'unrecognized_loan_asset',

@@ -1,6 +1,6 @@
 import type { SupportedNetworks } from '@/utils/networks';
 
-export type MarketDetailProvider = 'monarch-api' | 'morpho-api' | 'subgraph';
+export type MarketDetailProvider = 'monarch-api' | 'morpho-api';
 
 type ProviderAttempt<T> = {
   provider: MarketDetailProvider;
@@ -67,7 +67,7 @@ export const runMarketDetailFallback = async <T>({
     }
   }
 
-  const source = lastProvider ?? 'subgraph';
+  const source = lastProvider ?? 'monarch-api';
   const attemptedProviders = attempts.map((attempt) => attempt.provider);
   const message = `Failed to fetch ${dataLabel} for market ${marketId} on network ${network}: ${providerErrors
     .map(({ provider, message: providerMessage }) => `${provider}: ${providerMessage}`)

@@ -6,9 +6,6 @@
  * This page uses the shared Monarch API to provide cross-chain Monarch
  * transaction data across all chains with a single GraphQL endpoint.
  *
- * NOTE: This API is experimental and may be reverted due to cost concerns.
- * The old stats page at /admin/stats should be kept as a fallback.
- *
  * Features:
  * - Cross-chain volume aggregation
  * - Volume breakdown by chain

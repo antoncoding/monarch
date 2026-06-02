@@ -18,8 +18,6 @@ export { ALL_SUPPORTED_NETWORKS, SupportedNetworks, isSupportedNetwork } from '.
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const rpcPriority = process.env.NEXT_PUBLIC_RPC_PRIORITY;
 
-const _apiKey = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
-
 /**
  * Helper function to get RPC URL with fallback logic. Priority behavior:
  * - If NEXT_PUBLIC_RPC_PRIORITY === 'ALCHEMY': Use Alchemy first, fall back to specific RPC

@@ -3,14 +3,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarketSuppliers } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketSuppliers } from '@/data-sources/morpho-api/market-suppliers';
-import { fetchSubgraphMarketSuppliers } from '@/data-sources/subgraph/market-suppliers';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PaginatedMarketSuppliers } from '@/utils/types';
 
 /**
  * Hook to fetch current suppliers (positions) for a specific market,
- * using Monarch API as the primary source with existing sources as fallback.
+ * using Monarch API as the primary source with Morpho API as fallback.
  * Preserves exact total counts via the shared Monarch scan/cache layer.
  * Returns suppliers sorted by supply shares (descending).
  *
@@ -60,10 +59,6 @@ export const useMarketSuppliers = (
                 },
               ]
             : []),
-          {
-            provider: 'subgraph',
-            fetch: () => fetchSubgraphMarketSuppliers(marketId, network, effectiveMinShares, pageSize, targetSkip),
-          },
         ],
       });
     },

@@ -3,7 +3,6 @@ import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
-import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain, type SupportedNetworks } from '@/utils/networks';
@@ -31,7 +30,6 @@ type UseMarketsQueryOptions = {
  * Data fetching strategy:
  * - Tries Monarch API first using one shared multi-chain registry request
  * - Falls back per chain to Morpho API if Monarch is missing that chain or the multi-chain request fails
- * - Falls back per chain to Subgraph if Morpho fails or is unsupported
  * - Combines markets from all networks while preserving per-chain isolation
  * - Applies basic filtering (required fields, supported chains)
  *
@@ -100,7 +98,7 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
         }
       } catch (error) {
         const monarchError = toError(error);
-        console.warn('Monarch multi-chain markets fetch failed. Falling back per chain to Morpho/Subgraph.', monarchError);
+        console.warn('Monarch multi-chain markets fetch failed. Falling back per chain to Morpho API.', monarchError);
         fetchErrors.push(monarchError);
       }
 
@@ -117,15 +115,16 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
               };
             }
 
-            console.warn(`Morpho markets returned empty for network ${network}, falling back to Subgraph.`);
+            console.warn(`Morpho markets returned empty for network ${network}.`);
           } catch (error) {
-            console.warn(`Morpho markets failed for network ${network}, falling back to Subgraph.`, error);
+            console.warn(`Morpho markets failed for network ${network}.`, error);
+            throw error;
           }
         }
 
         return {
           network,
-          markets: await fetchSubgraphMarkets(network),
+          markets: [],
         };
       };
 

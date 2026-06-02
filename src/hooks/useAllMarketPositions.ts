@@ -3,8 +3,6 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarketBorrowers, fetchMonarchMarketSuppliers } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketBorrowers } from '@/data-sources/morpho-api/market-borrowers';
 import { fetchMorphoMarketSuppliers } from '@/data-sources/morpho-api/market-suppliers';
-import { fetchSubgraphMarketBorrowers } from '@/data-sources/subgraph/market-borrowers';
-import { fetchSubgraphMarketSuppliers } from '@/data-sources/subgraph/market-suppliers';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market, MarketBorrower, MarketSupplier } from '@/utils/types';
 
@@ -48,11 +46,11 @@ export const useAllMarketBorrowers = (
         try {
           return await fetchMorphoMarketBorrowers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
         } catch {
-          // Continue to subgraph fallback.
+          return null;
         }
       }
 
-      return fetchSubgraphMarketBorrowers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
+      return null;
     },
     enabled: !!marketId && !!network && !!marketState,
     staleTime: 1000 * 60 * 2, // 2 minutes
@@ -86,11 +84,11 @@ export const useAllMarketSuppliers = (marketId: string | undefined, network: Sup
         try {
           return await fetchMorphoMarketSuppliers(marketId, Number(network), '1', TOP_POSITIONS_LIMIT, 0);
         } catch {
-          // Continue to subgraph fallback.
+          return null;
         }
       }
 
-      return fetchSubgraphMarketSuppliers(marketId, network, '1', TOP_POSITIONS_LIMIT, 0);
+      return null;
     },
     enabled: !!marketId && !!network,
     staleTime: 1000 * 60 * 2, // 2 minutes

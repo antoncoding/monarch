@@ -4,7 +4,6 @@ import type { Address } from 'viem';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { fetchMonarchMarket } from '@/data-sources/monarch-api';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
-import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
 import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import { supportsMorphoApi } from '@/config/dataSources';
@@ -53,12 +52,7 @@ const fetchVaultCapMarket = async (
     }
   }
 
-  try {
-    return await fetchSubgraphMarket(marketId, chainId);
-  } catch (error) {
-    console.warn(`[VaultAllocations] Failed to fetch Subgraph market ${marketId} on ${chainId}:`, error);
-    return null;
-  }
+  return null;
 };
 
 /**

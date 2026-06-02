@@ -27,13 +27,13 @@ type UseUserTransactionsQueryOptions = {
 };
 
 /**
- * Fetches user transactions from Monarch, Morpho API, or Subgraph using React Query.
+ * Fetches user transactions from Monarch or Morpho API using React Query.
  *
  * Data fetching strategy:
  * - For non-paginated queries: requires single chainId, fetches with skip/first
  * - For paginated queries: can use multiple chainIds, fetches ALL data in parallel
  * - Tries Monarch first when the requested filters are supported by Envio
- * - Falls back to Morpho API and then Subgraph when Monarch is empty, unsupported, or fails
+ * - Falls back to Morpho API when Monarch is empty, unsupported, or fails
  */
 export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOptions) => {
   const { filters, enabled = true, paginate = false, pageSize = 1000 } = options;

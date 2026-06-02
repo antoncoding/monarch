@@ -5,7 +5,6 @@ import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchUserPositionStateForMarket } from '@/data-sources/monarch-api';
 import { fetchMorphoUserPositionForMarket } from '@/data-sources/morpho-api/positions';
-import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/positions';
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
 import type { MarketPosition } from '@/utils/types';
@@ -55,7 +54,7 @@ const buildPositionFromLiveMarket = (
  *
  * Prioritizes the latest on-chain snapshot via `fetchPositionSnapshot`.
  * If the snapshot is unavailable and local market metadata is present, it tries Monarch position state first,
- * then falls back to Morpho API or Subgraph for full market-backed reconstruction.
+ * then falls back to Morpho API for full market-backed reconstruction.
  *
  * @param user The user's address.
  * @param chainId The network ID.
@@ -120,18 +119,6 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
               fallbackPosition = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
             } catch (morphoError) {
               console.error('Failed to fetch position via Morpho API:', morphoError);
-              // Continue to Subgraph fallback
-            }
-          }
-
-          // If Morpho API failed or not supported, try Subgraph
-          if (!fallbackPosition) {
-            try {
-              console.log(`Attempting to fetch position via Subgraph for ${marketKey}`);
-              fallbackPosition = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
-            } catch (subgraphError) {
-              console.error('Failed to fetch position via Subgraph:', subgraphError);
-              fallbackPosition = null;
             }
           }
 
@@ -167,18 +154,6 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
             finalPosition = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
           } catch (morphoError) {
             console.error('Failed to fetch position via Morpho API:', morphoError);
-            // Continue to Subgraph fallback
-          }
-        }
-
-        // If Morpho API failed or not supported, try Subgraph
-        if (!finalPosition) {
-          try {
-            console.log(`Attempting to fetch position via Subgraph for ${marketKey}`);
-            finalPosition = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
-          } catch (subgraphError) {
-            console.error('Failed to fetch position via Subgraph:', subgraphError);
-            finalPosition = null;
           }
         }
       }

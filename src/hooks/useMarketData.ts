@@ -4,7 +4,6 @@ import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarket } from '@/data-sources/monarch-api';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
-import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchMarketSnapshot, type MarketSnapshot } from '@/utils/positions';
 import type { Market } from '@/utils/types';
@@ -71,13 +70,7 @@ const fetchFallbackMarketShell = async (uniqueKey: string, network: SupportedNet
     }
   }
 
-  try {
-    console.log(`Attempting to fetch market shell via Subgraph for ${uniqueKey}`);
-    return await fetchSubgraphMarket(uniqueKey, network);
-  } catch (subgraphError) {
-    console.error('Failed to fetch market shell via Subgraph:', subgraphError);
-    return null;
-  }
+  return null;
 };
 
 const fetchMonarchMarketState = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
@@ -127,7 +120,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
         console.log(`Found market snapshot for ${uniqueKey}, overriding live balances with on-chain data.`);
         finalMarket = mergeSnapshotIntoMarket(finalMarket, snapshot);
       } else if (!finalMarket) {
-        console.error(`Failed to fetch market data for ${uniqueKey} via Monarch, Morpho API, and Subgraph.`);
+        console.error(`Failed to fetch market data for ${uniqueKey} via Monarch or Morpho API.`);
       } else if (!snapshot) {
         console.warn(`Market snapshot failed for ${uniqueKey}, using indexed market state only.`);
       }

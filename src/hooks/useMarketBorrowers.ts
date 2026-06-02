@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarketBorrowers } from '@/data-sources/monarch-api';
 import { fetchMorphoMarketBorrowers } from '@/data-sources/morpho-api/market-borrowers';
-import { fetchSubgraphMarketBorrowers } from '@/data-sources/subgraph/market-borrowers';
 import { runMarketDetailFallback } from '@/hooks/queries/market-detail-fallback';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market, PaginatedMarketBorrowers } from '@/utils/types';
@@ -28,7 +27,7 @@ const buildMarketBorrowersKey = ({
 
 /**
  * Hook to fetch current borrowers (positions) for a specific market,
- * using Monarch API as the primary source with existing sources as fallback.
+ * using Monarch API as the primary source with Morpho API as fallback.
  * Preserves exact total counts via the shared Monarch scan/cache layer.
  * Returns borrowers sorted by borrow shares (descending).
  *
@@ -86,10 +85,6 @@ export const useMarketBorrowers = (
                 },
               ]
             : []),
-          {
-            provider: 'subgraph',
-            fetch: () => fetchSubgraphMarketBorrowers(marketId, network, effectiveMinShares, pageSize, targetSkip),
-          },
         ],
       });
     },

@@ -3,7 +3,6 @@ import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarketHistoricalData } from '@/data-sources/monarch-api/historical';
 import { fetchMorphoMarketHistoricalData, type HistoricalDataSuccessResult } from '@/data-sources/morpho-api/historical';
-import { fetchSubgraphMarketHistoricalData } from '@/data-sources/subgraph/historical';
 import { fetchHistoricalMarketBoundaryStates, type HistoricalMarketBoundaryState } from '@/utils/market-rate-enrichment';
 import { TIMEFRAME_CONFIG, calculateTimePoints, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
 import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
@@ -165,18 +164,6 @@ export const useMarketHistoricalData = (
           historicalData = await fetchMorphoMarketHistoricalData(uniqueKey, network, options);
         } catch (morphoError) {
           console.error('Failed to fetch historical data via Morpho API:', morphoError);
-          // Continue to Subgraph fallback
-        }
-      }
-
-      // If Morpho API failed or not supported, try Subgraph
-      if (!historicalData) {
-        try {
-          console.log(`Attempting to fetch historical data via Subgraph for ${uniqueKey}`);
-          historicalData = await fetchSubgraphMarketHistoricalData(uniqueKey, network, options);
-        } catch (subgraphError) {
-          console.error('Failed to fetch historical data via Subgraph:', subgraphError);
-          historicalData = null;
         }
       }
 
