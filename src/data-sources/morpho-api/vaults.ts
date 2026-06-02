@@ -58,29 +58,29 @@ export type MorphoVaultV2Rewards = {
 // API response types
 type ApiVault = {
   address: string;
-  chain: {
+  chain?: {
     id: number;
-  };
+  } | null;
   name: string;
   featured: boolean;
   metadata?: {
     description?: string | null;
     image?: string | null;
   } | null;
-  state: {
+  state?: {
     apy?: number | null;
     totalAssets: string;
-  };
-  asset: {
+  } | null;
+  asset?: {
     address: string;
     symbol: string;
-  };
+  } | null;
 };
 
 type AllVaultsApiResponse = {
   data?: {
     vaults?: {
-      items?: ApiVault[];
+      items?: (ApiVault | null)[];
       pageInfo?: {
         countTotal: number;
       };
@@ -92,7 +92,7 @@ type AllVaultsApiResponse = {
 type VaultApysApiResponse = {
   data?: {
     vaults?: {
-      items?: Pick<ApiVault, 'address' | 'chain' | 'state'>[];
+      items?: (Pick<ApiVault, 'address' | 'chain' | 'state'> | null)[];
     };
   };
   errors?: { message: string }[];
@@ -100,13 +100,13 @@ type VaultApysApiResponse = {
 
 type ApiVaultV2 = {
   address: string;
-  asset: {
+  asset?: {
     address: string;
     symbol: string;
-  };
-  chain: {
+  } | null;
+  chain?: {
     id: number;
-  };
+  } | null;
   listed: boolean;
   metadata?: {
     description?: string | null;
@@ -119,7 +119,7 @@ type ApiVaultV2 = {
 type VaultV2MetadataApiResponse = {
   data?: {
     vaultV2s?: {
-      items?: ApiVaultV2[];
+      items?: (ApiVaultV2 | null)[];
     };
   };
   errors?: { message: string }[];
@@ -146,7 +146,11 @@ const getVaultRequestKey = (vault: VaultAddressByNetwork) => {
 /**
  * Transforms API vault response to internal MorphoVault format
  */
-function transformVault(apiVault: ApiVault): MorphoVault {
+function transformVault(apiVault: ApiVault | null): MorphoVault | null {
+  if (!apiVault?.chain || !apiVault.state || !apiVault.asset) {
+    return null;
+  }
+
   return {
     address: apiVault.address,
     chainId: apiVault.chain.id,
@@ -160,7 +164,11 @@ function transformVault(apiVault: ApiVault): MorphoVault {
   };
 }
 
-function transformVaultV2Metadata(apiVault: ApiVaultV2): MorphoVaultV2Metadata {
+function transformVaultV2Metadata(apiVault: ApiVaultV2 | null): MorphoVaultV2Metadata | null {
+  if (!apiVault?.chain || !apiVault.asset) {
+    return null;
+  }
+
   return {
     address: apiVault.address,
     assetAddress: apiVault.asset.address,
@@ -181,7 +189,7 @@ function transformVaultV2Metadata(apiVault: ApiVaultV2): MorphoVaultV2Metadata {
  */
 export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
   try {
-    const vaults: ApiVault[] = [];
+    const vaults: MorphoVault[] = [];
 
     for (let skip = 0; ; skip += MAX_VAULTS_PAGE_SIZE) {
       const response = await morphoGraphqlFetcher<AllVaultsApiResponse>(allVaultsQuery, {
@@ -194,15 +202,20 @@ export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
       });
 
       const items = response?.data?.vaults?.items ?? [];
-      vaults.push(...items);
+      for (const item of items) {
+        const vault = transformVault(item);
+        if (vault) {
+          vaults.push(vault);
+        }
+      }
 
-      const totalCount = response?.data?.vaults?.pageInfo?.countTotal ?? vaults.length;
-      if (items.length === 0 || vaults.length >= totalCount) {
+      const totalCount = response?.data?.vaults?.pageInfo?.countTotal ?? skip + items.length;
+      if (items.length === 0 || skip + items.length >= totalCount) {
         break;
       }
     }
 
-    return vaults.map(transformVault);
+    return vaults;
   } catch (error) {
     console.error('Error fetching all Morpho vaults:', error);
     return [];
@@ -244,12 +257,17 @@ export const fetchMorphoVaultV2Metadata = async (vaults: VaultAddressByNetwork[]
 
       const items = response?.data?.vaultV2s?.items ?? [];
       for (const item of items) {
-        const key = getVaultRequestKey({ address: item.address, chainId: item.chain.id });
+        const metadata = transformVaultV2Metadata(item);
+        if (!metadata) {
+          continue;
+        }
+
+        const key = getVaultRequestKey({ address: metadata.address, chainId: metadata.chainId });
         if (!key || !requestedKeys.has(key)) {
           continue;
         }
 
-        metadataByKey.set(key, transformVaultV2Metadata(item));
+        metadataByKey.set(key, metadata);
       }
 
       if (items.length < MAX_VAULT_V2_METADATA_PAGE_SIZE) {
@@ -279,7 +297,12 @@ export const fetchListedMorphoVaultV2Metadata = async (): Promise<MorphoVaultV2M
       });
 
       const items = response?.data?.vaultV2s?.items ?? [];
-      metadata.push(...items.map(transformVaultV2Metadata));
+      for (const item of items) {
+        const vault = transformVaultV2Metadata(item);
+        if (vault) {
+          metadata.push(vault);
+        }
+      }
 
       if (items.length < MAX_VAULT_V2_METADATA_PAGE_SIZE) {
         break;
@@ -359,6 +382,10 @@ export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Pro
     const apys = new Map<string, number>();
 
     for (const vault of items) {
+      if (!vault?.chain || !vault.state) {
+        continue;
+      }
+
       const key = getVaultApyKey(vault.address, vault.chain.id);
       const apy = vault.state.apy;
       if (apy === null || apy === undefined) {

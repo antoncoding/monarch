@@ -5,22 +5,24 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { morphoGraphqlFetcher } from './fetchers';
 
 type MorphoWhitelistMarket = {
-  uniqueKey: string;
-  listed: boolean;
-  supplyingVaults?: {
-    address: string | null;
-  }[];
-  morphoBlue: {
-    chain: {
-      id: number;
-    };
-  };
+  uniqueKey?: string | null;
+  listed?: boolean | null;
+  supplyingVaults?:
+    | {
+        address: string | null;
+      }[]
+    | null;
+  morphoBlue?: {
+    chain?: {
+      id?: number | null;
+    } | null;
+  } | null;
 };
 
 type MorphoWhitelistStatusResponse = {
   data?: {
     markets?: {
-      items?: MorphoWhitelistMarket[];
+      items?: (MorphoWhitelistMarket | null)[];
       pageInfo?: {
         countTotal: number;
       };
@@ -30,6 +32,7 @@ type MorphoWhitelistStatusResponse = {
 };
 
 type MorphoWhitelistStatusPage = {
+  fetchedCount: number;
   items: MorphoMarketMetadata[];
   totalCount: number;
 };
@@ -66,17 +69,31 @@ const normalizeSupplyingVaults = (supplyingVaults: MorphoWhitelistMarket['supply
   const uniqueVaults = new Set<string>();
   const normalizedVaults: MorphoMarketMetadata['supplyingVaults'] = [];
 
-  supplyingVaults?.forEach((vault) => {
+  for (const vault of supplyingVaults ?? []) {
     const address = vault.address?.toLowerCase();
     if (!address || uniqueVaults.has(address)) {
-      return;
+      continue;
     }
 
     uniqueVaults.add(address);
     normalizedVaults.push({ address });
-  });
+  }
 
   return normalizedVaults;
+};
+
+const toMorphoMarketMetadata = (market: MorphoWhitelistMarket | null): MorphoMarketMetadata | null => {
+  const chainId = market?.morphoBlue?.chain?.id;
+  if (!market?.uniqueKey || typeof market.listed !== 'boolean' || typeof chainId !== 'number') {
+    return null;
+  }
+
+  return {
+    chainId,
+    uniqueKey: market.uniqueKey,
+    listed: market.listed,
+    supplyingVaults: normalizeSupplyingVaults(market.supplyingVaults),
+  };
 };
 
 const fetchMorphoMarketMetadataPage = async (
@@ -103,13 +120,17 @@ const fetchMorphoMarketMetadataPage = async (
     return null;
   }
 
+  const items: MorphoMarketMetadata[] = [];
+  for (const market of response.data.markets.items) {
+    const metadata = toMorphoMarketMetadata(market);
+    if (metadata) {
+      items.push(metadata);
+    }
+  }
+
   return {
-    items: response.data.markets.items.map((market) => ({
-      chainId: market.morphoBlue.chain.id,
-      uniqueKey: market.uniqueKey,
-      listed: market.listed,
-      supplyingVaults: normalizeSupplyingVaults(market.supplyingVaults),
-    })),
+    fetchedCount: response.data.markets.items.length,
+    items,
     totalCount: response.data.markets.pageInfo.countTotal,
   };
 };
@@ -121,15 +142,15 @@ const fetchMorphoMarketMetadataForNetwork = async (network: SupportedNetworks): 
   }
 
   const allMetadata = [...firstPage.items];
-  const firstPageCount = firstPage.items.length;
+  let fetchedCount = firstPage.fetchedCount;
   const totalCount = firstPage.totalCount;
 
-  if (firstPageCount === 0 && totalCount > 0) {
+  if (fetchedCount === 0 && totalCount > 0) {
     throw new Error(`[WhitelistStatus] Received empty first page for network ${network} while totalCount=${totalCount}.`);
   }
 
   const remainingOffsets: number[] = [];
-  for (let nextSkip = firstPageCount; nextSkip < totalCount; nextSkip += MORPHO_WHITELIST_PAGE_SIZE) {
+  for (let nextSkip = fetchedCount; nextSkip < totalCount; nextSkip += MORPHO_WHITELIST_PAGE_SIZE) {
     remainingOffsets.push(nextSkip);
   }
 
@@ -147,14 +168,13 @@ const fetchMorphoMarketMetadataForNetwork = async (network: SupportedNetworks): 
         throw new Error(`[WhitelistStatus] Failed to fetch one of the paginated whitelist pages for network ${network}.`);
       }
 
+      fetchedCount += settledPage.value.fetchedCount;
       allMetadata.push(...settledPage.value.items);
     }
   }
 
-  if (allMetadata.length < totalCount) {
-    throw new Error(
-      `[WhitelistStatus] Incomplete whitelist dataset for network ${network}: fetched ${allMetadata.length} of ${totalCount}.`,
-    );
+  if (fetchedCount < totalCount) {
+    throw new Error(`[WhitelistStatus] Incomplete whitelist dataset for network ${network}: fetched ${fetchedCount} of ${totalCount}.`);
   }
 
   return allMetadata;

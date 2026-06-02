@@ -133,7 +133,7 @@ export const useMarketV2SupplyingVaultsQuery = ({ enabled = true, markets, trust
   const query = useQuery<MarketV2SupplyingVault[], Error>({
     queryKey: ['monarch-market-v2-supplying-vaults', requestKey, adapterRelationsFingerprint],
     queryFn: async () => {
-      const results = await Promise.all(
+      const settledResults = await Promise.allSettled(
         chainMarketRequests.map((request) =>
           fetchMonarchMarketV2SupplyingVaults({
             adapterRelations: relevantAdapterRelations,
@@ -143,7 +143,13 @@ export const useMarketV2SupplyingVaultsQuery = ({ enabled = true, markets, trust
         ),
       );
 
-      const vaults = results.flat();
+      const vaults: MarketV2SupplyingVault[] = [];
+      for (const result of settledResults) {
+        if (result.status === 'fulfilled') {
+          vaults.push(...result.value);
+        }
+      }
+
       if (vaults.length === 0) {
         return vaults;
       }
