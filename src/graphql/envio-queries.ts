@@ -653,3 +653,35 @@ ${marketTxContextFields}
     }
   }
 `;
+
+export const envioMarketTxContextsWindowQuery = `
+  query EnvioMarketTxContextsWindow(
+    $chainId: Int!
+    $marketId: String!
+    $startTimestamp: numeric!
+    $endTimestamp: numeric!
+    $limit: Int!
+    $offset: Int!
+  ) {
+    MarketTxContext(
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+        timestamp: { _gte: $startTimestamp, _lt: $endTimestamp }
+      }
+      order_by: [{ timestamp: asc }, { txHash: asc }, { txContext_id: asc }]
+      limit: $limit
+      offset: $offset
+    ) {
+      id
+      chainId
+      market_id
+      timestamp
+      txHash
+      txContext_id
+      txContext {
+${marketTxContextFields}
+      }
+    }
+  }
+`;

@@ -1,5 +1,9 @@
 import { isAddress } from 'viem';
-import { envioMarketTxContextsPageQuery, envioMarketTxContextsPageWithinSnapshotQuery } from '@/graphql/envio-queries';
+import {
+  envioMarketTxContextsPageQuery,
+  envioMarketTxContextsPageWithinSnapshotQuery,
+  envioMarketTxContextsWindowQuery,
+} from '@/graphql/envio-queries';
 import { normalizeMarketUniqueKey } from '@/utils/markets';
 import { monarchGraphqlFetcher } from './fetchers';
 
@@ -888,6 +892,47 @@ const fetchMarketTxContextsPage = async (
   }
 };
 
+const fetchMarketTxContextsWindowPage = async (
+  marketId: string,
+  chainId: number,
+  startTimestamp: number,
+  endTimestamp: number,
+  limit: number,
+  offset: number,
+): Promise<MonarchMarketTxContextRow[]> => {
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => {
+    controller.abort();
+  }, MONARCH_MARKET_TX_CONTEXTS_TIMEOUT_MS);
+
+  try {
+    const response = await monarchGraphqlFetcher<MonarchMarketTxContextsPageResponse>(
+      envioMarketTxContextsWindowQuery,
+      {
+        chainId,
+        marketId,
+        startTimestamp: startTimestamp.toString(),
+        endTimestamp: endTimestamp.toString(),
+        limit,
+        offset,
+      },
+      {
+        signal: controller.signal,
+      },
+    );
+
+    return response.data?.MarketTxContext ?? [];
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Monarch market flow activity request timed out after ${MONARCH_MARKET_TX_CONTEXTS_TIMEOUT_MS}ms`);
+    }
+
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeoutId);
+  }
+};
+
 const normalizeMarketTxContextRow = (row: MonarchMarketTxContextRow, marketId: string, chainId: number): MarketProActivity => {
   if (row.chainId !== chainId) {
     throw new Error(`Monarch market pro activity row chain mismatch for ${row.id}`);
@@ -930,6 +975,26 @@ export const fetchMonarchMarketTxContexts = async (
   ceiling?: MarketTxContextCursor,
 ): Promise<PaginatedMarketProActivities> => {
   const rows = await fetchMarketTxContextsPage(marketId, chainId, first + 1, skip, ceiling);
+  const pageItems = rows.slice(0, first).map((row) => normalizeMarketTxContextRow(row, marketId, chainId));
+  const hasNextPage = rows.length > first;
+  const totalCount = skip + pageItems.length + Number(hasNextPage);
+
+  return {
+    items: pageItems,
+    totalCount,
+    hasNextPage,
+  };
+};
+
+export const fetchMonarchMarketTxContextsInWindow = async (
+  marketId: string,
+  chainId: number,
+  startTimestamp: number,
+  endTimestamp: number,
+  first = 250,
+  skip = 0,
+): Promise<PaginatedMarketProActivities> => {
+  const rows = await fetchMarketTxContextsWindowPage(marketId, chainId, startTimestamp, endTimestamp, first + 1, skip);
   const pageItems = rows.slice(0, first).map((row) => normalizeMarketTxContextRow(row, marketId, chainId));
   const hasNextPage = rows.length > first;
   const totalCount = skip + pageItems.length + Number(hasNextPage);

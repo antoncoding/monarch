@@ -14,6 +14,7 @@ export {
   fetchMonarchMarketSupplies,
 } from './market-detail';
 export {
+  fetchMonarchMarketTxContextsInWindow,
   fetchMonarchMarketTxContexts,
   type MarketProActivity,
   type MarketProActivityKind,
