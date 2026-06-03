@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "rm -rf .next/cache && next build",
     "build:clean": "rm -rf .next && next build",
     "check": "pnpm lint:check && pnpm typecheck",
     "dev": "next dev --turbo",
