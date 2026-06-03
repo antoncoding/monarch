@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "rm -rf .next && next build",
+    "build": "next build",
+    "build:clean": "rm -rf .next && next build",
     "check": "pnpm lint:check && pnpm typecheck",
     "dev": "next dev --turbo",
     "dev:ui-lab": "NEXT_PUBLIC_ENABLE_UI_LAB=true next dev --turbo",

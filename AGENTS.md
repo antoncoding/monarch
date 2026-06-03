@@ -37,5 +37,3 @@ For every non-trivial code or docs change, do this immediately before the final 
 2. Apply the sections and rules relevant to the files and behavior touched. (Can use multi-agent for this)
 3. Evaluate them and fix validation failures before reporting completion, unless blocked.
 4. In the final response, state the validation sections and rules applied, verification run, and remaining risks.
-
-When a user-reported bug exposes a reusable failure pattern, add the new rule to `docs/VALIDATIONS.md`, not this file.
