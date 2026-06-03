@@ -991,7 +991,7 @@ export const fetchMonarchMarketTxContextsInWindow = async (
   chainId: number,
   startTimestamp: number,
   endTimestamp: number,
-  first = 250,
+  first = 500,
   skip = 0,
 ): Promise<PaginatedMarketProActivities> => {
   const rows = await fetchMarketTxContextsWindowPage(marketId, chainId, startTimestamp, endTimestamp, first + 1, skip);
