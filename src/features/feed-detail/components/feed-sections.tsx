@@ -111,21 +111,15 @@ export function FeedHero({
             <StatTile
               label="Markets using"
               value={statValue(marketCount.toLocaleString('en-US'))}
-              detail={
-                isStatsLoading
-                  ? 'Market usage and oracle contracts are loading'
-                  : `${oracleCount.toLocaleString('en-US')} oracle contract${oracleCount === 1 ? '' : 's'}`
-              }
+              detail={isStatsLoading ? undefined : `${oracleCount.toLocaleString('en-US')} oracle contract${oracleCount === 1 ? '' : 's'}`}
             />
             <StatTile
               label="Supply TVL"
               value={statValue(formatUsdCompact(totalSupplyUsd))}
-              detail={isStatsLoading ? 'Supplied value is still calculating' : 'Supplied value in markets using this feed'}
             />
             <StatTile
               label="Borrow TVL"
               value={statValue(formatUsdCompact(totalBorrowUsd))}
-              detail={isStatsLoading ? 'Borrowed value is still calculating' : 'Borrowed value in markets using this feed'}
             />
           </div>
         </div>
@@ -202,10 +196,7 @@ export function FeedMetadataSection({
 
 export function VaultAccountingSection({ leg }: { leg: FeedDependencyLeg | null }) {
   return (
-    <SectionShell
-      title="Vault Accounting"
-      detail="Vault conversions use accounting values, so live price rounds are not shown."
-    >
+    <SectionShell title="Vault Accounting">
       <div>
         <DetailRow
           label="Conversion"
@@ -258,10 +249,7 @@ export function FeedInspectionSection({
   const formattedAnswer = answer != null && decimals != null ? formatOraclePrice(answer, decimals) : 'Unavailable';
 
   return (
-    <SectionShell
-      title="Price, Last 24 Hours"
-      detail="Sampled archive reads from the configured RPC. Current feed context is shown on the right."
-    >
+    <SectionShell title="Price, Last 24 Hours">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">
         <PriceHistoryChart
           points={priceHistory}
@@ -362,10 +350,7 @@ export function ContractSection({
   safeThreshold: bigint | null;
 }) {
   return (
-    <SectionShell
-      title="Chainlink Contract Details"
-      detail="Proxy implementation and owner contract, when available from the feed."
-    >
+    <SectionShell title="Chainlink Contract Details">
       <div>
         <DetailRow
           label="Version"
@@ -486,10 +471,7 @@ export function MarketsSection({ dependencies, chainId }: { dependencies: FeedMa
   const paginatedDependencies = dependencies.slice((safePage - 1) * MARKETS_PAGE_SIZE, safePage * MARKETS_PAGE_SIZE);
 
   return (
-    <SectionShell
-      title="Markets Using This Feed"
-      detail="Sorted by supplied plus borrowed USD value."
-    >
+    <SectionShell title="Markets Using This Feed">
       {dependencies.length === 0 ? (
         <p className="text-sm text-secondary">No loaded markets currently use this feed.</p>
       ) : (

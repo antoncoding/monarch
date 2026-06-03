@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { type Address, isAddress } from 'viem';
 import Header from '@/components/layout/header/Header';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
-import { StyledToast } from '@/components/ui/styled-toast';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useUsdEnrichedMarkets } from '@/hooks/useUsdEnrichedMarkets';
@@ -38,8 +36,6 @@ import {
   VaultAccountingSection,
 } from './components/feed-sections';
 import { getFeedVendorIcon, isChainlinkFeedLeg } from './components/feed-shared';
-
-const FEED_DATA_LOADING_TOAST_ID = 'feed-market-oracle-data-loading';
 
 function routeValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -144,30 +140,6 @@ export default function FeedContent() {
   const totalBorrowUsd = dependencies.reduce((sum, dependency) => sum + toFiniteNumber(dependency.market.state.borrowAssetsUsd), 0);
   const uniqueOracleCount = getUniqueOracleOccurrences(occurrences).length;
   const isMetadataLoading = isRouteSupported && (oracleMetadataLoading || marketsLoading || isUsdEnrichmentLoading);
-
-  useEffect(() => {
-    if (!isMetadataLoading) {
-      toast.dismiss(FEED_DATA_LOADING_TOAST_ID);
-      return;
-    }
-
-    toast.loading(
-      <StyledToast
-        title="Calculating feed metrics"
-        message="Markets, oracle contracts, Supply TVL, and Borrow TVL are still loading."
-      />,
-      {
-        toastId: FEED_DATA_LOADING_TOAST_ID,
-        closeButton: true,
-        closeOnClick: false,
-        autoClose: false,
-      },
-    );
-
-    return () => {
-      toast.dismiss(FEED_DATA_LOADING_TOAST_ID);
-    };
-  }, [isMetadataLoading]);
 
   if (!isRouteSupported) {
     return (
