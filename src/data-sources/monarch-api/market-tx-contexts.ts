@@ -967,6 +967,20 @@ const normalizeMarketTxContextRow = (row: MonarchMarketTxContextRow, marketId: s
   return activity;
 };
 
+const normalizeMarketTxContextRows = (rows: MonarchMarketTxContextRow[], marketId: string, chainId: number): MarketProActivity[] => {
+  const activities: MarketProActivity[] = [];
+
+  for (const row of rows) {
+    try {
+      activities.push(normalizeMarketTxContextRow(row, marketId, chainId));
+    } catch (error) {
+      console.warn(`Skipping malformed Monarch market pro activity row ${row.id}:`, error);
+    }
+  }
+
+  return activities;
+};
+
 export const fetchMonarchMarketTxContexts = async (
   marketId: string,
   chainId: number,
@@ -975,9 +989,10 @@ export const fetchMonarchMarketTxContexts = async (
   ceiling?: MarketTxContextCursor,
 ): Promise<PaginatedMarketProActivities> => {
   const rows = await fetchMarketTxContextsPage(marketId, chainId, first + 1, skip, ceiling);
-  const pageItems = rows.slice(0, first).map((row) => normalizeMarketTxContextRow(row, marketId, chainId));
+  const pageRows = rows.slice(0, first);
+  const pageItems = normalizeMarketTxContextRows(pageRows, marketId, chainId);
   const hasNextPage = rows.length > first;
-  const totalCount = skip + pageItems.length + Number(hasNextPage);
+  const totalCount = skip + pageRows.length + Number(hasNextPage);
 
   return {
     items: pageItems,
@@ -995,9 +1010,10 @@ export const fetchMonarchMarketTxContextsInWindow = async (
   skip = 0,
 ): Promise<PaginatedMarketProActivities> => {
   const rows = await fetchMarketTxContextsWindowPage(marketId, chainId, startTimestamp, endTimestamp, first + 1, skip);
-  const pageItems = rows.slice(0, first).map((row) => normalizeMarketTxContextRow(row, marketId, chainId));
+  const pageRows = rows.slice(0, first);
+  const pageItems = normalizeMarketTxContextRows(pageRows, marketId, chainId);
   const hasNextPage = rows.length > first;
-  const totalCount = skip + pageItems.length + Number(hasNextPage);
+  const totalCount = skip + pageRows.length + Number(hasNextPage);
 
   return {
     items: pageItems,

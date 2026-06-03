@@ -172,8 +172,10 @@ const formatBucketTimeRange = (bucket: FlowBucketData): string => {
   return `${date}-${endTime}`;
 };
 
-const getLegAddress = (activity: MarketProActivity, leg: MarketProActivityLeg): string => {
-  return (leg.positionAddress ?? leg.actorAddress ?? leg.receiverAddress ?? activity.actorAddress ?? activity.hash).toLowerCase();
+const getLegAddress = (activity: MarketProActivity, leg: MarketProActivityLeg): string | null => {
+  const address = leg.positionAddress ?? leg.actorAddress ?? leg.receiverAddress ?? activity.actorAddress;
+
+  return address ? address.toLowerCase() : null;
 };
 
 const getFlowConfig = (flowKind: MarketFlowKind, market: Market) => {
@@ -214,11 +216,14 @@ const createMutableBucket = (bucketStart: number, bucketEnd: number): MutableFlo
   negative: createFlowAccumulator(),
 });
 
-const addToAccumulator = (accumulator: FlowAccumulator, amountRaw: bigint, txId: string, address: string) => {
+const addToAccumulator = (accumulator: FlowAccumulator, amountRaw: bigint, txId: string, address: string | null) => {
   accumulator.amountRaw += amountRaw;
   accumulator.txIds.add(txId);
-  accumulator.addresses.add(address);
-  accumulator.contributors.set(address, (accumulator.contributors.get(address) ?? 0n) + amountRaw);
+
+  if (address) {
+    accumulator.addresses.add(address);
+    accumulator.contributors.set(address, (accumulator.contributors.get(address) ?? 0n) + amountRaw);
+  }
 };
 
 const finalizeContributors = (contributors: Map<string, bigint>, decimals: number): FlowContributor[] => {
@@ -424,7 +429,7 @@ function FlowBarShape({ direction, ...props }: FlowBarShapeProps & { direction: 
   const y = rawHeight < 0 ? rawY + rawHeight : rawY;
   const height = Math.abs(rawHeight);
 
-  if (width <= 0 || height <= 0) {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     return null;
   }
 
@@ -445,6 +450,24 @@ function FlowBarShape({ direction, ...props }: FlowBarShapeProps & { direction: 
       d={path}
       fill={props.fill}
       fillOpacity={1}
+    />
+  );
+}
+
+function PositiveFlowBarShape(props: FlowBarShapeProps) {
+  return (
+    <FlowBarShape
+      {...props}
+      direction="positive"
+    />
+  );
+}
+
+function NegativeFlowBarShape(props: FlowBarShapeProps) {
+  return (
+    <FlowBarShape
+      {...props}
+      direction="negative"
     />
   );
 }
@@ -856,12 +879,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
                 dataKey="positive"
                 fill={FLOW_POSITIVE_COLOR}
                 name={flowAnalytics.positiveLabel}
-                shape={(props: FlowBarShapeProps) => (
-                  <FlowBarShape
-                    {...props}
-                    direction="positive"
-                  />
-                )}
+                shape={PositiveFlowBarShape}
               />
               <Bar
                 activeBar={false}
@@ -869,12 +887,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
                 dataKey="negative"
                 fill={FLOW_NEGATIVE_COLOR}
                 name={flowAnalytics.negativeLabel}
-                shape={(props: FlowBarShapeProps) => (
-                  <FlowBarShape
-                    {...props}
-                    direction="negative"
-                  />
-                )}
+                shape={NegativeFlowBarShape}
               />
             </ComposedChart>
           </ResponsiveContainer>

@@ -17,7 +17,7 @@ export const useMarketFlowActivities = (
   timeRange: TimeseriesOptions,
 ) => {
   return useQuery<MarketFlowActivitiesResult>({
-    queryKey: ['marketFlowActivities', marketId, network, timeRange.startTimestamp, timeRange.endTimestamp, MARKET_FLOW_ACTIVITY_MAX_ROWS],
+    queryKey: ['marketFlowActivities', marketId, network, timeRange.startTimestamp, timeRange.endTimestamp],
     queryFn: async () => {
       if (!marketId || !network) {
         return { activities: [] };
