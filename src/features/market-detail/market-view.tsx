@@ -34,7 +34,7 @@ import { ProActivitiesTable } from './components/pro-activities-table';
 import { MarketHeader } from './components/market-header';
 import { TokenIcon } from '@/components/shared/token-icon';
 import RateChart from './components/charts/rate-chart';
-import VolumeChart from './components/charts/volume-chart';
+import VolumeChart, { MarketFlowChart } from './components/charts/volume-chart';
 import { SupplierPositionsChart } from './components/charts/supplier-positions-chart';
 import { SuppliersPieChart } from './components/charts/suppliers-pie-chart';
 import { BorrowersPieChart } from './components/charts/borrowers-pie-chart';
@@ -437,6 +437,14 @@ function MarketContent() {
               chainId={network}
               market={market}
             />
+
+            <div className="mt-6">
+              <MarketFlowChart
+                marketId={marketKey ?? ''}
+                chainId={network}
+                market={market}
+              />
+            </div>
 
             <div className="mt-6">
               <RateChart
