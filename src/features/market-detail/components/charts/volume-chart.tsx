@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { TbTrendingDown, TbTrendingUp, TbUsers } from 'react-icons/tb';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tooltip as HeroTooltip } from '@/components/ui/tooltip';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -19,6 +20,7 @@ import {
 } from 'recharts';
 import { formatUnits } from 'viem';
 import { Spinner } from '@/components/ui/spinner';
+import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useChartColors } from '@/constants/chartColors';
 import { useVaultRegistry } from '@/contexts/VaultRegistryContext';
@@ -39,7 +41,7 @@ import {
   chartLegendStyle,
   getTimeSeriesXAxisProps,
 } from './chart-utils';
-import type { MarketProActivity, MarketProActivityLeg } from '@/data-sources/monarch-api';
+import type { MarketFlowEvent, MarketFlowKind } from '@/data-sources/monarch-api';
 import type { AssetTimeseriesDataPoint, Market } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
@@ -54,7 +56,6 @@ const FLOW_POSITIVE_COLOR = 'oklch(0.66 0.12 154)';
 const FLOW_NEGATIVE_COLOR = 'oklch(0.62 0.13 24)';
 const FLOW_BAR_SIZE = 12;
 
-type MarketFlowKind = 'supply' | 'borrow';
 type MarketFlowDirection = 'positive' | 'negative';
 
 type FlowContributor = {
@@ -172,12 +173,6 @@ const formatBucketTimeRange = (bucket: FlowBucketData): string => {
   return `${date}-${endTime}`;
 };
 
-const getLegAddress = (activity: MarketProActivity, leg: MarketProActivityLeg): string | null => {
-  const address = leg.positionAddress ?? leg.actorAddress ?? leg.receiverAddress ?? activity.actorAddress;
-
-  return address ? address.toLowerCase() : null;
-};
-
 const getFlowConfig = (flowKind: MarketFlowKind, market: Market) => {
   if (flowKind === 'borrow') {
     return {
@@ -189,8 +184,6 @@ const getFlowConfig = (flowKind: MarketFlowKind, market: Market) => {
       tokenDecimals: market.loanAsset.decimals,
       tokenSymbol: market.loanAsset.symbol,
       currentRaw: safeBigInt(market.state.borrowAssets),
-      positiveKinds: new Set<MarketProActivityLeg['kind']>(['borrow']),
-      negativeKinds: new Set<MarketProActivityLeg['kind']>(['repay']),
     };
   }
 
@@ -203,8 +196,6 @@ const getFlowConfig = (flowKind: MarketFlowKind, market: Market) => {
     tokenDecimals: market.loanAsset.decimals,
     tokenSymbol: market.loanAsset.symbol,
     currentRaw: safeBigInt(market.state.supplyAssets),
-    positiveKinds: new Set<MarketProActivityLeg['kind']>(['supply', 'legacyVaultReallocateSupply']),
-    negativeKinds: new Set<MarketProActivityLeg['kind']>(['withdraw', 'legacyVaultReallocateWithdraw']),
   };
 };
 
@@ -268,7 +259,7 @@ const getFlowAxisMax = (buckets: FlowBucketData[]): number => {
 };
 
 const buildFlowAnalytics = (
-  activities: MarketProActivity[],
+  activities: MarketFlowEvent[],
   flowKind: MarketFlowKind,
   market: Market,
   timeframe: ChartTimeframe,
@@ -299,27 +290,14 @@ const buildFlowAnalytics = (
       continue;
     }
 
-    for (const leg of activity.legs) {
-      if (!leg.isCurrentMarket || leg.amount === '0') {
-        continue;
-      }
-
-      const isPositive = config.positiveKinds.has(leg.kind);
-      const isNegative = config.negativeKinds.has(leg.kind);
-      if (!isPositive && !isNegative) {
-        continue;
-      }
-
-      const amountRaw = safeBigInt(leg.amount);
-      if (amountRaw <= 0n) {
-        continue;
-      }
-
-      const direction: MarketFlowDirection = isPositive ? 'positive' : 'negative';
-      const address = getLegAddress(activity, leg);
-      addToAccumulator(bucket[direction], amountRaw, activity.hash, address);
-      addToAccumulator(direction === 'positive' ? positiveTotal : negativeTotal, amountRaw, activity.hash, address);
+    const amountRaw = safeBigInt(activity.amount);
+    if (amountRaw <= 0n) {
+      continue;
     }
+
+    const address = activity.address ? activity.address.toLowerCase() : null;
+    addToAccumulator(bucket[activity.direction], amountRaw, activity.hash, address);
+    addToAccumulator(activity.direction === 'positive' ? positiveTotal : negativeTotal, amountRaw, activity.hash, address);
   }
 
   const current = toDisplayAmount(config.currentRaw, config.tokenDecimals);
@@ -647,13 +625,15 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
     data: historicalData,
     isLoading: isHistoricalLoading,
     isFetching: isHistoricalFetching,
+    refetch: refetchHistoricalData,
   } = useMarketHistoricalData(marketId, chainId, selectedTimeRange, market, selectedTimeframe);
   const {
     data: flowActivitiesData,
     isLoading: isFlowLoading,
     isFetching: isFlowFetching,
     error: flowError,
-  } = useMarketFlowActivities(marketId, chainId, selectedTimeRange);
+    refetch: refetchFlowActivities,
+  } = useMarketFlowActivities(marketId, chainId, selectedTimeRange, flowKind);
 
   const formatYAxis = (value: number) => formatReadable(value);
   const intervalSeconds = TIMEFRAME_CONFIG[selectedTimeframe].intervalSeconds;
@@ -673,6 +653,9 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
   const hasFlowData = flowAnalytics.positiveAmount > 0 || flowAnalytics.negativeAmount > 0;
   const isLoading = isFlowLoading || isHistoricalLoading;
   const isFetching = isFlowFetching || isHistoricalFetching;
+  const handleRefresh = useCallback(() => {
+    void Promise.all([refetchFlowActivities(), refetchHistoricalData()]);
+  }, [refetchFlowActivities, refetchHistoricalData]);
   const flowAxisMax = useMemo(() => getFlowAxisMax(flowAnalytics.buckets), [flowAnalytics.buckets]);
   const grossFlowAmount = flowAnalytics.positiveAmount + flowAnalytics.negativeAmount;
   const positiveFlowShare = grossFlowAmount > 0 ? (flowAnalytics.positiveAmount / grossFlowAmount) * 100 : 50;
@@ -764,12 +747,26 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
         </div>
 
         <div className="flex gap-2">
-          {isFetching && !isLoading ? (
-            <div className="flex items-center gap-2 rounded-full border border-border/60 bg-surface px-2 py-1 text-[11px] text-secondary">
-              <Spinner size={12} />
-              <span>Updating</span>
-            </div>
-          ) : null}
+          <HeroTooltip
+            content={
+              <TooltipContent
+                title="Refresh flows"
+                detail="Fetch latest chart data"
+                icon={<RefetchIcon isLoading={isFetching} />}
+              />
+            }
+          >
+            <Button
+              aria-label="Refresh flow chart"
+              className="h-8 w-8 min-w-0 rounded border border-border bg-surface p-0 text-secondary shadow-none hover:bg-surface/70 hover:shadow-sm"
+              disabled={isFetching}
+              onClick={handleRefresh}
+              size="icon"
+              variant="default"
+            >
+              <RefetchIcon isLoading={isFetching} />
+            </Button>
+          </HeroTooltip>
           <Select
             value={flowKind}
             onValueChange={(value) => setFlowKind(value as MarketFlowKind)}

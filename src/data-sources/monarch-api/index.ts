@@ -14,7 +14,6 @@ export {
   fetchMonarchMarketSupplies,
 } from './market-detail';
 export {
-  fetchMonarchMarketTxContextsInWindow,
   fetchMonarchMarketTxContexts,
   type MarketProActivity,
   type MarketProActivityKind,
@@ -22,6 +21,11 @@ export {
   type MarketTxContextCursor,
   type PaginatedMarketProActivities,
 } from './market-tx-contexts';
+export {
+  fetchMonarchMarketFlowEventsInWindow,
+  type MarketFlowEvent,
+  type MarketFlowKind,
+} from './market-flow-events';
 export {
   fetchMonarchTransactions,
   type MonarchSupplyTransaction,
