@@ -29,6 +29,9 @@ type UseFilteredMarketsResult = {
   loading: boolean;
   isRefetching: boolean;
   dataUpdatedAt: number;
+  isUsingCachedMarkets: boolean;
+  isRefreshingCachedMarkets: boolean;
+  cachedMarketsUpdatedAt: number | null;
   refetch: () => Promise<unknown>;
 };
 
@@ -101,6 +104,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const preferences = useMarketPreferences();
   const sortColumn = preferences.sortColumn === SortColumn.TrustedBy ? SortColumn.Supply : preferences.sortColumn;
   const persistedFilters = useMarketFilterPreferences();
+  const filters = useMarketsFilters();
+  const { showUnwhitelistedMarkets } = useAppSettings();
   const isHistoricalRateSort = HISTORICAL_RATE_SORT_COLUMNS.has(sortColumn);
   const isRateAtTargetSort = sortColumn === SortColumn.RateAtTarget;
   const isUsdSensitiveSort = sortColumn === SortColumn.Supply || sortColumn === SortColumn.Borrow || sortColumn === SortColumn.Liquidity;
@@ -129,14 +134,16 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     isRefetching,
     dataUpdatedAt,
     isUsdEnrichmentLoading,
+    isRefreshingPersistedMarkets: isRefreshingCachedMarkets,
+    isUsingPersistedMarkets: isUsingCachedMarkets,
+    persistedMarketsUpdatedAt: cachedMarketsUpdatedAt,
     refetch,
   } = useProcessedMarkets({
     includeUnknownTokens: preferences.includeUnknownTokens,
   });
   const shouldWaitForRateTargetUsd = isUsdEnrichmentLoading && (isUsdSensitiveSort || hasActiveUsdFilter);
-  const { canEvaluateUnknownTokenGuard, oracleMetadataMap, whitelistChainIds } = useMarketFilterDependencyStatus();
-  const filters = useMarketsFilters();
-  const { showUnwhitelistedMarkets } = useAppSettings();
+  const { canEvaluateUnknownTokenGuard, isOracleMetadataLoading, oracleMetadataMap, whitelistChainIds } = useMarketFilterDependencyStatus();
+  const shouldWaitForOracleMetadata = isOracleMetadataLoading && (!preferences.showUnknownOracle || filters.selectedOracles.length > 0);
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys({ enabled: filters.trendingMode, defer: true });
   const customTagKeys = useCustomTagMarketKeys({ enabled: filters.customTagMode, defer: true });
@@ -152,11 +159,11 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     filteredMarkets = filterMarkets(filteredMarkets, {
       selectedNetwork: persistedFilters.selectedNetwork,
       showUnknownTokens: preferences.includeUnknownTokens || !canEvaluateUnknownTokenGuard,
-      showUnknownOracle: preferences.showUnknownOracle,
+      showUnknownOracle: preferences.showUnknownOracle || shouldWaitForOracleMetadata,
       showLockedMarkets: preferences.showLockedMarkets,
       selectedCollaterals: persistedFilters.selectedCollaterals,
       selectedLoanAssets: persistedFilters.selectedLoanAssets,
-      selectedOracles: filters.selectedOracles,
+      selectedOracles: shouldWaitForOracleMetadata ? [] : filters.selectedOracles,
       usdFilters: {
         minSupply: {
           enabled: preferences.minSupplyEnabled,
@@ -202,6 +209,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   }, [
     allMarkets,
     canEvaluateUnknownTokenGuard,
+    shouldWaitForOracleMetadata,
     showUnwhitelistedMarkets,
     whitelistChainIds,
     filters,
@@ -235,6 +243,10 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
       return [];
     }
 
+    if (shouldWaitForOracleMetadata) {
+      return [];
+    }
+
     // The page-level enrichment target is chosen from sorted/filtered rows.
     // If that order depends on USD values, wait for USD enrichment so we do
     // not fetch rates for a transient first page and then immediately refetch.
@@ -251,6 +263,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     return sortedCandidates.slice(startIndex, startIndex + preferences.entriesPerPage);
   }, [
     shouldEnableRateEnrichment,
+    shouldWaitForOracleMetadata,
     shouldWaitForRateTargetUsd,
     requiresGlobalRateSort,
     filteredCandidates,
@@ -267,7 +280,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     isFetching: isRateEnrichmentFetching,
   } = useMarketRateEnrichmentQuery(rateEnrichmentTargets);
   const rateEnrichmentLoading =
-    shouldEnableRateEnrichment && (shouldWaitForRateTargetUsd || isRateEnrichmentLoading || isRateEnrichmentFetching);
+    shouldEnableRateEnrichment &&
+    (shouldWaitForOracleMetadata || shouldWaitForRateTargetUsd || isRateEnrichmentLoading || isRateEnrichmentFetching);
 
   const marketDataNotices = useMemo<MarketDataNotice[]>(() => {
     if (!shouldEnableRateEnrichment || morphoRateFailedChainIds.size === 0) {
@@ -317,9 +331,12 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     marketDataNotices,
     rateEnrichmentPendingChainIds: shouldEnableRateEnrichment ? rateEnrichmentPendingChainIds : EMPTY_PENDING_CHAIN_IDS,
     rateEnrichmentLoading,
-    loading,
+    loading: loading || shouldWaitForOracleMetadata,
     isRefetching,
     dataUpdatedAt,
+    isUsingCachedMarkets,
+    isRefreshingCachedMarkets,
+    cachedMarketsUpdatedAt,
     refetch,
   };
 };

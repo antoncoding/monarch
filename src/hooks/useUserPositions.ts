@@ -1,19 +1,20 @@
 import { useCallback, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarket, fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoUserPositionMarkets, fetchMorphoUserPositionMarketsForNetworks } from '@/data-sources/morpho-api/positions';
 import { getMarketIdentityKey } from '@/utils/market-identity';
+import { getMarketDetailCacheKey } from '@/utils/marketDetailCacheKey';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, type PositionMarketOracleInput } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
 import type { Market, MarketPosition } from '@/utils/types';
 import { isSupplyPositionTransaction } from '@/utils/transactionGrouping';
+import { useApiResponseCache } from '@/stores/useApiResponseCache';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useCustomRpc } from '@/stores/useCustomRpc';
-import { useProcessedMarkets } from './useProcessedMarkets';
 import { fetchAllUserTransactions } from './queries/fetchUserTransactions';
 
 // Type for market key and chain identifier
@@ -30,6 +31,8 @@ export type UserPositionMarketHint = PositionMarket & {
 type UseUserPositionsOptions = {
   marketHints?: UserPositionMarketHint[];
 };
+
+const EMPTY_MARKET_HINTS: UserPositionMarketHint[] = [];
 
 type PositionsFetchSource = 'morpho-api';
 
@@ -63,7 +66,6 @@ type InitialDataResponse = {
 // Type for the final processed position data
 type EnhancedMarketPosition = MarketPosition;
 
-// --- Query Keys (adjusted for two-step process) ---
 export const positionKeys = {
   all: ['positions'] as const,
   // Key for the initial fetch of relevant market keys
@@ -78,7 +80,7 @@ export const positionKeys = {
       user,
       showEmpty ? 'include-empty' : 'active-only',
       initialData?.finalMarketKeys
-        .map((k) => `${k.marketUniqueKey.toLowerCase()}-${k.chainId}`)
+        .map((k) => `${k.marketUniqueKey.toLowerCase()}-${k.chainId}-${k.hasSupplyHistory ? 'history' : 'active'}`)
         .sort()
         .join(','),
     ] as const,
@@ -249,7 +251,7 @@ const useUserPositions = (
   options: UseUserPositionsOptions = {},
 ) => {
   const queryClient = useQueryClient();
-  const marketHints = options.marketHints ?? [];
+  const marketHints = options.marketHints ?? EMPTY_MARKET_HINTS;
   const hasMarketHints = marketHints.length > 0;
   const marketHintsSignature = useMemo(
     () =>
@@ -259,48 +261,68 @@ const useUserPositions = (
         .join(','),
     [marketHints],
   );
-  const { allMarkets, rawMarketsUnfiltered, loading: marketsLoading } = useProcessedMarkets({ enabled: !hasMarketHints });
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
-
   const { customRpcUrls } = useCustomRpc();
+  const chainIdsSignature = chainIds?.join(',') ?? 'all';
+  const cachedMarketDetailsByKey = useApiResponseCache((state) => state.marketDetailsByKey);
+  const setCachedMarketDetail = useApiResponseCache((state) => state.setMarketDetail);
 
-  // 1. Query for initial data: Fetch keys from sources, combine with cache, deduplicate
+  const cachedPositionMarkets = useMemo(() => {
+    if (hasMarketHints) {
+      return [];
+    }
+
+    const cachedMarkets = getUserMarkets();
+    return chainIds ? cachedMarkets.filter((market) => chainIds.includes(market.chainId as SupportedNetworks)) : cachedMarkets;
+  }, [chainIds, getUserMarkets, hasMarketHints]);
+
+  const cachedMarketDataMap = useMemo(() => {
+    const marketMap = new Map<string, Market>();
+
+    for (const cachedResponse of Object.values(cachedMarketDetailsByKey)) {
+      const market = cachedResponse.data;
+      marketMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
+    }
+
+    return marketMap;
+  }, [cachedMarketDetailsByKey]);
+
+  const initialPositionData = useMemo<InitialDataResponse | undefined>(() => {
+    const seedMarkets = hasMarketHints ? marketHints : cachedPositionMarkets;
+    return seedMarkets.length > 0 ? { finalMarketKeys: seedMarkets } : undefined;
+  }, [cachedPositionMarkets, hasMarketHints, marketHints]);
+
+  // 1. Query for relevant market keys, seeded from local cache so refreshes do not block first paint.
   const {
     data: initialData,
-    isLoading: isLoadingInitialData, // Primary loading state
+    isLoading: isLoadingInitialData,
     isRefetching: isRefetchingInitialData,
     error: initialError,
   } = useQuery<InitialDataResponse>({
-    // Note: Removed MarketsContextType type assertion
     queryKey: [
       ...positionKeys.initialData(user ?? ''),
       showEmpty ? 'include-empty' : 'active-only',
-      chainIds?.join(',') ?? 'all',
+      chainIdsSignature,
       marketHintsSignature,
     ],
     queryFn: async () => {
-      // User is guaranteed non-null here due to the 'enabled' flag
       if (!user) throw new Error('Assertion failed: User should be defined here.');
 
       const [sourceMarketKeys, transactionMarketKeys] = hasMarketHints
         ? [marketHints, []]
         : await Promise.all([fetchSourceMarketKeys(user, chainIds), showEmpty ? fetchSupplyTransactionMarketKeys(user, chainIds) : []]);
-      // Get keys from cache and filter by chainIds if provided
-      const cachedMarkets = hasMarketHints ? [] : getUserMarkets();
-      const filteredCachedMarkets = chainIds
-        ? cachedMarkets.filter((m) => chainIds.includes(m.chainId as SupportedNetworks))
-        : cachedMarkets;
 
-      // Combine and deduplicate
       const uniqueMarketsMap = new Map<string, PositionMarket>();
       appendUniquePositionMarkets(sourceMarketKeys, uniqueMarketsMap);
       appendUniquePositionMarkets(transactionMarketKeys, uniqueMarketsMap);
-      appendUniquePositionMarkets(filteredCachedMarkets, uniqueMarketsMap);
+      appendUniquePositionMarkets(cachedPositionMarkets, uniqueMarketsMap);
 
-      const finalMarketKeys = Array.from(uniqueMarketsMap.values());
-      return { finalMarketKeys };
+      return { finalMarketKeys: Array.from(uniqueMarketsMap.values()) };
     },
-    enabled: !!user && (hasMarketHints || allMarkets.length > 0 || rawMarketsUnfiltered.length > 0),
+    enabled: !!user,
+    initialData: initialPositionData,
+    initialDataUpdatedAt: initialPositionData ? 0 : undefined,
+    refetchOnMount: 'always',
     staleTime: 0,
   });
 
@@ -324,18 +346,15 @@ const useUserPositions = (
         marketsByChain.set(marketInfo.chainId, existing);
       }
 
-      // Build market data map from either targeted hints or the complete market registry.
+      // Build market data from targeted hints and persisted market details.
       const marketDataMap = new Map<string, Market>();
       for (const hint of marketHints) {
         if (hint.market) {
           marketDataMap.set(getMarketIdentityKey(hint.chainId, hint.marketUniqueKey), hint.market);
         }
       }
-      for (const market of allMarkets) {
-        marketDataMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
-      }
-      for (const market of rawMarketsUnfiltered) {
-        const key = getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey);
+
+      for (const [key, market] of cachedMarketDataMap) {
         if (!marketDataMap.has(key)) {
           marketDataMap.set(key, market);
         }
@@ -356,6 +375,7 @@ const useUserPositions = (
           }
 
           marketDataMap.set(getMarketIdentityKey(result.value.morphoBlue.chain.id, result.value.uniqueKey), result.value);
+          setCachedMarketDetail(getMarketDetailCacheKey(result.value.morphoBlue.chain.id, result.value.uniqueKey), result.value);
         }
       }
 
@@ -429,6 +449,7 @@ const useUserPositions = (
       return validPositions;
     },
     enabled: !!initialData && !!user,
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
     gcTime: 5 * 60 * 1000,
   });
@@ -454,14 +475,13 @@ const useUserPositions = (
   // Combine refetching states
   const isRefetching = isRefetchingInitialData || isRefetchingEnhanced;
 
-  // Combine loading states: loading is true if either the initial data OR the enhanced data is loading for the first time.
-  const loading = Boolean(user) && ((!hasMarketHints && marketsLoading) || isLoadingInitialData || isLoadingEnhanced);
+  const loading = Boolean(user) && (isLoadingInitialData || (isLoadingEnhanced && !enhancedPositions));
 
   return {
     data: enhancedPositions ?? [],
-    loading: loading, // <-- Use the combined loading state
+    loading,
     isRefetching,
-    positionsError: initialError, // Error is determined by the first query
+    positionsError: initialError,
     refetch,
   };
 };

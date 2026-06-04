@@ -72,7 +72,10 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     isRefetching,
     dataUpdatedAt,
     error,
+    isRefreshingPersistedData,
     refetch,
+    persistedDataUpdatedAt,
+    isUsingPersistedData,
   } = useMarketsQuery({
     enabled,
     refetchInterval: options?.marketsRefetchInterval,
@@ -161,6 +164,9 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     markets, // Computed from setting (backward compatible with old context)
     dataUpdatedAt,
     isUsdEnrichmentLoading,
+    isRefreshingPersistedMarkets: isRefreshingPersistedData,
+    isUsingPersistedMarkets: isUsingPersistedData,
+    persistedMarketsUpdatedAt: persistedDataUpdatedAt,
     loading: isLoading,
     isRefetching,
     error,

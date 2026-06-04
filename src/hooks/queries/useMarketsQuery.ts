@@ -1,11 +1,14 @@
+import { useEffect } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { usePersistedApiResponse } from '@/hooks/usePersistedApiResponse';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain, type SupportedNetworks } from '@/utils/networks';
+import { createPersistedApiResponseKey } from '@/utils/persistedApiResponseCache';
 import type { Market } from '@/utils/types';
 
 const toError = (error: unknown): Error => {
@@ -52,9 +55,19 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
   // Wait for token readiness so the costly market registry fetch does not run
   // once with bootstrap tokens and immediately restart with the full token list.
   const tokensReady = hasFetchedTokens || isTokenQueryError;
+  // Do not include token readiness in the persisted key; cached market rows can render
+  // while token metadata finishes, and the live query key still refetches afterward.
+  const marketsCacheKey = createPersistedApiResponseKey('markets:v2', [rpcIdentity, includeUnknownTokens]);
+  const {
+    entry: cachedMarkets,
+    isReady: isPersistedCacheReady,
+    write: writeCachedMarkets,
+  } = usePersistedApiResponse<Market[]>(marketsCacheKey);
 
   const query = useQuery({
-    queryKey: ['markets', rpcIdentity, includeUnknownTokens, allTokens.length],
+    queryKey: isPersistedCacheReady
+      ? ['markets', rpcIdentity, includeUnknownTokens, allTokens.length]
+      : ['markets', 'persisted-cache-loading', marketsCacheKey],
     queryFn: async () => {
       const fetchErrors: Error[] = [];
       const marketsByChain = new Map<SupportedNetworks, Market[]>();
@@ -167,14 +180,40 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
     },
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
     refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes while visible by default
+    refetchOnMount: cachedMarkets ? 'always' : true,
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
     placeholderData: keepPreviousData,
-    enabled: enabled && tokensReady,
+    initialData: enabled && isPersistedCacheReady ? cachedMarkets?.data : undefined,
+    initialDataUpdatedAt: enabled && isPersistedCacheReady ? cachedMarkets?.updatedAt : undefined,
+    enabled: enabled && tokensReady && isPersistedCacheReady,
   });
+
+  useEffect(() => {
+    if (!query.data || query.data.length === 0 || !query.isSuccess || !query.isFetchedAfterMount) {
+      return;
+    }
+
+    if (query.dataUpdatedAt <= (cachedMarkets?.updatedAt ?? 0)) {
+      return;
+    }
+
+    const nextCachedMarkets = { data: query.data, updatedAt: query.dataUpdatedAt };
+    writeCachedMarkets(nextCachedMarkets);
+  }, [cachedMarkets?.updatedAt, query.data, query.dataUpdatedAt, query.isFetchedAfterMount, query.isSuccess, writeCachedMarkets]);
+
+  const isUsingPersistedData = Boolean(
+    enabled &&
+      cachedMarkets &&
+      query.dataUpdatedAt === cachedMarkets.updatedAt &&
+      (!query.isFetchedAfterMount || query.isError || query.isRefetchError),
+  );
 
   return {
     ...query,
+    isRefreshingPersistedData: isUsingPersistedData && query.isFetching,
+    isUsingPersistedData,
+    persistedDataUpdatedAt: isUsingPersistedData ? (cachedMarkets?.updatedAt ?? null) : null,
     // Preserve the existing loading UI while the query is intentionally gated.
-    isLoading: enabled && (!tokensReady || query.isLoading),
+    isLoading: enabled && !cachedMarkets && (!tokensReady || !isPersistedCacheReady || query.isLoading),
   };
 };

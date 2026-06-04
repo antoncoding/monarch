@@ -36,6 +36,9 @@ export default function Markets() {
     loading,
     isRefetching,
     dataUpdatedAt,
+    isUsingCachedMarkets,
+    isRefreshingCachedMarkets,
+    cachedMarketsUpdatedAt,
     refetch,
   } = useFilteredMarkets({ currentPage });
 
@@ -241,6 +244,9 @@ export default function Markets() {
             loading={loading}
             isRefetching={isRefetching}
             dataUpdatedAt={dataUpdatedAt}
+            isUsingCachedMarkets={isUsingCachedMarkets}
+            isRefreshingCachedMarkets={isRefreshingCachedMarkets}
+            cachedMarketsUpdatedAt={cachedMarketsUpdatedAt}
             rateEnrichmentPendingChainIds={rateEnrichmentPendingChainIds}
             rateEnrichmentLoading={rateEnrichmentLoading}
             className={shouldUseFullWidthTableLayout ? 'w-full' : 'w-fit'}

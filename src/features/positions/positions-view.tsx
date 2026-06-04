@@ -6,7 +6,6 @@ import type { Address } from 'viem';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
@@ -41,8 +40,6 @@ export default function Positions() {
   // Start native account fetches during identity resolution, but keep native UI hidden until vault status is known.
   const shouldFetchNativeAccountData = !isV2VaultPage;
   const showNativeAccountSections = canEvaluateVaultIdentity && shouldFetchNativeAccountData;
-
-  const { loading: isMarketsLoading } = useProcessedMarkets();
 
   const {
     isPositionsLoading,
@@ -93,13 +90,9 @@ export default function Positions() {
     error: pricesError,
   } = usePortfolioValue(marketPositions, vaultsWithApy, earningsRangesByChain);
 
-  const loading = !canEvaluateVaultIdentity || (showNativeAccountSections && (isMarketsLoading || isPositionsLoading));
+  const loading = !canEvaluateVaultIdentity || (showNativeAccountSections && isPositionsLoading);
 
-  const loadingMessage = canEvaluateVaultIdentity
-    ? isMarketsLoading
-      ? 'Loading markets...'
-      : 'Loading user positions...'
-    : 'Loading account metadata...';
+  const loadingMessage = canEvaluateVaultIdentity ? 'Loading user positions...' : 'Loading account metadata...';
 
   const hasSuppliedMarkets = showNativeAccountSections && marketPositions.some(hasSupplyPositionHistory);
   const hasBorrowPositions =
