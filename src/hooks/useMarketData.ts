@@ -160,7 +160,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
   return {
     data,
     isLoading: isLoading && !cachedMarket,
-    error: error,
+    error: data ? null : error,
     refetch: refetch,
   };
 };

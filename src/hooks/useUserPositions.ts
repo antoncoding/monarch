@@ -333,6 +333,7 @@ const useUserPositions = (
   // 2. Query for enhanced position data (snapshots), dependent on initialData
   const {
     data: enhancedPositions,
+    error: enhancedError,
     isLoading: isLoadingEnhanced,
     isRefetching: isRefetchingEnhanced,
   } = useQuery<EnhancedMarketPosition[]>({
@@ -485,7 +486,7 @@ const useUserPositions = (
     data: enhancedPositions ?? [],
     loading,
     isRefetching,
-    positionsError: initialError,
+    positionsError: initialError ?? enhancedError,
     refetch,
   };
 };
