@@ -1,6 +1,8 @@
 import { envioMarketBorrowFlowEventsWindowQuery, envioMarketSupplyFlowEventsWindowQuery } from '@/graphql/envio-queries';
 import { monarchGraphqlFetcher } from './fetchers';
 
+const MONARCH_MARKET_FLOW_EVENTS_TIMEOUT_MS = 15_000;
+
 export type MarketFlowKind = 'supply' | 'borrow';
 export type MarketFlowDirection = 'positive' | 'negative';
 type MarketFlowEventType = 'supply' | 'withdraw' | 'borrow' | 'repay';
@@ -16,7 +18,6 @@ export type MarketFlowEvent = {
 
 export type PaginatedMarketFlowEvents = {
   items: MarketFlowEvent[];
-  totalCount: number;
   hasNextPage: boolean;
 };
 
@@ -42,7 +43,38 @@ type MonarchBorrowFlowEventsResponse = MonarchGraphqlResponse<{
   repays: MonarchFlowEventRow[];
 }>;
 
+type MonarchFlowEventsResponse = MonarchSupplyFlowEventsResponse | MonarchBorrowFlowEventsResponse;
+type FlowEventsVariables = {
+  chainId: number;
+  marketId: string;
+  startTimestamp: string;
+  endTimestamp: string;
+  limit: number;
+  offset: number;
+};
+
 const toTimestamp = (value: string | number): number => (typeof value === 'number' ? value : Number.parseInt(value, 10));
+
+const fetchFlowEventsResponse = async <T extends MonarchFlowEventsResponse>(query: string, variables: FlowEventsVariables): Promise<T> => {
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => {
+    controller.abort();
+  }, MONARCH_MARKET_FLOW_EVENTS_TIMEOUT_MS);
+
+  try {
+    return await monarchGraphqlFetcher<T>(query, variables, {
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Monarch market flow events request timed out after ${MONARCH_MARKET_FLOW_EVENTS_TIMEOUT_MS}ms`);
+    }
+
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeoutId);
+  }
+};
 
 const mapFlowRows = (rows: MonarchFlowEventRow[], eventType: MarketFlowEventType, direction: MarketFlowDirection): MarketFlowEvent[] =>
   rows.map((row) => ({
@@ -75,7 +107,7 @@ const fetchSupplyFlowEvents = async (
   limit: number,
   offset: number,
 ) => {
-  const response = await monarchGraphqlFetcher<MonarchSupplyFlowEventsResponse>(envioMarketSupplyFlowEventsWindowQuery, {
+  const response = await fetchFlowEventsResponse<MonarchSupplyFlowEventsResponse>(envioMarketSupplyFlowEventsWindowQuery, {
     chainId,
     marketId,
     startTimestamp: startTimestamp.toString(),
@@ -98,7 +130,7 @@ const fetchBorrowFlowEvents = async (
   limit: number,
   offset: number,
 ) => {
-  const response = await monarchGraphqlFetcher<MonarchBorrowFlowEventsResponse>(envioMarketBorrowFlowEventsWindowQuery, {
+  const response = await fetchFlowEventsResponse<MonarchBorrowFlowEventsResponse>(envioMarketBorrowFlowEventsWindowQuery, {
     chainId,
     marketId,
     startTimestamp: startTimestamp.toString(),
@@ -135,11 +167,9 @@ export const fetchMonarchMarketFlowEventsInWindow = async (
     ...mapFlowRows(negativeRows, negativeEventType, 'negative'),
   ].sort(sortFlowEvents);
   const hasNextPage = rows.positiveRows.length > first || rows.negativeRows.length > first;
-  const totalCount = skip + Math.max(positiveRows.length, negativeRows.length) + Number(hasNextPage);
 
   return {
     items,
-    totalCount,
     hasNextPage,
   };
 };
