@@ -334,14 +334,15 @@ export function useAllOracleMetadata(options?: OracleMetadataQueryOptions) {
       }
 
       const cacheKey = getOracleMetadataCacheKey(ALL_SUPPORTED_NETWORKS[index]);
-      if (query.dataUpdatedAt <= (cachedMetadataByKey[cacheKey]?.updatedAt ?? 0)) {
+      const currentCachedMetadata = useApiResponseCache.getState().oracleMetadataByKey[cacheKey];
+      if (query.dataUpdatedAt <= (currentCachedMetadata?.updatedAt ?? 0)) {
         return;
       }
 
       setCachedMetadata(cacheKey, query.data);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheWriteKey, cachedMetadataByKey, setCachedMetadata]);
+  }, [cacheWriteKey, setCachedMetadata]);
 
   // Merge all results into a single record
   const mergedRecord = useMemo(() => {

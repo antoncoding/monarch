@@ -281,6 +281,10 @@ const useUserPositions = (
 
     for (const cachedResponse of Object.values(cachedMarketDetailsByKey)) {
       const market = cachedResponse.data;
+      if (!market?.uniqueKey || !market.morphoBlue?.chain?.id) {
+        continue;
+      }
+
       marketMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
     }
 

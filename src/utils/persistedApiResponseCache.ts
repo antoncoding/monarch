@@ -6,6 +6,7 @@ export type CachedApiResponse<T> = {
 const DATABASE_NAME = 'monarch_api_response_cache';
 const DATABASE_VERSION = 1;
 const STORE_NAME = 'responses';
+let databasePromise: Promise<IDBDatabase | null> | null = null;
 
 type PersistedResponseRecord<T> = CachedApiResponse<T> & {
   key: string;
@@ -20,12 +21,26 @@ const getIndexedDb = (): IDBFactory | null => {
 };
 
 const openDatabase = (): Promise<IDBDatabase | null> => {
+  if (databasePromise) {
+    return databasePromise;
+  }
+
   const indexedDb = getIndexedDb();
   if (!indexedDb) {
     return Promise.resolve(null);
   }
 
-  return new Promise((resolve) => {
+  databasePromise = new Promise((resolve) => {
+    let settled = false;
+    const settle = (database: IDBDatabase | null) => {
+      if (settled) {
+        database?.close();
+        return;
+      }
+
+      settled = true;
+      resolve(database);
+    };
     const request = indexedDb.open(DATABASE_NAME, DATABASE_VERSION);
 
     request.onupgradeneeded = () => {
@@ -35,14 +50,29 @@ const openDatabase = (): Promise<IDBDatabase | null> => {
       }
     };
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => resolve(null);
-    request.onblocked = () => resolve(null);
+    request.onsuccess = () => {
+      const database = request.result;
+      database.onversionchange = () => {
+        database.close();
+        databasePromise = null;
+      };
+      settle(database);
+    };
+    request.onerror = () => {
+      databasePromise = null;
+      settle(null);
+    };
+    request.onblocked = () => {
+      databasePromise = null;
+      settle(null);
+    };
   });
+
+  return databasePromise;
 };
 
 export const createPersistedApiResponseKey = (namespace: string, parts: unknown[]): string => {
-  const serialized = JSON.stringify(parts);
+  const serialized = JSON.stringify(parts, (_, value: unknown) => (typeof value === 'bigint' ? value.toString() : value));
   let hash = 2166136261;
 
   for (let index = 0; index < serialized.length; index += 1) {
@@ -72,7 +102,6 @@ const runStoreRequest = async <T, TResult>(
       }
 
       settled = true;
-      database.close();
       resolve(value);
     };
 
