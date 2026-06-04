@@ -426,6 +426,98 @@ export const envioBorrowRepayPageQuery = `
   }
 `;
 
+export const envioMarketSupplyFlowEventsWindowQuery = `
+  query EnvioMarketSupplyFlowEventsWindow(
+    $chainId: Int!
+    $marketId: String!
+    $startTimestamp: numeric!
+    $endTimestamp: numeric!
+    $limit: Int!
+    $offset: Int!
+  ) {
+    supplies: Morpho_Supply(
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+        timestamp: { _gte: $startTimestamp, _lt: $endTimestamp }
+        assets: { _gt: "0" }
+      }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      assets
+      onBehalf
+    }
+    withdraws: Morpho_Withdraw(
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+        timestamp: { _gte: $startTimestamp, _lt: $endTimestamp }
+        assets: { _gt: "0" }
+      }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      assets
+      onBehalf
+    }
+  }
+`;
+
+export const envioMarketBorrowFlowEventsWindowQuery = `
+  query EnvioMarketBorrowFlowEventsWindow(
+    $chainId: Int!
+    $marketId: String!
+    $startTimestamp: numeric!
+    $endTimestamp: numeric!
+    $limit: Int!
+    $offset: Int!
+  ) {
+    borrows: Morpho_Borrow(
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+        timestamp: { _gte: $startTimestamp, _lt: $endTimestamp }
+        assets: { _gt: "0" }
+      }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      assets
+      onBehalf
+    }
+    repays: Morpho_Repay(
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+        timestamp: { _gte: $startTimestamp, _lt: $endTimestamp }
+        assets: { _gt: "0" }
+      }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      assets
+      onBehalf
+    }
+  }
+`;
+
 export const envioLiquidationsPageQuery = `
   query EnvioLiquidationsPage($chainId: Int!, $marketId: String!, $limit: Int!, $offset: Int!) {
     Morpho_Liquidate(
@@ -638,38 +730,6 @@ export const envioMarketTxContextsPageWithinSnapshotQuery = `
         ]
       }
       order_by: [{ timestamp: desc }, { txHash: desc }, { txContext_id: desc }]
-      limit: $limit
-      offset: $offset
-    ) {
-      id
-      chainId
-      market_id
-      timestamp
-      txHash
-      txContext_id
-      txContext {
-${marketTxContextFields}
-      }
-    }
-  }
-`;
-
-export const envioMarketTxContextsWindowQuery = `
-  query EnvioMarketTxContextsWindow(
-    $chainId: Int!
-    $marketId: String!
-    $startTimestamp: numeric!
-    $endTimestamp: numeric!
-    $limit: Int!
-    $offset: Int!
-  ) {
-    MarketTxContext(
-      where: {
-        chainId: { _eq: $chainId }
-        market_id: { _eq: $marketId }
-        timestamp: { _gte: $startTimestamp, _lt: $endTimestamp }
-      }
-      order_by: [{ timestamp: asc }, { txHash: asc }, { txContext_id: asc }]
       limit: $limit
       offset: $offset
     ) {
