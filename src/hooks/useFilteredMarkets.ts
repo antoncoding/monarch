@@ -29,9 +29,6 @@ type UseFilteredMarketsResult = {
   loading: boolean;
   isRefetching: boolean;
   dataUpdatedAt: number;
-  isUsingCachedMarkets: boolean;
-  isRefreshingCachedMarkets: boolean;
-  cachedMarketsUpdatedAt: number | null;
   refetch: () => Promise<unknown>;
 };
 
@@ -134,9 +131,6 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     isRefetching,
     dataUpdatedAt,
     isUsdEnrichmentLoading,
-    isRefreshingPersistedMarkets: isRefreshingCachedMarkets,
-    isUsingPersistedMarkets: isUsingCachedMarkets,
-    persistedMarketsUpdatedAt: cachedMarketsUpdatedAt,
     refetch,
   } = useProcessedMarkets({
     includeUnknownTokens: preferences.includeUnknownTokens,
@@ -334,9 +328,6 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     loading: loading || shouldWaitForOracleMetadata,
     isRefetching,
     dataUpdatedAt,
-    isUsingCachedMarkets,
-    isRefreshingCachedMarkets,
-    cachedMarketsUpdatedAt,
     refetch,
   };
 };

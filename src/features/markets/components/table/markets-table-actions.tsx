@@ -12,38 +12,19 @@ import { MarketFilter } from '@/features/positions/components/markets-filter-com
 import { useModal } from '@/hooks/useModal';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
-const MARKET_CACHE_STALE_WARNING_MS = 60 * 60 * 1000;
-
 type MarketsTableActionsProps = {
   onRefresh: () => void;
   isRefetching: boolean;
   isTableLoading: boolean;
   isMobile: boolean;
   dataUpdatedAt: number;
-  isUsingCachedMarkets: boolean;
-  isRefreshingCachedMarkets: boolean;
-  cachedMarketsUpdatedAt: number | null;
 };
 
-export function MarketsTableActions({
-  onRefresh,
-  isRefetching,
-  isTableLoading,
-  isMobile,
-  dataUpdatedAt,
-  isUsingCachedMarkets,
-  isRefreshingCachedMarkets,
-  cachedMarketsUpdatedAt,
-}: MarketsTableActionsProps) {
+export function MarketsTableActions({ onRefresh, isRefetching, isTableLoading, isMobile, dataUpdatedAt }: MarketsTableActionsProps) {
   const { open: openModal } = useModal();
   const { tableViewMode, setTableViewMode } = useMarketPreferences();
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
-  const cachedMarketsAge = cachedMarketsUpdatedAt ? moment(cachedMarketsUpdatedAt).fromNow() : null;
-  const isStaleCachedMarkets = cachedMarketsUpdatedAt ? Date.now() - cachedMarketsUpdatedAt > MARKET_CACHE_STALE_WARNING_MS : false;
-  const shouldShowRefreshLoading = !isTableLoading && (isRefetching || isRefreshingCachedMarkets);
-  const lastUpdatedClassName = isStaleCachedMarkets
-    ? 'text-xs text-yellow-600 dark:text-yellow-300 whitespace-nowrap cursor-default'
-    : 'text-xs text-secondary whitespace-nowrap cursor-default';
+  const shouldShowRefreshLoading = !isTableLoading && isRefetching;
 
   return (
     <>
@@ -56,7 +37,7 @@ export function MarketsTableActions({
             />
           }
         >
-          <span className={lastUpdatedClassName}>{moment(dataUpdatedAt).format('h:mm:ss A')}</span>
+          <span className="text-xs text-secondary whitespace-nowrap cursor-default">{moment(dataUpdatedAt).format('h:mm:ss A')}</span>
         </Tooltip>
       )}
 
@@ -66,11 +47,7 @@ export function MarketsTableActions({
         content={
           <TooltipContent
             title="Refresh"
-            detail={
-              isUsingCachedMarkets && cachedMarketsAge
-                ? `Updating cached markets from ${cachedMarketsAge}.`
-                : 'Fetch the latest market data'
-            }
+            detail="Fetch the latest market data"
           />
         }
       >

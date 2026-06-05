@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarkets } from '@/data-sources/monarch-api';
@@ -180,9 +180,8 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
     },
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
     refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes while visible by default
-    refetchOnMount: cachedMarkets ? 'always' : true,
+    refetchOnMount: true,
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
-    placeholderData: keepPreviousData,
     initialData: enabled && isPersistedCacheReady ? cachedMarkets?.data : undefined,
     initialDataUpdatedAt: enabled && isPersistedCacheReady ? cachedMarkets?.updatedAt : undefined,
     enabled: enabled && tokensReady && isPersistedCacheReady,
@@ -201,18 +200,8 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
     writeCachedMarkets(nextCachedMarkets);
   }, [cachedMarkets?.updatedAt, query.data, query.dataUpdatedAt, query.isFetchedAfterMount, query.isSuccess, writeCachedMarkets]);
 
-  const isUsingPersistedData = Boolean(
-    enabled &&
-      cachedMarkets &&
-      query.dataUpdatedAt === cachedMarkets.updatedAt &&
-      (!query.isFetchedAfterMount || query.isError || query.isRefetchError),
-  );
-
   return {
     ...query,
-    isRefreshingPersistedData: isUsingPersistedData && query.isFetching,
-    isUsingPersistedData,
-    persistedDataUpdatedAt: isUsingPersistedData ? (cachedMarkets?.updatedAt ?? null) : null,
     // Preserve the existing loading UI while the query is intentionally gated.
     isLoading: enabled && !cachedMarkets && (!tokensReady || !isPersistedCacheReady || query.isLoading),
   };

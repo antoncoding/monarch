@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarket, fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
@@ -454,7 +454,6 @@ const useUserPositions = (
       return validPositions;
     },
     enabled: !!initialData && !!user,
-    placeholderData: keepPreviousData,
     staleTime: 30_000,
     gcTime: 5 * 60 * 1000,
   });

@@ -207,7 +207,7 @@ export function useOracleMetadata(chainId: SupportedNetworks | number | undefine
     enabled,
     initialData: requestedEnabled ? cachedMetadata?.data : undefined,
     initialDataUpdatedAt: requestedEnabled ? cachedMetadata?.updatedAt : undefined,
-    refetchOnMount: cachedMetadata ? 'always' : true,
+    refetchOnMount: true,
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
   });
@@ -310,7 +310,7 @@ export function useAllOracleMetadata(options?: OracleMetadataQueryOptions) {
         enabled,
         initialData: requestedEnabled ? cachedMetadata?.data : undefined,
         initialDataUpdatedAt: requestedEnabled ? cachedMetadata?.updatedAt : undefined,
-        refetchOnMount: cachedMetadata ? 'always' : true,
+        refetchOnMount: true,
         staleTime: 1000 * 60 * 30,
         gcTime: 1000 * 60 * 60,
       };

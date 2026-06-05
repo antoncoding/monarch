@@ -25,9 +25,6 @@ type MarketsTableProps = {
   loading: boolean;
   isRefetching: boolean;
   dataUpdatedAt: number;
-  isUsingCachedMarkets: boolean;
-  isRefreshingCachedMarkets: boolean;
-  cachedMarketsUpdatedAt: number | null;
   rateEnrichmentPendingChainIds: Set<number>;
   rateEnrichmentLoading: boolean;
   className?: string;
@@ -44,9 +41,6 @@ function MarketsTable({
   loading,
   isRefetching,
   dataUpdatedAt,
-  isUsingCachedMarkets,
-  isRefreshingCachedMarkets,
-  cachedMarketsUpdatedAt,
   rateEnrichmentPendingChainIds,
   rateEnrichmentLoading,
   className,
@@ -155,9 +149,6 @@ function MarketsTable({
             isTableLoading={loading}
             isMobile={isMobile}
             dataUpdatedAt={dataUpdatedAt}
-            isUsingCachedMarkets={isUsingCachedMarkets}
-            isRefreshingCachedMarkets={isRefreshingCachedMarkets}
-            cachedMarketsUpdatedAt={cachedMarketsUpdatedAt}
           />
         }
         className="w-full"

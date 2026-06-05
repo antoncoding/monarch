@@ -138,7 +138,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
     enabled: !!uniqueKey && !!network,
     initialData: cacheKey ? cachedMarket?.data : undefined,
     initialDataUpdatedAt: cacheKey ? cachedMarket?.updatedAt : undefined,
-    refetchOnMount: cachedMarket ? 'always' : true,
+    refetchOnMount: true,
     staleTime: 30_000, // 30 seconds - individual market view needs accuracy
     refetchInterval: 30_000, // Match staleTime for consistency
     placeholderData: (previousData) => previousData ?? null,

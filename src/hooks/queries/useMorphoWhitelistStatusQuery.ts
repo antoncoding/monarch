@@ -48,7 +48,7 @@ export const useMorphoWhitelistStatusQuery = (options?: UseMorphoWhitelistStatus
     enabled: enabled && isPersistedCacheReady,
     staleTime: MORPHO_MARKET_METADATA_STALE_TIME,
     refetchInterval: enabled ? (options?.refetchInterval ?? MORPHO_MARKET_METADATA_STALE_TIME) : false,
-    refetchOnMount: cachedMetadata ? 'always' : true,
+    refetchOnMount: true,
     refetchOnWindowFocus: enabled ? (options?.refetchOnWindowFocus ?? true) : false,
     initialData: enabled ? cachedMetadata?.data : undefined,
     initialDataUpdatedAt: enabled ? cachedMetadata?.updatedAt : undefined,
