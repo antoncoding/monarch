@@ -15,14 +15,16 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 type MarketsTableActionsProps = {
   onRefresh: () => void;
   isRefetching: boolean;
+  isTableLoading: boolean;
   isMobile: boolean;
   dataUpdatedAt: number;
 };
 
-export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpdatedAt }: MarketsTableActionsProps) {
+export function MarketsTableActions({ onRefresh, isRefetching, isTableLoading, isMobile, dataUpdatedAt }: MarketsTableActionsProps) {
   const { open: openModal } = useModal();
   const { tableViewMode, setTableViewMode } = useMarketPreferences();
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
+  const shouldShowRefreshLoading = !isTableLoading && isRefetching;
 
   return (
     <>
@@ -53,10 +55,10 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile, dataUpd
           variant="ghost"
           size="sm"
           onClick={onRefresh}
-          disabled={isRefetching}
+          disabled={isTableLoading || shouldShowRefreshLoading}
           className="text-secondary min-w-0 px-2"
         >
-          <RefetchIcon isLoading={isRefetching} />
+          <RefetchIcon isLoading={shouldShowRefreshLoading} />
         </Button>
       </Tooltip>
 

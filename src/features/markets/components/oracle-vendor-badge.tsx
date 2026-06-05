@@ -31,7 +31,8 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
   );
 
 function OracleVendorBadge({ chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
-  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const { data: oracleMetadataMap, isLoading: isOracleMetadataLoading } = useOracleMetadata(chainId);
+  const isWaitingForOracleMetadata = isOracleMetadataLoading && Object.keys(oracleMetadataMap).length === 0;
   const standardOracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
 
   const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
@@ -58,7 +59,15 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
   const showGenericFallbackIcon =
     !isCustom && !isVaultOnly && !hasMonarchVerified && coreVendors.length === 0 && taggedVendors.length === 0;
 
-  const content = (
+  const content = isWaitingForOracleMetadata ? (
+    <div className="flex items-center space-x-1 rounded p-1">
+      {showText && <span className="mr-1 text-xs font-medium">Oracle</span>}
+      <IoHelpCircleOutline
+        className="text-secondary opacity-50"
+        size={18}
+      />
+    </div>
+  ) : (
     <div className="flex items-center space-x-1 rounded p-1">
       {showText && <span className="mr-1 text-xs font-medium">{displayNames.join(', ') || 'Oracle'}</span>}
       {isCustom ? (
@@ -100,6 +109,15 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
 
   if (useTooltip) {
     const getTooltipContent = () => {
+      if (isWaitingForOracleMetadata) {
+        return (
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-primary font-zen">Oracle metadata</p>
+            <p className="text-xs text-secondary font-zen">Classification is loading.</p>
+          </div>
+        );
+      }
+
       if (isCustom) {
         return (
           <div className="flex flex-col gap-1">

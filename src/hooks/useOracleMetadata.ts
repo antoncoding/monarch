@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
+import { useApiResponseCache } from '@/stores/useApiResponseCache';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 
 /**
@@ -138,6 +139,8 @@ export function getOracleMetadataKey(chainId: number, oracleAddress: string): st
   return `${chainId}-${oracleAddress.toLowerCase()}`;
 }
 
+const getOracleMetadataCacheKey = (chainId: number): string => `${ORACLE_GIST_BASE_URL ?? 'unset'}:${chainId}`;
+
 /**
  * Fetch oracle metadata directly from the centralized Gist.
  */
@@ -184,7 +187,7 @@ function transformToRecord(data: OracleMetadataFile | null | undefined): OracleM
 
 /**
  * Hook to fetch oracle metadata from the centralized Gist
- * Uses React Query's select option to transform raw data to address-keyed record
+ * Returns scanner metadata transformed to an address-keyed record.
  */
 type OracleMetadataQueryOptions = {
   enabled?: boolean;
@@ -192,16 +195,41 @@ type OracleMetadataQueryOptions = {
 };
 
 export function useOracleMetadata(chainId: SupportedNetworks | number | undefined, options?: OracleMetadataQueryOptions) {
-  const enabled = useDeferredQueryEnable(Boolean(chainId) && (options?.enabled ?? true), options?.defer ?? false, 2500);
+  const requestedEnabled = Boolean(chainId) && (options?.enabled ?? true);
+  const enabled = useDeferredQueryEnable(requestedEnabled, options?.defer ?? false, 2500);
+  const cacheKey = chainId == null ? null : getOracleMetadataCacheKey(chainId);
+  const cachedMetadata = useApiResponseCache((state) => (cacheKey ? state.oracleMetadataByKey[cacheKey] : undefined));
+  const setCachedMetadata = useApiResponseCache((state) => state.setOracleMetadata);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['oracle-metadata', ORACLE_GIST_BASE_URL ?? 'unset', chainId],
     queryFn: () => (chainId ? fetchOracleMetadata(chainId) : Promise.resolve(null)),
-    select: transformToRecord,
     enabled,
+    initialData: requestedEnabled ? cachedMetadata?.data : undefined,
+    initialDataUpdatedAt: requestedEnabled ? cachedMetadata?.updatedAt : undefined,
+    refetchOnMount: true,
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
   });
+
+  useEffect(() => {
+    if (!cacheKey || !query.data?.oracles?.length || !query.isSuccess || !query.isFetchedAfterMount) {
+      return;
+    }
+
+    if (query.dataUpdatedAt <= (cachedMetadata?.updatedAt ?? 0)) {
+      return;
+    }
+
+    setCachedMetadata(cacheKey, query.data);
+  }, [cacheKey, cachedMetadata?.updatedAt, query.data, query.dataUpdatedAt, query.isFetchedAfterMount, query.isSuccess, setCachedMetadata]);
+
+  const data = useMemo(() => transformToRecord(query.data), [query.data]);
+
+  return {
+    ...query,
+    data,
+  };
 }
 
 /**
@@ -266,24 +294,55 @@ export function getMetaOracleDataFromMetadata(
  * Returns a merged record with all oracles from all chains
  */
 export function useAllOracleMetadata(options?: OracleMetadataQueryOptions) {
-  const enabled = useDeferredQueryEnable(options?.enabled ?? true, options?.defer ?? false, 2500);
+  const requestedEnabled = options?.enabled ?? true;
+  const enabled = useDeferredQueryEnable(requestedEnabled, options?.defer ?? false, 2500);
+  const cachedMetadataByKey = useApiResponseCache((state) => state.oracleMetadataByKey);
+  const setCachedMetadata = useApiResponseCache((state) => state.setOracleMetadata);
 
   const queries = useQueries({
-    queries: ALL_SUPPORTED_NETWORKS.map((chainId) => ({
-      queryKey: ['oracle-metadata', ORACLE_GIST_BASE_URL ?? 'unset', chainId],
-      queryFn: () => fetchOracleMetadata(chainId),
-      enabled,
-      staleTime: 1000 * 60 * 30,
-      gcTime: 1000 * 60 * 60,
-    })),
+    queries: ALL_SUPPORTED_NETWORKS.map((chainId) => {
+      const cacheKey = getOracleMetadataCacheKey(chainId);
+      const cachedMetadata = cachedMetadataByKey[cacheKey];
+
+      return {
+        queryKey: ['oracle-metadata', ORACLE_GIST_BASE_URL ?? 'unset', chainId],
+        queryFn: () => fetchOracleMetadata(chainId),
+        enabled,
+        initialData: requestedEnabled ? cachedMetadata?.data : undefined,
+        initialDataUpdatedAt: requestedEnabled ? cachedMetadata?.updatedAt : undefined,
+        refetchOnMount: true,
+        staleTime: 1000 * 60 * 30,
+        gcTime: 1000 * 60 * 60,
+      };
+    }),
   });
 
-  const isLoading = queries.some((q) => q.isLoading);
+  const hasAllRequestedData = queries.every((query) => query.data !== undefined);
+  const isLoading =
+    requestedEnabled && !hasAllRequestedData && (!enabled || queries.some((q) => q.isLoading || (q.isFetching && q.data === undefined)));
   const isError = queries.some((q) => q.isError || q.isRefetchError || q.failureCount > 0);
 
   // Create stable dependency based on data update timestamps
   // This prevents unnecessary recalculations when queries array reference changes
   const dataUpdateKey = queries.map((q) => q.dataUpdatedAt).join(',');
+  const cacheWriteKey = queries.map((q) => `${q.dataUpdatedAt}:${q.isFetchedAfterMount ? 'fetched' : 'initial'}`).join(',');
+
+  useEffect(() => {
+    queries.forEach((query, index) => {
+      if (!query.data?.oracles?.length || !query.isSuccess || !query.isFetchedAfterMount) {
+        return;
+      }
+
+      const cacheKey = getOracleMetadataCacheKey(ALL_SUPPORTED_NETWORKS[index]);
+      const currentCachedMetadata = useApiResponseCache.getState().oracleMetadataByKey[cacheKey];
+      if (query.dataUpdatedAt <= (currentCachedMetadata?.updatedAt ?? 0)) {
+        return;
+      }
+
+      setCachedMetadata(cacheKey, query.data);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheWriteKey, setCachedMetadata]);
 
   // Merge all results into a single record
   const mergedRecord = useMemo(() => {

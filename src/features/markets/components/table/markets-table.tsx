@@ -146,6 +146,7 @@ function MarketsTable({
           <MarketsTableActions
             onRefresh={onRefresh}
             isRefetching={isRefetching}
+            isTableLoading={loading}
             isMobile={isMobile}
             dataUpdatedAt={dataUpdatedAt}
           />

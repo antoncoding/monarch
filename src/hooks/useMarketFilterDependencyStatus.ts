@@ -145,6 +145,7 @@ export const useMarketFilterDependencyStatus = () => {
     affectedGuards,
     hasAffectedGuards: affectedGuards.length > 0,
     canEvaluateUnknownTokenGuard: tokenReadiness === 'ready' || tokenReadiness === 'stale',
+    isOracleMetadataLoading: oracleReadiness === 'loading',
     oracleMetadataMap,
     oracleChainIds,
     whitelistChainIds: whitelistQuery.availableWhitelistChainIds,

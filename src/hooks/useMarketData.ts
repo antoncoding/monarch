@@ -1,9 +1,12 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { PublicClient } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMonarchMarket } from '@/data-sources/monarch-api';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
+import { useApiResponseCache } from '@/stores/useApiResponseCache';
+import { getMarketDetailCacheKey } from '@/utils/marketDetailCacheKey';
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchMarketSnapshot, type MarketSnapshot } from '@/utils/positions';
 import type { Market } from '@/utils/types';
@@ -85,9 +88,12 @@ const fetchMonarchMarketState = async (uniqueKey: string, network: SupportedNetw
 
 export const useMarketData = (uniqueKey: string | undefined, network: SupportedNetworks | undefined) => {
   const queryKey = ['marketData', uniqueKey, network];
+  const cacheKey = uniqueKey && network ? getMarketDetailCacheKey(network, uniqueKey) : null;
+  const cachedMarket = useApiResponseCache((state) => (cacheKey ? state.marketDetailsByKey[cacheKey] : undefined));
+  const setCachedMarket = useApiResponseCache((state) => state.setMarketDetail);
   const publicClient = usePublicClient({ chainId: network });
 
-  const { data, isLoading, error, refetch } = useQuery<Market | null>({
+  const { data, dataUpdatedAt, error, isFetchedAfterMount, isLoading, isSuccess, refetch } = useQuery<Market | null>({
     queryKey: queryKey,
     queryFn: async (): Promise<Market | null> => {
       console.log('fetching market');
@@ -130,16 +136,31 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
       return finalMarket;
     },
     enabled: !!uniqueKey && !!network,
+    initialData: cacheKey ? cachedMarket?.data : undefined,
+    initialDataUpdatedAt: cacheKey ? cachedMarket?.updatedAt : undefined,
+    refetchOnMount: true,
     staleTime: 30_000, // 30 seconds - individual market view needs accuracy
     refetchInterval: 30_000, // Match staleTime for consistency
     placeholderData: (previousData) => previousData ?? null,
     retry: 1,
   });
 
+  useEffect(() => {
+    if (!cacheKey || !data || !isSuccess || !isFetchedAfterMount) {
+      return;
+    }
+
+    if (dataUpdatedAt <= (cachedMarket?.updatedAt ?? 0)) {
+      return;
+    }
+
+    setCachedMarket(cacheKey, data);
+  }, [cacheKey, cachedMarket?.updatedAt, data, dataUpdatedAt, isFetchedAfterMount, isSuccess, setCachedMarket]);
+
   return {
     data,
-    isLoading: isLoading,
-    error: error,
+    isLoading: isLoading && !cachedMarket,
+    error: data ? null : error,
     refetch: refetch,
   };
 };
