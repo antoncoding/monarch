@@ -76,6 +76,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Domain matching, token resolution, unit conversion, entity ID normalization, address normalization, and formatting should live in shared chokepoints.
 - Multi-chain logic must respect chain ID and address together; do not match by address alone across chains.
 - Address grouping/comparison must normalize case at the shared domain chokepoint; mixed primary/fallback sources may return the same token with different casing.
+- Address equality checks must compare lowercase-normalized values, or use a helper that normalizes both sides; do not compare raw wallet, SDK, or API address strings directly.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
 - Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.

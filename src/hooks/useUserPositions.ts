@@ -454,6 +454,17 @@ const useUserPositions = (
       return validPositions;
     },
     enabled: !!initialData && !!user,
+    placeholderData: (previousData, previousQuery) => {
+      // Keep mounted rows during same-account market-key refreshes, but never across account changes.
+      const previousUser = typeof previousQuery?.queryKey[1] === 'string' ? previousQuery.queryKey[1].toLowerCase() : undefined;
+      const currentUser = user?.toLowerCase();
+
+      if (!currentUser || previousUser !== currentUser || !previousData || previousData.length === 0) {
+        return undefined;
+      }
+
+      return previousData;
+    },
     staleTime: 30_000,
     gcTime: 5 * 60 * 1000,
   });
