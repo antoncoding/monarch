@@ -35,7 +35,7 @@ interface PortfolioAnalyticsBannerProps {
   onSwap: () => void;
 }
 
-const METRIC_VALUE_CLASS = 'font-zen text-xl font-normal leading-none tabular-nums text-primary';
+const METRIC_VALUE_CLASS = 'font-zen text-[1.375rem] font-normal leading-none tabular-nums text-primary';
 
 function formatRate(value: number | null): string {
   if (value === null || !Number.isFinite(value)) {
@@ -146,7 +146,7 @@ function PortfolioMetricBox({
   tooltip?: ReactNode;
 }) {
   const content = (
-    <div className="flex h-full min-h-[5.5rem] min-w-0 flex-col rounded border border-border bg-surface px-3 py-2.5 shadow-[0_1px_1px_rgb(0_0_0_/_0.025)] dark:shadow-none">
+    <div className="flex h-full min-h-[5.25rem] min-w-0 flex-col rounded border border-border bg-surface px-4 py-3 shadow-[0_1px_1px_rgb(0_0_0_/_0.025)] dark:shadow-none">
       <div className="flex min-w-0 items-center justify-between gap-2">
         <span className="truncate font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{label}</span>
         {action}
@@ -165,7 +165,7 @@ function PortfolioMetricBox({
         )}
       </div>
       {caption ? (
-        <span className="mt-1 break-words text-xs leading-4 text-secondary">{caption}</span>
+        <span className="mt-1 break-words text-[11px] leading-4 text-secondary">{caption}</span>
       ) : (
         <span
           className="mt-1 min-h-4"
@@ -241,7 +241,7 @@ export function PortfolioAnalyticsBanner({
           variant="primary"
           onClick={onSwap}
           title="Swap tokens"
-          className="shrink-0 self-start"
+          className="hidden h-9 shrink-0 self-start sm:inline-flex"
         >
           <IoIosSwap className="h-4 w-4" />
           Swap
@@ -249,7 +249,7 @@ export function PortfolioAnalyticsBanner({
       </div>
 
       {showPortfolioStats && (
-        <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-2 sm:grid-cols-3">
+        <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-2 sm:grid-cols-[1.08fr_0.92fr_0.92fr]">
           <PortfolioMetricBox
             label="TOTAL DEPOSIT"
             value={formatUsdValue(totalUsd)}

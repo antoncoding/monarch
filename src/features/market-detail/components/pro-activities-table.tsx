@@ -694,12 +694,12 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
           >
             <TableHeader>
               <TableRow className="text-secondary">
-                <TableHead className="w-[18%] px-4 py-3 text-left">ACCOUNT</TableHead>
-                <TableHead className="w-[14%] px-4 py-3 text-left">ACTION</TableHead>
-                <TableHead className="w-[18%] px-4 py-3 text-left">INTERMEDIARY</TableHead>
-                <TableHead className="w-[18%] px-4 py-3 text-right">NET FLOW</TableHead>
-                <TableHead className="w-[18%] px-4 py-3 text-left whitespace-nowrap">TIME</TableHead>
-                <TableHead className="w-[14%] px-4 py-3 text-right">TRANSACTION</TableHead>
+                <TableHead className="w-[18%] text-left">ACCOUNT</TableHead>
+                <TableHead className="w-[14%] text-left">ACTION</TableHead>
+                <TableHead className="w-[18%] text-left">INTERMEDIARY</TableHead>
+                <TableHead className="w-[18%] text-right">NET FLOW</TableHead>
+                <TableHead className="w-[18%] text-left">TIME</TableHead>
+                <TableHead className="w-[14%] text-right">TRANSACTION</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact text-sm">
@@ -735,7 +735,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                   return (
                     <Fragment key={activity.id}>
                       <TableRow
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="cursor-pointer hover:bg-hovered"
                         tabIndex={0}
                         aria-controls={detailRowId}
                         aria-expanded={isExpanded}
@@ -751,10 +751,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           }
                         }}
                       >
-                        <TableCell
-                          className="px-4 py-3"
-                          onClick={(event) => event.stopPropagation()}
-                        >
+                        <TableCell onClick={(event) => event.stopPropagation()}>
                           {displayActorAddress ? (
                             <AccountIdentity
                               address={displayActorAddress}
@@ -767,7 +764,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           )}
                         </TableCell>
 
-                        <TableCell className="px-4 py-3">
+                        <TableCell>
                           <Badge
                             variant={activityMeta.variant}
                             className="whitespace-nowrap"
@@ -776,10 +773,7 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           </Badge>
                         </TableCell>
 
-                        <TableCell
-                          className="px-4 py-3"
-                          onClick={(event) => event.stopPropagation()}
-                        >
+                        <TableCell onClick={(event) => event.stopPropagation()}>
                           {intermediaryAddress ? (
                             <AccountIdentity
                               address={intermediaryAddress}
@@ -790,14 +784,12 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                           ) : null}
                         </TableCell>
 
-                        <TableCell className="px-4 py-3 text-right">{renderRowFlow(activity)}</TableCell>
+                        <TableCell className="text-right">{renderRowFlow(activity)}</TableCell>
 
-                        <TableCell className="px-4 py-3 text-sm whitespace-nowrap text-gray-500">
-                          {formatActivityTime(activity.timestamp)}
-                        </TableCell>
+                        <TableCell className="text-sm whitespace-nowrap text-gray-500">{formatActivityTime(activity.timestamp)}</TableCell>
 
                         <TableCell
-                          className="px-4 py-3 text-right"
+                          className="text-right"
                           onClick={(event) => event.stopPropagation()}
                         >
                           <TransactionIdentity

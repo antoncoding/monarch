@@ -51,9 +51,8 @@ function getTypeFilterLabel(selectedTypes: ('supply' | 'withdraw')[]): string {
 function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
   return (
     <TableHead
-      className={`whitespace-nowrap px-2 py-2 font-normal ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
+      className={`font-normal ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
       onClick={() => onSort(sortKeyValue)}
-      style={{ padding: '0.5rem' }}
     >
       <div className="flex cursor-pointer items-center justify-center gap-1 hover:text-primary">
         <div>{label}</div>
@@ -227,11 +226,11 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
             <Table className="responsive w-full min-w-full rounded-md font-zen">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Chain</TableHead>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Type</TableHead>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">User</TableHead>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Asset</TableHead>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Market</TableHead>
+                  <TableHead className="font-normal">Chain</TableHead>
+                  <TableHead className="font-normal">Type</TableHead>
+                  <TableHead className="font-normal">User</TableHead>
+                  <TableHead className="font-normal">Asset</TableHead>
+                  <TableHead className="font-normal">Market</TableHead>
                   <SortableHeader
                     label="Amount (USD)"
                     sortKeyValue="usdValue"
@@ -239,7 +238,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   />
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Tx Hash</TableHead>
+                  <TableHead className="font-normal">Tx Hash</TableHead>
                   <SortableHeader
                     label="Time"
                     sortKeyValue="timestamp"
@@ -261,10 +260,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       className="hover:bg-hovered"
                     >
                       {/* Chain */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '100px' }}
-                      >
+                      <TableCell style={{ minWidth: '100px' }}>
                         <div className="flex items-center gap-2">
                           {networkImg && (
                             <Image
@@ -280,10 +276,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* Type */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '80px' }}
-                      >
+                      <TableCell style={{ minWidth: '80px' }}>
                         <span
                           className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${
                             tx.type === 'supply' ? 'text-green-500' : 'text-red-500'
@@ -294,10 +287,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* User */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '140px' }}
-                      >
+                      <TableCell style={{ minWidth: '140px' }}>
                         <AccountIdentity
                           address={tx.onBehalf as Address}
                           chainId={tx.chainId}
@@ -307,10 +297,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* Asset */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '100px' }}
-                      >
+                      <TableCell style={{ minWidth: '100px' }}>
                         <div className="flex items-center gap-1.5">
                           {tx.market && (
                             <TokenIcon
@@ -326,10 +313,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* Market */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '200px' }}
-                      >
+                      <TableCell style={{ minWidth: '200px' }}>
                         {tx.market && marketPath ? (
                           <Link
                             href={marketPath}
@@ -358,7 +342,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
 
                       {/* Amount (USD) */}
                       <TableCell
-                        className="px-2 py-3 text-right"
+                        className="text-right"
                         style={{ minWidth: '120px' }}
                       >
                         <span className="tabular-nums text-sm">
@@ -370,10 +354,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* Tx Hash */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '120px' }}
-                      >
+                      <TableCell style={{ minWidth: '120px' }}>
                         <TransactionIdentity
                           txHash={tx.txHash}
                           chainId={tx.chainId as SupportedNetworks}
@@ -381,10 +362,7 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       </TableCell>
 
                       {/* Time */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '90px' }}
-                      >
+                      <TableCell style={{ minWidth: '90px' }}>
                         <span className="whitespace-nowrap text-xs text-secondary">{moment.unix(tx.timestamp).fromNow()}</span>
                       </TableCell>
                     </TableRow>

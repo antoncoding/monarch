@@ -416,10 +416,10 @@ export function OracleCoverageSection({ occurrences, chainId }: { occurrences: F
           <Table>
             <TableHeader>
               <TableRow className="border-b text-left text-xs text-secondary">
-                <TableHead className="px-3 py-2">Oracle</TableHead>
-                <TableHead className="px-3 py-2">Type</TableHead>
-                <TableHead className="px-3 py-2">Upgradeability</TableHead>
-                <TableHead className="px-3 py-2 text-right">Last scanned</TableHead>
+                <TableHead>Oracle</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Upgradeability</TableHead>
+                <TableHead className="text-right">Last scanned</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact text-sm">
@@ -486,11 +486,11 @@ export function MarketsSection({ dependencies, chainId }: { dependencies: FeedMa
             </colgroup>
             <TableHeader>
               <TableRow className="border-b text-left text-xs text-secondary">
-                <TableHead className="min-w-[15rem] px-3 py-2">Market</TableHead>
-                <TableHead className="px-3 py-2 text-center align-middle">Supplied</TableHead>
-                <TableHead className="px-3 py-2 text-center align-middle">Borrowed</TableHead>
-                <TableHead className="px-3 py-2 text-right">Utilization</TableHead>
-                <TableHead className="px-3 py-2 text-right">Market ID</TableHead>
+                <TableHead className="min-w-[15rem]">Market</TableHead>
+                <TableHead className="text-center align-middle">Supplied</TableHead>
+                <TableHead className="text-center align-middle">Borrowed</TableHead>
+                <TableHead className="text-right">Utilization</TableHead>
+                <TableHead className="text-right">Market ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact text-sm">
@@ -509,10 +509,10 @@ export function MarketsSection({ dependencies, chainId }: { dependencies: FeedMa
                       showLltv
                     />
                   </TableCell>
-                  <TableCell className="px-3 py-2 text-center align-middle tabular-nums whitespace-nowrap">
+                  <TableCell className="text-center align-middle tabular-nums whitespace-nowrap">
                     {formatUsdCompact(market.state.supplyAssetsUsd)}
                   </TableCell>
-                  <TableCell className="px-3 py-2 text-center align-middle tabular-nums whitespace-nowrap">
+                  <TableCell className="text-center align-middle tabular-nums whitespace-nowrap">
                     {formatUsdCompact(market.state.borrowAssetsUsd)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{formatPercentValue(market.state.utilization)}</TableCell>

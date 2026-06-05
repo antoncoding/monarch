@@ -151,10 +151,7 @@ function MarketRow({
   return (
     <TableRow className="hover:bg-hovered">
       {/* Market */}
-      <TableCell
-        className="px-4 py-3"
-        style={{ minWidth: '200px' }}
-      >
+      <TableCell style={{ minWidth: '200px' }}>
         <MarketIdentity
           market={market}
           chainId={chainId}
@@ -169,7 +166,7 @@ function MarketRow({
 
       {/* Supply Amount */}
       <TableCell
-        className="px-4 py-3 text-right"
+        className="text-right"
         style={{ minWidth: '120px' }}
       >
         <div className="flex items-center justify-end gap-1.5">
@@ -186,7 +183,7 @@ function MarketRow({
 
       {/* Actual APY (from earnings) */}
       <TableCell
-        className="px-4 py-3 text-right"
+        className="text-right"
         style={{ minWidth: '90px' }}
       >
         {isEarningsLoading ? (
@@ -206,7 +203,7 @@ function MarketRow({
 
       {/* Interest Earned */}
       <TableCell
-        className="px-4 py-3 text-right"
+        className="text-right"
         style={{ minWidth: '110px' }}
       >
         {isEarningsLoading ? (
@@ -238,7 +235,7 @@ function MarketRow({
 
       {/* Net Flow */}
       <TableCell
-        className="px-4 py-3 text-right"
+        className="text-right"
         style={{ minWidth: '140px' }}
       >
         {flowDisplay}
@@ -246,7 +243,7 @@ function MarketRow({
 
       {/* Time-weighted share */}
       <TableCell
-        className="px-4 py-3 text-right"
+        className="text-right"
         style={{ minWidth: '120px' }}
       >
         {weightDisplay}
@@ -254,7 +251,7 @@ function MarketRow({
 
       {/* Actions */}
       <TableCell
-        className="px-4 py-3 text-right"
+        className="text-right"
         style={{ minWidth: '180px' }}
       >
         <MarketActionsCell
@@ -331,19 +328,19 @@ export function MarketsBreakdownTable({
         <TableHeader>
           <TableRow className="text-secondary">
             <TableHead
-              className="px-4 py-3 text-left"
+              className="text-left"
               style={{ minWidth: '200px' }}
             >
               Market
             </TableHead>
             <TableHead
-              className="px-4 py-3 text-right"
+              className="text-right"
               style={{ minWidth: '120px' }}
             >
               Supply
             </TableHead>
             <TableHead
-              className="px-4 py-3 text-right"
+              className="text-right"
               style={{ minWidth: '90px' }}
             >
               <Tooltip
@@ -360,7 +357,7 @@ export function MarketsBreakdownTable({
               </Tooltip>
             </TableHead>
             <TableHead
-              className="px-4 py-3 text-right"
+              className="text-right"
               style={{ minWidth: '110px' }}
             >
               <Tooltip
@@ -384,7 +381,7 @@ export function MarketsBreakdownTable({
               </Tooltip>
             </TableHead>
             <TableHead
-              className="px-4 py-3 text-right"
+              className="text-right"
               style={{ minWidth: '140px' }}
             >
               <Tooltip
@@ -401,7 +398,7 @@ export function MarketsBreakdownTable({
               </Tooltip>
             </TableHead>
             <TableHead
-              className="px-4 py-3 text-right"
+              className="text-right"
               style={{ minWidth: '120px' }}
             >
               <Tooltip
@@ -418,7 +415,7 @@ export function MarketsBreakdownTable({
               </Tooltip>
             </TableHead>
             <TableHead
-              className="px-4 py-3 text-right"
+              className="text-right"
               style={{ minWidth: '180px' }}
             >
               Actions

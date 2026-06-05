@@ -149,24 +149,18 @@ export function HistoryTab({
   const renderSkeletonRows = (count = 8) => {
     return Array.from({ length: count }).map((_, idx) => (
       <TableRow key={`skeleton-${idx}`}>
-        <TableCell
-          className="px-4 py-3"
-          style={{ minWidth: '100px' }}
-        >
+        <TableCell style={{ minWidth: '100px' }}>
           <div className="flex justify-start">
             <div className="bg-hovered h-6 w-16 rounded animate-pulse" />
           </div>
         </TableCell>
-        <TableCell
-          className="px-4 py-3"
-          style={{ minWidth: '200px' }}
-        >
+        <TableCell style={{ minWidth: '200px' }}>
           <div className="flex items-center justify-start gap-2">
             <div className="bg-hovered h-4 w-32 rounded animate-pulse" />
           </div>
         </TableCell>
         <TableCell
-          className="px-4 py-3 text-right"
+          className="text-right"
           style={{ minWidth: '120px' }}
         >
           <div className="flex justify-end">
@@ -174,7 +168,7 @@ export function HistoryTab({
           </div>
         </TableCell>
         <TableCell
-          className="px-4 py-3 text-center"
+          className="text-center"
           style={{ minWidth: '120px' }}
         >
           <div className="flex justify-center">
@@ -182,7 +176,7 @@ export function HistoryTab({
           </div>
         </TableCell>
         <TableCell
-          className="px-4 py-3 text-right"
+          className="text-right"
           style={{ minWidth: '90px' }}
         >
           <div className="flex justify-end">
@@ -286,31 +280,31 @@ export function HistoryTab({
           <TableHeader>
             <TableRow className="text-secondary">
               <TableHead
-                className="px-4 py-3 text-left"
+                className="text-left"
                 style={{ minWidth: '100px' }}
               >
                 Action
               </TableHead>
               <TableHead
-                className="px-4 py-3 text-left"
+                className="text-left"
                 style={{ minWidth: '200px' }}
               >
                 Market
               </TableHead>
               <TableHead
-                className="px-4 py-3 text-right"
+                className="text-right"
                 style={{ minWidth: '120px' }}
               >
                 Amount
               </TableHead>
               <TableHead
-                className="px-4 py-3 text-center"
+                className="text-center"
                 style={{ minWidth: '120px' }}
               >
                 Tx Hash
               </TableHead>
               <TableHead
-                className="px-4 py-3 text-right"
+                className="text-right"
                 style={{ minWidth: '90px' }}
               >
                 Time
@@ -324,7 +318,7 @@ export function HistoryTab({
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="px-4 py-3 text-center text-gray-400"
+                  className="text-center text-gray-400"
                 >
                   No transactions found
                 </TableCell>
@@ -347,17 +341,11 @@ export function HistoryTab({
                     key={`${tx.hash}-${index}`}
                     className="hover:bg-hovered"
                   >
-                    <TableCell
-                      className="px-4 py-3"
-                      style={{ minWidth: '100px' }}
-                    >
+                    <TableCell style={{ minWidth: '100px' }}>
                       <span className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${actionClass}`}>{actionLabel}</span>
                     </TableCell>
 
-                    <TableCell
-                      className="px-4 py-3"
-                      style={{ minWidth: '200px' }}
-                    >
+                    <TableCell style={{ minWidth: '200px' }}>
                       <div className="flex items-center justify-start gap-2">
                         <MarketIdentity
                           market={market}
@@ -373,7 +361,7 @@ export function HistoryTab({
                     </TableCell>
 
                     <TableCell
-                      className="px-4 py-3 text-right"
+                      className="text-right"
                       style={{ minWidth: '120px' }}
                     >
                       <div className="flex items-center justify-end gap-1.5 text-sm">
@@ -391,10 +379,7 @@ export function HistoryTab({
                       </div>
                     </TableCell>
 
-                    <TableCell
-                      className="px-4 py-3"
-                      style={{ minWidth: '120px' }}
-                    >
+                    <TableCell style={{ minWidth: '120px' }}>
                       <div className="flex justify-center">
                         <TransactionIdentity
                           txHash={tx.hash}
@@ -404,7 +389,7 @@ export function HistoryTab({
                     </TableCell>
 
                     <TableCell
-                      className="px-4 py-3 text-right"
+                      className="text-right"
                       style={{ minWidth: '90px' }}
                     >
                       <span className="text-xs text-secondary whitespace-nowrap">{moment.unix(tx.timestamp).fromNow()}</span>

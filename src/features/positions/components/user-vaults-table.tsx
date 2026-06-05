@@ -186,7 +186,7 @@ export function UserVaultsTable({ vaults, period, isEarningsLoading = false, ref
                 return (
                   <Fragment key={rowKey}>
                     <TableRow
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-hovered"
                       onClick={() => toggleRow(rowKey)}
                     >
                       {/* Network */}

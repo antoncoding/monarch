@@ -57,13 +57,13 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
               </colgroup>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="px-4 py-2 text-left">Market</TableHead>
-                  <TableHead className="px-4 py-2 text-right">{rateLabel}</TableHead>
-                  <TableHead className="px-4 py-2 text-right">Util</TableHead>
-                  <TableHead className="px-4 py-2 text-left">Supplied Amount</TableHead>
+                  <TableHead className="text-left">Market</TableHead>
+                  <TableHead className="text-right">{rateLabel}</TableHead>
+                  <TableHead className="text-right">Util</TableHead>
+                  <TableHead className="text-left">Supplied Amount</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="text-sm">
                 {paginatedPositions.map((position) => {
                   const userConfirmedSupply = BigInt(position.state.supplyAssets);
                   const userNetSupply = userConfirmedSupply + position.pendingDelta;
@@ -79,11 +79,11 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                     <TableRow
                       key={position.market.uniqueKey}
                       onClick={() => onSelectMarket(position.market.uniqueKey)}
-                      className={`cursor-pointer border-b border-l-2 border-l-transparent border-gray-200 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 ${
+                      className={`cursor-pointer border-b border-l-2 border-l-transparent border-gray-200 transition-colors hover:bg-hovered dark:border-gray-700 ${
                         isSelected ? 'bg-primary/5 border-l-primary' : ''
                       }`}
                     >
-                      <TableCell className="px-4 py-2">
+                      <TableCell>
                         <div className="flex items-center justify-start">
                           <MarketIdentity
                             market={position.market}
@@ -98,7 +98,7 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="px-4 py-2 text-right">
+                      <TableCell className="text-right">
                         {apyPreview ? (
                           <span className="whitespace-nowrap text-sm text-foreground">
                             <span className="line-through opacity-50">
@@ -121,7 +121,7 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="px-4 py-2 text-right">
+                      <TableCell className="text-right">
                         {apyPreview ? (
                           <span className="whitespace-nowrap text-sm text-foreground">
                             <span className="line-through opacity-50">{formatReadable(position.market.state.utilization * 100)}%</span>
@@ -134,7 +134,7 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="px-4 py-2">
+                      <TableCell>
                         <div className="flex items-center gap-2 justify-end">
                           <div>
                             {formatReadable(

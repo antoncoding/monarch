@@ -180,7 +180,7 @@ function MarketsTable({
                   targetColumn={SortColumn.Starred}
                   showDirection={false}
                 />
-                <TableHead className="font-normal px-2 py-2 whitespace-nowrap"> Id </TableHead>
+                <TableHead className="font-normal"> Id </TableHead>
                 <HTSortable
                   label="Loan"
                   sortColumn={sortColumn}
@@ -195,7 +195,7 @@ function MarketsTable({
                   sortDirection={sortDirection}
                   targetColumn={SortColumn.CollateralAsset}
                 />
-                <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Oracle</TableHead>
+                <TableHead className="font-normal">Oracle</TableHead>
                 <HTSortable
                   label="LLTV"
                   sortColumn={sortColumn}
@@ -203,7 +203,7 @@ function MarketsTable({
                   sortDirection={sortDirection}
                   targetColumn={SortColumn.LLTV}
                 />
-                {columnVisibility.trustedBy && <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Trusted By</TableHead>}
+                {columnVisibility.trustedBy && <TableHead className="font-normal">Trusted By</TableHead>}
                 {columnVisibility.totalSupply && (
                   <HTSortable
                     label="Total Supply"
@@ -321,27 +321,9 @@ function MarketsTable({
                     targetColumn={SortColumn.MonthlyBorrowAPY}
                   />
                 )}
-                <TableHead
-                  className="font-normal px-2 py-2 whitespace-nowrap"
-                  style={{ padding: '0.35rem 0.8rem' }}
-                >
-                  {' '}
-                  Risk{' '}
-                </TableHead>
-                <TableHead
-                  className="font-normal px-2 py-2 whitespace-nowrap"
-                  style={{ padding: '0.35rem 0.8rem' }}
-                >
-                  {' '}
-                  Indicators{' '}
-                </TableHead>
-                <TableHead
-                  className="font-normal px-2 py-2 whitespace-nowrap"
-                  style={{ padding: '0.35rem 0.8rem' }}
-                >
-                  {' '}
-                  Actions{' '}
-                </TableHead>
+                <TableHead className="font-normal"> Risk </TableHead>
+                <TableHead className="font-normal"> Indicators </TableHead>
+                <TableHead className="font-normal"> Actions </TableHead>
               </TableRow>
             </TableHeader>
             <MarketTableBody

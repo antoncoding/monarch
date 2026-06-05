@@ -148,7 +148,7 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
 
                   <TableCell
                     data-label="Actions"
-                    className="justify-end px-4 py-3"
+                    className="text-right"
                     style={{ minWidth: '180px' }}
                   >
                     <div className="flex items-center justify-end gap-2">

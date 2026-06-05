@@ -207,7 +207,7 @@ function SuppliedMarketPositionsTable({
           <TableHead className="w-20">Actions</TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody className="text-sm">
+      <TableBody className="table-body-compact text-sm">
         {positions.length === 0 && (
           <TableRow>
             <TableCell
@@ -228,7 +228,7 @@ function SuppliedMarketPositionsTable({
           return (
             <TableRow
               key={rowKey}
-              className="hover:bg-gray-50"
+              className="hover:bg-hovered"
             >
               <TableCell className="w-16">
                 <div className="flex items-center justify-center">
@@ -328,7 +328,7 @@ function SuppliedMarketPositionsTable({
 
               <TableCell
                 data-label="Actions"
-                className="justify-center px-4 py-3"
+                className="text-center"
               >
                 <div className="flex items-center justify-center">
                   <SuppliedMarketPositionActionsDropdown
@@ -532,7 +532,7 @@ export function SuppliedMorphoBlueGroupedTable({
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="text-sm">
+            <TableBody className="table-body-compact text-sm">
               {processedPositions.length === 0 && (
                 <TableRow>
                   <TableCell
@@ -553,7 +553,7 @@ export function SuppliedMorphoBlueGroupedTable({
                 return (
                   <Fragment key={rowKey}>
                     <TableRow
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-hovered"
                       onClick={() => toggleRow(rowKey)}
                     >
                       {/* Chain image */}
@@ -657,7 +657,7 @@ export function SuppliedMorphoBlueGroupedTable({
                       {/* Actions button */}
                       <TableCell
                         data-label="Actions"
-                        className="justify-center px-4 py-3"
+                        className="text-center"
                       >
                         <div className="flex items-center justify-center gap-2">
                           <PositionActionsDropdown

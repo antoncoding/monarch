@@ -20,9 +20,8 @@ export function HTSortable({ label, sortColumn, titleOnclick, sortDirection, tar
 
   return (
     <TableHead
-      className={`px-2 py-1 ${sortingCurrent ? 'text-primary' : ''}`}
+      className={sortingCurrent ? 'text-primary' : ''}
       onClick={() => titleOnclick(targetColumn)}
-      style={{ padding: '0.5rem' }}
     >
       <div className="flex items-center justify-center gap-1 font-normal hover:cursor-pointer whitespace-nowrap">
         <div>{label}</div>

@@ -39,9 +39,8 @@ type SortableHeaderProps = {
 function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
   return (
     <TableHead
-      className={`whitespace-nowrap px-2 py-2 font-normal ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
+      className={`font-normal ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
       onClick={() => onSort(sortKeyValue)}
-      style={{ padding: '0.5rem' }}
     >
       <div className="flex cursor-pointer items-center justify-center gap-1 hover:text-primary">
         <div>{label}</div>
@@ -136,7 +135,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
             <Table className="responsive w-full min-w-full rounded-md font-zen">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Asset</TableHead>
+                  <TableHead className="font-normal">Asset</TableHead>
                   <SortableHeader
                     label="Total Volume"
                     sortKeyValue="totalVolumeUsd"
@@ -188,10 +187,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
                     className="hover:bg-hovered"
                   >
                     {/* Asset */}
-                    <TableCell
-                      className="px-2 py-3"
-                      style={{ minWidth: '120px' }}
-                    >
+                    <TableCell style={{ minWidth: '120px' }}>
                       <div className="flex items-center justify-center gap-1.5">
                         <TokenIcon
                           address={asset.loanAssetAddress}
@@ -206,7 +202,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
 
                     {/* Total Volume */}
                     <TableCell
-                      className="px-2 py-3 text-center"
+                      className="text-center"
                       style={{ minWidth: '120px' }}
                     >
                       <span className="tabular-nums text-sm">${formatReadable(asset.totalVolumeUsd)}</span>
@@ -214,7 +210,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
 
                     {/* Supply Volume */}
                     <TableCell
-                      className="px-2 py-3 text-center"
+                      className="text-center"
                       style={{ minWidth: '120px' }}
                     >
                       <span className="tabular-nums text-sm">${formatReadable(asset.supplyVolumeUsd)}</span>
@@ -222,7 +218,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
 
                     {/* Withdraw Volume */}
                     <TableCell
-                      className="px-2 py-3 text-center"
+                      className="text-center"
                       style={{ minWidth: '120px' }}
                     >
                       <span className="tabular-nums text-sm">${formatReadable(asset.withdrawVolumeUsd)}</span>
@@ -230,7 +226,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
 
                     {/* Total Txns */}
                     <TableCell
-                      className="px-2 py-3 text-center"
+                      className="text-center"
                       style={{ minWidth: '100px' }}
                     >
                       <span className="text-sm">{asset.totalCount.toLocaleString()}</span>
@@ -238,7 +234,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
 
                     {/* Supply Txns */}
                     <TableCell
-                      className="px-2 py-3 text-center"
+                      className="text-center"
                       style={{ minWidth: '100px' }}
                     >
                       <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>
@@ -246,7 +242,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
 
                     {/* Withdraw Txns */}
                     <TableCell
-                      className="px-2 py-3 text-center"
+                      className="text-center"
                       style={{ minWidth: '100px' }}
                     >
                       <span className="text-sm">{asset.withdrawCount.toLocaleString()}</span>

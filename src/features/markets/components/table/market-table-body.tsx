@@ -164,7 +164,7 @@ export function MarketTableBody({
               <TableCell
                 data-label="LLTV"
                 className="z-50"
-                style={{ minWidth: '60px', padding: 5 }}
+                style={{ minWidth: '60px' }}
               >
                 {Number(item.lltv) / 1e16}%
               </TableCell>
@@ -172,7 +172,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="Trusted By"
                   className="z-50 text-center"
-                  style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}
+                  style={{ minWidth: '110px' }}
                 >
                   <TrustedByCell vaults={getTrustedVaultsForMarket(item, trustedVaultMap, v2SupplyingVaultsLookup)} />
                 </TableCell>
@@ -211,7 +211,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label={supplyRateLabel}
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <APYCell market={item} />
                 </TableCell>
@@ -220,7 +220,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label={borrowRateLabel}
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <p className="text-sm">
                     {item.state.borrowApy == null ? (
@@ -238,7 +238,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="Target Rate"
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <div className="flex justify-center text-sm">
                     {item.state.apyAtTarget == null ? (
@@ -257,7 +257,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="Utilization"
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <p className="text-sm">{`${(item.state.utilization * 100).toFixed(2)}%`}</p>
                 </TableCell>
@@ -266,7 +266,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="24h Supply"
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'dailySupplyApy')}</div>
                 </TableCell>
@@ -275,7 +275,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="24h Borrow"
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'dailyBorrowApy')}</div>
                 </TableCell>
@@ -284,7 +284,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="7d Supply"
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'weeklySupplyApy')}</div>
                 </TableCell>
@@ -293,7 +293,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="7d Borrow"
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'weeklyBorrowApy')}</div>
                 </TableCell>
@@ -302,7 +302,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="30d Supply"
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'monthlySupplyApy')}</div>
                 </TableCell>
@@ -311,7 +311,7 @@ export function MarketTableBody({
                 <TableCell
                   data-label="30d Borrow"
                   className="z-50 text-center"
-                  style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
+                  style={{ minWidth: '85px' }}
                 >
                   <div className="flex justify-center text-sm">{renderHistoricalRateCell(item, 'monthlyBorrowApy')}</div>
                 </TableCell>
@@ -322,7 +322,7 @@ export function MarketTableBody({
               <TableCell
                 data-label="Indicators"
                 className="z-50"
-                style={{ maxWidth: '40px', padding: 0 }}
+                style={{ maxWidth: '40px' }}
               >
                 <MarketIndicators
                   market={item}
@@ -331,7 +331,7 @@ export function MarketTableBody({
               </TableCell>
               <TableCell
                 data-label="Actions"
-                className="justify-center px-4 py-3"
+                className="text-center"
               >
                 <div className="flex items-center justify-center">
                   <MarketActionsDropdown market={item} />

@@ -1013,16 +1013,16 @@ function MarketExposureTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10 whitespace-nowrap px-3 py-3 text-center font-normal">Chain</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 font-normal">Market</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-right font-normal">{usdHeader}</TableHead>
-              <TableHead className="whitespace-nowrap px-4 py-3 text-right font-normal">{amountHeader}</TableHead>
+              <TableHead className="w-10 text-center font-normal">Chain</TableHead>
+              <TableHead className="font-normal">Market</TableHead>
+              <TableHead className="text-right font-normal">{usdHeader}</TableHead>
+              <TableHead className="text-right font-normal">{amountHeader}</TableHead>
               {showFeeds ? (
-                <TableHead className="whitespace-nowrap px-4 py-3 font-normal">Feeds</TableHead>
+                <TableHead className="font-normal">Feeds</TableHead>
               ) : (
-                <TableHead className="whitespace-nowrap px-4 py-3 text-center font-normal">Oracle</TableHead>
+                <TableHead className="text-center font-normal">Oracle</TableHead>
               )}
-              {showAssumptions && <TableHead className="whitespace-nowrap px-4 py-3 font-normal">{riskColumnHeader}</TableHead>}
+              {showAssumptions && <TableHead className="font-normal">{riskColumnHeader}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody className="text-sm">
@@ -1032,7 +1032,7 @@ function MarketExposureTable({
 
               return (
                 <TableRow key={row.id}>
-                  <TableCell className="px-3 py-3 text-center">
+                  <TableCell className="text-center">
                     <Tooltip content={<span className="text-xs">{getNetworkName(row.chainId) ?? row.chainId}</span>}>
                       <span className="inline-flex items-center justify-center">
                         <NetworkIcon
@@ -1042,7 +1042,7 @@ function MarketExposureTable({
                       </span>
                     </Tooltip>
                   </TableCell>
-                  <TableCell className="px-4 py-3">
+                  <TableCell>
                     <Link
                       href={getMarketHref(row)}
                       className="no-underline"
@@ -1058,16 +1058,16 @@ function MarketExposureTable({
                       />
                     </Link>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-right tabular-nums">
+                  <TableCell className="text-right tabular-nums">
                     <UsdWithPercent
                       valueUsd={forceSupplyAmounts ? row.supplyUsd : row.exposureUsd}
                       totalUsd={totalUsd}
                     />
                   </TableCell>
-                  <TableCell className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">
                     {formatLoanAssetAmount(row, exposureMetric, forceSupplyAmounts)}
                   </TableCell>
-                  <TableCell className={cn('px-4 py-3', !showFeeds && 'text-center')}>
+                  <TableCell className={cn(!showFeeds && 'text-center')}>
                     {showFeeds ? (
                       <OracleFeedsCell
                         row={row}
@@ -1080,7 +1080,7 @@ function MarketExposureTable({
                     )}
                   </TableCell>
                   {showAssumptions && (
-                    <TableCell className={cn('max-w-[260px] px-4 py-3', centerRiskCell && 'text-center')}>
+                    <TableCell className={cn('max-w-[260px]', centerRiskCell && 'text-center')}>
                       {assumptionMode === 'vault' ? <VaultDependencyBadges row={row} /> : <AssumptionBadges assumptions={assumptions} />}
                     </TableCell>
                   )}

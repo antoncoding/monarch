@@ -45,9 +45,8 @@ type SortableHeaderProps = {
 function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
   return (
     <TableHead
-      className={`whitespace-nowrap px-2 py-2 font-normal ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
+      className={`font-normal ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
       onClick={() => onSort(sortKeyValue)}
-      style={{ padding: '0.5rem' }}
     >
       <div className="flex cursor-pointer items-center justify-center gap-1 hover:text-primary">
         <div>{label}</div>
@@ -150,7 +149,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
             <Table className="responsive w-full min-w-full rounded-md font-zen">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Market</TableHead>
+                  <TableHead className="font-normal">Market</TableHead>
                   <SortableHeader
                     label="Loan Asset"
                     sortKeyValue="loanSymbol"
@@ -212,10 +211,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
                       className="hover:bg-hovered"
                     >
                       {/* Market */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '200px' }}
-                      >
+                      <TableCell style={{ minWidth: '200px' }}>
                         {marketStats.market && marketPath ? (
                           <Link
                             href={marketPath}
@@ -243,10 +239,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
                       </TableCell>
 
                       {/* Loan Asset */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '120px' }}
-                      >
+                      <TableCell style={{ minWidth: '120px' }}>
                         <div className="flex items-center justify-center gap-1.5">
                           <TokenIcon
                             address={marketStats.loanAssetAddress}
@@ -261,7 +254,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
 
                       {/* Total Volume */}
                       <TableCell
-                        className="px-2 py-3 text-center"
+                        className="text-center"
                         style={{ minWidth: '120px' }}
                       >
                         <span className="tabular-nums text-sm">${formatReadable(marketStats.totalVolumeUsd)}</span>
@@ -269,7 +262,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
 
                       {/* Supply Volume */}
                       <TableCell
-                        className="px-2 py-3 text-center"
+                        className="text-center"
                         style={{ minWidth: '120px' }}
                       >
                         <span className="tabular-nums text-sm">${formatReadable(marketStats.supplyVolumeUsd)}</span>
@@ -277,7 +270,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
 
                       {/* Withdraw Volume */}
                       <TableCell
-                        className="px-2 py-3 text-center"
+                        className="text-center"
                         style={{ minWidth: '120px' }}
                       >
                         <span className="tabular-nums text-sm">${formatReadable(marketStats.withdrawVolumeUsd)}</span>
@@ -285,7 +278,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
 
                       {/* Total Txns */}
                       <TableCell
-                        className="px-2 py-3 text-center"
+                        className="text-center"
                         style={{ minWidth: '100px' }}
                       >
                         <span className="text-sm">{marketStats.totalCount.toLocaleString()}</span>
@@ -293,7 +286,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
 
                       {/* Supply Txns */}
                       <TableCell
-                        className="px-2 py-3 text-center"
+                        className="text-center"
                         style={{ minWidth: '100px' }}
                       >
                         <span className="text-sm">{marketStats.supplyCount.toLocaleString()}</span>
@@ -301,7 +294,7 @@ export function StatsMarketTable({ transactions, isLoading }: StatsMarketTablePr
 
                       {/* Withdraw Txns */}
                       <TableCell
-                        className="px-2 py-3 text-center"
+                        className="text-center"
                         style={{ minWidth: '100px' }}
                       >
                         <span className="text-sm">{marketStats.withdrawCount.toLocaleString()}</span>

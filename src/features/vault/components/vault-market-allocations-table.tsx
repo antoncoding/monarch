@@ -97,12 +97,12 @@ export function VaultMarketAllocationsTable({
     <Table className="w-full font-zen">
       <TableHeader>
         <TableRow className="text-xs text-secondary">
-          <TableHead className="px-4 py-3 text-left font-normal">Market</TableHead>
-          <TableHead className="px-4 py-3 text-right font-normal">Allocation</TableHead>
+          <TableHead className="text-left font-normal">Market</TableHead>
+          <TableHead className="text-right font-normal">Allocation</TableHead>
           {isPositionMode ? (
             <>
-              <TableHead className="px-4 py-3 text-right font-normal">Liquidity</TableHead>
-              <TableHead className="px-4 py-3 text-right font-normal">
+              <TableHead className="text-right font-normal">Liquidity</TableHead>
+              <TableHead className="text-right font-normal">
                 <Tooltip
                   content={
                     <TooltipContent
@@ -117,7 +117,7 @@ export function VaultMarketAllocationsTable({
                   </span>
                 </Tooltip>
               </TableHead>
-              <TableHead className="px-4 py-3 text-right font-normal">
+              <TableHead className="text-right font-normal">
                 <Tooltip
                   content={
                     <TooltipContent
@@ -134,8 +134,8 @@ export function VaultMarketAllocationsTable({
             </>
           ) : (
             <>
-              <TableHead className="px-4 py-3 text-right font-normal">{rateLabel}</TableHead>
-              <TableHead className="px-4 py-3 text-right font-normal">Liquidity</TableHead>
+              <TableHead className="text-right font-normal">{rateLabel}</TableHead>
+              <TableHead className="text-right font-normal">Liquidity</TableHead>
             </>
           )}
         </TableRow>
@@ -164,10 +164,7 @@ export function VaultMarketAllocationsTable({
               key={`${chainId}:${market.uniqueKey}`}
               className="hover:bg-hovered"
             >
-              <TableCell
-                className="px-4 py-3"
-                style={{ minWidth: '220px' }}
-              >
+              <TableCell style={{ minWidth: '220px' }}>
                 <MarketIdentity
                   market={market}
                   chainId={chainId}
@@ -180,10 +177,7 @@ export function VaultMarketAllocationsTable({
                   showExplorerLink={showExplorerLink}
                 />
               </TableCell>
-              <TableCell
-                className="px-4 py-3"
-                style={{ minWidth: '150px' }}
-              >
+              <TableCell style={{ minWidth: '150px' }}>
                 <AllocationCell
                   amount={allocationValue}
                   symbol={assetSymbol}
@@ -196,13 +190,13 @@ export function VaultMarketAllocationsTable({
               {isPositionMode ? (
                 <>
                   <TableCell
-                    className="px-4 py-3 text-right text-xs text-secondary whitespace-nowrap"
+                    className="text-right text-xs text-secondary whitespace-nowrap"
                     style={{ minWidth: '130px' }}
                   >
                     {liquidity}
                   </TableCell>
                   <TableCell
-                    className="px-4 py-3 text-right"
+                    className="text-right"
                     style={{ minWidth: '130px' }}
                   >
                     {isEarningsLoading ? (
@@ -220,7 +214,7 @@ export function VaultMarketAllocationsTable({
                     )}
                   </TableCell>
                   <TableCell
-                    className="px-4 py-3 text-right"
+                    className="text-right"
                     style={{ minWidth: '120px' }}
                   >
                     {isEarningsLoading ? (
@@ -252,10 +246,8 @@ export function VaultMarketAllocationsTable({
                 </>
               ) : (
                 <>
-                  <TableCell className="px-4 py-3 text-right text-xs text-secondary whitespace-nowrap">
-                    {(displayRate * 100).toFixed(2)}%
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-right text-xs text-secondary whitespace-nowrap">{liquidity}</TableCell>
+                  <TableCell className="text-right text-xs text-secondary whitespace-nowrap">{(displayRate * 100).toFixed(2)}%</TableCell>
+                  <TableCell className="text-right text-xs text-secondary whitespace-nowrap">{liquidity}</TableCell>
                 </>
               )}
             </TableRow>

@@ -125,7 +125,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="text-sm">
+          <TableBody className="table-body-compact text-sm">
             {borrowRows.map((row) => {
               const rowKey = `${row.market.uniqueKey}-${row.market.morphoBlue.chain.id}`;
               const detailRowId = `${rowKey}-detail`;
@@ -135,7 +135,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
               return (
                 <Fragment key={rowKey}>
                   <TableRow
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-hovered"
                     tabIndex={0}
                     aria-controls={detailRowId}
                     aria-expanded={isExpanded}
@@ -256,7 +256,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
 
                     <TableCell
                       data-label="Actions"
-                      className="justify-center px-4 py-3"
+                      className="text-center"
                       onClick={(event) => event.stopPropagation()}
                     >
                       <div className="flex items-center justify-center">

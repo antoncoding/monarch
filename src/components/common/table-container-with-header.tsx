@@ -11,7 +11,7 @@ type TableContainerWithHeaderProps = {
  * Provides consistent styling for tables with:
  * - Title on the left (uppercase, monospace font)
  * - Optional actions on the right (filters, refresh, settings, etc.)
- * - Separator border between header and content
+ * - Compact utility header that sits close to the table content
  * - Responsive overflow handling
  *
  * @example
@@ -32,11 +32,11 @@ type TableContainerWithHeaderProps = {
 export function TableContainerWithHeader({ title, actions, children, className = '' }: TableContainerWithHeaderProps) {
   return (
     <div className={`rounded border border-border bg-surface font-zen shadow-sm ${className}`}>
-      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-3">
-        <h3 className="font-monospace text-xs uppercase text-secondary">{title}</h3>
+      <div className="flex min-h-9 items-center justify-between px-4 pt-2 pb-0">
+        <h3 className="font-monospace text-[11px] uppercase leading-4 tracking-[0.08em] text-secondary">{title}</h3>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      <div className="overflow-x-auto pb-4">{children}</div>
+      <div className="overflow-x-auto pb-2">{children}</div>
     </div>
   );
 }
@@ -53,9 +53,8 @@ type TableContainerWithDescriptionProps = {
  * Expanded table container variant with description support.
  *
  * Features:
- * - Larger title with primary color (not secondary)
  * - Description text below title
- * - More vertical padding in header
+ * - Compact utility header that matches standard table containers
  * - Actions are vertically centered
  *
  * @example
@@ -76,14 +75,14 @@ export function TableContainerWithDescription({
 }: TableContainerWithDescriptionProps) {
   return (
     <div className={`rounded border border-border bg-surface font-zen shadow-sm ${className}`}>
-      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-        <div className="flex-1">
-          <h3 className="mb-1 font-monospace text-xs uppercase text-secondary">{title}</h3>
-          {description && <p className="text-xs text-secondary">{description}</p>}
+      <div className="flex min-h-10 items-start justify-between gap-4 px-4 pt-3 pb-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-monospace text-[11px] uppercase leading-4 tracking-[0.08em] text-secondary">{title}</h3>
+          {description && <p className="mt-1 text-xs leading-4 text-secondary">{description}</p>}
         </div>
-        {actions && <div className="flex items-center gap-2 ml-4">{actions}</div>}
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      <div className="overflow-x-auto">{children}</div>
+      <div className="overflow-x-auto pb-2">{children}</div>
     </div>
   );
 }

@@ -90,9 +90,8 @@ function HTSortable({
   const isSorting = sortColumn === column;
   return (
     <th
-      className={`cursor-pointer select-none text-center font-normal px-2 py-2 ${isSorting ? 'text-primary' : ''}`}
+      className={`cursor-pointer select-none text-center font-normal ${isSorting ? 'text-primary' : ''}`}
       onClick={() => onSort(column)}
-      style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}
     >
       <div className="flex items-center justify-center gap-1">
         <div>{label}</div>
@@ -144,7 +143,7 @@ function MarketRow({
       }}
     >
       {showSelectColumn && (
-        <td className="z-50 py-1">
+        <td className="z-50">
           <div className="flex items-center justify-center">
             <Checkbox
               checked={isSelected}
@@ -157,7 +156,7 @@ function MarketRow({
         </td>
       )}
       <td
-        className="z-50 py-1 text-center"
+        className="z-50 text-center"
         style={{ minWidth: '80px' }}
       >
         <MarketIdBadge
@@ -166,7 +165,7 @@ function MarketRow({
         />
       </td>
       <td
-        className="z-50 py-1 pl-4"
+        className="z-50"
         style={{ minWidth: '240px' }}
       >
         <MarketIdentity
@@ -183,7 +182,7 @@ function MarketRow({
       {columnVisibility.trustedBy && (
         <td
           data-label="Trusted By"
-          className="z-50 py-1 text-center"
+          className="z-50 text-center"
           style={{ minWidth: '110px' }}
         >
           <TrustedByCell vaults={trustedVaults} />
@@ -192,7 +191,7 @@ function MarketRow({
       {columnVisibility.totalSupply && (
         <td
           data-label="Total Supply"
-          className="z-50 py-1 text-center"
+          className="z-50 text-center"
           style={{ minWidth: '120px' }}
         >
           <p className="text-xs">{formatAmountDisplay(market.state.supplyAssets, market.loanAsset.decimals)}</p>
@@ -201,7 +200,7 @@ function MarketRow({
       {columnVisibility.totalBorrow && (
         <td
           data-label="Total Borrow"
-          className="z-50 py-1 text-center"
+          className="z-50 text-center"
           style={{ minWidth: '120px' }}
         >
           <p className="text-xs">{formatAmountDisplay(market.state.borrowAssets, market.loanAsset.decimals)}</p>
@@ -210,7 +209,7 @@ function MarketRow({
       {columnVisibility.liquidity && (
         <td
           data-label="Liquidity"
-          className="z-50 py-1 text-center"
+          className="z-50 text-center"
           style={{ minWidth: '120px' }}
         >
           <p className="text-xs">{formatAmountDisplay(market.state.liquidityAssets, market.loanAsset.decimals)}</p>
@@ -219,7 +218,7 @@ function MarketRow({
       {columnVisibility.supplyAPY && (
         <td
           data-label={supplyRateLabel}
-          className="z-50 py-1 text-center"
+          className="z-50 text-center"
           style={{ minWidth: '100px' }}
         >
           <div className="flex items-center justify-center">
@@ -235,7 +234,7 @@ function MarketRow({
       {columnVisibility.borrowAPY && (
         <td
           data-label={borrowRateLabel}
-          className="z-50 py-1 text-center"
+          className="z-50 text-center"
           style={{ minWidth: '100px' }}
         >
           <p className="text-sm">
@@ -248,7 +247,7 @@ function MarketRow({
       {columnVisibility.rateAtTarget && (
         <td
           data-label="Target Rate"
-          className="z-50 py-1 text-center"
+          className="z-50 text-center"
           style={{ minWidth: '110px' }}
         >
           <p className="text-sm">
@@ -261,7 +260,7 @@ function MarketRow({
       {columnVisibility.utilizationRate && (
         <td
           data-label="Utilization"
-          className="z-50 py-1 text-center"
+          className="z-50 text-center"
           style={{ minWidth: '100px' }}
         >
           <p className="text-sm">{`${(market.state.utilization * 100).toFixed(2)}%`}</p>
@@ -269,7 +268,7 @@ function MarketRow({
       )}
       <td
         data-label="Indicators"
-        className="z-50 py-1 text-center"
+        className="z-50 text-center"
         style={{ minWidth: '100px' }}
       >
         <MarketIndicators
@@ -589,28 +588,8 @@ export function MarketsTableWithSameLoanAsset({
           <table className="responsive rounded-md font-zen text-sm">
             <thead className="">
               <tr>
-                {showSelectColumn && (
-                  <th
-                    className="text-center font-normal px-2 py-2"
-                    style={{
-                      padding: '0.5rem',
-                      paddingTop: '1rem',
-                      paddingBottom: '1rem',
-                    }}
-                  >
-                    Select
-                  </th>
-                )}
-                <th
-                  className="text-center font-normal px-2 py-2"
-                  style={{
-                    padding: '0.5rem',
-                    paddingTop: '1rem',
-                    paddingBottom: '1rem',
-                  }}
-                >
-                  Id
-                </th>
+                {showSelectColumn && <th className="text-center font-normal">Select</th>}
+                <th className="text-center font-normal">Id</th>
                 <HTSortable
                   label="Market"
                   column={SortColumn.COLLATSYMBOL}
@@ -618,14 +597,7 @@ export function MarketsTableWithSameLoanAsset({
                   sortDirection={sortDirection}
                   onSort={handleSort}
                 />
-                {columnVisibility.trustedBy && (
-                  <th
-                    className="text-center font-normal px-2 py-2"
-                    style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}
-                  >
-                    Trusted By
-                  </th>
-                )}
+                {columnVisibility.trustedBy && <th className="text-center font-normal">Trusted By</th>}
                 {columnVisibility.totalSupply && (
                   <HTSortable
                     label="Total Supply"
@@ -689,12 +661,7 @@ export function MarketsTableWithSameLoanAsset({
                     onSort={handleSort}
                   />
                 )}
-                <th
-                  className="text-center font-normal px-2 py-2"
-                  style={{ padding: '0.5rem' }}
-                >
-                  Indicators
-                </th>
+                <th className="text-center font-normal">Indicators</th>
               </tr>
             </thead>
             <tbody>
