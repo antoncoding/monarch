@@ -155,6 +155,26 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'USDtb',
+    img: require('../imgs/tokens/usdtb.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0xc139190f447e929f090edeb554d95abb8b18ac1c' }],
+    protocol: {
+      name: 'Ethena',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'AA_FalconXUSDC',
+    img: require('../imgs/tokens/aa-falconxusdc.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0xc26a6fa2c37b38e549a4a1807543801db684f99c' }],
+    protocol: {
+      name: 'MEV Capital',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
     symbol: 'sUSDe',
     img: require('../imgs/tokens/susde.png') as string,
     decimals: 18,
@@ -397,6 +417,16 @@ const supportedTokens = [
       },
       { chain: monad, address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c' },
     ],
+    peg: TokenPeg.BTC,
+  },
+  {
+    symbol: 'kBTC',
+    img: require('../imgs/tokens/kbtc.png') as string,
+    decimals: 8,
+    networks: [{ chain: mainnet, address: '0x73e0c0d45e048d25fc26fa3159b0aa04bfa4db98' }],
+    protocol: {
+      name: 'Kraken',
+    },
     peg: TokenPeg.BTC,
   },
   {
@@ -999,29 +1029,27 @@ const supportedTokens = [
   },
 ];
 
-const findToken = (address: string, chainId: number) => {
-  return supportedTokens.find((token) =>
+const findToken = (address: string, chainId: number) =>
+  supportedTokens.find((token) =>
     token.networks.some((network) => network.address.toLowerCase() === address.toLowerCase() && network.chain.id === chainId),
   );
-};
 
 const infoToKey = toChainAssetKey;
 
 const findTokenWithKey = (key: string) => {
   // key: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48-1|0x833589fcd6edb6e08f4c7c32d4f71b54bda02913-8453'
   const subKeys = key.split('|');
-  return supportedTokens.find((token) => {
-    return token.networks.some((network) => infoToKey(network.address, network.chain.id) === subKeys[0].toLowerCase());
-  });
+  return supportedTokens.find((token) =>
+    token.networks.some((network) => infoToKey(network.address, network.chain.id) === subKeys[0].toLowerCase()),
+  );
 };
 
-const getUniqueTokens = (tokenList: { address: string; chainId: number }[]) => {
-  return supportedTokens.filter((token) => {
-    return tokenList.find((item) =>
+const getUniqueTokens = (tokenList: { address: string; chainId: number }[]) =>
+  supportedTokens.filter((token) =>
+    tokenList.find((item) =>
       token.networks.find((network) => network.address.toLowerCase() === item.address.toLowerCase() && network.chain.id === item.chainId),
-    );
-  });
-};
+    ),
+  );
 
 const isWrappedNativeToken = (address: string, chainId: number) => {
   const wrappedToken = getWrappedNativeToken(chainId);
