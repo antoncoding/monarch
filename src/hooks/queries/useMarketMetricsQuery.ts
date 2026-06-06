@@ -36,6 +36,18 @@ export type MarketCurrentState = {
   individualSupplyUsd: number;
 };
 
+export type MarketPriceDebtRisk = {
+  hasWarning: boolean;
+  unrealizedBadDebtUsd: number | null;
+  debtAtRiskUsd: number | null;
+  borrowerCount: number | null;
+  worstBorrower: string | null;
+  worstBorrowerLtv: number | null;
+  minCollateralRatio: number | null;
+  sampledBorrowerCount: number | null;
+  priceSource: string | null;
+};
+
 // Enhanced market metrics from Monarch API
 export type MarketMetrics = {
   marketUniqueKey: string;
@@ -46,6 +58,7 @@ export type MarketMetrics = {
   // Key flags
   everLiquidated: boolean;
   marketScore: number | null;
+  marketPriceDebtRisk?: MarketPriceDebtRisk;
   // Backend-computed trending (official)
   isTrending: boolean;
   trendingReason: string | null;
@@ -76,6 +89,7 @@ type MarketMetricsParams = {
 
 const PAGE_SIZE = 1000;
 const MARKET_METRICS_REFRESH_MS = 15 * 60 * 1000;
+const MARKET_METRICS_QUERY_SCHEMA_VERSION = 2;
 
 const getMarketMetricsClientUrl = (searchParams?: URLSearchParams): string => {
   if (!DATA_API_BASE_URL) {
@@ -167,7 +181,7 @@ export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
   const queryEnabled = useDeferredQueryEnable(enabled, defer, 2000);
 
   return useQuery({
-    queryKey: ['market-metrics', { chainId, sortBy, sortOrder }],
+    queryKey: ['market-metrics', MARKET_METRICS_QUERY_SCHEMA_VERSION, { chainId, sortBy, sortOrder }],
     queryFn: () => fetchAllMarketMetrics({ chainId, sortBy, sortOrder }),
     staleTime: MARKET_METRICS_REFRESH_MS,
     refetchInterval: MARKET_METRICS_REFRESH_MS,

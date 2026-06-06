@@ -12,6 +12,7 @@ import { ClearFiltersButton } from '@/components/shared/clear-filters-button';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { useMarketV2SupplyingVaultsQuery } from '@/hooks/queries/useMarketV2SupplyingVaultsQuery';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { getMetricsKey, type MarketMetrics, useMarketMetricsMap } from '@/hooks/queries/useMarketMetricsQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import type { MarketV2SupplyingVault } from '@/data-sources/monarch-api/vaults';
@@ -109,6 +110,7 @@ function MarketRow({
   showSelectColumn,
   trustedVaultMap,
   v2SupplyingVaultsLookup,
+  marketMetrics,
   supplyRateLabel,
   borrowRateLabel,
   isAprDisplay,
@@ -119,6 +121,7 @@ function MarketRow({
   showSelectColumn: boolean;
   trustedVaultMap: Map<string, TrustedVault>;
   v2SupplyingVaultsLookup: Map<string, MarketV2SupplyingVault[]>;
+  marketMetrics?: MarketMetrics | null;
   supplyRateLabel: string;
   borrowRateLabel: string;
   isAprDisplay: boolean;
@@ -274,6 +277,7 @@ function MarketRow({
       >
         <MarketIndicators
           market={market}
+          marketMetrics={marketMetrics}
           showRisk
         />
       </td>
@@ -510,6 +514,9 @@ export function MarketsTableWithSameLoanAsset({
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
   const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
+  const { metricsMap } = useMarketMetricsMap({
+    enabled: paginatedMarkets.length > 0,
+  });
   const { lookup: v2SupplyingVaultsLookup } = useMarketV2SupplyingVaultsQuery({
     enabled: shouldLoadTrustedVaultMetadata,
     markets: paginatedMarkets.map((marketWithSelection) => marketWithSelection.market),
@@ -707,6 +714,10 @@ export function MarketsTableWithSameLoanAsset({
                   showSelectColumn={showSelectColumn}
                   trustedVaultMap={trustedVaultMap}
                   v2SupplyingVaultsLookup={v2SupplyingVaultsLookup}
+                  marketMetrics={
+                    metricsMap.get(getMetricsKey(marketWithSelection.market.morphoBlue.chain.id, marketWithSelection.market.uniqueKey)) ??
+                    null
+                  }
                   supplyRateLabel={supplyRateLabel}
                   borrowRateLabel={borrowRateLabel}
                   isAprDisplay={isAprDisplay}

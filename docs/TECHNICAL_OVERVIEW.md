@@ -204,7 +204,7 @@ Market metrics: external data API via `/v1/markets/metrics`
 |-----------|--------|---------|------------|
 | Markets list | Monarch multi-chain → Morpho per supported missing chain | 5 min stale | `useMarketsQuery` |
 | Rolling market `24h/7d/30d` rates | Morpho API rolling fields → archive RPC snapshots + Morpho SDK math fallback | 15 min stale | `useMarketRateEnrichmentQuery` |
-| Market metrics (flows, trending) | Monarch API | 5 min stale | `useMarketMetricsQuery` |
+| Market metrics and flags | Monarch API | 5 min stale | `useMarketMetricsQuery`; see `docs/MARKET_FLAGS.md` for the target compact flags shape |
 | Market state (APY, utilization, balances) | Monarch market state + Morpho shell + RPC snapshot | 30s stale | `useMarketData` |
 | Market historical chart series | Monarch GraphQL → Morpho API | 5 min stale | `useMarketHistoricalData` |
 | User positions | Monarch position discovery + on-chain snapshots + market registry from `useProcessedMarkets` | 5 min | `useUserPositions` |
@@ -276,7 +276,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `useUserBalancesQuery` | ERC20 wallet balances across chains | Pure RPC multicall via wagmi | No Envio gap |
 | `useTokensQuery` | Token metadata lookup for app UI | Local token registry + Pendle assets API | Not part of Monarch migration |
 | `useOracleMetadata` / `useAllOracleMetadata` | Oracle classification and feed metadata | Scanner gist JSON | Not part of Monarch migration |
-| `useMarketMetricsQuery` | Enhanced market metrics, flows, trending, scores | External data API via `/v1/markets/metrics` | Already Monarch-backed |
+| `useMarketMetricsQuery` | Enhanced market metrics, flows, trending, scores, and current backend market flags | External data API via `/v1/markets/metrics` | Already Monarch-backed; target compact flags shape is in `docs/MARKET_FLAGS.md` |
 | `useUserRewardsQuery` | User claimable rewards and Merkl proofs | Merkl API through the server-side `/api/merkl` API-key proxy | Outside Monarch/Envio scope today |
 | `useMerklCampaignsQuery` / `useMerklHoldIncentivesQuery` | Campaign and HOLD incentive enrichment | Merkl API through `/api/merkl` + hardcoded opportunity mapping | Outside Monarch/Envio scope today |
 

@@ -13,6 +13,7 @@ import type { MarketV2SupplyingVault } from '@/data-sources/monarch-api/vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { getMetricsKey, useMarketMetricsMap } from '@/hooks/queries/useMarketMetricsQuery';
 import type { MarketRateEnrichment } from '@/utils/market-rate-enrichment';
 import type { Market } from '@/utils/types';
 import { getTrustedVaultsForMarket } from '@/utils/vaults';
@@ -44,6 +45,9 @@ export function MarketTableBody({
 }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
+  const { metricsMap } = useMarketMetricsMap({
+    enabled: currentEntries.length > 0,
+  });
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -94,6 +98,7 @@ export function MarketTableBody({
       {currentEntries.map((item) => {
         const collatToShow = item.collateralAsset.symbol.slice(0, 6).concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
         const isStared = starredMarkets.includes(item.uniqueKey);
+        const metrics = metricsMap.get(getMetricsKey(item.morphoBlue.chain.id, item.uniqueKey));
 
         return (
           <React.Fragment key={item.uniqueKey}>
@@ -317,7 +322,10 @@ export function MarketTableBody({
                 </TableCell>
               )}
               <TableCell style={{ minWidth: '90px' }}>
-                <MarketRiskIndicators market={item} />
+                <MarketRiskIndicators
+                  market={item}
+                  marketMetrics={metrics ?? null}
+                />
               </TableCell>
               <TableCell
                 data-label="Indicators"
@@ -326,6 +334,7 @@ export function MarketTableBody({
               >
                 <MarketIndicators
                   market={item}
+                  marketMetrics={metrics ?? null}
                   showRisk={false}
                 />
               </TableCell>
