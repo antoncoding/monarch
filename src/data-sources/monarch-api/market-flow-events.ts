@@ -5,12 +5,13 @@ const MONARCH_MARKET_FLOW_EVENTS_TIMEOUT_MS = 15_000;
 
 export type MarketFlowKind = 'supply' | 'borrow';
 export type MarketFlowDirection = 'positive' | 'negative';
-type MarketFlowEventType = 'supply' | 'withdraw' | 'borrow' | 'repay';
+export type MarketFlowEventType = 'supply' | 'withdraw' | 'borrow' | 'repay' | 'liquidation';
 
 export type MarketFlowEvent = {
   id: string;
   hash: string;
   timestamp: number;
+  type: MarketFlowEventType;
   direction: MarketFlowDirection;
   amount: string;
   address: string;
@@ -41,9 +42,15 @@ type MonarchSupplyFlowEventsResponse = MonarchGraphqlResponse<{
 type MonarchBorrowFlowEventsResponse = MonarchGraphqlResponse<{
   borrows: MonarchFlowEventRow[];
   repays: MonarchFlowEventRow[];
+  liquidations: MonarchFlowEventRow[];
 }>;
 
 type MonarchFlowEventsResponse = MonarchSupplyFlowEventsResponse | MonarchBorrowFlowEventsResponse;
+type FlowEventRows = {
+  positiveRows: MonarchFlowEventRow[];
+  negativeRows: MonarchFlowEventRow[];
+  liquidationRows?: MonarchFlowEventRow[];
+};
 type FlowEventsVariables = {
   chainId: number;
   marketId: string;
@@ -81,6 +88,7 @@ const mapFlowRows = (rows: MonarchFlowEventRow[], eventType: MarketFlowEventType
     id: `${eventType}:${row.id}`,
     hash: row.txHash,
     timestamp: toTimestamp(row.timestamp),
+    type: eventType,
     direction,
     amount: row.assets,
     address: row.onBehalf,
@@ -106,7 +114,7 @@ const fetchSupplyFlowEvents = async (
   endTimestamp: number,
   limit: number,
   offset: number,
-) => {
+): Promise<FlowEventRows> => {
   const response = await fetchFlowEventsResponse<MonarchSupplyFlowEventsResponse>(envioMarketSupplyFlowEventsWindowQuery, {
     chainId,
     marketId,
@@ -129,7 +137,7 @@ const fetchBorrowFlowEvents = async (
   endTimestamp: number,
   limit: number,
   offset: number,
-) => {
+): Promise<FlowEventRows> => {
   const response = await fetchFlowEventsResponse<MonarchBorrowFlowEventsResponse>(envioMarketBorrowFlowEventsWindowQuery, {
     chainId,
     marketId,
@@ -142,6 +150,7 @@ const fetchBorrowFlowEvents = async (
   return {
     positiveRows: response.data?.borrows ?? [],
     negativeRows: response.data?.repays ?? [],
+    liquidationRows: response.data?.liquidations ?? [],
   };
 };
 
@@ -160,13 +169,15 @@ export const fetchMonarchMarketFlowEventsInWindow = async (
       : await fetchBorrowFlowEvents(marketId, chainId, startTimestamp, endTimestamp, first + 1, skip);
   const positiveRows = rows.positiveRows.slice(0, first);
   const negativeRows = rows.negativeRows.slice(0, first);
+  const liquidationRows = (rows.liquidationRows ?? []).slice(0, first);
   const positiveEventType = flowKind === 'supply' ? 'supply' : 'borrow';
   const negativeEventType = flowKind === 'supply' ? 'withdraw' : 'repay';
   const items = [
     ...mapFlowRows(positiveRows, positiveEventType, 'positive'),
     ...mapFlowRows(negativeRows, negativeEventType, 'negative'),
+    ...mapFlowRows(liquidationRows, 'liquidation', 'negative'),
   ].sort(sortFlowEvents);
-  const hasNextPage = rows.positiveRows.length > first || rows.negativeRows.length > first;
+  const hasNextPage = rows.positiveRows.length > first || rows.negativeRows.length > first || (rows.liquidationRows?.length ?? 0) > first;
 
   return {
     items,
