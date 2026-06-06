@@ -4,6 +4,8 @@ import { MdError } from 'react-icons/md';
 import { IoWarningOutline } from 'react-icons/io5';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
+import type { MarketMetrics } from '@/hooks/queries/useMarketMetricsQuery';
+import { getMarketPriceBadDebtWarning } from '@/features/markets/utils/market-price-debt-risk';
 import type { WarningWithDetail, Market } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
 
@@ -195,17 +197,23 @@ export function MarketOracleIndicator({
 
 export function MarketStatusIndicator({
   market,
+  marketMetrics,
   isBatched = false,
   mode = 'simple',
 }: {
   market: Market;
+  marketMetrics?: MarketMetrics | null;
   isBatched?: boolean;
   mode?: 'simple' | 'complex';
 }) {
   const warningsWithDetail = useMarketWarnings(market);
+  const marketPriceBadDebtWarning = getMarketPriceBadDebtWarning(marketMetrics);
 
   // Combine debt + general category warnings
-  const warnings = warningsWithDetail.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general);
+  const warnings = [
+    ...(marketPriceBadDebtWarning ? [marketPriceBadDebtWarning] : []),
+    ...warningsWithDetail.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general),
+  ];
 
   if (warnings.length === 0) {
     return (
@@ -222,7 +230,7 @@ export function MarketStatusIndicator({
     return (
       <RiskIndicator
         level="red"
-        description={isBatched ? 'One or more markets have warnings' : 'Market has critical warning'}
+        description={isBatched ? 'One or more markets have warnings' : (alertWarning?.description ?? 'Market has critical warning')}
         mode={mode}
         warningDetail={alertWarning}
       />

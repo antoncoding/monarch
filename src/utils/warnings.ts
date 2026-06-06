@@ -79,6 +79,8 @@ const BAD_DEBT: WarningWithDetail = {
   category: WarningCategory.debt,
 };
 
+const OVER_UTILIZATION_ALERT_THRESHOLD = 1.01;
+
 const UNRECOGNIZED_ORACLE: WarningWithDetail = {
   code: 'unrecognized_oracle',
   level: 'alert',
@@ -153,6 +155,16 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
     }
   } catch {
     // ignore invalid BigInt values (e.g., decimal strings like "0.00")
+  }
+
+  const utilization = market.state.utilization;
+  if (Number.isFinite(utilization) && utilization > OVER_UTILIZATION_ALERT_THRESHOLD) {
+    result.push({
+      code: 'over_utilized_market',
+      level: 'alert',
+      description: `Market utilization is ${(utilization * 100).toFixed(2)}%, which means borrowed assets exceed supplied assets.`,
+      category: WarningCategory.debt,
+    });
   }
 
   // Append our own oracle warnings

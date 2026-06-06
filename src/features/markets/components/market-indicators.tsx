@@ -6,11 +6,18 @@ import { IoWarningOutline } from 'react-icons/io5';
 import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CustomTagIcon } from '@/components/shared/custom-tag-icons';
-import { getMetricsKey, useMarketMetricsMap, matchesCustomTag, type FlowTimeWindow } from '@/hooks/queries/useMarketMetricsQuery';
+import {
+  getMetricsKey,
+  useMarketMetricsMap,
+  matchesCustomTag,
+  type FlowTimeWindow,
+  type MarketMetrics,
+} from '@/hooks/queries/useMarketMetricsQuery';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketPreferences, type CustomTagConfig } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { RewardsIndicator } from '@/features/markets/components/rewards-indicator';
+import { getMarketPriceBadDebtWarning } from '@/features/markets/utils/market-price-debt-risk';
 
 const ICON_SIZE = 14;
 
@@ -60,18 +67,26 @@ function buildCustomTagDetail(
 
 type MarketIndicatorsProps = {
   market: Market;
+  marketMetrics?: MarketMetrics | null;
   showRisk?: boolean;
   isStared?: boolean;
   hasUserPosition?: boolean;
 };
 
-export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
+export function MarketIndicators({
+  market,
+  marketMetrics,
+  showRisk = false,
+  isStared = false,
+  hasUserPosition = false,
+}: MarketIndicatorsProps) {
   const { showOfficialTrending, customTagConfig } = useMarketPreferences();
-  const shouldLoadMetrics = showOfficialTrending || customTagConfig.enabled;
+  const shouldResolveMarketMetrics = marketMetrics === undefined;
+  const shouldLoadMetrics = shouldResolveMarketMetrics && (showOfficialTrending || customTagConfig.enabled || showRisk);
   const { metricsMap } = useMarketMetricsMap({ enabled: shouldLoadMetrics, defer: true });
 
   const marketKey = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
-  const metrics = metricsMap.get(marketKey);
+  const metrics = marketMetrics ?? metricsMap.get(marketKey);
   const hasLiquidationProtection = Boolean(metrics?.everLiquidated);
 
   // Official trending (backend-computed)
@@ -82,7 +97,8 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
   const hasCustomTag = customTagConfig.enabled && metrics ? matchesCustomTag(metrics, customTagConfig) : false;
 
   const marketWarnings = useMarketWarnings(showRisk ? market : null);
-  const warnings = showRisk ? marketWarnings : [];
+  const marketPriceBadDebtWarning = showRisk ? getMarketPriceBadDebtWarning(metrics) : null;
+  const warnings = showRisk ? [...(marketPriceBadDebtWarning ? [marketPriceBadDebtWarning] : []), ...marketWarnings] : [];
   const hasWarnings = warnings.length > 0;
   const alertWarning = warnings.find((w) => w.level === 'alert');
   const warningLevel = alertWarning ? 'alert' : warnings.length > 0 ? 'warning' : null;
