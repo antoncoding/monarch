@@ -18,7 +18,7 @@ const TabsTrigger = forwardRef<ElementRef<typeof Trigger>, ComponentPropsWithout
   <Trigger
     ref={ref}
     className={cn(
-      'relative inline-flex h-full items-center justify-center whitespace-nowrap px-0 text-lg font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground',
+      'relative inline-flex h-full items-center justify-center whitespace-nowrap px-0 text-lg font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground',
       'after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-transparent data-[state=active]:after:bg-primary',
       'first:mr-6 mr-6',
       className,
@@ -32,7 +32,7 @@ const TabsContent = forwardRef<ElementRef<typeof Content>, ComponentPropsWithout
   <Content
     ref={ref}
     className={cn(
-      'mt-6 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+      'mt-6 focus-visible:outline-none',
       className,
     )}
     {...props}
