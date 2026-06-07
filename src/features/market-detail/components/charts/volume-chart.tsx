@@ -171,7 +171,7 @@ const toSoftBorder = (color: string, percent = 22): string => `color-mix(in srgb
 const getFlowChartColors = (chartColors: ReturnType<typeof useChartColors>): FlowChartColors => ({
   positive: FLOW_POSITIVE_COLOR,
   negative: FLOW_NEGATIVE_COLOR,
-  liquidation: chartColors.apyAtTarget.stroke,
+  liquidation: chartColors.liquidation.stroke,
   net: chartColors.apyAtTarget.stroke,
 });
 
