@@ -16,6 +16,7 @@ function ColorSwatches({ paletteId }: { paletteId: ChartPaletteName }) {
     palette.supply.stroke,
     palette.borrow.stroke,
     palette.apyAtTarget.stroke,
+    palette.liquidation.stroke,
     palette.risk.stroke,
   ];
 

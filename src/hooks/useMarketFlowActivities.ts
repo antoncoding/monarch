@@ -4,7 +4,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import type { TimeseriesOptions } from '@/utils/types';
 
 const MARKET_FLOW_EVENT_PAGE_SIZE = 999;
-const MARKET_FLOW_EVENT_MAX_ROWS_PER_DIRECTION = 10_000;
+const MARKET_FLOW_EVENT_MAX_ROWS_PER_EVENT_TYPE = 20_000;
 const MARKET_FLOW_EVENT_PAGE_OVERLAP = 3;
 
 type MarketFlowActivitiesResult = {
@@ -28,8 +28,8 @@ export const useMarketFlowActivities = (
       let skip = 0;
       let hasNextPage = true;
 
-      while (hasNextPage && skip < MARKET_FLOW_EVENT_MAX_ROWS_PER_DIRECTION) {
-        const pageSize = Math.min(MARKET_FLOW_EVENT_PAGE_SIZE, MARKET_FLOW_EVENT_MAX_ROWS_PER_DIRECTION - skip);
+      while (hasNextPage && skip < MARKET_FLOW_EVENT_MAX_ROWS_PER_EVENT_TYPE) {
+        const pageSize = Math.min(MARKET_FLOW_EVENT_PAGE_SIZE, MARKET_FLOW_EVENT_MAX_ROWS_PER_EVENT_TYPE - skip);
         const page = await fetchMonarchMarketFlowEventsInWindow(
           marketId,
           network,

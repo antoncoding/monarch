@@ -58,6 +58,13 @@ const FLOW_BAR_SIZE = 12;
 
 type MarketFlowDirection = 'positive' | 'negative';
 
+type FlowChartColors = {
+  positive: string;
+  negative: string;
+  liquidation: string;
+  net: string;
+};
+
 type FlowContributor = {
   address: string;
   amount: number;
@@ -69,14 +76,19 @@ type FlowBucketData = {
   bucketEnd: number;
   positive: number;
   negative: number;
+  liquidation: number;
+  negativeTotal: number;
   net: number;
   total: number | null;
   positiveTxCount: number;
   negativeTxCount: number;
+  liquidationTxCount: number;
   positiveAddressCount: number;
   negativeAddressCount: number;
+  liquidationAddressCount: number;
   topPositive: FlowContributor[];
   topNegative: FlowContributor[];
+  topLiquidation: FlowContributor[];
 };
 
 type FlowAccumulator = {
@@ -92,6 +104,7 @@ type MutableFlowBucket = {
   bucketEnd: number;
   positive: FlowAccumulator;
   negative: FlowAccumulator;
+  liquidation: FlowAccumulator;
 };
 
 type FlowAnalytics = {
@@ -100,16 +113,23 @@ type FlowAnalytics = {
   currentLabel: string;
   positiveAmount: number;
   negativeAmount: number;
+  liquidationAmount: number;
+  negativeTotalAmount: number;
   net: number;
   netChangePercentage: number | null;
   positiveTxCount: number;
   negativeTxCount: number;
+  negativeTotalTxCount: number;
   positiveAddressCount: number;
   negativeAddressCount: number;
+  negativeTotalAddressCount: number;
   positiveLabel: string;
   negativeLabel: string;
+  liquidationLabel: string | null;
+  negativeTotalLabel: string;
   positiveActorLabel: string;
   negativeActorLabel: string;
+  liquidationActorLabel: string | null;
   tokenSymbol: string;
 };
 
@@ -148,6 +168,13 @@ const toSoftFill = (color: string, percent = 12): string => `color-mix(in srgb, 
 
 const toSoftBorder = (color: string, percent = 22): string => `color-mix(in srgb, ${color} ${percent}%, var(--color-border))`;
 
+const getFlowChartColors = (chartColors: ReturnType<typeof useChartColors>): FlowChartColors => ({
+  positive: FLOW_POSITIVE_COLOR,
+  negative: FLOW_NEGATIVE_COLOR,
+  liquidation: chartColors.liquidation.stroke,
+  net: chartColors.apyAtTarget.stroke,
+});
+
 const formatAddress = (address: string): string => {
   if (address.length <= 12) {
     return address;
@@ -179,8 +206,11 @@ const getFlowConfig = (flowKind: MarketFlowKind, market: Market) => {
       currentLabel: 'Borrow',
       positiveLabel: 'Borrowed',
       negativeLabel: 'Repaid',
+      liquidationLabel: 'Liquidated',
+      negativeTotalLabel: 'Total Unwind',
       positiveActorLabel: 'Borrowers',
       negativeActorLabel: 'Repayers',
+      liquidationActorLabel: 'Liquidated Borrowers',
       tokenDecimals: market.loanAsset.decimals,
       tokenSymbol: market.loanAsset.symbol,
       currentRaw: safeBigInt(market.state.borrowAssets),
@@ -191,8 +221,11 @@ const getFlowConfig = (flowKind: MarketFlowKind, market: Market) => {
     currentLabel: 'Supply',
     positiveLabel: 'Supplied',
     negativeLabel: 'Withdrawn',
+    liquidationLabel: null,
+    negativeTotalLabel: 'Withdrawn',
     positiveActorLabel: 'Suppliers',
     negativeActorLabel: 'Withdrawers',
+    liquidationActorLabel: null,
     tokenDecimals: market.loanAsset.decimals,
     tokenSymbol: market.loanAsset.symbol,
     currentRaw: safeBigInt(market.state.supplyAssets),
@@ -205,6 +238,7 @@ const createMutableBucket = (bucketStart: number, bucketEnd: number): MutableFlo
   bucketEnd,
   positive: createFlowAccumulator(),
   negative: createFlowAccumulator(),
+  liquidation: createFlowAccumulator(),
 });
 
 const addToAccumulator = (accumulator: FlowAccumulator, amountRaw: bigint, txId: string, address: string | null) => {
@@ -230,6 +264,8 @@ const finalizeContributors = (contributors: Map<string, bigint>, decimals: numbe
 const finalizeBucket = (bucket: MutableFlowBucket, decimals: number): FlowBucketData => {
   const positiveAmount = toDisplayAmount(bucket.positive.amountRaw, decimals);
   const negativeAmount = toDisplayAmount(bucket.negative.amountRaw, decimals);
+  const liquidationAmount = toDisplayAmount(bucket.liquidation.amountRaw, decimals);
+  const negativeTotalAmount = negativeAmount + liquidationAmount;
 
   return {
     x: bucket.x,
@@ -237,14 +273,19 @@ const finalizeBucket = (bucket: MutableFlowBucket, decimals: number): FlowBucket
     bucketEnd: bucket.bucketEnd,
     positive: positiveAmount,
     negative: -negativeAmount,
-    net: positiveAmount - negativeAmount,
+    liquidation: -liquidationAmount,
+    negativeTotal: -negativeTotalAmount,
+    net: positiveAmount - negativeTotalAmount,
     total: null,
     positiveTxCount: bucket.positive.txIds.size,
     negativeTxCount: bucket.negative.txIds.size,
+    liquidationTxCount: bucket.liquidation.txIds.size,
     positiveAddressCount: bucket.positive.addresses.size,
     negativeAddressCount: bucket.negative.addresses.size,
+    liquidationAddressCount: bucket.liquidation.addresses.size,
     topPositive: finalizeContributors(bucket.positive.contributors, decimals),
     topNegative: finalizeContributors(bucket.negative.contributors, decimals),
+    topLiquidation: finalizeContributors(bucket.liquidation.contributors, decimals),
   };
 };
 
@@ -252,7 +293,7 @@ const getFlowAxisMax = (buckets: FlowBucketData[]): number => {
   let maxValue = 0;
 
   for (const bucket of buckets) {
-    maxValue = Math.max(maxValue, Math.abs(bucket.positive), Math.abs(bucket.negative), Math.abs(bucket.net));
+    maxValue = Math.max(maxValue, Math.abs(bucket.positive), Math.abs(bucket.negativeTotal), Math.abs(bucket.net));
   }
 
   return maxValue > 0 ? maxValue * 1.12 : 1;
@@ -276,6 +317,8 @@ const buildFlowAnalytics = (
 
   const positiveTotal = createFlowAccumulator();
   const negativeTotal = createFlowAccumulator();
+  const liquidationTotal = createFlowAccumulator();
+  const negativeCombinedTotal = createFlowAccumulator();
 
   for (const activity of activities) {
     if (activity.timestamp < startTimestamp || activity.timestamp >= endTimestamp) {
@@ -296,14 +339,25 @@ const buildFlowAnalytics = (
     }
 
     const address = activity.address ? activity.address.toLowerCase() : null;
-    addToAccumulator(bucket[activity.direction], amountRaw, activity.hash, address);
-    addToAccumulator(activity.direction === 'positive' ? positiveTotal : negativeTotal, amountRaw, activity.hash, address);
+    if (activity.direction === 'positive') {
+      addToAccumulator(bucket.positive, amountRaw, activity.hash, address);
+      addToAccumulator(positiveTotal, amountRaw, activity.hash, address);
+      continue;
+    }
+
+    const negativeBucket = activity.type === 'liquidation' ? bucket.liquidation : bucket.negative;
+    const negativeAccumulator = activity.type === 'liquidation' ? liquidationTotal : negativeTotal;
+    addToAccumulator(negativeBucket, amountRaw, activity.hash, address);
+    addToAccumulator(negativeAccumulator, amountRaw, activity.hash, address);
+    addToAccumulator(negativeCombinedTotal, amountRaw, activity.hash, address);
   }
 
   const current = toDisplayAmount(config.currentRaw, config.tokenDecimals);
   const positiveAmount = toDisplayAmount(positiveTotal.amountRaw, config.tokenDecimals);
   const negativeAmount = toDisplayAmount(negativeTotal.amountRaw, config.tokenDecimals);
-  const net = positiveAmount - negativeAmount;
+  const liquidationAmount = toDisplayAmount(liquidationTotal.amountRaw, config.tokenDecimals);
+  const negativeTotalAmount = toDisplayAmount(negativeCombinedTotal.amountRaw, config.tokenDecimals);
+  const net = positiveAmount - negativeTotalAmount;
   const estimatedStart = current - net;
   const netChangePercentage = estimatedStart > 0 ? (net / estimatedStart) * 100 : null;
 
@@ -313,16 +367,23 @@ const buildFlowAnalytics = (
     currentLabel: config.currentLabel,
     positiveAmount,
     negativeAmount,
+    liquidationAmount,
+    negativeTotalAmount,
     net,
     netChangePercentage,
     positiveTxCount: positiveTotal.txIds.size,
     negativeTxCount: negativeTotal.txIds.size,
+    negativeTotalTxCount: negativeCombinedTotal.txIds.size,
     positiveAddressCount: positiveTotal.addresses.size,
     negativeAddressCount: negativeTotal.addresses.size,
+    negativeTotalAddressCount: negativeCombinedTotal.addresses.size,
     positiveLabel: config.positiveLabel,
     negativeLabel: config.negativeLabel,
+    liquidationLabel: config.liquidationLabel,
+    negativeTotalLabel: config.negativeTotalLabel,
     positiveActorLabel: config.positiveActorLabel,
     negativeActorLabel: config.negativeActorLabel,
+    liquidationActorLabel: config.liquidationActorLabel,
     tokenSymbol: config.tokenSymbol,
   };
 };
@@ -396,9 +457,14 @@ type FlowBarShapeProps = {
   width?: number;
   height?: number;
   fill?: string;
+  payload?: FlowBucketData;
 };
 
-function FlowBarShape({ direction, ...props }: FlowBarShapeProps & { direction: MarketFlowDirection }) {
+function FlowBarShape({
+  direction,
+  squareEnd = false,
+  ...props
+}: FlowBarShapeProps & { direction: MarketFlowDirection; squareEnd?: boolean }) {
   const x = Number(props.x ?? 0);
   const rawY = Number(props.y ?? 0);
   const width = Number(props.width ?? 0);
@@ -414,8 +480,9 @@ function FlowBarShape({ direction, ...props }: FlowBarShapeProps & { direction: 
   const radius = Math.min(3, width / 2, height);
   const right = x + width;
   const bottom = y + height;
-  const path =
-    direction === 'positive'
+  const path = squareEnd
+    ? `M ${x} ${y} H ${right} V ${bottom} H ${x} Z`
+    : direction === 'positive'
       ? `M ${x} ${bottom} V ${y + radius} Q ${x} ${y} ${x + radius} ${y} H ${right - radius} Q ${right} ${y} ${right} ${
           y + radius
         } V ${bottom} Z`
@@ -446,6 +513,16 @@ function NegativeFlowBarShape(props: FlowBarShapeProps) {
     <FlowBarShape
       {...props}
       direction="negative"
+      squareEnd={Number(props.payload?.liquidation ?? 0) < 0}
+    />
+  );
+}
+
+function LiquidationFlowBarShape(props: FlowBarShapeProps) {
+  return (
+    <FlowBarShape
+      {...props}
+      direction="negative"
     />
   );
 }
@@ -467,6 +544,7 @@ function FlowDirectionStat({
   txCount,
   addressCount,
   symbol,
+  color,
 }: {
   direction: MarketFlowDirection;
   label: string;
@@ -474,10 +552,11 @@ function FlowDirectionStat({
   txCount: number;
   addressCount: number;
   symbol: string;
+  color: string;
 }) {
   const isPositive = direction === 'positive';
   const Icon = isPositive ? TbTrendingUp : TbTrendingDown;
-  const directionColor = isPositive ? FLOW_POSITIVE_COLOR : FLOW_NEGATIVE_COLOR;
+  const directionColor = color;
 
   return (
     <div className="min-w-[152px]">
@@ -511,11 +590,13 @@ function FlowTooltip({
   active,
   payload,
   analytics,
+  colors,
   contributorLabels,
 }: {
   active?: boolean;
   payload?: Array<{ payload?: FlowBucketData }>;
   analytics: FlowAnalytics;
+  colors: FlowChartColors;
   contributorLabels: Record<string, string>;
 }) {
   const bucket = payload?.[0]?.payload;
@@ -566,13 +647,13 @@ function FlowTooltip({
           <span className="flex items-center gap-2 text-secondary">
             <span
               className="h-2 w-2 rounded-sm"
-              style={{ backgroundColor: FLOW_POSITIVE_COLOR }}
+              style={{ backgroundColor: colors.positive }}
             />
             {analytics.positiveLabel}
           </span>
           <span
             className="tabular-nums"
-            style={{ color: FLOW_POSITIVE_COLOR }}
+            style={{ color: colors.positive }}
           >
             {formatFlowAmount(bucket.positive, analytics.tokenSymbol)} ({formatTxCount(bucket.positiveTxCount)})
           </span>
@@ -581,22 +662,39 @@ function FlowTooltip({
           <span className="flex items-center gap-2 text-secondary">
             <span
               className="h-2 w-2 rounded-sm"
-              style={{ backgroundColor: FLOW_NEGATIVE_COLOR }}
+              style={{ backgroundColor: colors.negative }}
             />
             {analytics.negativeLabel}
           </span>
           <span
             className="tabular-nums"
-            style={{ color: FLOW_NEGATIVE_COLOR }}
+            style={{ color: colors.negative }}
           >
             {formatFlowAmount(Math.abs(bucket.negative), analytics.tokenSymbol)} ({formatTxCount(bucket.negativeTxCount)})
           </span>
         </div>
+        {analytics.liquidationLabel ? (
+          <div className="flex items-center justify-between gap-6 text-sm">
+            <span className="flex items-center gap-2 text-secondary">
+              <span
+                className="h-2 w-2 rounded-sm"
+                style={{ backgroundColor: colors.liquidation }}
+              />
+              {analytics.liquidationLabel}
+            </span>
+            <span
+              className="tabular-nums"
+              style={{ color: colors.liquidation }}
+            >
+              {formatFlowAmount(Math.abs(bucket.liquidation), analytics.tokenSymbol)} ({formatTxCount(bucket.liquidationTxCount)})
+            </span>
+          </div>
+        ) : null}
         <div className="flex items-center justify-between gap-6 border-t border-border/60 pt-2 text-sm">
           <span className="text-secondary">Net</span>
           <span
             className="tabular-nums"
-            style={{ color: bucket.net >= 0 ? FLOW_POSITIVE_COLOR : FLOW_NEGATIVE_COLOR }}
+            style={{ color: bucket.net >= 0 ? colors.positive : colors.negative }}
           >
             {formatSignedValue(bucket.net, analytics.tokenSymbol)}
           </span>
@@ -610,6 +708,9 @@ function FlowTooltip({
       </div>
       {renderContributors(`Top ${analytics.positiveActorLabel.toLowerCase()}`, bucket.topPositive, '+')}
       {renderContributors(`Top ${analytics.negativeActorLabel.toLowerCase()}`, bucket.topNegative, '-')}
+      {analytics.liquidationActorLabel
+        ? renderContributors(`Top ${analytics.liquidationActorLabel.toLowerCase()}`, bucket.topLiquidation, '-')
+        : null}
     </div>
   );
 }
@@ -637,6 +738,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
 
   const formatYAxis = (value: number) => formatReadable(value);
   const intervalSeconds = TIMEFRAME_CONFIG[selectedTimeframe].intervalSeconds;
+  const flowColors = useMemo(() => getFlowChartColors(chartColors), [chartColors]);
   const flowAnalytics = useMemo(() => {
     const baseAnalytics = buildFlowAnalytics(
       flowActivitiesData?.activities ?? [],
@@ -650,16 +752,17 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
 
     return attachFlowTotals(baseAnalytics, totals, intervalSeconds);
   }, [flowActivitiesData?.activities, flowKind, historicalData, intervalSeconds, market, selectedTimeframe, selectedTimeRange]);
-  const hasFlowData = flowAnalytics.positiveAmount > 0 || flowAnalytics.negativeAmount > 0;
+  const hasFlowData = flowAnalytics.positiveAmount > 0 || flowAnalytics.negativeTotalAmount > 0;
   const isLoading = isFlowLoading || isHistoricalLoading;
   const isFetching = isFlowFetching || isHistoricalFetching;
   const handleRefresh = useCallback(() => {
     void Promise.all([refetchFlowActivities(), refetchHistoricalData()]);
   }, [refetchFlowActivities, refetchHistoricalData]);
   const flowAxisMax = useMemo(() => getFlowAxisMax(flowAnalytics.buckets), [flowAnalytics.buckets]);
-  const grossFlowAmount = flowAnalytics.positiveAmount + flowAnalytics.negativeAmount;
+  const grossFlowAmount = flowAnalytics.positiveAmount + flowAnalytics.negativeTotalAmount;
   const positiveFlowShare = grossFlowAmount > 0 ? (flowAnalytics.positiveAmount / grossFlowAmount) * 100 : 50;
   const negativeFlowShare = grossFlowAmount > 0 ? (flowAnalytics.negativeAmount / grossFlowAmount) * 100 : 50;
+  const liquidationFlowShare = grossFlowAmount > 0 ? (flowAnalytics.liquidationAmount / grossFlowAmount) * 100 : 0;
   const contributorAddresses = useMemo(() => {
     const addressesByKey = new Map<string, string>();
 
@@ -673,6 +776,14 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
       }
 
       for (const contributor of bucket.topNegative) {
+        const normalizedAddress = normalizeKlerosAddress(contributor.address);
+
+        if (normalizedAddress) {
+          addressesByKey.set(normalizedAddress.toLowerCase(), normalizedAddress);
+        }
+      }
+
+      for (const contributor of bucket.topLiquidation) {
         const normalizedAddress = normalizeKlerosAddress(contributor.address);
 
         if (normalizedAddress) {
@@ -713,7 +824,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
               <span className="tabular-nums text-lg">{formatFlowAmount(flowAnalytics.current, flowAnalytics.tokenSymbol)}</span>
               <span
                 className="text-xs tabular-nums"
-                style={{ color: flowAnalytics.net >= 0 ? FLOW_POSITIVE_COLOR : FLOW_NEGATIVE_COLOR }}
+                style={{ color: flowAnalytics.net >= 0 ? flowColors.positive : flowColors.negative }}
               >
                 {flowAnalytics.netChangePercentage === null ? 'n/a' : formatNetChangePercentage(flowAnalytics.netChangePercentage)}
               </span>
@@ -723,7 +834,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
             <p className="text-xs uppercase tracking-wider text-secondary">Net Flow</p>
             <p
               className="mt-1 tabular-nums text-lg"
-              style={{ color: flowAnalytics.net >= 0 ? FLOW_POSITIVE_COLOR : FLOW_NEGATIVE_COLOR }}
+              style={{ color: flowAnalytics.net >= 0 ? flowColors.positive : flowColors.negative }}
             >
               {formatSignedValue(flowAnalytics.net, flowAnalytics.tokenSymbol)}
             </p>
@@ -735,14 +846,16 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
             label={flowAnalytics.positiveLabel}
             symbol={flowAnalytics.tokenSymbol}
             txCount={flowAnalytics.positiveTxCount}
+            color={flowColors.positive}
           />
           <FlowDirectionStat
-            addressCount={flowAnalytics.negativeAddressCount}
-            amount={flowAnalytics.negativeAmount}
+            addressCount={flowAnalytics.negativeTotalAddressCount}
+            amount={flowAnalytics.negativeTotalAmount}
             direction="negative"
-            label={flowAnalytics.negativeLabel}
+            label={flowAnalytics.negativeTotalLabel}
             symbol={flowAnalytics.tokenSymbol}
-            txCount={flowAnalytics.negativeTxCount}
+            txCount={flowAnalytics.negativeTotalTxCount}
+            color={flowColors.negative}
           />
         </div>
 
@@ -838,6 +951,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
                   <FlowTooltip
                     active={active}
                     analytics={flowAnalytics}
+                    colors={flowColors}
                     contributorLabels={contributorLabels}
                     payload={payload}
                   />
@@ -846,9 +960,12 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
               <Legend
                 {...chartLegendStyle}
                 payload={[
-                  { color: FLOW_POSITIVE_COLOR, type: 'circle', value: flowAnalytics.positiveLabel },
-                  { color: FLOW_NEGATIVE_COLOR, type: 'circle', value: flowAnalytics.negativeLabel },
-                  { color: chartColors.apyAtTarget.stroke, type: 'circle', value: 'Net' },
+                  { color: flowColors.positive, type: 'circle', value: flowAnalytics.positiveLabel },
+                  { color: flowColors.negative, type: 'circle', value: flowAnalytics.negativeLabel },
+                  ...(flowAnalytics.liquidationLabel
+                    ? [{ color: flowColors.liquidation, type: 'circle' as const, value: flowAnalytics.liquidationLabel }]
+                    : []),
+                  { color: flowColors.net, type: 'circle', value: 'Net' },
                 ]}
               />
               <ReferenceLine
@@ -865,7 +982,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
                 dataKey="net"
                 dot={false}
                 name="Net"
-                stroke={chartColors.apyAtTarget.stroke}
+                stroke={flowColors.net}
                 strokeOpacity={0.82}
                 strokeWidth={1.75}
                 type="monotone"
@@ -874,7 +991,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
                 activeBar={false}
                 barSize={FLOW_BAR_SIZE}
                 dataKey="positive"
-                fill={FLOW_POSITIVE_COLOR}
+                fill={flowColors.positive}
                 name={flowAnalytics.positiveLabel}
                 shape={PositiveFlowBarShape}
               />
@@ -882,10 +999,22 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
                 activeBar={false}
                 barSize={FLOW_BAR_SIZE}
                 dataKey="negative"
-                fill={FLOW_NEGATIVE_COLOR}
+                fill={flowColors.negative}
                 name={flowAnalytics.negativeLabel}
                 shape={NegativeFlowBarShape}
+                stackId="unwind"
               />
+              {flowAnalytics.liquidationLabel ? (
+                <Bar
+                  activeBar={false}
+                  barSize={FLOW_BAR_SIZE}
+                  dataKey="liquidation"
+                  fill={flowColors.liquidation}
+                  name={flowAnalytics.liquidationLabel}
+                  shape={LiquidationFlowBarShape}
+                  stackId="unwind"
+                />
+              ) : null}
             </ComposedChart>
           </ResponsiveContainer>
         ) : (
@@ -901,24 +1030,33 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
           <div
             style={{
               width: `${positiveFlowShare}%`,
-              backgroundColor: FLOW_POSITIVE_COLOR,
+              backgroundColor: flowColors.positive,
               opacity: 0.72,
             }}
           />
           <div
             style={{
               width: `${negativeFlowShare}%`,
-              backgroundColor: FLOW_NEGATIVE_COLOR,
+              backgroundColor: flowColors.negative,
               opacity: 0.72,
             }}
           />
+          {flowAnalytics.liquidationLabel ? (
+            <div
+              style={{
+                width: `${liquidationFlowShare}%`,
+                backgroundColor: flowColors.liquidation,
+                opacity: 0.72,
+              }}
+            />
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-x-8 gap-y-2">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-secondary">{flowAnalytics.positiveLabel}</span>
             <span
               className="tabular-nums"
-              style={{ color: FLOW_POSITIVE_COLOR }}
+              style={{ color: flowColors.positive }}
             >
               +{formatFlowAmount(flowAnalytics.positiveAmount, flowAnalytics.tokenSymbol)}
             </span>
@@ -927,16 +1065,27 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
             <span className="text-secondary">{flowAnalytics.negativeLabel}</span>
             <span
               className="tabular-nums"
-              style={{ color: FLOW_NEGATIVE_COLOR }}
+              style={{ color: flowColors.negative }}
             >
               -{formatFlowAmount(flowAnalytics.negativeAmount, flowAnalytics.tokenSymbol)}
             </span>
           </div>
+          {flowAnalytics.liquidationLabel ? (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-secondary">{flowAnalytics.liquidationLabel}</span>
+              <span
+                className="tabular-nums"
+                style={{ color: flowColors.liquidation }}
+              >
+                -{formatFlowAmount(flowAnalytics.liquidationAmount, flowAnalytics.tokenSymbol)}
+              </span>
+            </div>
+          ) : null}
           <div className="flex items-center gap-2 text-sm">
             <span className="text-secondary">Net</span>
             <span
               className="tabular-nums"
-              style={{ color: flowAnalytics.net >= 0 ? FLOW_POSITIVE_COLOR : FLOW_NEGATIVE_COLOR }}
+              style={{ color: flowAnalytics.net >= 0 ? flowColors.positive : flowColors.negative }}
             >
               {formatSignedValue(flowAnalytics.net, flowAnalytics.tokenSymbol)}
             </span>

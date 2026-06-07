@@ -515,6 +515,23 @@ export const envioMarketBorrowFlowEventsWindowQuery = `
       assets
       onBehalf
     }
+    liquidations: Morpho_Liquidate(
+      where: {
+        chainId: { _eq: $chainId }
+        market_id: { _eq: $marketId }
+        timestamp: { _gte: $startTimestamp, _lt: $endTimestamp }
+        repaidAssets: { _gt: "0" }
+      }
+      limit: $limit
+      offset: $offset
+      order_by: [{ timestamp: desc }, { txHash: desc }, { id: desc }]
+    ) {
+      id
+      txHash
+      timestamp
+      assets: repaidAssets
+      onBehalf: borrower
+    }
   }
 `;
 
