@@ -542,7 +542,7 @@ export const assetPricesQuery = `
         chain {
           id
         }
-        price {
+        price(maxLag: 24) {
           usd
         }
       }
