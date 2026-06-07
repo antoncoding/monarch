@@ -22,7 +22,7 @@ import { formatUnits } from 'viem';
 import { Spinner } from '@/components/ui/spinner';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { useChartColors } from '@/constants/chartColors';
+import { MONARCH_PRIMARY, useChartColors } from '@/constants/chartColors';
 import { useVaultRegistry } from '@/contexts/VaultRegistryContext';
 import { formatKlerosAddressTagLabel, getKlerosAddressTagKey, normalizeKlerosAddress } from '@/data-sources/kleros/address-tags';
 import { useKlerosAddressTagsQuery } from '@/hooks/queries/useKlerosAddressTagsQuery';
@@ -52,6 +52,9 @@ type VolumeChartProps = {
 };
 
 const MAX_NET_GROWTH_PERCENT = 20_000;
+const FLOW_POSITIVE_COLOR = 'oklch(0.66 0.12 154)';
+const FLOW_NEGATIVE_COLOR = 'oklch(0.62 0.13 24)';
+const FLOW_LIQUIDATION_COLOR = MONARCH_PRIMARY;
 const FLOW_BAR_SIZE = 12;
 
 type MarketFlowDirection = 'positive' | 'negative';
@@ -166,10 +169,10 @@ const toSoftFill = (color: string, percent = 12): string => `color-mix(in srgb, 
 
 const toSoftBorder = (color: string, percent = 22): string => `color-mix(in srgb, ${color} ${percent}%, var(--color-border))`;
 
-const getFlowChartColors = (flowKind: MarketFlowKind, chartColors: ReturnType<typeof useChartColors>): FlowChartColors => ({
-  positive: flowKind === 'supply' ? chartColors.supply.stroke : chartColors.borrow.stroke,
-  negative: chartColors.withdraw.stroke,
-  liquidation: chartColors.risk.stroke,
+const getFlowChartColors = (chartColors: ReturnType<typeof useChartColors>): FlowChartColors => ({
+  positive: FLOW_POSITIVE_COLOR,
+  negative: FLOW_NEGATIVE_COLOR,
+  liquidation: FLOW_LIQUIDATION_COLOR,
   net: chartColors.apyAtTarget.stroke,
 });
 
@@ -736,7 +739,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
 
   const formatYAxis = (value: number) => formatReadable(value);
   const intervalSeconds = TIMEFRAME_CONFIG[selectedTimeframe].intervalSeconds;
-  const flowColors = useMemo(() => getFlowChartColors(flowKind, chartColors), [chartColors, flowKind]);
+  const flowColors = useMemo(() => getFlowChartColors(chartColors), [chartColors]);
   const flowAnalytics = useMemo(() => {
     const baseAnalytics = buildFlowAnalytics(
       flowActivitiesData?.activities ?? [],
