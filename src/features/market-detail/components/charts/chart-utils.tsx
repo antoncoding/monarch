@@ -181,7 +181,8 @@ export function createLegendClickHandler<T extends Record<string, boolean>>({ vi
         <span
           className="text-xs"
           style={{
-            color: isVisible ? 'var(--color-text-secondary)' : '#666',
+            color: 'var(--color-text-secondary)',
+            opacity: isVisible ? 1 : 0.45,
           }}
         >
           {value}

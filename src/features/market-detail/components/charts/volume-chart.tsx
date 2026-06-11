@@ -55,6 +55,7 @@ const MAX_NET_GROWTH_PERCENT = 20_000;
 const FLOW_POSITIVE_COLOR = 'oklch(0.66 0.12 154)';
 const FLOW_NEGATIVE_COLOR = 'oklch(0.62 0.13 24)';
 const FLOW_BAR_SIZE = 12;
+const VOLUME_TOOLTIP_WRAPPER_STYLE = { zIndex: 40, pointerEvents: 'none' as const };
 
 type MarketFlowDirection = 'positive' | 'negative';
 
@@ -815,8 +816,8 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
   }, [chainId, contributorAddresses, getAddressLabel, klerosAddressTags]);
 
   return (
-    <Card className="overflow-hidden border border-border bg-surface shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="overflow-visible border border-border bg-surface shadow-sm">
+      <div className="relative z-10 flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-6">
           <div className="min-w-[150px]">
             <p className="text-xs uppercase tracking-wider text-secondary">{flowAnalytics.currentLabel}</p>
@@ -901,7 +902,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
         </div>
       </div>
 
-      <div className="w-full">
+      <div className="relative z-20 w-full overflow-visible">
         {isLoading ? (
           <div className="flex h-[350px] items-center justify-center text-primary">
             <Spinner size={30} />
@@ -946,6 +947,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
                 domain={[-flowAxisMax, flowAxisMax]}
               />
               <Tooltip
+                allowEscapeViewBox={{ x: true, y: true }}
                 cursor={chartTooltipCursor}
                 content={({ active, payload }) => (
                   <FlowTooltip
@@ -956,6 +958,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
                     payload={payload}
                   />
                 )}
+                wrapperStyle={VOLUME_TOOLTIP_WRAPPER_STYLE}
               />
               <Legend
                 {...chartLegendStyle}
@@ -1024,7 +1027,7 @@ export function MarketFlowChart({ marketId, chainId, market }: VolumeChartProps)
         )}
       </div>
 
-      <div className="border-t border-border px-6 py-4">
+      <div className="relative z-0 border-t border-border px-6 py-4">
         <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">Window Gross Volume</h4>
         <div className="mb-3 flex h-1.5 overflow-hidden rounded-sm bg-hovered">
           <div
@@ -1229,9 +1232,9 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
   const liquidityStats = getVolumeStats('liquidity');
 
   return (
-    <Card className="overflow-hidden border border-border bg-surface shadow-sm">
+    <Card className="overflow-visible border border-border bg-surface shadow-sm">
       {/* Header: Live Stats + Controls */}
-      <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative z-10 flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Live Stats */}
         <div className="flex flex-wrap gap-x-6 gap-y-4">
           <div>
@@ -1290,7 +1293,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
       </div>
 
       {/* Chart Body - Full Width */}
-      <div className="w-full">
+      <div className="relative z-20 w-full overflow-visible">
         {isLoading ? (
           <div className="flex h-[350px] items-center justify-center text-primary">
             <Spinner size={30} />
@@ -1333,6 +1336,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
                 domain={['auto', 'auto']}
               />
               <Tooltip
+                allowEscapeViewBox={{ x: true, y: true }}
                 cursor={chartTooltipCursor}
                 content={({ active, payload, label }) => (
                   <ChartTooltipContent
@@ -1342,6 +1346,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
                     formatValue={formatValue}
                   />
                 )}
+                wrapperStyle={VOLUME_TOOLTIP_WRAPPER_STYLE}
               />
               <Legend
                 {...chartLegendStyle}
@@ -1383,7 +1388,7 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
       </div>
 
       {/* Footer: IRM Targets + Historical Averages */}
-      <div className="grid grid-cols-1 divide-y border-t border-border lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+      <div className="relative z-0 grid grid-cols-1 divide-y border-t border-border lg:grid-cols-2 lg:divide-x lg:divide-y-0">
         {/* IRM Targets */}
         <div className="px-6 py-4">
           <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">IRM Rebalancing Targets</h4>

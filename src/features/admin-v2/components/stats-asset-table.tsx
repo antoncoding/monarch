@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronUpIcon, ChevronDownIcon } from '@radix-ui/react-icons';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { AdminSortableTableHead } from '@/features/admin-v2/components/admin-sortable-table-head';
 import { formatReadable } from '@/utils/balance';
 import type { EnrichedTransaction } from '@/hooks/useMonarchTransactions';
 
@@ -14,6 +15,7 @@ type StatsAssetTableProps = {
 };
 
 type AssetStats = {
+  id: string;
   loanSymbol: string;
   loanAssetAddress: string;
   chainId: number;
@@ -27,30 +29,6 @@ type AssetStats = {
 
 type SortKey = 'totalVolumeUsd' | 'supplyVolumeUsd' | 'withdrawVolumeUsd' | 'totalCount' | 'supplyCount' | 'withdrawCount';
 type SortDirection = 'asc' | 'desc';
-
-type SortableHeaderProps = {
-  label: string;
-  sortKeyValue: SortKey;
-  currentSortKey: SortKey;
-  sortDirection: SortDirection;
-  onSort: (key: SortKey) => void;
-};
-
-function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
-  return (
-    <TableHead
-      className={`whitespace-nowrap px-2 py-2 font-normal ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
-      onClick={() => onSort(sortKeyValue)}
-      style={{ padding: '0.5rem' }}
-    >
-      <div className="flex cursor-pointer items-center justify-center gap-1 hover:text-primary">
-        <div>{label}</div>
-        {currentSortKey === sortKeyValue &&
-          (sortDirection === 'asc' ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />)}
-      </div>
-    </TableHead>
-  );
-}
 
 export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('totalVolumeUsd');
@@ -68,15 +46,18 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
     setCurrentPage(1);
   };
 
-  // Aggregate transactions by loan asset symbol
+  // Aggregate transactions by chain and loan asset identity.
   const aggregatedData = useMemo(() => {
     const statsMap = new Map<string, AssetStats>();
 
     for (const tx of transactions) {
       const symbol = tx.loanSymbol ?? 'Unknown';
-      const existing = statsMap.get(symbol) ?? {
+      const loanAssetAddress = tx.market?.loanAsset.address ?? '';
+      const assetKey = `${tx.chainId}:${(loanAssetAddress || symbol).toLowerCase()}`;
+      const existing = statsMap.get(assetKey) ?? {
+        id: assetKey,
         loanSymbol: symbol,
-        loanAssetAddress: tx.market?.loanAsset.address ?? '',
+        loanAssetAddress,
         chainId: tx.chainId,
         supplyVolumeUsd: 0,
         withdrawVolumeUsd: 0,
@@ -96,7 +77,7 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
       existing.totalVolumeUsd += tx.usdValue;
       existing.totalCount++;
 
-      statsMap.set(symbol, existing);
+      statsMap.set(assetKey, existing);
     }
 
     return Array.from(statsMap.values());
@@ -121,154 +102,152 @@ export function StatsAssetTable({ transactions, isLoading }: StatsAssetTableProp
   const totalPages = Math.ceil(sortedData.length / entriesPerPage);
 
   return (
-    <div className="rounded-md bg-surface font-zen shadow-sm">
-      <div className="border-b border-border px-6 py-4">
-        <h3 className="font-zen text-lg">Top Assets</h3>
-        <p className="mt-1 text-sm text-secondary">
-          {sortedData.length} asset{sortedData.length === 1 ? '' : 's'}
-        </p>
-      </div>
-      <div className="overflow-x-auto">
-        {sortedData.length === 0 ? (
-          <div className="py-8 text-center text-secondary">{isLoading ? 'Loading assets...' : 'No asset data available'}</div>
-        ) : (
-          <>
-            <Table className="responsive w-full min-w-full rounded-md font-zen">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Asset</TableHead>
-                  <SortableHeader
-                    label="Total Volume"
-                    sortKeyValue="totalVolumeUsd"
-                    currentSortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Supply Volume"
-                    sortKeyValue="supplyVolumeUsd"
-                    currentSortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Withdraw Volume"
-                    sortKeyValue="withdrawVolumeUsd"
-                    currentSortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Total Txns"
-                    sortKeyValue="totalCount"
-                    currentSortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Supply Txns"
-                    sortKeyValue="supplyCount"
-                    currentSortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Withdraw Txns"
-                    sortKeyValue="withdrawCount"
-                    currentSortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentEntries.map((asset) => (
-                  <TableRow
-                    key={asset.loanSymbol}
-                    className="hover:bg-hovered"
+    <TableContainerWithHeader title="Top Assets">
+      {sortedData.length === 0 ? (
+        <div className="py-8 text-center text-secondary">{isLoading ? 'Loading assets...' : 'No asset data available'}</div>
+      ) : (
+        <>
+          <Table className="responsive w-full min-w-full rounded-md">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="whitespace-nowrap text-left font-normal">Asset</TableHead>
+                <AdminSortableTableHead
+                  label="Total Volume"
+                  sortKeyValue="totalVolumeUsd"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <AdminSortableTableHead
+                  label="Supply Volume"
+                  sortKeyValue="supplyVolumeUsd"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <AdminSortableTableHead
+                  label="Withdraw Volume"
+                  sortKeyValue="withdrawVolumeUsd"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <AdminSortableTableHead
+                  label="Total Txns"
+                  sortKeyValue="totalCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <AdminSortableTableHead
+                  label="Supply Txns"
+                  sortKeyValue="supplyCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <AdminSortableTableHead
+                  label="Withdraw Txns"
+                  sortKeyValue="withdrawCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  align="right"
+                />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentEntries.map((asset) => (
+                <TableRow
+                  key={asset.id}
+                  className="hover:bg-hovered"
+                >
+                  {/* Asset */}
+                  <TableCell
+                    className="px-2 py-3"
+                    style={{ minWidth: '120px' }}
                   >
-                    {/* Asset */}
-                    <TableCell
-                      className="px-2 py-3"
-                      style={{ minWidth: '120px' }}
-                    >
-                      <div className="flex items-center justify-center gap-1.5">
-                        <TokenIcon
-                          address={asset.loanAssetAddress}
-                          chainId={asset.chainId}
-                          symbol={asset.loanSymbol}
-                          width={20}
-                          height={20}
-                        />
-                        <span className="whitespace-nowrap text-sm">{asset.loanSymbol}</span>
-                      </div>
-                    </TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <TokenIcon
+                        address={asset.loanAssetAddress}
+                        chainId={asset.chainId}
+                        symbol={asset.loanSymbol}
+                        width={20}
+                        height={20}
+                      />
+                      <span className="whitespace-nowrap text-sm font-normal">{asset.loanSymbol}</span>
+                    </div>
+                  </TableCell>
 
-                    {/* Total Volume */}
-                    <TableCell
-                      className="px-2 py-3 text-center"
-                      style={{ minWidth: '120px' }}
-                    >
-                      <span className="tabular-nums text-sm">${formatReadable(asset.totalVolumeUsd)}</span>
-                    </TableCell>
+                  {/* Total Volume */}
+                  <TableCell
+                    className="px-2 py-3 text-right"
+                    style={{ minWidth: '120px' }}
+                  >
+                    <span className="tabular-nums text-sm">${formatReadable(asset.totalVolumeUsd)}</span>
+                  </TableCell>
 
-                    {/* Supply Volume */}
-                    <TableCell
-                      className="px-2 py-3 text-center"
-                      style={{ minWidth: '120px' }}
-                    >
-                      <span className="tabular-nums text-sm">${formatReadable(asset.supplyVolumeUsd)}</span>
-                    </TableCell>
+                  {/* Supply Volume */}
+                  <TableCell
+                    className="px-2 py-3 text-right"
+                    style={{ minWidth: '120px' }}
+                  >
+                    <span className="tabular-nums text-sm">${formatReadable(asset.supplyVolumeUsd)}</span>
+                  </TableCell>
 
-                    {/* Withdraw Volume */}
-                    <TableCell
-                      className="px-2 py-3 text-center"
-                      style={{ minWidth: '120px' }}
-                    >
-                      <span className="tabular-nums text-sm">${formatReadable(asset.withdrawVolumeUsd)}</span>
-                    </TableCell>
+                  {/* Withdraw Volume */}
+                  <TableCell
+                    className="px-2 py-3 text-right"
+                    style={{ minWidth: '120px' }}
+                  >
+                    <span className="tabular-nums text-sm">${formatReadable(asset.withdrawVolumeUsd)}</span>
+                  </TableCell>
 
-                    {/* Total Txns */}
-                    <TableCell
-                      className="px-2 py-3 text-center"
-                      style={{ minWidth: '100px' }}
-                    >
-                      <span className="text-sm">{asset.totalCount.toLocaleString()}</span>
-                    </TableCell>
+                  {/* Total Txns */}
+                  <TableCell
+                    className="px-2 py-3 text-right"
+                    style={{ minWidth: '100px' }}
+                  >
+                    <span className="text-sm">{asset.totalCount.toLocaleString()}</span>
+                  </TableCell>
 
-                    {/* Supply Txns */}
-                    <TableCell
-                      className="px-2 py-3 text-center"
-                      style={{ minWidth: '100px' }}
-                    >
-                      <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>
-                    </TableCell>
+                  {/* Supply Txns */}
+                  <TableCell
+                    className="px-2 py-3 text-right"
+                    style={{ minWidth: '100px' }}
+                  >
+                    <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>
+                  </TableCell>
 
-                    {/* Withdraw Txns */}
-                    <TableCell
-                      className="px-2 py-3 text-center"
-                      style={{ minWidth: '100px' }}
-                    >
-                      <span className="text-sm">{asset.withdrawCount.toLocaleString()}</span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="p-4">
-              <TablePagination
-                mode="fixed"
-                totalPages={totalPages}
-                totalEntries={sortedData.length}
-                currentPage={currentPage}
-                pageSize={entriesPerPage}
-                onPageChange={setCurrentPage}
-                isLoading={isLoading}
-              />
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+                  {/* Withdraw Txns */}
+                  <TableCell
+                    className="px-2 py-3 text-right"
+                    style={{ minWidth: '100px' }}
+                  >
+                    <span className="text-sm">{asset.withdrawCount.toLocaleString()}</span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="p-4">
+            <TablePagination
+              mode="fixed"
+              totalPages={totalPages}
+              totalEntries={sortedData.length}
+              currentPage={currentPage}
+              pageSize={entriesPerPage}
+              onPageChange={setCurrentPage}
+              isLoading={isLoading}
+            />
+          </div>
+        </>
+      )}
+    </TableContainerWithHeader>
   );
 }

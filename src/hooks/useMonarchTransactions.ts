@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatUnits } from 'viem';
 import {
   fetchMonarchTransactions,
+  type MonarchBorrowTransaction,
   type MonarchSupplyTransaction,
   type MonarchWithdrawTransaction,
   type TimeRange,
@@ -27,7 +28,7 @@ const ETH_PEGGED_SYMBOLS = new Set(['WETH', 'ETH', 'wstETH', 'cbETH', 'rETH', 's
 // Known BTC-pegged tokens
 const BTC_PEGGED_SYMBOLS = new Set(['WBTC', 'BTC', 'tBTC', 'cbBTC', 'sBTC', 'renBTC', 'BTCB']);
 
-export type EnrichedTransaction = {
+type EnrichedAdminTransaction<TType extends 'supply' | 'withdraw' | 'borrow'> = {
   txHash: string;
   timestamp: number;
   marketId: string;
@@ -35,11 +36,16 @@ export type EnrichedTransaction = {
   assetsFormatted: number;
   usdValue: number;
   chainId: number;
-  type: 'supply' | 'withdraw';
+  type: TType;
   market?: Market;
   loanSymbol?: string;
   onBehalf: string;
 };
+
+export type EnrichedSupplyTransaction = EnrichedAdminTransaction<'supply'>;
+export type EnrichedWithdrawTransaction = EnrichedAdminTransaction<'withdraw'>;
+export type EnrichedBorrowTransaction = EnrichedAdminTransaction<'borrow'>;
+export type EnrichedTransaction = EnrichedSupplyTransaction | EnrichedWithdrawTransaction;
 
 export type ChainStats = {
   chainId: number;
@@ -61,8 +67,9 @@ export type DailyVolume = {
 
 type UseMonarchTransactionsReturn = {
   transactions: EnrichedTransaction[];
-  supplies: EnrichedTransaction[];
-  withdraws: EnrichedTransaction[];
+  supplies: EnrichedSupplyTransaction[];
+  withdraws: EnrichedWithdrawTransaction[];
+  borrows: EnrichedBorrowTransaction[];
   chainStats: ChainStats[];
   dailyVolumes: DailyVolume[];
   totalSupplyVolumeUsd: number;
@@ -154,8 +161,9 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
   const enrichedData = useMemo(() => {
     if (!rawTransactions) {
       return {
-        supplies: [] as EnrichedTransaction[],
-        withdraws: [] as EnrichedTransaction[],
+        supplies: [] as EnrichedSupplyTransaction[],
+        withdraws: [] as EnrichedWithdrawTransaction[],
+        borrows: [] as EnrichedBorrowTransaction[],
         transactions: [] as EnrichedTransaction[],
       };
     }
@@ -192,7 +200,10 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
       return 0;
     };
 
-    const enrichTx = (tx: MonarchSupplyTransaction | MonarchWithdrawTransaction, type: 'supply' | 'withdraw'): EnrichedTransaction => {
+    const enrichTx = <TType extends 'supply' | 'withdraw' | 'borrow'>(
+      tx: MonarchSupplyTransaction | MonarchWithdrawTransaction | MonarchBorrowTransaction,
+      type: TType,
+    ): EnrichedAdminTransaction<TType> => {
       const market = marketMap.get(tx.market_id.toLowerCase());
       const decimals = market?.loanAsset.decimals ?? 18;
       const formatted = Number(formatUnits(BigInt(tx.assets), decimals));
@@ -214,9 +225,10 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
 
     const supplies = rawTransactions.supplies.map((tx) => enrichTx(tx, 'supply'));
     const withdraws = rawTransactions.withdraws.map((tx) => enrichTx(tx, 'withdraw'));
+    const borrows = rawTransactions.borrows.map((tx) => enrichTx(tx, 'borrow'));
     const transactions = [...supplies, ...withdraws].sort((a, b) => b.timestamp - a.timestamp);
 
-    return { supplies, withdraws, transactions };
+    return { supplies, withdraws, borrows, transactions };
   }, [rawTransactions, marketMap, tokenPrices, ethPrice, btcPrice]);
 
   // Calculate chain stats
@@ -323,6 +335,7 @@ export const useMonarchTransactions = (timeframe: TimeFrame): UseMonarchTransact
     transactions: enrichedData.transactions,
     supplies: enrichedData.supplies,
     withdraws: enrichedData.withdraws,
+    borrows: enrichedData.borrows,
     chainStats,
     dailyVolumes,
     ...totals,

@@ -121,14 +121,13 @@ const DropdownMenuCheckboxItem = React.forwardRef<
       "relative flex cursor-pointer select-none items-center gap-3 rounded-sm px-4 py-2 text-sm outline-none transition-colors font-zen",
       "text-primary hover:bg-hovered focus:bg-hovered",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      !startContent && "pl-8",
       className
     )}
     checked={checked}
     {...props}
   >
     {!startContent && (
-      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
         <DropdownMenuPrimitive.ItemIndicator>
           <FaCheck className="h-4 w-4" />
         </DropdownMenuPrimitive.ItemIndicator>
@@ -137,6 +136,13 @@ const DropdownMenuCheckboxItem = React.forwardRef<
     {startContent && <span className="flex items-center justify-center">{startContent}</span>}
     <span className="flex-grow">{children}</span>
     {endContent && <span className="flex items-center justify-center ml-auto">{endContent}</span>}
+    {startContent && (
+      <span className="ml-auto flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+        <DropdownMenuPrimitive.ItemIndicator>
+          <FaCheck className="h-4 w-4" />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+    )}
   </DropdownMenuPrimitive.CheckboxItem>
 ))
 DropdownMenuCheckboxItem.displayName =
@@ -183,7 +189,7 @@ const DropdownMenuLabel = React.forwardRef<
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={cn(
-      "px-4 py-2 text-sm font-semibold font-zen text-primary",
+      "px-4 py-2 text-sm font-normal font-zen text-primary",
       inset && "pl-8",
       className
     )}

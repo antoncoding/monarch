@@ -3,9 +3,9 @@
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Spinner } from '@/components/ui/spinner';
 import { useChartColors } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
+import { AdminChartLoadingState } from '@/features/admin-v2/components/admin-chart-loading-state';
 import {
   ChartGradients,
   ChartTooltipContent,
@@ -17,8 +17,6 @@ import type { DailyVolume } from '@/hooks/useMonarchTransactions';
 
 type StatsVolumeChartProps = {
   dailyVolumes: DailyVolume[];
-  totalSupplyVolumeUsd: number;
-  totalWithdrawVolumeUsd: number;
   isLoading: boolean;
 };
 
@@ -29,7 +27,7 @@ function createStatsVolumeGradients(colors: ReturnType<typeof useChartColors>) {
   ];
 }
 
-export function StatsVolumeChart({ dailyVolumes, totalSupplyVolumeUsd, totalWithdrawVolumeUsd, isLoading }: StatsVolumeChartProps) {
+export function StatsVolumeChart({ dailyVolumes, isLoading }: StatsVolumeChartProps) {
   const chartColors = useChartColors();
   const [visibleLines, setVisibleLines] = useState({
     supply: true,
@@ -49,44 +47,16 @@ export function StatsVolumeChart({ dailyVolumes, totalSupplyVolumeUsd, totalWith
 
   const legendHandlers = createLegendClickHandler({ visibleLines, setVisibleLines });
 
-  const totalVolume = totalSupplyVolumeUsd + totalWithdrawVolumeUsd;
-
   return (
-    <Card className="overflow-hidden border border-border bg-surface shadow-sm">
-      {/* Header: Live Stats */}
-      <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-6">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-secondary">Total Volume</p>
-            <span className="tabular-nums text-lg">${formatReadable(totalVolume)}</span>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wider text-secondary">Supply Volume</p>
-            <span
-              className="tabular-nums text-lg"
-              style={{ color: chartColors.supply.stroke }}
-            >
-              ${formatReadable(totalSupplyVolumeUsd)}
-            </span>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wider text-secondary">Withdraw Volume</p>
-            <span
-              className="tabular-nums text-lg"
-              style={{ color: chartColors.withdraw.stroke }}
-            >
-              ${formatReadable(totalWithdrawVolumeUsd)}
-            </span>
-          </div>
-        </div>
+    <Card className="overflow-visible border border-border bg-surface shadow-sm">
+      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-3 dark:border-gray-800">
+        <h3 className="font-monospace text-xs uppercase text-secondary">Daily Volume</h3>
       </div>
 
       {/* Chart Body */}
-      <div className="w-full">
+      <div className="relative z-20 w-full overflow-visible">
         {isLoading ? (
-          <div className="flex h-[350px] items-center justify-center text-primary">
-            <Spinner size={30} />
-          </div>
+          <AdminChartLoadingState className="h-[350px]" />
         ) : chartData.length === 0 ? (
           <div className="flex h-[350px] items-center justify-center text-secondary">No data available</div>
         ) : (
@@ -126,6 +96,8 @@ export function StatsVolumeChart({ dailyVolumes, totalSupplyVolumeUsd, totalWith
               />
               <Tooltip
                 cursor={chartTooltipCursor}
+                allowEscapeViewBox={{ x: true, y: true }}
+                wrapperStyle={{ zIndex: 30, pointerEvents: 'none' }}
                 content={({ active, payload, label }) => (
                   <ChartTooltipContent
                     active={active}
@@ -162,21 +134,6 @@ export function StatsVolumeChart({ dailyVolumes, totalSupplyVolumeUsd, totalWith
             </AreaChart>
           </ResponsiveContainer>
         )}
-      </div>
-
-      {/* Footer: Summary */}
-      <div className="border-t border-border px-6 py-4">
-        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">Period Summary</h4>
-        <div className="flex flex-wrap gap-x-8 gap-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-secondary">Transactions</span>
-            <span className="tabular-nums text-sm">{dailyVolumes.length} days</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-secondary">Avg Daily Volume</span>
-            <span className="tabular-nums text-sm">${formatReadable(dailyVolumes.length > 0 ? totalVolume / dailyVolumes.length : 0)}</span>
-          </div>
-        </div>
       </div>
     </Card>
   );

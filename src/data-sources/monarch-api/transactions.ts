@@ -25,6 +25,15 @@ export type MonarchWithdrawTransaction = {
   onBehalf: string;
 };
 
+export type MonarchBorrowTransaction = {
+  txHash: string;
+  timestamp: number;
+  market_id: string;
+  assets: string;
+  chainId: number;
+  onBehalf: string;
+};
+
 type SuppliesResponse = {
   data: {
     Morpho_Supply?: MonarchSupplyTransaction[];
@@ -34,6 +43,12 @@ type SuppliesResponse = {
 type WithdrawsResponse = {
   data: {
     Morpho_Withdraw?: MonarchWithdrawTransaction[];
+  };
+};
+
+type BorrowsResponse = {
+  data: {
+    Morpho_Borrow?: MonarchBorrowTransaction[];
   };
 };
 
@@ -91,8 +106,43 @@ const fetchWithdrawsPage = async (timeRange: FrozenTimeRange, limit: number, off
   return response.data.Morpho_Withdraw ?? [];
 };
 
+const fetchBorrowsPage = async (timeRange: FrozenTimeRange, limit: number, offset: number): Promise<MonarchBorrowTransaction[]> => {
+  const query = `
+    query MonarchBorrows($startTimestamp: numeric!, $endTimestamp: numeric!, $limit: Int!, $offset: Int!) {
+      Morpho_Borrow(
+        where: {isMonarch: {_eq: true}, timestamp: {_gte: $startTimestamp, _lte: $endTimestamp}},
+        limit: $limit, offset: $offset, order_by: {timestamp: desc}
+      ) { txHash timestamp market_id assets chainId onBehalf }
+    }
+  `;
+
+  const variables = {
+    startTimestamp: timeRange.startTimestamp,
+    endTimestamp: timeRange.endTimestamp,
+    limit,
+    offset,
+  };
+
+  const response = await monarchGraphqlFetcher<BorrowsResponse>(query, variables);
+  return response.data.Morpho_Borrow ?? [];
+};
+
+const fetchAllPages = async <T>(fetchPage: (limit: number, offset: number) => Promise<T[]>, limit: number): Promise<T[]> => {
+  const items: T[] = [];
+  let offset = 0;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const pageItems = await fetchPage(limit, offset);
+    items.push(...pageItems);
+    if (pageItems.length < limit) break;
+    offset += limit;
+  }
+
+  return items;
+};
+
 /**
- * Fetches all supply and withdraw transactions with independent pagination.
+ * Fetches all supply, withdraw, and borrow transactions with independent pagination.
  * Each collection is fetched completely before returning.
  * Freezes endTimestamp at start to ensure consistent results during pagination.
  */
@@ -102,29 +152,18 @@ export const fetchMonarchTransactions = async (
 ): Promise<{
   supplies: MonarchSupplyTransaction[];
   withdraws: MonarchWithdrawTransaction[];
+  borrows: MonarchBorrowTransaction[];
 }> => {
   const frozenTimeRange: FrozenTimeRange = {
     startTimestamp: timeRange.startTimestamp,
     endTimestamp: timeRange.endTimestamp ?? Math.floor(Date.now() / 1000),
   };
 
-  const allSupplies: MonarchSupplyTransaction[] = [];
-  let suppliesOffset = 0;
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const supplies = await fetchSuppliesPage(frozenTimeRange, limit, suppliesOffset);
-    allSupplies.push(...supplies);
-    if (supplies.length < limit) break;
-    suppliesOffset += limit;
-  }
+  const [allSupplies, allWithdraws, allBorrows] = await Promise.all([
+    fetchAllPages((pageLimit, offset) => fetchSuppliesPage(frozenTimeRange, pageLimit, offset), limit),
+    fetchAllPages((pageLimit, offset) => fetchWithdrawsPage(frozenTimeRange, pageLimit, offset), limit),
+    fetchAllPages((pageLimit, offset) => fetchBorrowsPage(frozenTimeRange, pageLimit, offset), limit),
+  ]);
 
-  const allWithdraws: MonarchWithdrawTransaction[] = [];
-  let withdrawsOffset = 0;
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const withdraws = await fetchWithdrawsPage(frozenTimeRange, limit, withdrawsOffset);
-    allWithdraws.push(...withdraws);
-    if (withdraws.length < limit) break;
-    withdrawsOffset += limit;
-  }
-
-  return { supplies: allSupplies, withdraws: allWithdraws };
+  return { supplies: allSupplies, withdraws: allWithdraws, borrows: allBorrows };
 };

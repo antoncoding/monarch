@@ -46,35 +46,36 @@ export function PasswordGate({ children }: PasswordGateProps) {
       <Card className="w-full max-w-md">
         <CardBody className="p-6">
           <div className="mb-6 text-center">
-            <h1 className="font-zen text-xl">Stats V2 (Experimental)</h1>
-            <p className="mt-2 text-sm text-secondary">
-              This page uses the experimental shared Monarch API and may be reverted if costs become too high.
-            </p>
+            <h1 className="font-zen text-xl">Monarch Stats</h1>
+            <p className="mt-2 text-sm text-secondary">Protected admin dashboard for Monarch protocol activity.</p>
           </div>
 
           <form onSubmit={handleSubmit}>
             <Input
               type="password"
-              label="Access Password"
+              label="Access password"
               placeholder="Enter password"
               value={password}
               onValueChange={setPassword}
               isInvalid={!!error}
               errorMessage={error ?? undefined}
               autoFocus
+              autoComplete="current-password"
             />
 
             <Button
               type="submit"
               variant="primary"
-              className="mt-4 w-full"
+              className="mt-4 font-normal"
+              fullWidth
+              isLoading={isLoading}
               disabled={isLoading || !password}
             >
-              {isLoading ? 'Verifying...' : 'Access Dashboard'}
+              Access dashboard
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-secondary">Contact the team if you need access credentials.</p>
+          <p className="mt-4 text-center text-xs text-secondary">Contact the team for access credentials.</p>
         </CardBody>
       </Card>
     </div>

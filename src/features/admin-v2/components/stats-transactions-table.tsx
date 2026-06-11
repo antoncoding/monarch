@@ -4,8 +4,9 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import moment from 'moment';
-import { ChevronUpIcon, ChevronDownIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { TablePagination } from '@/components/shared/table-pagination';
@@ -13,8 +14,9 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
-import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
+import { useChartColors } from '@/constants/chartColors';
+import { AdminSortableTableHead } from '@/features/admin-v2/components/admin-sortable-table-head';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getTruncatedAssetName } from '@/utils/oracle';
@@ -28,43 +30,20 @@ type StatsTransactionsTableProps = {
 type SortKey = 'timestamp' | 'usdValue';
 type SortDirection = 'asc' | 'desc';
 
-type SortableHeaderProps = {
-  label: string;
-  sortKeyValue: SortKey;
-  currentSortKey: SortKey;
-  sortDirection: SortDirection;
-  onSort: (key: SortKey) => void;
-};
-
-function getChainFilterLabel(selectedChains: number[]): string {
-  if (selectedChains.length === 0) return 'All chains';
+function getChainFilterValue(selectedChains: number[]): string {
+  if (selectedChains.length === 0) return 'All';
   if (selectedChains.length === 1) return getNetworkName(selectedChains[0]) ?? 'Chain';
-  return `${selectedChains.length} chains`;
+  return `${selectedChains.length} selected`;
 }
 
-function getTypeFilterLabel(selectedTypes: ('supply' | 'withdraw')[]): string {
-  if (selectedTypes.length === 0) return 'All types';
+function getTypeFilterValue(selectedTypes: ('supply' | 'withdraw')[]): string {
+  if (selectedTypes.length === 0) return 'All';
   if (selectedTypes.length === 1) return selectedTypes[0] === 'supply' ? 'Supply' : 'Withdraw';
-  return 'Both types';
-}
-
-function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
-  return (
-    <TableHead
-      className={`whitespace-nowrap px-2 py-2 font-normal ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
-      onClick={() => onSort(sortKeyValue)}
-      style={{ padding: '0.5rem' }}
-    >
-      <div className="flex cursor-pointer items-center justify-center gap-1 hover:text-primary">
-        <div>{label}</div>
-        {currentSortKey === sortKeyValue &&
-          (sortDirection === 'asc' ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />)}
-      </div>
-    </TableHead>
-  );
+  return 'Both';
 }
 
 export function StatsTransactionsTable({ transactions, isLoading }: StatsTransactionsTableProps) {
+  const chartColors = useChartColors();
   const [sortKey, setSortKey] = useState<SortKey>('timestamp');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -139,273 +118,278 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
     setCurrentPage(1);
   };
 
+  const tableActions = (
+    <div className="flex flex-wrap items-center gap-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="group flex h-10 min-w-[120px] max-w-[200px] items-center gap-2 rounded-sm bg-surface px-3 font-zen text-sm shadow-sm transition-all duration-200 hover:bg-hovered"
+            aria-label={`Chain: ${getChainFilterValue(selectedChains)}`}
+          >
+            <span className="text-secondary">Chain:</span>
+            <span className="min-w-0 flex-1 truncate text-primary">{getChainFilterValue(selectedChains)}</span>
+            <ChevronDownIcon className="h-4 w-4 shrink-0 text-secondary transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="p-1"
+        >
+          {uniqueChainIds.map((chainId) => {
+            const networkImg = getNetworkImg(chainId);
+            const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
+            return (
+              <DropdownMenuCheckboxItem
+                key={chainId}
+                checked={selectedChains.includes(chainId)}
+                className="gap-2 px-2"
+                onCheckedChange={(checked) => handleChainToggle(chainId, !!checked)}
+                startContent={
+                  networkImg ? (
+                    <Image
+                      src={networkImg as string}
+                      alt={networkName}
+                      width={16}
+                      height={16}
+                      className="rounded-full"
+                    />
+                  ) : undefined
+                }
+              >
+                {networkName}
+              </DropdownMenuCheckboxItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="group flex h-10 min-w-[120px] max-w-[200px] items-center gap-2 rounded-sm bg-surface px-3 font-zen text-sm shadow-sm transition-all duration-200 hover:bg-hovered"
+            aria-label={`Type: ${getTypeFilterValue(selectedTypes)}`}
+          >
+            <span className="text-secondary">Type:</span>
+            <span className="min-w-0 flex-1 truncate text-primary">{getTypeFilterValue(selectedTypes)}</span>
+            <ChevronDownIcon className="h-4 w-4 shrink-0 text-secondary transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="p-1"
+        >
+          <DropdownMenuCheckboxItem
+            checked={selectedTypes.includes('supply')}
+            className="gap-2 px-2"
+            onCheckedChange={(checked) => handleTypeToggle('supply', !!checked)}
+          >
+            Supply
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={selectedTypes.includes('withdraw')}
+            className="gap-2 px-2"
+            onCheckedChange={(checked) => handleTypeToggle('withdraw', !!checked)}
+          >
+            Withdraw
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+
   return (
-    <div className="rounded-md bg-surface font-zen shadow-sm">
-      <div className="border-b border-border px-6 py-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="font-zen text-lg">Recent Transactions</h3>
-            <p className="mt-1 text-sm text-secondary">
-              {filteredData.length} transaction{filteredData.length === 1 ? '' : 's'}
-              {filteredData.length !== transactions.length && ` (filtered from ${transactions.length})`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Chain Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="surface"
-                  size="sm"
-                  className="min-w-[120px]"
-                >
-                  {getChainFilterLabel(selectedChains)}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {uniqueChainIds.map((chainId) => {
-                  const networkImg = getNetworkImg(chainId);
-                  const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={chainId}
-                      checked={selectedChains.includes(chainId)}
-                      onCheckedChange={(checked) => handleChainToggle(chainId, !!checked)}
-                      startContent={
-                        networkImg ? (
+    <TableContainerWithHeader
+      title="Recent Transactions"
+      actions={tableActions}
+    >
+      {sortedData.length === 0 ? (
+        <div className="py-8 text-center text-secondary">{isLoading ? 'Loading transactions...' : 'No transaction data available'}</div>
+      ) : (
+        <>
+          <Table className="responsive w-full min-w-full rounded-md">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="whitespace-nowrap text-left font-normal">Chain</TableHead>
+                <TableHead className="whitespace-nowrap text-left font-normal">Type</TableHead>
+                <TableHead className="whitespace-nowrap text-left font-normal">User</TableHead>
+                <TableHead className="whitespace-nowrap text-left font-normal">Asset</TableHead>
+                <TableHead className="whitespace-nowrap text-left font-normal">Market</TableHead>
+                <AdminSortableTableHead
+                  label="Amount (USD)"
+                  sortKeyValue="usdValue"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <TableHead className="whitespace-nowrap text-left font-normal">Tx Hash</TableHead>
+                <AdminSortableTableHead
+                  label="Time"
+                  sortKeyValue="timestamp"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentEntries.map((tx) => {
+                const networkImg = getNetworkImg(tx.chainId);
+                const networkName = getNetworkName(tx.chainId) ?? `Chain ${tx.chainId}`;
+                const marketPath = tx.market ? `/market/${tx.chainId}/${tx.market.uniqueKey}` : null;
+
+                return (
+                  <TableRow
+                    key={`${tx.chainId}-${tx.txHash}-${tx.type}-${tx.marketId}-${tx.assets}-${tx.timestamp}`}
+                    className="hover:bg-hovered"
+                  >
+                    {/* Chain */}
+                    <TableCell
+                      className="px-2 py-3"
+                      style={{ minWidth: '100px' }}
+                    >
+                      <div className="flex items-center gap-2">
+                        {networkImg && (
                           <Image
                             src={networkImg as string}
                             alt={networkName}
-                            width={16}
-                            height={16}
+                            width={20}
+                            height={20}
                             className="rounded-full"
                           />
-                        ) : undefined
-                      }
-                    >
-                      {networkName}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Type Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="surface"
-                  size="sm"
-                  className="min-w-[100px]"
-                >
-                  {getTypeFilterLabel(selectedTypes)}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuCheckboxItem
-                  checked={selectedTypes.includes('supply')}
-                  onCheckedChange={(checked) => handleTypeToggle('supply', !!checked)}
-                >
-                  Supply
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedTypes.includes('withdraw')}
-                  onCheckedChange={(checked) => handleTypeToggle('withdraw', !!checked)}
-                >
-                  Withdraw
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-      <div className="overflow-x-auto">
-        {sortedData.length === 0 ? (
-          <div className="py-8 text-center text-secondary">{isLoading ? 'Loading transactions...' : 'No transaction data available'}</div>
-        ) : (
-          <>
-            <Table className="responsive w-full min-w-full rounded-md font-zen">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Chain</TableHead>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Type</TableHead>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">User</TableHead>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Asset</TableHead>
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Market</TableHead>
-                  <SortableHeader
-                    label="Amount (USD)"
-                    sortKeyValue="usdValue"
-                    currentSortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <TableHead className="whitespace-nowrap px-2 py-2 font-normal">Tx Hash</TableHead>
-                  <SortableHeader
-                    label="Time"
-                    sortKeyValue="timestamp"
-                    currentSortKey={sortKey}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentEntries.map((tx, idx) => {
-                  const networkImg = getNetworkImg(tx.chainId);
-                  const networkName = getNetworkName(tx.chainId) ?? `Chain ${tx.chainId}`;
-                  const marketPath = tx.market ? `/market/${tx.chainId}/${tx.market.uniqueKey}` : null;
-
-                  return (
-                    <TableRow
-                      key={`${tx.txHash}-${idx}`}
-                      className="hover:bg-hovered"
-                    >
-                      {/* Chain */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '100px' }}
-                      >
-                        <div className="flex items-center gap-2">
-                          {networkImg && (
-                            <Image
-                              src={networkImg as string}
-                              alt={networkName}
-                              width={20}
-                              height={20}
-                              className="rounded-full"
-                            />
-                          )}
-                          <span className="text-sm">{networkName}</span>
-                        </div>
-                      </TableCell>
-
-                      {/* Type */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '80px' }}
-                      >
-                        <span
-                          className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${
-                            tx.type === 'supply' ? 'text-green-500' : 'text-red-500'
-                          }`}
-                        >
-                          {tx.type === 'supply' ? 'Supply' : 'Withdraw'}
-                        </span>
-                      </TableCell>
-
-                      {/* User */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '140px' }}
-                      >
-                        <AccountIdentity
-                          address={tx.onBehalf as Address}
-                          chainId={tx.chainId}
-                          variant="badge"
-                          linkTo="profile"
-                        />
-                      </TableCell>
-
-                      {/* Asset */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '100px' }}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          {tx.market && (
-                            <TokenIcon
-                              address={tx.market.loanAsset.address}
-                              chainId={tx.market.morphoBlue.chain.id}
-                              symbol={tx.loanSymbol ?? ''}
-                              width={16}
-                              height={16}
-                            />
-                          )}
-                          <span className="whitespace-nowrap text-sm">{getTruncatedAssetName(tx.loanSymbol ?? 'Unknown')}</span>
-                        </div>
-                      </TableCell>
-
-                      {/* Market */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '200px' }}
-                      >
-                        {tx.market && marketPath ? (
-                          <Link
-                            href={marketPath}
-                            className="no-underline hover:no-underline"
-                          >
-                            <div className="flex items-center gap-2">
-                              <MarketIdBadge
-                                marketId={tx.market.uniqueKey}
-                                chainId={tx.market.morphoBlue.chain.id}
-                                showLink={false}
-                              />
-                              <MarketIdentity
-                                market={tx.market}
-                                focus={MarketIdentityFocus.Collateral}
-                                chainId={tx.market.morphoBlue.chain.id}
-                                mode={MarketIdentityMode.Minimum}
-                                showLltv={false}
-                                showOracle={false}
-                              />
-                            </div>
-                          </Link>
-                        ) : (
-                          <span className="text-xs text-secondary">—</span>
                         )}
-                      </TableCell>
+                        <span className="text-sm font-normal">{networkName}</span>
+                      </div>
+                    </TableCell>
 
-                      {/* Amount (USD) */}
-                      <TableCell
-                        className="px-2 py-3 text-right"
-                        style={{ minWidth: '120px' }}
+                    {/* Type */}
+                    <TableCell
+                      className="px-2 py-3"
+                      style={{ minWidth: '80px' }}
+                    >
+                      <span
+                        className="inline-flex items-center rounded-sm border border-border/60 bg-hovered/40 px-2 py-1 text-xs"
+                        style={{ color: tx.type === 'supply' ? chartColors.supply.stroke : chartColors.withdraw.stroke }}
                       >
-                        <span className="tabular-nums text-sm">
-                          ${formatReadable(tx.usdValue)}
-                          <span className="ml-1 text-xs text-secondary">
-                            ({formatReadable(tx.assetsFormatted)} {tx.loanSymbol})
-                          </span>
+                        {tx.type === 'supply' ? 'Supply' : 'Withdraw'}
+                      </span>
+                    </TableCell>
+
+                    {/* User */}
+                    <TableCell
+                      className="px-2 py-3"
+                      style={{ minWidth: '140px' }}
+                    >
+                      <AccountIdentity
+                        address={tx.onBehalf as Address}
+                        chainId={tx.chainId}
+                        variant="badge"
+                        linkTo="profile"
+                        className="font-normal"
+                      />
+                    </TableCell>
+
+                    {/* Asset */}
+                    <TableCell
+                      className="px-2 py-3"
+                      style={{ minWidth: '100px' }}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {tx.market && (
+                          <TokenIcon
+                            address={tx.market.loanAsset.address}
+                            chainId={tx.market.morphoBlue.chain.id}
+                            symbol={tx.loanSymbol ?? ''}
+                            width={16}
+                            height={16}
+                          />
+                        )}
+                        <span className="whitespace-nowrap text-sm font-normal">{getTruncatedAssetName(tx.loanSymbol ?? 'Unknown')}</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Market */}
+                    <TableCell
+                      className="px-2 py-3"
+                      style={{ minWidth: '200px' }}
+                    >
+                      {tx.market && marketPath ? (
+                        <Link
+                          href={marketPath}
+                          className="no-underline hover:no-underline"
+                        >
+                          <div className="flex items-center gap-2 [&_span]:font-normal">
+                            <MarketIdBadge
+                              marketId={tx.market.uniqueKey}
+                              chainId={tx.market.morphoBlue.chain.id}
+                              showLink={false}
+                            />
+                            <MarketIdentity
+                              market={tx.market}
+                              focus={MarketIdentityFocus.Collateral}
+                              chainId={tx.market.morphoBlue.chain.id}
+                              mode={MarketIdentityMode.Minimum}
+                              showLltv={false}
+                              showOracle={false}
+                            />
+                          </div>
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-secondary">—</span>
+                      )}
+                    </TableCell>
+
+                    {/* Amount (USD) */}
+                    <TableCell
+                      className="px-2 py-3 text-right"
+                      style={{ minWidth: '120px' }}
+                    >
+                      <span className="tabular-nums text-sm">
+                        ${formatReadable(tx.usdValue)}
+                        <span className="ml-1 text-xs text-secondary">
+                          ({formatReadable(tx.assetsFormatted)} {tx.loanSymbol})
                         </span>
-                      </TableCell>
+                      </span>
+                    </TableCell>
 
-                      {/* Tx Hash */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '120px' }}
-                      >
-                        <TransactionIdentity
-                          txHash={tx.txHash}
-                          chainId={tx.chainId as SupportedNetworks}
-                        />
-                      </TableCell>
+                    {/* Tx Hash */}
+                    <TableCell
+                      className="px-2 py-3"
+                      style={{ minWidth: '120px' }}
+                    >
+                      <TransactionIdentity
+                        txHash={tx.txHash}
+                        chainId={tx.chainId as SupportedNetworks}
+                      />
+                    </TableCell>
 
-                      {/* Time */}
-                      <TableCell
-                        className="px-2 py-3"
-                        style={{ minWidth: '90px' }}
-                      >
-                        <span className="whitespace-nowrap text-xs text-secondary">{moment.unix(tx.timestamp).fromNow()}</span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            <div className="p-4">
-              <TablePagination
-                mode="fixed"
-                totalPages={totalPages}
-                totalEntries={sortedData.length}
-                currentPage={currentPage}
-                pageSize={entriesPerPage}
-                onPageChange={setCurrentPage}
-                isLoading={isLoading}
-              />
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+                    {/* Time */}
+                    <TableCell
+                      className="px-2 py-3"
+                      style={{ minWidth: '90px' }}
+                    >
+                      <span className="whitespace-nowrap text-xs text-secondary">{moment.unix(tx.timestamp).fromNow()}</span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          <div className="p-4">
+            <TablePagination
+              mode="fixed"
+              totalPages={totalPages}
+              totalEntries={sortedData.length}
+              currentPage={currentPage}
+              pageSize={entriesPerPage}
+              onPageChange={setCurrentPage}
+              isLoading={isLoading}
+            />
+          </div>
+        </>
+      )}
+    </TableContainerWithHeader>
   );
 }

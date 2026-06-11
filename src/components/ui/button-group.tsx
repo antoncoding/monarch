@@ -13,6 +13,7 @@ type ButtonGroupProps = {
   options: ButtonOption[];
   value: string;
   onChange: (value: ButtonOption['value']) => void;
+  ariaLabel?: string;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'primary' | 'compact';
   equalWidth?: boolean;
@@ -46,7 +47,15 @@ const variantStyles = {
   ],
 };
 
-export default function ButtonGroup({ options, value, onChange, size = 'md', variant = 'default', equalWidth = false }: ButtonGroupProps) {
+export default function ButtonGroup({
+  options,
+  value,
+  onChange,
+  ariaLabel = 'Button group',
+  size = 'md',
+  variant = 'default',
+  equalWidth = false,
+}: ButtonGroupProps) {
   const isCompact = variant === 'compact';
 
   return (
@@ -56,7 +65,7 @@ export default function ButtonGroup({ options, value, onChange, size = 'md', var
         isCompact ? 'h-10 overflow-hidden rounded-sm bg-surface shadow-sm' : 'rounded shadow-sm',
       )}
       role="group"
-      aria-label="Button group"
+      aria-label={ariaLabel}
     >
       {options.map((option, index) => {
         const isFirst = index === 0;
@@ -67,10 +76,11 @@ export default function ButtonGroup({ options, value, onChange, size = 'md', var
           <button
             key={option.key}
             type="button"
+            aria-pressed={isSelected}
             onClick={() => onChange(option.value)}
             className={clsx(
               // Base styles
-              'relative font-medium transition-all duration-200',
+              'relative font-normal transition-all duration-200',
               sizeClasses[size],
               equalWidth && 'min-w-[3rem] text-center',
 

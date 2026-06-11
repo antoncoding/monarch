@@ -28,6 +28,7 @@ export {
 } from './market-flow-events';
 export {
   fetchMonarchTransactions,
+  type MonarchBorrowTransaction,
   type MonarchSupplyTransaction,
   type MonarchWithdrawTransaction,
   type TimeRange,
