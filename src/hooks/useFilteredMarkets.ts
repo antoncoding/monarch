@@ -170,8 +170,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const officialTrendingKeys = useOfficialTrendingMarketKeys({ enabled: filters.trendingMode, defer: true });
   const customTagKeys = useCustomTagMarketKeys({ enabled: filters.customTagMode, defer: true });
   const discoveryPriorityMap = useMarketDiscoveryPriorityMap({
-    categories: filters.discoveryCategories,
-    enabled: filters.discoveryCategories.length > 0,
+    categories: persistedFilters.discoveryCategories,
+    enabled: persistedFilters.discoveryCategories.length > 0,
     defer: true,
   });
 

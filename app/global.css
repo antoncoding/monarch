@@ -222,6 +222,16 @@
   --color-background-hovered: var(--palette-bg-hovered);
   --color-text: #16181a;
   --color-text-secondary: #8e8e8e;
+  --market-discovery-focus-bg: color-mix(
+    in srgb,
+    var(--palette-orange) 6%,
+    var(--color-background-secondary)
+  );
+  --market-discovery-focus-bg-hover: color-mix(
+    in srgb,
+    var(--palette-orange) 10%,
+    var(--color-background-secondary)
+  );
 
   /* shadcn variables */
   --background: 0 0% 100%;
@@ -270,6 +280,16 @@
   --color-background-hovered: var(--palette-bg-hovered);
   --color-text: #fff;
   --color-text-secondary: #8e8e8e;
+  --market-discovery-focus-bg: color-mix(
+    in srgb,
+    var(--palette-orange) 9%,
+    var(--color-background-secondary)
+  );
+  --market-discovery-focus-bg-hover: color-mix(
+    in srgb,
+    var(--palette-orange) 13%,
+    var(--color-background-secondary)
+  );
 
   /* shadcn dark variables */
   --background: 222.2 84% 4.9%;
@@ -407,12 +427,12 @@ tbody tr:not(.no-hover-effect tr):hover {
 }
 
 tbody tr.market-discovery-focused {
-  background-color: rgba(244, 95, 45, 0.06);
+  background-color: var(--market-discovery-focus-bg);
   border-left: 2px solid transparent !important;
 }
 
 tbody tr.market-discovery-focused:hover {
-  background-color: rgba(244, 95, 45, 0.1);
+  background-color: var(--market-discovery-focus-bg-hover);
   border-left: 2px solid transparent !important;
 }
 
