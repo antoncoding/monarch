@@ -14,8 +14,8 @@ export const MARKET_DISCOVERY_CATEGORY_META: Record<
     shortLabel: 'New',
   },
   trending: {
-    label: 'Trending',
-    shortLabel: 'Trend',
+    label: 'Growing',
+    shortLabel: 'Growing',
   },
   popular: {
     label: 'Popular',

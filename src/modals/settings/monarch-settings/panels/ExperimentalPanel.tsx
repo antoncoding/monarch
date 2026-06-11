@@ -16,15 +16,15 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Official Trending */}
+      {/* Official Growing */}
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
-        <h3 className="text-xs uppercase text-secondary">Official Trending</h3>
+        <h3 className="text-xs uppercase text-secondary">Official Growing</h3>
         <SettingToggleItem
-          title="Show Trending Markets"
-          description="Display trending icon on officially trending markets (backend-computed based on flow activity)."
+          title="Show Growing Markets"
+          description="Display the growing icon on markets with backend-computed flow growth."
           selected={showOfficialTrending}
           onChange={setShowOfficialTrending}
-          ariaLabel="Toggle official trending display"
+          ariaLabel="Toggle official growing display"
         />
       </div>
 

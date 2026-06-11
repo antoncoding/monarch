@@ -3,7 +3,7 @@ import { FaRegLightbulb, FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill } from 'react-icons/go';
 import { LuUser } from 'react-icons/lu';
 import { IoWarningOutline } from 'react-icons/io5';
-import { HiFire } from 'react-icons/hi2';
+import { TbTrendingUp } from 'react-icons/tb';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CustomTagIcon } from '@/components/shared/custom-tag-icons';
 import type { MarketDiscoveryCategory } from '@/features/markets/market-discovery';
@@ -97,7 +97,7 @@ export function MarketIndicators({
   const metrics = marketMetrics ?? metricsMap.get(marketKey);
   const hasLiquidationProtection = Boolean(metrics?.everLiquidated);
 
-  // Official trending (backend-computed)
+  // Official growing signal (legacy API field name is trending)
   const isOfficialTrending = showOfficialTrending && !discoveryDataLoaded && Boolean(metrics?.isTrending);
   const isDiscoveryTrending = Boolean(discoveryCategories?.has('trending'));
   const trendingReason = metrics?.trendingReason;
@@ -214,24 +214,24 @@ export function MarketIndicators({
         </Tooltip>
       )}
 
-      {/* Backend-computed trending */}
+      {/* Backend-computed growing */}
       {(isOfficialTrending || isDiscoveryTrending) && (
         <Tooltip
           content={
             <TooltipContent
               icon={
-                <HiFire
+                <TbTrendingUp
                   size={ICON_SIZE}
                   className="text-orange-500"
                 />
               }
-              title="Trending"
-              detail={discoveryTrendingFlag?.summary ?? trendingReason ?? 'This market is trending based on flow activity'}
+              title="Growing"
+              detail={discoveryTrendingFlag?.summary ?? trendingReason ?? 'This market is growing based on flow activity'}
             />
           }
         >
           <div className="flex-shrink-0">
-            <HiFire
+            <TbTrendingUp
               size={ICON_SIZE}
               className="text-orange-500"
             />

@@ -12,7 +12,7 @@ import type { PriceFeedVendors } from '@/utils/oracle';
 type MarketsFiltersState = {
   selectedOracles: PriceFeedVendors[];
   searchQuery: string;
-  trendingMode: boolean; // Official trending filter (backend-computed)
+  trendingMode: boolean; // Official growing filter (legacy API key)
   customTagMode: boolean; // User's custom tag filter
   starredOnly: boolean; // Show only starred markets
   discoveryCategories: MarketDiscoveryCategory[];

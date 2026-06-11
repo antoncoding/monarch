@@ -276,7 +276,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `useUserBalancesQuery` | ERC20 wallet balances across chains | Pure RPC multicall via wagmi | No Envio gap |
 | `useTokensQuery` | Token metadata lookup for app UI | Local token registry + Pendle assets API | Not part of Monarch migration |
 | `useOracleMetadata` / `useAllOracleMetadata` | Oracle classification and feed metadata | Scanner gist JSON | Not part of Monarch migration |
-| `useMarketMetricsQuery` | Enhanced market metrics, flows, trending, scores, and current backend market flags | External data API via `/v1/markets/metrics` | Already Monarch-backed; compact discovery flags use `/v1/markets/flags` |
+| `useMarketMetricsQuery` | Enhanced market metrics, flows, growing signal, scores, and current backend market flags | External data API via `/v1/markets/metrics` | Already Monarch-backed; compact discovery flags use `/v1/markets/flags` |
 | `useUserRewardsQuery` | User claimable rewards and Merkl proofs | Merkl API through the server-side `/api/merkl` API-key proxy | Outside Monarch/Envio scope today |
 | `useMerklCampaignsQuery` / `useMerklHoldIncentivesQuery` | Campaign and HOLD incentive enrichment | Merkl API through `/api/merkl` + hardcoded opportunity mapping | Outside Monarch/Envio scope today |
 

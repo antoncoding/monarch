@@ -61,7 +61,7 @@ export type MarketMetrics = {
   everLiquidated: boolean;
   marketScore: number | null;
   marketPriceDebtRisk?: MarketPriceDebtRisk;
-  // Backend-computed trending (official)
+  // Backend-computed growing signal (legacy API field name)
   isTrending: boolean;
   trendingReason: string | null;
   // State and flows
@@ -175,7 +175,7 @@ const fetchAllMarketMetrics = async (params: MarketMetricsParams): Promise<Marke
  * - Flow data (1h, 24h, 7d, 30d) for supply/borrow
  * - Individual vs vault supply breakdown
  * - Liquidation history flag
- * - Backend-computed trending signal
+ * - Backend-computed growing signal
  * - Market scores (future)
  */
 export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
@@ -278,8 +278,8 @@ export const matchesCustomTag = (metrics: MarketMetrics, config: CustomTagConfig
 export const isMarketTrending = matchesCustomTag;
 
 /**
- * Returns a Set of market keys that are officially trending (backend-computed).
- * Uses isTrending field from Monarch API.
+ * Returns a Set of market keys that are officially growing (backend-computed).
+ * Uses the legacy isTrending field from Monarch API.
  */
 export const useOfficialTrendingMarketKeys = (params: Pick<MarketMetricsParams, 'enabled' | 'defer'> = {}) => {
   const { metricsMap } = useMarketMetricsMap(params);
@@ -315,5 +315,5 @@ export const useCustomTagMarketKeys = (params: Pick<MarketMetricsParams, 'enable
   }, [metricsMap, customTagConfig]);
 };
 
-// Legacy alias - now returns official trending (breaking change, but intended)
+// Legacy alias - now returns official growing keys.
 export const useTrendingMarketKeys = useOfficialTrendingMarketKeys;

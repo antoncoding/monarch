@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import { FaRegLightbulb } from 'react-icons/fa';
-import { HiFire } from 'react-icons/hi2';
 import { LuUser } from 'react-icons/lu';
+import { TbTrendingUp } from 'react-icons/tb';
 import {
   MARKET_DISCOVERY_CATEGORIES,
   MARKET_DISCOVERY_CATEGORY_META,
@@ -16,7 +16,7 @@ import { cn } from '@/utils/components';
 
 const CATEGORY_ICONS: Record<MarketDiscoveryCategory, ReactNode> = {
   newOpportunities: <FaRegLightbulb className="h-3.5 w-3.5" />,
-  trending: <HiFire className="h-3.5 w-3.5" />,
+  trending: <TbTrendingUp className="h-3.5 w-3.5" />,
   popular: <LuUser className="h-3.5 w-3.5" />,
 };
 

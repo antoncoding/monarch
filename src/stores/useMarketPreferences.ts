@@ -66,8 +66,8 @@ type MarketPreferencesState = {
   minBorrowEnabled: boolean;
   minLiquidityEnabled: boolean;
 
-  // Official Trending (backend-computed)
-  showOfficialTrending: boolean; // Default ON - show 🔥 for API's isTrending
+  // Official Growing (backend-computed, legacy API field name is isTrending)
+  showOfficialTrending: boolean;
 
   // Custom Tags (user-defined)
   customTagConfig: CustomTagConfig;
@@ -103,7 +103,7 @@ type MarketPreferencesActions = {
   setMinBorrowEnabled: (enabled: boolean) => void;
   setMinLiquidityEnabled: (enabled: boolean) => void;
 
-  // Official Trending
+  // Official Growing
   setShowOfficialTrending: (show: boolean) => void;
 
   // Custom Tags
@@ -182,7 +182,7 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       setMinBorrowEnabled: (enabled) => set({ minBorrowEnabled: enabled }),
       setMinLiquidityEnabled: (enabled) => set({ minLiquidityEnabled: enabled }),
 
-      // Official Trending
+      // Official Growing
       setShowOfficialTrending: (show) => set({ showOfficialTrending: show }),
 
       // Custom Tags
