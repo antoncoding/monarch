@@ -9,6 +9,7 @@ import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import type { Market } from '@/utils/types';
+import { SettingToggleItem } from '../SettingItem';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -16,8 +17,15 @@ export function BlacklistedMarketsDetail() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const { rawMarketsUnfiltered } = useProcessedMarkets();
-  const { customBlacklistedMarkets, isBlacklisted, addBlacklistedMarket, removeBlacklistedMarket, isDefaultBlacklisted } =
-    useBlacklistedMarkets();
+  const {
+    customBlacklistedMarkets,
+    showBlacklistedPositions,
+    setShowBlacklistedPositions,
+    isBlacklisted,
+    addBlacklistedMarket,
+    removeBlacklistedMarket,
+    isDefaultBlacklisted,
+  } = useBlacklistedMarkets();
   const { success: toastSuccess } = useStyledToast();
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,6 +85,17 @@ export function BlacklistedMarketsDetail() {
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Position Visibility</h3>
+        <SettingToggleItem
+          title="Show Blacklisted Positions"
+          description="Turn off to ignore blacklisted markets in positions, portfolio APR/APY, and reports."
+          selected={showBlacklistedPositions}
+          onChange={setShowBlacklistedPositions}
+          ariaLabel="Toggle blacklisted positions visibility"
+        />
+      </div>
+
       {/* Blacklisted Markets Section */}
       {blacklistedMarkets.length > 0 && (
         <div className="flex flex-col gap-4 rounded bg-surface p-4">
