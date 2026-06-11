@@ -115,8 +115,8 @@ export default function DiscoveryFilter({ showLabelPrefix = false }: DiscoveryFi
                 <li
                   key={category}
                   className={cn(
-                    'm-2 flex cursor-pointer items-center justify-between rounded border border-transparent p-2 text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-800',
-                    isSelected && 'border-orange-500/40 dark:border-orange-500/45',
+                    'm-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-800',
+                    isSelected && 'bg-gray-100 dark:bg-gray-800',
                   )}
                   onClick={() => toggleDiscoveryCategory(category)}
                   onKeyDown={(e) => {
@@ -129,7 +129,7 @@ export default function DiscoveryFilter({ showLabelPrefix = false }: DiscoveryFi
                   tabIndex={0}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={isSelected ? 'text-orange-500' : 'text-secondary'}>{CATEGORY_ICONS[category]}</span>
+                    <span className="text-secondary">{CATEGORY_ICONS[category]}</span>
                     <span>{meta.label}</span>
                   </div>
                   <span className="font-monospace text-[11px] text-secondary">{isLoading ? '...' : count}</span>
