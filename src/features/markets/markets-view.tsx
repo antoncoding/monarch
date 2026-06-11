@@ -224,6 +224,7 @@ export default function Markets() {
             collateralItems={uniqueCollaterals}
             selectedOracles={filters.selectedOracles}
             setSelectedOracles={filters.setSelectedOracles}
+            selectedDiscoveryCategories={filters.discoveryCategories}
             loading={loading}
             onClearAll={handleClearAll}
           />
