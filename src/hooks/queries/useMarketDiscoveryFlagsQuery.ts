@@ -10,6 +10,7 @@ export type MarketDiscoveryFlagReason =
   | 'newly_active'
   | 'strong_recent_flow'
   | 'morpho_vault_signal'
+  | 'individual_supplier_flow'
   | 'monarch_user_flow';
 
 export type MarketDiscoveryFlag = {

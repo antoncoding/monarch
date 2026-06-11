@@ -32,7 +32,7 @@ type MarketDiscoveryFlag = {
 };
 ```
 
-The API returns each discovery category ordered from most exciting to least exciting. The frontend preserves that order when users select Discovery filters, pulling flagged rows to the top without replacing the user's active market filters.
+The API returns each discovery category ordered from most exciting to least exciting. The frontend always shows backend discovery indicators for flagged markets. Discovery control selections only prioritize matching rows and add temporary row focus; they do not turn tags on or off.
 
 `newOpportunities` is intentionally stricter than broad volume: a market needs Morpho listing, healthy utilization, at least `$500k` supply/TVL, a vault signal, and fresh large supply activation. Older markets qualify only from large `24h` supply or vault supply flow; a market created in the last `3d` can qualify from `7d` supply flow because the full flow window is inside the market lifetime.
 

@@ -103,7 +103,7 @@ export function MarketIndicators({
     ? discoveryFlags.find((flag) => flag.reasons.includes('recently_created') || flag.reasons.includes('newly_active'))
     : null;
   const popularFlag = discoveryCategories?.has('popular')
-    ? discoveryFlags.find((flag) => flag.reasons.includes('monarch_user_flow'))
+    ? discoveryFlags.find((flag) => flag.reasons.includes('individual_supplier_flow') || flag.reasons.includes('monarch_user_flow'))
     : null;
   const discoveryTrendingFlag = isDiscoveryTrending ? discoveryFlags.find((flag) => flag.reasons.includes('strong_recent_flow')) : null;
 

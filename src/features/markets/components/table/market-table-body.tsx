@@ -362,7 +362,7 @@ export function MarketTableBody({
                   market={item}
                   marketMetrics={metrics ?? null}
                   discoveryFlags={discoveryFlags}
-                  discoveryCategories={activeMarketDiscoveryCategories}
+                  discoveryCategories={marketDiscoveryCategories}
                   showRisk={false}
                 />
               </TableCell>
