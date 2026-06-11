@@ -307,11 +307,11 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
                     disabled={starredCount === 0}
                   />
                 </FilterRow>
-                {/* Official Trending Filter (backend-computed) */}
+                {/* Official Growing Filter (backend-computed) */}
                 {showOfficialTrending && (
                   <FilterRow
-                    title="Trending Only"
-                    description="Show officially trending markets"
+                    title="Growing Only"
+                    description="Show markets with backend-computed flow growth"
                   >
                     <IconSwitch
                       selected={trendingMode}

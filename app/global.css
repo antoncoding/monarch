@@ -406,6 +406,16 @@ tbody tr:not(.no-hover-effect tr):hover {
   border-left: 2px solid var(--palette-orange) !important;
 }
 
+tbody tr.market-discovery-focused {
+  background-color: rgba(244, 95, 45, 0.06);
+  border-left: 2px solid transparent !important;
+}
+
+tbody tr.market-discovery-focused:hover {
+  background-color: rgba(244, 95, 45, 0.1);
+  border-left: 2px solid transparent !important;
+}
+
 /* Compact table variant - less padding for simpler tables */
 .table-body-compact td {
   padding: 0.625rem;

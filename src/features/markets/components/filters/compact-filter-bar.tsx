@@ -2,6 +2,7 @@
 
 import { TrashIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
+import type { MarketDiscoveryCategory } from '@/features/markets/market-discovery';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PriceFeedVendors } from '@/utils/oracle';
 import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
@@ -10,6 +11,7 @@ import { ExpandableSearchInput } from './expandable-search-input';
 import NetworkFilter from './network-filter';
 import AssetFilter from './asset-filter';
 import OracleFilter from './oracle-filter';
+import DiscoveryFilter from './discovery-filter';
 
 type CompactFilterBarProps = {
   // Search
@@ -35,6 +37,9 @@ type CompactFilterBarProps = {
   selectedOracles: PriceFeedVendors[];
   setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
 
+  // Discovery
+  selectedDiscoveryCategories: MarketDiscoveryCategory[];
+
   // Loading
   loading: boolean;
 
@@ -56,11 +61,16 @@ export function CompactFilterBar({
   collateralItems,
   selectedOracles,
   setSelectedOracles,
+  selectedDiscoveryCategories,
   loading,
   onClearAll,
 }: CompactFilterBarProps) {
   const hasActiveFilters =
-    selectedNetwork !== null || selectedLoanAssets.length > 0 || selectedCollaterals.length > 0 || selectedOracles.length > 0;
+    selectedNetwork !== null ||
+    selectedLoanAssets.length > 0 ||
+    selectedCollaterals.length > 0 ||
+    selectedOracles.length > 0 ||
+    selectedDiscoveryCategories.length > 0;
 
   return (
     <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
@@ -103,6 +113,8 @@ export function CompactFilterBar({
         selectedOracles={selectedOracles}
         setSelectedOracles={setSelectedOracles}
       />
+
+      <DiscoveryFilter showLabelPrefix />
 
       {hasActiveFilters && onClearAll && (
         <Button

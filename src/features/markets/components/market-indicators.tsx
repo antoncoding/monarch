@@ -1,11 +1,12 @@
 import { Tooltip } from '@/components/ui/tooltip';
-import { FaShieldAlt } from 'react-icons/fa';
+import { FaRegLightbulb, FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill } from 'react-icons/go';
 import { LuUser } from 'react-icons/lu';
 import { IoWarningOutline } from 'react-icons/io5';
-import { AiOutlineFire } from 'react-icons/ai';
+import { TbTrendingUp } from 'react-icons/tb';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CustomTagIcon } from '@/components/shared/custom-tag-icons';
+import type { MarketDiscoveryCategory } from '@/features/markets/market-discovery';
 import {
   getMetricsKey,
   useMarketMetricsMap,
@@ -13,6 +14,7 @@ import {
   type FlowTimeWindow,
   type MarketMetrics,
 } from '@/hooks/queries/useMarketMetricsQuery';
+import type { MarketDiscoveryFlag } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketPreferences, type CustomTagConfig } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
@@ -68,6 +70,9 @@ function buildCustomTagDetail(
 type MarketIndicatorsProps = {
   market: Market;
   marketMetrics?: MarketMetrics | null;
+  discoveryFlags?: MarketDiscoveryFlag[];
+  discoveryCategories?: Set<MarketDiscoveryCategory>;
+  discoveryDataLoaded?: boolean;
   showRisk?: boolean;
   isStared?: boolean;
   hasUserPosition?: boolean;
@@ -76,6 +81,9 @@ type MarketIndicatorsProps = {
 export function MarketIndicators({
   market,
   marketMetrics,
+  discoveryFlags = [],
+  discoveryCategories,
+  discoveryDataLoaded = false,
   showRisk = false,
   isStared = false,
   hasUserPosition = false,
@@ -89,9 +97,17 @@ export function MarketIndicators({
   const metrics = marketMetrics ?? metricsMap.get(marketKey);
   const hasLiquidationProtection = Boolean(metrics?.everLiquidated);
 
-  // Official trending (backend-computed)
-  const isOfficialTrending = showOfficialTrending && Boolean(metrics?.isTrending);
+  // Official growing signal (legacy API field name is trending)
+  const isOfficialTrending = showOfficialTrending && !discoveryDataLoaded && Boolean(metrics?.isTrending);
+  const isDiscoveryTrending = Boolean(discoveryCategories?.has('trending'));
   const trendingReason = metrics?.trendingReason;
+  const newOpportunityFlag = discoveryCategories?.has('newOpportunities')
+    ? discoveryFlags.find((flag) => flag.reasons.includes('recently_created') || flag.reasons.includes('newly_active'))
+    : null;
+  const popularFlag = discoveryCategories?.has('popular')
+    ? discoveryFlags.find((flag) => flag.reasons.includes('individual_supplier_flow') || flag.reasons.includes('monarch_user_flow'))
+    : null;
+  const discoveryTrendingFlag = isDiscoveryTrending ? discoveryFlags.find((flag) => flag.reasons.includes('strong_recent_flow')) : null;
 
   // User's custom tag
   const hasCustomTag = customTagConfig.enabled && metrics ? matchesCustomTag(metrics, customTagConfig) : false;
@@ -174,24 +190,72 @@ export function MarketIndicators({
         whitelisted={market.whitelisted}
       />
 
-      {/* Official Trending (backend-computed) */}
-      {isOfficialTrending && (
+      {newOpportunityFlag && (
         <Tooltip
           content={
             <TooltipContent
               icon={
-                <AiOutlineFire
+                <FaRegLightbulb
                   size={ICON_SIZE}
                   className="text-orange-500"
                 />
               }
-              title="Trending"
-              detail={trendingReason ?? 'This market is trending based on flow activity'}
+              title="New opportunity"
+              detail={newOpportunityFlag.summary}
             />
           }
         >
           <div className="flex-shrink-0">
-            <AiOutlineFire
+            <FaRegLightbulb
+              size={ICON_SIZE}
+              className="text-orange-500"
+            />
+          </div>
+        </Tooltip>
+      )}
+
+      {/* Backend-computed growing */}
+      {(isOfficialTrending || isDiscoveryTrending) && (
+        <Tooltip
+          content={
+            <TooltipContent
+              icon={
+                <TbTrendingUp
+                  size={ICON_SIZE}
+                  className="text-orange-500"
+                />
+              }
+              title="Growing"
+              detail={discoveryTrendingFlag?.summary ?? trendingReason ?? 'This market is growing based on flow activity'}
+            />
+          }
+        >
+          <div className="flex-shrink-0">
+            <TbTrendingUp
+              size={ICON_SIZE}
+              className="text-orange-500"
+            />
+          </div>
+        </Tooltip>
+      )}
+
+      {popularFlag && (
+        <Tooltip
+          content={
+            <TooltipContent
+              icon={
+                <LuUser
+                  size={ICON_SIZE}
+                  className="text-orange-500"
+                />
+              }
+              title="Popular"
+              detail={popularFlag.summary}
+            />
+          }
+        >
+          <div className="flex-shrink-0">
+            <LuUser
               size={ICON_SIZE}
               className="text-orange-500"
             />
