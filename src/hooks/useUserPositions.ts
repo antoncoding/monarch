@@ -15,6 +15,7 @@ import { isSupplyPositionTransaction } from '@/utils/transactionGrouping';
 import { useApiResponseCache } from '@/stores/useApiResponseCache';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useCustomRpc } from '@/stores/useCustomRpc';
+import { getBlacklistedMarketKeys, useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { fetchAllUserTransactions } from './queries/fetchUserTransactions';
 
 // Type for market key and chain identifier
@@ -263,9 +264,38 @@ const useUserPositions = (
   );
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
   const { customRpcUrls } = useCustomRpc();
+  const { customBlacklistedMarkets, showBlacklistedPositions } = useBlacklistedMarkets();
   const chainIdsSignature = chainIds?.join(',') ?? 'all';
   const cachedMarketDetailsByKey = useApiResponseCache((state) => state.marketDetailsByKey);
   const setCachedMarketDetail = useApiResponseCache((state) => state.setMarketDetail);
+  const blacklistedPositionMarketKeys = useMemo(() => getBlacklistedMarketKeys(customBlacklistedMarkets), [customBlacklistedMarkets]);
+  const blacklistedPositionKeysSignature = useMemo(
+    () => (showBlacklistedPositions ? '' : Array.from(blacklistedPositionMarketKeys).sort().join(',')),
+    [blacklistedPositionMarketKeys, showBlacklistedPositions],
+  );
+  const filterBlacklistedPositionMarkets = useCallback(
+    (markets: PositionMarket[]) => {
+      if (showBlacklistedPositions) {
+        return markets;
+      }
+
+      return markets.filter((market) => !blacklistedPositionMarketKeys.has(market.marketUniqueKey.toLowerCase()));
+    },
+    [blacklistedPositionMarketKeys, showBlacklistedPositions],
+  );
+  const filterBlacklistedEnhancedPositions = useCallback(
+    (positions: EnhancedMarketPosition[] | undefined) => {
+      if (showBlacklistedPositions || !positions) {
+        return positions;
+      }
+
+      return positions.filter((position) => {
+        const marketKey = position.market?.uniqueKey;
+        return !marketKey || !blacklistedPositionMarketKeys.has(marketKey.toLowerCase());
+      });
+    },
+    [blacklistedPositionMarketKeys, showBlacklistedPositions],
+  );
 
   const cachedPositionMarkets = useMemo(() => {
     if (hasMarketHints) {
@@ -293,8 +323,9 @@ const useUserPositions = (
 
   const initialPositionData = useMemo<InitialDataResponse | undefined>(() => {
     const seedMarkets = hasMarketHints ? marketHints : cachedPositionMarkets;
-    return seedMarkets.length > 0 ? { finalMarketKeys: seedMarkets } : undefined;
-  }, [cachedPositionMarkets, hasMarketHints, marketHints]);
+    const finalMarketKeys = filterBlacklistedPositionMarkets(seedMarkets);
+    return finalMarketKeys.length > 0 ? { finalMarketKeys } : undefined;
+  }, [cachedPositionMarkets, filterBlacklistedPositionMarkets, hasMarketHints, marketHints]);
 
   // 1. Query for relevant market keys, seeded from local cache so refreshes do not block first paint.
   const {
@@ -308,6 +339,8 @@ const useUserPositions = (
       showEmpty ? 'include-empty' : 'active-only',
       chainIdsSignature,
       marketHintsSignature,
+      showBlacklistedPositions ? 'include-blacklisted-markets' : 'exclude-blacklisted-markets',
+      blacklistedPositionKeysSignature,
     ],
     queryFn: async () => {
       if (!user) throw new Error('Assertion failed: User should be defined here.');
@@ -321,7 +354,7 @@ const useUserPositions = (
       appendUniquePositionMarkets(transactionMarketKeys, uniqueMarketsMap);
       appendUniquePositionMarkets(cachedPositionMarkets, uniqueMarketsMap);
 
-      return { finalMarketKeys: Array.from(uniqueMarketsMap.values()) };
+      return { finalMarketKeys: filterBlacklistedPositionMarkets(Array.from(uniqueMarketsMap.values())) };
     },
     enabled: !!user,
     initialData: initialPositionData,
@@ -463,7 +496,7 @@ const useUserPositions = (
         return undefined;
       }
 
-      return previousData;
+      return filterBlacklistedEnhancedPositions(previousData);
     },
     staleTime: 30_000,
     gcTime: 5 * 60 * 1000,
@@ -493,7 +526,7 @@ const useUserPositions = (
   const loading = Boolean(user) && (isLoadingInitialData || (isLoadingEnhanced && !enhancedPositions));
 
   return {
-    data: enhancedPositions ?? [],
+    data: filterBlacklistedEnhancedPositions(enhancedPositions) ?? [],
     loading,
     isRefetching,
     positionsError: initialError ?? enhancedError,

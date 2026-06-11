@@ -9,8 +9,15 @@ export type BlacklistedMarket = {
   addedAt: number;
 };
 
+export const getBlacklistedMarketKeys = (customBlacklistedMarkets: readonly Pick<BlacklistedMarket, 'uniqueKey'>[]): Set<string> => {
+  return new Set(
+    [...defaultBlacklistedMarkets, ...customBlacklistedMarkets.map((market) => market.uniqueKey)].map((key) => key.toLowerCase()),
+  );
+};
+
 type BlacklistedMarketsState = {
   customBlacklistedMarkets: BlacklistedMarket[];
+  showBlacklistedPositions: boolean;
   /** Cached Set of all blacklisted keys (default + custom) */
   _cachedBlacklistedKeys: Set<string> | null;
 };
@@ -18,6 +25,7 @@ type BlacklistedMarketsState = {
 type BlacklistedMarketsActions = {
   addBlacklistedMarket: (uniqueKey: string, chainId: number, reason?: string) => boolean;
   removeBlacklistedMarket: (uniqueKey: string) => void;
+  setShowBlacklistedPositions: (show: boolean) => void;
   isBlacklisted: (uniqueKey: string) => boolean;
   isDefaultBlacklisted: (uniqueKey: string) => boolean;
   getAllBlacklistedKeys: () => Set<string>;
@@ -34,13 +42,14 @@ export const useBlacklistedMarkets = create<BlacklistedMarketsStore>()(
   persist(
     (set, get) => ({
       customBlacklistedMarkets: [],
+      showBlacklistedPositions: true,
       _cachedBlacklistedKeys: null,
 
       addBlacklistedMarket: (uniqueKey, chainId, reason) => {
         const state = get();
         const allKeys = state.getAllBlacklistedKeys();
 
-        if (allKeys.has(uniqueKey)) {
+        if (allKeys.has(uniqueKey.toLowerCase())) {
           return false;
         }
 
@@ -66,9 +75,11 @@ export const useBlacklistedMarkets = create<BlacklistedMarketsStore>()(
         }));
       },
 
+      setShowBlacklistedPositions: (show) => set({ showBlacklistedPositions: show }),
+
       isBlacklisted: (uniqueKey) => {
         const state = get();
-        return state.getAllBlacklistedKeys().has(uniqueKey);
+        return state.getAllBlacklistedKeys().has(uniqueKey.toLowerCase());
       },
 
       isDefaultBlacklisted: (uniqueKey) => {
@@ -82,8 +93,7 @@ export const useBlacklistedMarkets = create<BlacklistedMarketsStore>()(
           return state._cachedBlacklistedKeys;
         }
         // Compute and cache the Set
-        const customKeys = state.customBlacklistedMarkets.map((m) => m.uniqueKey);
-        const newSet = new Set([...defaultBlacklistedMarkets, ...customKeys]);
+        const newSet = getBlacklistedMarketKeys(state.customBlacklistedMarkets);
         // Update cache (using set() to avoid mutation)
         set({ _cachedBlacklistedKeys: newSet });
         return newSet;
@@ -96,6 +106,7 @@ export const useBlacklistedMarkets = create<BlacklistedMarketsStore>()(
       partialize: (state) => ({
         // Only persist customBlacklistedMarkets, not the cache
         customBlacklistedMarkets: state.customBlacklistedMarkets,
+        showBlacklistedPositions: state.showBlacklistedPositions,
       }),
     },
   ),
