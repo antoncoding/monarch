@@ -1,6 +1,8 @@
-export type MerklCampaignType = 'MORPHOSUPPLY' | 'MORPHOBORROW' | 'MORPHOSUPPLY_SINGLETOKEN' | 'MULTILENDBORROW';
+export type MarketRewardType = 'MORPHOSUPPLY' | 'MORPHOBORROW' | 'MORPHOSUPPLY_SINGLETOKEN' | 'MULTILENDBORROW';
 
-export type MarketRewardType = MerklCampaignType;
+export type MerklCampaignType = MarketRewardType;
+
+export type MerklRawCampaignType = MarketRewardType | 'ERC20LOGPROCESSOR' | 'MORPHOVAULT';
 
 export type MerklCampaignStatus = {
   status: string;
@@ -105,7 +107,7 @@ export type MerklCampaign = {
   computeChainId: number;
   distributionChainId: number;
   campaignId: string;
-  type: MerklCampaignType;
+  type: MerklRawCampaignType;
   distributionType: string;
   subType: number;
   rewardTokenId: string;
@@ -131,7 +133,7 @@ export type MerklCampaign = {
 export type MerklCampaignsResponse = MerklCampaign[];
 
 export type MerklApiParams = {
-  type?: MerklCampaignType;
+  type?: MarketRewardType;
   chainId?: number;
   items?: number;
   page?: number;

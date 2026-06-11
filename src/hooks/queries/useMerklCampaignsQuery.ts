@@ -1,14 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
 import { expandMultiLendBorrowCampaign, fetchActiveCampaigns, simplifyMerklCampaign } from '@/utils/merklApi';
-import type { MerklCampaignType, SimplifiedCampaign } from '@/utils/merklTypes';
+import type { MarketRewardType, SimplifiedCampaign } from '@/utils/merklTypes';
 
-const CAMPAIGN_TYPES_TO_FETCH: MerklCampaignType[] = ['MORPHOSUPPLY', 'MORPHOBORROW', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
+const CAMPAIGN_TYPES_TO_FETCH: MarketRewardType[] = ['MORPHOSUPPLY', 'MORPHOBORROW', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
 
-const toSimplifiedCampaigns = (
-  type: MerklCampaignType,
-  campaigns: Awaited<ReturnType<typeof fetchActiveCampaigns>>,
-): SimplifiedCampaign[] =>
+const toSimplifiedCampaigns = (type: MarketRewardType, campaigns: Awaited<ReturnType<typeof fetchActiveCampaigns>>): SimplifiedCampaign[] =>
   campaigns.flatMap((campaign) => {
     const typedCampaign = {
       ...campaign,

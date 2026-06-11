@@ -52,13 +52,8 @@ async function fetchMerklRewards(
   const rewardsList: RewardResponseType[] = [];
   const rewardsWithProofsList: MerklRewardWithProofs[] = [];
 
-  const { data, error, status } = await fetchMerklApi<MerklRewardsResponse>(`/v4/users/${userAddress}/rewards`, {
-    chainId: ALL_SUPPORTED_NETWORKS,
+  const { data, error, status } = await fetchMerklApi<MerklRewardsResponse>(`/v4/users/${userAddress}/rewards/summary`, {
     reloadChainId: options.forceReload ? ALL_SUPPORTED_NETWORKS : undefined,
-    test: false,
-    claimableOnly: true,
-    breakdownPage: 0,
-    type: 'TOKEN',
   });
 
   if (error || status !== 200) {
@@ -70,6 +65,10 @@ async function fetchMerklRewards(
   }
 
   for (const chainData of data) {
+    if (!ALL_SUPPORTED_NETWORKS.includes(chainData.chain.id)) {
+      continue;
+    }
+
     if (!chainData.rewards || chainData.rewards.length === 0) {
       continue;
     }

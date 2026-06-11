@@ -1,4 +1,11 @@
-import type { MerklApiParams, MerklCampaign, MerklOpportunityLookupParams, MerklOpportunity, SimplifiedCampaign } from './merklTypes';
+import type {
+  MarketRewardType,
+  MerklApiParams,
+  MerklCampaign,
+  MerklOpportunityLookupParams,
+  MerklOpportunity,
+  SimplifiedCampaign,
+} from './merklTypes';
 
 const MERKL_API_PROXY_BASE_PATH = '/api/merkl';
 
@@ -160,7 +167,7 @@ const isCampaignActive = (campaign: MerklCampaign): boolean => {
 };
 
 const getBaseCampaignFields = (
-  campaign: MerklCampaign,
+  campaign: MerklCampaign & { type: MarketRewardType },
 ): Pick<
   SimplifiedCampaign,
   | 'chainId'
@@ -192,7 +199,7 @@ const getBaseCampaignFields = (
   opportunityAction: campaign.Opportunity?.action,
 });
 
-export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampaign | null {
+export function simplifyMerklCampaign(campaign: MerklCampaign & { type: MarketRewardType }): SimplifiedCampaign | null {
   const baseFields = getBaseCampaignFields(campaign);
 
   if (campaign.type === 'MORPHOSUPPLY_SINGLETOKEN') {
@@ -220,7 +227,7 @@ export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampai
   };
 }
 
-export function expandMultiLendBorrowCampaign(campaign: MerklCampaign): SimplifiedCampaign[] {
+export function expandMultiLendBorrowCampaign(campaign: MerklCampaign & { type: MarketRewardType }): SimplifiedCampaign[] {
   const baseFields = getBaseCampaignFields(campaign);
 
   return (campaign.params.markets ?? []).flatMap((market) => {

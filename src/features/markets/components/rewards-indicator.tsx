@@ -9,8 +9,8 @@ type RewardsIndicatorProps = {
   size: number;
   chainId: number;
   marketId: string;
-  loanTokenAddress: string;
-  whitelisted: boolean;
+  loanTokenAddress?: string;
+  whitelisted: boolean; // whitelisted by morpho
 };
 
 export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelisted, size }: RewardsIndicatorProps) {

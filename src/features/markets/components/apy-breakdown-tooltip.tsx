@@ -24,8 +24,27 @@ type APYCellProps = {
   mode?: RateMode;
 };
 
+const modeByType: Record<string, RateMode | null> = {
+  MORPHOSUPPLY: 'supply',
+  MORPHOSUPPLY_SINGLETOKEN: 'supply',
+  MORPHOBORROW: 'borrow',
+};
+
 const getCampaignMode = (campaign: SimplifiedCampaign): RateMode | null => {
-  return campaign.type === 'MORPHOBORROW' || campaign.opportunityAction === 'BORROW' ? 'borrow' : 'supply';
+  const directMode = modeByType[campaign.type];
+  if (directMode) return directMode;
+
+  if (campaign.type !== 'MULTILENDBORROW') return null;
+
+  const action = campaign.opportunityAction?.toUpperCase();
+  if (action === 'LEND') return 'supply';
+  if (action === 'BORROW') return 'borrow';
+
+  const name = campaign.name?.toLowerCase() ?? '';
+  if (name.includes('borrow')) return 'borrow';
+  if (name.includes('supply') || name.includes('lend')) return 'supply';
+
+  return null;
 };
 
 const filterCampaignsByMode = (campaigns: SimplifiedCampaign[], mode: RateMode): SimplifiedCampaign[] => {

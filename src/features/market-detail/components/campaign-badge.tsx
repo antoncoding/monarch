@@ -14,6 +14,11 @@ type CampaignBadgeProps = {
   filterType?: 'supply' | 'borrow';
 };
 
+// Supply campaign types: MORPHOSUPPLY, MORPHOSUPPLY_SINGLETOKEN, MULTILENDBORROW
+const SUPPLY_CAMPAIGN_TYPES = ['MORPHOSUPPLY', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
+// Borrow campaign types: MORPHOBORROW
+const BORROW_CAMPAIGN_TYPES = ['MORPHOBORROW'];
+
 export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted, filterType }: CampaignBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -28,9 +33,8 @@ export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted
   const filteredCampaigns = useMemo(() => {
     if (!filterType) return activeCampaigns;
 
-    return activeCampaigns.filter((campaign) =>
-      filterType === 'borrow' ? campaign.type === 'MORPHOBORROW' : campaign.type !== 'MORPHOBORROW',
-    );
+    const allowedTypes = filterType === 'supply' ? SUPPLY_CAMPAIGN_TYPES : BORROW_CAMPAIGN_TYPES;
+    return activeCampaigns.filter((campaign) => allowedTypes.includes(campaign.type));
   }, [activeCampaigns, filterType]);
 
   if (loading || !hasActiveRewards || filteredCampaigns.length === 0) {
