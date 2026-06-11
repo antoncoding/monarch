@@ -24,6 +24,18 @@ type MarketFilterPreferencesStore = MarketFilterPreferencesState & MarketFilterP
 
 const dedupeSelections = (values: string[]) => [...new Set(values)];
 
+const normalizeStringSelections = (values: unknown): string[] => {
+  if (typeof values === 'string') {
+    return [values];
+  }
+
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return dedupeSelections(values.filter((value): value is string => typeof value === 'string'));
+};
+
 const isMarketDiscoveryCategory = (value: unknown): value is MarketDiscoveryCategory =>
   typeof value === 'string' && (MARKET_DISCOVERY_CATEGORIES as readonly string[]).includes(value);
 
@@ -62,9 +74,9 @@ export const useMarketFilterPreferences = create<MarketFilterPreferencesStore>()
             'discoveryCategories' in state ? normalizeDiscoveryCategories(state.discoveryCategories) : currentState.discoveryCategories,
           selectedNetwork: 'selectedNetwork' in state ? (state.selectedNetwork ?? null) : currentState.selectedNetwork,
           selectedLoanAssets:
-            'selectedLoanAssets' in state ? dedupeSelections(state.selectedLoanAssets ?? []) : currentState.selectedLoanAssets,
+            'selectedLoanAssets' in state ? normalizeStringSelections(state.selectedLoanAssets) : currentState.selectedLoanAssets,
           selectedCollaterals:
-            'selectedCollaterals' in state ? dedupeSelections(state.selectedCollaterals ?? []) : currentState.selectedCollaterals,
+            'selectedCollaterals' in state ? normalizeStringSelections(state.selectedCollaterals) : currentState.selectedCollaterals,
         })),
       toggleDiscoveryCategory: (category) =>
         set((state) => ({
@@ -87,8 +99,8 @@ export const useMarketFilterPreferences = create<MarketFilterPreferencesStore>()
           ...DEFAULT_STATE,
           ...savedState,
           discoveryCategories: normalizeDiscoveryCategories(savedState.discoveryCategories),
-          selectedCollaterals: dedupeSelections(savedState.selectedCollaterals ?? []),
-          selectedLoanAssets: dedupeSelections(savedState.selectedLoanAssets ?? []),
+          selectedCollaterals: normalizeStringSelections(savedState.selectedCollaterals),
+          selectedLoanAssets: normalizeStringSelections(savedState.selectedLoanAssets),
           selectedNetwork: savedState.selectedNetwork ?? null,
         };
       },

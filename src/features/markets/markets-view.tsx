@@ -165,6 +165,9 @@ export default function Markets() {
     persistedFilters.discoveryCategories,
     filters.selectedOracles,
     filters.searchQuery,
+    filters.trendingMode,
+    filters.customTagMode,
+    filters.starredOnly,
     resetPage,
   ]);
 
