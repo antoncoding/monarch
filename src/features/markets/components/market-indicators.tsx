@@ -72,6 +72,7 @@ type MarketIndicatorsProps = {
   marketMetrics?: MarketMetrics | null;
   discoveryFlags?: MarketDiscoveryFlag[];
   discoveryCategories?: Set<MarketDiscoveryCategory>;
+  discoveryDataLoaded?: boolean;
   showRisk?: boolean;
   isStared?: boolean;
   hasUserPosition?: boolean;
@@ -82,6 +83,7 @@ export function MarketIndicators({
   marketMetrics,
   discoveryFlags = [],
   discoveryCategories,
+  discoveryDataLoaded = false,
   showRisk = false,
   isStared = false,
   hasUserPosition = false,
@@ -96,7 +98,7 @@ export function MarketIndicators({
   const hasLiquidationProtection = Boolean(metrics?.everLiquidated);
 
   // Official trending (backend-computed)
-  const isOfficialTrending = showOfficialTrending && Boolean(metrics?.isTrending);
+  const isOfficialTrending = showOfficialTrending && !discoveryDataLoaded && Boolean(metrics?.isTrending);
   const isDiscoveryTrending = Boolean(discoveryCategories?.has('trending'));
   const trendingReason = metrics?.trendingReason;
   const newOpportunityFlag = discoveryCategories?.has('newOpportunities')

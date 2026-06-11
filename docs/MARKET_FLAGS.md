@@ -36,7 +36,9 @@ The API returns each discovery category ordered from most exciting to least exci
 
 `newOpportunities` is intentionally stricter than broad volume: a market needs Morpho listing, healthy utilization, at least `$500k` supply/TVL, a vault signal, and fresh large supply activation. Older markets qualify only from large `24h` supply or vault supply flow; a market created in the last `3d` can qualify from `7d` supply flow because the full flow window is inside the market lifetime.
 
-The frontend also uses `marketCreatedAt` from `/v1/markets/metrics` to show creation timing in the expanded market row. Client-side oracle/asset warnings still stay in their existing warning path.
+For older markets, New Opportunity must also clear an age-adjusted relative-growth hurdle. The backend currently uses `20%` 24h supply growth for markets up to `30d` old, `40%` up to `180d`, and `100%` after that. Trending is separate: it is significant relative supply/borrow growth (`20%` over `24h` or `60%` over `7d`, with at least `$500k` flow), not a proxy for every large dollar-flow market.
+
+The frontend also uses `marketCreatedAt` from `/v1/markets/metrics` to show creation timing in the expanded market row. The UI shows the date and age only, not the creation block. Client-side oracle/asset warnings still stay in their existing warning path.
 
 ## Follow-Ups
 

@@ -18,8 +18,6 @@ const marketCreatedDateFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
 });
 
-const numberFormatter = new Intl.NumberFormat('en-US');
-
 function getMarketCreatedDisplay(createdAt: string | null | undefined) {
   if (!createdAt) {
     return null;
@@ -47,7 +45,6 @@ function getMarketCreatedDisplay(createdAt: string | null | undefined) {
 export function ExpandedMarketDetail({ market, marketMetrics }: ExpandedMarketDetailProps) {
   const warningsWithDetail = useMarketWarnings(market);
   const marketCreatedDisplay = getMarketCreatedDisplay(marketMetrics?.marketCreatedAt);
-  const marketCreationBlockNumber = marketMetrics?.marketCreationBlockNumber;
 
   return (
     <div className="flex w-full flex-col gap-4 lg:flex-row lg:gap-6">
@@ -83,12 +80,7 @@ export function ExpandedMarketDetail({ market, marketMetrics }: ExpandedMarketDe
         {marketCreatedDisplay && (
           <div className="mb-1 flex items-start justify-between gap-3">
             <p className="font-inter text-sm opacity-80">Market Created</p>
-            <div className="text-right">
-              <p className="font-zen text-sm">{marketCreatedDisplay}</p>
-              {marketCreationBlockNumber != null && (
-                <p className="font-monospace text-[11px] text-secondary">block {numberFormatter.format(marketCreationBlockNumber)}</p>
-              )}
-            </div>
+            <p className="text-right font-zen text-sm">{marketCreatedDisplay}</p>
           </div>
         )}
       </div>

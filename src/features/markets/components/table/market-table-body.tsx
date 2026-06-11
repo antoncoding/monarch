@@ -53,10 +53,15 @@ export function MarketTableBody({
   const { metricsMap } = useMarketMetricsMap({
     enabled: currentEntries.length > 0,
   });
-  const { flagsByMarket, categoriesByMarket } = useMarketDiscoveryFlagsMap({
+  const {
+    flagsByMarket,
+    categoriesByMarket,
+    data: discoveryFlagsResponse,
+  } = useMarketDiscoveryFlagsMap({
     enabled: currentEntries.length > 0,
     defer: true,
   });
+  const discoveryDataLoaded = Boolean(discoveryFlagsResponse?.flags);
   const activeDiscoveryCategories = useMemo(() => new Set<MarketDiscoveryCategory>(discoveryCategories), [discoveryCategories]);
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
@@ -112,6 +117,9 @@ export function MarketTableBody({
         const metrics = metricsMap.get(marketKey);
         const discoveryFlags = flagsByMarket.get(marketKey) ?? [];
         const marketDiscoveryCategories = categoriesByMarket.get(marketKey);
+        const resolvedDiscoveryCategories = discoveryDataLoaded
+          ? (marketDiscoveryCategories ?? new Set<MarketDiscoveryCategory>())
+          : marketDiscoveryCategories;
         const activeMarketDiscoveryCategories = new Set<MarketDiscoveryCategory>();
         if (marketDiscoveryCategories && activeDiscoveryCategories.size > 0) {
           for (const category of marketDiscoveryCategories) {
@@ -362,7 +370,8 @@ export function MarketTableBody({
                   market={item}
                   marketMetrics={metrics ?? null}
                   discoveryFlags={discoveryFlags}
-                  discoveryCategories={marketDiscoveryCategories}
+                  discoveryCategories={resolvedDiscoveryCategories}
+                  discoveryDataLoaded={discoveryDataLoaded}
                   showRisk={false}
                 />
               </TableCell>
