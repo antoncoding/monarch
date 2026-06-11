@@ -13,12 +13,10 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useUserRewardsQuery } from '@/hooks/queries/useUserRewardsQuery';
-
-import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
-import { MORPHO_LEGACY, MORPHO_TOKEN_BASE, MORPHO_TOKEN_MAINNET } from '@/utils/tokens';
+import { MORPHO_TOKEN_BASE, MORPHO_TOKEN_MAINNET } from '@/utils/tokens';
 import type { AggregatedRewardType } from '@/utils/types';
 import RewardTable from './components/reward-table';
 import { PositionBreadcrumbs } from '@/features/position-detail/components/position-breadcrumbs';
@@ -45,25 +43,13 @@ export default function Rewards() {
     chainId: SupportedNetworks.Base,
   });
 
-  const { data: morphoBalanceLegacy, refetch: refetchLegacy } = useReadContract({
-    address: MORPHO_LEGACY,
-    abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: [account as Address],
-    chainId: SupportedNetworks.Mainnet,
-  });
-
   const handleRefresh = useCallback(() => {
     void refetch();
     void refetchMainnet();
     void refetchBase();
-    void refetchLegacy();
-  }, [refetch, refetchMainnet, refetchBase, refetchLegacy]);
+  }, [refetch, refetchMainnet, refetchBase]);
 
-  const morphoBalance = useMemo(
-    () => (morphoBalanceMainnet ?? 0n) + (morphoBalanceBase ?? 0n) + (morphoBalanceLegacy ?? 0n),
-    [morphoBalanceMainnet, morphoBalanceBase, morphoBalanceLegacy],
-  );
+  const morphoBalance = useMemo(() => (morphoBalanceMainnet ?? 0n) + (morphoBalanceBase ?? 0n), [morphoBalanceMainnet, morphoBalanceBase]);
 
   const allRewards = useMemo(() => {
     const result: AggregatedRewardType[] = [];
@@ -94,8 +80,7 @@ export default function Rewards() {
     return allRewards.reduce((acc, reward) => {
       if (
         reward.asset.address.toLowerCase() === MORPHO_TOKEN_MAINNET.toLowerCase() ||
-        reward.asset.address.toLowerCase() === MORPHO_TOKEN_BASE.toLowerCase() ||
-        reward.asset.address.toLowerCase() === MORPHO_LEGACY.toLowerCase()
+        reward.asset.address.toLowerCase() === MORPHO_TOKEN_BASE.toLowerCase()
       ) {
         return acc + reward.total.claimable;
       }
@@ -103,13 +88,7 @@ export default function Rewards() {
     }, 0n);
   }, [allRewards]);
 
-  const showLegacy = morphoBalanceLegacy !== undefined && morphoBalanceLegacy !== 0n;
   const isBookmarked = isAddressBookmarked(account as Address);
-
-  const { wrap, transaction } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
-    // Refresh rewards data after successful wrap
-    handleRefresh();
-  });
 
   useEffect(() => {
     if (account) {
@@ -201,40 +180,6 @@ export default function Rewards() {
             </div>
 
             <ReferralRewardsBlock account={account as Address} />
-
-            {showLegacy && (
-              <div className="flex flex-col gap-1">
-                <Tooltip
-                  content={
-                    <TooltipContent
-                      title="Legacy MORPHO"
-                      detail="Legacy MORPHO tokens that need to be wrapped"
-                    />
-                  }
-                >
-                  <span className="cursor-help text-xs uppercase tracking-wider text-secondary border-b border-dotted border-secondary/60">
-                    Legacy MORPHO
-                  </span>
-                </Tooltip>
-                <div className="flex items-center gap-3 text-lg">
-                  {morphoBalanceLegacy && <span className="tabular-nums">{formatSimple(formatBalance(morphoBalanceLegacy, 18))}</span>}
-                  <TokenIcon
-                    address={MORPHO_TOKEN_MAINNET}
-                    chainId={SupportedNetworks.Mainnet}
-                    width={18}
-                    height={18}
-                  />
-                  <Button
-                    variant="surface"
-                    size="sm"
-                    onClick={() => void wrap()}
-                    disabled={!!transaction?.isModalVisible}
-                  >
-                    Wrap Now
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
         <div className="space-y-6">

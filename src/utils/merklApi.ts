@@ -1,4 +1,4 @@
-import type { MerklCampaign, SimplifiedCampaign, MerklApiParams, MerklOpportunityLookupParams, MerklOpportunity } from './merklTypes';
+import type { MerklApiParams, MerklCampaign, MerklOpportunityLookupParams, MerklOpportunity, SimplifiedCampaign } from './merklTypes';
 
 const MERKL_API_PROXY_BASE_PATH = '/api/merkl';
 
@@ -56,44 +56,36 @@ export async function fetchMerklApi<T>(
   };
 }
 
-// Helper function to fetch campaigns from the Merkl REST API.
 export async function fetchCampaigns(params: MerklApiParams = {}): Promise<MerklCampaign[]> {
-  try {
-    const queryParams: Record<string, MerklQueryValue> = {};
+  const queryParams: Record<string, MerklQueryValue> = {};
 
-    if (params.type) queryParams.type = params.type;
-    if (params.chainId !== undefined) queryParams.chainId = params.chainId;
-    if (params.items !== undefined) queryParams.items = params.items;
-    if (params.page !== undefined) queryParams.page = params.page;
-    if (params.startTimestamp !== undefined) queryParams.startTimestamp = params.startTimestamp;
-    if (params.endTimestamp !== undefined) queryParams.endTimestamp = params.endTimestamp;
+  if (params.type) queryParams.type = params.type;
+  if (params.chainId !== undefined) queryParams.chainId = params.chainId;
+  if (params.items !== undefined) queryParams.items = params.items;
+  if (params.page !== undefined) queryParams.page = params.page;
+  if (params.startTimestamp !== undefined) queryParams.startTimestamp = params.startTimestamp;
+  if (params.endTimestamp !== undefined) queryParams.endTimestamp = params.endTimestamp;
 
-    const { data, error, status } = await fetchMerklApi<MerklCampaign[]>('/v4/campaigns', {
-      ...queryParams,
-      mainProtocolId: 'morpho',
-      withOpportunity: true,
-    });
+  const { data, error, status } = await fetchMerklApi<MerklCampaign[]>('/v4/campaigns', {
+    ...queryParams,
+    mainProtocolId: 'morpho',
+    withOpportunity: true,
+  });
 
-    if (error || status !== 200) {
-      throw new Error(`Merkl API error: ${status} ${error}`);
-    }
-
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error('Error fetching Merkl campaigns:', err);
-    throw err;
+  if (error || status !== 200) {
+    throw new Error(`Merkl API campaign error: ${status} ${error}`);
   }
+
+  return Array.isArray(data) ? data : [];
 }
 
-// Helper function to fetch active campaigns with full pagination
 export async function fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {}): Promise<MerklCampaign[]> {
   const now = Math.floor(Date.now() / 1000);
-  const pageSize = params.items ?? 100; // Use provided items or default to 100
+  const pageSize = params.items ?? 100;
   const allCampaigns: MerklCampaign[] = [];
   let currentPage = 0;
-  let hasMore = true;
 
-  while (hasMore) {
+  while (true) {
     const batch = await fetchCampaigns({
       ...params,
       items: pageSize,
@@ -104,12 +96,11 @@ export async function fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTi
 
     allCampaigns.push(...batch);
 
-    // If we got fewer results than pageSize, we've reached the end
     if (batch.length < pageSize) {
-      hasMore = false;
-    } else {
-      currentPage++;
+      break;
     }
+
+    currentPage += 1;
   }
 
   return allCampaigns;
@@ -163,14 +154,12 @@ export const getMerklOpportunityAprDecimal = (opportunity: MerklOpportunity | nu
   return aprPercent / 100;
 };
 
-// Helper to check if a campaign is currently active
-function isCampaignActive(campaign: MerklCampaign): boolean {
+const isCampaignActive = (campaign: MerklCampaign): boolean => {
   const now = Math.floor(Date.now() / 1000);
-  return campaign.startTimestamp <= now && campaign.endTimestamp > now;
-}
+  return campaign.startTimestamp <= now && campaign.endTimestamp > now && Number.isFinite(campaign.apr) && campaign.apr > 0;
+};
 
-// Helper to extract common campaign fields
-function getBaseCampaignFields(
+const getBaseCampaignFields = (
   campaign: MerklCampaign,
 ): Pick<
   SimplifiedCampaign,
@@ -185,65 +174,66 @@ function getBaseCampaignFields(
   | 'name'
   | 'opportunityIdentifier'
   | 'opportunityAction'
-> {
-  return {
-    chainId: campaign.computeChainId,
-    campaignId: campaign.campaignId,
-    type: campaign.type,
-    apr: campaign.apr,
-    rewardToken: {
-      symbol: campaign.rewardToken.symbol,
-      icon: campaign.rewardToken.icon,
-      address: campaign.rewardToken.address,
-    },
-    startTimestamp: campaign.startTimestamp,
-    endTimestamp: campaign.endTimestamp,
-    isActive: isCampaignActive(campaign),
-    name: campaign.Opportunity?.name,
-    opportunityIdentifier: campaign.Opportunity?.identifier,
-    opportunityAction: campaign.Opportunity?.action,
-  };
-}
+> => ({
+  chainId: campaign.computeChainId,
+  campaignId: campaign.campaignId,
+  type: campaign.type,
+  apr: campaign.apr,
+  rewardToken: {
+    symbol: campaign.rewardToken.symbol,
+    icon: campaign.rewardToken.icon,
+    address: campaign.rewardToken.address,
+  },
+  startTimestamp: campaign.startTimestamp,
+  endTimestamp: campaign.endTimestamp,
+  isActive: isCampaignActive(campaign),
+  name: campaign.Opportunity?.name,
+  opportunityIdentifier: campaign.Opportunity?.identifier,
+  opportunityAction: campaign.Opportunity?.action,
+});
 
-// Adapter function to convert Merkl campaigns to SimplifiedCampaign.
-export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampaign {
+export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampaign | null {
   const baseFields = getBaseCampaignFields(campaign);
 
-  // For SINGLETOKEN campaigns, use targetToken as the identifier
-  const marketId =
-    campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-      ? `singletoken_${campaign.params.targetToken}_${campaign.computeChainId}`
-      : campaign.params.market;
-
-  // Add type-specific fields
   if (campaign.type === 'MORPHOSUPPLY_SINGLETOKEN') {
+    const targetToken = campaign.params.targetToken;
+    if (!targetToken) return null;
+
     return {
       ...baseFields,
-      marketId,
+      marketId: `singletoken_${targetToken}_${campaign.computeChainId}`,
       targetToken: {
-        symbol: campaign.params.symbolTargetToken,
-        address: campaign.params.targetToken,
+        symbol: campaign.params.symbolTargetToken ?? '',
+        address: targetToken,
       },
     };
   }
 
+  const marketId = campaign.params.market;
+  if (!marketId) return null;
+
   return {
     ...baseFields,
     marketId,
-    collateralToken: { symbol: campaign.params.symbolCollateralToken },
-    loanToken: { symbol: campaign.params.symbolLoanToken },
+    collateralToken: campaign.params.symbolCollateralToken ? { symbol: campaign.params.symbolCollateralToken } : undefined,
+    loanToken: campaign.params.symbolLoanToken ? { symbol: campaign.params.symbolLoanToken } : undefined,
   };
 }
 
-// Expand MULTILENDBORROW campaigns into multiple SimplifiedCampaign objects (one per market)
 export function expandMultiLendBorrowCampaign(campaign: MerklCampaign): SimplifiedCampaign[] {
   const baseFields = getBaseCampaignFields(campaign);
-  const markets = campaign.params.markets ?? [];
 
-  return markets.map((m) => ({
-    ...baseFields,
-    marketId: m.campaignParameters.market,
-    collateralToken: { symbol: m.campaignParameters.symbolCollateralToken },
-    loanToken: { symbol: m.campaignParameters.symbolLoanToken },
-  }));
+  return (campaign.params.markets ?? []).flatMap((market) => {
+    const marketId = market.campaignParameters.market;
+    if (!marketId) return [];
+
+    return [
+      {
+        ...baseFields,
+        marketId,
+        collateralToken: { symbol: market.campaignParameters.symbolCollateralToken },
+        loanToken: { symbol: market.campaignParameters.symbolLoanToken },
+      },
+    ];
+  });
 }

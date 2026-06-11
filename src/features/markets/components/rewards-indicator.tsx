@@ -9,8 +9,8 @@ type RewardsIndicatorProps = {
   size: number;
   chainId: number;
   marketId: string;
-  loanTokenAddress?: string;
-  whitelisted: boolean; // whitelisted by morpho
+  loanTokenAddress: string;
+  whitelisted: boolean;
 };
 
 export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelisted, size }: RewardsIndicatorProps) {
@@ -28,7 +28,7 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
   // Create tooltip detail with all rewards
   const rewardsList = activeCampaigns
     .map((campaign) => {
-      const rewardType = campaign.type === 'MORPHOBORROW' ? 'borrower' : 'supplier';
+      const rewardType = campaign.type === 'MORPHOBORROW' || campaign.opportunityAction === 'BORROW' ? 'borrower' : 'supplier';
       return `${campaign.rewardToken.symbol} ${rewardType} reward +${campaign.apr.toFixed(2)}%`;
     })
     .join('\n');

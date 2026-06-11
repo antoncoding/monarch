@@ -1,18 +1,18 @@
 'use client';
 
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import Link from 'next/link';
+import { TokenIcon } from '@/components/shared/token-icon';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { getMerklCampaignURL } from '@/utils/external';
-import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
+import type { SimplifiedCampaign, MarketRewardType } from '@/utils/merklTypes';
 
-const CAMPAIGN_TYPE_CONFIG: Record<MerklCampaignType, { badge: string }> = {
+const CAMPAIGN_TYPE_CONFIG: Record<MarketRewardType, { badge: string }> = {
   MORPHOSUPPLY: { badge: 'Lender Rewards' },
-  MORPHOSUPPLY_SINGLETOKEN: { badge: 'Lender Rewards' },
-  MULTILENDBORROW: { badge: 'Lend/Borrow Rewards' },
   MORPHOBORROW: { badge: 'Borrow Rewards' },
+  MORPHOSUPPLY_SINGLETOKEN: { badge: 'Lender Rewards' },
+  MULTILENDBORROW: { badge: 'Market Rewards' },
 };
 
 type CampaignModalProps = {
@@ -22,17 +22,15 @@ type CampaignModalProps = {
 };
 
 function getUrlIdentifier(campaign: SimplifiedCampaign): string {
-  // Always prefer opportunityIdentifier from the Opportunity object
   if (campaign.opportunityIdentifier) {
     return campaign.opportunityIdentifier;
   }
-  // Fallback for legacy data
-  switch (campaign.type) {
-    case 'MORPHOSUPPLY_SINGLETOKEN':
-      return campaign.targetToken?.address ?? campaign.campaignId;
-    default:
-      return campaign.marketId.slice(0, 42);
+
+  if (campaign.type === 'MORPHOSUPPLY_SINGLETOKEN') {
+    return campaign.targetToken?.address ?? campaign.campaignId;
   }
+
+  return campaign.marketId.slice(0, 42);
 }
 
 function formatCampaignDate(timestamp: number): string {
@@ -44,8 +42,7 @@ function formatCampaignDate(timestamp: number): string {
 }
 
 function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
-  const urlIdentifier = getUrlIdentifier(campaign);
-  const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, urlIdentifier);
+  const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, getUrlIdentifier(campaign));
 
   const { badge } = CAMPAIGN_TYPE_CONFIG[campaign.type] ?? CAMPAIGN_TYPE_CONFIG.MORPHOSUPPLY;
 
@@ -56,12 +53,12 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
         <div className="flex items-center gap-3">
           <span className="rounded-sm bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800 dark:text-green-300">{badge}</span>
           <div className="flex items-center gap-2">
-            <Image
-              src={campaign.rewardToken.icon}
-              alt={campaign.rewardToken.symbol}
+            <TokenIcon
+              address={campaign.rewardToken.address}
+              chainId={campaign.chainId}
+              symbol={campaign.rewardToken.symbol}
               width={20}
               height={20}
-              className="rounded-full"
             />
             <span className="text-normal">{campaign.rewardToken.symbol}</span>
           </div>
@@ -75,7 +72,7 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
       {/* Date Range + Link */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-500 dark:text-gray-500">
-          {formatCampaignDate(campaign.startTimestamp)} — {formatCampaignDate(campaign.endTimestamp)}
+          {formatCampaignDate(campaign.startTimestamp)} - {formatCampaignDate(campaign.endTimestamp)}
         </span>
         <Link
           href={merklUrl}
@@ -111,7 +108,7 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
     >
       <ModalHeader
         title="Active Reward Campaigns"
-        description="Earn extra incentives from live Merkl programs"
+        description="Current Merkl incentives for this market"
         mainIcon={<ExternalLinkIcon className="h-5 w-5" />}
         onClose={onClose}
       />
