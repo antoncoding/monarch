@@ -15,6 +15,8 @@ export type MarketDiscoveryFlagReason =
 export type MarketDiscoveryFlag = {
   chainId: number;
   marketUniqueKey: string;
+  marketCreatedAt: string | null;
+  marketCreationBlockNumber: number | null;
   reasons: MarketDiscoveryFlagReason[];
   summary: string;
 };
@@ -35,7 +37,7 @@ type MarketDiscoveryFlagMaps = {
 };
 
 const MARKET_DISCOVERY_FLAGS_REFRESH_MS = 15 * 60 * 1000;
-const MARKET_DISCOVERY_FLAGS_QUERY_SCHEMA_VERSION = 1;
+const MARKET_DISCOVERY_FLAGS_QUERY_SCHEMA_VERSION = 2;
 
 const fetchMarketDiscoveryFlags = async (): Promise<MarketDiscoveryFlagsResponse> => {
   if (!DATA_API_BASE_URL) {
@@ -109,30 +111,36 @@ export const useMarketDiscoveryFlagsMap = (params: MarketDiscoveryFlagsParams = 
   };
 };
 
-export const useMarketDiscoveryFlagKeys = ({
+export const useMarketDiscoveryPriorityMap = ({
   categories,
   enabled = true,
   defer = false,
 }: MarketDiscoveryFlagsParams & { categories: MarketDiscoveryCategory[] }) => {
-  const { categoriesByMarket } = useMarketDiscoveryFlagsMap({
+  const { data } = useMarketDiscoveryFlagsQuery({
     enabled: enabled && categories.length > 0,
     defer,
   });
 
   return useMemo(() => {
-    const keys = new Set<string>();
-    if (categories.length === 0) return keys;
+    const priorityMap = new Map<string, number>();
+    if (!data?.flags || categories.length === 0) return priorityMap;
 
     const selectedCategories = new Set(categories);
-    for (const [key, marketCategories] of categoriesByMarket) {
-      for (const category of marketCategories) {
-        if (selectedCategories.has(category)) {
-          keys.add(key);
-          break;
+    let priority = 0;
+    for (const category of MARKET_DISCOVERY_CATEGORIES) {
+      if (!selectedCategories.has(category)) {
+        continue;
+      }
+
+      for (const flag of data.flags[category] ?? []) {
+        const key = getMarketDiscoveryKey(flag.chainId, flag.marketUniqueKey);
+        if (!priorityMap.has(key)) {
+          priorityMap.set(key, priority);
+          priority += 1;
         }
       }
     }
 
-    return keys;
-  }, [categories, categoriesByMarket]);
+    return priorityMap;
+  }, [categories, data?.flags]);
 };

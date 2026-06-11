@@ -52,6 +52,8 @@ export type MarketPriceDebtRisk = {
 export type MarketMetrics = {
   marketUniqueKey: string;
   chainId: number;
+  marketCreatedAt: string | null;
+  marketCreationBlockNumber: number | null;
   loanAsset: { address: string; symbol: string; decimals: number };
   collateralAsset: { address: string; symbol: string; decimals: number } | null;
   lltv: number;
@@ -89,7 +91,7 @@ type MarketMetricsParams = {
 
 const PAGE_SIZE = 1000;
 const MARKET_METRICS_REFRESH_MS = 15 * 60 * 1000;
-const MARKET_METRICS_QUERY_SCHEMA_VERSION = 2;
+const MARKET_METRICS_QUERY_SCHEMA_VERSION = 3;
 
 const getMarketMetricsClientUrl = (searchParams?: URLSearchParams): string => {
   if (!DATA_API_BASE_URL) {

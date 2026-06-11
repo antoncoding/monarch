@@ -65,9 +65,10 @@ export default function DiscoveryFilter({ showLabelPrefix = false }: DiscoveryFi
       <button
         type="button"
         className={cn(
-          'bg-surface flex h-10 items-center gap-2 rounded-sm px-3 shadow-sm transition-all duration-200 hover:bg-hovered',
+          'bg-surface flex h-10 items-center gap-2 rounded-sm border border-transparent px-3 shadow-sm transition-all duration-200 hover:bg-hovered',
           'min-w-[132px] max-w-[220px]',
           isOpen && 'min-w-[190px]',
+          discoveryCategories.length > 0 && 'border-orange-500/45',
         )}
         onClick={toggleDropdown}
         onKeyDown={(e) => {
@@ -114,8 +115,8 @@ export default function DiscoveryFilter({ showLabelPrefix = false }: DiscoveryFi
                 <li
                   key={category}
                   className={cn(
-                    'm-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-800',
-                    isSelected && 'bg-gray-100 dark:bg-gray-800',
+                    'm-2 flex cursor-pointer items-center justify-between rounded border border-transparent p-2 text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-800',
+                    isSelected && 'border-orange-500/40 dark:border-orange-500/45',
                   )}
                   onClick={() => toggleDiscoveryCategory(category)}
                   onKeyDown={(e) => {

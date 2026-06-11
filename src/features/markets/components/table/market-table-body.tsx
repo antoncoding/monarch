@@ -382,7 +382,10 @@ export function MarketTableBody({
                   colSpan={visibleColumnsCount}
                 >
                   <div className="p-4">
-                    <ExpandedMarketDetail market={item} />
+                    <ExpandedMarketDetail
+                      market={item}
+                      marketMetrics={metrics ?? null}
+                    />
                   </div>
                 </TableCell>
               </TableRow>

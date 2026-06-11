@@ -25,12 +25,18 @@ type MarketFlagsResponse = {
 type MarketDiscoveryFlag = {
   chainId: number;
   marketUniqueKey: string;
+  marketCreatedAt: string | null;
+  marketCreationBlockNumber: number | null;
   reasons: MarketDiscoveryFlagReason[];
   summary: string;
 };
 ```
 
-The frontend turns this into lookup maps for compact row badges, discovery prioritization, and row focus styling. Client-side oracle/asset warnings still stay in their existing warning path.
+The API returns each discovery category ordered from most exciting to least exciting. The frontend preserves that order when users select Discovery filters, pulling flagged rows to the top without replacing the user's active market filters.
+
+`newOpportunities` is intentionally stricter than broad volume: a market needs Morpho listing, healthy utilization, at least `$500k` supply/TVL, a vault signal, and fresh large supply activation. Older markets qualify only from large `24h` supply or vault supply flow; a market created in the last `3d` can qualify from `7d` supply flow because the full flow window is inside the market lifetime.
+
+The frontend also uses `marketCreatedAt` from `/v1/markets/metrics` to show creation timing in the expanded market row. Client-side oracle/asset warnings still stay in their existing warning path.
 
 ## Follow-Ups
 

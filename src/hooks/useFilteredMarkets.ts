@@ -8,7 +8,7 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
-import { useMarketDiscoveryFlagKeys } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
+import { useMarketDiscoveryPriorityMap } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
@@ -51,22 +51,30 @@ const EMPTY_DATA_NOTICES: MarketDataNotice[] = [];
 
 const getNetworkLabel = (chainId: number): string => getNetworkName(chainId) ?? `chain ${chainId}`;
 
-const prioritizeDiscoveryMarkets = (markets: Market[], discoveryFlagKeys: Set<string>): Market[] => {
-  if (markets.length === 0 || discoveryFlagKeys.size === 0) {
+const prioritizeDiscoveryMarkets = (markets: Market[], discoveryPriorityMap: Map<string, number>): Market[] => {
+  if (markets.length === 0 || discoveryPriorityMap.size === 0) {
     return markets;
   }
 
   return [...markets].sort((a, b) => {
     const aKey = getMetricsKey(a.morphoBlue.chain.id, a.uniqueKey);
     const bKey = getMetricsKey(b.morphoBlue.chain.id, b.uniqueKey);
-    const aFlagged = discoveryFlagKeys.has(aKey);
-    const bFlagged = discoveryFlagKeys.has(bKey);
+    const aPriority = discoveryPriorityMap.get(aKey);
+    const bPriority = discoveryPriorityMap.get(bKey);
 
-    if (aFlagged === bFlagged) {
+    if (aPriority === undefined && bPriority === undefined) {
       return 0;
     }
 
-    return aFlagged ? -1 : 1;
+    if (aPriority === undefined) {
+      return 1;
+    }
+
+    if (bPriority === undefined) {
+      return -1;
+    }
+
+    return aPriority - bPriority;
   });
 };
 
@@ -161,7 +169,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const { findToken } = useTokensQuery();
   const officialTrendingKeys = useOfficialTrendingMarketKeys({ enabled: filters.trendingMode, defer: true });
   const customTagKeys = useCustomTagMarketKeys({ enabled: filters.customTagMode, defer: true });
-  const discoveryFlagKeys = useMarketDiscoveryFlagKeys({
+  const discoveryPriorityMap = useMarketDiscoveryPriorityMap({
     categories: filters.discoveryCategories,
     enabled: filters.discoveryCategories.length > 0,
     defer: true,
@@ -258,8 +266,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   }, [filteredCandidates, sortColumn, preferences.sortDirection, preferences.starredMarkets]);
 
   const discoverySortedCandidates = useMemo(
-    () => prioritizeDiscoveryMarkets(sortedCandidates, discoveryFlagKeys),
-    [sortedCandidates, discoveryFlagKeys],
+    () => prioritizeDiscoveryMarkets(sortedCandidates, discoveryPriorityMap),
+    [sortedCandidates, discoveryPriorityMap],
   );
 
   const rateEnrichmentTargets = useMemo(() => {
@@ -340,7 +348,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
 
     return prioritizeDiscoveryMarkets(
       sortMarkets(enrichedCandidates, createPropertySort(propertyPath), preferences.sortDirection as 1 | -1),
-      discoveryFlagKeys,
+      discoveryPriorityMap,
     );
   }, [
     shouldEnableRateEnrichment,
@@ -350,7 +358,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     filteredCandidates,
     sortColumn,
     preferences.sortDirection,
-    discoveryFlagKeys,
+    discoveryPriorityMap,
   ]);
 
   return {
