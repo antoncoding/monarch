@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { PulseLoader } from 'react-spinners';
 import { TableBody, TableRow, TableCell } from '@/components/ui/table';
@@ -10,13 +10,17 @@ import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import type { MarketV2SupplyingVault } from '@/data-sources/monarch-api/vaults';
+import type { MarketDiscoveryCategory } from '@/features/markets/market-discovery';
+import { useMarketDiscoveryFlagsMap } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { getMetricsKey, useMarketMetricsMap } from '@/hooks/queries/useMarketMetricsQuery';
 import type { MarketRateEnrichment } from '@/utils/market-rate-enrichment';
 import type { Market } from '@/utils/types';
 import { getTrustedVaultsForMarket } from '@/utils/vaults';
+import { cn } from '@/utils/components';
 import { APYCell } from '../apy-breakdown-tooltip';
 import { MarketActionsDropdown } from '../market-actions-dropdown';
 import { ExpandedMarketDetail } from './market-row-detail';
@@ -44,10 +48,16 @@ export function MarketTableBody({
   rateEnrichmentLoading,
 }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
+  const discoveryCategories = useMarketsFilters((state) => state.discoveryCategories);
   const { success: toastSuccess } = useStyledToast();
   const { metricsMap } = useMarketMetricsMap({
     enabled: currentEntries.length > 0,
   });
+  const { flagsByMarket, categoriesByMarket } = useMarketDiscoveryFlagsMap({
+    enabled: currentEntries.length > 0,
+    defer: true,
+  });
+  const activeDiscoveryCategories = useMemo(() => new Set<MarketDiscoveryCategory>(discoveryCategories), [discoveryCategories]);
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -98,7 +108,19 @@ export function MarketTableBody({
       {currentEntries.map((item) => {
         const collatToShow = item.collateralAsset.symbol.slice(0, 6).concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
         const isStared = starredMarkets.includes(item.uniqueKey);
-        const metrics = metricsMap.get(getMetricsKey(item.morphoBlue.chain.id, item.uniqueKey));
+        const marketKey = getMetricsKey(item.morphoBlue.chain.id, item.uniqueKey);
+        const metrics = metricsMap.get(marketKey);
+        const discoveryFlags = flagsByMarket.get(marketKey) ?? [];
+        const marketDiscoveryCategories = categoriesByMarket.get(marketKey);
+        const activeMarketDiscoveryCategories = new Set<MarketDiscoveryCategory>();
+        if (marketDiscoveryCategories && activeDiscoveryCategories.size > 0) {
+          for (const category of marketDiscoveryCategories) {
+            if (activeDiscoveryCategories.has(category)) {
+              activeMarketDiscoveryCategories.add(category);
+            }
+          }
+        }
+        const isDiscoveryFocused = activeMarketDiscoveryCategories.size > 0;
 
         return (
           <React.Fragment key={item.uniqueKey}>
@@ -106,7 +128,11 @@ export function MarketTableBody({
               onClick={() => {
                 setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey);
               }}
-              className={`hover:cursor-pointer ${item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''}`}
+              className={cn(
+                'hover:cursor-pointer',
+                item.uniqueKey === expandedRowId && 'table-body-focused',
+                isDiscoveryFocused && 'market-discovery-focused',
+              )}
             >
               <TableCell
                 data-label=""
@@ -335,6 +361,8 @@ export function MarketTableBody({
                 <MarketIndicators
                   market={item}
                   marketMetrics={metrics ?? null}
+                  discoveryFlags={discoveryFlags}
+                  discoveryCategories={activeMarketDiscoveryCategories}
                   showRisk={false}
                 />
               </TableCell>

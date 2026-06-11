@@ -406,6 +406,15 @@ tbody tr:not(.no-hover-effect tr):hover {
   border-left: 2px solid var(--palette-orange) !important;
 }
 
+tbody tr.market-discovery-focused {
+  background-color: rgba(244, 95, 45, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(244, 95, 45, 0.28);
+}
+
+tbody tr.market-discovery-focused:hover {
+  background-color: rgba(244, 95, 45, 0.1);
+}
+
 /* Compact table variant - less padding for simpler tables */
 .table-body-compact td {
   padding: 0.625rem;

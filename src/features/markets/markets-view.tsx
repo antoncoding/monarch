@@ -164,6 +164,7 @@ export default function Markets() {
     persistedFilters.selectedLoanAssets,
     filters.selectedOracles,
     filters.searchQuery,
+    filters.discoveryCategories,
     resetPage,
   ]);
 

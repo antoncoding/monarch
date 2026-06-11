@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { MarketDiscoveryCategory } from '@/features/markets/market-discovery';
 import type { PriceFeedVendors } from '@/utils/oracle';
 
 /**
@@ -14,6 +15,7 @@ type MarketsFiltersState = {
   trendingMode: boolean; // Official trending filter (backend-computed)
   customTagMode: boolean; // User's custom tag filter
   starredOnly: boolean; // Show only starred markets
+  discoveryCategories: MarketDiscoveryCategory[];
 };
 
 type MarketsFiltersActions = {
@@ -22,6 +24,8 @@ type MarketsFiltersActions = {
   toggleTrendingMode: () => void;
   toggleCustomTagMode: () => void;
   toggleStarredOnly: () => void;
+  toggleDiscoveryCategory: (category: MarketDiscoveryCategory) => void;
+  clearDiscoveryCategories: () => void;
   resetFilters: () => void;
 };
 
@@ -33,6 +37,7 @@ const DEFAULT_STATE: MarketsFiltersState = {
   trendingMode: false,
   customTagMode: false,
   starredOnly: false,
+  discoveryCategories: [],
 };
 
 /**
@@ -51,6 +56,13 @@ export const useMarketsFilters = create<MarketsFiltersStore>()((set) => ({
   toggleTrendingMode: () => set((state) => ({ trendingMode: !state.trendingMode })),
   toggleCustomTagMode: () => set((state) => ({ customTagMode: !state.customTagMode })),
   toggleStarredOnly: () => set((state) => ({ starredOnly: !state.starredOnly })),
+  toggleDiscoveryCategory: (category) =>
+    set((state) => ({
+      discoveryCategories: state.discoveryCategories.includes(category)
+        ? state.discoveryCategories.filter((item) => item !== category)
+        : [...state.discoveryCategories, category],
+    })),
+  clearDiscoveryCategories: () => set({ discoveryCategories: [] }),
 
   resetFilters: () => set(DEFAULT_STATE),
 }));

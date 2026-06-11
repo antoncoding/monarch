@@ -8,6 +8,7 @@ import { TbArrowAutofitWidth } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
+import { MarketDiscoveryDropdown } from '@/features/markets/components/market-discovery-dropdown';
 import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
 import { useModal } from '@/hooks/useModal';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -42,6 +43,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isTableLoading, i
       )}
 
       <MarketFilter />
+      <MarketDiscoveryDropdown />
 
       <Tooltip
         content={
