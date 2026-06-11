@@ -1,12 +1,11 @@
 import { create } from 'zustand';
-import type { MarketDiscoveryCategory } from '@/features/markets/market-discovery';
 import type { PriceFeedVendors } from '@/utils/oracle';
 
 /**
  * Session-only filter state for the markets page.
  *
- * Persisted market selections (network, loan asset, collateral) live in
- * useMarketFilterPreferences. This store holds the transient filters that
+ * Persisted market selections (network, loan asset, collateral, discovery)
+ * live in useMarketFilterPreferences. This store holds transient filters that
  * should reset naturally between sessions or when the user clears the page.
  */
 type MarketsFiltersState = {
@@ -15,7 +14,6 @@ type MarketsFiltersState = {
   trendingMode: boolean; // Official growing filter (legacy API key)
   customTagMode: boolean; // User's custom tag filter
   starredOnly: boolean; // Show only starred markets
-  discoveryCategories: MarketDiscoveryCategory[];
 };
 
 type MarketsFiltersActions = {
@@ -24,8 +22,6 @@ type MarketsFiltersActions = {
   toggleTrendingMode: () => void;
   toggleCustomTagMode: () => void;
   toggleStarredOnly: () => void;
-  toggleDiscoveryCategory: (category: MarketDiscoveryCategory) => void;
-  clearDiscoveryCategories: () => void;
   resetFilters: () => void;
 };
 
@@ -37,7 +33,6 @@ const DEFAULT_STATE: MarketsFiltersState = {
   trendingMode: false,
   customTagMode: false,
   starredOnly: false,
-  discoveryCategories: [],
 };
 
 /**
@@ -56,13 +51,6 @@ export const useMarketsFilters = create<MarketsFiltersStore>()((set) => ({
   toggleTrendingMode: () => set((state) => ({ trendingMode: !state.trendingMode })),
   toggleCustomTagMode: () => set((state) => ({ customTagMode: !state.customTagMode })),
   toggleStarredOnly: () => set((state) => ({ starredOnly: !state.starredOnly })),
-  toggleDiscoveryCategory: (category) =>
-    set((state) => ({
-      discoveryCategories: state.discoveryCategories.includes(category)
-        ? state.discoveryCategories.filter((item) => item !== category)
-        : [...state.discoveryCategories, category],
-    })),
-  clearDiscoveryCategories: () => set({ discoveryCategories: [] }),
 
   resetFilters: () => set(DEFAULT_STATE),
 }));

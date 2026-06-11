@@ -14,8 +14,8 @@ import type { MarketDiscoveryCategory } from '@/features/markets/market-discover
 import { useMarketDiscoveryFlagsMap } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { useMarketFilterPreferences } from '@/stores/useMarketFilterPreferences';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
-import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { getMetricsKey, useMarketMetricsMap } from '@/hooks/queries/useMarketMetricsQuery';
 import type { MarketRateEnrichment } from '@/utils/market-rate-enrichment';
 import type { Market } from '@/utils/types';
@@ -48,7 +48,7 @@ export function MarketTableBody({
   rateEnrichmentLoading,
 }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
-  const discoveryCategories = useMarketsFilters((state) => state.discoveryCategories);
+  const discoveryCategories = useMarketFilterPreferences((state) => state.discoveryCategories);
   const { success: toastSuccess } = useStyledToast();
   const { metricsMap } = useMarketMetricsMap({
     enabled: currentEntries.length > 0,

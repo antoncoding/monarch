@@ -11,7 +11,7 @@ import {
   type MarketDiscoveryCategory,
 } from '@/features/markets/market-discovery';
 import { useMarketDiscoveryFlagsQuery } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
-import { useMarketsFilters } from '@/stores/useMarketsFilters';
+import { useMarketFilterPreferences } from '@/stores/useMarketFilterPreferences';
 import { cn } from '@/utils/components';
 
 const CATEGORY_ICONS: Record<MarketDiscoveryCategory, ReactNode> = {
@@ -27,9 +27,9 @@ type DiscoveryFilterProps = {
 export default function DiscoveryFilter({ showLabelPrefix = false }: DiscoveryFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const discoveryCategories = useMarketsFilters((state) => state.discoveryCategories);
-  const toggleDiscoveryCategory = useMarketsFilters((state) => state.toggleDiscoveryCategory);
-  const clearDiscoveryCategories = useMarketsFilters((state) => state.clearDiscoveryCategories);
+  const discoveryCategories = useMarketFilterPreferences((state) => state.discoveryCategories);
+  const toggleDiscoveryCategory = useMarketFilterPreferences((state) => state.toggleDiscoveryCategory);
+  const clearDiscoveryCategories = useMarketFilterPreferences((state) => state.clearDiscoveryCategories);
   const { data, isLoading } = useMarketDiscoveryFlagsQuery({ defer: true });
   const selectedCategorySet = new Set(discoveryCategories);
 

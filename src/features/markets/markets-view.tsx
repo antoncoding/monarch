@@ -162,9 +162,9 @@ export default function Markets() {
     persistedFilters.selectedNetwork,
     persistedFilters.selectedCollaterals,
     persistedFilters.selectedLoanAssets,
+    persistedFilters.discoveryCategories,
     filters.selectedOracles,
     filters.searchQuery,
-    filters.discoveryCategories,
     resetPage,
   ]);
 
@@ -224,7 +224,7 @@ export default function Markets() {
             collateralItems={uniqueCollaterals}
             selectedOracles={filters.selectedOracles}
             setSelectedOracles={filters.setSelectedOracles}
-            selectedDiscoveryCategories={filters.discoveryCategories}
+            selectedDiscoveryCategories={persistedFilters.discoveryCategories}
             loading={loading}
             onClearAll={handleClearAll}
           />
