@@ -246,6 +246,12 @@ const supportedTokens = [
     networks: [{ chain: base, address: '0x00b174d66adA7d63789087F50A9b9e0e48446dc1' }],
   },
   {
+    symbol: 'AVLT',
+    img: require('../imgs/tokens/avlt.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x74db7a52773a52699dbc0c01b1254e5301e3e119' }],
+  },
+  {
     symbol: 'EURe',
     img: require('../imgs/tokens/eure.png') as string,
     decimals: 18,
