@@ -80,6 +80,9 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
 - Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
+- Market reward campaign display must use Merkl campaign/opportunity data through the shared `/api/merkl` path; do not attach generic HOLD/vault opportunities to Morpho markets unless the campaign identifies a market or an explicit single-token "any Morpho Market" incentive.
+- Vault V2 reward APR display must use Merkl opportunities by vault address through `/api/merkl` when Merkl has the reward; do not add a Morpho API reward-field dependency unless Merkl lacks the data.
+- User reward claiming must use Merkl `/v4/users/{address}/rewards/summary` claim/proof data; deprecated Morpho URD/non-Merkl reward claim paths and Merkl legacy combined reward endpoints should stay out of the app.
 - Large optional metadata or enrichment queries used only for secondary badges, warnings, filters, or tooltips must be gated or deferred so core table rendering does not wait on them during cold start.
 - Vault-scoped pages with configured cap or market IDs must use targeted market reads for first render; do not wait on the global market registry when the vault metadata already identifies the relevant markets.
 - Vault adapter selection must be cap-aware when a vault has multiple active adapters; do not let list order alone choose the adapter used for positions, activity, withdrawals, or settings.

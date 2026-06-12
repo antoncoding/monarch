@@ -1,9 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { useDeferredQueryEnable } from '@/hooks/useDeferredQueryEnable';
-import { fetchActiveCampaigns, simplifyMerklCampaign, expandMultiLendBorrowCampaign } from '@/utils/merklApi';
-import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
+import { expandMultiLendBorrowCampaign, fetchActiveCampaigns, simplifyMerklCampaign } from '@/utils/merklApi';
+import type { MarketRewardType, SimplifiedCampaign } from '@/utils/merklTypes';
 
-const CAMPAIGN_TYPES_TO_FETCH: MerklCampaignType[] = ['MORPHOSUPPLY', 'MORPHOBORROW', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
+const CAMPAIGN_TYPES_TO_FETCH: MarketRewardType[] = ['MORPHOSUPPLY', 'MORPHOBORROW', 'MORPHOSUPPLY_SINGLETOKEN', 'MULTILENDBORROW'];
+
+const toSimplifiedCampaigns = (type: MarketRewardType, campaigns: Awaited<ReturnType<typeof fetchActiveCampaigns>>): SimplifiedCampaign[] =>
+  campaigns.flatMap((campaign) => {
+    const typedCampaign = {
+      ...campaign,
+      type,
+    };
+
+    if (type === 'MULTILENDBORROW') {
+      return expandMultiLendBorrowCampaign(typedCampaign);
+    }
+
+    const simplified = simplifyMerklCampaign(typedCampaign);
+    return simplified ? [simplified] : [];
+  });
 
 export const useMerklCampaignsQuery = () => {
   const enabled = useDeferredQueryEnable(true, true, 2000);
@@ -12,29 +27,16 @@ export const useMerklCampaignsQuery = () => {
     queryFn: async () => {
       const settledResults = await Promise.allSettled(CAMPAIGN_TYPES_TO_FETCH.map((type) => fetchActiveCampaigns({ type })));
 
-      // Extract successful results, use empty array for failed fetches
-      const results = settledResults.map((result, index) => {
+      return settledResults.flatMap((result, index) => {
+        const type = CAMPAIGN_TYPES_TO_FETCH[index];
+        if (!type) return [];
+
         if (result.status === 'fulfilled') {
-          return result.value;
+          return toSimplifiedCampaigns(type, result.value);
         }
-        console.warn(`Failed to fetch ${CAMPAIGN_TYPES_TO_FETCH[index]} campaigns:`, result.reason);
+
+        console.warn(`Failed to fetch ${type} campaigns:`, result.reason);
         return [];
-      });
-
-      // Hot Fix: the returned format changed and type no longer in current form. Insert it back
-      const allRawCampaigns = results.flatMap((campaigns, index) =>
-        campaigns.map((campaign) => ({
-          ...campaign,
-          type: CAMPAIGN_TYPES_TO_FETCH[index],
-        })),
-      );
-
-      // Expand MULTILENDBORROW campaigns into multiple SimplifiedCampaign objects (one per market)
-      return allRawCampaigns.flatMap((campaign) => {
-        if (campaign.type === 'MULTILENDBORROW') {
-          return expandMultiLendBorrowCampaign(campaign);
-        }
-        return simplifyMerklCampaign(campaign);
       });
     },
     staleTime: 5 * 60 * 1000,

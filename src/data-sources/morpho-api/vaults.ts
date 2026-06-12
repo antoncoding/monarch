@@ -1,5 +1,5 @@
 import { MORPHO_API_SUPPORTED_NETWORKS, supportsMorphoApiChainId } from '@/config/dataSources';
-import { allVaultsQuery, vaultApysQuery, vaultV2MetadataQuery, vaultV2RewardsQuery } from '@/graphql/vault-queries';
+import { allVaultsQuery, vaultApysQuery, vaultV2MetadataQuery } from '@/graphql/vault-queries';
 import { morphoGraphqlFetcher } from './fetchers';
 
 export type VaultAddressByNetwork = {
@@ -36,23 +36,6 @@ export type MorphoVaultV2Metadata = {
   metadataImage?: string;
   name: string;
   symbol: string;
-};
-
-export type MorphoVaultV2Reward = {
-  supplyApr: number;
-  asset: {
-    address: string;
-    symbol: string;
-    price?: {
-      usd?: number | null;
-    } | null;
-  };
-};
-
-export type MorphoVaultV2Rewards = {
-  address: string;
-  apy: number | null;
-  rewards: MorphoVaultV2Reward[];
 };
 
 // API response types
@@ -121,13 +104,6 @@ type VaultV2MetadataApiResponse = {
     vaultV2s?: {
       items?: (ApiVaultV2 | null)[];
     };
-  };
-  errors?: { message: string }[];
-};
-
-type VaultV2RewardsApiResponse = {
-  data?: {
-    vaultV2ByAddress?: MorphoVaultV2Rewards | null;
   };
   errors?: { message: string }[];
 };
@@ -313,32 +289,6 @@ export const fetchListedMorphoVaultV2Metadata = async (): Promise<MorphoVaultV2M
   } catch (error) {
     console.warn('Error fetching listed Morpho V2 vault metadata:', error);
     return [];
-  }
-};
-
-export const fetchMorphoVaultV2Rewards = async (vaultAddress: string, chainId: number): Promise<MorphoVaultV2Rewards | null> => {
-  if (!supportsMorphoApiChainId(chainId)) {
-    return null;
-  }
-
-  try {
-    const response = await morphoGraphqlFetcher<VaultV2RewardsApiResponse>(vaultV2RewardsQuery, {
-      address: vaultAddress.toLowerCase(),
-      chainId,
-    });
-
-    const vault = response?.data?.vaultV2ByAddress;
-    if (!vault) {
-      return null;
-    }
-
-    return {
-      ...vault,
-      rewards: Array.isArray(vault.rewards) ? vault.rewards : [],
-    };
-  } catch (error) {
-    console.warn('Error fetching Morpho V2 vault rewards:', error);
-    return null;
   }
 };
 

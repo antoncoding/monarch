@@ -24,7 +24,7 @@ type UseMarketCampaignsReturn = {
 type MarketCampaignsOptions = {
   marketId: string;
   loanTokenAddress?: string;
-  chainId?: number;
+  chainId: number;
   whitelisted: boolean;
 };
 
@@ -36,7 +36,9 @@ export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCa
     const normalizedMarketId = marketId.toLowerCase();
 
     // Filter campaigns for this specific market
-    const directMarketCampaigns = allCampaigns.filter((campaign) => campaign.marketId?.toLowerCase() === normalizedMarketId);
+    const directMarketCampaigns = allCampaigns.filter(
+      (campaign) => campaign.chainId === chainId && campaign.marketId.toLowerCase() === normalizedMarketId,
+    );
 
     // For SINGLETOKEN campaigns, also include campaigns where the loan token matches the target token
     // the market has to be whitelisted

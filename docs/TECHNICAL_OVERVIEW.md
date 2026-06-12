@@ -212,14 +212,14 @@ Market metrics: external data API via `/v1/markets/metrics`
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
 | User autovault metadata | Monarch GraphQL + on-chain enrichment | 60s | `useUserVaultsV2Query` |
 | Vault detail/settings metadata | Monarch GraphQL + narrow RPC fallback | 30s | `useVaultV2Data` |
-| Vault V2 rewards | Morpho API rewards fields backed by Merkl | 5 min | `useVaultV2RewardsQuery` |
+| Vault V2 rewards | Merkl API opportunities via `/api/merkl` | 5 min | `useVaultV2RewardsQuery` |
 | Market detail participants/activity | Monarch GraphQL + Morpho API fallback | 2-5 min stale | `useMarketSuppliers` / `useMarketBorrowers` / `useMarketSupplies` / `useMarketBorrows` |
 | Vault allocations | On-chain multicall | 30s | `useAllocationsQuery` |
 | Token balances | On-chain multicall | 5 min | `useUserBalancesQuery` |
 | Oracle metadata | Scanner Gist | 30 min | `useOracleMetadata` / `useAllOracleMetadata` |
 | Account contract tags | Kleros Scout API | 6h stale | `useKlerosAddressTagsQuery` |
-| User claimable rewards | Merkl API via `/api/merkl` | 5 min stale, forced refresh on manual refetch | `useUserRewardsQuery` |
-| Reward campaigns | Merkl API via `/api/merkl` | 5 min stale | `useMerklCampaignsQuery` |
+| User claimable rewards | Merkl `/rewards/summary` via `/api/merkl` | 5 min stale, forced refresh on manual refetch | `useUserRewardsQuery` |
+| Market reward campaigns | Merkl API via `/api/merkl` | 5 min stale | `useMerklCampaignsQuery` |
 | Market liquidations | Monarch GraphQL + Morpho API fallback | 5 min stale | `useMarketLiquidations` |
 | Admin stats transactions | Monarch GraphQL + market registry/token price enrichment | 2 min stale | `useMonarchTransactions` |
 
@@ -261,7 +261,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 |---------------|----------------|-------------|----------------------------------|
 | `useUserVaultsV2Query` | User vault list with optional balance, TVL, and yield enrichment | Monarch vault metadata + RPC balances/totalAssets + RPC 4626 yield snapshots | Already off Morpho for yield; no new Envio schema gap identified |
 | `useVaultV2Data` | Vault detail/settings metadata for a single vault | Monarch vault detail first, narrow RPC fallback if metadata unavailable | Already aligned with Monarch-first design |
-| `useVaultV2RewardsQuery` | Vault detail reward APR enrichment | Morpho API `vaultV2ByAddress.rewards` backed by Merkl | Outside Monarch/Envio scope today |
+| `useVaultV2RewardsQuery` | Vault detail reward APR enrichment | Merkl API opportunity lookup by vault address through `/api/merkl` | Outside Monarch/Envio scope today |
 | `useAllMorphoVaultsQuery` | Global whitelisted vault registry | Morpho API only | Intentionally Morpho-only today |
 | `usePublicAllocatorVaults` | Public allocator config for supplying vaults in a market | Morpho API only | Intentionally Morpho-only today |
 | `useAllocationsQuery` | Live vault `allocation(capId)` values | Pure RPC multicall | No Envio gap |
@@ -278,7 +278,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `useOracleMetadata` / `useAllOracleMetadata` | Oracle classification and feed metadata | Scanner gist JSON | Not part of Monarch migration |
 | `useMarketMetricsQuery` | Enhanced market metrics, flows, growing signal, scores, and current backend market flags | External data API via `/v1/markets/metrics` | Already Monarch-backed; compact discovery flags use `/v1/markets/flags` |
 | `useUserRewardsQuery` | User claimable rewards and Merkl proofs | Merkl API through the server-side `/api/merkl` API-key proxy | Outside Monarch/Envio scope today |
-| `useMerklCampaignsQuery` / `useMerklHoldIncentivesQuery` | Campaign and HOLD incentive enrichment | Merkl API through `/api/merkl` + hardcoded opportunity mapping | Outside Monarch/Envio scope today |
+| `useMerklCampaignsQuery` / `useMerklHoldIncentivesQuery` | Market reward campaign and HOLD incentive enrichment | Merkl API through `/api/merkl` for Morpho campaign data and hardcoded HOLD opportunities | Outside Monarch/Envio scope today |
 
 ### Data Flow Patterns
 
@@ -444,10 +444,10 @@ Fallback Strategy:
 ### APIs
 | Service | Endpoint | Purpose |
 |---------|----------|---------|
-| Morpho API | `https://blue-api.morpho.org/graphql` | Markets, vaults, positions, Vault V2 reward APRs |
+| Morpho API | `https://blue-api.morpho.org/graphql` | Markets, vaults, positions |
 | Monarch GraphQL | `https://api.monarchlend.xyz/graphql` | Autovault metadata, market live state, historical charts, market detail/activity, admin transactions |
 | Monarch Metrics | External data API `/v1/markets/metrics` | Market metrics and admin stats |
-| Merkl API | `https://api.merkl.xyz` via `/api/merkl` | Reward campaigns, opportunities, and user claimable rewards with server-side API-key auth |
+| Merkl API | `https://api.merkl.xyz` via `/api/merkl` | Market reward campaigns, Vault V2 reward opportunities, configured HOLD opportunity lookups, and user claimable rewards with server-side API-key auth |
 | Velora API | `https://api.paraswap.io` | Swap quotes and executable tx payloads |
 | Alchemy | Per-chain RPC | Default RPC provider |
 

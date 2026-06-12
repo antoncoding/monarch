@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { FiGift } from 'react-icons/fi';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
+import { isBorrowCampaign } from '@/utils/merklApi';
 import merklLogo from '@/imgs/merkl.jpg';
 
 type RewardsIndicatorProps = {
@@ -28,7 +29,7 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
   // Create tooltip detail with all rewards
   const rewardsList = activeCampaigns
     .map((campaign) => {
-      const rewardType = campaign.type === 'MORPHOBORROW' ? 'borrower' : 'supplier';
+      const rewardType = isBorrowCampaign(campaign) ? 'borrower' : 'supplier';
       return `${campaign.rewardToken.symbol} ${rewardType} reward +${campaign.apr.toFixed(2)}%`;
     })
     .join('\n');

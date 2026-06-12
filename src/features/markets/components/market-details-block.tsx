@@ -12,6 +12,7 @@ import { getIRMTitle, previewMarketState } from '@/utils/morpho';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
 import type { Market } from '@/utils/types';
+import { isBorrowCampaign } from '@/utils/merklApi';
 import OracleVendorBadge from './oracle-vendor-badge';
 import { TokenIcon } from '@/components/shared/token-icon';
 
@@ -50,6 +51,15 @@ export function MarketDetailsBlock({
     chainId: market.morphoBlue.chain.id,
     whitelisted: market.whitelisted,
   });
+  const modeCampaigns = useMemo(
+    () =>
+      activeCampaigns.filter((campaign) => {
+        const isBorrow = isBorrowCampaign(campaign);
+        return mode === 'borrow' ? isBorrow : !isBorrow;
+      }),
+    [activeCampaigns, mode],
+  );
+  const hasModeRewards = hasActiveRewards && modeCampaigns.length > 0;
 
   // Calculate preview state when supplyDelta or borrowDelta is provided
   const previewState = useMemo(() => {
@@ -208,16 +218,16 @@ export function MarketDetailsBlock({
                         </p>
                       )}
                     </div>
-                    {showRewards && hasActiveRewards && (
+                    {showRewards && hasModeRewards && (
                       <div className="flex items-start justify-between">
                         <p className="flex items-center gap-1 font-zen text-sm opacity-50">Extra Rewards:</p>
                         <div className="flex items-center gap-1">
                           <p className="text-right text-sm font-bold text-green-600 dark:text-green-400">
-                            +{activeCampaigns.reduce((sum, c) => sum + c.apr, 0).toFixed(2)}%
+                            +{modeCampaigns.reduce((sum, c) => sum + c.apr, 0).toFixed(2)}%
                           </p>
-                          {activeCampaigns.map((campaign, index) => (
+                          {modeCampaigns.map((campaign) => (
                             <TokenIcon
-                              key={index}
+                              key={campaign.campaignId}
                               address={campaign.rewardToken.address}
                               chainId={campaign.chainId}
                               symbol={campaign.rewardToken.symbol}

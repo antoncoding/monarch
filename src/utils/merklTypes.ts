@@ -1,4 +1,8 @@
-export type MerklCampaignType = 'MORPHOSUPPLY' | 'MORPHOBORROW' | 'MORPHOSUPPLY_SINGLETOKEN' | 'MULTILENDBORROW';
+export type MarketRewardType = 'MORPHOSUPPLY' | 'MORPHOBORROW' | 'MORPHOSUPPLY_SINGLETOKEN' | 'MULTILENDBORROW';
+
+export type MerklCampaignType = MarketRewardType;
+
+export type MerklRawCampaignType = MarketRewardType | 'ERC20LOGPROCESSOR' | 'MORPHOCOLLATERAL' | 'MORPHOVAULT';
 
 export type MerklCampaignStatus = {
   status: string;
@@ -34,56 +38,6 @@ export type MerklToken = {
   symbol: string;
 };
 
-export type MerklCreator = {
-  address: string;
-  tags: string[];
-  creatorId: string | null;
-};
-
-export type MerklMarketCampaignParams = {
-  market: string;
-  symbolLoanToken: string;
-  symbolCollateralToken: string;
-};
-
-export type MerklCampaignParams = {
-  LLTV: string;
-  market: string;
-  duration: number;
-  blacklist: string[];
-  loanToken: string;
-  whitelist: string[];
-  forwarders: string[];
-  targetToken: string;
-  collateralToken: string;
-  symbolLoanToken: string;
-  decimalsLoanToken: number;
-  symbolRewardToken: string;
-  symbolTargetToken: string;
-  decimalsRewardToken: number;
-  decimalsTargetToken: number;
-  symbolCollateralToken: string;
-  computeScoreParameters: {
-    computeMethod: string;
-  };
-  decimalsCollateralToken: number;
-  distributionMethodParameters: {
-    distributionMethod: string;
-    distributionSettings: {
-      apr: string;
-      targetToken: string;
-      symbolTargetToken: string;
-      rewardTokenPricing: boolean;
-      targetTokenPricing: boolean;
-      decimalsTargetToken: number;
-    };
-  };
-  // For MULTILENDBORROW campaigns
-  markets?: Array<{
-    campaignParameters: MerklMarketCampaignParams;
-  }>;
-};
-
 export type MerklOpportunity = {
   id?: string;
   identifier: string;
@@ -99,12 +53,61 @@ export type MerklOpportunity = {
   campaigns?: MerklCampaign[];
 };
 
+export type MerklCreator = {
+  address: string;
+  tags: string[];
+  creatorId: string | null;
+};
+
+export type MerklMarketCampaignParams = {
+  market: string;
+  symbolLoanToken: string;
+  symbolCollateralToken: string;
+};
+
+export type MerklCampaignParams = {
+  LLTV?: string;
+  market?: string;
+  duration?: number;
+  blacklist?: string[];
+  loanToken?: string;
+  whitelist?: string[];
+  forwarders?: string[];
+  targetToken?: string;
+  collateralToken?: string;
+  symbolLoanToken?: string;
+  decimalsLoanToken?: number;
+  symbolRewardToken?: string;
+  symbolTargetToken?: string;
+  decimalsRewardToken?: number;
+  decimalsTargetToken?: number;
+  symbolCollateralToken?: string;
+  computeScoreParameters?: {
+    computeMethod: string;
+  };
+  decimalsCollateralToken?: number;
+  distributionMethodParameters?: {
+    distributionMethod: string;
+    distributionSettings: {
+      apr?: string;
+      targetToken?: string;
+      symbolTargetToken?: string;
+      rewardTokenPricing?: boolean;
+      targetTokenPricing?: boolean;
+      decimalsTargetToken?: number;
+    };
+  };
+  markets?: Array<{
+    campaignParameters: MerklMarketCampaignParams;
+  }>;
+};
+
 export type MerklCampaign = {
   id: string;
   computeChainId: number;
   distributionChainId: number;
   campaignId: string;
-  type: MerklCampaignType;
+  type: MerklRawCampaignType;
   distributionType: string;
   subType: number;
   rewardTokenId: string;
@@ -115,7 +118,7 @@ export type MerklCampaign = {
   dailyRewards: number;
   apr: number;
   creatorAddress: string;
-  params: MerklCampaignParams;
+  params?: MerklCampaignParams;
   chain: MerklChain;
   rewardToken: MerklToken;
   distributionChain: MerklChain;
@@ -130,7 +133,7 @@ export type MerklCampaign = {
 export type MerklCampaignsResponse = MerklCampaign[];
 
 export type MerklApiParams = {
-  type?: MerklCampaignType;
+  type?: MarketRewardType;
   chainId?: number;
   items?: number;
   page?: number;
@@ -149,7 +152,7 @@ export type SimplifiedCampaign = {
   marketId: string;
   chainId: number;
   campaignId: string;
-  type: MerklCampaignType;
+  type: MarketRewardType;
   apr: number;
   rewardToken: {
     symbol: string;
