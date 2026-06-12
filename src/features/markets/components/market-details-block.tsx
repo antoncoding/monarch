@@ -12,6 +12,7 @@ import { getIRMTitle, previewMarketState } from '@/utils/morpho';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
 import type { Market } from '@/utils/types';
+import { isBorrowCampaign } from '@/utils/merklApi';
 import OracleVendorBadge from './oracle-vendor-badge';
 import { TokenIcon } from '@/components/shared/token-icon';
 
@@ -52,9 +53,10 @@ export function MarketDetailsBlock({
   });
   const modeCampaigns = useMemo(
     () =>
-      activeCampaigns.filter((campaign) =>
-        mode === 'borrow' ? campaign.type === 'MORPHOBORROW' || campaign.opportunityAction === 'BORROW' : campaign.type !== 'MORPHOBORROW',
-      ),
+      activeCampaigns.filter((campaign) => {
+        const isBorrow = isBorrowCampaign(campaign);
+        return mode === 'borrow' ? isBorrow : !isBorrow;
+      }),
     [activeCampaigns, mode],
   );
   const hasModeRewards = hasActiveRewards && modeCampaigns.length > 0;

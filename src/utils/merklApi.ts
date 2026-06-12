@@ -11,6 +11,7 @@ const MERKL_API_PROXY_BASE_PATH = '/api/merkl';
 
 const MERKL_LIVE_STATUS = 'LIVE';
 const MERKL_HOLD_ACTION = 'HOLD';
+const DEFAULT_CAMPAIGN_PAGE_SIZE = 100;
 
 type MerklQueryValue = string | number | boolean | readonly (string | number | boolean)[];
 
@@ -88,7 +89,8 @@ export async function fetchCampaigns(params: MerklApiParams = {}): Promise<Merkl
 
 export async function fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {}): Promise<MerklCampaign[]> {
   const now = Math.floor(Date.now() / 1000);
-  const pageSize = params.items ?? 100;
+  const requestedPageSize = params.items ?? DEFAULT_CAMPAIGN_PAGE_SIZE;
+  const pageSize = Number.isInteger(requestedPageSize) && requestedPageSize > 0 ? requestedPageSize : DEFAULT_CAMPAIGN_PAGE_SIZE;
   const allCampaigns: MerklCampaign[] = [];
   let currentPage = 0;
 
@@ -161,6 +163,9 @@ export const getMerklOpportunityAprDecimal = (opportunity: MerklOpportunity | nu
   return aprPercent / 100;
 };
 
+export const isBorrowCampaign = (campaign: Pick<SimplifiedCampaign, 'opportunityAction' | 'type'>): boolean =>
+  campaign.type === 'MORPHOBORROW' || campaign.opportunityAction?.toUpperCase() === 'BORROW';
+
 const isCampaignActive = (campaign: MerklCampaign): boolean => {
   const now = Math.floor(Date.now() / 1000);
   return campaign.startTimestamp <= now && campaign.endTimestamp > now && Number.isFinite(campaign.apr) && campaign.apr > 0;
@@ -200,6 +205,8 @@ const getBaseCampaignFields = (
 });
 
 export function simplifyMerklCampaign(campaign: MerklCampaign & { type: MarketRewardType }): SimplifiedCampaign | null {
+  if (!campaign.params) return null;
+
   const baseFields = getBaseCampaignFields(campaign);
 
   if (campaign.type === 'MORPHOSUPPLY_SINGLETOKEN') {
@@ -228,9 +235,12 @@ export function simplifyMerklCampaign(campaign: MerklCampaign & { type: MarketRe
 }
 
 export function expandMultiLendBorrowCampaign(campaign: MerklCampaign & { type: MarketRewardType }): SimplifiedCampaign[] {
+  const markets = campaign.params?.markets;
+  if (!markets) return [];
+
   const baseFields = getBaseCampaignFields(campaign);
 
-  return (campaign.params.markets ?? []).flatMap((market) => {
+  return markets.flatMap((market) => {
     const marketId = market.campaignParameters.market;
     if (!marketId) return [];
 

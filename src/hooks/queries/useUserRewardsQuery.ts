@@ -4,7 +4,7 @@ import type { Address } from 'viem';
 import { fetchMerklApi } from '@/utils/merklApi';
 import { reportHandledError } from '@/utils/sentry';
 import type { RewardResponseType } from '@/utils/types';
-import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS, isSupportedNetwork } from '@/utils/networks';
 
 export type MerklRewardWithProofs = {
   tokenAddress: Address;
@@ -65,7 +65,7 @@ async function fetchMerklRewards(
   }
 
   for (const chainData of data) {
-    if (!ALL_SUPPORTED_NETWORKS.includes(chainData.chain.id)) {
+    if (!isSupportedNetwork(chainData.chain.id)) {
       continue;
     }
 

@@ -2,7 +2,7 @@ export type MarketRewardType = 'MORPHOSUPPLY' | 'MORPHOBORROW' | 'MORPHOSUPPLY_S
 
 export type MerklCampaignType = MarketRewardType;
 
-export type MerklRawCampaignType = MarketRewardType | 'ERC20LOGPROCESSOR' | 'MORPHOVAULT';
+export type MerklRawCampaignType = MarketRewardType | 'ERC20LOGPROCESSOR' | 'MORPHOCOLLATERAL' | 'MORPHOVAULT';
 
 export type MerklCampaignStatus = {
   status: string;
@@ -118,7 +118,7 @@ export type MerklCampaign = {
   dailyRewards: number;
   apr: number;
   creatorAddress: string;
-  params: MerklCampaignParams;
+  params?: MerklCampaignParams;
   chain: MerklChain;
   rewardToken: MerklToken;
   distributionChain: MerklChain;
