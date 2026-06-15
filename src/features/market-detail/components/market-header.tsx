@@ -140,12 +140,17 @@ function DiscoverySummaryBadges({ items }: { items: MarketDiscoveryItem[] }): Re
             />
           }
         >
-          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-sm bg-green-100 px-1.5 text-green-700 dark:bg-green-400/10 dark:text-green-300">
+          <button
+            type="button"
+            aria-label={`${item.label}: ${item.summary}`}
+            onClick={(event) => event.stopPropagation()}
+            className="inline-flex h-5 min-w-5 items-center justify-center rounded-sm bg-green-100 px-1.5 text-green-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-700 dark:bg-green-400/10 dark:text-green-300 dark:focus-visible:ring-green-300"
+          >
             <DiscoveryIcon
               category={item.category}
               className="h-3.5 w-3.5"
             />
-          </span>
+          </button>
         </Tooltip>
       ))}
     </div>
@@ -825,21 +830,21 @@ export function MarketHeader({
 
         {/* Advanced Details - Expandable */}
         <div className="mt-4 border-t border-border pt-4">
-          <button
-            type="button"
-            className="flex w-full cursor-pointer items-center justify-between text-sm text-secondary hover:text-primary"
-            onClick={() => setIsExpanded(!isExpanded)}
-            aria-expanded={isExpanded}
-          >
+          <div className="flex w-full flex-wrap items-center justify-between gap-3 text-sm text-secondary">
             <div className="flex flex-wrap items-center gap-2">
               <DiscoverySummaryBadges items={discoveryItems} />
               {renderSummaryBadges()}
             </div>
-            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="ml-auto flex cursor-pointer items-center gap-2 hover:text-primary"
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-expanded={isExpanded}
+            >
               <span>Advanced Details</span>
               <ChevronDownIcon className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
+            </button>
+          </div>
 
           <AnimatePresence>
             {isExpanded && (
