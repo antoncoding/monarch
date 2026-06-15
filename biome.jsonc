@@ -2,6 +2,10 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/core"],
 
+  "files": {
+    "includes": ["**", "!src/imgs/**/*.svg", "!public/imgs/**/*.svg"]
+  },
+
   "formatter": {
     "enabled": true,
     "lineWidth": 140  // Increased to 140 to allow longer one-line code
@@ -172,12 +176,7 @@
       "nursery": {
         // Disable aggressive nursery rules during migration
         // "noShadow": "off",
-        "useSortedClasses": "off",
-
-        // These are too aggressive for migration
-        "noLeakedRender": "off",
-        "noEqualsToNull": "off",
-        "noIncrementDecrement": "off"
+        "useSortedClasses": "off"
       }
     }
   },
