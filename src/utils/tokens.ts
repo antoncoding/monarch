@@ -192,6 +192,12 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'PST',
+    img: require('../imgs/tokens/pst.svg') as string,
+    decimals: 6,
+    networks: [{ chain: mainnet, address: '0x22aE3D9a738471f405169Af055d31c687087d4c7' }],
+  },
+  {
     symbol: 'aUSD',
     img: require('../imgs/tokens/aUSD.webp') as string,
     decimals: 6,
