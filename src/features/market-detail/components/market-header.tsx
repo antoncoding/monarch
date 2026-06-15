@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { formatUnits } from 'viem';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { FaRegLightbulb } from 'react-icons/fa';
 import { GrStatusGood } from 'react-icons/gr';
 import { IoWarningOutline, IoEllipsisVertical } from 'react-icons/io5';
 import { MdError } from 'react-icons/md';
@@ -13,7 +14,7 @@ import { GoStarFill, GoStar } from 'react-icons/go';
 import { TbTrendingUp } from 'react-icons/tb';
 import { AiOutlineStop } from 'react-icons/ai';
 import { FiExternalLink } from 'react-icons/fi';
-import { LuCopy, LuArrowDownToLine, LuRefreshCw } from 'react-icons/lu';
+import { LuCopy, LuArrowDownToLine, LuRefreshCw, LuUser } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { SplitActionButton } from '@/components/ui/split-action-button';
 import { useModal } from '@/hooks/useModal';
@@ -30,6 +31,13 @@ import { OracleTypeInfo } from '@/features/markets/components/oracle/MarketOracl
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useAppSettings } from '@/stores/useAppSettings';
+import {
+  MARKET_DISCOVERY_CATEGORIES,
+  MARKET_DISCOVERY_CATEGORY_META,
+  getMarketDiscoveryKey,
+  type MarketDiscoveryCategory,
+} from '@/features/markets/market-discovery';
+import { useMarketDiscoveryFlagsMap, type MarketDiscoveryFlag } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
 import { convertApyToApr } from '@/utils/rateMath';
 import { formatReadable } from '@/utils/balance';
 import { getIRMTitle } from '@/utils/morpho';
@@ -44,6 +52,133 @@ type WarningBlockProps = {
   warnings: WarningWithDetail[];
   riskLevel: RiskLevel;
 };
+
+type MarketDiscoveryItem = {
+  category: MarketDiscoveryCategory;
+  label: string;
+  summary: string;
+};
+
+function getDiscoveryFlagForCategory(flags: MarketDiscoveryFlag[], category: MarketDiscoveryCategory): MarketDiscoveryFlag | null {
+  switch (category) {
+    case 'newOpportunities':
+      return (
+        flags.find(
+          (flag) =>
+            flag.reasons.includes('recently_created') ||
+            flag.reasons.includes('newly_active') ||
+            flag.reasons.includes('morpho_vault_signal'),
+        ) ?? null
+      );
+    case 'trending':
+      return flags.find((flag) => flag.reasons.includes('strong_recent_flow')) ?? null;
+    case 'popular':
+      return flags.find((flag) => flag.reasons.includes('individual_supplier_flow') || flag.reasons.includes('monarch_user_flow')) ?? null;
+    default: {
+      const exhaustiveCheck: never = category;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+function getDiscoveryItems(flags: MarketDiscoveryFlag[], categories: Set<MarketDiscoveryCategory> | undefined): MarketDiscoveryItem[] {
+  if (!categories || categories.size === 0) return [];
+
+  const items: MarketDiscoveryItem[] = [];
+  for (const category of MARKET_DISCOVERY_CATEGORIES) {
+    if (!categories.has(category)) {
+      continue;
+    }
+
+    const flag = getDiscoveryFlagForCategory(flags, category);
+    items.push({
+      category,
+      label: MARKET_DISCOVERY_CATEGORY_META[category].shortLabel,
+      summary: flag?.summary ?? MARKET_DISCOVERY_CATEGORY_META[category].label,
+    });
+  }
+
+  return items;
+}
+
+function DiscoveryIcon({ category, className }: { category: MarketDiscoveryCategory; className: string }): React.ReactNode {
+  switch (category) {
+    case 'newOpportunities':
+      return <FaRegLightbulb className={className} />;
+    case 'trending':
+      return <TbTrendingUp className={className} />;
+    case 'popular':
+      return <LuUser className={className} />;
+    default: {
+      const exhaustiveCheck: never = category;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+function DiscoverySummaryBadges({ items }: { items: MarketDiscoveryItem[] }): React.ReactNode {
+  if (items.length === 0) return null;
+
+  return (
+    <div
+      className="flex items-center gap-1.5"
+      aria-label="Market discovery indicators"
+    >
+      {items.map((item) => (
+        <Tooltip
+          key={item.category}
+          content={
+            <TooltipContent
+              icon={
+                <DiscoveryIcon
+                  category={item.category}
+                  className="h-3.5 w-3.5 text-green-700 dark:text-green-300"
+                />
+              }
+              title={item.label}
+              detail={item.summary}
+            />
+          }
+        >
+          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-sm bg-green-100 px-1.5 text-green-700 dark:bg-green-400/10 dark:text-green-300">
+            <DiscoveryIcon
+              category={item.category}
+              className="h-3.5 w-3.5"
+            />
+          </span>
+        </Tooltip>
+      ))}
+    </div>
+  );
+}
+
+function DiscoveryInfoBlock({ items }: { items: MarketDiscoveryItem[] }): React.ReactNode {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="rounded border border-green-200 bg-green-50 p-3 dark:border-green-400/20 dark:bg-green-400/10">
+      <div className="space-y-2">
+        {items.map((item) => (
+          <div
+            key={item.category}
+            className="flex items-start gap-2"
+          >
+            <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-sm bg-green-100 text-green-700 dark:bg-green-400/15 dark:text-green-300">
+              <DiscoveryIcon
+                category={item.category}
+                className="h-3.5 w-3.5"
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-green-800 dark:text-green-300">{item.label}</p>
+              <p className="text-xs leading-relaxed text-green-800/80 dark:text-green-200/80">{item.summary}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function WarningBlock({ warnings, riskLevel }: WarningBlockProps): React.ReactNode {
   if (warnings.length === 0) return null;
@@ -368,6 +503,22 @@ export function MarketHeader({
   const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const toast = useStyledToast();
   const networkImg = getNetworkImg(network);
+  const discoveryKey = market ? getMarketDiscoveryKey(market.morphoBlue.chain.id, market.uniqueKey) : null;
+  const {
+    flagsByMarket,
+    categoriesByMarket,
+    data: discoveryFlagsResponse,
+  } = useMarketDiscoveryFlagsMap({
+    enabled: Boolean(market),
+    defer: true,
+  });
+  const discoveryItems = useMemo(() => {
+    if (!discoveryKey || !discoveryFlagsResponse?.flags) {
+      return [];
+    }
+
+    return getDiscoveryItems(flagsByMarket.get(discoveryKey) ?? [], categoriesByMarket.get(discoveryKey));
+  }, [categoriesByMarket, discoveryFlagsResponse?.flags, discoveryKey, flagsByMarket]);
 
   if (isLoading || !market) {
     return <MarketHeaderSkeleton />;
@@ -680,7 +831,10 @@ export function MarketHeader({
             onClick={() => setIsExpanded(!isExpanded)}
             aria-expanded={isExpanded}
           >
-            {renderSummaryBadges()}
+            <div className="flex flex-wrap items-center gap-2">
+              <DiscoverySummaryBadges items={discoveryItems} />
+              {renderSummaryBadges()}
+            </div>
             <div className="flex items-center gap-2">
               <span>Advanced Details</span>
               <ChevronDownIcon className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
@@ -697,6 +851,8 @@ export function MarketHeader({
                 className="overflow-hidden"
               >
                 <div className="pt-4 space-y-4">
+                  <DiscoveryInfoBlock items={discoveryItems} />
+
                   {/* Global Warnings (debt + general) at top */}
                   <WarningBlock
                     warnings={globalWarnings}
