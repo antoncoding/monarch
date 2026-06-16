@@ -192,6 +192,12 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'tGBP',
+    img: require('../imgs/tokens/tgbp.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x27f6c8289550fce67f6b50bed1f519966afe5287' }],
+  },
+  {
     symbol: 'PST',
     img: require('../imgs/tokens/pst.svg') as string,
     decimals: 6,
