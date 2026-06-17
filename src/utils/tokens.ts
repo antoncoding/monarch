@@ -285,6 +285,12 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0x5F7827FDeb7c20b443265Fc2F40845B715385Ff2' }],
   },
   {
+    symbol: 'ARGt',
+    img: require('../imgs/tokens/argt.png') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0x59863989d080B22476DB95656d0C3CC18be92214' }],
+  },
+  {
     symbol: 'EUTBL',
     img: require('../imgs/tokens/eutbl.webp') as string,
     decimals: 5,
