@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { type Address, encodeFunctionData, zeroAddress } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
 import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { formatBalance } from '@/utils/balance';
@@ -45,8 +45,6 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
   const { batchAddUserMarkets } = useUserMarketsCache(account);
   const toast = useStyledToast();
   const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
-  const isBundlerAddressValid = bundlerAddress !== zeroAddress;
-  const bundlerAddressErrorMessage = `No bundler configured for chain ${market.morphoBlue.chain.id}.`;
 
   // Hook for Morpho bundler authorization (both sig and tx)
   const { isBundlerAuthorized, isAuthorizingBundler, ensureBundlerAuthorization, refetchIsBundlerAuthorized } = useBundlerAuthorizationStep(
@@ -135,10 +133,6 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
 
   // Core transaction execution logic
   const executeBorrowTransaction = useCallback(async () => {
-    if (!isBundlerAddressValid) {
-      throw new Error(bundlerAddressErrorMessage);
-    }
-
     // Asset-based borrow uses an exact asset amount plus a max-share slippage bound.
     const borrowSharesSlippageAmount = getBorrowSharesSlippageAmount({
       borrowAssets: borrowAmount,
@@ -331,8 +325,6 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     sendTransactionAsync,
     useEth,
     usePermit2Setting,
-    isBundlerAddressValid,
-    bundlerAddressErrorMessage,
     permit2Authorized,
     authorizePermit2,
     ensureBundlerAuthorization,
