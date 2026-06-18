@@ -20,6 +20,53 @@ type ChainWithRpcUrls = {
   };
 };
 
+type AppKitCustomRpcUrls = Record<`eip155:${number}`, { url: string }[]>;
+
+const CUSTOM_RPC_STORAGE_KEY = 'monarch_store_customRpc';
+
+function getPersistedCustomRpcUrls(): AppKitCustomRpcUrls | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  try {
+    const rawValue = localStorage.getItem(CUSTOM_RPC_STORAGE_KEY);
+    if (!rawValue) {
+      return undefined;
+    }
+
+    const persistedValue = JSON.parse(rawValue) as {
+      state?: {
+        customRpcUrls?: Record<string, unknown>;
+      };
+    };
+    const customRpcUrls = persistedValue.state?.customRpcUrls;
+    if (!customRpcUrls) {
+      return undefined;
+    }
+
+    const entries: [`eip155:${number}`, { url: string }[]][] = [];
+
+    for (const [chainId, rpcUrl] of Object.entries(customRpcUrls)) {
+      const parsedChainId = Number(chainId);
+      if (!Number.isInteger(parsedChainId) || typeof rpcUrl !== 'string') {
+        continue;
+      }
+
+      const trimmedRpcUrl = rpcUrl.trim();
+      if (!trimmedRpcUrl) {
+        continue;
+      }
+
+      entries.push([`eip155:${parsedChainId}`, [{ url: trimmedRpcUrl }]]);
+    }
+
+    return entries.length > 0 ? (Object.fromEntries(entries) as AppKitCustomRpcUrls) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // Get project ID from environment
 const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? '';
 
@@ -55,6 +102,7 @@ const customUnichain = withAppKitRpc(unichain, getDefaultRPC(SupportedNetworks.U
 const customEtherlink = withAppKitRpc(etherlink, getDefaultRPC(SupportedNetworks.Etherlink));
 const customMonad = withAppKitRpc(monad, getDefaultRPC(SupportedNetworks.Monad));
 const customHyperEvm = withAppKitRpc(hyperEvm, getDefaultRPC(SupportedNetworks.HyperEVM));
+const persistedCustomRpcUrls = getPersistedCustomRpcUrls();
 
 // Define networks for AppKit (non-empty tuple type required)
 export const networks = [
@@ -83,6 +131,7 @@ export const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   networks,
   projectId,
+  customRpcUrls: persistedCustomRpcUrls,
 });
 
 // Create AppKit modal instance
@@ -90,6 +139,7 @@ export const modal = createAppKit({
   adapters: [wagmiAdapter],
   projectId,
   networks,
+  customRpcUrls: persistedCustomRpcUrls,
   metadata,
   features: {
     socials: [],

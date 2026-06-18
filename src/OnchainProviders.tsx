@@ -6,9 +6,8 @@ import type { ReactNode } from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { useConnection, WagmiProvider } from 'wagmi';
 import { wagmiAdapter } from '@/config/appkit';
-import { createWagmiConfig } from '@/store/createWagmiConfig';
 import { ConnectRedirectProvider } from './components/providers/ConnectRedirectProvider';
-import { CustomRpcProvider, useCustomRpcContext } from './components/providers/CustomRpcProvider';
+import { CustomRpcProvider } from './components/providers/CustomRpcProvider';
 
 type Props = { children: ReactNode };
 
@@ -33,16 +32,11 @@ function SentryWalletScopeSync() {
 }
 
 function WagmiConfigProvider({ children }: Props) {
-  const { customRpcUrls } = useCustomRpcContext();
-
-  // Use wagmiAdapter config by default, or create custom config if custom RPCs are set
-  // This dual-config approach allows AppKit modal to work while respecting custom RPCs
-  const hasCustomRpcs = Object.keys(customRpcUrls).length > 0;
-  const wagmiConfig = hasCustomRpcs ? createWagmiConfig(customRpcUrls) : wagmiAdapter.wagmiConfig;
-
+  // AppKit syncs wallet connectors and connections into this adapter-owned config.
+  // Custom RPCs are loaded into it at startup; replacing it splits modal state from app hooks.
   return (
     <WagmiProvider
-      config={wagmiConfig}
+      config={wagmiAdapter.wagmiConfig}
       reconnectOnMount
     >
       <SentryWalletScopeSync />
