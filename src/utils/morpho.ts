@@ -54,8 +54,7 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
     case SupportedNetworks.Monad:
       return '0x5738366B9348f22607294007e75114922dF2a16A';
     case SupportedNetworks.Katana:
-      // Morpho docs list Bundler3 on Katana; legacy Bundler V2 flows stay disabled until migrated.
-      return zeroAddress;
+      return '0x5738366B9348f22607294007e75114922dF2a16A';
     default:
       return zeroAddress;
   }
