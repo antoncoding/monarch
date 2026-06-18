@@ -177,6 +177,37 @@ const rawKnownVaults: TrustedVault[] = [
     name: 'Felix WHYPE',
     asset: '0x5555555555555555555555555555555555555555',
   },
+  // Katana top listed vaults by Morpho totalAssetsUsd.
+  {
+    address: '0x61D4F9D3797BA4dA152238c53a6f93Fb665C3c1d',
+    chainId: 747_474,
+    name: 'Steakhouse Prime USDC',
+    asset: '0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36',
+  },
+  {
+    address: '0xC5e7AB07030305fc925175b25B93b285d40dCdFf',
+    chainId: 747_474,
+    name: 'Gauntlet WETH',
+    asset: '0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62',
+  },
+  {
+    address: '0x8ED68f91AfbE5871dCE31ae007a936ebE8511d47',
+    chainId: 747_474,
+    name: 'Yearn OG USDT',
+    asset: '0x2DCa96907fde857dd3D816880A0df407eeB2D2F2',
+  },
+  {
+    address: '0xCE2b8e464Fc7b5E58710C24b7e5EBFB6027f29D7',
+    chainId: 747_474,
+    name: 'Yearn OG USDC',
+    asset: '0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36',
+  },
+  {
+    address: '0xFaDe0C546f44e33C134c4036207B314AC643dc2E',
+    chainId: 747_474,
+    name: 'Yearn OG ETH',
+    asset: '0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62',
+  },
 ];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
