@@ -18,6 +18,7 @@ const NETWORK_ALIASES: Record<string, SupportedNetworks> = {
   eth: SupportedNetworks.Mainnet,
   'hyper-evm': SupportedNetworks.HyperEVM,
   hyperevm: SupportedNetworks.HyperEVM,
+  katana: SupportedNetworks.Katana,
   mainnet: SupportedNetworks.Mainnet,
   monad: SupportedNetworks.Monad,
   op: SupportedNetworks.Optimism,

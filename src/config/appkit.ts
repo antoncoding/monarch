@@ -7,7 +7,7 @@ import { createAppKit } from '@reown/appkit/react';
 import type { AppKitNetwork } from '@reown/appkit/networks';
 import { etherlink } from 'viem/chains';
 import { arbitrum, base, mainnet, monad, optimism, polygon, unichain } from 'wagmi/chains';
-import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
+import { SupportedNetworks, getDefaultRPC, hyperEvm, katana } from '@/utils/networks';
 
 type ChainWithRpcUrls = {
   rpcUrls: {
@@ -102,6 +102,7 @@ const customUnichain = withAppKitRpc(unichain, getDefaultRPC(SupportedNetworks.U
 const customEtherlink = withAppKitRpc(etherlink, getDefaultRPC(SupportedNetworks.Etherlink));
 const customMonad = withAppKitRpc(monad, getDefaultRPC(SupportedNetworks.Monad));
 const customHyperEvm = withAppKitRpc(hyperEvm, getDefaultRPC(SupportedNetworks.HyperEVM));
+const customKatana = withAppKitRpc(katana, getDefaultRPC(SupportedNetworks.Katana));
 const persistedCustomRpcUrls = getPersistedCustomRpcUrls();
 
 // Define networks for AppKit (non-empty tuple type required)
@@ -115,6 +116,7 @@ export const networks = [
   customEtherlink,
   customHyperEvm,
   customMonad,
+  customKatana,
 ] as [AppKitNetwork, ...AppKitNetwork[]];
 
 // Metadata for the app

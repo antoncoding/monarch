@@ -3,6 +3,7 @@ import {
   arbitrum,
   base,
   etherlink as etherlinkChain,
+  katana as katanaViem,
   mainnet,
   monad,
   optimism,
@@ -44,6 +45,16 @@ export const hyperEvm = defineChain({
     multicall3: {
       address: '0xcA11bde05977b3631167028862bE2a173976CA11',
       blockCreated: 13_051,
+    },
+  },
+});
+
+export const katana = defineChain({
+  ...katanaViem,
+  contracts: {
+    ...katanaViem.contracts,
+    multicall3: {
+      address: '0xcA11bde05977b3631167028862bE2a173976CA11',
     },
   },
 });
@@ -188,6 +199,17 @@ export const networks: NetworkConfig[] = [
     nativeTokenSymbol: 'MON',
     wrappedNativeToken: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
     explorerUrl: 'https://monadscan.com',
+  },
+  {
+    network: SupportedNetworkId.Katana,
+    chain: katana,
+    logo: require('../imgs/chains/katana.svg') as string,
+    name: 'Katana',
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_KATANA_RPC),
+    blocktime: 1,
+    maxBlockDelay: 10,
+    explorerUrl: 'https://katanascan.com',
+    wrappedNativeToken: '0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62',
   },
 ];
 

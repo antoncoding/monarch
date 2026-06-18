@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { MathLib } from '@morpho-org/blue-sdk';
-import { type Address, encodeFunctionData } from 'viem';
+import { type Address, encodeFunctionData, zeroAddress } from 'viem';
 import { morphoIrmAbi } from '@/abis/morpho-irm';
 import { useConnection, usePublicClient } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -55,6 +55,8 @@ export function useRepayTransaction({
   const publicClient = usePublicClient({ chainId: market.morphoBlue.chain.id });
   const toast = useStyledToast();
   const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
+  const isBundlerAddressValid = bundlerAddress !== zeroAddress;
+  const bundlerAddressErrorMessage = `No bundler configured for chain ${market.morphoBlue.chain.id}.`;
 
   const useRepayByShares = repayShares > 0n;
   const repayBySharesBaseAssets = useRepayByShares && repayAssets === 0n ? BigInt(currentPosition?.state.borrowAssets ?? 0) : repayAssets;
@@ -293,6 +295,10 @@ export function useRepayTransaction({
       }
 
       try {
+        if (!isBundlerAddressValid) {
+          throw new Error(bundlerAddressErrorMessage);
+        }
+
         const txs: `0x${string}`[] = [];
         const { repayTransferAmount, repayBySharesToRepay } = executionPlan;
 
@@ -442,6 +448,8 @@ export function useRepayTransaction({
         if (error instanceof Error) {
           if (error.message.includes('User rejected')) {
             toast.error('Transaction rejected', 'Transaction rejected by user');
+          } else if (error.message.includes('No bundler configured')) {
+            toast.error('Unsupported network', error.message);
           } else {
             toast.error('Transaction Error', 'Failed to process transaction');
           }
@@ -464,6 +472,8 @@ export function useRepayTransaction({
       toast,
       useRepayByShares,
       bundlerAddress,
+      isBundlerAddressValid,
+      bundlerAddressErrorMessage,
       tracking,
     ],
   );

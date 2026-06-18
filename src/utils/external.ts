@@ -60,6 +60,8 @@ const getChainNameForMerkl = (chainId: number): string => {
       return 'hyperevm';
     case SupportedNetworks.Monad:
       return 'monad';
+    case SupportedNetworks.Katana:
+      return 'katana';
     default:
       return 'ethereum';
   }
