@@ -23,6 +23,7 @@ const WalletModalContext = createContext<WalletModalContextValue | undefined>(un
 type WalletConnectorMessage = ConnectorEventMap['message'];
 
 const WALLET_CONNECT_IDS = ['walletConnect'];
+const WALLET_CONNECT_LINK_TIMEOUT_MS = 10_000;
 const getFaviconUrl = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 
 const FEATURED_WALLETS: WalletOption[] = [
@@ -274,6 +275,7 @@ function WalletButton({
 
 function WalletConnectView({
   hasCopiedWalletConnectUri,
+  hasLinkTimedOut,
   isPending,
   onCopyLink,
   onBack,
@@ -282,6 +284,7 @@ function WalletConnectView({
   walletConnectUri,
 }: {
   hasCopiedWalletConnectUri: boolean;
+  hasLinkTimedOut: boolean;
   isPending: boolean;
   onCopyLink: () => void;
   onBack: () => void;
@@ -291,9 +294,11 @@ function WalletConnectView({
 }) {
   const statusText = walletConnectUri
     ? 'QR prompt and pairing link ready.'
-    : isPending
-      ? 'Preparing WalletConnect link.'
-      : 'WalletConnect prompt closed.';
+    : hasLinkTimedOut
+      ? 'WalletConnect link was not returned.'
+      : isPending
+        ? 'Preparing WalletConnect link.'
+        : 'WalletConnect prompt closed.';
 
   return (
     <div className="flex flex-col gap-4">
@@ -363,6 +368,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasCopiedWalletConnectUri, setHasCopiedWalletConnectUri] = useState(false);
+  const [hasWalletConnectLinkTimedOut, setHasWalletConnectLinkTimedOut] = useState(false);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
   const [walletConnectOption, setWalletConnectOption] = useState<WalletOption | null>(null);
   const [walletConnectUri, setWalletConnectUri] = useState<string | null>(null);
@@ -375,6 +381,8 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
 
     const handleMessage = (message: WalletConnectorMessage) => {
       if (message.type !== 'display_uri' || typeof message.data !== 'string') return;
+      setErrorMessage(null);
+      setHasWalletConnectLinkTimedOut(false);
       setWalletConnectUri(message.data);
       setHasCopiedWalletConnectUri(false);
     };
@@ -387,6 +395,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
     connectAttemptRef.current += 1;
     setErrorMessage(null);
     setHasCopiedWalletConnectUri(false);
+    setHasWalletConnectLinkTimedOut(false);
     setPendingOptionId(null);
     setWalletConnectOption(null);
     setWalletConnectUri(null);
@@ -416,6 +425,21 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
     resetModalState();
     setIsOpen(true);
   }, [resetModalState, walletConnectConnector]);
+
+  useEffect(() => {
+    if (!walletConnectOption || pendingOptionId !== walletConnectOption.id || walletConnectUri) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setHasWalletConnectLinkTimedOut(true);
+      setPendingOptionId(null);
+      setErrorMessage(
+        'WalletConnect did not return a pairing link. Check browser shields, network blockers, or the WalletConnect project ID, then try again.',
+      );
+      void closeWalletConnectPrompt(walletConnectConnector);
+    }, WALLET_CONNECT_LINK_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingOptionId, walletConnectConnector, walletConnectOption, walletConnectUri]);
 
   const detectedConnectors = useMemo(
     () =>
@@ -461,6 +485,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
       setErrorMessage(null);
       if (usesWalletConnect) {
         setHasCopiedWalletConnectUri(false);
+        setHasWalletConnectLinkTimedOut(false);
         setWalletConnectUri(null);
       }
       setPendingOptionId(option.id);
@@ -521,6 +546,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
               {walletConnectOption ? (
                 <WalletConnectView
                   hasCopiedWalletConnectUri={hasCopiedWalletConnectUri}
+                  hasLinkTimedOut={hasWalletConnectLinkTimedOut}
                   isPending={walletConnectViewPending}
                   onBack={handleBackToWalletList}
                   onCopyLink={handleCopyWalletConnectUri}
