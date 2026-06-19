@@ -1,9 +1,9 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeftIcon, ReloadIcon } from '@radix-ui/react-icons';
+import { ArrowLeftIcon, CheckIcon, ClipboardIcon, ExternalLinkIcon, ReloadIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { useConnect, type Connector } from 'wagmi';
+import { useConnect, type Connector, type ConnectorEventMap } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
 
@@ -20,6 +20,7 @@ type WalletModalContextValue = {
 };
 
 const WalletModalContext = createContext<WalletModalContextValue | undefined>(undefined);
+type WalletConnectorMessage = ConnectorEventMap['message'];
 
 const WALLET_CONNECT_IDS = ['walletConnect'];
 const getFaviconUrl = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
@@ -272,16 +273,28 @@ function WalletButton({
 }
 
 function WalletConnectView({
+  hasCopiedWalletConnectUri,
   isPending,
+  onCopyLink,
   onBack,
   onRetry,
   option,
+  walletConnectUri,
 }: {
+  hasCopiedWalletConnectUri: boolean;
   isPending: boolean;
+  onCopyLink: () => void;
   onBack: () => void;
   onRetry: () => void;
   option: WalletOption;
+  walletConnectUri: string | null;
 }) {
+  const statusText = walletConnectUri
+    ? 'QR prompt and pairing link ready.'
+    : isPending
+      ? 'Preparing WalletConnect link.'
+      : 'WalletConnect prompt closed.';
+
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-sm border border-primary/10 bg-hovered/40 p-4">
@@ -289,7 +302,7 @@ function WalletConnectView({
           <WalletIcon option={option} />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="truncate text-sm font-medium text-primary">{option.name}</div>
-            <div className="text-xs text-secondary">{isPending ? 'Opening WalletConnect QR.' : 'WalletConnect prompt closed.'}</div>
+            <div className="text-xs text-secondary">{statusText}</div>
           </div>
         </div>
       </div>
@@ -311,6 +324,36 @@ function WalletConnectView({
           <ReloadIcon className="h-3.5 w-3.5" />
           Open QR
         </Button>
+        <Button
+          size="sm"
+          variant="surface"
+          onClick={onCopyLink}
+          disabled={!walletConnectUri}
+        >
+          {hasCopiedWalletConnectUri ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardIcon className="h-3.5 w-3.5" />}
+          {hasCopiedWalletConnectUri ? 'Copied' : 'Copy link'}
+        </Button>
+        {walletConnectUri ? (
+          <Button
+            asChild
+            size="sm"
+            variant="surface"
+          >
+            <a href={walletConnectUri}>
+              <ExternalLinkIcon className="h-3.5 w-3.5" />
+              Open link
+            </a>
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="surface"
+            disabled
+          >
+            <ExternalLinkIcon className="h-3.5 w-3.5" />
+            Open link
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -319,17 +362,34 @@ function WalletConnectView({
 export function WalletModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasCopiedWalletConnectUri, setHasCopiedWalletConnectUri] = useState(false);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
   const [walletConnectOption, setWalletConnectOption] = useState<WalletOption | null>(null);
+  const [walletConnectUri, setWalletConnectUri] = useState<string | null>(null);
   const connectAttemptRef = useRef(0);
   const { connectors, connectAsync, reset: resetConnectMutation } = useConnect();
   const walletConnectConnector = useMemo(() => connectors.find((connector) => connector.id === 'walletConnect'), [connectors]);
 
+  useEffect(() => {
+    if (!walletConnectConnector) return;
+
+    const handleMessage = (message: WalletConnectorMessage) => {
+      if (message.type !== 'display_uri' || typeof message.data !== 'string') return;
+      setWalletConnectUri(message.data);
+      setHasCopiedWalletConnectUri(false);
+    };
+
+    walletConnectConnector.emitter.on('message', handleMessage);
+    return () => walletConnectConnector.emitter.off('message', handleMessage);
+  }, [walletConnectConnector]);
+
   const resetModalState = useCallback(() => {
     connectAttemptRef.current += 1;
     setErrorMessage(null);
+    setHasCopiedWalletConnectUri(false);
     setPendingOptionId(null);
     setWalletConnectOption(null);
+    setWalletConnectUri(null);
     resetConnectMutation();
   }, [resetConnectMutation]);
 
@@ -371,6 +431,18 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
     [connectors],
   );
 
+  const handleCopyWalletConnectUri = useCallback(async () => {
+    if (!walletConnectUri) return;
+
+    try {
+      await navigator.clipboard.writeText(walletConnectUri);
+      setHasCopiedWalletConnectUri(true);
+      setErrorMessage(null);
+    } catch {
+      setErrorMessage('Unable to copy WalletConnect link.');
+    }
+  }, [walletConnectUri]);
+
   const handleConnect = useCallback(
     async (option: WalletOption) => {
       const connector = getConnectorByOption(connectors, option);
@@ -387,6 +459,10 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
       const attemptId = connectAttemptRef.current + 1;
       connectAttemptRef.current = attemptId;
       setErrorMessage(null);
+      if (usesWalletConnect) {
+        setHasCopiedWalletConnectUri(false);
+        setWalletConnectUri(null);
+      }
       setPendingOptionId(option.id);
       if (usesWalletConnect) setWalletConnectOption(option);
 
@@ -444,10 +520,13 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
             <ModalBody className="gap-5">
               {walletConnectOption ? (
                 <WalletConnectView
+                  hasCopiedWalletConnectUri={hasCopiedWalletConnectUri}
                   isPending={walletConnectViewPending}
                   onBack={handleBackToWalletList}
+                  onCopyLink={handleCopyWalletConnectUri}
                   onRetry={handleRetryWalletConnect}
                   option={walletConnectOption}
+                  walletConnectUri={walletConnectUri}
                 />
               ) : (
                 [...WALLET_SECTIONS, ...(detectedConnectors.length > 0 ? [{ title: 'Detected', wallets: detectedConnectors }] : [])].map(
