@@ -24,23 +24,10 @@ type WalletConnectorMessage = ConnectorEventMap['message'];
 
 const WALLET_CONNECT_IDS = ['walletConnect'];
 const WALLET_CONNECT_LINK_TIMEOUT_MS = 10_000;
+const WALLET_NOT_FOUND_MESSAGE = 'Wallet not found.';
 const getFaviconUrl = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 
 const FEATURED_WALLETS: WalletOption[] = [
-  {
-    id: 'metaMask',
-    connectorIds: ['metaMask'],
-    name: 'MetaMask',
-    description: 'Browser extension or mobile wallet.',
-    iconUrl: getFaviconUrl('metamask.io'),
-  },
-  {
-    id: 'rabby',
-    connectorIds: ['rabby'],
-    name: 'Rabby',
-    description: 'Rabby browser extension.',
-    iconUrl: getFaviconUrl('rabby.io'),
-  },
   {
     id: 'walletConnect',
     connectorIds: WALLET_CONNECT_IDS,
@@ -184,7 +171,11 @@ const WALLET_SECTIONS = [
   { title: 'More wallets', wallets: MORE_WALLETS },
 ];
 
-const KNOWN_CONNECTOR_IDS = new Set([...FEATURED_WALLETS, ...MORE_WALLETS].flatMap((option) => option.connectorIds));
+const HIDDEN_STATIC_CONNECTOR_IDS = ['metaMask', 'rabby'];
+const KNOWN_CONNECTOR_IDS = new Set([
+  ...HIDDEN_STATIC_CONNECTOR_IDS,
+  ...[...FEATURED_WALLETS, ...MORE_WALLETS].flatMap((option) => option.connectorIds),
+]);
 
 function isWalletConnectOption(option: WalletOption): boolean {
   return option.connectorIds.includes('walletConnect');
@@ -195,6 +186,7 @@ function getConnectorByOption(connectors: readonly Connector[], option: WalletOp
 }
 
 function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && /Provider not found/i.test(error.message)) return WALLET_NOT_FOUND_MESSAGE;
   if (error instanceof Error && error.message.trim()) return error.message;
   return 'Unable to connect wallet.';
 }
@@ -245,11 +237,13 @@ function WalletIcon({ option }: { option: Pick<WalletOption, 'iconUrl' | 'name'>
 
 function WalletButton({
   connector,
+  errorLabel,
   isPending,
   onConnect,
   option,
 }: {
   connector?: Connector;
+  errorLabel?: string;
   isPending: boolean;
   onConnect: (option: WalletOption) => void;
   option: WalletOption;
@@ -260,16 +254,35 @@ function WalletButton({
     <button
       key={option.id}
       type="button"
-      className="flex min-h-[76px] items-center gap-3 rounded-sm border border-primary/10 bg-surface p-3 text-left transition hover:border-primary/30 hover:bg-hovered disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex min-h-[64px] items-center gap-2.5 rounded-sm border border-primary/10 bg-surface p-2.5 text-left transition hover:border-primary/30 hover:bg-hovered disabled:cursor-not-allowed disabled:opacity-50"
       onClick={() => onConnect(option)}
       disabled={isPending || isUnavailable}
     >
       <WalletIcon option={option} />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate text-sm font-medium text-primary">{option.name}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-medium text-primary">{option.name}</span>
+          {errorLabel ? (
+            <span className="ml-auto shrink-0 rounded-sm bg-danger/10 px-1.5 py-0.5 text-[10px] font-medium uppercase text-danger">
+              {errorLabel}
+            </span>
+          ) : null}
+        </span>
         <span className="text-xs leading-4 text-secondary">{option.description}</span>
       </span>
     </button>
+  );
+}
+
+function WalletErrorNotice({ message }: { message: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="sticky bottom-0 z-10 -mx-6 -mb-6 border-primary/10 border-t bg-surface px-6 py-3 text-sm text-danger"
+    >
+      {message}
+    </div>
   );
 }
 
@@ -369,6 +382,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasCopiedWalletConnectUri, setHasCopiedWalletConnectUri] = useState(false);
   const [hasWalletConnectLinkTimedOut, setHasWalletConnectLinkTimedOut] = useState(false);
+  const [failedOptionId, setFailedOptionId] = useState<string | null>(null);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
   const [walletConnectOption, setWalletConnectOption] = useState<WalletOption | null>(null);
   const [walletConnectUri, setWalletConnectUri] = useState<string | null>(null);
@@ -394,6 +408,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
   const resetModalState = useCallback(() => {
     connectAttemptRef.current += 1;
     setErrorMessage(null);
+    setFailedOptionId(null);
     setHasCopiedWalletConnectUri(false);
     setHasWalletConnectLinkTimedOut(false);
     setPendingOptionId(null);
@@ -455,6 +470,11 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
     [connectors],
   );
 
+  const walletSections = useMemo(
+    () => [...(detectedConnectors.length > 0 ? [{ title: 'Detected', wallets: detectedConnectors }] : []), ...WALLET_SECTIONS],
+    [detectedConnectors],
+  );
+
   const handleCopyWalletConnectUri = useCallback(async () => {
     if (!walletConnectUri) return;
 
@@ -472,10 +492,9 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
       const connector = getConnectorByOption(connectors, option);
       const usesWalletConnect = isWalletConnectOption(option);
       if (!connector) {
+        setFailedOptionId(option.id);
         setErrorMessage(
-          usesWalletConnect
-            ? 'WalletConnect is not configured. Set NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID.'
-            : `${option.name} is not available in this browser.`,
+          usesWalletConnect ? 'WalletConnect is not configured. Set NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID.' : WALLET_NOT_FOUND_MESSAGE,
         );
         return;
       }
@@ -483,6 +502,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
       const attemptId = connectAttemptRef.current + 1;
       connectAttemptRef.current = attemptId;
       setErrorMessage(null);
+      setFailedOptionId(null);
       if (usesWalletConnect) {
         setHasCopiedWalletConnectUri(false);
         setHasWalletConnectLinkTimedOut(false);
@@ -497,8 +517,10 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
         handleOpenChange(false);
       } catch (error) {
         if (connectAttemptRef.current !== attemptId) return;
+        const nextErrorMessage = getErrorMessage(error);
+        if (nextErrorMessage === WALLET_NOT_FOUND_MESSAGE) setFailedOptionId(option.id);
         setIsOpen(true);
-        setErrorMessage(getErrorMessage(error));
+        setErrorMessage(nextErrorMessage);
       } finally {
         if (connectAttemptRef.current === attemptId) setPendingOptionId(null);
       }
@@ -520,7 +542,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
         isOpen={isOpen}
         onOpenChange={handleOpenChange}
         title="Connect Wallet"
-        size="lg"
+        size="2xl"
       >
         {(onClose) => (
           <>
@@ -542,7 +564,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
                 onClose={onClose}
               />
             )}
-            <ModalBody className="gap-5">
+            <ModalBody className="gap-4">
               {walletConnectOption ? (
                 <WalletConnectView
                   hasCopiedWalletConnectUri={hasCopiedWalletConnectUri}
@@ -555,32 +577,31 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
                   walletConnectUri={walletConnectUri}
                 />
               ) : (
-                [...WALLET_SECTIONS, ...(detectedConnectors.length > 0 ? [{ title: 'Detected', wallets: detectedConnectors }] : [])].map(
-                  (section) => (
-                    <section
-                      key={section.title}
-                      className="space-y-2"
-                    >
-                      <h3 className="text-xs font-medium uppercase text-secondary">{section.title}</h3>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {section.wallets.map((option) => (
-                          <WalletButton
-                            key={option.id}
-                            connector={getConnectorByOption(connectors, option)}
-                            isPending={pendingOptionId === option.id}
-                            onConnect={(walletOption) => {
-                              void handleConnect(walletOption);
-                            }}
-                            option={option}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  ),
-                )
+                walletSections.map((section) => (
+                  <section
+                    key={section.title}
+                    className="space-y-2"
+                  >
+                    <h3 className="text-xs font-medium uppercase text-secondary">{section.title}</h3>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+                      {section.wallets.map((option) => (
+                        <WalletButton
+                          key={option.id}
+                          connector={getConnectorByOption(connectors, option)}
+                          errorLabel={failedOptionId === option.id ? 'Not found' : undefined}
+                          isPending={pendingOptionId === option.id}
+                          onConnect={(walletOption) => {
+                            void handleConnect(walletOption);
+                          }}
+                          option={option}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ))
               )}
 
-              {errorMessage ? <div className="rounded-sm bg-danger/10 p-3 text-sm text-danger">{errorMessage}</div> : null}
+              {errorMessage ? <WalletErrorNotice message={errorMessage} /> : null}
             </ModalBody>
           </>
         )}
