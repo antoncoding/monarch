@@ -58,9 +58,9 @@ const FEATURED_WALLETS: WalletOption[] = [
   },
   {
     id: 'rainbow',
-    connectorIds: ['rainbow'],
+    connectorIds: WALLET_CONNECT_IDS,
     name: 'Rainbow',
-    description: 'Rainbow browser or mobile wallet.',
+    description: 'Connect Rainbow with WalletConnect.',
     iconUrl: getFaviconUrl('rainbow.me'),
   },
   {
@@ -176,6 +176,13 @@ const KNOWN_CONNECTOR_IDS = new Set([
   ...HIDDEN_STATIC_CONNECTOR_IDS,
   ...[...FEATURED_WALLETS, ...MORE_WALLETS].flatMap((option) => option.connectorIds),
 ]);
+
+function normalizeWalletName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\bwallet\b/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
 
 function isWalletConnectOption(option: WalletOption): boolean {
   return option.connectorIds.includes('walletConnect');
@@ -470,10 +477,15 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
     [connectors],
   );
 
-  const walletSections = useMemo(
-    () => [...(detectedConnectors.length > 0 ? [{ title: 'Detected', wallets: detectedConnectors }] : []), ...WALLET_SECTIONS],
-    [detectedConnectors],
-  );
+  const walletSections = useMemo(() => {
+    const detectedWalletNames = new Set(detectedConnectors.map((option) => normalizeWalletName(option.name)));
+    const staticSections = WALLET_SECTIONS.map((section) => ({
+      ...section,
+      wallets: section.wallets.filter((option) => !detectedWalletNames.has(normalizeWalletName(option.name))),
+    })).filter((section) => section.wallets.length > 0);
+
+    return [...(detectedConnectors.length > 0 ? [{ title: 'Detected', wallets: detectedConnectors }] : []), ...staticSections];
+  }, [detectedConnectors]);
 
   const handleCopyWalletConnectUri = useCallback(async () => {
     if (!walletConnectUri) return;

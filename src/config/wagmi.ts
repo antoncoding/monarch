@@ -84,7 +84,7 @@ const walletMetadata = {
 };
 
 if (!walletConnectProjectId && process.env.NODE_ENV !== 'production') {
-  console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WalletConnect, Ledger, and Trezor options are disabled.');
+  console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WalletConnect, Ledger, Trezor, and Rainbow options are disabled.');
 }
 
 type InjectedParameters = NonNullable<Parameters<typeof injected>[0]>;
@@ -95,7 +95,6 @@ const createTargetedInjectedConnector = (target: InjectedParameters['target']) =
 const injectedWalletTargets: InjectedParameters['target'][] = [
   { id: 'metaMask', name: 'MetaMask', provider: 'isMetaMask', icon: 'https://metamask.io/favicon.ico' },
   { id: 'rabby', name: 'Rabby', provider: 'isRabby', icon: 'https://rabby.io/favicon.ico' },
-  { id: 'rainbow', name: 'Rainbow', provider: 'isRainbow', icon: 'https://rainbow.me/favicon.ico' },
   { id: 'trustWallet', name: 'Trust Wallet', provider: 'isTrustWallet', icon: 'https://trustwallet.com/favicon.ico' },
   { id: 'coinbaseWallet', name: 'Coinbase Wallet', provider: 'isCoinbaseWallet', icon: 'https://www.coinbase.com/favicon.ico' },
   { id: 'braveWallet', name: 'Brave Wallet', provider: 'isBraveWallet', icon: 'https://brave.com/favicon.ico' },
