@@ -5,9 +5,11 @@ import { createStorage, type Storage } from 'wagmi';
 import localStorage from 'local-storage-fallback';
 import { createAppKit } from '@reown/appkit/react';
 import type { AppKitNetwork } from '@reown/appkit/networks';
+import type { HttpTransportConfig } from 'viem';
 import { etherlink } from 'viem/chains';
 import { arbitrum, base, mainnet, monad, optimism, polygon, unichain } from 'wagmi/chains';
-import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
+import { SupportedNetworks, getDefaultRPC, hyperEvm, isSupportedNetwork, katana } from '@/utils/networks';
+import { createRpcTransport, getRpcHttpConfig } from '@/utils/rpc-transport';
 
 type ChainWithRpcUrls = {
   rpcUrls: {
@@ -20,7 +22,7 @@ type ChainWithRpcUrls = {
   };
 };
 
-type AppKitCustomRpcUrls = Record<`eip155:${number}`, { url: string }[]>;
+type AppKitCustomRpcUrls = Record<`eip155:${number}`, { url: string; config?: HttpTransportConfig }[]>;
 
 const CUSTOM_RPC_STORAGE_KEY = 'monarch_store_customRpc';
 
@@ -49,7 +51,7 @@ function getPersistedCustomRpcUrls(): AppKitCustomRpcUrls | undefined {
 
     for (const [chainId, rpcUrl] of Object.entries(customRpcUrls)) {
       const parsedChainId = Number(chainId);
-      if (!Number.isInteger(parsedChainId) || typeof rpcUrl !== 'string') {
+      if (!Number.isInteger(parsedChainId) || !isSupportedNetwork(parsedChainId) || typeof rpcUrl !== 'string') {
         continue;
       }
 
@@ -58,7 +60,8 @@ function getPersistedCustomRpcUrls(): AppKitCustomRpcUrls | undefined {
         continue;
       }
 
-      entries.push([`eip155:${parsedChainId}`, [{ url: trimmedRpcUrl }]]);
+      const config = getRpcHttpConfig(parsedChainId, trimmedRpcUrl);
+      entries.push([`eip155:${parsedChainId}`, [{ url: trimmedRpcUrl, ...(config ? { config } : {}) }]]);
     }
 
     return entries.length > 0 ? (Object.fromEntries(entries) as AppKitCustomRpcUrls) : undefined;
@@ -102,7 +105,10 @@ const customUnichain = withAppKitRpc(unichain, getDefaultRPC(SupportedNetworks.U
 const customEtherlink = withAppKitRpc(etherlink, getDefaultRPC(SupportedNetworks.Etherlink));
 const customMonad = withAppKitRpc(monad, getDefaultRPC(SupportedNetworks.Monad));
 const customHyperEvm = withAppKitRpc(hyperEvm, getDefaultRPC(SupportedNetworks.HyperEVM));
+const customKatana = withAppKitRpc(katana, getDefaultRPC(SupportedNetworks.Katana));
 const persistedCustomRpcUrls = getPersistedCustomRpcUrls();
+const persistedKatanaRpcUrl = persistedCustomRpcUrls?.[`eip155:${SupportedNetworks.Katana}`]?.[0]?.url;
+const katanaRpcUrl = persistedKatanaRpcUrl ?? getDefaultRPC(SupportedNetworks.Katana);
 
 // Define networks for AppKit (non-empty tuple type required)
 export const networks = [
@@ -115,6 +121,7 @@ export const networks = [
   customEtherlink,
   customHyperEvm,
   customMonad,
+  customKatana,
 ] as [AppKitNetwork, ...AppKitNetwork[]];
 
 // Metadata for the app
@@ -132,6 +139,9 @@ export const wagmiAdapter = new WagmiAdapter({
   networks,
   projectId,
   customRpcUrls: persistedCustomRpcUrls,
+  transports: {
+    [SupportedNetworks.Katana]: createRpcTransport(SupportedNetworks.Katana, katanaRpcUrl),
+  },
 });
 
 // Create AppKit modal instance

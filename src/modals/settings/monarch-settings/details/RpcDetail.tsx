@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { type SupportedNetworks, networks } from '@/utils/networks';
+import { getRpcRequestHeaders } from '@/utils/rpc-transport';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 
 const getNetworkByChainId = (chainId: SupportedNetworks) => networks.find((n) => n.network === chainId);
@@ -25,9 +26,13 @@ async function validateRpcUrl(url: string, expectedChainId: number): Promise<{ i
   }
 
   try {
+    const rpcHeaders = getRpcRequestHeaders(expectedChainId, url);
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...rpcHeaders,
+      },
       body: JSON.stringify({
         id: 1,
         jsonrpc: '2.0',

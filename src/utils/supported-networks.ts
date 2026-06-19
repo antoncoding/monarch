@@ -8,6 +8,7 @@ export enum SupportedNetworks {
   Etherlink = 42_793,
   HyperEVM = 999,
   Monad = 143,
+  Katana = 747_474,
 }
 
 export const ALL_SUPPORTED_NETWORKS = [
@@ -20,6 +21,7 @@ export const ALL_SUPPORTED_NETWORKS = [
   SupportedNetworks.Etherlink,
   SupportedNetworks.HyperEVM,
   SupportedNetworks.Monad,
+  SupportedNetworks.Katana,
 ];
 
 export const isSupportedNetwork = (chainId: number): chainId is SupportedNetworks => {

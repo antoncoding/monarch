@@ -26,6 +26,7 @@ export const WETH_BY_CHAIN: Partial<Record<SupportedNetworks, Address>> = {
   [SupportedNetworks.Arbitrum]: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
   [SupportedNetworks.Etherlink]: '0xfc24f770F94edBca6D6f885E12d4317320BcB401',
   [SupportedNetworks.Monad]: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242',
+  [SupportedNetworks.Katana]: '0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62',
 };
 
 export const getCanonicalWethAddress = (chainId: number): Address | undefined => {

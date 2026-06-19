@@ -12,4 +12,5 @@ export const PUBLIC_ALLOCATOR_ADDRESSES: Partial<Record<SupportedNetworks, `0x${
   [SupportedNetworks.Etherlink]: '0x8b8B1bd41d36c06253203CD21463994aB752c1e6',
   [SupportedNetworks.HyperEVM]: '0x517505be22D9068687334e69ae7a02fC77edf4Fc',
   [SupportedNetworks.Monad]: '0xfd70575B732F9482F4197FE1075492e114E97302',
+  [SupportedNetworks.Katana]: '0x39EB6Da5e88194C82B13491Df2e8B3E213eD2412',
 };

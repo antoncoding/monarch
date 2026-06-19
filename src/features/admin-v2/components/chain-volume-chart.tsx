@@ -31,6 +31,7 @@ const CHAIN_COLOR_INDEX: Record<number, number> = {
   42793: 7, // Etherlink
   999: 5, // HyperEVM
   143: 2, // Monad
+  747474: 8, // Katana
 };
 
 const CHAIN_STAT_PLACEHOLDERS = ['chain-1', 'chain-2', 'chain-3', 'chain-4'] as const;

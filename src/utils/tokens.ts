@@ -1,6 +1,6 @@
 import { type Chain, arbitrum, base, etherlink, mainnet, monad, optimism, polygon, unichain } from 'viem/chains';
 import { toChainAssetKey } from './chain-asset-key';
-import { getWrappedNativeToken, hyperEvm } from './networks';
+import { getWrappedNativeToken, hyperEvm, katana } from './networks';
 
 export type TokenSource = 'local' | 'external' | 'unknown';
 
@@ -550,6 +550,7 @@ const supportedTokens = [
         chain: unichain,
         address: '0x7DCC39B4d1C53CB31e1aBc0e358b43987FEF80f7',
       },
+      { chain: katana, address: '0x9893989433e7a383Cb313953e4c2365107dc19a7' },
     ],
     peg: TokenPeg.ETH,
   },
@@ -1018,6 +1019,192 @@ const supportedTokens = [
       },
     ],
   },
+  // Katana
+  {
+    symbol: 'vbETH',
+    img: require('../imgs/tokens/weth.webp') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: '0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Vault Bridge',
+    },
+    peg: TokenPeg.ETH,
+  },
+  {
+    symbol: 'vbUSDC',
+    img: require('../imgs/tokens/usdc.webp') as string,
+    decimals: 6,
+    networks: [
+      {
+        address: '0x203A662b0BD271A6ed5a60EdFbd04bFce608FD36',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Vault Bridge',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'vbUSDT',
+    img: require('../imgs/tokens/usdt.webp') as string,
+    decimals: 6,
+    networks: [
+      {
+        address: '0x2DCa96907fde857dd3D816880A0df407eeB2D2F2',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Vault Bridge',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'vbWBTC',
+    img: require('../imgs/tokens/wbtc.png') as string,
+    decimals: 8,
+    networks: [
+      {
+        address: '0x0913DA6Da4b42f538B445599b46Bb4622342Cf52',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Vault Bridge',
+    },
+    peg: TokenPeg.BTC,
+  },
+  {
+    symbol: 'AUSD',
+    img: require('../imgs/tokens/aUSD.webp') as string,
+    decimals: 6,
+    networks: [
+      {
+        address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Agora',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'LBTC',
+    img: require('../imgs/tokens/lbtc.webp') as string,
+    decimals: 8,
+    networks: [
+      {
+        address: '0xecAc9C5F704e954931349Da37F60E39f515c11c1',
+        chain: katana,
+      },
+    ],
+    peg: TokenPeg.BTC,
+  },
+  {
+    symbol: 'KAT',
+    img: require('../imgs/tokens/kat.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: '0x7F1f4b4b29f5058fA32CC7a97141b8D7e5ABDC2d',
+        chain: katana,
+      },
+    ],
+  },
+  {
+    symbol: 'avKAT',
+    img: require('../imgs/tokens/avkat.png') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: '0x7231dbaCdFc968E07656D12389AB20De82FbfCeB',
+        chain: katana,
+      },
+    ],
+  },
+  {
+    symbol: 'dUSD',
+    img: require('../imgs/tokens/dusd.png') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: '0xcA52d08737E6Af8763a2bF6034B3B03868f24DDA',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'dTRINITY',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'yvvbETH',
+    img: require('../imgs/tokens/weth.webp') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: '0xE007CA01894c863d7898045ed5A3B4Abf0b18f37',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Yearn',
+    },
+    peg: TokenPeg.ETH,
+  },
+  {
+    symbol: 'yvvbUSDC',
+    img: require('../imgs/tokens/usdc.webp') as string,
+    decimals: 6,
+    networks: [
+      {
+        address: '0x80c34BD3A3569E126e7055831036aa7b212cB159',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Yearn',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'yvvbUSDT',
+    img: require('../imgs/tokens/usdt.webp') as string,
+    decimals: 6,
+    networks: [
+      {
+        address: '0x9A6bd7B6Fd5C4F87eb66356441502fc7dCdd185B',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Yearn',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'yvvbWBTC',
+    img: require('../imgs/tokens/wbtc.png') as string,
+    decimals: 8,
+    networks: [
+      {
+        address: '0xAa0362eCC584B985056E47812931270b99C91f9d',
+        chain: katana,
+      },
+    ],
+    protocol: {
+      name: 'Yearn',
+    },
+    peg: TokenPeg.BTC,
+  },
+  // End of Katana
   {
     symbol: 'MORPHO',
     img: require('../imgs/tokens/morpho.svg') as string,
@@ -1034,6 +1221,10 @@ const supportedTokens = [
       {
         address: '0x40bd670a58238e6e230c430bbb5ce6ec0d40df48', // not used in "reward" as MORPHO_ARBITRUM just yet
         chain: arbitrum,
+      },
+      {
+        address: '0x1e5eFCA3D0dB2c6d5C67a4491845c43253eB9e4e',
+        chain: katana,
       },
     ],
   },
