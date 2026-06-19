@@ -5,9 +5,10 @@ import type { ReactNode } from 'react';
 // biome-ignore lint/performance/noNamespaceImport: Sentry SDK requires namespace import
 import * as Sentry from '@sentry/nextjs';
 import { useConnection, WagmiProvider } from 'wagmi';
-import { wagmiAdapter } from '@/config/appkit';
+import { wagmiConfig } from '@/config/wagmi';
 import { ConnectRedirectProvider } from './components/providers/ConnectRedirectProvider';
 import { CustomRpcProvider } from './components/providers/CustomRpcProvider';
+import { WalletModalProvider } from './components/providers/WalletModalProvider';
 
 type Props = { children: ReactNode };
 
@@ -32,15 +33,15 @@ function SentryWalletScopeSync() {
 }
 
 function WagmiConfigProvider({ children }: Props) {
-  // AppKit syncs wallet connectors and connections into this adapter-owned config.
-  // Custom RPCs are loaded into it at startup; replacing it splits modal state from app hooks.
   return (
     <WagmiProvider
-      config={wagmiAdapter.wagmiConfig}
+      config={wagmiConfig}
       reconnectOnMount
     >
       <SentryWalletScopeSync />
-      <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
+      <ConnectRedirectProvider>
+        <WalletModalProvider>{children}</WalletModalProvider>
+      </ConnectRedirectProvider>
     </WagmiProvider>
   );
 }

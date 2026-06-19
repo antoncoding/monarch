@@ -21,7 +21,7 @@ Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates 
 |-----------|---------|---------|
 | Wagmi | 3.1.0 | React hooks for Ethereum |
 | Viem | 2.40.2 | Ethereum utilities |
-| @reown/appkit | 1.8.14 | Wallet connection (WalletConnect v3) |
+| Wagmi connectors | 3.1.0 | Wallet connection, injected wallets, Safe, and WalletConnect |
 | @morpho-org/blue-sdk | 5.3.0 | Morpho Blue protocol SDK |
 | Velora (ParaSwap) API | HTTP | Same-chain quote + transaction payloads for swaps |
 
