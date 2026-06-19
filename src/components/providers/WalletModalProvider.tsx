@@ -25,6 +25,7 @@ type WalletConnectorMessage = ConnectorEventMap['message'];
 const WALLET_CONNECT_IDS = ['walletConnect'];
 const WALLET_CONNECT_LINK_TIMEOUT_MS = 10_000;
 const WALLET_NOT_FOUND_MESSAGE = 'Wallet not found.';
+const SAFE_CONNECTOR_ID = 'safe';
 const getFaviconUrl = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
 
 const FEATURED_WALLETS: WalletOption[] = [
@@ -64,10 +65,10 @@ const FEATURED_WALLETS: WalletOption[] = [
     iconUrl: getFaviconUrl('rainbow.me'),
   },
   {
-    id: 'safe',
-    connectorIds: ['safe'],
+    id: SAFE_CONNECTOR_ID,
+    connectorIds: WALLET_CONNECT_IDS,
     name: 'Safe',
-    description: 'Use Monarch inside the Safe Apps iframe.',
+    description: 'Connect Safe with WalletConnect.',
     iconUrl: getFaviconUrl('app.safe.global'),
   },
 ];
@@ -393,9 +394,32 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
   const [walletConnectOption, setWalletConnectOption] = useState<WalletOption | null>(null);
   const [walletConnectUri, setWalletConnectUri] = useState<string | null>(null);
+  const [isSafeConnectorAvailable, setIsSafeConnectorAvailable] = useState(false);
   const connectAttemptRef = useRef(0);
   const { connectors, connectAsync, reset: resetConnectMutation } = useConnect();
+  const safeConnector = useMemo(() => connectors.find((connector) => connector.id === SAFE_CONNECTOR_ID), [connectors]);
   const walletConnectConnector = useMemo(() => connectors.find((connector) => connector.id === 'walletConnect'), [connectors]);
+
+  useEffect(() => {
+    if (!safeConnector) {
+      setIsSafeConnectorAvailable(false);
+      return;
+    }
+
+    let isCurrent = true;
+    safeConnector
+      .getProvider()
+      .then((provider) => {
+        if (isCurrent) setIsSafeConnectorAvailable(Boolean(provider));
+      })
+      .catch(() => {
+        if (isCurrent) setIsSafeConnectorAvailable(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [safeConnector]);
 
   useEffect(() => {
     if (!walletConnectConnector) return;
@@ -466,7 +490,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
   const detectedConnectors = useMemo(
     () =>
       connectors
-        .filter((connector) => !KNOWN_CONNECTOR_IDS.has(connector.id))
+        .filter((connector) => !KNOWN_CONNECTOR_IDS.has(connector.id) && (connector.id !== SAFE_CONNECTOR_ID || isSafeConnectorAvailable))
         .map<WalletOption>((connector) => ({
           id: connector.id,
           connectorIds: [connector.id],
@@ -474,7 +498,7 @@ export function WalletModalProvider({ children }: { children: ReactNode }) {
           description: 'Detected browser wallet.',
           iconUrl: connector.icon || getFaviconUrl('ethereum.org'),
         })),
-    [connectors],
+    [connectors, isSafeConnectorAvailable],
   );
 
   const walletSections = useMemo(() => {

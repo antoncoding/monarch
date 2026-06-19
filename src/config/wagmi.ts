@@ -84,7 +84,7 @@ const walletMetadata = {
 };
 
 if (!walletConnectProjectId && process.env.NODE_ENV !== 'production') {
-  console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WalletConnect, Ledger, Trezor, and Rainbow options are disabled.');
+  console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WalletConnect, Ledger, Trezor, Rainbow, and Safe options are disabled.');
 }
 
 type InjectedParameters = NonNullable<Parameters<typeof injected>[0]>;
