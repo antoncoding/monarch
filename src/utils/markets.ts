@@ -155,6 +155,17 @@ export const marketOverrideRules: MarketOverrideRule[] = [
       },
     ],
   },
+  {
+    marketIds: ['0x23a7d0ff682b323363fb8ba58327ed87001f6306e09b7fd7413bbe4698e749c8'],
+    warnings: [
+      {
+        code: 'msy_depeg',
+        level: 'alert',
+        description: 'msY is experiencing a depeg. This market carries elevated risk and may result in losses.',
+        category: 'general',
+      },
+    ],
+  },
 ];
 
 // Helper functions to query the override rules
