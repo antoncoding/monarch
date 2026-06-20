@@ -1,9 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Address } from 'viem';
-import { IoIosSwap } from 'react-icons/io';
-import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { PulseLoader } from 'react-spinners';
-import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -17,8 +14,6 @@ import { PositionsPeriodSettingsButton } from './positions-period-settings';
 interface PortfolioAnalyticsBannerProps {
   account: string;
   accountChainId?: number;
-  isBookmarked: boolean;
-  onToggleBookmark: () => void;
   period: EarningsPeriod;
   onPeriodChange: (period: EarningsPeriod) => void;
   rateLabel: string;
@@ -32,7 +27,6 @@ interface PortfolioAnalyticsBannerProps {
   isEarningsLoading: boolean;
   valueError: Error | null;
   showPortfolioStats: boolean;
-  onSwap: () => void;
 }
 
 const METRIC_VALUE_CLASS = 'font-zen text-xl font-normal leading-none tabular-nums text-primary';
@@ -192,8 +186,6 @@ function PortfolioMetricBox({
 export function PortfolioAnalyticsBanner({
   account,
   accountChainId,
-  isBookmarked,
-  onToggleBookmark,
   period,
   onPeriodChange,
   rateLabel,
@@ -207,7 +199,6 @@ export function PortfolioAnalyticsBanner({
   isEarningsLoading,
   valueError,
   showPortfolioStats,
-  onSwap,
 }: PortfolioAnalyticsBannerProps) {
   const analyticsLoading = isValueLoading || isEarningsLoading;
   const displayRate = isAprDisplay ? portfolioAnalytics.annualizedApr : portfolioAnalytics.annualizedApy;
@@ -215,37 +206,19 @@ export function PortfolioAnalyticsBanner({
 
   return (
     <div className="flex flex-col gap-3 font-zen">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 items-start">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
             <AccountIdentity
               address={account as Address}
               variant="full"
               showAddress
+              showBookmark
               chainId={accountChainId}
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="min-w-0 px-1 text-secondary hover:bg-transparent hover:text-primary"
-              aria-label={isBookmarked ? 'Remove address bookmark' : 'Bookmark address'}
-              onClick={onToggleBookmark}
-            >
-              {isBookmarked ? <RiBookmarkFill className="h-4 w-4" /> : <RiBookmarkLine className="h-4 w-4" />}
-            </Button>
           </div>
           <AccountVaultInfo account={account as Address} />
         </div>
-
-        <Button
-          variant="primary"
-          onClick={onSwap}
-          title="Swap tokens"
-          className="shrink-0 self-start"
-        >
-          <IoIosSwap className="h-4 w-4" />
-          Swap
-        </Button>
       </div>
 
       {showPortfolioStats && (

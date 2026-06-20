@@ -5,18 +5,12 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useTheme } from 'next-themes';
-import { FaRegMoon } from 'react-icons/fa';
-import { GearIcon } from '@radix-ui/react-icons';
-import { LuSunMedium } from 'react-icons/lu';
-import { RiBookLine, RiDiscordFill, RiGithubFill, RiKey2Line, RiPieChart2Line } from 'react-icons/ri';
+import { usePathname } from 'next/navigation';
 import { useConnection } from 'wagmi';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { useModal } from '@/hooks/useModal';
-import { EXTERNAL_LINKS } from '@/utils/external';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
+import { HeaderMenuItems } from './HeaderMenuItems';
 import { TransactionIndicator } from './TransactionIndicator';
 
 export function NavbarLink({
@@ -75,20 +69,14 @@ export function NavbarTitle() {
 }
 
 export function Navbar() {
-  const { theme, setTheme } = useTheme();
   const { address } = useConnection();
-  const router = useRouter();
-  const { open: openModal } = useModal();
   const [mounted, setMounted] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const positionsHref = mounted && address ? `/positions/${address}` : '/positions';
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
 
   return (
     <nav className="flex h-full w-full items-center justify-between">
@@ -105,45 +93,18 @@ export function Navbar() {
           </NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
           <NavbarLink
-            href="/autovault"
-            matchKey="/autovault"
+            href={positionsHref}
+            matchKey="/position"
           >
-            Autovault
+            Positions
           </NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
-          {mounted ? (
-            <>
-              <NavbarLink
-                href={address ? `/positions/${address}` : '/positions'}
-                matchKey="/position"
-              >
-                Portfolio
-              </NavbarLink>
-              <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
-              <NavbarLink
-                href={address ? `/rewards/${address}` : '/rewards'}
-                matchKey="/rewards"
-              >
-                Rewards
-              </NavbarLink>
-            </>
-          ) : (
-            <>
-              <NavbarLink
-                href="/positions"
-                matchKey="/position"
-              >
-                Portfolio
-              </NavbarLink>
-              <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
-              <NavbarLink
-                href="/rewards"
-                matchKey="/rewards"
-              >
-                Rewards
-              </NavbarLink>
-            </>
-          )}
+          <NavbarLink
+            href="/analysis"
+            matchKey="/analysis"
+          >
+            Analytics
+          </NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
 
           <DropdownMenu onOpenChange={setIsMoreOpen}>
@@ -168,48 +129,7 @@ export function Navbar() {
               align="end"
               className="min-w-[180px]"
             >
-              <DropdownMenuItem
-                endContent={<RiPieChart2Line className="h-4 w-4" />}
-                onClick={() => router.push('/analysis')}
-              >
-                Analysis
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                endContent={<RiKey2Line className="h-4 w-4" />}
-                onClick={() => router.push('/api-keys')}
-              >
-                API Keys
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                endContent={<RiBookLine className="h-4 w-4" />}
-                onClick={() => window.open(EXTERNAL_LINKS.docs, '_blank')}
-              >
-                Docs
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                endContent={<RiDiscordFill className="h-4 w-4" />}
-                onClick={() => window.open(EXTERNAL_LINKS.discord, '_blank')}
-              >
-                Discord
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                endContent={<RiGithubFill className="h-4 w-4" />}
-                onClick={() => window.open(EXTERNAL_LINKS.github, '_blank')}
-              >
-                GitHub
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                endContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
-                onClick={toggleTheme}
-              >
-                {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                endContent={<GearIcon className="h-4 w-4" />}
-                onClick={() => openModal('monarchSettings', {})}
-              >
-                Settings
-              </DropdownMenuItem>
+              <HeaderMenuItems />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

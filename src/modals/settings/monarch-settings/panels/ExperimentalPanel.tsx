@@ -12,7 +12,7 @@ type ExperimentalPanelProps = {
 
 export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps) {
   const { showOfficialTrending, setShowOfficialTrending, customTagConfig, setCustomTagEnabled } = useMarketPreferences();
-  const { showDeveloperOptions, setShowDeveloperOptions, usePublicAllocator, setUsePublicAllocator } = useAppSettings();
+  const { usePublicAllocator, setUsePublicAllocator } = useAppSettings();
 
   return (
     <div className="flex flex-col gap-4">
@@ -60,18 +60,6 @@ export function ExperimentalPanel({ onNavigateToDetail }: ExperimentalPanelProps
           selected={usePublicAllocator}
           onChange={setUsePublicAllocator}
           ariaLabel="Toggle public allocator"
-        />
-      </div>
-
-      {/* Developer */}
-      <div className="flex flex-col gap-4 rounded bg-surface p-4">
-        <h3 className="text-xs uppercase text-secondary">Developer</h3>
-        <SettingToggleItem
-          title="Developer Options"
-          description="Show advanced developer tools like Accrue Interest and Liquidate in market detail views."
-          selected={showDeveloperOptions}
-          onChange={setShowDeveloperOptions}
-          ariaLabel="Toggle developer options"
         />
       </div>
     </div>

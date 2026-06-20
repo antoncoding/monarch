@@ -27,6 +27,8 @@ import { formatVaultAdapterType, getMonarchVaultHref } from '@/utils/vaults';
 import type { Address } from 'viem';
 
 const ACCOUNT_IDENTITY_LABEL_MAX_WIDTH_CLASS = 'max-w-[22rem]';
+const FULL_ACCOUNT_CHIP_CLASS = 'inline-flex h-7 items-center rounded-sm px-2 text-xs leading-none';
+const FULL_ACCOUNT_ICON_BUTTON_CLASS = 'inline-flex h-7 w-7 items-center justify-center rounded-sm transition-colors';
 
 type AccountIdentityProps = {
   address: Address;
@@ -47,10 +49,7 @@ type AccountIdentityProps = {
 type MainTagKind = 'adapter' | 'ens' | 'kleros' | 'vault';
 
 const getMainTagClassName = (kind: MainTagKind) =>
-  clsx(
-    'inline-flex min-w-0 items-center rounded-sm px-2 py-1 font-zen text-xs text-secondary',
-    kind === 'adapter' ? 'border border-border bg-surface' : 'bg-hovered',
-  );
+  clsx(FULL_ACCOUNT_CHIP_CLASS, 'min-w-0 font-zen text-secondary', kind === 'adapter' ? 'border border-border bg-surface' : 'bg-hovered');
 
 const getEntityBadgeLabel = (vaultIdentity: VaultAccountIdentity): string | undefined => {
   if (vaultIdentity.kind === 'vault-adapter') {
@@ -412,7 +411,10 @@ export function AccountIdentity({
 
   const addressBadge = (
     <span
-      className="inline-flex cursor-pointer items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-monospace text-xs text-secondary transition-colors hover:brightness-110"
+      className={clsx(
+        FULL_ACCOUNT_CHIP_CLASS,
+        'cursor-pointer gap-1 bg-hovered font-monospace text-secondary transition-colors hover:brightness-110',
+      )}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -443,7 +445,7 @@ export function AccountIdentity({
   const metadataChips = (
     <>
       {mounted && isOwner && (
-        <span className="inline-flex items-center gap-1 rounded-sm bg-green-500/10 px-2 py-1 font-zen text-xs text-green-500">
+        <span className={clsx(FULL_ACCOUNT_CHIP_CLASS, 'gap-1 bg-green-500/10 font-zen text-green-500')}>
           <FaCircle size={6} />
           Connected
         </span>
@@ -486,15 +488,16 @@ export function AccountIdentity({
         </span>
       ) : null}
 
-      {entityBadge && (
-        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 text-xs text-secondary">{entityBadge}</span>
-      )}
+      {entityBadge && <span className={clsx(FULL_ACCOUNT_CHIP_CLASS, 'bg-hovered text-secondary')}>{entityBadge}</span>}
 
       {linkedVaultHref && (
         <Tooltip content={<TooltipContent title="Open vault account" />}>
           <Link
             href={linkedVaultHref}
-            className="inline-flex items-center gap-1 rounded-sm bg-hovered px-2 py-1 text-xs text-secondary no-underline transition-colors hover:text-primary hover:no-underline"
+            className={clsx(
+              FULL_ACCOUNT_CHIP_CLASS,
+              'gap-1 bg-hovered text-secondary no-underline transition-colors hover:text-primary hover:no-underline',
+            )}
             aria-label={`Open vault account for ${vaultIdentity?.displayName ?? 'linked vault'}`}
           >
             <span>Vault</span>
@@ -519,7 +522,7 @@ export function AccountIdentity({
       {showBookmark && (
         <button
           type="button"
-          className={clsx('rounded-sm p-1 transition-colors', isBookmarked ? 'text-primary' : 'text-secondary hover:text-primary')}
+          className={clsx(FULL_ACCOUNT_ICON_BUTTON_CLASS, isBookmarked ? 'text-primary' : 'text-secondary hover:text-primary')}
           aria-label={isBookmarked ? 'Remove address bookmark' : 'Bookmark address'}
           onClick={(e) => {
             e.preventDefault();
@@ -533,7 +536,7 @@ export function AccountIdentity({
     </>
   );
 
-  const fullClasses = clsx('flex items-center gap-2', className);
+  const fullClasses = clsx('flex flex-wrap items-center gap-2', className);
 
   const fullTrigger = showActions ? (
     <AccountActionsPopover
