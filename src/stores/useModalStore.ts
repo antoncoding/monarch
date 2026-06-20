@@ -1,5 +1,6 @@
 import type { Address } from 'viem';
 import { create } from 'zustand';
+import type { SettingsCategory } from '@/modals/settings/monarch-settings/constants';
 import type { Market, MarketPosition, GroupedPosition } from '@/utils/types';
 import type { SwapToken } from '@/features/swap/types';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -63,7 +64,7 @@ export type ModalProps = {
   };
 
   monarchSettings: {
-    initialCategory?: 'transaction' | 'display' | 'filters' | 'preferences' | 'experimental';
+    initialCategory?: SettingsCategory;
     initialDetailView?: 'custom-tag-config' | 'trusted-vaults' | 'blacklisted-markets' | 'rpc-config' | 'filter-thresholds';
     onCloseCallback?: () => void;
   };

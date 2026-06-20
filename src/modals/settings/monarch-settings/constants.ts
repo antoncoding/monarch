@@ -1,9 +1,9 @@
 import type { IconType } from 'react-icons';
 import { FiZap, FiEye, FiSliders } from 'react-icons/fi';
 import { MdFilterList } from 'react-icons/md';
-import { RiFlaskLine } from 'react-icons/ri';
+import { RiCodeLine, RiFlaskLine } from 'react-icons/ri';
 
-export type SettingsCategory = 'transaction' | 'display' | 'filters' | 'preferences' | 'experimental';
+export type SettingsCategory = 'transaction' | 'display' | 'filters' | 'preferences' | 'developer' | 'experimental';
 
 export type DetailView = 'custom-tag-config' | 'trusted-vaults' | 'blacklisted-markets' | 'rpc-config' | 'filter-thresholds' | null;
 
@@ -19,6 +19,7 @@ export const SETTINGS_CATEGORIES: CategoryConfig[] = [
   { id: 'display', label: 'DISPLAY', icon: FiEye },
   { id: 'filters', label: 'FILTERS', icon: MdFilterList },
   { id: 'preferences', label: 'PREFERENCES', icon: FiSliders },
+  { id: 'developer', label: 'DEVELOPER', icon: RiCodeLine },
   { id: 'experimental', label: 'EXPERIMENTAL', icon: RiFlaskLine, badge: 'Beta' },
 ];
 

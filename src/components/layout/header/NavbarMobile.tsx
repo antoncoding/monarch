@@ -1,63 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { HamburgerMenuIcon, GearIcon } from '@radix-ui/react-icons';
+import { useState } from 'react';
+import { HamburgerMenuIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useTheme } from 'next-themes';
-import { FaRegMoon } from 'react-icons/fa';
-import { LuSunMedium } from 'react-icons/lu';
-import {
-  RiBookLine,
-  RiBriefcaseLine,
-  RiDiscordFill,
-  RiGiftLine,
-  RiGithubFill,
-  RiKey2Line,
-  RiLineChartLine,
-  RiPieChart2Line,
-} from 'react-icons/ri';
-import { useConnection } from 'wagmi';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { useModal } from '@/hooks/useModal';
-import { EXTERNAL_LINKS } from '@/utils/external';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
+import { HeaderMenuItems } from './HeaderMenuItems';
 
 export default function NavbarMobile() {
-  const { theme, setTheme } = useTheme();
-  const { address } = useConnection();
-  const router = useRouter();
-  const { open: openModal } = useModal();
-  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-    setIsMenuOpen(false);
-  };
-
-  const handleExternalLink = (url: string) => {
-    window.open(url, '_blank');
-    setIsMenuOpen(false);
-  };
-
-  const handleNavigation = (path: string) => {
-    router.push(path);
-    setIsMenuOpen(false);
-  };
 
   return (
     <nav className="flex h-full w-full items-center justify-between px-4">
@@ -101,77 +55,11 @@ export default function NavbarMobile() {
             align="start"
             className="min-w-[200px]"
           >
-            <DropdownMenuItem
-              startContent={<RiLineChartLine className="h-5 w-5" />}
-              onClick={() => handleNavigation('/markets')}
-              className="py-3"
-            >
-              <span className="font-medium">Markets</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              startContent={<RiPieChart2Line className="h-5 w-5" />}
-              onClick={() => handleNavigation('/analysis')}
-              className="py-3"
-            >
-              <span className="font-medium">Analysis</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              startContent={<RiKey2Line className="h-5 w-5" />}
-              onClick={() => handleNavigation('/api-keys')}
-              className="py-3"
-            >
-              <span className="font-medium">API Keys</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              startContent={<RiBriefcaseLine className="h-5 w-5" />}
-              onClick={() => handleNavigation(mounted && address ? `/positions/${address}` : '/positions')}
-              className="py-3"
-            >
-              <span className="font-medium">Portfolio</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              startContent={<RiGiftLine className="h-5 w-5" />}
-              onClick={() => handleNavigation(mounted && address ? `/rewards/${address}` : '/rewards')}
-              className="py-3"
-            >
-              <span className="font-medium">Rewards</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              startContent={<RiBookLine className="h-4 w-4" />}
-              onClick={() => handleExternalLink(EXTERNAL_LINKS.docs)}
-            >
-              Docs
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              startContent={<RiDiscordFill className="h-4 w-4" />}
-              onClick={() => handleExternalLink(EXTERNAL_LINKS.discord)}
-            >
-              Discord
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              startContent={<RiGithubFill className="h-4 w-4" />}
-              onClick={() => handleExternalLink(EXTERNAL_LINKS.github)}
-            >
-              GitHub
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              startContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
-              onClick={toggleTheme}
-            >
-              {mounted && (theme === 'dark' ? 'Light Theme' : 'Dark Theme')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              startContent={<GearIcon className="h-4 w-4" />}
-              onClick={() => {
-                openModal('monarchSettings', {});
-                setIsMenuOpen(false);
-              }}
-            >
-              Settings
-            </DropdownMenuItem>
+            <HeaderMenuItems
+              iconSide="start"
+              itemClassName="py-3"
+              onSelect={() => setIsMenuOpen(false)}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

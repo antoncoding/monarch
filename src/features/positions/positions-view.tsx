@@ -12,7 +12,6 @@ import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
 import { useVaultHistoricalApy } from '@/hooks/useVaultHistoricalApy';
 import { useVaultAccountIdentity } from '@/hooks/useVaultAccountIdentity';
 import { useVaultRegistry } from '@/contexts/VaultRegistryContext';
-import { useModal } from '@/hooks/useModal';
 import { usePositionsFilters } from '@/stores/usePositionsFilters';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -27,10 +26,9 @@ import { hasSupplyPositionHistory } from '@/utils/positions';
 
 export default function Positions() {
   const { account } = useParams<{ account: string }>();
-  const { open } = useModal();
   const period = usePositionsFilters((s) => s.period);
   const setPeriod = usePositionsFilters((s) => s.setPeriod);
-  const { addVisitedAddress, toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
+  const { addVisitedAddress } = usePortfolioBookmarks();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { loading: isVaultRegistryLoading } = useVaultRegistry();
@@ -100,7 +98,6 @@ export default function Positions() {
     marketPositions.some((position) => BigInt(position.state.borrowShares) > 0n || BigInt(position.state.collateral) > 0n);
   const hasVaults = showNativeAccountSections && vaults && vaults.length > 0;
   const showEmpty = showNativeAccountSections && !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasBorrowPositions && !hasVaults;
-  const isBookmarked = isAddressBookmarked(account as Address);
   const showHeaderPortfolio = showNativeAccountSections && !loading;
 
   useEffect(() => {
@@ -123,8 +120,6 @@ export default function Positions() {
           <PortfolioAnalyticsBanner
             account={account}
             accountChainId={accountVaultIdentity?.chainId}
-            isBookmarked={isBookmarked}
-            onToggleBookmark={() => toggleAddressBookmark(account as Address)}
             period={period}
             onPeriodChange={setPeriod}
             rateLabel={rateLabel}
@@ -138,7 +133,6 @@ export default function Positions() {
             isEarningsLoading={isEarningsLoading || isVaultApyLoading}
             valueError={pricesError}
             showPortfolioStats={showHeaderPortfolio}
-            onSwap={() => open('bridgeSwap', {})}
           />
         </div>
 

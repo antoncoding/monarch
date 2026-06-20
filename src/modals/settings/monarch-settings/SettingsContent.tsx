@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { slideVariants, slideTransition, type SlideDirection } from '@/components/common/settings-modal';
 import { SettingsHeader } from './SettingsHeader';
-import { TransactionPanel, DisplayPanel, FiltersPanel, PreferencesPanel, ExperimentalPanel } from './panels';
+import { TransactionPanel, DisplayPanel, FiltersPanel, PreferencesPanel, DeveloperPanel, ExperimentalPanel } from './panels';
 import { CustomTagDetail, TrustedVaultsDetail, BlacklistedMarketsDetail, RpcDetail, ThresholdsDetail } from './details';
 import type { SettingsCategory, DetailView } from './constants';
 
@@ -16,6 +16,7 @@ const PANEL_COMPONENTS: Record<SettingsCategory, React.ComponentType<PanelProps>
   display: DisplayPanel,
   filters: FiltersPanel,
   preferences: PreferencesPanel,
+  developer: DeveloperPanel,
   experimental: ExperimentalPanel,
 };
 

@@ -90,7 +90,7 @@ export function AccountActionsPopover({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="cursor-pointer">{children}</div>
+        <div className="inline-flex cursor-pointer items-center">{children}</div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem
