@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
-import { useAppKit } from '@reown/appkit/react';
 import { useConnection } from 'wagmi';
 import { Button, type ButtonProps } from '@/components/ui/button';
+import { useWalletModal } from '@/components/providers/WalletModalProvider';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { getNetworkName } from '@/utils/networks';
 
@@ -78,7 +78,7 @@ export function ExecuteTransactionButton({
   variant = 'primary',
   ...buttonProps
 }: ExecuteTransactionButtonProps): JSX.Element {
-  const { open } = useAppKit();
+  const { openWalletModal } = useWalletModal();
   const { isConnected } = useConnection();
   const [isSwitching, setIsSwitching] = useState(false);
 
@@ -89,8 +89,8 @@ export function ExecuteTransactionButton({
 
   // Handle wallet connection
   const handleConnect = useCallback(() => {
-    open();
-  }, [open]);
+    openWalletModal();
+  }, [openWalletModal]);
 
   // Handle chain switching with loading state
   const handleSwitchChain = useCallback(async () => {

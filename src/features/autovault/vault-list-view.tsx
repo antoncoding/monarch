@@ -6,13 +6,13 @@ import { FiShield, FiZap } from 'react-icons/fi';
 import { GearIcon } from '@radix-ui/react-icons';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
-import { useAppKit } from '@reown/appkit/react';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import Header from '@/components/layout/header/Header';
+import { useWalletModal } from '@/components/providers/WalletModalProvider';
 import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { formatCompactTokenAmount } from '@/utils/token-amount-format';
@@ -65,7 +65,7 @@ function PageSkeleton() {
 
 export default function AutovaultListContent() {
   const router = useRouter();
-  const { open } = useAppKit();
+  const { openWalletModal } = useWalletModal();
   const { isConnected, address } = useConnection();
   const { findToken } = useTokensQuery();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
@@ -84,7 +84,7 @@ export default function AutovaultListContent() {
   });
 
   const handleConnect = () => {
-    open();
+    openWalletModal();
   };
 
   const handleCreateVault = () => {

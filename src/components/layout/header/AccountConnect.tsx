@@ -1,17 +1,14 @@
-import { useAppKit } from '@reown/appkit/react';
 import { useConnection } from 'wagmi';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useConnectRedirect } from '@/components/providers/ConnectRedirectProvider';
+import { useWalletModal } from '@/components/providers/WalletModalProvider';
 import { AccountDropdown } from './AccountDropdown';
 
-/**
- * Custom wallet connection button using AppKit hooks
- */
 function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
-  const { open } = useAppKit();
   const { isConnected } = useConnection();
   const { setRedirectPath } = useConnectRedirect();
+  const { openWalletModal } = useWalletModal();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -20,7 +17,7 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
 
   const handleConnect = () => {
     setRedirectPath(onConnectPath);
-    open();
+    openWalletModal();
   };
 
   return (

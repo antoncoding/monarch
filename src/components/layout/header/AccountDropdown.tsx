@@ -5,18 +5,18 @@ import { ExitIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { LuCopy } from 'react-icons/lu';
 import { clsx } from 'clsx';
 import { useConnection, useDisconnect } from 'wagmi';
-import { useAppKit } from '@reown/appkit/react';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { useWalletModal } from '@/components/providers/WalletModalProvider';
 import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
 
 export function AccountDropdown() {
   const { address, chainId } = useConnection();
   const { disconnect } = useDisconnect();
-  const { open } = useAppKit();
+  const { openWalletModal } = useWalletModal();
   const toast = useStyledToast();
 
   const handleDisconnectWallet = useCallback(() => {
@@ -32,8 +32,8 @@ export function AccountDropdown() {
   }, [address, toast]);
 
   const handleOpenModal = useCallback(() => {
-    open();
-  }, [open]);
+    openWalletModal();
+  }, [openWalletModal]);
 
   if (!address) return null;
 
