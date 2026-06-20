@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { PulseLoader } from 'react-spinners';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -13,7 +14,7 @@ import { useRateLabel } from '@/hooks/useRateLabel';
 import type { MarketAllocation } from '@/types/vaultAllocations';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
-import { convertApyToApr } from '@/utils/rateMath';
+import { formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { Market, MarketPositionWithEarnings } from '@/utils/types';
 import { calculateAllocationPercent, formatVaultAbsoluteCap, parseRelativeCap } from '@/utils/vaultAllocation';
 
@@ -34,6 +35,7 @@ type VaultMarketAllocationsTableProps = {
   positions?: MarketPositionWithEarnings[];
   periodLabel?: string;
   isEarningsLoading?: boolean;
+  allocationAssetAddress?: string;
   allocationAssetSymbol?: string;
   allocationAssetDecimals?: number;
   showExplorerLink?: boolean;
@@ -55,6 +57,7 @@ export function VaultMarketAllocationsTable({
   positions = [],
   periodLabel,
   isEarningsLoading = false,
+  allocationAssetAddress,
   allocationAssetSymbol,
   allocationAssetDecimals,
   showExplorerLink = false,
@@ -87,11 +90,24 @@ export function VaultMarketAllocationsTable({
   }, [marketAllocations, positionByMarket]);
 
   const sortedRows = useMemo(() => sortRows(rows), [rows]);
+  const allocatedAssets = useMemo(() => {
+    return marketAllocations.reduce((sum, allocation) => sum + allocation.allocation, 0n);
+  }, [marketAllocations]);
   const totalAllocation = useMemo(() => {
     if (totalAssets !== undefined) return totalAssets;
-    return marketAllocations.reduce((sum, allocation) => sum + allocation.allocation, 0n);
-  }, [marketAllocations, totalAssets]);
+    return allocatedAssets;
+  }, [allocatedAssets, totalAssets]);
+  const idleAllocation = totalAssets !== undefined && totalAssets > allocatedAssets ? totalAssets - allocatedAssets : 0n;
+  const idleAsset = {
+    address: allocationAssetAddress ?? sortedRows[0]?.market.loanAsset.address,
+    decimals: allocationAssetDecimals ?? sortedRows[0]?.market.loanAsset.decimals,
+    symbol: allocationAssetSymbol ?? sortedRows[0]?.market.loanAsset.symbol,
+  };
   const isPositionMode = mode === 'position';
+  const formatDisplayRate = (apy: number | null | undefined) => {
+    if (apy === null || apy === undefined || !Number.isFinite(apy)) return '-';
+    return formatRateAsPercentage(toDisplayRateFromApy(apy, isAprDisplay));
+  };
 
   return (
     <Table className="w-full font-zen">
@@ -101,7 +117,7 @@ export function VaultMarketAllocationsTable({
           <TableHead className="px-4 py-3 text-right font-normal">Allocation</TableHead>
           {isPositionMode ? (
             <>
-              <TableHead className="px-4 py-3 text-right font-normal">Liquidity</TableHead>
+              <TableHead className="px-4 py-3 text-right font-normal">Live {rateLabel}</TableHead>
               <TableHead className="px-4 py-3 text-right font-normal">
                 <Tooltip
                   content={
@@ -133,10 +149,7 @@ export function VaultMarketAllocationsTable({
               </TableHead>
             </>
           ) : (
-            <>
-              <TableHead className="px-4 py-3 text-right font-normal">{rateLabel}</TableHead>
-              <TableHead className="px-4 py-3 text-right font-normal">Liquidity</TableHead>
-            </>
+            <TableHead className="px-4 py-3 text-right font-normal">Live {rateLabel}</TableHead>
           )}
         </TableRow>
       </TableHeader>
@@ -154,10 +167,9 @@ export function VaultMarketAllocationsTable({
             assetDecimals,
             assetSymbol,
           )}`;
-          const displayRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy;
-          const realizedRate = isAprDisplay ? convertApyToApr(row.realizedApy ?? 0) : (row.realizedApy ?? 0);
+          const liveRate = formatDisplayRate(market.state.supplyApy);
+          const realizedRate = toDisplayRateFromApy(row.realizedApy ?? 0, isAprDisplay);
           const earnedAssets = row.earnedAssets ?? 0n;
-          const liquidity = formatReadable(formatBalance(BigInt(market.state.liquidityAssets || 0), market.loanAsset.decimals).toString());
 
           return (
             <TableRow
@@ -196,10 +208,10 @@ export function VaultMarketAllocationsTable({
               {isPositionMode ? (
                 <>
                   <TableCell
-                    className="px-4 py-3 text-right text-xs text-secondary whitespace-nowrap"
-                    style={{ minWidth: '130px' }}
+                    className="px-4 py-3 text-right text-xs whitespace-nowrap"
+                    style={{ minWidth: '110px' }}
                   >
-                    {liquidity}
+                    {liveRate}
                   </TableCell>
                   <TableCell
                     className="px-4 py-3 text-right"
@@ -251,16 +263,76 @@ export function VaultMarketAllocationsTable({
                   </TableCell>
                 </>
               ) : (
-                <>
-                  <TableCell className="px-4 py-3 text-right text-xs text-secondary whitespace-nowrap">
-                    {(displayRate * 100).toFixed(2)}%
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-right text-xs text-secondary whitespace-nowrap">{liquidity}</TableCell>
-                </>
+                <TableCell className="px-4 py-3 text-right text-xs whitespace-nowrap">{liveRate}</TableCell>
               )}
             </TableRow>
           );
         })}
+        {idleAllocation > 0n && idleAsset.decimals !== undefined && idleAsset.symbol && (
+          <TableRow className="hover:bg-hovered">
+            <TableCell
+              className="px-4 py-3"
+              style={{ minWidth: '220px' }}
+            >
+              <div className="flex items-center gap-2">
+                {idleAsset.address && (
+                  <TokenIcon
+                    address={idleAsset.address}
+                    chainId={chainId}
+                    symbol={idleAsset.symbol}
+                    width={18}
+                    height={18}
+                  />
+                )}
+                <span className="whitespace-nowrap text-primary">{idleAsset.symbol}</span>
+                <span className="text-secondary">/</span>
+                <span className="whitespace-nowrap text-secondary">empty</span>
+                <Badge
+                  variant="default"
+                  size="sm"
+                  className="ml-1 font-normal"
+                >
+                  idle
+                </Badge>
+              </div>
+            </TableCell>
+            <TableCell
+              className="px-4 py-3"
+              style={{ minWidth: '150px' }}
+            >
+              <AllocationCell
+                amount={formatBalance(idleAllocation, idleAsset.decimals)}
+                symbol={idleAsset.symbol}
+                percentage={totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(idleAllocation, totalAllocation)) : 0}
+                compact
+              />
+            </TableCell>
+            {isPositionMode ? (
+              <>
+                <TableCell
+                  className="px-4 py-3 text-right text-xs whitespace-nowrap"
+                  style={{ minWidth: '110px' }}
+                >
+                  {formatDisplayRate(0)}
+                </TableCell>
+                <TableCell
+                  className="px-4 py-3 text-right text-secondary"
+                  style={{ minWidth: '130px' }}
+                >
+                  -
+                </TableCell>
+                <TableCell
+                  className="px-4 py-3 text-right text-secondary"
+                  style={{ minWidth: '120px' }}
+                >
+                  -
+                </TableCell>
+              </>
+            ) : (
+              <TableCell className="px-4 py-3 text-right text-xs whitespace-nowrap">{formatDisplayRate(0)}</TableCell>
+            )}
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );

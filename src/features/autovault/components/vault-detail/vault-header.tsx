@@ -125,13 +125,14 @@ export function VaultHeader({
       ? `${formatVaultAdapterType(capsAdapterRows[0].adapterType)} ${getSlicedAddress(capsAdapterRows[0].adapter)}`
       : `${capsAdapterRows.length} configured adapters`;
   const hasRewards = rewards.length > 0;
-  const rewardsDetail = [
-    baseRateLabel ? `Base ${rateLabel} ${baseRateLabel}` : null,
+  const rateDetail = [
+    hasRewards && baseRateLabel ? `Base ${rateLabel} ${baseRateLabel}` : null,
     ...rewards.map((reward) => `${reward.assetSymbol} reward +${(reward.rate * 100).toFixed(2)}%`),
-    `Net ${rateLabel} ${apyLabel}`,
+    hasRewards ? `Net ${rateLabel} ${apyLabel}` : null,
   ]
     .filter((row): row is string => Boolean(row))
     .join('\n');
+  const hasRateDetail = rateDetail.length > 0;
 
   return (
     <div className="mt-6 mb-6 space-y-4">
@@ -239,12 +240,12 @@ export function VaultHeader({
                 <div className="flex items-center gap-2">
                   {isLoading ? (
                     <div className="h-6 w-16 animate-pulse rounded bg-hovered" />
-                  ) : hasRewards ? (
+                  ) : hasRateDetail ? (
                     <Tooltip
                       content={
                         <TooltipContent
                           title={`Vault ${rateLabel} Breakdown`}
-                          detail={rewardsDetail}
+                          detail={rateDetail}
                         />
                       }
                     >

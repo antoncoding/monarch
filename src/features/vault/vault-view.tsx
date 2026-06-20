@@ -39,7 +39,7 @@ import { getSlicedAddress } from '@/utils/address';
 import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { parseCapIdParams } from '@/utils/morpho';
 import { groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
-import { convertAprToApy, convertApyToApr } from '@/utils/rateMath';
+import { convertAprToApy, formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
 import { ALL_SUPPORTED_NETWORKS, getNetworkConfig, SupportedNetworks } from '@/utils/networks';
 import { formatVaultAdapterType } from '@/utils/vaults';
 
@@ -185,6 +185,7 @@ function VaultAdapterPositionDetail({
             transactions={relevantTransactions}
             snapshotsByChain={snapshotsByChain}
             marketAllocations={marketAllocations}
+            assetAddress={assetAddress}
             totalAssets={totalAssets}
           />
         </div>
@@ -336,7 +337,7 @@ export default function VaultContent() {
   const baseVaultApy = vaultRewardsData?.apy ?? vaultAPY;
   const baseVaultRate = useMemo(() => {
     if (baseVaultApy === null || baseVaultApy === undefined) return null;
-    return isAprDisplay ? convertApyToApr(baseVaultApy) : baseVaultApy;
+    return toDisplayRateFromApy(baseVaultApy, isAprDisplay);
   }, [baseVaultApy, isAprDisplay]);
 
   const displayedVaultRate = useMemo(() => {
@@ -354,7 +355,7 @@ export default function VaultContent() {
 
   const baseRateLabel = useMemo(() => {
     if (baseVaultRate === null || baseVaultRate === undefined) return undefined;
-    return `${(baseVaultRate * 100).toFixed(2)}%`;
+    return formatRateAsPercentage(baseVaultRate);
   }, [baseVaultRate]);
 
   const totalAssetsLabel = useMemo(() => {

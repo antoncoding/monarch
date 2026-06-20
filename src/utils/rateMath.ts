@@ -85,6 +85,25 @@ export function formatRateAsPercentage(rate: number, precision = 2): string {
   return `${(rate * 100).toFixed(precision)}%`;
 }
 
+export function computeAnnualizedApyFromValueGrowth({
+  currentValue,
+  pastValue,
+  periodSeconds,
+}: {
+  currentValue: number;
+  pastValue: number;
+  periodSeconds: number;
+}): number | null {
+  if (!Number.isFinite(currentValue) || !Number.isFinite(pastValue) || currentValue <= 0 || pastValue <= 0 || periodSeconds <= 0) {
+    return null;
+  }
+
+  const annualizationFactor = SECONDS_PER_YEAR / periodSeconds;
+  const annualizedApy = (currentValue / pastValue) ** annualizationFactor - 1;
+
+  return Number.isFinite(annualizedApy) ? annualizedApy : null;
+}
+
 export function computeAnnualizedApyFromGrowth({
   currentValue,
   pastValue,
@@ -99,8 +118,9 @@ export function computeAnnualizedApyFromGrowth({
   const growthRatio = toScaledRatio(currentValue, pastValue);
   if (growthRatio == null || growthRatio <= 0) return null;
 
-  const annualizationFactor = SECONDS_PER_YEAR / periodSeconds;
-  const annualizedApy = growthRatio ** annualizationFactor - 1;
-
-  return Number.isFinite(annualizedApy) ? annualizedApy : null;
+  return computeAnnualizedApyFromValueGrowth({
+    currentValue: growthRatio,
+    pastValue: 1,
+    periodSeconds,
+  });
 }

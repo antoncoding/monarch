@@ -51,8 +51,8 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     [adapterQuery.primaryAdapter, hasResolvedAdapterState],
   );
 
-  // Weighted average across configured market allocations. This avoids position
-  // discovery and historical RPC reads on the first vault paint.
+  // Weighted average across current vault assets. Idle vault assets are part of
+  // the denominator at 0% yield, matching the vault's real deployed capital.
   const vaultAPY = useMemo(() => {
     if (allocationsQuery.marketAllocations.length === 0) return null;
 
@@ -68,9 +68,11 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
       weightedAPY += allocated * (allocation.market.state.supplyApy ?? 0);
     }
 
-    if (totalAllocated === 0) return null;
-    return weightedAPY / totalAllocated;
-  }, [allocationsQuery.marketAllocations, vaultDataQuery.data?.tokenDecimals]);
+    const totalVaultAssets = contract.totalAssets > 0n ? formatBalance(contract.totalAssets, tokenDecimals) : 0;
+    const denominator = Math.max(totalVaultAssets, totalAllocated);
+    if (denominator === 0) return null;
+    return weightedAPY / denominator;
+  }, [allocationsQuery.marketAllocations, contract.totalAssets, vaultDataQuery.data?.tokenDecimals]);
 
   // Complex derived state: needsInitialization
   const needsInitialization = useMemo(() => {

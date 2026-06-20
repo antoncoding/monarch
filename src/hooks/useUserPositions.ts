@@ -34,6 +34,7 @@ type UseUserPositionsOptions = {
 };
 
 const EMPTY_MARKET_HINTS: UserPositionMarketHint[] = [];
+const POSITION_MARKET_DETAIL_STALE_TIME_MS = 30_000;
 
 type PositionsFetchSource = 'morpho-api';
 
@@ -306,21 +307,6 @@ const useUserPositions = (
     return chainIds ? cachedMarkets.filter((market) => chainIds.includes(market.chainId as SupportedNetworks)) : cachedMarkets;
   }, [chainIds, getUserMarkets, hasMarketHints]);
 
-  const cachedMarketDataMap = useMemo(() => {
-    const marketMap = new Map<string, Market>();
-
-    for (const cachedResponse of Object.values(cachedMarketDetailsByKey)) {
-      const market = cachedResponse.data;
-      if (!market?.uniqueKey || !market.morphoBlue?.chain?.id) {
-        continue;
-      }
-
-      marketMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
-    }
-
-    return marketMap;
-  }, [cachedMarketDetailsByKey]);
-
   const initialPositionData = useMemo<InitialDataResponse | undefined>(() => {
     const seedMarkets = hasMarketHints ? marketHints : cachedPositionMarkets;
     const finalMarketKeys = filterBlacklistedPositionMarkets(seedMarkets);
@@ -392,7 +378,19 @@ const useUserPositions = (
         }
       }
 
-      for (const [key, market] of cachedMarketDataMap) {
+      for (const cachedResponse of Object.values(cachedMarketDetailsByKey)) {
+        // Position live APY comes from market state, so persisted details must
+        // follow the same short freshness window as the market-detail query.
+        if (Date.now() - cachedResponse.updatedAt > POSITION_MARKET_DETAIL_STALE_TIME_MS) {
+          continue;
+        }
+
+        const market = cachedResponse.data;
+        if (!market?.uniqueKey || !market.morphoBlue?.chain?.id) {
+          continue;
+        }
+
+        const key = getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey);
         if (!marketDataMap.has(key)) {
           marketDataMap.set(key, market);
         }

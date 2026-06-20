@@ -18,7 +18,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
-import { convertApyToApr } from '@/utils/rateMath';
+import { formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
 import { getGroupedEarnings } from '@/utils/positions';
 import { cn } from '@/utils/components';
 import type { GroupedPosition } from '@/utils/types';
@@ -79,17 +79,13 @@ export function PositionHeader({
 
   const formattedRate = (() => {
     if (!groupedPosition) return null;
-    const rate = groupedPosition.totalWeightedApy;
-    const displayRate = isAprDisplay ? convertApyToApr(rate) : rate;
-    return `${(displayRate * 100).toFixed(2)}%`;
+    return formatRateAsPercentage(toDisplayRateFromApy(groupedPosition.totalWeightedApy, isAprDisplay));
   })();
 
   // Actual/realized APY from earnings
   const formattedActualRate = (() => {
     if (!groupedPosition || !groupedPosition.actualApy) return null;
-    const rate = groupedPosition.actualApy;
-    const displayRate = isAprDisplay ? convertApyToApr(rate) : rate;
-    return `${(displayRate * 100).toFixed(2)}%`;
+    return formatRateAsPercentage(toDisplayRateFromApy(groupedPosition.actualApy, isAprDisplay));
   })();
 
   const totalSupplyFormatted = groupedPosition ? formatReadable(groupedPosition.totalSupply) : null;

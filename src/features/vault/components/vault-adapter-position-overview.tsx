@@ -32,6 +32,7 @@ type VaultAdapterPositionOverviewProps = {
   transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   marketAllocations: MarketAllocation[];
+  assetAddress?: Address;
   totalAssets?: bigint;
 };
 
@@ -42,6 +43,7 @@ type VaultMarketBreakdownTableProps = {
   isEarningsLoading: boolean;
   periodLabel: string;
   marketAllocations: MarketAllocation[];
+  assetAddress?: Address;
   totalAssets?: bigint;
 };
 
@@ -52,6 +54,7 @@ function VaultMarketBreakdownTable({
   isEarningsLoading,
   periodLabel,
   marketAllocations,
+  assetAddress,
   totalAssets,
 }: VaultMarketBreakdownTableProps) {
   const actions = (
@@ -81,6 +84,7 @@ function VaultMarketBreakdownTable({
         positions={positions}
         periodLabel={periodLabel}
         isEarningsLoading={isEarningsLoading}
+        allocationAssetAddress={assetAddress}
       />
     </TableContainerWithHeader>
   );
@@ -96,6 +100,7 @@ export function VaultAdapterPositionOverview({
   transactions,
   snapshotsByChain,
   marketAllocations,
+  assetAddress,
   totalAssets,
 }: VaultAdapterPositionOverviewProps) {
   const periodLabel = PERIOD_LABELS[period];
@@ -118,6 +123,7 @@ export function VaultAdapterPositionOverview({
         isEarningsLoading={isEarningsLoading}
         periodLabel={periodLabel}
         marketAllocations={marketAllocations}
+        assetAddress={assetAddress}
         totalAssets={totalAssets}
       />
     </div>

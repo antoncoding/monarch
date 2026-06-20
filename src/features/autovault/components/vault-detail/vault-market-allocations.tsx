@@ -74,6 +74,7 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
           marketAllocations={marketAllocations}
           totalAssets={totalAllocation}
           chainId={chainId}
+          allocationAssetAddress={vaultData.assetAddress}
           allocationAssetSymbol={vaultData.tokenSymbol}
           allocationAssetDecimals={vaultData.tokenDecimals}
           showExplorerLink
