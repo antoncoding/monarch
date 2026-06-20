@@ -156,7 +156,10 @@ export const marketOverrideRules: MarketOverrideRule[] = [
     ],
   },
   {
-    marketIds: ['0x23a7d0ff682b323363fb8ba58327ed87001f6306e09b7fd7413bbe4698e749c8'],
+    marketIds: [
+      '0x23a7d0ff682b323363fb8ba58327ed87001f6306e09b7fd7413bbe4698e749c8',
+      '0xb317d11c2bc2c0c8e6ea3c6517731cf667c86f2c716624be50319a6d32a97e8d',
+    ],
     warnings: [
       {
         code: 'msy_depeg',
