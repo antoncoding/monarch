@@ -120,6 +120,30 @@ type WalletConnectWalletOptions = {
   walletConnectParameters?: RainbowKitWalletConnectParameters;
 };
 
+const isMobileBrowser = () =>
+  typeof navigator !== 'undefined' && /Android|BlackBerry|iPad|iPhone|iPod|IEMobile|Mobile|Opera Mini/i.test(navigator.userAgent);
+
+const rabbyMobileWalletConnect = ({ projectId, walletConnectParameters }: WalletConnectWalletOptions): Wallet => {
+  const rabbyExtensionWallet = rabbyWallet();
+  const getUri = (uri: string) => `rabby://wc?uri=${encodeURIComponent(uri)}`;
+
+  return {
+    id: 'rabby-mobile',
+    name: 'Rabby Wallet',
+    iconBackground: rabbyExtensionWallet.iconBackground,
+    iconUrl: rabbyExtensionWallet.iconUrl,
+    hidden: () => !isMobileBrowser(),
+    downloadUrls: {
+      android: 'https://play.google.com/store/apps/details?id=com.debank.rabbymobile',
+      ios: 'https://apps.apple.com/app/rabby-wallet-crypto-evm/id6474381673',
+      mobile: 'https://rabby.io',
+    },
+    mobile: { getUri },
+    qrCode: { getUri },
+    createConnector: getWalletConnectConnector({ projectId, walletConnectParameters }),
+  };
+};
+
 const safeWalletConnect = ({ projectId, walletConnectParameters }: WalletConnectWalletOptions): Wallet => {
   const safeAppWallet = safeWallet();
   const getUri = (uri: string) => `https://app.safe.global/wc?uri=${encodeURIComponent(uri)}`;
@@ -157,7 +181,16 @@ const connectors = connectorsForWallets(
   [
     {
       groupName: 'Recommended',
-      wallets: [metaMaskWallet, rabbyWallet, ledgerWallet, trustWallet, rainbowWallet, safeWalletConnect, walletConnectWallet],
+      wallets: [
+        metaMaskWallet,
+        rabbyWallet,
+        rabbyMobileWalletConnect,
+        ledgerWallet,
+        trustWallet,
+        rainbowWallet,
+        safeWalletConnect,
+        walletConnectWallet,
+      ],
     },
     {
       groupName: 'More wallets',
