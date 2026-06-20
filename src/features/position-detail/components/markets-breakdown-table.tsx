@@ -16,7 +16,7 @@ import { MarketActionsCell } from './market-actions-cell';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { convertApyToApr } from '@/utils/rateMath';
+import { formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
@@ -39,7 +39,6 @@ type MarketRowProps = {
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   periodLabel: string;
-  rateLabel: string;
   isAprDisplay: boolean;
   isOwner: boolean;
   totalWeightedCapital: bigint;
@@ -51,7 +50,6 @@ function MarketRow({
   isEarningsLoading,
   actualBlockData,
   periodLabel,
-  rateLabel,
   isAprDisplay,
   isOwner,
   totalWeightedCapital,
@@ -67,9 +65,15 @@ function MarketRow({
   const weightBps = totalWeightedCapital > 0n ? (weightedCapital * 10_000n) / totalWeightedCapital : 0n;
   const weightPct = Number(weightBps) / 100;
 
+  const formatDisplayRate = (apy: number | null | undefined) => {
+    if (apy === null || apy === undefined || !Number.isFinite(apy)) return '-';
+    return formatRateAsPercentage(toDisplayRateFromApy(apy, isAprDisplay));
+  };
+  const liveRate = formatDisplayRate(market.state.supplyApy);
+
   // Actual APY from earnings calculation
   const actualApy = position.actualApy ?? 0;
-  const displayActualRate = isAprDisplay ? convertApyToApr(actualApy) : actualApy;
+  const displayActualRate = toDisplayRateFromApy(actualApy, isAprDisplay);
 
   const formatTokenAmount = (value: bigint) => formatReadable(Number(formatBalance(value, loanDecimals)));
 
@@ -182,6 +186,14 @@ function MarketRow({
             height={16}
           />
         </div>
+      </TableCell>
+
+      {/* Live APY */}
+      <TableCell
+        className="px-4 py-3 text-right"
+        style={{ minWidth: '100px' }}
+      >
+        <span className="tabular-nums">{liveRate}</span>
       </TableCell>
 
       {/* Actual APY (from earnings) */}
@@ -344,6 +356,12 @@ export function MarketsBreakdownTable({
             </TableHead>
             <TableHead
               className="px-4 py-3 text-right"
+              style={{ minWidth: '100px' }}
+            >
+              Live {rateLabel}
+            </TableHead>
+            <TableHead
+              className="px-4 py-3 text-right"
               style={{ minWidth: '90px' }}
             >
               <Tooltip
@@ -434,7 +452,6 @@ export function MarketsBreakdownTable({
               isEarningsLoading={isEarningsLoading}
               actualBlockData={actualBlockData}
               periodLabel={periodLabel}
-              rateLabel={rateLabel}
               isAprDisplay={isAprDisplay}
               isOwner={isOwner}
               totalWeightedCapital={totalWeightedCapital}

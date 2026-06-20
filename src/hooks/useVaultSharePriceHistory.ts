@@ -43,6 +43,21 @@ type VaultSharePriceHistory = {
   source: 'morpho-api' | 'none' | 'rpc';
 };
 
+export function selectNearestVaultSharePricePoint(points: VaultSharePricePoint[], targetTimestamp: number) {
+  let nearestPoint: VaultSharePricePoint | undefined;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+
+  for (const point of points) {
+    const distance = Math.abs(point.timestamp - targetTimestamp);
+    if (distance >= nearestDistance) continue;
+
+    nearestPoint = point;
+    nearestDistance = distance;
+  }
+
+  return nearestPoint;
+}
+
 function getMorphoSharePriceOptions(timeframe: ChartTimeframe, timeRange: TimeseriesOptions): TimeseriesOptions {
   return {
     ...timeRange,
