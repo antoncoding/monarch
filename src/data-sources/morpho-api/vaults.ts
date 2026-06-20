@@ -1,5 +1,5 @@
 import { MORPHO_API_SUPPORTED_NETWORKS, supportsMorphoApiChainId } from '@/config/dataSources';
-import { allVaultsQuery, vaultApysQuery, vaultV2MetadataQuery } from '@/graphql/vault-queries';
+import { allVaultsQuery, vaultApysQuery, vaultV2ApyQuery, vaultV2MetadataQuery } from '@/graphql/vault-queries';
 import { morphoGraphqlFetcher } from './fetchers';
 
 export type VaultAddressByNetwork = {
@@ -104,6 +104,15 @@ type VaultV2MetadataApiResponse = {
     vaultV2s?: {
       items?: (ApiVaultV2 | null)[];
     };
+  };
+  errors?: { message: string }[];
+};
+
+type VaultV2ApyApiResponse = {
+  data?: {
+    vaultV2ByAddress?: {
+      avgNetApyExcludingRewards?: number | null;
+    } | null;
   };
   errors?: { message: string }[];
 };
@@ -289,6 +298,24 @@ export const fetchListedMorphoVaultV2Metadata = async (): Promise<MorphoVaultV2M
   } catch (error) {
     console.warn('Error fetching listed Morpho V2 vault metadata:', error);
     return [];
+  }
+};
+
+export const fetchMorphoVaultV2Apy = async (address: string, chainId: number): Promise<number | null> => {
+  if (!supportsMorphoApiChainId(chainId)) {
+    return null;
+  }
+
+  try {
+    const response = await morphoGraphqlFetcher<VaultV2ApyApiResponse>(vaultV2ApyQuery, {
+      address: address.toLowerCase(),
+      chainId,
+    });
+    const apy = response?.data?.vaultV2ByAddress?.avgNetApyExcludingRewards;
+    return typeof apy === 'number' && Number.isFinite(apy) ? apy : null;
+  } catch (error) {
+    console.warn('Error fetching Morpho Vault V2 APY:', error);
+    return null;
   }
 };
 

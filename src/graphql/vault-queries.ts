@@ -47,6 +47,14 @@ export const vaultApysQuery = `
   }
 `;
 
+export const vaultV2ApyQuery = `
+  query VaultV2Apy($address: String!, $chainId: Int!) {
+    vaultV2ByAddress(address: $address, chainId: $chainId) {
+      avgNetApyExcludingRewards
+    }
+  }
+`;
+
 export const vaultV2SharePriceHistoryQuery = `
   query VaultV2SharePriceHistory($address: String!, $chainId: Int!, $options: TimeseriesOptions!) {
     vaultV2ByAddress(address: $address, chainId: $chainId) {

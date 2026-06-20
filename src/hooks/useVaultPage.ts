@@ -1,11 +1,15 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { Address } from 'viem';
+import { useQuery } from '@tanstack/react-query';
+import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
+import { supportsMorphoApiChainId } from '@/config/dataSources';
+import { fetchMorphoVaultV2Apy } from '@/data-sources/morpho-api/vaults';
 import type { SupportedNetworks } from '@/utils/networks';
+import { getVaultReadKey } from '@/utils/vaultAllocation';
+import { fetchVaultYieldSnapshots } from '@/utils/vaultYield';
 import { useMorphoMarketAdapters } from './useMorphoMarketAdapters';
-import { useVaultAllocations } from './useVaultAllocations';
 import { useVaultV2 } from './useVaultV2';
 import { useVaultV2Data } from './useVaultV2Data';
-import { formatBalance } from '@/utils/balance';
 
 type UseVaultPageArgs = {
   vaultAddress: Address;
@@ -20,22 +24,18 @@ type UseVaultPageArgs = {
  * Use this for:
  * - Complex computations requiring multiple data sources
  * - Expensive calculations (APY)
- * - Aggregated refetch functions
  *
  * DON'T use this for:
  * - Raw data (use useVaultV2Data, etc. directly)
  * - Simple 1-liner computations (do in component)
  */
 export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVaultPageArgs) {
+  const { customRpcUrls } = useCustomRpcContext();
+  const customRpcUrl = customRpcUrls[chainId];
   // Pull only what we need for computations
   const vaultDataQuery = useVaultV2Data({ vaultAddress, chainId });
   const contract = useVaultV2({ vaultAddress, chainId, connectedAddress, onTransactionSuccess: vaultDataQuery.refetch });
   const adapterQuery = useMorphoMarketAdapters({ vaultAddress, chainId });
-  const allocationsQuery = useVaultAllocations({ vaultAddress, chainId });
-  const { refetch: refetchVaultData } = vaultDataQuery;
-  const { refetch: refetchContract } = contract;
-  const { refetch: refetchAdapter } = adapterQuery;
-  const { refetch: refetchAllocations } = allocationsQuery;
   const hasResolvedAdapterState = !adapterQuery.isLoading && !adapterQuery.error;
   const hasResolvedVaultState = !vaultDataQuery.isLoading && !vaultDataQuery.isError;
 
@@ -51,26 +51,53 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     [adapterQuery.primaryAdapter, hasResolvedAdapterState],
   );
 
-  // Weighted average across configured market allocations. This avoids position
-  // discovery and historical RPC reads on the first vault paint.
+  const localVaultApyQuery = useQuery({
+    queryKey: ['vault-v2-local-apy', vaultAddress.toLowerCase(), chainId, customRpcUrl ?? null],
+    queryFn: async () => {
+      const snapshots = await fetchVaultYieldSnapshots({
+        vaults: [{ address: vaultAddress, networkId: chainId }],
+        customRpcUrls: { [chainId]: customRpcUrl },
+      });
+
+      return snapshots.get(getVaultReadKey(vaultAddress, chainId))?.vaultApy ?? null;
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const localVaultApy = localVaultApyQuery.data;
+  const hasLocalVaultApy = typeof localVaultApy === 'number' && Number.isFinite(localVaultApy);
+  const shouldFetchMorphoVaultApy = supportsMorphoApiChainId(chainId) && !localVaultApyQuery.isLoading && !hasLocalVaultApy;
+  const vaultV2ApyQuery = useQuery({
+    queryKey: ['morpho-vault-v2-apy', vaultAddress.toLowerCase(), chainId],
+    queryFn: () => fetchMorphoVaultV2Apy(vaultAddress, chainId),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: shouldFetchMorphoVaultApy,
+  });
+
   const vaultAPY = useMemo(() => {
-    if (allocationsQuery.marketAllocations.length === 0) return null;
-
-    const tokenDecimals = vaultDataQuery.data?.tokenDecimals ?? 18;
-    let totalAllocated = 0;
-    let weightedAPY = 0;
-
-    for (const allocation of allocationsQuery.marketAllocations) {
-      if (allocation.allocation <= 0n) continue;
-
-      const allocated = formatBalance(allocation.allocation, tokenDecimals);
-      totalAllocated += allocated;
-      weightedAPY += allocated * (allocation.market.state.supplyApy ?? 0);
+    if (typeof localVaultApy === 'number' && Number.isFinite(localVaultApy)) {
+      return localVaultApy;
     }
 
-    if (totalAllocated === 0) return null;
-    return weightedAPY / totalAllocated;
-  }, [allocationsQuery.marketAllocations, vaultDataQuery.data?.tokenDecimals]);
+    if (localVaultApyQuery.isLoading && localVaultApy === undefined) {
+      return null;
+    }
+
+    const morphoVaultApy = vaultV2ApyQuery.data;
+    if (typeof morphoVaultApy === 'number' && Number.isFinite(morphoVaultApy)) {
+      return morphoVaultApy;
+    }
+
+    if (shouldFetchMorphoVaultApy && vaultV2ApyQuery.isLoading && morphoVaultApy === undefined) {
+      return null;
+    }
+
+    return null;
+  }, [localVaultApy, localVaultApyQuery.isLoading, shouldFetchMorphoVaultApy, vaultV2ApyQuery.data, vaultV2ApyQuery.isLoading]);
 
   // Complex derived state: needsInitialization
   const needsInitialization = useMemo(() => {
@@ -88,14 +115,6 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     isVaultInitialized,
   ]);
 
-  // Aggregated refetch function (convenience)
-  const refetchAll = useCallback(() => {
-    void refetchVaultData();
-    void refetchContract();
-    void refetchAdapter();
-    void refetchAllocations();
-  }, [refetchVaultData, refetchContract, refetchAdapter, refetchAllocations]);
-
   // Return ONLY computed/derived state - no raw data!
   return {
     // Complex computed state
@@ -104,9 +123,6 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     needsInitialization,
     vaultAPY,
     vault24hEarnings: null,
-    isAPYLoading: allocationsQuery.loading,
-
-    // Aggregated utilities
-    refetchAll,
+    isAPYLoading: localVaultApyQuery.isLoading || (shouldFetchMorphoVaultApy && vaultV2ApyQuery.isLoading),
   };
 }
