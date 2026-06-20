@@ -1,4 +1,5 @@
 import './global.css';
+import '@rainbow-me/rainbowkit/styles.css';
 
 import { Suspense } from 'react';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';

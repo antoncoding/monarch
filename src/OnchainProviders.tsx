@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { RainbowKitProvider, lightTheme } from '@rainbow-me/rainbowkit';
 // biome-ignore lint/performance/noNamespaceImport: Sentry SDK requires namespace import
 import * as Sentry from '@sentry/nextjs';
 import { useConnection, WagmiProvider } from 'wagmi';
@@ -40,7 +41,15 @@ function WagmiConfigProvider({ children }: Props) {
     >
       <SentryWalletScopeSync />
       <ConnectRedirectProvider>
-        <WalletModalProvider>{children}</WalletModalProvider>
+        <RainbowKitProvider
+          modalSize="compact"
+          theme={lightTheme({
+            accentColor: '#f45f2d',
+            borderRadius: 'small',
+          })}
+        >
+          <WalletModalProvider>{children}</WalletModalProvider>
+        </RainbowKitProvider>
       </ConnectRedirectProvider>
     </WagmiProvider>
   );

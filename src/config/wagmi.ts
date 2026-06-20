@@ -1,6 +1,33 @@
 import type { Chain } from 'viem';
+import {
+  connectorsForWallets,
+  getWalletConnectConnector,
+  type RainbowKitWalletConnectParameters,
+  type Wallet,
+} from '@rainbow-me/rainbowkit';
+import {
+  backpackWallet,
+  braveWallet,
+  coinbaseWallet,
+  enkryptWallet,
+  frameWallet,
+  imTokenWallet,
+  injectedWallet,
+  ledgerWallet,
+  metaMaskWallet,
+  okxWallet,
+  phantomWallet,
+  rabbyWallet,
+  rainbowWallet,
+  safeWallet,
+  tahoWallet,
+  tokenPocketWallet,
+  trustWallet,
+  uniswapWallet,
+  walletConnectWallet,
+  zerionWallet,
+} from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, createStorage, type Transport } from 'wagmi';
-import { injected, safe, walletConnect } from 'wagmi/connectors';
 import { networks as networkConfigs, getDefaultRPC, isSupportedNetwork } from '@/utils/networks';
 import { createRpcTransport } from '@/utils/rpc-transport';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
@@ -76,6 +103,7 @@ const createTransports = (customRpcUrls: CustomRpcUrls): Record<number, Transpor
 const supportedChains = networkConfigs.map(({ chain }) => chain) as [Chain, ...Chain[]];
 const persistedCustomRpcUrls = getPersistedCustomRpcUrls();
 const walletConnectProjectId = (process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '').trim();
+const rainbowKitProjectId = walletConnectProjectId || 'YOUR_PROJECT_ID';
 const walletMetadata = {
   name: 'Monarch',
   description: 'Customized lending on Morpho Blue',
@@ -84,63 +112,81 @@ const walletMetadata = {
 };
 
 if (!walletConnectProjectId && process.env.NODE_ENV !== 'production') {
-  console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WalletConnect, Ledger, Trezor, Rainbow, and Safe options are disabled.');
+  console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WalletConnect-backed wallet links use RainbowKit test config.');
 }
 
-type InjectedParameters = NonNullable<Parameters<typeof injected>[0]>;
+type WalletConnectWalletOptions = {
+  projectId: string;
+  walletConnectParameters?: RainbowKitWalletConnectParameters;
+};
 
-const createTargetedInjectedConnector = (target: InjectedParameters['target']) =>
-  injected({ target, shimDisconnect: true, unstable_shimAsyncInject: 1000 });
+const safeWalletConnect = ({ projectId, walletConnectParameters }: WalletConnectWalletOptions): Wallet => {
+  const safeAppWallet = safeWallet();
+  const getUri = (uri: string) => `https://app.safe.global/wc?uri=${encodeURIComponent(uri)}`;
 
-const injectedWalletTargets: InjectedParameters['target'][] = [
-  { id: 'metaMask', name: 'MetaMask', provider: 'isMetaMask', icon: 'https://metamask.io/favicon.ico' },
-  { id: 'rabby', name: 'Rabby', provider: 'isRabby', icon: 'https://rabby.io/favicon.ico' },
-  { id: 'trustWallet', name: 'Trust Wallet', provider: 'isTrustWallet', icon: 'https://trustwallet.com/favicon.ico' },
-  { id: 'coinbaseWallet', name: 'Coinbase Wallet', provider: 'isCoinbaseWallet', icon: 'https://www.coinbase.com/favicon.ico' },
-  { id: 'braveWallet', name: 'Brave Wallet', provider: 'isBraveWallet', icon: 'https://brave.com/favicon.ico' },
-  { id: 'okxWallet', name: 'OKX Wallet', provider: 'isOkxWallet', icon: 'https://www.okx.com/favicon.ico' },
-  {
-    id: 'phantom',
-    name: 'Phantom',
-    provider: (window) => window?.phantom?.ethereum,
-    icon: 'https://phantom.com/favicon.ico',
-  },
-  { id: 'uniswapWallet', name: 'Uniswap Wallet', provider: 'isUniswapWallet', icon: 'https://wallet.uniswap.org/favicon.ico' },
-  { id: 'zerion', name: 'Zerion', provider: 'isZerion', icon: 'https://zerion.io/favicon.ico' },
-  { id: 'tokenPocket', name: 'TokenPocket', provider: 'isTokenPocket', icon: 'https://www.tokenpocket.pro/favicon.ico' },
-  { id: 'imToken', name: 'imToken', provider: 'isImToken', icon: 'https://token.im/favicon.ico' },
-  { id: 'frame', name: 'Frame', provider: 'isFrame', icon: 'https://frame.sh/favicon.ico' },
-  { id: 'taho', name: 'Taho', provider: 'isTally', icon: 'https://taho.xyz/favicon.ico' },
-  { id: 'enkrypt', name: 'Enkrypt', provider: 'isEnkrypt', icon: 'https://www.enkrypt.com/favicon.ico' },
-  { id: 'backpack', name: 'Backpack', provider: 'isBackpack', icon: 'https://www.backpack.app/favicon.ico' },
-];
-
-const createWalletConnectConnector = () =>
-  walletConnectProjectId
-    ? walletConnect({
-        projectId: walletConnectProjectId,
-        metadata: walletMetadata,
-        qrModalOptions: {
-          themeVariables: {
-            '--wcm-z-index': '3600',
+  return {
+    id: 'safe-walletconnect',
+    name: 'Safe',
+    iconAccent: safeAppWallet.iconAccent,
+    iconBackground: safeAppWallet.iconBackground,
+    iconUrl: safeAppWallet.iconUrl,
+    downloadUrls: {
+      desktop: 'https://app.safe.global',
+      mobile: 'https://safe.global/mobile',
+    },
+    desktop: {
+      getUri,
+      instructions: {
+        learnMoreUrl: 'https://help.safe.global/articles/6643739210-how-to-connect-a-safe-to-a-dapp-using-walletconnect',
+        steps: [
+          {
+            step: 'connect',
+            title: 'Open Safe',
+            description: 'Open Safe and approve the WalletConnect request.',
           },
-        },
-        showQrModal: true,
-      })
-    : null;
+        ],
+      },
+    },
+    mobile: { getUri },
+    qrCode: { getUri },
+    createConnector: getWalletConnectConnector({ projectId, walletConnectParameters }),
+  };
+};
 
-const connectors = (() => {
-  if (typeof window === 'undefined') return [];
-
-  const walletConnectConnector = createWalletConnectConnector();
-
-  return [
-    ...injectedWalletTargets.map(createTargetedInjectedConnector),
-    ...(walletConnectConnector ? [walletConnectConnector] : []),
-    safe({ shimDisconnect: true }),
-    injected({ shimDisconnect: true, unstable_shimAsyncInject: 1000 }),
-  ];
-})();
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Recommended',
+      wallets: [metaMaskWallet, rabbyWallet, ledgerWallet, trustWallet, rainbowWallet, safeWalletConnect, walletConnectWallet],
+    },
+    {
+      groupName: 'More wallets',
+      wallets: [
+        coinbaseWallet,
+        braveWallet,
+        okxWallet,
+        phantomWallet,
+        uniswapWallet,
+        zerionWallet,
+        tokenPocketWallet,
+        imTokenWallet,
+        frameWallet,
+        tahoWallet,
+        enkryptWallet,
+        backpackWallet,
+        injectedWallet,
+        safeWallet,
+      ],
+    },
+  ],
+  {
+    appName: walletMetadata.name,
+    appDescription: walletMetadata.description,
+    appUrl: walletMetadata.url,
+    appIcon: walletMetadata.icons[0],
+    projectId: rainbowKitProjectId,
+  },
+);
 
 export const wagmiConfig = createConfig({
   ssr: true,
