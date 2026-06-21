@@ -54,3 +54,15 @@ export function getMarketPriceBadDebtWarning(metrics: MarketMetrics | null | und
     category: WarningCategory.debt,
   };
 }
+
+export function withMarketPriceBadDebtWarning(
+  metrics: MarketMetrics | null | undefined,
+  warnings: WarningWithDetail[],
+): WarningWithDetail[] {
+  const marketPriceBadDebtWarning = getMarketPriceBadDebtWarning(metrics);
+  if (!marketPriceBadDebtWarning || warnings.some((warning) => warning.code === marketPriceBadDebtWarning.code)) {
+    return warnings;
+  }
+
+  return [marketPriceBadDebtWarning, ...warnings];
+}
