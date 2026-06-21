@@ -1,6 +1,7 @@
 import { Info } from '@/components/Info/info';
 import { EstimatedValueTooltip } from '@/components/shared/estimated-value-tooltip';
 import { OracleTypeInfo } from '@/features/markets/components/oracle';
+import { withMarketPriceBadDebtWarning } from '@/features/markets/utils/market-price-debt-risk';
 import type { MarketMetrics } from '@/hooks/queries/useMarketMetricsQuery';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { formatReadable } from '@/utils/balance';
@@ -43,7 +44,8 @@ function getMarketCreatedDisplay(createdAt: string | null | undefined) {
 }
 
 export function ExpandedMarketDetail({ market, marketMetrics }: ExpandedMarketDetailProps) {
-  const warningsWithDetail = useMarketWarnings(market);
+  const baseWarnings = useMarketWarnings(market);
+  const warningsWithDetail = withMarketPriceBadDebtWarning(marketMetrics, baseWarnings);
   const marketCreatedDisplay = getMarketCreatedDisplay(marketMetrics?.marketCreatedAt);
 
   return (

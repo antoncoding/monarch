@@ -29,6 +29,8 @@ import TransactionFiltersModal from '@/features/market-detail/components/filters
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketLiquiditySourcing } from '@/hooks/useMarketLiquiditySourcing';
 import { useAllMarketBorrowers, useAllMarketSuppliers } from '@/hooks/useAllMarketPositions';
+import { getMetricsKey, useMarketMetricsMap } from '@/hooks/queries/useMarketMetricsQuery';
+import { withMarketPriceBadDebtWarning } from '@/features/markets/utils/market-price-debt-risk';
 import { normalizeMarketUniqueKey } from '@/utils/markets';
 import { ProActivitiesTable } from './components/pro-activities-table';
 import { MarketHeader } from './components/market-header';
@@ -99,7 +101,14 @@ function MarketContent() {
   const { position: userPosition, refetch: refetchUserPosition } = useUserPosition(address, network, marketKey);
 
   // Get all warnings for this market (hook handles undefined market)
-  const allWarnings = useMarketWarnings(market);
+  const baseWarnings = useMarketWarnings(market);
+  const { metricsMap } = useMarketMetricsMap({
+    chainId: network,
+    enabled: Boolean(market),
+    defer: true,
+  });
+  const marketMetrics = market ? (metricsMap.get(getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey)) ?? null) : null;
+  const allWarnings = useMemo(() => withMarketPriceBadDebtWarning(marketMetrics, baseWarnings), [baseWarnings, marketMetrics]);
 
   // Pre-fetch Public Allocator data eagerly so modals have instant access
   const liquiditySourcing = useMarketLiquiditySourcing(market ?? undefined, network);
