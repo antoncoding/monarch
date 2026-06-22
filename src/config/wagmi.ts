@@ -123,6 +123,8 @@ type WalletConnectWalletOptions = {
 const isMobileBrowser = () =>
   typeof navigator !== 'undefined' && /Android|BlackBerry|iPad|iPhone|iPod|IEMobile|Mobile|Opera Mini/i.test(navigator.userAgent);
 
+const isSafeAppFrame = () => typeof window !== 'undefined' && window.parent !== window;
+
 const rabbyMobileWalletConnect = ({ projectId, walletConnectParameters }: WalletConnectWalletOptions): Wallet => {
   const rabbyExtensionWallet = rabbyWallet();
   const getUri = (uri: string) => `rabby://wc?uri=${encodeURIComponent(uri)}`;
@@ -146,7 +148,15 @@ const rabbyMobileWalletConnect = ({ projectId, walletConnectParameters }: Wallet
 
 const safeWalletConnect = ({ projectId, walletConnectParameters }: WalletConnectWalletOptions): Wallet => {
   const safeAppWallet = safeWallet();
-  const getUri = (uri: string) => `https://app.safe.global/wc?uri=${encodeURIComponent(uri)}`;
+  const openSafeWithWalletConnect = (uri: string) => `https://app.safe.global/wc?uri=${encodeURIComponent(uri)}`;
+  const openSafeWithWalletConnectDesktop = (uri: string) => {
+    if (typeof window !== 'undefined') {
+      window.open(openSafeWithWalletConnect(uri), '_blank', 'noopener,noreferrer');
+    }
+
+    // RainbowKit 2.2 opens desktop URIs in _self. We already opened Safe in a new tab.
+    return '';
+  };
 
   return {
     id: 'safe-walletconnect',
@@ -154,25 +164,26 @@ const safeWalletConnect = ({ projectId, walletConnectParameters }: WalletConnect
     iconAccent: safeAppWallet.iconAccent,
     iconBackground: safeAppWallet.iconBackground,
     iconUrl: safeAppWallet.iconUrl,
+    hidden: isSafeAppFrame,
     downloadUrls: {
       desktop: 'https://app.safe.global',
       mobile: 'https://safe.global/mobile',
     },
-    desktop: {
-      getUri,
+    desktop: { getUri: openSafeWithWalletConnectDesktop },
+    mobile: { getUri: openSafeWithWalletConnect },
+    qrCode: {
+      getUri: (uri) => uri,
       instructions: {
         learnMoreUrl: 'https://help.safe.global/articles/6643739210-how-to-connect-a-safe-to-a-dapp-using-walletconnect',
         steps: [
           {
             step: 'connect',
-            title: 'Open Safe',
-            description: 'Open Safe and approve the WalletConnect request.',
+            title: 'Connect with Safe',
+            description: 'Open Safe WalletConnect and approve the connection request.',
           },
         ],
       },
     },
-    mobile: { getUri },
-    qrCode: { getUri },
     createConnector: getWalletConnectConnector({ projectId, walletConnectParameters }),
   };
 };
@@ -189,6 +200,7 @@ const connectors = connectorsForWallets(
         trustWallet,
         rainbowWallet,
         safeWalletConnect,
+        safeWallet,
         walletConnectWallet,
       ],
     },
@@ -208,7 +220,6 @@ const connectors = connectorsForWallets(
         enkryptWallet,
         backpackWallet,
         injectedWallet,
-        safeWallet,
       ],
     },
   ],

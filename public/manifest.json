@@ -1,20 +1,12 @@
 {
   "name": "Monarch",
+  "description": "A DeFi dashboard for inspecting and managing Morpho lending markets and vault positions.",
   "short_name": "Monarch",
+  "iconPath": "icon.png",
   "icons": [
     {
-      "src": "/icons/16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/48x48.png",
-      "sizes": "48x48",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/96x96.png",
-      "sizes": "96x96",
+      "src": "/icon.png",
+      "sizes": "309x308",
       "type": "image/png"
     }
   ],
