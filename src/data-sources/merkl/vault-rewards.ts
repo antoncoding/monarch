@@ -80,7 +80,6 @@ const getCampaignRewards = (campaigns: MerklCampaign[] | undefined): MerklVaultV
 export const fetchMerklVaultV2Rewards = async (vaultAddress: string, chainId: number): Promise<MerklVaultV2Rewards | null> => {
   try {
     const { data, error, status } = await fetchMerklApi<MerklOpportunity[]>('/v4/opportunities', {
-      mainProtocolId: 'morpho',
       chainId,
       explorerAddress: vaultAddress,
       campaigns: true,
