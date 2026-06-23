@@ -11,6 +11,7 @@ import { TbTrendingUp } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { Market } from '@/utils/types';
+import { BlacklistAssetsModal } from './blacklist-assets-modal';
 import { BlacklistConfirmationModal } from './blacklist-confirmation-modal';
 import { useModal } from '@/hooks/useModal';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -23,6 +24,7 @@ type MarketActionsDropdownProps = {
 
 export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isAssetsModalOpen, setIsAssetsModalOpen] = useState(false);
   const { open: openModal } = useModal();
   const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
@@ -137,6 +139,13 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
           >
             {isBlacklisted(market.uniqueKey) ? 'Blacklisted' : 'Blacklist'}
           </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() => setIsAssetsModalOpen(true)}
+            startContent={<AiOutlineStop className="h-4 w-4" />}
+          >
+            Blacklist Assets
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -144,6 +153,11 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
         isOpen={isConfirmModalOpen}
         onOpenChange={setIsConfirmModalOpen}
         onConfirm={handleConfirmBlacklist}
+        market={market}
+      />
+      <BlacklistAssetsModal
+        isOpen={isAssetsModalOpen}
+        onOpenChange={setIsAssetsModalOpen}
         market={market}
       />
     </div>

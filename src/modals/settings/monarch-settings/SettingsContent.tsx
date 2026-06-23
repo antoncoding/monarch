@@ -4,7 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { slideVariants, slideTransition, type SlideDirection } from '@/components/common/settings-modal';
 import { SettingsHeader } from './SettingsHeader';
 import { TransactionPanel, DisplayPanel, FiltersPanel, PreferencesPanel, DeveloperPanel, ExperimentalPanel } from './panels';
-import { CustomTagDetail, TrustedVaultsDetail, BlacklistedMarketsDetail, RpcDetail, ThresholdsDetail } from './details';
+import {
+  CustomTagDetail,
+  TrustedVaultsDetail,
+  BlacklistedMarketsDetail,
+  BlacklistedAssetsDetail,
+  RpcDetail,
+  ThresholdsDetail,
+} from './details';
 import type { SettingsCategory, DetailView } from './constants';
 
 type PanelProps = {
@@ -24,6 +31,7 @@ const DETAIL_COMPONENTS: Record<Exclude<DetailView, null>, React.ComponentType> 
   'custom-tag-config': CustomTagDetail,
   'trusted-vaults': TrustedVaultsDetail,
   'blacklisted-markets': BlacklistedMarketsDetail,
+  'blacklisted-assets': BlacklistedAssetsDetail,
   'rpc-config': RpcDetail,
   'filter-thresholds': ThresholdsDetail,
 };
