@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useUsdEnrichedMarkets } from '@/hooks/useUsdEnrichedMarkets';
-import { getAssetBlacklistKey, useBlacklistedAssets } from '@/stores/useBlacklistedAssets';
-import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
+import { getAssetBlacklistKey, getBlacklistedAssetKeys, useBlacklistedAssets } from '@/stores/useBlacklistedAssets';
+import { getBlacklistedMarketKeys, useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { isForceUnwhitelisted, isMarketVisibleWithWhitelistGuard } from '@/utils/markets';
@@ -83,13 +83,13 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   const { whitelistLookup, supplyingVaultsLookup, availableWhitelistChainIds } = useMorphoWhitelistStatusQuery({
     enabled: enabled && enableMorphoMetadata,
   });
-  const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
-  const { getAllBlacklistedAssetKeys, customBlacklistedAssets } = useBlacklistedAssets();
+  const customBlacklistedMarkets = useBlacklistedMarkets((state) => state.customBlacklistedMarkets);
+  const customBlacklistedAssets = useBlacklistedAssets((state) => state.customBlacklistedAssets);
   const { showUnwhitelistedMarkets } = useAppSettings();
 
   // Get blacklisted keys (memoized to prevent infinite loops)
-  const allBlacklistedMarketKeys = useMemo(() => getAllBlacklistedKeys(), [customBlacklistedMarkets, getAllBlacklistedKeys]);
-  const allBlacklistedAssetKeys = useMemo(() => getAllBlacklistedAssetKeys(), [customBlacklistedAssets, getAllBlacklistedAssetKeys]);
+  const allBlacklistedMarketKeys = useMemo(() => getBlacklistedMarketKeys(customBlacklistedMarkets), [customBlacklistedMarkets]);
+  const allBlacklistedAssetKeys = useMemo(() => getBlacklistedAssetKeys(customBlacklistedAssets), [customBlacklistedAssets]);
 
   // Process markets: blacklist filter + force-unwhitelisted overrides
   const processedData = useMemo(() => {

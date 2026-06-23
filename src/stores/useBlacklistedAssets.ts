@@ -17,15 +17,12 @@ export const getBlacklistedAssetKeys = (customBlacklistedAssets: readonly Pick<B
 
 type BlacklistedAssetsState = {
   customBlacklistedAssets: BlacklistedAsset[];
-  _cachedBlacklistedAssetKeys: Set<string> | null;
 };
 
 type BlacklistedAssetsActions = {
   addBlacklistedAsset: (asset: Omit<BlacklistedAsset, 'addedAt'>) => boolean;
   removeBlacklistedAsset: (chainId: number, address: string) => void;
   isAssetBlacklisted: (chainId: number, address: string) => boolean;
-  getAllBlacklistedAssetKeys: () => Set<string>;
-  setAll: (state: Partial<BlacklistedAssetsState>) => void;
 };
 
 type BlacklistedAssetsStore = BlacklistedAssetsState & BlacklistedAssetsActions;
@@ -34,13 +31,12 @@ export const useBlacklistedAssets = create<BlacklistedAssetsStore>()(
   persist(
     (set, get) => ({
       customBlacklistedAssets: [],
-      _cachedBlacklistedAssetKeys: null,
 
       addBlacklistedAsset: (asset) => {
         const key = getAssetBlacklistKey(asset.chainId, asset.address);
         const state = get();
 
-        if (state.getAllBlacklistedAssetKeys().has(key)) {
+        if (getBlacklistedAssetKeys(state.customBlacklistedAssets).has(key)) {
           return false;
         }
 
@@ -53,7 +49,6 @@ export const useBlacklistedAssets = create<BlacklistedAssetsStore>()(
               addedAt: Date.now(),
             },
           ],
-          _cachedBlacklistedAssetKeys: null,
         }));
 
         return true;
@@ -66,25 +61,11 @@ export const useBlacklistedAssets = create<BlacklistedAssetsStore>()(
           customBlacklistedAssets: state.customBlacklistedAssets.filter(
             (asset) => getAssetBlacklistKey(asset.chainId, asset.address) !== key,
           ),
-          _cachedBlacklistedAssetKeys: null,
         }));
       },
 
-      isAssetBlacklisted: (chainId, address) => get().getAllBlacklistedAssetKeys().has(getAssetBlacklistKey(chainId, address)),
-
-      getAllBlacklistedAssetKeys: () => {
-        const state = get();
-
-        if (state._cachedBlacklistedAssetKeys) {
-          return state._cachedBlacklistedAssetKeys;
-        }
-
-        const nextSet = getBlacklistedAssetKeys(state.customBlacklistedAssets);
-        set({ _cachedBlacklistedAssetKeys: nextSet });
-        return nextSet;
-      },
-
-      setAll: (newState) => set({ ...newState, _cachedBlacklistedAssetKeys: null }),
+      isAssetBlacklisted: (chainId, address) =>
+        getBlacklistedAssetKeys(get().customBlacklistedAssets).has(getAssetBlacklistKey(chainId, address)),
     }),
     {
       name: 'monarch_store_blacklistedAssets',

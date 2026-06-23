@@ -159,8 +159,6 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
         isOpen={isAssetsModalOpen}
         onOpenChange={setIsAssetsModalOpen}
         market={market}
-        onAssetAdded={(symbol) => toastSuccess('Asset blacklisted', `${symbol} markets are now hidden`)}
-        onAssetRemoved={(symbol) => toastSuccess('Asset removed from blacklist', `${symbol} markets are now visible`)}
       />
     </div>
   );

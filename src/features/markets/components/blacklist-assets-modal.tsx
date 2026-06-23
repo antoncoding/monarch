@@ -1,9 +1,9 @@
 'use client';
 
-import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { SettingToggleItem } from '@/modals/settings/monarch-settings/SettingItem';
 import { getAssetBlacklistKey, useBlacklistedAssets } from '@/stores/useBlacklistedAssets';
 import type { Market, TokenInfo } from '@/utils/types';
@@ -21,10 +21,13 @@ function AssetSwitchRow({
   onChange: (selected: boolean) => void;
   roleLabel: string;
 }) {
+  const assetSymbol = asset.symbol || 'Unknown';
+  const assetName = asset.name || 'Unknown asset';
+
   return (
-    <div className="rounded bg-surface-soft p-3">
+    <div className="rounded bg-surface p-3">
       <SettingToggleItem
-        title={`${asset.symbol} ${roleLabel}`}
+        title={`${assetSymbol} ${roleLabel}`}
         description={
           <div className="flex min-w-0 items-center gap-2">
             <TokenIcon
@@ -32,14 +35,14 @@ function AssetSwitchRow({
               chainId={chainId}
               width={18}
               height={18}
-              symbol={asset.symbol}
+              symbol={assetSymbol}
             />
-            <span className="truncate">{asset.name}</span>
+            <span className="truncate">{assetName}</span>
           </div>
         }
         selected={selected}
         onChange={onChange}
-        ariaLabel={`Toggle ${asset.symbol} asset blacklist`}
+        ariaLabel={`Toggle ${assetSymbol} asset blacklist`}
         color="destructive"
       />
     </div>
@@ -50,20 +53,26 @@ type BlacklistAssetsModalProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   market: Market | null;
-  onAssetAdded?: (symbol: string) => void;
-  onAssetRemoved?: (symbol: string) => void;
 };
 
-export function BlacklistAssetsModal({ isOpen, onOpenChange, market, onAssetAdded, onAssetRemoved }: BlacklistAssetsModalProps) {
-  const { addBlacklistedAsset, removeBlacklistedAsset, isAssetBlacklisted } = useBlacklistedAssets();
+export function BlacklistAssetsModal({ isOpen, onOpenChange, market }: BlacklistAssetsModalProps) {
+  const addBlacklistedAsset = useBlacklistedAssets((state) => state.addBlacklistedAsset);
+  const removeBlacklistedAsset = useBlacklistedAssets((state) => state.removeBlacklistedAsset);
+  const isAssetBlacklisted = useBlacklistedAssets((state) => state.isAssetBlacklisted);
+  const { success: toastSuccess } = useStyledToast();
 
   if (!market) return null;
 
   const chainId = market.morphoBlue.chain.id;
-  const assets = [
-    { token: market.loanAsset, label: 'loan asset' },
-    { token: market.collateralAsset, label: 'collateral asset' },
-  ];
+  const loanAssetKey = getAssetBlacklistKey(chainId, market.loanAsset.address);
+  const collateralAssetKey = getAssetBlacklistKey(chainId, market.collateralAsset.address);
+  const assets =
+    loanAssetKey === collateralAssetKey
+      ? [{ key: loanAssetKey, token: market.loanAsset, label: 'loan and collateral asset' }]
+      : [
+          { key: loanAssetKey, token: market.loanAsset, label: 'loan asset' },
+          { key: collateralAssetKey, token: market.collateralAsset, label: 'collateral asset' },
+        ];
 
   return (
     <Modal
@@ -73,27 +82,19 @@ export function BlacklistAssetsModal({ isOpen, onOpenChange, market, onAssetAdde
     >
       <ModalHeader
         variant="compact"
-        mainIcon={<IoWarningOutline className="h-5 w-5 text-orange-500" />}
         title="Blacklist Assets"
-        description="Hide every market that uses these assets"
-        className="border-b border-primary/10"
+        description="Hide markets that use this loan or collateral asset."
         onClose={() => onOpenChange(false)}
       />
-      <ModalBody
-        variant="compact"
-        className="py-6"
-      >
+      <ModalBody variant="compact">
         <div className="flex flex-col gap-3">
-          <div className="rounded bg-orange-500/10 p-3 text-xs text-secondary">
-            Switch on an asset to hide all markets where it appears as loan or collateral. You can remove assets later in Settings.
-          </div>
-
-          {assets.map(({ token, label }) => {
+          {assets.map(({ key, token, label }) => {
             const selected = isAssetBlacklisted(chainId, token.address);
+            const assetSymbol = token.symbol || 'Asset';
 
             return (
               <AssetSwitchRow
-                key={getAssetBlacklistKey(chainId, token.address)}
+                key={key}
                 asset={token}
                 chainId={chainId}
                 roleLabel={label}
@@ -106,19 +107,19 @@ export function BlacklistAssetsModal({ isOpen, onOpenChange, market, onAssetAdde
                       symbol: token.symbol,
                       name: token.name,
                     });
-                    if (added) onAssetAdded?.(token.symbol);
+                    if (added) toastSuccess('Asset blacklisted', `${assetSymbol} markets are now hidden`);
                     return;
                   }
 
                   removeBlacklistedAsset(chainId, token.address);
-                  onAssetRemoved?.(token.symbol);
+                  toastSuccess('Asset removed from blacklist', `${assetSymbol} markets are now visible`);
                 }}
               />
             );
           })}
         </div>
       </ModalBody>
-      <ModalFooter className="border-t border-primary/10">
+      <ModalFooter>
         <Button
           variant="primary"
           size="md"
