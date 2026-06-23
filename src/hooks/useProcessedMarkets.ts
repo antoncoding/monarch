@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useMorphoWhitelistStatusQuery } from '@/hooks/queries/useMorphoWhitelistStatusQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useUsdEnrichedMarkets } from '@/hooks/useUsdEnrichedMarkets';
+import { getAssetBlacklistKey, useBlacklistedAssets } from '@/stores/useBlacklistedAssets';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { getMarketIdentityKey } from '@/utils/market-identity';
@@ -83,10 +84,12 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     enabled: enabled && enableMorphoMetadata,
   });
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
+  const { getAllBlacklistedAssetKeys, customBlacklistedAssets } = useBlacklistedAssets();
   const { showUnwhitelistedMarkets } = useAppSettings();
 
   // Get blacklisted keys (memoized to prevent infinite loops)
   const allBlacklistedMarketKeys = useMemo(() => getAllBlacklistedKeys(), [customBlacklistedMarkets, getAllBlacklistedKeys]);
+  const allBlacklistedAssetKeys = useMemo(() => getAllBlacklistedAssetKeys(), [customBlacklistedAssets, getAllBlacklistedAssetKeys]);
 
   // Process markets: blacklist filter + force-unwhitelisted overrides
   const processedData = useMemo(() => {
@@ -118,8 +121,16 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
     // rawMarketsUnfiltered: before blacklist (for blacklist management modal)
     const rawMarketsUnfiltered = withMergedMorphoMetadata;
 
-    // Apply blacklist filter
-    const blacklistFiltered = rawMarketsUnfiltered.filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
+    // Apply market and asset blacklist filters
+    const blacklistFiltered = rawMarketsUnfiltered.filter((market) => {
+      if (allBlacklistedMarketKeys.has(market.uniqueKey)) return false;
+
+      const chainId = market.morphoBlue.chain.id;
+      return !(
+        allBlacklistedAssetKeys.has(getAssetBlacklistKey(chainId, market.loanAsset.address)) ||
+        allBlacklistedAssetKeys.has(getAssetBlacklistKey(chainId, market.collateralAsset.address))
+      );
+    });
 
     // Apply force-unwhitelisted overrides after blacklist filtering
     const enriched = blacklistFiltered.map((market) => {
@@ -138,7 +149,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
       rawMarketsUnfiltered,
       allMarkets,
     };
-  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, whitelistLookup, supplyingVaultsLookup]);
+  }, [rawMarketsFromQuery, allBlacklistedMarketKeys, allBlacklistedAssetKeys, whitelistLookup, supplyingVaultsLookup]);
 
   const { markets: allMarketsWithUsd, isLoading: isUsdEnrichmentLoading } = useUsdEnrichedMarkets(processedData.allMarkets, {
     enabled: enabled && enableUsdEnrichment,

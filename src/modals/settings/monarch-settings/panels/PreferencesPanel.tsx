@@ -6,6 +6,7 @@ import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { useEffectiveTrustedVaults } from '@/hooks/useEffectiveTrustedVaults';
 import { useTrustedVaultMetadata } from '@/hooks/useTrustedVaultMetadata';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { useBlacklistedAssets } from '@/stores/useBlacklistedAssets';
 import { isTrustedVaultV2 } from '@/utils/vaults';
 import { SettingActionItem, SettingToggleItem } from '../SettingItem';
 import type { DetailView } from '../constants';
@@ -17,6 +18,7 @@ type PreferencesPanelProps = {
 export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) {
   const effectiveTrustedVaults = useEffectiveTrustedVaults();
   const { rebalanceDefaultMode, setRebalanceDefaultMode } = useAppSettings();
+  const blacklistedAssetCount = useBlacklistedAssets((state) => state.customBlacklistedAssets.length);
   const [mounted, setMounted] = useState(false);
   const trustedVaultCount = effectiveTrustedVaults.length;
   const { trustedVaultMap } = useTrustedVaultMetadata({
@@ -106,6 +108,16 @@ export function PreferencesPanel({ onNavigateToDetail }: PreferencesPanelProps) 
           description="Block specific markets from appearing in your view. Blacklisted markets are completely hidden from all lists."
           buttonLabel="Edit"
           onClick={() => onNavigateToDetail?.('blacklisted-markets')}
+        />
+        <SettingActionItem
+          title="Manage Blacklisted Assets"
+          description={
+            blacklistedAssetCount === 0
+              ? 'Hide every market involving a specific loan or collateral asset.'
+              : `${blacklistedAssetCount} asset${blacklistedAssetCount === 1 ? '' : 's'} currently hidden from market lists.`
+          }
+          buttonLabel="Edit"
+          onClick={() => onNavigateToDetail?.('blacklisted-assets')}
         />
       </div>
     </div>
