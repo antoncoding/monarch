@@ -104,7 +104,8 @@ export function AddCollateralAndLeverage({
   const currentCollateralAssets = currentCollateralAssetsRaw ?? 0n;
   const currentBorrowAssets = currentBorrowAssetsRaw ?? 0n;
   const canLoopExistingPosition = currentCollateralAssets > 0n;
-  const useExistingPositionSource = leverageSource === 'position';
+  const selectedLeverageSource = canLoopExistingPosition ? leverageSource : 'wallet';
+  const useExistingPositionSource = selectedLeverageSource === 'position';
   const hasInvalidExistingPositionData =
     useExistingPositionSource && (currentCollateralAssetsRaw == null || currentBorrowAssetsRaw == null);
 
@@ -147,11 +148,6 @@ export function AddCollateralAndLeverage({
     setInitialCapitalInputAmount(0n);
     setInitialCapitalInputError(null);
   }, [useExistingPositionSource]);
-
-  useEffect(() => {
-    if (leverageSource !== 'position' || canLoopExistingPosition || currentCollateralAssetsRaw == null) return;
-    setLeverageSource('wallet');
-  }, [canLoopExistingPosition, currentCollateralAssetsRaw, leverageSource]);
 
   useEffect(() => {
     if (useExistingPositionSource) return;
@@ -673,7 +669,7 @@ export function AddCollateralAndLeverage({
           <div className="mt-2 space-y-3">
             {canLoopExistingPosition && (
               <LeverageSourceSwitch
-                value={leverageSource}
+                value={selectedLeverageSource}
                 onChange={setLeverageSource}
               />
             )}
