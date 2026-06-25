@@ -175,10 +175,10 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                     </TableCell>
 
                     <TableCell data-label="Loan">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                         {row.isActiveDebt ? (
                           <>
-                            <span className="font-medium">{formatReadableTokenAmount(row.borrowAmount)}</span>
+                            <span className="font-medium tabular-nums">{formatReadableTokenAmount(row.borrowAmount)}</span>
                             <span>{row.market.loanAsset.symbol}</span>
                             <TokenIcon
                               address={row.market.loanAsset.address}
@@ -208,10 +208,10 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                     </TableCell>
 
                     <TableCell data-label="Collateral">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                         {row.collateralAmount > 0 ? (
                           <>
-                            <span className="font-medium">{formatReadableTokenAmount(row.collateralAmount)}</span>
+                            <span className="font-medium tabular-nums">{formatReadableTokenAmount(row.collateralAmount)}</span>
                             <span>{getTruncatedAssetName(row.market.collateralAsset.symbol)}</span>
                             <TokenIcon
                               address={row.market.collateralAsset.address}
