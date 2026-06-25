@@ -1,10 +1,10 @@
 import { formatMultiplierBps, ltvWadToBps, multiplierBpsFromTargetLtv } from '@/hooks/leverage/math';
-import { LTV_WAD, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
+import { LTV_WAD } from '@/modals/borrow/components/helpers';
+import { cn } from '@/utils/components';
 
 type PositionLeverageSummaryProps = {
   currentLtv: bigint;
   projectedLtv: bigint;
-  lltv: bigint;
   hasChanges: boolean;
 };
 
@@ -14,28 +14,21 @@ const formatLeverageFromLtv = (ltv: bigint): string => {
   return `${formatMultiplierBps(multiplierBpsFromTargetLtv(ltvWadToBps(ltv)))}x`;
 };
 
-export function PositionLeverageSummary({ currentLtv, projectedLtv, lltv, hasChanges }: PositionLeverageSummaryProps): JSX.Element {
+export function PositionLeverageSummary({ currentLtv, projectedLtv, hasChanges }: PositionLeverageSummaryProps): JSX.Element {
   const currentLeverage = formatLeverageFromLtv(currentLtv);
   const projectedLeverage = hasChanges ? formatLeverageFromLtv(projectedLtv) : currentLeverage;
-  const projectedLtvForDisplay = hasChanges ? projectedLtv : currentLtv;
+  const cardClassName = 'rounded border px-3 py-2.5';
+  const valueClassName = 'text-lg font-medium tabular-nums';
 
   return (
     <div className="mb-3 grid grid-cols-2 gap-2">
-      <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
+      <div className={cn(cardClassName, 'border-white/10 bg-hovered')}>
         <p className="mb-1 text-[11px] uppercase tracking-[0.12em] text-secondary">Current</p>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-lg font-medium tabular-nums">{currentLeverage}</span>
-          <span className={`text-xs tabular-nums ${getLTVColor(currentLtv, lltv)}`}>{formatLtvPercent(currentLtv)}% LTV</span>
-        </div>
+        <span className={valueClassName}>{currentLeverage}</span>
       </div>
-      <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
+      <div className={cn(cardClassName, hasChanges ? 'border-white/10 bg-hovered' : 'border-white/5 bg-hovered/40 text-secondary')}>
         <p className="mb-1 text-[11px] uppercase tracking-[0.12em] text-secondary">Updated</p>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-lg font-medium tabular-nums">{projectedLeverage}</span>
-          <span className={`text-xs tabular-nums ${getLTVColor(projectedLtvForDisplay, lltv)}`}>
-            {formatLtvPercent(projectedLtvForDisplay)}% LTV
-          </span>
-        </div>
+        <span className={cn(valueClassName, !hasChanges && 'text-secondary')}>{projectedLeverage}</span>
       </div>
     </div>
   );

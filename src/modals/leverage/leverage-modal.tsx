@@ -185,6 +185,28 @@ export function LeverageModal({
           label: effectiveMode === 'leverage' ? `Leverage ${market.collateralAsset.symbol}` : `Deleverage ${market.collateralAsset.symbol}`,
         },
       ];
+  const modalDescription = useMemo(() => {
+    if (effectiveMode === 'leverage') {
+      if (defaultLeverageSource === 'position') {
+        return `Borrow more ${market.loanAsset.symbol} against the current position and loop it into ${market.collateralAsset.symbol}. No wallet capital is added.`;
+      }
+      if (isErc4626Route) {
+        return `Add wallet capital, borrow ${market.loanAsset.symbol}, and loop into ${market.collateralAsset.symbol}.`;
+      }
+      if (isSwapRoute) {
+        return `Add wallet capital, borrow ${market.loanAsset.symbol}, and swap into ${market.collateralAsset.symbol}.`;
+      }
+      return `Add wallet capital and borrow against it to increase ${market.collateralAsset.symbol} exposure.`;
+    }
+
+    if (isErc4626Route) {
+      return `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`;
+    }
+    if (isSwapRoute) {
+      return `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`;
+    }
+    return `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`;
+  }, [effectiveMode, defaultLeverageSource, isErc4626Route, isSwapRoute, market.collateralAsset.symbol, market.loanAsset.symbol]);
 
   const {
     data: collateralTokenBalance,
@@ -297,19 +319,7 @@ export function LeverageModal({
             )}
           </div>
         }
-        description={
-          effectiveMode === 'leverage'
-            ? isErc4626Route
-              ? `Leverage ERC4626 vault exposure by looping ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
-              : isSwapRoute
-                ? `Leverage ${market.collateralAsset.symbol} exposure by swapping borrowed ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
-                : `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
-            : isErc4626Route
-              ? `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`
-              : isSwapRoute
-                ? `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`
-                : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
-        }
+        description={modalDescription}
       />
       <ModalBody>
         {routeContent ? (

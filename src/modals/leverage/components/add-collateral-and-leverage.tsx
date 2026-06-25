@@ -636,7 +636,6 @@ export function AddCollateralAndLeverage({
           <PositionLeverageSummary
             currentLtv={currentLTV}
             projectedLtv={projectedLTV}
-            lltv={lltv}
             hasChanges={hasChanges}
           />
           <BorrowPositionRiskCard

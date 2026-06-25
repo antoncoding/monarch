@@ -249,7 +249,6 @@ export function RemoveCollateralAndDeleverage({
           <PositionLeverageSummary
             currentLtv={currentLTV}
             projectedLtv={displayProjectedLTV}
-            lltv={lltv}
             hasChanges={hasChanges}
           />
           <BorrowPositionRiskCard

@@ -55,7 +55,7 @@ export function PositionDebtLoopInput({
 }: PositionDebtLoopInputProps): JSX.Element {
   return (
     <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
-      <p className="mb-1 text-[11px] uppercase tracking-[0.12em] text-secondary">Additional Debt To Loop</p>
+      <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Additional Debt</p>
       <Input
         decimals={market.loanAsset.decimals}
         max={marketLiquidity}
@@ -101,7 +101,7 @@ export function WalletCapitalInput({
   return (
     <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">Initial Capital</p>
+        <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Wallet Capital</p>
         {canUseLoanAssetInput && (
           <div className="flex items-center gap-2">
             <div className="text-xs text-secondary">Use {market.loanAsset.symbol}</div>
@@ -160,7 +160,9 @@ export function TargetLeverageInput({
   return (
     <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">{useTargetLtvInput ? 'Target LTV' : 'Target Multiplier'}</p>
+        <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
+          {useTargetLtvInput ? 'Target LTV' : 'Target Multiplier'}
+        </p>
         <div className="flex items-center gap-2">
           <div className="text-xs text-secondary">Use LTV</div>
           <IconSwitch
