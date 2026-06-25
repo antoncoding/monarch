@@ -169,7 +169,7 @@ export function AddCollateralAndLeverage({
 
   useEffect(() => {
     setHasInitializedPositionTarget(false);
-  }, [useExistingPositionSource, currentCollateralAssets, currentBorrowAssets]);
+  }, [useExistingPositionSource, market.uniqueKey, account]);
 
   useEffect(() => {
     if (
