@@ -147,7 +147,7 @@ export function useLeverageTransaction({
   const { isConfirming: leveragePending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'leverage',
     pendingText: requiresInitialCapitalTransfer
-      ? `Leveraging ${formatBalance(initialCapitalInputAmount, initialCapitalInputTokenDecimals)} ${initialCapitalInputTokenSymbol}`
+      ? `Leveraging ${formatBalance(initialCapitalTransferAmount, initialCapitalInputTokenDecimals)} ${initialCapitalInputTokenSymbol}`
       : `Increasing leverage on ${market.collateralAsset.symbol}`,
     successText: 'Leverage Executed',
     errorText: 'Failed to execute leverage',
@@ -164,7 +164,7 @@ export function useLeverageTransaction({
       title: 'Leverage',
       description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
       tokenSymbol: requiresInitialCapitalTransfer ? initialCapitalInputTokenSymbol : market.loanAsset.symbol,
-      amount: requiresInitialCapitalTransfer ? initialCapitalInputAmount : flashLoanAssetAmount,
+      amount: requiresInitialCapitalTransfer ? initialCapitalTransferAmount : flashLoanAssetAmount,
       marketId: market.uniqueKey,
     }),
     [
@@ -172,7 +172,7 @@ export function useLeverageTransaction({
       market.loanAsset.symbol,
       initialCapitalInputTokenSymbol,
       requiresInitialCapitalTransfer,
-      initialCapitalInputAmount,
+      initialCapitalTransferAmount,
       flashLoanAssetAmount,
       market.uniqueKey,
     ],

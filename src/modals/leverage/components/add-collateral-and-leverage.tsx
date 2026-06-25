@@ -147,11 +147,18 @@ export function AddCollateralAndLeverage({
     }
   }, [targetMultiplierBps, maxMultiplierBps, maxTargetLtvBps, useTargetLtvInput, targetLtvIntentBps]);
 
+  const currentCollateralAssetsRaw = parseUnsignedBigInt(currentPosition?.state.collateral);
+  const currentBorrowAssetsRaw = parseUnsignedBigInt(currentPosition?.state.borrowAssets);
+  const hasInvalidExistingPositionData =
+    useExistingPositionSource && (currentCollateralAssetsRaw == null || currentBorrowAssetsRaw == null);
+  const currentCollateralAssets = currentCollateralAssetsRaw ?? 0n;
+  const currentBorrowAssets = currentBorrowAssetsRaw ?? 0n;
+
   const quote = useLeverageQuote({
     chainId: market.morphoBlue.chain.id,
     route,
     initialCapitalInputAmount,
-    positionDebtInputAmount: useExistingPositionSource ? positionDebtInputAmount : undefined,
+    positionDebtInputAmount: useExistingPositionSource ? (hasInvalidExistingPositionData ? 0n : positionDebtInputAmount) : undefined,
     inputMode: useLoanAssetInputForTransaction ? 'loan' : 'collateral',
     multiplierBps,
     loanTokenAddress: market.loanAsset.address,
@@ -162,8 +169,6 @@ export function AddCollateralAndLeverage({
     slippageBps: swapSlippageBps,
   });
 
-  const currentCollateralAssets = parseUnsignedBigInt(currentPosition?.state.collateral) ?? 0n;
-  const currentBorrowAssets = parseUnsignedBigInt(currentPosition?.state.borrowAssets) ?? 0n;
   const hasQuoteChanges = quote.totalCollateralTokenAmountAdded > 0n && quote.flashLoanAssetAmount > 0n;
   const collateralAssetPriceUsd = useMemo(() => {
     const totalCollateralAssets = BigInt(market.state.collateralAssets);
@@ -620,7 +625,7 @@ export function AddCollateralAndLeverage({
     return previewLeveredCarryOnCapitalRate >= 0 ? 'text-emerald-500' : 'text-red-500';
   }, [previewLeveredCarryOnCapitalRate]);
   const hasRequiredInput = useExistingPositionSource
-    ? currentCollateralAssets > 0n && positionDebtInputAmount > 0n && positionDebtInputError === null
+    ? !hasInvalidExistingPositionData && currentCollateralAssets > 0n && positionDebtInputAmount > 0n && positionDebtInputError === null
     : initialCapitalInputAmount > 0n && initialCapitalInputError === null;
   const leverageButtonLabel = useExistingPositionSource ? 'Increase Leverage' : 'Leverage';
 
@@ -857,7 +862,10 @@ export function AddCollateralAndLeverage({
                 )}
               </div>
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
-              {useExistingPositionSource && currentCollateralAssets <= 0n && (
+              {hasInvalidExistingPositionData && (
+                <p className="mt-2 text-xs text-red-500">Unable to read valid position data. Refresh balances and try again.</p>
+              )}
+              {useExistingPositionSource && !hasInvalidExistingPositionData && currentCollateralAssets <= 0n && (
                 <p className="mt-2 text-xs text-red-500">Existing collateral is required to increase leverage without wallet capital.</p>
               )}
               {!quote.error && leverageFeeReadinessError && <p className="mt-2 text-xs text-red-500">{leverageFeeReadinessError}</p>}
@@ -885,6 +893,7 @@ export function AddCollateralAndLeverage({
                 disabled={
                   route == null ||
                   !hasRequiredInput ||
+                  hasInvalidExistingPositionData ||
                   quote.error !== null ||
                   !isBundlerAuthorizationReady ||
                   !hasExecutableInitialCapitalConversion ||

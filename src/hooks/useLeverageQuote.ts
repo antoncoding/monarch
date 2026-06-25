@@ -18,6 +18,7 @@ type UseLeverageQuoteParams = {
    * Exact user-entered starting capital, denominated by `inputMode`.
    * - `loan`: market loan asset amount
    * - `collateral`: market collateral token amount
+   * Ignored when `positionDebtInputAmount` is set.
    */
   initialCapitalInputAmount: bigint;
   /**
@@ -264,11 +265,16 @@ export function useLeverageQuote({
   userAddress,
 }: UseLeverageQuoteParams): LeverageQuote {
   const isPositionDebtInput = positionDebtInputAmount !== undefined;
+  const safeInitialCapitalInputAmount = isPositionDebtInput ? 0n : initialCapitalInputAmount;
   const safePositionDebtInputAmount = positionDebtInputAmount ?? 0n;
   const isLoanAssetInput = inputMode === 'loan';
   const isSwapLoanAssetInput = route?.kind === 'swap' && isLoanAssetInput && !isPositionDebtInput;
   const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
-  const erc4626PreviewDepositAmount = isPositionDebtInput ? safePositionDebtInputAmount : isLoanAssetInput ? initialCapitalInputAmount : 0n;
+  const erc4626PreviewDepositAmount = isPositionDebtInput
+    ? safePositionDebtInputAmount
+    : isLoanAssetInput
+      ? safeInitialCapitalInputAmount
+      : 0n;
 
   const {
     data: previewDepositCollateralSharesFromLoanAssets,
@@ -290,7 +296,7 @@ export function useLeverageQuote({
     if (isPositionDebtInput) return 0n;
     if (!route) return 0n;
     if (isSwapLoanAssetInput) return 0n;
-    if (!isLoanAssetInput) return initialCapitalInputAmount;
+    if (!isLoanAssetInput) return safeInitialCapitalInputAmount;
     // `previewDeposit(initialCapitalInputAmount)` returns the ERC4626 collateral-share amount minted by
     // depositing the user's exact loan-token asset input into the vault.
     if (route.kind === 'erc4626') return (previewDepositCollateralSharesFromLoanAssets as bigint | undefined) ?? 0n;
@@ -300,7 +306,7 @@ export function useLeverageQuote({
     route,
     isSwapLoanAssetInput,
     isLoanAssetInput,
-    initialCapitalInputAmount,
+    safeInitialCapitalInputAmount,
     previewDepositCollateralSharesFromLoanAssets,
   ]);
 
@@ -373,14 +379,14 @@ export function useLeverageQuote({
       collateralTokenAddress,
       collateralTokenDecimals,
       swapExecutionAddress,
-      initialCapitalInputAmount.toString(),
+      safeInitialCapitalInputAmount.toString(),
       multiplierBps.toString(),
       slippageBps,
       userAddress ?? null,
     ],
-    enabled: route?.kind === 'swap' && isLoanAssetInput && initialCapitalInputAmount > 0n && !!userAddress,
+    enabled: route?.kind === 'swap' && isLoanAssetInput && safeInitialCapitalInputAmount > 0n && !!userAddress,
     queryFn: async () => {
-      const flashLoanAssetAmount = computeLeveragedExtraAmount(initialCapitalInputAmount, multiplierBps);
+      const flashLoanAssetAmount = computeLeveragedExtraAmount(safeInitialCapitalInputAmount, multiplierBps);
       if (flashLoanAssetAmount <= 0n) {
         return {
           flashLoanAssetAmount: 0n,
@@ -390,7 +396,7 @@ export function useLeverageQuote({
         };
       }
 
-      const totalLoanSellAmount = initialCapitalInputAmount + flashLoanAssetAmount;
+      const totalLoanSellAmount = safeInitialCapitalInputAmount + flashLoanAssetAmount;
       const sellRoute = await fetchVeloraPriceRoute({
         srcToken: loanTokenAddress,
         srcDecimals: loanTokenDecimals,
@@ -533,7 +539,7 @@ export function useLeverageQuote({
   const error = useMemo(() => {
     if (!route) return null;
     if (route.kind === 'swap') {
-      if (!userAddress && (initialCapitalInputAmount > 0n || safePositionDebtInputAmount > 0n)) {
+      if (!userAddress && (safeInitialCapitalInputAmount > 0n || safePositionDebtInputAmount > 0n)) {
         return 'Connect wallet to fetch swap-backed leverage route.';
       }
       const routeError = isPositionDebtInput
@@ -551,7 +557,7 @@ export function useLeverageQuote({
     route,
     swapExecutionAddress,
     userAddress,
-    initialCapitalInputAmount,
+    safeInitialCapitalInputAmount,
     safePositionDebtInputAmount,
     isPositionDebtInput,
     isLoanAssetInput,

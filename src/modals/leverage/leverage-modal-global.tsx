@@ -38,8 +38,8 @@ export function LeverageModalGlobal({
     chainId,
   });
 
-  const { position, refetch: refetchPosition } = useUserPosition(address, chainId, market.uniqueKey);
-  const resolvedPosition = providedPosition ?? position;
+  const { position, loading: isPositionLoading, refetch: refetchPosition } = useUserPosition(address, chainId, market.uniqueKey);
+  const resolvedPosition = position ?? (isPositionLoading ? (providedPosition ?? null) : null);
 
   const handleRefetch = useCallback(() => {
     refetchPosition();
