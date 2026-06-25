@@ -562,14 +562,35 @@ export function useLeverageQuote({
     erc4626MintError,
   ]);
 
-  const isLoading =
-    !!route &&
-    (route.kind === 'swap'
-      ? (isPositionDebtInput && (swapPositionDebtQuoteQuery.isLoading || swapPositionDebtQuoteQuery.isFetching)) ||
-        (!isPositionDebtInput &&
-          ((isLoanAssetInput && (swapLoanInputCombinedQuoteQuery.isLoading || swapLoanInputCombinedQuoteQuery.isFetching)) ||
-            (!isLoanAssetInput && (swapCollateralInputQuoteQuery.isLoading || swapCollateralInputQuoteQuery.isFetching))))
-      : isLoadingErc4626Deposit || isLoadingErc4626Mint);
+  const isLoading = useMemo(() => {
+    if (!route) return false;
+
+    if (route.kind !== 'swap') {
+      return isLoadingErc4626Deposit || isLoadingErc4626Mint;
+    }
+
+    if (isPositionDebtInput) {
+      return swapPositionDebtQuoteQuery.isLoading || swapPositionDebtQuoteQuery.isFetching;
+    }
+
+    if (isLoanAssetInput) {
+      return swapLoanInputCombinedQuoteQuery.isLoading || swapLoanInputCombinedQuoteQuery.isFetching;
+    }
+
+    return swapCollateralInputQuoteQuery.isLoading || swapCollateralInputQuoteQuery.isFetching;
+  }, [
+    route,
+    isLoadingErc4626Deposit,
+    isLoadingErc4626Mint,
+    isPositionDebtInput,
+    isLoanAssetInput,
+    swapPositionDebtQuoteQuery.isLoading,
+    swapPositionDebtQuoteQuery.isFetching,
+    swapLoanInputCombinedQuoteQuery.isLoading,
+    swapLoanInputCombinedQuoteQuery.isFetching,
+    swapCollateralInputQuoteQuery.isLoading,
+    swapCollateralInputQuoteQuery.isFetching,
+  ]);
 
   return {
     initialCapitalCollateralTokenAmount,
