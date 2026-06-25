@@ -78,7 +78,7 @@ export function AddCollateralAndLeverage({
     setLeverageUseTargetLtvInput,
   } = useAppSettings();
   const lltv = useMemo(() => parseUnsignedBigInt(market.lltv) ?? 0n, [market.lltv]);
-  const lltvBps = useMemo(() => ltvWadToBps(lltv), [lltv]);
+  const lltvBps = ltvWadToBps(lltv);
   const maxTargetLtvBps = useMemo(() => (lltvBps > LEVERAGE_SAFE_LTV_BUFFER_BPS ? lltvBps - LEVERAGE_SAFE_LTV_BUFFER_BPS : 0n), [lltvBps]);
   const maxMultiplierBps = useMemo(() => computeMaxMultiplierBpsForTargetLtv(maxTargetLtvBps), [maxTargetLtvBps]);
   const defaultMultiplierBps = useMemo(() => clampMultiplierBps(LEVERAGE_DEFAULT_MULTIPLIER_BPS, maxMultiplierBps), [maxMultiplierBps]);
@@ -86,14 +86,8 @@ export function AddCollateralAndLeverage({
     () => clampTargetLtvBps(targetLtvBpsFromMultiplier(defaultMultiplierBps), maxTargetLtvBps),
     [defaultMultiplierBps, maxTargetLtvBps],
   );
-  const currentCollateralAssets = useMemo(
-    () => parseUnsignedBigInt(currentPosition?.state.collateral) ?? 0n,
-    [currentPosition?.state.collateral],
-  );
-  const currentBorrowAssets = useMemo(
-    () => parseUnsignedBigInt(currentPosition?.state.borrowAssets) ?? 0n,
-    [currentPosition?.state.borrowAssets],
-  );
+  const currentCollateralAssets = parseUnsignedBigInt(currentPosition?.state.collateral) ?? 0n;
+  const currentBorrowAssets = parseUnsignedBigInt(currentPosition?.state.borrowAssets) ?? 0n;
   const currentLTV = useMemo(
     () =>
       computeLtv({
@@ -103,7 +97,7 @@ export function AddCollateralAndLeverage({
       }),
     [currentBorrowAssets, currentCollateralAssets, oraclePrice],
   );
-  const currentLtvBps = useMemo(() => ltvWadToBps(currentLTV), [currentLTV]);
+  const currentLtvBps = ltvWadToBps(currentLTV);
   const canLeverageExistingPosition = currentCollateralAssets > 0n;
 
   const [initialCapitalInputAmount, setInitialCapitalInputAmount] = useState<bigint>(0n);
@@ -112,7 +106,7 @@ export function AddCollateralAndLeverage({
   const [targetMultiplierBps, setTargetMultiplierBps] = useState<bigint>(defaultMultiplierBps);
   const [targetLtvIntentBps, setTargetLtvIntentBps] = useState<bigint>(defaultTargetLtvIntentBps);
   const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
-  const [hasInitializedPositionTarget, setHasInitializedPositionTarget] = useState(false);
+  const [initializedPositionTargetKey, setInitializedPositionTargetKey] = useState<string | null>(null);
 
   const multiplierBps = useMemo(() => clampMultiplierBps(targetMultiplierBps, maxMultiplierBps), [targetMultiplierBps, maxMultiplierBps]);
   const targetLtvBps = useMemo(
@@ -124,7 +118,7 @@ export function AddCollateralAndLeverage({
   const isSwapRoute = route?.kind === 'swap';
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
   const useExistingPositionSource = defaultLeverageSource === 'position';
-  const leverageSizingMode = useExistingPositionSource ? 'position-target' : 'initial-capital';
+  const positionTargetInitKey = useExistingPositionSource && account ? `${market.uniqueKey}:${account}` : null;
   const useLoanAssetInputForTransaction = !useExistingPositionSource && useLoanAssetInput;
 
   const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
@@ -168,14 +162,10 @@ export function AddCollateralAndLeverage({
   }, [currentLtvBps, maxTargetLtvBps]);
 
   useEffect(() => {
-    setHasInitializedPositionTarget(false);
-  }, [useExistingPositionSource, market.uniqueKey, account]);
-
-  useEffect(() => {
     if (
-      !useExistingPositionSource ||
+      !positionTargetInitKey ||
       !canLeverageExistingPosition ||
-      hasInitializedPositionTarget ||
+      initializedPositionTargetKey === positionTargetInitKey ||
       suggestedPositionTargetLtvBps <= currentLtvBps
     ) {
       return;
@@ -183,11 +173,11 @@ export function AddCollateralAndLeverage({
 
     setTargetLtvIntentBps(suggestedPositionTargetLtvBps);
     setTargetMultiplierBps(multiplierBpsFromTargetLtv(suggestedPositionTargetLtvBps, maxMultiplierBps));
-    setHasInitializedPositionTarget(true);
+    setInitializedPositionTargetKey(positionTargetInitKey);
   }, [
-    useExistingPositionSource,
+    positionTargetInitKey,
     canLeverageExistingPosition,
-    hasInitializedPositionTarget,
+    initializedPositionTargetKey,
     suggestedPositionTargetLtvBps,
     currentLtvBps,
     maxMultiplierBps,
@@ -215,9 +205,8 @@ export function AddCollateralAndLeverage({
   const quote = useLeverageQuote({
     chainId: market.morphoBlue.chain.id,
     route,
-    sizingMode: leverageSizingMode,
     initialCapitalInputAmount,
-    positionDebtInputAmount,
+    positionDebtInputAmount: useExistingPositionSource ? positionDebtInputAmount : undefined,
     inputMode: useLoanAssetInputForTransaction ? 'loan' : 'collateral',
     multiplierBps,
     loanTokenAddress: market.loanAsset.address,
@@ -426,20 +415,10 @@ export function AddCollateralAndLeverage({
       : isErc4626Route
         ? 'Total Collateral Added (Min.)'
         : 'Total Collateral Added';
-  const hasExecutableInitialCapitalConversion = useMemo(() => {
-    if (useExistingPositionSource) return quote.totalCollateralTokenAmountAdded > 0n;
-    if (!useLoanAssetInputForTransaction) return true;
-    if (isSwapRoute) return quote.totalCollateralTokenAmountAdded > 0n;
-    if (isErc4626Route) return quote.initialCapitalCollateralTokenAmount > 0n;
-    return false;
-  }, [
-    useExistingPositionSource,
-    useLoanAssetInputForTransaction,
-    isSwapRoute,
-    isErc4626Route,
-    quote.totalCollateralTokenAmountAdded,
-    quote.initialCapitalCollateralTokenAmount,
-  ]);
+  const hasExecutableInitialCapitalConversion = useExistingPositionSource
+    ? quote.totalCollateralTokenAmountAdded > 0n
+    : !useLoanAssetInputForTransaction ||
+      (isSwapRoute ? quote.totalCollateralTokenAmountAdded > 0n : isErc4626Route && quote.initialCapitalCollateralTokenAmount > 0n);
   const positionTargetError = useMemo(() => {
     if (!useExistingPositionSource) return null;
     if (!canLeverageExistingPosition) return 'Existing collateral is required to increase leverage without new capital.';
