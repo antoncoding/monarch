@@ -3,11 +3,18 @@ import Input from '@/components/Input/Input';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { clampTargetLtvBps, multiplierBpsFromTargetLtv } from '@/hooks/leverage/math';
 import { formatBalance } from '@/utils/balance';
+import { cn } from '@/utils/components';
 import type { Market } from '@/utils/types';
 
 const TARGET_INPUT_DEBOUNCE_MS = 300;
 
 type InputErrorSetter = (error: string | null) => void;
+export type LeverageSource = 'wallet' | 'position';
+
+type LeverageSourceSwitchProps = {
+  value: LeverageSource;
+  onChange: (value: LeverageSource) => void;
+};
 
 type PositionDebtLoopInputProps = {
   market: Market;
@@ -18,7 +25,7 @@ type PositionDebtLoopInputProps = {
   setError: InputErrorSetter;
 };
 
-type WalletCapitalInputProps = {
+type AddCapitalInputProps = {
   market: Market;
   canUseLoanAssetInput: boolean;
   useLoanAssetInput: boolean;
@@ -45,6 +52,31 @@ type TargetLeverageInputProps = {
   syncInputFieldsFromMultiplier: (value: bigint) => void;
 };
 
+export function LeverageSourceSwitch({ value, onChange }: LeverageSourceSwitchProps): JSX.Element {
+  const options: { value: LeverageSource; label: string }[] = [
+    { value: 'wallet', label: 'Add Capital' },
+    { value: 'position', label: 'Loop More' },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-1 rounded border border-white/10 bg-hovered p-1">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={cn(
+            'rounded px-3 py-2 text-sm transition-colors',
+            value === option.value ? 'bg-surface text-primary shadow-sm' : 'text-secondary hover:bg-surface/60 hover:text-primary',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function PositionDebtLoopInput({
   market,
   marketLiquidity,
@@ -55,7 +87,7 @@ export function PositionDebtLoopInput({
 }: PositionDebtLoopInputProps): JSX.Element {
   return (
     <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
-      <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Additional Debt</p>
+      <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Borrow More</p>
       <Input
         decimals={market.loanAsset.decimals}
         max={marketLiquidity}
@@ -84,7 +116,7 @@ export function PositionDebtLoopInput({
   );
 }
 
-export function WalletCapitalInput({
+export function AddCapitalInput({
   market,
   canUseLoanAssetInput,
   useLoanAssetInput,
@@ -97,11 +129,11 @@ export function WalletCapitalInput({
   setValue,
   error,
   setError,
-}: WalletCapitalInputProps): JSX.Element {
+}: AddCapitalInputProps): JSX.Element {
   return (
     <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Wallet Capital</p>
+        <p className="font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Add Capital</p>
         {canUseLoanAssetInput && (
           <div className="flex items-center gap-2">
             <div className="text-xs text-secondary">Use {market.loanAsset.symbol}</div>

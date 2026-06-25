@@ -16,7 +16,6 @@ import type { LeverageRoute } from '@/hooks/leverage/types';
 import { computeLtv, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 import { PreviewSectionHeader } from '@/modals/borrow/components/preview-section-header';
-import { PositionLeverageSummary } from './position-leverage-summary';
 
 type RemoveCollateralAndDeleverageProps = {
   market: Market;
@@ -242,14 +241,9 @@ export function RemoveCollateralAndDeleverage({
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           <PreviewSectionHeader
-            title="Deleverage Preview"
+            title="Unwind Leverage"
             onRefresh={onSuccess}
             isRefreshing={isRefreshing}
-          />
-          <PositionLeverageSummary
-            currentLtv={currentLTV}
-            projectedLtv={displayProjectedLTV}
-            hasChanges={hasChanges}
           />
           <BorrowPositionRiskCard
             market={market}
@@ -267,7 +261,7 @@ export function RemoveCollateralAndDeleverage({
           <div className="mt-2 space-y-3">
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
               <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
-                Collateral To Unwind {market.collateralAsset.symbol}
+                Collateral to Unwind {market.collateralAsset.symbol}
               </p>
               <Input
                 decimals={market.collateralAsset.decimals}
@@ -394,7 +388,7 @@ export function RemoveCollateralAndDeleverage({
                 variant="primary"
                 className="min-w-32"
               >
-                Decrease Leverage
+                Unwind Leverage
               </ExecuteTransactionButton>
             </div>
 

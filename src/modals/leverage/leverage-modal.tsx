@@ -9,6 +9,7 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getSpecialErc4626LeverageConfig, isSpecialErc4626LeverageMarket } from '@/config/leverage';
+import { parseUnsignedBigInt } from '@/hooks/leverage/math';
 import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
 import { useAppSettings } from '@/stores/useAppSettings';
 import type { LeverageRoute } from '@/hooks/leverage/types';
@@ -185,28 +186,29 @@ export function LeverageModal({
           label: effectiveMode === 'leverage' ? `Leverage ${market.collateralAsset.symbol}` : `Deleverage ${market.collateralAsset.symbol}`,
         },
       ];
+  const hasPositionCollateral = (parseUnsignedBigInt(position?.state.collateral) ?? 0n) > 0n;
   const modalDescription = useMemo(() => {
     if (effectiveMode === 'leverage') {
-      if (defaultLeverageSource === 'position') {
-        return `Borrow more ${market.loanAsset.symbol} against the current position and loop it into ${market.collateralAsset.symbol}. No wallet capital is added.`;
+      if (hasPositionCollateral) {
+        return `Add capital or borrow more ${market.loanAsset.symbol} against this position, then loop into ${market.collateralAsset.symbol}.`;
       }
       if (isErc4626Route) {
-        return `Add wallet capital, borrow ${market.loanAsset.symbol}, and loop into ${market.collateralAsset.symbol}.`;
+        return `Add capital, borrow ${market.loanAsset.symbol}, and loop into ${market.collateralAsset.symbol}.`;
       }
       if (isSwapRoute) {
-        return `Add wallet capital, borrow ${market.loanAsset.symbol}, and swap into ${market.collateralAsset.symbol}.`;
+        return `Add capital, borrow ${market.loanAsset.symbol}, and swap into ${market.collateralAsset.symbol}.`;
       }
-      return `Add wallet capital and borrow against it to increase ${market.collateralAsset.symbol} exposure.`;
+      return `Add capital and borrow against it to increase ${market.collateralAsset.symbol} exposure.`;
     }
 
     if (isErc4626Route) {
-      return `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`;
+      return `Withdraw collateral from the loop and use it to repay ${market.loanAsset.symbol}.`;
     }
     if (isSwapRoute) {
-      return `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`;
+      return `Withdraw collateral from the loop and swap it to repay ${market.loanAsset.symbol}.`;
     }
-    return `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`;
-  }, [effectiveMode, defaultLeverageSource, isErc4626Route, isSwapRoute, market.collateralAsset.symbol, market.loanAsset.symbol]);
+    return 'Withdraw collateral from the loop and use it to repay debt.';
+  }, [effectiveMode, hasPositionCollateral, isErc4626Route, isSwapRoute, market.collateralAsset.symbol, market.loanAsset.symbol]);
 
   const {
     data: collateralTokenBalance,

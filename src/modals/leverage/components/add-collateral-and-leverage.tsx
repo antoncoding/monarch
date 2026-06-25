@@ -4,7 +4,6 @@ import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 import { PreviewSectionHeader } from '@/modals/borrow/components/preview-section-header';
 import { LTV_WAD, computeLtv } from '@/modals/borrow/components/helpers';
-import { PositionLeverageSummary } from './position-leverage-summary';
 import { HelpTooltipIcon } from '@/components/shared/help-tooltip-icon';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { TooltipContent as SharedTooltipContent } from '@/components/shared/tooltip-content';
@@ -40,7 +39,13 @@ import { previewMarketState } from '@/utils/morpho';
 import { convertAprToApy, toApyFromDisplayRate, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
-import { PositionDebtLoopInput, TargetLeverageInput, WalletCapitalInput } from './leverage-input-panels';
+import {
+  AddCapitalInput,
+  LeverageSourceSwitch,
+  PositionDebtLoopInput,
+  TargetLeverageInput,
+  type LeverageSource,
+} from './leverage-input-panels';
 
 type AddCollateralAndLeverageProps = {
   market: Market;
@@ -92,6 +97,16 @@ export function AddCollateralAndLeverage({
   const [targetMultiplierBps, setTargetMultiplierBps] = useState<bigint>(defaultMultiplierBps);
   const [targetLtvIntentBps, setTargetLtvIntentBps] = useState<bigint>(defaultTargetLtvIntentBps);
   const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
+  const [leverageSource, setLeverageSource] = useState<LeverageSource>(defaultLeverageSource);
+
+  const currentCollateralAssetsRaw = parseUnsignedBigInt(currentPosition?.state.collateral);
+  const currentBorrowAssetsRaw = parseUnsignedBigInt(currentPosition?.state.borrowAssets);
+  const currentCollateralAssets = currentCollateralAssetsRaw ?? 0n;
+  const currentBorrowAssets = currentBorrowAssetsRaw ?? 0n;
+  const canLoopExistingPosition = currentCollateralAssets > 0n;
+  const useExistingPositionSource = leverageSource === 'position';
+  const hasInvalidExistingPositionData =
+    useExistingPositionSource && (currentCollateralAssetsRaw == null || currentBorrowAssetsRaw == null);
 
   const multiplierBps = useMemo(() => clampMultiplierBps(targetMultiplierBps, maxMultiplierBps), [targetMultiplierBps, maxMultiplierBps]);
   const targetLtvBps = useMemo(
@@ -102,7 +117,6 @@ export function AddCollateralAndLeverage({
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
-  const useExistingPositionSource = defaultLeverageSource === 'position';
   const useLoanAssetInputForTransaction = !useExistingPositionSource && useLoanAssetInput;
 
   const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
@@ -135,6 +149,17 @@ export function AddCollateralAndLeverage({
   }, [useExistingPositionSource]);
 
   useEffect(() => {
+    if (leverageSource !== 'position' || canLoopExistingPosition || currentCollateralAssetsRaw == null) return;
+    setLeverageSource('wallet');
+  }, [canLoopExistingPosition, currentCollateralAssetsRaw, leverageSource]);
+
+  useEffect(() => {
+    if (useExistingPositionSource) return;
+    setPositionDebtInputAmount(0n);
+    setPositionDebtInputError(null);
+  }, [useExistingPositionSource]);
+
+  useEffect(() => {
     const clampedMultiplier = clampMultiplierBps(targetMultiplierBps, maxMultiplierBps);
     if (clampedMultiplier !== targetMultiplierBps) {
       setTargetMultiplierBps(clampedMultiplier);
@@ -146,13 +171,6 @@ export function AddCollateralAndLeverage({
       setTargetLtvIntentBps(derivedTargetLtvBps);
     }
   }, [targetMultiplierBps, maxMultiplierBps, maxTargetLtvBps, useTargetLtvInput, targetLtvIntentBps]);
-
-  const currentCollateralAssetsRaw = parseUnsignedBigInt(currentPosition?.state.collateral);
-  const currentBorrowAssetsRaw = parseUnsignedBigInt(currentPosition?.state.borrowAssets);
-  const hasInvalidExistingPositionData =
-    useExistingPositionSource && (currentCollateralAssetsRaw == null || currentBorrowAssetsRaw == null);
-  const currentCollateralAssets = currentCollateralAssetsRaw ?? 0n;
-  const currentBorrowAssets = currentBorrowAssetsRaw ?? 0n;
 
   const quote = useLeverageQuote({
     chainId: market.morphoBlue.chain.id,
@@ -627,21 +645,16 @@ export function AddCollateralAndLeverage({
   const hasRequiredInput = useExistingPositionSource
     ? !hasInvalidExistingPositionData && currentCollateralAssets > 0n && positionDebtInputAmount > 0n && positionDebtInputError === null
     : initialCapitalInputAmount > 0n && initialCapitalInputError === null;
-  const leverageButtonLabel = useExistingPositionSource ? 'Increase Leverage' : 'Leverage';
+  const leverageButtonLabel = useExistingPositionSource ? 'Loop More' : 'Leverage';
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           <PreviewSectionHeader
-            title={useExistingPositionSource ? 'Increase Leverage' : 'Leverage Preview'}
+            title={useExistingPositionSource ? 'Loop More' : 'Leverage Preview'}
             onRefresh={onSuccess}
             isRefreshing={isRefreshing}
-          />
-          <PositionLeverageSummary
-            currentLtv={currentLTV}
-            projectedLtv={projectedLTV}
-            hasChanges={hasChanges}
           />
           <BorrowPositionRiskCard
             market={market}
@@ -658,6 +671,12 @@ export function AddCollateralAndLeverage({
           />
 
           <div className="mt-2 space-y-3">
+            {canLoopExistingPosition && (
+              <LeverageSourceSwitch
+                value={leverageSource}
+                onChange={setLeverageSource}
+              />
+            )}
             {useExistingPositionSource ? (
               <PositionDebtLoopInput
                 market={market}
@@ -669,7 +688,7 @@ export function AddCollateralAndLeverage({
               />
             ) : (
               <>
-                <WalletCapitalInput
+                <AddCapitalInput
                   market={market}
                   canUseLoanAssetInput={canUseLoanAssetInput}
                   useLoanAssetInput={useLoanAssetInput}
@@ -702,7 +721,7 @@ export function AddCollateralAndLeverage({
               <div className="space-y-1 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-secondary">
-                    {useExistingPositionSource ? 'Additional Debt' : isSwapRoute ? 'Flash Borrow Required' : 'Flash Borrow'}
+                    {useExistingPositionSource ? 'Borrow More' : isSwapRoute ? 'Flash Borrow Required' : 'Flash Borrow'}
                   </span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
                     <Tooltip content={<span className="text-xs">{flashBorrowPreview.full}</span>}>
@@ -866,7 +885,7 @@ export function AddCollateralAndLeverage({
                 <p className="mt-2 text-xs text-red-500">Unable to read valid position data. Refresh balances and try again.</p>
               )}
               {useExistingPositionSource && !hasInvalidExistingPositionData && currentCollateralAssets <= 0n && (
-                <p className="mt-2 text-xs text-red-500">Existing collateral is required to increase leverage without wallet capital.</p>
+                <p className="mt-2 text-xs text-red-500">Existing collateral is required to loop more without adding capital.</p>
               )}
               {!quote.error && leverageFeeReadinessError && <p className="mt-2 text-xs text-red-500">{leverageFeeReadinessError}</p>}
               {isErc4626Route && vaultRateInsight.error && (
