@@ -11,6 +11,7 @@ type LeverageModalGlobalProps = {
   market: Market;
   defaultMode?: 'leverage' | 'deleverage';
   toggleLeverageDeleverage?: boolean;
+  defaultLeverageSource?: 'wallet' | 'position';
   refetch?: () => void;
   onOpenChange: (open: boolean) => void;
 };
@@ -23,6 +24,7 @@ export function LeverageModalGlobal({
   market,
   defaultMode,
   toggleLeverageDeleverage,
+  defaultLeverageSource,
   refetch: externalRefetch,
   onOpenChange,
 }: LeverageModalGlobalProps): JSX.Element {
@@ -50,6 +52,7 @@ export function LeverageModalGlobal({
       position={position}
       defaultMode={defaultMode}
       toggleLeverageDeleverage={toggleLeverageDeleverage}
+      defaultLeverageSource={defaultLeverageSource}
     />
   );
 }

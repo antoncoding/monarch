@@ -3,23 +3,27 @@
 import type React from 'react';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { BsArrowDownLeftCircle, BsArrowUpRightCircle } from 'react-icons/bs';
-import { TbTrendingDown } from 'react-icons/tb';
+import { TbTrendingDown, TbTrendingUp } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 type BorrowPositionActionsDropdownProps = {
   isOwner: boolean;
   isActiveDebt: boolean;
+  canAdjustLeverage: boolean;
   onBorrowMoreClick: () => void;
   onRepayClick: () => void;
+  onLeverageClick: () => void;
   onDeleverageClick: () => void;
 };
 
 export function BorrowPositionActionsDropdown({
   isOwner,
   isActiveDebt,
+  canAdjustLeverage,
   onBorrowMoreClick,
   onRepayClick,
+  onLeverageClick,
   onDeleverageClick,
 }: BorrowPositionActionsDropdownProps) {
   const handleClick = (event: React.MouseEvent) => {
@@ -64,6 +68,16 @@ export function BorrowPositionActionsDropdown({
           >
             {isActiveDebt ? 'Repay' : 'Manage'}
           </DropdownMenuItem>
+          {canAdjustLeverage && (
+            <DropdownMenuItem
+              onClick={onLeverageClick}
+              startContent={<TbTrendingUp className="h-4 w-4" />}
+              disabled={!isOwner}
+              className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
+            >
+              Increase Leverage
+            </DropdownMenuItem>
+          )}
           {isActiveDebt && (
             <DropdownMenuItem
               onClick={onDeleverageClick}

@@ -263,6 +263,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         <BorrowPositionActionsDropdown
                           isOwner={isOwner}
                           isActiveDebt={row.isActiveDebt}
+                          canAdjustLeverage={row.collateralAmount > 0}
                           onBorrowMoreClick={() =>
                             open('borrow', {
                               market: row.market,
@@ -278,6 +279,17 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                               market: row.market,
                               defaultMode: 'repay',
                               toggleBorrowRepay: false,
+                              refetch: () => {
+                                void onRefetch();
+                              },
+                            })
+                          }
+                          onLeverageClick={() =>
+                            open('leverage', {
+                              market: row.market,
+                              defaultMode: 'leverage',
+                              defaultLeverageSource: 'position',
+                              toggleLeverageDeleverage: false,
                               refetch: () => {
                                 void onRefetch();
                               },

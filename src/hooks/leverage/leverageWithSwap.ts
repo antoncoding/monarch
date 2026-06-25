@@ -153,7 +153,7 @@ export const leverageWithSwap = async ({
       }
     }
 
-    if (!isApproved) {
+    if (initialCapitalTransferAmount > 0n && !isApproved) {
       updateStep('approve_token');
       await approve();
       await sleep(900);

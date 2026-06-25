@@ -111,7 +111,7 @@ export const leverageWithErc4626Deposit = async ({
       }
     }
 
-    if (!isApproved) {
+    if (initialCapitalTransferAmount > 0n && !isApproved) {
       updateStep('approve_token');
       await approve();
       await sleep(900);
@@ -135,7 +135,7 @@ export const leverageWithErc4626Deposit = async ({
     );
   }
 
-  if (isLoanAssetInput) {
+  if (isLoanAssetInput && initialCapitalInputAmount > 0n) {
     // WHY: the user provided an exact amount of loan-token assets, so this leg should deposit that
     // exact asset amount into the vault with a share floor derived from the ERC4626 preview.
     txs.push(
