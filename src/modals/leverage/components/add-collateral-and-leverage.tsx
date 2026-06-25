@@ -112,6 +112,7 @@ export function AddCollateralAndLeverage({
   const [targetMultiplierBps, setTargetMultiplierBps] = useState<bigint>(defaultMultiplierBps);
   const [targetLtvIntentBps, setTargetLtvIntentBps] = useState<bigint>(defaultTargetLtvIntentBps);
   const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
+  const [hasInitializedPositionTarget, setHasInitializedPositionTarget] = useState(false);
 
   const multiplierBps = useMemo(() => clampMultiplierBps(targetMultiplierBps, maxMultiplierBps), [targetMultiplierBps, maxMultiplierBps]);
   const targetLtvBps = useMemo(
@@ -167,11 +168,30 @@ export function AddCollateralAndLeverage({
   }, [currentLtvBps, maxTargetLtvBps]);
 
   useEffect(() => {
-    if (!useExistingPositionSource || suggestedPositionTargetLtvBps <= currentLtvBps || targetLtvBps > currentLtvBps) return;
+    setHasInitializedPositionTarget(false);
+  }, [useExistingPositionSource, currentCollateralAssets, currentBorrowAssets]);
+
+  useEffect(() => {
+    if (
+      !useExistingPositionSource ||
+      !canLeverageExistingPosition ||
+      hasInitializedPositionTarget ||
+      suggestedPositionTargetLtvBps <= currentLtvBps
+    ) {
+      return;
+    }
 
     setTargetLtvIntentBps(suggestedPositionTargetLtvBps);
     setTargetMultiplierBps(multiplierBpsFromTargetLtv(suggestedPositionTargetLtvBps, maxMultiplierBps));
-  }, [useExistingPositionSource, suggestedPositionTargetLtvBps, currentLtvBps, targetLtvBps, maxMultiplierBps]);
+    setHasInitializedPositionTarget(true);
+  }, [
+    useExistingPositionSource,
+    canLeverageExistingPosition,
+    hasInitializedPositionTarget,
+    suggestedPositionTargetLtvBps,
+    currentLtvBps,
+    maxMultiplierBps,
+  ]);
 
   const positionDebtInputAmount = useMemo(() => {
     if (!useExistingPositionSource || currentCollateralAssets <= 0n || oraclePrice <= 0n) return 0n;
