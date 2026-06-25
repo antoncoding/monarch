@@ -16,6 +16,7 @@ import type { LeverageRoute } from '@/hooks/leverage/types';
 import { computeLtv, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 import { PreviewSectionHeader } from '@/modals/borrow/components/preview-section-header';
+import { PositionLeverageSummary } from './position-leverage-summary';
 
 type RemoveCollateralAndDeleverageProps = {
   market: Market;
@@ -245,6 +246,12 @@ export function RemoveCollateralAndDeleverage({
             onRefresh={onSuccess}
             isRefreshing={isRefreshing}
           />
+          <PositionLeverageSummary
+            currentLtv={currentLTV}
+            projectedLtv={displayProjectedLTV}
+            lltv={lltv}
+            hasChanges={hasChanges}
+          />
           <BorrowPositionRiskCard
             market={market}
             oraclePrice={oraclePrice}
@@ -388,7 +395,7 @@ export function RemoveCollateralAndDeleverage({
                 variant="primary"
                 className="min-w-32"
               >
-                Deleverage
+                Decrease Leverage
               </ExecuteTransactionButton>
             </div>
 

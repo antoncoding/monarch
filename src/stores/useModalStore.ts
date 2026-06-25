@@ -29,7 +29,9 @@ export type ModalProps = {
   // Leverage & Deleverage
   leverage: {
     market: Market;
+    position?: MarketPosition | null;
     defaultMode?: 'leverage' | 'deleverage';
+    defaultLeverageSource?: 'wallet' | 'position';
     toggleLeverageDeleverage?: boolean;
     refetch?: () => void;
   };

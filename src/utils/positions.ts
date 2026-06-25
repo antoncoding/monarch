@@ -55,6 +55,7 @@ export type PositionSnapshotsWithOracleResult = {
 
 export type BorrowPositionRow = {
   market: MorphoMarket;
+  position: MarketPosition;
   state: {
     borrowAssets: string;
     borrowShares: string;
@@ -618,6 +619,7 @@ export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[])
 
       return {
         market: position.market,
+        position,
         state: {
           borrowAssets: position.state.borrowAssets,
           borrowShares: position.state.borrowShares,

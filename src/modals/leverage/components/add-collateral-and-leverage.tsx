@@ -4,14 +4,13 @@ import { useConnection, useReadContract } from 'wagmi';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 import { PreviewSectionHeader } from '@/modals/borrow/components/preview-section-header';
 import { LTV_WAD, computeLtv } from '@/modals/borrow/components/helpers';
+import { PositionLeverageSummary } from './position-leverage-summary';
 import { HelpTooltipIcon } from '@/components/shared/help-tooltip-icon';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { TooltipContent as SharedTooltipContent } from '@/components/shared/tooltip-content';
-import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
-import { IconSwitch } from '@/components/ui/icon-switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import {
   clampTargetLtvBps,
@@ -21,7 +20,6 @@ import {
   computeLeverageProjectedPosition,
   formatTokenAmountPreview,
   ltvWadToBps,
-  multiplierBpsFromTargetLtv,
   parseUnsignedBigInt,
   toScaledRatio,
   targetLtvBpsFromMultiplier,
@@ -42,6 +40,7 @@ import { previewMarketState } from '@/utils/morpho';
 import { convertAprToApy, toApyFromDisplayRate, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
+import { PositionDebtLoopInput, TargetLeverageInput, WalletCapitalInput } from './leverage-input-panels';
 
 type AddCollateralAndLeverageProps = {
   market: Market;
@@ -49,12 +48,12 @@ type AddCollateralAndLeverageProps = {
   currentPosition: MarketPosition | null;
   collateralTokenBalance: bigint | undefined;
   oraclePrice: bigint;
+  defaultLeverageSource?: 'wallet' | 'position';
   onSuccess?: () => void;
   isRefreshing?: boolean;
 };
 
 const LEVERAGE_SAFE_LTV_BUFFER_BPS = 100n; // keep a 1% buffer below liquidation LTV
-const TARGET_INPUT_DEBOUNCE_MS = 300;
 const INLINE_VALUE_TOOLTIP_CLASS_NAME = 'px-4 py-3 text-xs';
 
 export function AddCollateralAndLeverage({
@@ -63,6 +62,7 @@ export function AddCollateralAndLeverage({
   currentPosition,
   collateralTokenBalance,
   oraclePrice,
+  defaultLeverageSource = 'wallet',
   onSuccess,
   isRefreshing = false,
 }: AddCollateralAndLeverageProps): JSX.Element {
@@ -86,6 +86,8 @@ export function AddCollateralAndLeverage({
 
   const [initialCapitalInputAmount, setInitialCapitalInputAmount] = useState<bigint>(0n);
   const [initialCapitalInputError, setInitialCapitalInputError] = useState<string | null>(null);
+  const [positionDebtInputAmount, setPositionDebtInputAmount] = useState<bigint>(0n);
+  const [positionDebtInputError, setPositionDebtInputError] = useState<string | null>(null);
   const [useLoanAssetInput, setUseLoanAssetInput] = useState(false);
   const [targetMultiplierBps, setTargetMultiplierBps] = useState<bigint>(defaultMultiplierBps);
   const [targetLtvIntentBps, setTargetLtvIntentBps] = useState<bigint>(defaultTargetLtvIntentBps);
@@ -100,6 +102,8 @@ export function AddCollateralAndLeverage({
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
+  const useExistingPositionSource = defaultLeverageSource === 'position';
+  const useLoanAssetInputForTransaction = !useExistingPositionSource && useLoanAssetInput;
 
   const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
     address: market.loanAsset.address as `0x${string}`,
@@ -108,7 +112,7 @@ export function AddCollateralAndLeverage({
     abi: erc20Abi,
     chainId: market.morphoBlue.chain.id,
     query: {
-      enabled: !!account && useLoanAssetInput,
+      enabled: !!account && useLoanAssetInputForTransaction,
     },
   });
 
@@ -122,6 +126,13 @@ export function AddCollateralAndLeverage({
     if (canUseLoanAssetInput) return;
     setUseLoanAssetInput(false);
   }, [canUseLoanAssetInput]);
+
+  useEffect(() => {
+    if (!useExistingPositionSource) return;
+    setUseLoanAssetInput(false);
+    setInitialCapitalInputAmount(0n);
+    setInitialCapitalInputError(null);
+  }, [useExistingPositionSource]);
 
   useEffect(() => {
     const clampedMultiplier = clampMultiplierBps(targetMultiplierBps, maxMultiplierBps);
@@ -140,7 +151,8 @@ export function AddCollateralAndLeverage({
     chainId: market.morphoBlue.chain.id,
     route,
     initialCapitalInputAmount,
-    inputMode: useLoanAssetInput ? 'loan' : 'collateral',
+    positionDebtInputAmount: useExistingPositionSource ? positionDebtInputAmount : undefined,
+    inputMode: useLoanAssetInputForTransaction ? 'loan' : 'collateral',
     multiplierBps,
     loanTokenAddress: market.loanAsset.address,
     loanTokenDecimals: market.loanAsset.decimals,
@@ -150,8 +162,8 @@ export function AddCollateralAndLeverage({
     slippageBps: swapSlippageBps,
   });
 
-  const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
-  const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
+  const currentCollateralAssets = parseUnsignedBigInt(currentPosition?.state.collateral) ?? 0n;
+  const currentBorrowAssets = parseUnsignedBigInt(currentPosition?.state.borrowAssets) ?? 0n;
   const hasQuoteChanges = quote.totalCollateralTokenAmountAdded > 0n && quote.flashLoanAssetAmount > 0n;
   const collateralAssetPriceUsd = useMemo(() => {
     const totalCollateralAssets = BigInt(market.state.collateralAssets);
@@ -263,12 +275,14 @@ export function AddCollateralAndLeverage({
     // WHY: after a confirmed leverage tx, reset drafts so the panel reflects refreshed onchain position state.
     setInitialCapitalInputAmount(0n);
     setInitialCapitalInputError(null);
+    setPositionDebtInputAmount(0n);
+    setPositionDebtInputError(null);
     syncInputFieldsFromMultiplier(defaultMultiplierBps);
-    if (useLoanAssetInput) {
+    if (useLoanAssetInputForTransaction) {
       void refetchLoanTokenBalance();
     }
     if (onSuccess) onSuccess();
-  }, [defaultMultiplierBps, onSuccess, refetchLoanTokenBalance, syncInputFieldsFromMultiplier, useLoanAssetInput]);
+  }, [defaultMultiplierBps, onSuccess, refetchLoanTokenBalance, syncInputFieldsFromMultiplier, useLoanAssetInputForTransaction]);
 
   const {
     transaction,
@@ -288,7 +302,7 @@ export function AddCollateralAndLeverage({
     totalCollateralTokenAmountAdded: quote.totalCollateralTokenAmountAdded,
     collateralAssetPriceUsd,
     swapPriceRoute: quote.swapPriceRoute,
-    useLoanAssetInput,
+    useLoanAssetInput: useLoanAssetInputForTransaction,
     slippageBps: swapSlippageBps,
     onSuccess: handleTransactionSuccess,
   });
@@ -306,7 +320,7 @@ export function AddCollateralAndLeverage({
 
   const handleLeverage = useCallback(() => {
     if (!isLeverageFeeReady) return;
-    const usePermit2Flow = usePermit2Setting;
+    const usePermit2Flow = usePermit2Setting && !useExistingPositionSource;
 
     if (usePermit2Flow && permit2Authorized) {
       void signAndLeverage();
@@ -314,14 +328,14 @@ export function AddCollateralAndLeverage({
     }
 
     void approveAndLeverage();
-  }, [isLeverageFeeReady, usePermit2Setting, permit2Authorized, signAndLeverage, approveAndLeverage]);
+  }, [isLeverageFeeReady, usePermit2Setting, useExistingPositionSource, permit2Authorized, signAndLeverage, approveAndLeverage]);
 
   const projectedOverLimit = projectedLTV >= lltv;
   const insufficientLiquidity = quote.flashLoanAssetAmount > marketLiquidity;
-  const inputAssetSymbol = useLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
-  const inputAssetDecimals = useLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
-  const inputAssetBalance = useLoanAssetInput ? (loanTokenBalance as bigint | undefined) : collateralTokenBalance;
-  const inputTokenIconAddress = useLoanAssetInput ? market.loanAsset.address : market.collateralAsset.address;
+  const inputAssetSymbol = useLoanAssetInputForTransaction ? market.loanAsset.symbol : market.collateralAsset.symbol;
+  const inputAssetDecimals = useLoanAssetInputForTransaction ? market.loanAsset.decimals : market.collateralAsset.decimals;
+  const inputAssetBalance = useLoanAssetInputForTransaction ? (loanTokenBalance as bigint | undefined) : collateralTokenBalance;
+  const inputTokenIconAddress = useLoanAssetInputForTransaction ? market.loanAsset.address : market.collateralAsset.address;
   const flashBorrowPreview = useMemo(
     () => formatTokenAmountPreview(quote.flashLoanAssetAmount, market.loanAsset.decimals),
     [quote.flashLoanAssetAmount, market.loanAsset.decimals],
@@ -346,20 +360,28 @@ export function AddCollateralAndLeverage({
     () => formatTokenAmountPreview(quote.flashLegCollateralTokenAmount, market.collateralAsset.decimals),
     [quote.flashLegCollateralTokenAmount, market.collateralAsset.decimals],
   );
-  const collateralPreviewForDisplay = isSwapRoute && !useLoanAssetInput ? swapCollateralOutPreview : totalCollateralAddedPreview;
+  const collateralPreviewForDisplay =
+    isSwapRoute && !useLoanAssetInputForTransaction ? swapCollateralOutPreview : totalCollateralAddedPreview;
   const collateralPreviewLabel = isSwapRoute
-    ? useLoanAssetInput
+    ? useLoanAssetInputForTransaction
       ? 'Total Collateral Added (Min.)'
       : 'Collateral From Swap (Min.)'
     : isErc4626Route
       ? 'Total Collateral Added (Min.)'
       : 'Total Collateral Added';
   const hasExecutableInitialCapitalConversion = useMemo(() => {
-    if (!useLoanAssetInput) return true;
+    if (useExistingPositionSource || !useLoanAssetInputForTransaction) return true;
     if (isSwapRoute) return quote.totalCollateralTokenAmountAdded > 0n;
     if (isErc4626Route) return quote.initialCapitalCollateralTokenAmount > 0n;
     return false;
-  }, [useLoanAssetInput, isSwapRoute, isErc4626Route, quote.totalCollateralTokenAmountAdded, quote.initialCapitalCollateralTokenAmount]);
+  }, [
+    useExistingPositionSource,
+    useLoanAssetInputForTransaction,
+    isSwapRoute,
+    isErc4626Route,
+    quote.totalCollateralTokenAmountAdded,
+    quote.initialCapitalCollateralTokenAmount,
+  ]);
   const swapRatePreviewText = useMemo(() => {
     if (!isSwapRoute || !quote.swapPriceRoute) return null;
 
@@ -493,9 +515,10 @@ export function AddCollateralAndLeverage({
     vaultRateInsight.sharePriceNow,
   ]);
   const contributedCapitalAssets = useMemo(() => {
+    if (useExistingPositionSource) return null;
     if (addedCollateralAssets <= 0n) return null;
 
-    if (isSwapRoute && useLoanAssetInput) {
+    if (isSwapRoute && useLoanAssetInputForTransaction) {
       const totalLoanInput = initialCapitalInputAmount + addedBorrowAssets;
       if (totalLoanInput <= 0n) return null;
 
@@ -515,7 +538,8 @@ export function AddCollateralAndLeverage({
     isSwapRoute,
     quote.initialCapitalCollateralTokenAmount,
     quote.totalCollateralTokenAmountAdded,
-    useLoanAssetInput,
+    useExistingPositionSource,
+    useLoanAssetInputForTransaction,
   ]);
   const holdRewardsApy = useMemo(() => {
     const holdRewardAprDecimal = merklHoldIncentives.holdRewardAprDecimal;
@@ -537,6 +561,7 @@ export function AddCollateralAndLeverage({
   const hasConfiguredHoldRewards = merklHoldIncentives.incentiveLabel != null;
   const shouldShowHoldRewardsRow = hasConfiguredHoldRewards;
   const shouldShowNetRate = isErc4626Route || (showFullRewardAPY && shouldShowHoldRewardsRow);
+  const shouldShowLeveredCarryRow = !useExistingPositionSource;
   const isNetRateLoading =
     (isErc4626Route && (vaultRateInsight.isLoading || vaultRateInsight.vaultApy3d == null || projectedLtvRatio == null)) ||
     (showFullRewardAPY && shouldShowHoldRewardsRow && merklHoldIncentives.loading);
@@ -594,15 +619,25 @@ export function AddCollateralAndLeverage({
     if (previewLeveredCarryOnCapitalRate == null) return 'text-secondary';
     return previewLeveredCarryOnCapitalRate >= 0 ? 'text-emerald-500' : 'text-red-500';
   }, [previewLeveredCarryOnCapitalRate]);
+  const hasRequiredInput = useExistingPositionSource
+    ? currentCollateralAssets > 0n && positionDebtInputAmount > 0n && positionDebtInputError === null
+    : initialCapitalInputAmount > 0n && initialCapitalInputError === null;
+  const leverageButtonLabel = useExistingPositionSource ? 'Increase Leverage' : 'Leverage';
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           <PreviewSectionHeader
-            title="Leverage Preview"
+            title={useExistingPositionSource ? 'Increase Leverage' : 'Leverage Preview'}
             onRefresh={onSuccess}
             isRefreshing={isRefreshing}
+          />
+          <PositionLeverageSummary
+            currentLtv={currentLTV}
+            projectedLtv={projectedLTV}
+            lltv={lltv}
+            hasChanges={hasChanges}
           />
           <BorrowPositionRiskCard
             market={market}
@@ -619,102 +654,52 @@ export function AddCollateralAndLeverage({
           />
 
           <div className="mt-2 space-y-3">
-            <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">Initial Capital</p>
-                {canUseLoanAssetInput && (
-                  <div className="flex items-center gap-2">
-                    <div className="text-xs text-secondary">Use {market.loanAsset.symbol}</div>
-                    <IconSwitch
-                      size="sm"
-                      selected={useLoanAssetInput}
-                      onChange={setUseLoanAssetInput}
-                      thumbIcon={null}
-                      classNames={{
-                        wrapper: 'mr-0 h-4 w-9',
-                        thumb: 'h-3 w-3',
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-              <Input
-                decimals={inputAssetDecimals}
-                max={inputAssetBalance}
-                setValue={setInitialCapitalInputAmount}
-                setError={setInitialCapitalInputError}
-                exceedMaxErrMessage="Insufficient Balance"
-                value={initialCapitalInputAmount}
-                inputClassName="h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums"
-                endAdornment={
-                  <TokenIcon
-                    address={inputTokenIconAddress}
-                    chainId={market.morphoBlue.chain.id}
-                    symbol={inputAssetSymbol}
-                    width={16}
-                    height={16}
-                  />
-                }
+            {useExistingPositionSource ? (
+              <PositionDebtLoopInput
+                market={market}
+                marketLiquidity={marketLiquidity}
+                value={positionDebtInputAmount}
+                setValue={setPositionDebtInputAmount}
+                error={positionDebtInputError}
+                setError={setPositionDebtInputError}
               />
-              <div className="mt-1 flex items-start gap-3 text-xs">
-                {initialCapitalInputError && <p className="text-red-500">{initialCapitalInputError}</p>}
-                <span className="ml-auto text-right text-secondary">
-                  Balance: {formatBalance(inputAssetBalance ?? 0n, inputAssetDecimals)} {inputAssetSymbol}
-                </span>
-              </div>
-            </div>
-
-            <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">
-                  {useTargetLtvInput ? 'Target LTV' : 'Target Multiplier'}
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className="text-xs text-secondary">Use LTV</div>
-                  <IconSwitch
-                    size="sm"
-                    selected={useTargetLtvInput}
-                    onChange={handleTargetInputModeChange}
-                    thumbIcon={null}
-                    classNames={{
-                      wrapper: 'mr-0 h-4 w-9',
-                      thumb: 'h-3 w-3',
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="relative min-w-0">
-                {useTargetLtvInput ? (
-                  <Input
-                    decimals={2}
-                    setValue={(nextTargetLtvBps) => {
-                      const clampedTargetLtvBps = clampTargetLtvBps(nextTargetLtvBps, maxTargetLtvBps);
-                      setTargetLtvIntentBps(clampedTargetLtvBps);
-                      setTargetMultiplierBps(multiplierBpsFromTargetLtv(clampedTargetLtvBps, maxMultiplierBps));
-                    }}
-                    value={targetLtvIntentBps}
-                    inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
-                    endAdornment={<span className="text-xs text-secondary">%</span>}
-                    debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
-                  />
-                ) : (
-                  <Input
-                    decimals={4}
-                    setValue={syncInputFieldsFromMultiplier}
-                    value={multiplierBps}
-                    inputClassName="h-10 rounded bg-hovered px-3 py-2 pr-10 text-base font-medium tabular-nums"
-                    endAdornment={<span className="text-xs text-secondary">x</span>}
-                    debounceSetValueMs={TARGET_INPUT_DEBOUNCE_MS}
-                  />
-                )}
-              </div>
-            </div>
+            ) : (
+              <>
+                <WalletCapitalInput
+                  market={market}
+                  canUseLoanAssetInput={canUseLoanAssetInput}
+                  useLoanAssetInput={useLoanAssetInput}
+                  setUseLoanAssetInput={setUseLoanAssetInput}
+                  inputAssetSymbol={inputAssetSymbol}
+                  inputAssetDecimals={inputAssetDecimals}
+                  inputAssetBalance={inputAssetBalance}
+                  inputTokenIconAddress={inputTokenIconAddress}
+                  value={initialCapitalInputAmount}
+                  setValue={setInitialCapitalInputAmount}
+                  error={initialCapitalInputError}
+                  setError={setInitialCapitalInputError}
+                />
+                <TargetLeverageInput
+                  useTargetLtvInput={useTargetLtvInput}
+                  onTargetInputModeChange={handleTargetInputModeChange}
+                  targetLtvIntentBps={targetLtvIntentBps}
+                  setTargetLtvIntentBps={setTargetLtvIntentBps}
+                  setTargetMultiplierBps={setTargetMultiplierBps}
+                  maxTargetLtvBps={maxTargetLtvBps}
+                  maxMultiplierBps={maxMultiplierBps}
+                  multiplierBps={multiplierBps}
+                  syncInputFieldsFromMultiplier={syncInputFieldsFromMultiplier}
+                />
+              </>
+            )}
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
               <p className="mb-2 text-[11px] uppercase tracking-[0.12em] text-secondary">Transaction Preview</p>
               <div className="space-y-1 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-secondary">{isSwapRoute ? 'Flash Borrow Required' : 'Flash Borrow'}</span>
+                  <span className="text-secondary">
+                    {useExistingPositionSource ? 'Additional Debt' : isSwapRoute ? 'Flash Borrow Required' : 'Flash Borrow'}
+                  </span>
                   <span className="tabular-nums inline-flex items-center gap-1.5">
                     <Tooltip content={<span className="text-xs">{flashBorrowPreview.full}</span>}>
                       <span className="cursor-help border-b border-dotted border-white/40">{flashBorrowPreview.compact}</span>
@@ -846,31 +831,36 @@ export function AddCollateralAndLeverage({
                             {isNetRateLoading ? '...' : renderRateFromDisplayMode(previewExpectedNetRate)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-0.5">
-                            <span className="text-secondary">{leveredCarryLabel}</span>
-                            <HelpTooltipIcon
-                              content={
-                                <SharedTooltipContent
-                                  title={leveredCarryLabel}
-                                  detail={leveredCarryDetail}
-                                  secondaryDetail={leveredCarrySecondaryDetail}
-                                />
-                              }
-                              ariaLabel={`Explain ${leveredCarryLabel}`}
-                              className="h-auto w-auto"
-                            />
+                        {shouldShowLeveredCarryRow && (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-0.5">
+                              <span className="text-secondary">{leveredCarryLabel}</span>
+                              <HelpTooltipIcon
+                                content={
+                                  <SharedTooltipContent
+                                    title={leveredCarryLabel}
+                                    detail={leveredCarryDetail}
+                                    secondaryDetail={leveredCarrySecondaryDetail}
+                                  />
+                                }
+                                ariaLabel={`Explain ${leveredCarryLabel}`}
+                                className="h-auto w-auto"
+                              />
+                            </div>
+                            <span className={`tabular-nums ${leveredCarryRateClass}`}>
+                              {isLeveredCarryLoading ? '...' : renderRateFromDisplayMode(previewLeveredCarryOnCapitalRate)}
+                            </span>
                           </div>
-                          <span className={`tabular-nums ${leveredCarryRateClass}`}>
-                            {isLeveredCarryLoading ? '...' : renderRateFromDisplayMode(previewLeveredCarryOnCapitalRate)}
-                          </span>
-                        </div>
+                        )}
                       </>
                     )}
                   </>
                 )}
               </div>
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
+              {useExistingPositionSource && currentCollateralAssets <= 0n && (
+                <p className="mt-2 text-xs text-red-500">Existing collateral is required to increase leverage without wallet capital.</p>
+              )}
               {!quote.error && leverageFeeReadinessError && <p className="mt-2 text-xs text-red-500">{leverageFeeReadinessError}</p>}
               {isErc4626Route && vaultRateInsight.error && (
                 <p className="mt-2 text-xs text-red-500">Failed to fetch 3-day vault/borrow rates: {vaultRateInsight.error}</p>
@@ -895,9 +885,8 @@ export function AddCollateralAndLeverage({
                 isLoading={isLoadingPermit2 || leveragePending || quote.isLoading}
                 disabled={
                   route == null ||
-                  initialCapitalInputError !== null ||
+                  !hasRequiredInput ||
                   quote.error !== null ||
-                  initialCapitalInputAmount <= 0n ||
                   !isBundlerAuthorizationReady ||
                   !hasExecutableInitialCapitalConversion ||
                   !isLeverageFeeReady ||
@@ -908,7 +897,7 @@ export function AddCollateralAndLeverage({
                 variant="primary"
                 className="min-w-32"
               >
-                Leverage
+                {leverageButtonLabel}
               </ExecuteTransactionButton>
             </div>
 

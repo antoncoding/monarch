@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { IoWarningOutline } from 'react-icons/io5';
-import { RiSparklingFill } from 'react-icons/ri';
 import { type Address, erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
@@ -26,6 +25,7 @@ type LeverageModalProps = {
   isRefreshing?: boolean;
   position: MarketPosition | null;
   defaultMode?: 'leverage' | 'deleverage';
+  defaultLeverageSource?: 'wallet' | 'position';
   toggleLeverageDeleverage?: boolean;
 };
 
@@ -101,6 +101,7 @@ export function LeverageModal({
   isRefreshing = false,
   position,
   defaultMode = 'leverage',
+  defaultLeverageSource = 'wallet',
   toggleLeverageDeleverage = true,
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
@@ -220,6 +221,7 @@ export function LeverageModal({
           currentPosition={position}
           collateralTokenBalance={collateralTokenBalance}
           oraclePrice={oraclePrice}
+          defaultLeverageSource={defaultLeverageSource}
           onSuccess={handleRefreshAll}
           isRefreshing={isRefreshingAnyData}
         />
@@ -236,7 +238,17 @@ export function LeverageModal({
         isRefreshing={isRefreshingAnyData}
       />
     );
-  }, [route, effectiveMode, market, position, collateralTokenBalance, oraclePrice, handleRefreshAll, isRefreshingAnyData]);
+  }, [
+    route,
+    effectiveMode,
+    market,
+    position,
+    collateralTokenBalance,
+    oraclePrice,
+    defaultLeverageSource,
+    handleRefreshAll,
+    isRefreshingAnyData,
+  ]);
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -276,13 +288,6 @@ export function LeverageModal({
               options={modeOptions}
               onValueChange={(nextMode) => setMode(nextMode as 'leverage' | 'deleverage')}
             />
-            <Badge
-              variant="default"
-              className="inline-flex items-center gap-1"
-            >
-              <RiSparklingFill className="h-3 w-3 text-yellow-400" />
-              New
-            </Badge>
             {(route || availableRouteModes.length > 0) && (
               <RouteModeBadge
                 value={displayedRouteMode}
