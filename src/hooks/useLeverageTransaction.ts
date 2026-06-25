@@ -163,7 +163,7 @@ export function useLeverageTransaction({
     () => ({
       title: 'Leverage',
       description: `${market.collateralAsset.symbol} leveraged using ${market.loanAsset.symbol} debt`,
-      tokenSymbol: initialCapitalInputTokenSymbol,
+      tokenSymbol: requiresInitialCapitalTransfer ? initialCapitalInputTokenSymbol : market.loanAsset.symbol,
       amount: requiresInitialCapitalTransfer ? initialCapitalInputAmount : flashLoanAssetAmount,
       marketId: market.uniqueKey,
     }),

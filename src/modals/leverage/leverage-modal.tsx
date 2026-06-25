@@ -188,20 +188,24 @@ export function LeverageModal({
           label: effectiveMode === 'leverage' ? leverageModeLabel : `Deleverage ${market.collateralAsset.symbol}`,
         },
       ];
-  const description =
-    effectiveMode === 'leverage'
-      ? isPositionUpdateIntent
-        ? 'Increase leverage on this position without adding wallet capital.'
-        : isErc4626Route
-          ? `Leverage ERC4626 vault exposure by looping ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
-          : isSwapRoute
-            ? `Leverage ${market.collateralAsset.symbol} exposure by swapping borrowed ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
-            : `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
-      : isErc4626Route
-        ? `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`
-        : isSwapRoute
-          ? `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`
-          : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`;
+  let description: string;
+  if (effectiveMode === 'leverage') {
+    if (isPositionUpdateIntent) {
+      description = 'Increase leverage on this position without adding wallet capital.';
+    } else if (isErc4626Route) {
+      description = `Leverage ERC4626 vault exposure by looping ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`;
+    } else if (isSwapRoute) {
+      description = `Leverage ${market.collateralAsset.symbol} exposure by swapping borrowed ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`;
+    } else {
+      description = `Leverage your ${market.collateralAsset.symbol} exposure by looping.`;
+    }
+  } else if (isErc4626Route) {
+    description = `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`;
+  } else if (isSwapRoute) {
+    description = `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`;
+  } else {
+    description = `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`;
+  }
 
   const {
     data: collateralTokenBalance,
