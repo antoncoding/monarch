@@ -446,7 +446,10 @@ export function useLeverageQuote({
 
   const flashLoanAssetAmount = useMemo(() => {
     if (!route) return 0n;
-    if (isPositionTargetSizing) return effectivePositionDebtInputAmount;
+    if (isPositionTargetSizing) {
+      if (route.kind === 'swap') return swapLoanSellQuoteQuery.data?.flashLoanAssetAmount ?? 0n;
+      return effectivePositionDebtInputAmount;
+    }
     if (route.kind === 'swap') {
       if (isLoanAssetInput) return swapLoanSellQuoteQuery.data?.flashLoanAssetAmount ?? 0n;
       return swapCollateralInputQuoteQuery.data?.flashLoanAssetAmount ?? 0n;
