@@ -112,17 +112,17 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
         title="Market Borrows"
         actions={headerActions}
       >
-        <Table className="responsive w-full min-w-[840px] table-fixed">
+        <Table className="responsive w-full min-w-[960px] table-fixed">
           <TableHeader>
             <TableRow className="w-full justify-center text-secondary">
               <TableHead className="w-16">Network</TableHead>
-              <TableHead className="w-[30%]">Market</TableHead>
-              <TableHead>Loan</TableHead>
-              <TableHead>{rateLabel} (now)</TableHead>
-              <TableHead>Collateral</TableHead>
-              <TableHead>LTV</TableHead>
-              {showHealthScore && <TableHead>Health Score</TableHead>}
-              <TableHead>Actions</TableHead>
+              <TableHead className="w-[28%]">Market</TableHead>
+              <TableHead className="w-32">Loan</TableHead>
+              <TableHead className="w-24">{rateLabel} (now)</TableHead>
+              <TableHead className="w-44">Collateral</TableHead>
+              <TableHead className="w-24">LTV</TableHead>
+              {showHealthScore && <TableHead className="w-28">Health Score</TableHead>}
+              <TableHead className="w-20">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="text-sm">
@@ -179,14 +179,24 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         {row.isActiveDebt ? (
                           <>
                             <span className="font-medium">{formatReadableTokenAmount(row.borrowAmount)}</span>
-                            <span>{row.market.loanAsset.symbol}</span>
-                            <TokenIcon
-                              address={row.market.loanAsset.address}
-                              chainId={row.market.morphoBlue.chain.id}
-                              symbol={row.market.loanAsset.symbol}
-                              width={16}
-                              height={16}
-                            />
+                            <Tooltip
+                              content={
+                                <TooltipContent
+                                  title={row.market.loanAsset.symbol}
+                                  detail="Loan asset"
+                                />
+                              }
+                            >
+                              <span className="inline-flex">
+                                <TokenIcon
+                                  address={row.market.loanAsset.address}
+                                  chainId={row.market.morphoBlue.chain.id}
+                                  symbol={row.market.loanAsset.symbol}
+                                  width={16}
+                                  height={16}
+                                />
+                              </span>
+                            </Tooltip>
                           </>
                         ) : (
                           <span className="font-medium text-secondary">-</span>
@@ -207,8 +217,11 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                       </div>
                     </TableCell>
 
-                    <TableCell data-label="Collateral">
-                      <div className="flex items-center justify-center gap-2">
+                    <TableCell
+                      data-label="Collateral"
+                      className="px-3"
+                    >
+                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                         {row.collateralAmount > 0 ? (
                           <>
                             <span className="font-medium">{formatReadableTokenAmount(row.collateralAmount)}</span>
@@ -234,7 +247,6 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         ) : (
                           <div className="whitespace-nowrap tabular-nums">
                             <span className="font-medium">{metrics.currentLtvLabel}</span>
-                            <span className="ml-1 text-xs text-secondary">/ {metrics.lltvLabel}</span>
                           </div>
                         )}
                       </div>
@@ -283,11 +295,11 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                               },
                             })
                           }
-                          onDeleverageClick={() =>
+                          onAdjustLeverageClick={() =>
                             open('leverage', {
                               market: row.market,
-                              defaultMode: 'deleverage',
-                              toggleLeverageDeleverage: false,
+                              position: row.position,
+                              intent: 'adjust',
                               refetch: () => {
                                 void onRefetch();
                               },

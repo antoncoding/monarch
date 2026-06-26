@@ -5,7 +5,6 @@ import { RiSparklingFill } from 'react-icons/ri';
 import { type Address, erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { ModalIntentSwitcher } from '@/components/common/Modal/ModalIntentSwitcher';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -15,8 +14,8 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { cn } from '@/utils/components';
 import type { Market, MarketPosition } from '@/utils/types';
+import { AdjustLeveragePosition } from './components/adjust-leverage-position';
 import { AddCollateralAndLeverage } from './components/add-collateral-and-leverage';
-import { RemoveCollateralAndDeleverage } from './components/remove-collateral-and-deleverage';
 
 type LeverageModalProps = {
   market: Market;
@@ -25,8 +24,7 @@ type LeverageModalProps = {
   refetch?: () => void;
   isRefreshing?: boolean;
   position: MarketPosition | null;
-  defaultMode?: 'leverage' | 'deleverage';
-  toggleLeverageDeleverage?: boolean;
+  intent?: 'create' | 'adjust';
 };
 
 const ROUTE_MODE_LABELS = {
@@ -100,10 +98,8 @@ export function LeverageModal({
   refetch,
   isRefreshing = false,
   position,
-  defaultMode = 'leverage',
-  toggleLeverageDeleverage = true,
+  intent = 'create',
 }: LeverageModalProps): JSX.Element {
-  const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
   const [routeMode, setRouteMode] = useState<RouteMode>('erc4626');
   const specialBundlerWarningAcknowledgements = useAppSettings((state) => state.specialBundlerWarningAcknowledgements);
   const setSpecialBundlerWarningAcknowledged = useAppSettings((state) => state.setSpecialBundlerWarningAcknowledged);
@@ -172,18 +168,7 @@ export function LeverageModal({
     return availableRouteModes[0] ?? routeMode;
   }, [route, availableRouteModes, routeMode]);
 
-  const effectiveMode = mode;
-  const modeOptions: { value: string; label: string }[] = toggleLeverageDeleverage
-    ? [
-        { value: 'leverage', label: `Leverage ${market.collateralAsset.symbol}` },
-        { value: 'deleverage', label: `Deleverage ${market.collateralAsset.symbol}` },
-      ]
-    : [
-        {
-          value: effectiveMode,
-          label: effectiveMode === 'leverage' ? `Leverage ${market.collateralAsset.symbol}` : `Deleverage ${market.collateralAsset.symbol}`,
-        },
-      ];
+  const isAdjustIntent = intent === 'adjust';
 
   const {
     data: collateralTokenBalance,
@@ -212,9 +197,9 @@ export function LeverageModal({
   const routeContent = useMemo((): JSX.Element | null => {
     if (!route) return null;
 
-    if (effectiveMode === 'leverage') {
+    if (isAdjustIntent) {
       return (
-        <AddCollateralAndLeverage
+        <AdjustLeveragePosition
           market={market}
           route={route}
           currentPosition={position}
@@ -227,16 +212,17 @@ export function LeverageModal({
     }
 
     return (
-      <RemoveCollateralAndDeleverage
+      <AddCollateralAndLeverage
         market={market}
         route={route}
         currentPosition={position}
+        collateralTokenBalance={collateralTokenBalance}
         oraclePrice={oraclePrice}
         onSuccess={handleRefreshAll}
         isRefreshing={isRefreshingAnyData}
       />
     );
-  }, [route, effectiveMode, market, position, collateralTokenBalance, oraclePrice, handleRefreshAll, isRefreshingAnyData]);
+  }, [route, isAdjustIntent, market, position, collateralTokenBalance, oraclePrice, handleRefreshAll, isRefreshingAnyData]);
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -271,11 +257,7 @@ export function LeverageModal({
         onClose={() => onOpenChange(false)}
         title={
           <div className="flex items-center gap-2">
-            <ModalIntentSwitcher
-              value={effectiveMode}
-              options={modeOptions}
-              onValueChange={(nextMode) => setMode(nextMode as 'leverage' | 'deleverage')}
-            />
+            <span>Leverage</span>
             <Badge
               variant="default"
               className="inline-flex items-center gap-1"
@@ -293,17 +275,13 @@ export function LeverageModal({
           </div>
         }
         description={
-          effectiveMode === 'leverage'
-            ? isErc4626Route
+          isAdjustIntent
+            ? 'Set a target LTV or multiplier. The preview will show whether this borrows more or unwinds debt.'
+            : isErc4626Route
               ? `Leverage ERC4626 vault exposure by looping ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
               : isSwapRoute
                 ? `Leverage ${market.collateralAsset.symbol} exposure by swapping borrowed ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
                 : `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
-            : isErc4626Route
-              ? `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`
-              : isSwapRoute
-                ? `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`
-                : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
         }
       />
       <ModalBody>

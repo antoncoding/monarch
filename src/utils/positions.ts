@@ -55,6 +55,7 @@ export type PositionSnapshotsWithOracleResult = {
 
 export type BorrowPositionRow = {
   market: MorphoMarket;
+  position: MarketPosition;
   state: {
     borrowAssets: string;
     borrowShares: string;
@@ -68,7 +69,7 @@ export type BorrowPositionRow = {
 
 const ONE_YEAR_IN_SECONDS = 86_400 * 365;
 
-const toPositionAmount = (value: string | number | bigint | null | undefined): bigint => {
+export const toPositionAmount = (value: string | number | bigint | null | undefined): bigint => {
   if (value === null || value === undefined || value === '') {
     return 0n;
   }
@@ -79,6 +80,14 @@ const toPositionAmount = (value: string | number | bigint | null | undefined): b
     return 0n;
   }
 };
+
+export function hasBorrowSidePosition(position: MarketPosition | null | undefined): boolean {
+  return (
+    toPositionAmount(position?.state.collateral) > 0n ||
+    toPositionAmount(position?.state.borrowShares) > 0n ||
+    toPositionAmount(position?.state.borrowAssets) > 0n
+  );
+}
 
 export function hasOpenPosition(position: MarketPosition): boolean {
   return (
@@ -618,6 +627,7 @@ export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[])
 
       return {
         market: position.market,
+        position,
         state: {
           borrowAssets: position.state.borrowAssets,
           borrowShares: position.state.borrowShares,
