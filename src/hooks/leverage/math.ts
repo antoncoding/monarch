@@ -4,6 +4,7 @@ import { LEVERAGE_MIN_MULTIPLIER_BPS, LEVERAGE_MULTIPLIER_SCALE_BPS } from './ty
 export const LEVERAGE_SLIPPAGE_BUFFER_BPS = 9_950n; // 0.50% tolerance
 export const BPS_SCALE = 10_000n;
 export const WAD_TO_BPS_SCALE = 100_000_000_000_000n;
+const LTV_WAD_SCALE = 10n ** 18n;
 const ASSET_INPUT_SHARE_SLIPPAGE_BUFFER_BPS = 50n; // 0.50%
 const MORPHO_VIRTUAL_SHARES = 1_000_000n;
 const MORPHO_VIRTUAL_ASSETS = 1n;
@@ -173,6 +174,53 @@ export const computeLeverageProjectedPosition = ({
   projectedBorrowAssets: currentBorrowAssets + addedBorrowAssets,
   projectedCollateralAssets: currentCollateralAssets + addedCollateralAssets,
 });
+
+export type TargetDebtAdjustmentDirection = 'increase' | 'decrease' | 'none';
+
+/**
+ * Computes the debt delta needed to move the whole position to a target LTV.
+ *
+ * WHY: existing-position leverage is not a fresh isolated loop. Borrowing `x`
+ * and depositing the resulting collateral changes both sides of the current
+ * position. Deleveraging is the inverse, but the slippage factor moves to the
+ * removed-collateral side because the route sells collateral to repay debt.
+ */
+export const computeDebtAdjustmentForTargetLtv = ({
+  currentBorrowAssets,
+  currentCollateralValueInLoan,
+  collateralValueFactorBps = BPS_SCALE,
+  targetLtv,
+}: {
+  currentBorrowAssets: bigint;
+  currentCollateralValueInLoan: bigint;
+  collateralValueFactorBps?: bigint;
+  targetLtv: bigint;
+}): { direction: TargetDebtAdjustmentDirection; amount: bigint } => {
+  if (currentCollateralValueInLoan <= 0n || targetLtv <= 0n) {
+    return currentBorrowAssets > 0n ? { direction: 'decrease', amount: currentBorrowAssets } : { direction: 'none', amount: 0n };
+  }
+
+  const safeCollateralValueFactorBps =
+    collateralValueFactorBps <= 0n ? 0n : collateralValueFactorBps > BPS_SCALE ? BPS_SCALE : collateralValueFactorBps;
+  if (safeCollateralValueFactorBps <= 0n) return { direction: 'none', amount: 0n };
+
+  const signedNumerator = targetLtv * currentCollateralValueInLoan - LTV_WAD_SCALE * currentBorrowAssets;
+  if (signedNumerator === 0n) return { direction: 'none', amount: 0n };
+
+  const direction = signedNumerator > 0n ? 'increase' : 'decrease';
+  const denominator =
+    direction === 'increase'
+      ? LTV_WAD_SCALE - (targetLtv * safeCollateralValueFactorBps) / BPS_SCALE
+      : LTV_WAD_SCALE - (targetLtv * BPS_SCALE) / safeCollateralValueFactorBps;
+  if (denominator <= 0n) return { direction: 'none', amount: 0n };
+
+  const absNumerator = signedNumerator > 0n ? signedNumerator : -signedNumerator;
+  const amount = (absNumerator + denominator - 1n) / denominator;
+  return {
+    direction,
+    amount,
+  };
+};
 
 export type DeleverageProjectedPosition = {
   usesCloseRoute: boolean;
@@ -348,6 +396,12 @@ export const withSlippageCeil = (value: bigint, slippageBps?: number): bigint =>
   if (value <= 0n) return 0n;
   const ceilBps = FRACTIONAL_BPS_DENOMINATOR + getSlippageToleranceBps(slippageBps);
   return (value * ceilBps + FRACTIONAL_BPS_DENOMINATOR - 1n) / FRACTIONAL_BPS_DENOMINATOR;
+};
+
+export const withSlippageInverseCeil = (value: bigint, slippageBps?: number): bigint => {
+  if (value <= 0n) return 0n;
+  const floorBps = getSlippageFloorBps(slippageBps);
+  return (value * FRACTIONAL_BPS_DENOMINATOR + floorBps - 1n) / floorBps;
 };
 
 /**

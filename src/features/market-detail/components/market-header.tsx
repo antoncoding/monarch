@@ -42,6 +42,7 @@ import { convertApyToApr } from '@/utils/rateMath';
 import { formatReadable } from '@/utils/balance';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
+import { hasBorrowSidePosition } from '@/utils/positions';
 import { getMarketURL, supportsMorphoAppLinks } from '@/utils/external';
 import type { Market, MarketPosition, WarningWithDetail } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
@@ -284,7 +285,8 @@ function ActionButtons({
   const hasSupply = userPosition !== null && BigInt(userPosition.state.supplyShares) > 0n;
   const hasBorrow = userPosition !== null && BigInt(userPosition.state.borrowShares) > 0n;
   const hasCollateral = userPosition !== null && BigInt(userPosition.state.collateral) > 0n;
-  const hasBorrowPosition = hasBorrow || hasCollateral;
+  const hasBorrowPosition = hasBorrowSidePosition(userPosition);
+  const leverageActionLabel = hasBorrowPosition ? 'Adjust Leverage' : 'Leverage';
 
   const supplyTooltip =
     hasSupply && userPosition ? (
@@ -356,7 +358,7 @@ function ActionButtons({
       disabled: !hasBorrow,
     },
     {
-      label: 'Leverage',
+      label: leverageActionLabel,
       icon: <TbTrendingUp className="h-4 w-4" />,
       onClick: onLeverageClick,
       disabled: false,
@@ -556,7 +558,8 @@ export function MarketHeader({
   const handleOpenLeverage = () => {
     openModal('leverage', {
       market,
-      defaultMode: 'leverage',
+      position: userPosition ?? undefined,
+      intent: hasBorrowSidePosition(userPosition) ? 'adjust' : undefined,
     });
   };
 

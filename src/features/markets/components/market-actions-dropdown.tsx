@@ -20,9 +20,10 @@ import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 
 type MarketActionsDropdownProps = {
   market: Market;
+  hasBorrowPosition?: boolean;
 };
 
-export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
+export function MarketActionsDropdown({ market, hasBorrowPosition = false }: MarketActionsDropdownProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isAssetsModalOpen, setIsAssetsModalOpen] = useState(false);
   const { open: openModal } = useModal();
@@ -60,9 +61,10 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
   const handleOpenLeverage = () => {
     openModal('leverage', {
       market,
-      defaultMode: 'leverage',
+      intent: hasBorrowPosition ? 'adjust' : undefined,
     });
   };
+  const leverageActionLabel = hasBorrowPosition ? 'Adjust Leverage' : 'Leverage';
 
   return (
     <div
@@ -104,7 +106,7 @@ export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
             onClick={handleOpenLeverage}
             startContent={<TbTrendingUp className="h-4 w-4" />}
           >
-            Leverage
+            {leverageActionLabel}
           </DropdownMenuItem>
 
           <DropdownMenuItem
