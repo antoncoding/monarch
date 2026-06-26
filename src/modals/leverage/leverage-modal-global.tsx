@@ -4,12 +4,14 @@ import { useCallback } from 'react';
 import { useConnection } from 'wagmi';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import useUserPosition from '@/hooks/useUserPosition';
-import type { Market } from '@/utils/types';
+import type { Market, MarketPosition } from '@/utils/types';
 import { LeverageModal } from './leverage-modal';
 
 type LeverageModalGlobalProps = {
   market: Market;
+  position?: MarketPosition | null;
   defaultMode?: 'leverage' | 'deleverage';
+  defaultLeverageSource?: 'wallet' | 'position';
   toggleLeverageDeleverage?: boolean;
   refetch?: () => void;
   onOpenChange: (open: boolean) => void;
@@ -21,7 +23,9 @@ type LeverageModalGlobalProps = {
  */
 export function LeverageModalGlobal({
   market,
+  position: providedPosition,
   defaultMode,
+  defaultLeverageSource,
   toggleLeverageDeleverage,
   refetch: externalRefetch,
   onOpenChange,
@@ -35,6 +39,8 @@ export function LeverageModalGlobal({
   });
 
   const { position, refetch: refetchPosition } = useUserPosition(address, chainId, market.uniqueKey);
+  // Prefer the live position, but keep the row-seeded position when fallback APIs return null.
+  const resolvedPosition = position ?? providedPosition ?? null;
 
   const handleRefetch = useCallback(() => {
     refetchPosition();
@@ -47,8 +53,9 @@ export function LeverageModalGlobal({
       onOpenChange={onOpenChange}
       oraclePrice={oraclePrice}
       refetch={handleRefetch}
-      position={position}
+      position={resolvedPosition}
       defaultMode={defaultMode}
+      defaultLeverageSource={defaultLeverageSource}
       toggleLeverageDeleverage={toggleLeverageDeleverage}
     />
   );

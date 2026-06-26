@@ -18,8 +18,14 @@ type UseLeverageQuoteParams = {
    * Exact user-entered starting capital, denominated by `inputMode`.
    * - `loan`: market loan asset amount
    * - `collateral`: market collateral token amount
+   * Ignored when `positionDebtInputAmount` is set.
    */
   initialCapitalInputAmount: bigint;
+  /**
+   * Exact extra debt to loop from an existing position. When set, the quote has no wallet-funded
+   * initial leg: the flash-loaned debt is converted into collateral and supplied back to the same market.
+   */
+  positionDebtInputAmount?: bigint;
   inputMode: 'collateral' | 'loan';
   slippageBps: number;
   multiplierBps: bigint;
@@ -248,6 +254,7 @@ export function useLeverageQuote({
   chainId,
   route,
   initialCapitalInputAmount,
+  positionDebtInputAmount,
   inputMode,
   slippageBps,
   multiplierBps,
@@ -257,35 +264,61 @@ export function useLeverageQuote({
   collateralTokenDecimals,
   userAddress,
 }: UseLeverageQuoteParams): LeverageQuote {
+  const isPositionDebtInput = positionDebtInputAmount !== undefined;
+  const safeInitialCapitalInputAmount = isPositionDebtInput ? 0n : initialCapitalInputAmount;
+  const safePositionDebtInputAmount = positionDebtInputAmount ?? 0n;
   const isLoanAssetInput = inputMode === 'loan';
-  const isSwapLoanAssetInput = route?.kind === 'swap' && isLoanAssetInput;
+  const walletLoanInputFlashLoanAssetAmount = isLoanAssetInput
+    ? computeLeveragedExtraAmount(safeInitialCapitalInputAmount, multiplierBps)
+    : 0n;
+  const exactLoanInputFlashLoanAssetAmount = isPositionDebtInput ? safePositionDebtInputAmount : walletLoanInputFlashLoanAssetAmount;
+  const exactLoanInputSellAmount = isPositionDebtInput
+    ? safePositionDebtInputAmount
+    : isLoanAssetInput
+      ? safeInitialCapitalInputAmount + exactLoanInputFlashLoanAssetAmount
+      : 0n;
+  const isSwapExactLoanInput = route?.kind === 'swap' && (isPositionDebtInput || isLoanAssetInput);
+  const isSwapLoanAssetInput = route?.kind === 'swap' && isLoanAssetInput && !isPositionDebtInput;
   const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
+  const erc4626PreviewDepositAmount = isPositionDebtInput
+    ? safePositionDebtInputAmount
+    : isLoanAssetInput
+      ? safeInitialCapitalInputAmount
+      : 0n;
 
   const {
-    data: previewDepositCollateralSharesFromUserLoanAssets,
+    data: previewDepositCollateralSharesFromLoanAssets,
     isLoading: isLoadingErc4626Deposit,
     error: erc4626DepositError,
   } = useReadContract({
     address: route?.kind === 'erc4626' ? route.collateralVault : undefined,
     abi: erc4626Abi,
     functionName: 'previewDeposit',
-    // `previewDeposit(user loan assets)` -> ERC4626 collateral shares minted from that exact asset input.
-    args: [initialCapitalInputAmount],
+    // `previewDeposit(loan assets)` -> ERC4626 collateral shares minted from that exact asset input.
+    args: [erc4626PreviewDepositAmount],
     chainId,
     query: {
-      enabled: route?.kind === 'erc4626' && isLoanAssetInput && initialCapitalInputAmount > 0n,
+      enabled: route?.kind === 'erc4626' && erc4626PreviewDepositAmount > 0n,
     },
   });
 
   const quotedInitialCapitalCollateralTokenAmount = useMemo(() => {
+    if (isPositionDebtInput) return 0n;
     if (!route) return 0n;
     if (isSwapLoanAssetInput) return 0n;
-    if (!isLoanAssetInput) return initialCapitalInputAmount;
+    if (!isLoanAssetInput) return safeInitialCapitalInputAmount;
     // `previewDeposit(initialCapitalInputAmount)` returns the ERC4626 collateral-share amount minted by
     // depositing the user's exact loan-token asset input into the vault.
-    if (route.kind === 'erc4626') return (previewDepositCollateralSharesFromUserLoanAssets as bigint | undefined) ?? 0n;
+    if (route.kind === 'erc4626') return (previewDepositCollateralSharesFromLoanAssets as bigint | undefined) ?? 0n;
     return 0n;
-  }, [route, isSwapLoanAssetInput, isLoanAssetInput, initialCapitalInputAmount, previewDepositCollateralSharesFromUserLoanAssets]);
+  }, [
+    isPositionDebtInput,
+    route,
+    isSwapLoanAssetInput,
+    isLoanAssetInput,
+    safeInitialCapitalInputAmount,
+    previewDepositCollateralSharesFromLoanAssets,
+  ]);
 
   const initialCapitalCollateralTokenAmount = useMemo(() => {
     if (route?.kind !== 'erc4626' || !isLoanAssetInput) return quotedInitialCapitalCollateralTokenAmount;
@@ -293,8 +326,11 @@ export function useLeverageQuote({
   }, [route, isLoanAssetInput, quotedInitialCapitalCollateralTokenAmount, slippageBps]);
 
   const targetFlashCollateralTokenAmount = useMemo(
-    () => (isSwapLoanAssetInput ? 0n : computeFlashCollateralAmount(quotedInitialCapitalCollateralTokenAmount, multiplierBps)),
-    [isSwapLoanAssetInput, quotedInitialCapitalCollateralTokenAmount, multiplierBps],
+    () =>
+      isPositionDebtInput || isSwapLoanAssetInput
+        ? 0n
+        : computeFlashCollateralAmount(quotedInitialCapitalCollateralTokenAmount, multiplierBps),
+    [isPositionDebtInput, isSwapLoanAssetInput, quotedInitialCapitalCollateralTokenAmount, multiplierBps],
   );
 
   const {
@@ -342,9 +378,9 @@ export function useLeverageQuote({
       }),
   });
 
-  const swapLoanInputCombinedQuoteQuery = useQuery({
+  const swapExactLoanInputQuoteQuery = useQuery({
     queryKey: [
-      'leverage-swap-loan-input-combined-quote',
+      'leverage-swap-exact-loan-input-quote',
       chainId,
       route?.kind === 'swap' ? route.paraswapAdapterAddress : null,
       route?.kind === 'swap' ? route.generalAdapterAddress : null,
@@ -353,15 +389,15 @@ export function useLeverageQuote({
       collateralTokenAddress,
       collateralTokenDecimals,
       swapExecutionAddress,
-      initialCapitalInputAmount.toString(),
-      multiplierBps.toString(),
+      isPositionDebtInput ? 'position' : 'wallet-loan',
+      exactLoanInputSellAmount.toString(),
+      exactLoanInputFlashLoanAssetAmount.toString(),
       slippageBps,
       userAddress ?? null,
     ],
-    enabled: route?.kind === 'swap' && isLoanAssetInput && initialCapitalInputAmount > 0n && !!userAddress,
+    enabled: isSwapExactLoanInput && exactLoanInputSellAmount > 0n && !!userAddress,
     queryFn: async () => {
-      const flashLoanAssetAmount = computeLeveragedExtraAmount(initialCapitalInputAmount, multiplierBps);
-      if (flashLoanAssetAmount <= 0n) {
+      if (exactLoanInputFlashLoanAssetAmount <= 0n) {
         return {
           flashLoanAssetAmount: 0n,
           flashLegCollateralTokenAmount: 0n,
@@ -370,13 +406,12 @@ export function useLeverageQuote({
         };
       }
 
-      const totalLoanSellAmount = initialCapitalInputAmount + flashLoanAssetAmount;
       const sellRoute = await fetchVeloraPriceRoute({
         srcToken: loanTokenAddress,
         srcDecimals: loanTokenDecimals,
         destToken: collateralTokenAddress,
         destDecimals: collateralTokenDecimals,
-        amount: totalLoanSellAmount,
+        amount: exactLoanInputSellAmount,
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
         side: 'SELL',
@@ -385,8 +420,8 @@ export function useLeverageQuote({
       const totalCollateralTokenAmountAdded = withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps);
 
       return {
-        flashLoanAssetAmount,
-        flashLegCollateralTokenAmount: 0n,
+        flashLoanAssetAmount: exactLoanInputFlashLoanAssetAmount,
+        flashLegCollateralTokenAmount: isPositionDebtInput ? totalCollateralTokenAmountAdded : 0n,
         totalCollateralTokenAmountAdded,
         priceRoute: sellRoute,
       };
@@ -395,24 +430,34 @@ export function useLeverageQuote({
 
   const flashLegCollateralTokenAmount = useMemo(() => {
     if (!route) return 0n;
+    if (isPositionDebtInput) {
+      if (route.kind === 'swap') return swapExactLoanInputQuoteQuery.data?.flashLegCollateralTokenAmount ?? 0n;
+      return withSlippageFloor((previewDepositCollateralSharesFromLoanAssets as bigint | undefined) ?? 0n, slippageBps);
+    }
     if (route.kind === 'swap') {
-      if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.flashLegCollateralTokenAmount ?? 0n;
+      if (isLoanAssetInput) return swapExactLoanInputQuoteQuery.data?.flashLegCollateralTokenAmount ?? 0n;
       return swapCollateralInputQuoteQuery.data?.flashLegCollateralTokenAmount ?? 0n;
     }
     return withSlippageFloor(targetFlashCollateralTokenAmount, slippageBps);
   }, [
     route,
+    isPositionDebtInput,
+    swapExactLoanInputQuoteQuery.data?.flashLegCollateralTokenAmount,
+    previewDepositCollateralSharesFromLoanAssets,
     isLoanAssetInput,
     targetFlashCollateralTokenAmount,
     slippageBps,
-    swapLoanInputCombinedQuoteQuery.data?.flashLegCollateralTokenAmount,
     swapCollateralInputQuoteQuery.data?.flashLegCollateralTokenAmount,
   ]);
 
   const flashLoanAssetAmount = useMemo(() => {
     if (!route) return 0n;
+    if (isPositionDebtInput) {
+      if (route.kind === 'swap') return swapExactLoanInputQuoteQuery.data?.flashLoanAssetAmount ?? 0n;
+      return safePositionDebtInputAmount;
+    }
     if (route.kind === 'swap') {
-      if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.flashLoanAssetAmount ?? 0n;
+      if (isLoanAssetInput) return swapExactLoanInputQuoteQuery.data?.flashLoanAssetAmount ?? 0n;
       return swapCollateralInputQuoteQuery.data?.flashLoanAssetAmount ?? 0n;
     }
     // `previewMint(targetFlashCollateralTokenAmount)` returns how many loan-token assets the flash leg
@@ -420,38 +465,50 @@ export function useLeverageQuote({
     return previewMintableLoanAssets ?? 0n;
   }, [
     route,
+    isPositionDebtInput,
+    safePositionDebtInputAmount,
+    swapExactLoanInputQuoteQuery.data?.flashLoanAssetAmount,
     isLoanAssetInput,
-    swapLoanInputCombinedQuoteQuery.data?.flashLoanAssetAmount,
     swapCollateralInputQuoteQuery.data?.flashLoanAssetAmount,
     previewMintableLoanAssets,
   ]);
 
   const totalCollateralTokenAmountAdded = useMemo(() => {
     if (!route) return 0n;
+    if (isPositionDebtInput) return flashLegCollateralTokenAmount;
     if (route.kind === 'swap') {
-      if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.totalCollateralTokenAmountAdded ?? 0n;
+      if (isLoanAssetInput) return swapExactLoanInputQuoteQuery.data?.totalCollateralTokenAmountAdded ?? 0n;
       return initialCapitalCollateralTokenAmount + flashLegCollateralTokenAmount;
     }
     return initialCapitalCollateralTokenAmount + flashLegCollateralTokenAmount;
   }, [
     route,
+    isPositionDebtInput,
     isLoanAssetInput,
     initialCapitalCollateralTokenAmount,
     flashLegCollateralTokenAmount,
-    swapLoanInputCombinedQuoteQuery.data?.totalCollateralTokenAmountAdded,
+    swapExactLoanInputQuoteQuery.data?.totalCollateralTokenAmountAdded,
   ]);
 
   const swapPriceRoute = useMemo(() => {
     if (route?.kind !== 'swap') return null;
-    if (isLoanAssetInput) return swapLoanInputCombinedQuoteQuery.data?.priceRoute ?? null;
+    if (isPositionDebtInput || isLoanAssetInput) return swapExactLoanInputQuoteQuery.data?.priceRoute ?? null;
     return swapCollateralInputQuoteQuery.data?.priceRoute ?? null;
-  }, [route, isLoanAssetInput, swapLoanInputCombinedQuoteQuery.data?.priceRoute, swapCollateralInputQuoteQuery.data?.priceRoute]);
+  }, [
+    route,
+    isPositionDebtInput,
+    isLoanAssetInput,
+    swapExactLoanInputQuoteQuery.data?.priceRoute,
+    swapCollateralInputQuoteQuery.data?.priceRoute,
+  ]);
 
   const error = useMemo(() => {
     if (!route) return null;
     if (route.kind === 'swap') {
-      if (!userAddress && initialCapitalInputAmount > 0n) return 'Connect wallet to fetch swap-backed leverage route.';
-      const routeError = isLoanAssetInput ? swapLoanInputCombinedQuoteQuery.error : swapCollateralInputQuoteQuery.error;
+      if (!userAddress && (safeInitialCapitalInputAmount > 0n || safePositionDebtInputAmount > 0n)) {
+        return 'Connect wallet to fetch swap-backed leverage route.';
+      }
+      const routeError = isPositionDebtInput || isLoanAssetInput ? swapExactLoanInputQuoteQuery.error : swapCollateralInputQuoteQuery.error;
       if (!routeError) return null;
       return toUserFacingVeloraQuoteError({ error: routeError, action: 'leverage' });
     }
@@ -462,20 +519,39 @@ export function useLeverageQuote({
     route,
     swapExecutionAddress,
     userAddress,
-    initialCapitalInputAmount,
+    safeInitialCapitalInputAmount,
+    safePositionDebtInputAmount,
+    isPositionDebtInput,
     isLoanAssetInput,
-    swapLoanInputCombinedQuoteQuery.error,
+    swapExactLoanInputQuoteQuery.error,
     swapCollateralInputQuoteQuery.error,
     erc4626DepositError,
     erc4626MintError,
   ]);
 
-  const isLoading =
-    !!route &&
-    (route.kind === 'swap'
-      ? (isLoanAssetInput && (swapLoanInputCombinedQuoteQuery.isLoading || swapLoanInputCombinedQuoteQuery.isFetching)) ||
-        (!isLoanAssetInput && (swapCollateralInputQuoteQuery.isLoading || swapCollateralInputQuoteQuery.isFetching))
-      : isLoadingErc4626Deposit || isLoadingErc4626Mint);
+  const isLoading = useMemo(() => {
+    if (!route) return false;
+
+    if (route.kind !== 'swap') {
+      return isLoadingErc4626Deposit || isLoadingErc4626Mint;
+    }
+
+    if (isPositionDebtInput || isLoanAssetInput) {
+      return swapExactLoanInputQuoteQuery.isLoading || swapExactLoanInputQuoteQuery.isFetching;
+    }
+
+    return swapCollateralInputQuoteQuery.isLoading || swapCollateralInputQuoteQuery.isFetching;
+  }, [
+    route,
+    isLoadingErc4626Deposit,
+    isLoadingErc4626Mint,
+    isPositionDebtInput,
+    isLoanAssetInput,
+    swapExactLoanInputQuoteQuery.isLoading,
+    swapExactLoanInputQuoteQuery.isFetching,
+    swapCollateralInputQuoteQuery.isLoading,
+    swapCollateralInputQuoteQuery.isFetching,
+  ]);
 
   return {
     initialCapitalCollateralTokenAmount,

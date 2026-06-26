@@ -8,12 +8,28 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineEditor';
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
-import { computeDeleverageProjectedPosition, formatTokenAmountPreview, parseUnsignedBigInt } from '@/hooks/leverage/math';
+import {
+  clampTargetLtvBps,
+  computeDebtAdjustmentForTargetLtv,
+  computeDeleverageProjectedPosition,
+  formatTokenAmountPreview,
+  ltvWadToBps,
+  parseUnsignedBigInt,
+  WAD_TO_BPS_SCALE,
+  withSlippageInverseCeil,
+} from '@/hooks/leverage/math';
 import { useDeleverageQuote } from '@/hooks/useDeleverageQuote';
 import { useDeleverageTransaction } from '@/hooks/useDeleverageTransaction';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { LeverageRoute } from '@/hooks/leverage/types';
-import { computeLtv, formatLtvPercent, getLTVColor } from '@/modals/borrow/components/helpers';
+import {
+  computeLtv,
+  computeRequiredCollateralAssets,
+  formatLtvPercent,
+  getCollateralValueInLoan,
+  getLTVColor,
+  LTV_WAD,
+} from '@/modals/borrow/components/helpers';
 import { BorrowPositionRiskCard } from '@/modals/borrow/components/borrow-position-risk-card';
 import { PreviewSectionHeader } from '@/modals/borrow/components/preview-section-header';
 
@@ -36,9 +52,8 @@ export function RemoveCollateralAndDeleverage({
 }: RemoveCollateralAndDeleverageProps): JSX.Element {
   const { address: account } = useConnection();
   const isSwapRoute = route?.kind === 'swap';
-  const [withdrawCollateralAmount, setWithdrawCollateralAmount] = useState<bigint>(0n);
+  const [targetLtvBps, setTargetLtvBps] = useState<bigint | null>(null);
   const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
-  const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
 
   const currentCollateralAssetsRaw = parseUnsignedBigInt(currentPosition?.state.collateral);
   const currentBorrowAssetsRaw = parseUnsignedBigInt(currentPosition?.state.borrowAssets);
@@ -50,8 +65,53 @@ export function RemoveCollateralAndDeleverage({
   const currentBorrowAssets = currentBorrowAssetsRaw ?? 0n;
   const currentBorrowShares = currentBorrowSharesRaw ?? 0n;
   const lltv = lltvRaw ?? 0n;
-  const quoteWithdrawCollateralAmount = hasInvalidPositionData ? 0n : withdrawCollateralAmount;
+  const currentLTV = useMemo(
+    () =>
+      computeLtv({
+        borrowAssets: currentBorrowAssets,
+        collateralAssets: currentCollateralAssets,
+        oraclePrice,
+      }),
+    [currentBorrowAssets, currentCollateralAssets, oraclePrice],
+  );
+  const currentLtvBps = useMemo(() => ltvWadToBps(currentLTV), [currentLTV]);
+  const effectiveTargetLtvBps = targetLtvBps ?? currentLtvBps;
+  const currentCollateralValueInLoan = useMemo(
+    () => getCollateralValueInLoan(currentCollateralAssets, oraclePrice),
+    [currentCollateralAssets, oraclePrice],
+  );
+  const targetDebtAdjustment = useMemo(
+    () =>
+      computeDebtAdjustmentForTargetLtv({
+        currentBorrowAssets,
+        currentCollateralValueInLoan,
+        targetLtv: effectiveTargetLtvBps * WAD_TO_BPS_SCALE,
+      }),
+    [currentBorrowAssets, currentCollateralValueInLoan, effectiveTargetLtvBps],
+  );
   const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
+  const targetRepayAmount =
+    effectiveTargetLtvBps === 0n
+      ? currentBorrowAssets
+      : targetDebtAdjustment.direction === 'decrease'
+        ? targetDebtAdjustment.amount > currentBorrowAssets
+          ? currentBorrowAssets
+          : targetDebtAdjustment.amount
+        : 0n;
+  const targetRepayAmountWithSlippage = withSlippageInverseCeil(targetRepayAmount, swapSlippageBps);
+  const targetWithdrawCollateralAmount =
+    effectiveTargetLtvBps === 0n
+      ? currentCollateralAssets
+      : computeRequiredCollateralAssets({
+          // WHY: this is only the seed amount for the route quote. The risk preview below remains
+          // authoritative because the live swap/vault quote can move after slippage and fees.
+          borrowAssets: targetRepayAmountWithSlippage,
+          oraclePrice,
+          targetLtv: LTV_WAD,
+        });
+  const withdrawCollateralAmount =
+    targetWithdrawCollateralAmount > currentCollateralAssets ? currentCollateralAssets : targetWithdrawCollateralAmount;
+  const quoteWithdrawCollateralAmount = hasInvalidPositionData ? 0n : withdrawCollateralAmount;
 
   const quote = useDeleverageQuote({
     chainId: market.morphoBlue.chain.id,
@@ -97,16 +157,6 @@ export function RemoveCollateralAndDeleverage({
     ],
   );
 
-  const currentLTV = useMemo(
-    () =>
-      computeLtv({
-        borrowAssets: currentBorrowAssets,
-        collateralAssets: currentCollateralAssets,
-        oraclePrice,
-      }),
-    [currentBorrowAssets, currentCollateralAssets, oraclePrice],
-  );
-
   const projectedLTV = useMemo(
     () =>
       computeLtv({
@@ -125,8 +175,7 @@ export function RemoveCollateralAndDeleverage({
 
   const handleTransactionSuccess = useCallback(() => {
     // WHY: clear unwind draft after confirmation so users see the refreshed live position, not stale input.
-    setWithdrawCollateralAmount(0n);
-    setWithdrawInputError(null);
+    setTargetLtvBps(null);
     if (onSuccess) onSuccess();
   }, [onSuccess]);
 
@@ -154,7 +203,7 @@ export function RemoveCollateralAndDeleverage({
   const handleDeleverage = useCallback(() => {
     if (
       hasInvalidPositionData ||
-      withdrawInputError ||
+      targetDebtAdjustment.direction === 'increase' ||
       quote.closeRouteRequiresResolution ||
       withdrawCollateralAmount > projection.maxWithdrawCollateral
     ) {
@@ -163,7 +212,7 @@ export function RemoveCollateralAndDeleverage({
     void authorizeAndDeleverage();
   }, [
     hasInvalidPositionData,
-    withdrawInputError,
+    targetDebtAdjustment.direction,
     quote.closeRouteRequiresResolution,
     withdrawCollateralAmount,
     projection.maxWithdrawCollateral,
@@ -176,6 +225,7 @@ export function RemoveCollateralAndDeleverage({
   const displayProjectedLTV = previewHasTransientState ? settledProjectedLtvRef.current : projectedLTV;
   const shouldShowProjectedRisk = hasChanges && !previewHasTransientState;
   const exceedsMaxWithdraw = withdrawCollateralAmount > projection.maxWithdrawCollateral;
+  const targetNeedsLeverage = targetDebtAdjustment.direction === 'increase';
   const projectedOverLimit = displayProjectedLTV >= lltv;
   const flashBorrowPreview = useMemo(
     () => formatTokenAmountPreview(projection.flashLoanAmountForTx, market.loanAsset.decimals),
@@ -190,14 +240,6 @@ export function RemoveCollateralAndDeleverage({
     [withdrawCollateralAmount, market.collateralAsset.decimals],
   );
   const collateralFlowLabel = isSwapRoute ? 'Collateral Sold' : 'Collateral Unwound';
-
-  const handleWithdrawAmountChange = useCallback(
-    (nextWithdrawAmount: bigint) => {
-      clearExecutionError();
-      setWithdrawCollateralAmount(nextWithdrawAmount);
-    },
-    [clearExecutionError],
-  );
 
   const handleSwapSlippageChange = useCallback(
     (nextSlippagePercent: number) => {
@@ -241,7 +283,7 @@ export function RemoveCollateralAndDeleverage({
       {!transaction?.isModalVisible && (
         <div className="flex flex-col">
           <PreviewSectionHeader
-            title="Deleverage Preview"
+            title="Decrease LTV Preview"
             onRefresh={onSuccess}
             isRefreshing={isRefreshing}
           />
@@ -260,31 +302,21 @@ export function RemoveCollateralAndDeleverage({
 
           <div className="mt-2 space-y-3">
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
-              <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">
-                Collateral To Unwind {market.collateralAsset.symbol}
-              </p>
+              <p className="mb-1 font-monospace text-[11px] uppercase tracking-[0.12em] text-secondary">Target LTV</p>
               <Input
-                decimals={market.collateralAsset.decimals}
-                max={projection.maxWithdrawCollateral}
-                setValue={handleWithdrawAmountChange}
-                setError={setWithdrawInputError}
-                exceedMaxErrMessage="Exceeds deleverageable collateral"
-                value={withdrawCollateralAmount}
-                inputClassName="h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums"
-                endAdornment={
-                  <TokenIcon
-                    address={market.collateralAsset.address}
-                    chainId={market.morphoBlue.chain.id}
-                    symbol={market.collateralAsset.symbol}
-                    width={16}
-                    height={16}
-                  />
-                }
+                decimals={2}
+                setValue={(nextTargetLtvBps) => {
+                  clearExecutionError();
+                  setTargetLtvBps(clampTargetLtvBps(nextTargetLtvBps));
+                }}
+                value={effectiveTargetLtvBps}
+                inputClassName="h-10 rounded bg-surface px-3 py-2 pr-10 text-base font-medium tabular-nums"
+                endAdornment={<span className="text-xs text-secondary">%</span>}
+                debounceSetValueMs={300}
               />
-              {withdrawInputError && <p className="mt-1 text-right text-xs text-red-500">{withdrawInputError}</p>}
-              {!withdrawInputError && exceedsMaxWithdraw && (
-                <p className="mt-1 text-right text-xs text-red-500">Exceeds deleverageable collateral</p>
-              )}
+              <p className="mt-1 text-right text-xs text-secondary">Current: {formatLtvPercent(currentLTV)}%</p>
+              {targetNeedsLeverage && <p className="mt-1 text-right text-xs text-red-500">Select Increase LTV to target a higher LTV.</p>}
+              {exceedsMaxWithdraw && <p className="mt-1 text-right text-xs text-red-500">Exceeds deleverageable collateral</p>}
             </div>
 
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
@@ -377,7 +409,7 @@ export function RemoveCollateralAndDeleverage({
                 disabled={
                   route == null ||
                   hasInvalidPositionData ||
-                  withdrawInputError !== null ||
+                  targetNeedsLeverage ||
                   quote.error !== null ||
                   quote.closeRouteRequiresResolution ||
                   exceedsMaxWithdraw ||
@@ -388,7 +420,7 @@ export function RemoveCollateralAndDeleverage({
                 variant="primary"
                 className="min-w-32"
               >
-                Deleverage
+                {effectiveTargetLtvBps === 0n ? 'Unwind' : 'Decrease LTV'}
               </ExecuteTransactionButton>
             </div>
 

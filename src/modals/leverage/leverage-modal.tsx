@@ -10,6 +10,7 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getSpecialErc4626LeverageConfig, isSpecialErc4626LeverageMarket } from '@/config/leverage';
+import { parseUnsignedBigInt } from '@/hooks/leverage/math';
 import { useLeverageRouteAvailability } from '@/hooks/leverage/useLeverageRouteAvailability';
 import { useAppSettings } from '@/stores/useAppSettings';
 import type { LeverageRoute } from '@/hooks/leverage/types';
@@ -26,6 +27,7 @@ type LeverageModalProps = {
   isRefreshing?: boolean;
   position: MarketPosition | null;
   defaultMode?: 'leverage' | 'deleverage';
+  defaultLeverageSource?: 'wallet' | 'position';
   toggleLeverageDeleverage?: boolean;
 };
 
@@ -101,6 +103,7 @@ export function LeverageModal({
   isRefreshing = false,
   position,
   defaultMode = 'leverage',
+  defaultLeverageSource = 'wallet',
   toggleLeverageDeleverage = true,
 }: LeverageModalProps): JSX.Element {
   const [mode, setMode] = useState<'leverage' | 'deleverage'>(defaultMode);
@@ -153,7 +156,6 @@ export function LeverageModal({
     swapRoute,
   ]);
   const isErc4626Route = route?.kind === 'erc4626';
-  const isSwapRoute = route?.kind === 'swap';
   const hasAcknowledgedSpecialBundlerWarning =
     !isSpecialErc4626BundlerMarket || !specialErc4626LeverageConfig
       ? true
@@ -173,10 +175,11 @@ export function LeverageModal({
   }, [route, availableRouteModes, routeMode]);
 
   const effectiveMode = mode;
+  const hasPositionCollateral = (parseUnsignedBigInt(position?.state.collateral) ?? 0n) > 0n;
   const modeOptions: { value: string; label: string }[] = toggleLeverageDeleverage
     ? [
-        { value: 'leverage', label: `Leverage ${market.collateralAsset.symbol}` },
-        { value: 'deleverage', label: `Deleverage ${market.collateralAsset.symbol}` },
+        { value: 'leverage', label: hasPositionCollateral ? 'Increase LTV' : `Leverage ${market.collateralAsset.symbol}` },
+        { value: 'deleverage', label: hasPositionCollateral ? 'Decrease LTV' : `Deleverage ${market.collateralAsset.symbol}` },
       ]
     : [
         {
@@ -184,6 +187,11 @@ export function LeverageModal({
           label: effectiveMode === 'leverage' ? `Leverage ${market.collateralAsset.symbol}` : `Deleverage ${market.collateralAsset.symbol}`,
         },
       ];
+  const modalDescription = hasPositionCollateral
+    ? `Set a target LTV. Higher targets borrow and loop more; lower targets unwind and repay ${market.loanAsset.symbol}.`
+    : effectiveMode === 'leverage'
+      ? `Add capital and borrow ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
+      : `Withdraw collateral from the loop and repay ${market.loanAsset.symbol}.`;
 
   const {
     data: collateralTokenBalance,
@@ -220,6 +228,7 @@ export function LeverageModal({
           currentPosition={position}
           collateralTokenBalance={collateralTokenBalance}
           oraclePrice={oraclePrice}
+          defaultLeverageSource={defaultLeverageSource}
           onSuccess={handleRefreshAll}
           isRefreshing={isRefreshingAnyData}
         />
@@ -236,7 +245,17 @@ export function LeverageModal({
         isRefreshing={isRefreshingAnyData}
       />
     );
-  }, [route, effectiveMode, market, position, collateralTokenBalance, oraclePrice, handleRefreshAll, isRefreshingAnyData]);
+  }, [
+    route,
+    effectiveMode,
+    market,
+    position,
+    collateralTokenBalance,
+    oraclePrice,
+    defaultLeverageSource,
+    handleRefreshAll,
+    isRefreshingAnyData,
+  ]);
 
   const mainIcon = (
     <div className="flex -space-x-2">
@@ -292,19 +311,7 @@ export function LeverageModal({
             )}
           </div>
         }
-        description={
-          effectiveMode === 'leverage'
-            ? isErc4626Route
-              ? `Leverage ERC4626 vault exposure by looping ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
-              : isSwapRoute
-                ? `Leverage ${market.collateralAsset.symbol} exposure by swapping borrowed ${market.loanAsset.symbol} into ${market.collateralAsset.symbol}.`
-                : `Leverage your ${market.collateralAsset.symbol} exposure by looping.`
-            : isErc4626Route
-              ? `Reduce ERC4626 leveraged exposure by unwinding your ${market.collateralAsset.symbol} loop.`
-              : isSwapRoute
-                ? `Reduce leveraged exposure by swapping withdrawn ${market.collateralAsset.symbol} into ${market.loanAsset.symbol}.`
-                : `Reduce leveraged ${market.collateralAsset.symbol} exposure by unwinding your loop.`
-        }
+        description={modalDescription}
       />
       <ModalBody>
         {routeContent ? (
