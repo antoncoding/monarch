@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { PulseLoader } from 'react-spinners';
+import { useConnection } from 'wagmi';
 import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
@@ -18,6 +19,10 @@ import { useMarketFilterPreferences } from '@/stores/useMarketFilterPreferences'
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { getMetricsKey, useMarketMetricsMap } from '@/hooks/queries/useMarketMetricsQuery';
 import type { MarketRateEnrichment } from '@/utils/market-rate-enrichment';
+import useUserPositions from '@/hooks/useUserPositions';
+import { getMarketIdentityKey } from '@/utils/market-identity';
+import type { SupportedNetworks } from '@/utils/networks';
+import { hasBorrowSidePosition } from '@/utils/positions';
 import type { Market } from '@/utils/types';
 import { getTrustedVaultsForMarket } from '@/utils/vaults';
 import { cn } from '@/utils/components';
@@ -50,6 +55,7 @@ export function MarketTableBody({
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const discoveryCategories = useMarketFilterPreferences((state) => state.discoveryCategories);
   const { success: toastSuccess } = useStyledToast();
+  const { address } = useConnection();
   const { metricsMap } = useMarketMetricsMap({
     enabled: currentEntries.length > 0,
   });
@@ -66,6 +72,20 @@ export function MarketTableBody({
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
+  const currentChainIds = useMemo(
+    () => Array.from(new Set(currentEntries.map((market) => market.morphoBlue.chain.id as SupportedNetworks))),
+    [currentEntries],
+  );
+  const { data: userPositions } = useUserPositions(address, false, currentChainIds);
+  const borrowPositionByMarket = useMemo(() => {
+    const nextMap = new Map<string, boolean>();
+    for (const position of userPositions) {
+      if (hasBorrowSidePosition(position)) {
+        nextMap.set(getMarketIdentityKey(position.market.morphoBlue.chain.id, position.market.uniqueKey), true);
+      }
+    }
+    return nextMap;
+  }, [userPositions]);
 
   const renderRateLoading = () => (
     <PulseLoader
@@ -380,7 +400,10 @@ export function MarketTableBody({
                 className="justify-center px-4 py-3"
               >
                 <div className="flex items-center justify-center">
-                  <MarketActionsDropdown market={item} />
+                  <MarketActionsDropdown
+                    market={item}
+                    hasBorrowPosition={borrowPositionByMarket.get(getMarketIdentityKey(item.morphoBlue.chain.id, item.uniqueKey)) ?? false}
+                  />
                 </div>
               </TableCell>
             </TableRow>

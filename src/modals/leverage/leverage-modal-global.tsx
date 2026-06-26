@@ -4,16 +4,21 @@ import { useCallback } from 'react';
 import { useConnection } from 'wagmi';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import useUserPosition from '@/hooks/useUserPosition';
-import type { Market } from '@/utils/types';
+import { hasBorrowSidePosition } from '@/utils/positions';
+import type { Market, MarketPosition } from '@/utils/types';
 import { LeverageModal } from './leverage-modal';
 
 type LeverageModalGlobalProps = {
   market: Market;
-  defaultMode?: 'leverage' | 'deleverage';
-  toggleLeverageDeleverage?: boolean;
+  position?: MarketPosition | null;
+  intent?: 'create' | 'adjust';
   refetch?: () => void;
   onOpenChange: (open: boolean) => void;
 };
+
+function isMatchingPosition(candidate: MarketPosition | null | undefined, market: Market, chainId: number): boolean {
+  return candidate?.market.uniqueKey.toLowerCase() === market.uniqueKey.toLowerCase() && candidate.market.morphoBlue.chain.id === chainId;
+}
 
 /**
  * Global wrapper that mirrors BorrowModalGlobal behavior:
@@ -21,8 +26,8 @@ type LeverageModalGlobalProps = {
  */
 export function LeverageModalGlobal({
   market,
-  defaultMode,
-  toggleLeverageDeleverage,
+  position: providedPosition,
+  intent,
   refetch: externalRefetch,
   onOpenChange,
 }: LeverageModalGlobalProps): JSX.Element {
@@ -35,6 +40,13 @@ export function LeverageModalGlobal({
   });
 
   const { position, refetch: refetchPosition } = useUserPosition(address, chainId, market.uniqueKey);
+  // Prefer the live position, but keep the row-seeded position when fallback APIs return null.
+  const resolvedPosition: MarketPosition | null = isMatchingPosition(position, market, chainId)
+    ? (position ?? null)
+    : isMatchingPosition(providedPosition, market, chainId)
+      ? (providedPosition ?? null)
+      : null;
+  const resolvedIntent = intent ?? (hasBorrowSidePosition(resolvedPosition) ? 'adjust' : 'create');
 
   const handleRefetch = useCallback(() => {
     refetchPosition();
@@ -47,9 +59,8 @@ export function LeverageModalGlobal({
       onOpenChange={onOpenChange}
       oraclePrice={oraclePrice}
       refetch={handleRefetch}
-      position={position}
-      defaultMode={defaultMode}
-      toggleLeverageDeleverage={toggleLeverageDeleverage}
+      position={resolvedPosition}
+      intent={resolvedIntent}
     />
   );
 }

@@ -150,11 +150,11 @@ export function AddCollateralAndLeverage({
     slippageBps: swapSlippageBps,
   });
 
-  const currentCollateralAssets = BigInt(currentPosition?.state.collateral ?? 0);
-  const currentBorrowAssets = BigInt(currentPosition?.state.borrowAssets ?? 0);
+  const currentCollateralAssets = parseUnsignedBigInt(currentPosition?.state.collateral) ?? 0n;
+  const currentBorrowAssets = parseUnsignedBigInt(currentPosition?.state.borrowAssets) ?? 0n;
   const hasQuoteChanges = quote.totalCollateralTokenAmountAdded > 0n && quote.flashLoanAssetAmount > 0n;
   const collateralAssetPriceUsd = useMemo(() => {
-    const totalCollateralAssets = BigInt(market.state.collateralAssets);
+    const totalCollateralAssets = parseUnsignedBigInt(market.state?.collateralAssets) ?? 0n;
     const totalCollateralAssetsUsd = market.state.collateralAssetsUsd;
     if (
       totalCollateralAssets <= 0n ||
@@ -171,33 +171,23 @@ export function AddCollateralAndLeverage({
     const priceUsd = totalCollateralAssetsUsd / totalCollateralToken;
     return Number.isFinite(priceUsd) && priceUsd > 0 ? priceUsd : null;
   }, [market.state.collateralAssets, market.state.collateralAssetsUsd, market.collateralAsset.decimals]);
-  const leverageTransferFee = useMemo<bigint | null>(() => {
-    if (collateralAssetPriceUsd == null) return null;
+  const leverageTransferFee = useMemo<bigint>(() => {
     return getLeverageFee({
       amount: quote.totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
     });
   }, [quote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals]);
-  const netAddedCollateral = useMemo<bigint | null>(() => {
-    if (leverageTransferFee == null) return null;
+  const netAddedCollateral = useMemo<bigint>(() => {
     return quote.totalCollateralTokenAmountAdded - leverageTransferFee;
   }, [quote.totalCollateralTokenAmountAdded, leverageTransferFee]);
-  const isLeverageFeeReady = useMemo(
-    () => hasQuoteChanges && leverageTransferFee != null && netAddedCollateral != null && netAddedCollateral > 0n,
-    [hasQuoteChanges, leverageTransferFee, netAddedCollateral],
-  );
+  const isLeverageFeeReady = useMemo(() => hasQuoteChanges && netAddedCollateral > 0n, [hasQuoteChanges, netAddedCollateral]);
   const leverageFeeReadinessError = useMemo(() => {
     if (!hasQuoteChanges) return null;
-    if (collateralAssetPriceUsd == null) return 'Collateral price unavailable. Leverage preview and submit are disabled.';
-    if (leverageTransferFee == null || netAddedCollateral == null) return 'Leverage fee unavailable. Please retry.';
     if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
     return null;
-  }, [hasQuoteChanges, collateralAssetPriceUsd, leverageTransferFee, netAddedCollateral]);
-  const addedCollateralAssets = useMemo(
-    () => (isLeverageFeeReady && netAddedCollateral != null ? netAddedCollateral : 0n),
-    [isLeverageFeeReady, netAddedCollateral],
-  );
+  }, [hasQuoteChanges, netAddedCollateral]);
+  const addedCollateralAssets = useMemo(() => (isLeverageFeeReady ? netAddedCollateral : 0n), [isLeverageFeeReady, netAddedCollateral]);
   const addedBorrowAssets = useMemo(
     () => (isLeverageFeeReady ? quote.flashLoanAssetAmount : 0n),
     [isLeverageFeeReady, quote.flashLoanAssetAmount],
@@ -212,7 +202,7 @@ export function AddCollateralAndLeverage({
       }),
     [currentCollateralAssets, currentBorrowAssets, addedCollateralAssets, addedBorrowAssets],
   );
-  const marketLiquidity = BigInt(market.state.liquidityAssets);
+  const marketLiquidity = parseUnsignedBigInt(market.state?.liquidityAssets) ?? 0n;
   const hasChanges = isLeverageFeeReady;
   const rateLabel = isAprDisplay ? 'APR' : 'APY';
 
@@ -331,11 +321,11 @@ export function AddCollateralAndLeverage({
     [quote.totalCollateralTokenAmountAdded, market.collateralAsset.decimals],
   );
   const leverageFeePreview = useMemo(() => {
-    if (!isLeverageFeeReady || leverageTransferFee == null) return null;
+    if (!isLeverageFeeReady) return null;
     return formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals);
   }, [isLeverageFeeReady, leverageTransferFee, market.collateralAsset.decimals]);
   const leverageFeeUsdValue = useMemo(() => {
-    if (!isLeverageFeeReady || leverageTransferFee == null || collateralAssetPriceUsd == null) return null;
+    if (!isLeverageFeeReady || collateralAssetPriceUsd == null) return null;
     return computeAssetUsdValue(leverageTransferFee, market.collateralAsset.decimals, collateralAssetPriceUsd);
   }, [isLeverageFeeReady, leverageTransferFee, collateralAssetPriceUsd, market.collateralAsset.decimals]);
   const leverageFeeUsdDisplay = useMemo(
@@ -880,7 +870,7 @@ export function AddCollateralAndLeverage({
               )}
               {insufficientLiquidity && (
                 <p className="mt-2 text-xs text-red-500">
-                  Flash loan repayment borrow exceeds market liquidity ({formatBalance(marketLiquidity, market.loanAsset.decimals)}{' '}
+                  Flash loan borrow exceeds market liquidity ({formatBalance(marketLiquidity, market.loanAsset.decimals)}{' '}
                   {market.loanAsset.symbol} available).
                 </p>
               )}

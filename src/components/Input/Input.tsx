@@ -16,6 +16,7 @@ type InputProps = {
   endAdornment?: React.ReactNode;
   inputClassName?: string;
   debounceSetValueMs?: number;
+  onEmpty?: () => void;
 };
 
 const formatInputAmount = (value: bigint, decimals: number): string => {
@@ -38,6 +39,7 @@ export default function Input({
   endAdornment,
   inputClassName,
   debounceSetValueMs = 0,
+  onEmpty,
 }: InputProps): JSX.Element {
   // State for the input text
   const [inputAmount, setInputAmount] = useState<string>(value ? formatInputAmount(value, decimals) : '0');
@@ -110,7 +112,13 @@ export default function Input({
 
       const parseableInput = toParseableDecimalInput(normalizedInput);
       if (!parseableInput) {
-        scheduleSetValue(BigInt(0));
+        if (onEmpty) {
+          clearSetValueDebounce();
+          pendingSetValueRef.current = null;
+          onEmpty();
+        } else {
+          scheduleSetValue(BigInt(0));
+        }
         if (setError) setError(null);
         return;
       }
@@ -132,7 +140,7 @@ export default function Input({
         if (setError) setError('Invalid input');
       }
     },
-    [decimals, setError, setInputAmount, max, exceedMaxErrMessage, allowExceedMax, scheduleSetValue],
+    [decimals, setError, setInputAmount, max, exceedMaxErrMessage, allowExceedMax, scheduleSetValue, onEmpty, clearSetValueDebounce],
   );
 
   // if max is clicked, set the input to the max value
