@@ -60,6 +60,7 @@ export function MarketDetailsBlock({
     [activeCampaigns, mode],
   );
   const hasModeRewards = hasActiveRewards && modeCampaigns.length > 0;
+  const rewardSign = mode === 'borrow' ? '-' : '+';
 
   // Calculate preview state when supplyDelta or borrowDelta is provided
   const previewState = useMemo(() => {
@@ -222,8 +223,9 @@ export function MarketDetailsBlock({
                       <div className="flex items-start justify-between">
                         <p className="flex items-center gap-1 font-zen text-sm opacity-50">Extra Rewards:</p>
                         <div className="flex items-center gap-1">
-                          <p className="text-right text-sm font-bold text-green-600 dark:text-green-400">
-                            +{modeCampaigns.reduce((sum, c) => sum + c.apr, 0).toFixed(2)}%
+                          <p className="text-right text-sm font-bold text-primary">
+                            {rewardSign}
+                            {modeCampaigns.reduce((sum, c) => sum + c.apr, 0).toFixed(2)}%
                           </p>
                           {modeCampaigns.map((campaign) => (
                             <TokenIcon

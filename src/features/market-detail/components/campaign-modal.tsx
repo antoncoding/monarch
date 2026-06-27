@@ -6,13 +6,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { getMerklCampaignURL } from '@/utils/external';
+import { isBorrowCampaign } from '@/utils/merklApi';
 import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
 
 const CAMPAIGN_TYPE_CONFIG: Record<MerklCampaignType, { badge: string }> = {
   MORPHOSUPPLY: { badge: 'Lender Rewards' },
   MORPHOSUPPLY_SINGLETOKEN: { badge: 'Lender Rewards' },
   MULTILENDBORROW: { badge: 'Lend/Borrow Rewards' },
-  MORPHOBORROW: { badge: 'Borrow Rewards' },
+  MORPHOBORROW: { badge: 'Borrow Rate Offset' },
 };
 
 type CampaignModalProps = {
@@ -48,13 +49,16 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
   const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, urlIdentifier);
 
   const { badge } = CAMPAIGN_TYPE_CONFIG[campaign.type] ?? CAMPAIGN_TYPE_CONFIG.MORPHOSUPPLY;
+  const isBorrowReward = isBorrowCampaign(campaign);
+  const rewardSign = isBorrowReward ? '-' : '+';
+  const rateLabel = isBorrowReward ? 'Borrow APR offset' : 'Reward APR';
 
   return (
     <div className="bg-hovered rounded-sm border border-gray-200/20 p-4 dark:border-gray-600/15">
       {/* Header: Badge + Reward Token + APR */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="rounded-sm bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800 dark:text-green-300">{badge}</span>
+          <span className="rounded-sm bg-primary/10 px-2 py-1 text-xs text-primary">{badge}</span>
           <div className="flex items-center gap-2">
             <Image
               src={campaign.rewardToken.icon}
@@ -66,7 +70,13 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
             <span className="text-normal">{campaign.rewardToken.symbol}</span>
           </div>
         </div>
-        <span className="text text-green-600 dark:text-green-400">+{campaign.apr.toFixed(2)}% APR</span>
+        <div className="text-right text-primary">
+          <span className="block text-sm">
+            {rewardSign}
+            {campaign.apr.toFixed(2)}% APR
+          </span>
+          <span className="block text-[11px] text-secondary">{rateLabel}</span>
+        </div>
       </div>
 
       {/* Campaign Name */}
@@ -99,6 +109,10 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
 export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps) {
   if (!isOpen) return null;
 
+  const hasBorrowCampaigns = campaigns.some(isBorrowCampaign);
+  const hasSupplyCampaigns = campaigns.some((campaign) => !isBorrowCampaign(campaign));
+  const isBorrowOnly = hasBorrowCampaigns && !hasSupplyCampaigns;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -110,8 +124,8 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
       backdrop="blur"
     >
       <ModalHeader
-        title="Active Reward Campaigns"
-        description="Earn extra incentives from live Merkl programs"
+        title={isBorrowOnly ? 'Active Borrow Incentives' : 'Active Reward Campaigns'}
+        description={isBorrowOnly ? 'Borrower incentives reduce the displayed borrow cost.' : 'Live Merkl incentives for this market.'}
         mainIcon={<ExternalLinkIcon className="h-5 w-5" />}
         onClose={onClose}
       />
