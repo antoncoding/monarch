@@ -42,6 +42,7 @@ export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted
   }
 
   const totalBonus = filteredCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0);
+  const rewardSign = filterType === 'borrow' ? '-' : '+';
 
   return (
     <>
@@ -49,17 +50,19 @@ export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted
         type="button"
         onClick={() => setIsModalOpen(true)}
         className="flex items-center transition-opacity hover:opacity-80"
+        aria-label={`Open ${filterType ?? 'market'} reward campaigns, ${rewardSign}${totalBonus.toFixed(1)}%`}
       >
         <Badge
-          variant="success"
+          variant="default"
           size="md"
-          className="flex cursor-pointer items-center px-2 py-1"
+          className="flex cursor-pointer items-center bg-primary/10 px-2 py-1 text-primary dark:bg-primary/10 dark:text-primary"
         >
           <FaGift
             size={15}
             className="mr-1"
           />
-          +{totalBonus.toFixed(1)}%
+          {rewardSign}
+          {totalBonus.toFixed(1)}%
         </Badge>
       </button>
 
