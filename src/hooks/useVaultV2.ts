@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, zeroAddress } from 'viem';
+import { type Address, encodeFunctionData, toFunctionSelector, zeroAddress } from 'viem';
 import { useQueryClient } from '@tanstack/react-query';
 import { useConnection, useChainId, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
@@ -15,6 +15,33 @@ export type PerformanceFeeConfig = {
   fee: bigint;
   recipient: Address;
 };
+
+export const VAULT_V2_ABDICATED_GATE_SETTER_SIGNATURES = [
+  'setReceiveSharesGate(address)',
+  'setSendSharesGate(address)',
+  'setReceiveAssetsGate(address)',
+  'setSendAssetsGate(address)',
+] as const;
+
+export const VAULT_V2_ABDICATED_GATE_SETTER_SELECTORS = VAULT_V2_ABDICATED_GATE_SETTER_SIGNATURES.map(toFunctionSelector);
+
+export function buildVaultV2GateAbdicationCalls(): `0x${string}`[] {
+  return VAULT_V2_ABDICATED_GATE_SETTER_SELECTORS.flatMap((selector) => {
+    const abdicateGateSetterTx = encodeFunctionData({
+      abi: vaultv2Abi,
+      functionName: 'abdicate',
+      args: [selector],
+    });
+
+    const submitAbdicateGateSetterTx = encodeFunctionData({
+      abi: vaultv2Abi,
+      functionName: 'submit',
+      args: [abdicateGateSetterTx],
+    });
+
+    return [submitAbdicateGateSetterTx, abdicateGateSetterTx];
+  });
+}
 
 /**
  * Builds timelocked transaction calls for setting performance fee recipient and fee.
@@ -253,6 +280,12 @@ export function useVaultV2({
         });
         txs.push(setCuratorTx);
       }
+
+      // Abdicate the full gate setter surface during initialization. Morpho flags
+      // receive-shares, send-shares, and receive-assets gates as critical; send-assets
+      // belongs to the same transfer-gate family, so Monarch-created vaults should not
+      // retain curator control over it either.
+      txs.push(...buildVaultV2GateAbdicationCalls());
 
       // Step 2. Commit to Morpho registry.
       const setRegistryTx = encodeFunctionData({
