@@ -16,16 +16,16 @@ export type PerformanceFeeConfig = {
   recipient: Address;
 };
 
-export const VAULT_V2_ABDICATED_GATE_SETTER_SIGNATURES = [
+const VAULT_V2_ABDICATED_GATE_SETTER_SIGNATURES = [
   'setReceiveSharesGate(address)',
   'setSendSharesGate(address)',
   'setReceiveAssetsGate(address)',
   'setSendAssetsGate(address)',
 ] as const;
 
-export const VAULT_V2_ABDICATED_GATE_SETTER_SELECTORS = VAULT_V2_ABDICATED_GATE_SETTER_SIGNATURES.map(toFunctionSelector);
+const VAULT_V2_ABDICATED_GATE_SETTER_SELECTORS = VAULT_V2_ABDICATED_GATE_SETTER_SIGNATURES.map(toFunctionSelector);
 
-export function buildVaultV2GateAbdicationCalls(): `0x${string}`[] {
+function buildVaultV2GateAbdicationCalls(): `0x${string}`[] {
   return VAULT_V2_ABDICATED_GATE_SETTER_SELECTORS.flatMap((selector) => {
     const abdicateGateSetterTx = encodeFunctionData({
       abi: vaultv2Abi,
@@ -281,10 +281,9 @@ export function useVaultV2({
         txs.push(setCuratorTx);
       }
 
-      // Abdicate the full gate setter surface during initialization. Morpho flags
-      // receive-shares, send-shares, and receive-assets gates as critical; send-assets
-      // belongs to the same transfer-gate family, so Monarch-created vaults should not
-      // retain curator control over it either.
+      // Abdicate the full gate setter surface during initialization. The first three
+      // gates preserve non-custodial exits; send-assets only gates deposits, but
+      // Monarch-created vaults should not retain curator control over any gate.
       txs.push(...buildVaultV2GateAbdicationCalls());
 
       // Step 2. Commit to Morpho registry.
