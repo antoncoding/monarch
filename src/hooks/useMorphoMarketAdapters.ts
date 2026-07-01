@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { type Address, zeroAddress } from 'viem';
+import { useReadContracts } from 'wagmi';
+import { adapterV2FactoryAbi } from '@/abis/morpho-market-v1-adapter-v2-factory';
 import { useVaultV2Data } from './useVaultV2Data';
 import { parseCapIdParams } from '@/utils/morpho';
-import type { SupportedNetworks } from '@/utils/networks';
+import { getAgentConfig, type SupportedNetworks } from '@/utils/networks';
 import { hasPositiveVaultCap } from '@/utils/vaultAllocation';
 
 export type VaultMarketAdapter = {
@@ -24,6 +26,44 @@ const getAddressKey = (address: string | undefined): string => address?.toLowerC
 
 export function useMorphoMarketAdapters({ vaultAddress, chainId }: { vaultAddress?: Address; chainId: SupportedNetworks }) {
   const query = useVaultV2Data({ vaultAddress, chainId });
+  const factoryAddress = useMemo(() => {
+    try {
+      return getAgentConfig(chainId)?.marketAdapterFactory ?? null;
+    } catch (_error) {
+      return null;
+    }
+  }, [chainId]);
+  const canReadFactoryAdapter = Boolean(vaultAddress && factoryAddress);
+
+  const {
+    data: factoryAdapterResults,
+    isFetching: isFetchingFactoryAdapter,
+    isLoading: isLoadingFactoryAdapter,
+    refetch: refetchFactoryAdapter,
+  } = useReadContracts({
+    contracts:
+      vaultAddress && factoryAddress
+        ? [
+            {
+              address: factoryAddress,
+              abi: adapterV2FactoryAbi,
+              functionName: 'morphoMarketV1AdapterV2',
+              args: [vaultAddress],
+              chainId,
+            },
+          ]
+        : [],
+    query: {
+      enabled: canReadFactoryAdapter,
+      staleTime: 10_000,
+      refetchOnWindowFocus: false,
+    },
+  });
+
+  const factoryAdapter =
+    factoryAdapterResults?.[0]?.status === 'success' && factoryAdapterResults[0].result !== zeroAddress
+      ? (factoryAdapterResults[0].result.toLowerCase() as Address)
+      : undefined;
 
   const capSummaryByAdapter = useMemo(() => {
     const summaries = new Map<string, AdapterCapSummary>();
@@ -60,7 +100,11 @@ export function useMorphoMarketAdapters({ vaultAddress, chainId }: { vaultAddres
   const adapters = useMemo<VaultMarketAdapter[]>(() => {
     const adapterDetails = query.data?.adapterDetails ?? [];
     const adapterDetailsByAddress = new Map(adapterDetails.map((adapterDetail) => [getAddressKey(adapterDetail.address), adapterDetail]));
-    const adapterAddresses = [...(query.data?.adapters ?? []), ...adapterDetails.map((adapterDetail) => adapterDetail.address)];
+    const adapterAddresses = [
+      ...(factoryAdapter ? [factoryAdapter] : []),
+      ...(query.data?.adapters ?? []),
+      ...adapterDetails.map((adapterDetail) => adapterDetail.address),
+    ];
     const seenAddresses = new Set<string>();
 
     return adapterAddresses
@@ -78,7 +122,7 @@ export function useMorphoMarketAdapters({ vaultAddress, chainId }: { vaultAddres
           {
             adapter: adapterKey as Address,
             adapterType: adapterDetail?.adapterType,
-            factoryAddress: adapterDetail?.factoryAddress as Address | undefined,
+            factoryAddress: (adapterDetail?.factoryAddress as Address | undefined) ?? factoryAddress ?? undefined,
             hasPositiveAdapterCap: capSummary?.hasPositiveAdapterCap ?? false,
             id: `${chainId}-${vaultAddress ?? 'unknown'}-${adapterKey}`,
             marketCapCount: capSummary?.marketCapCount ?? 0,
@@ -97,7 +141,7 @@ export function useMorphoMarketAdapters({ vaultAddress, chainId }: { vaultAddres
 
         return 0;
       });
-  }, [capSummaryByAdapter, chainId, query.data?.adapterDetails, query.data?.adapters, vaultAddress]);
+  }, [capSummaryByAdapter, chainId, factoryAdapter, factoryAddress, query.data?.adapterDetails, query.data?.adapters, vaultAddress]);
 
   const configuredAdapters = useMemo(
     () => adapters.filter((adapter) => adapter.marketCapCount > 0 || adapter.hasPositiveAdapterCap),
@@ -114,17 +158,22 @@ export function useMorphoMarketAdapters({ vaultAddress, chainId }: { vaultAddres
     };
   }, [adapters, configuredAdapters]);
 
+  const refetch = useCallback(async () => {
+    const [queryResult] = await Promise.all([query.refetch(), canReadFactoryAdapter ? refetchFactoryAdapter() : Promise.resolve(null)]);
+    return queryResult;
+  }, [canReadFactoryAdapter, query.refetch, refetchFactoryAdapter]);
+
   return {
     primaryAdapter,
     primaryAdapterType,
     primaryFactoryAddress,
     adapters,
     configuredAdapters,
-    isFetching: query.isFetching,
-    isLoading: query.isLoading,
+    isFetching: query.isFetching || isFetchingFactoryAdapter,
+    isLoading: query.isLoading || isLoadingFactoryAdapter,
     error: query.error,
-    refetch: query.refetch,
-    isRefetching: query.isRefetching,
+    refetch,
+    isRefetching: query.isRefetching || isFetchingFactoryAdapter,
     hasAdapters: adapters.length > 0,
     hasMultipleAdapters: adapters.length > 1,
   };

@@ -49,10 +49,12 @@ function StepIndicator({ currentStep }: { currentStep: StepId }) {
 
 function DeployAdapterStep({
   isDeploying,
+  isCheckingAdapter,
   adapterDetected,
   adapterAddress,
 }: {
   isDeploying: boolean;
+  isCheckingAdapter: boolean;
   adapterDetected: boolean;
   adapterAddress: Address;
 }) {
@@ -61,8 +63,16 @@ function DeployAdapterStep({
       <p className="text-sm text-secondary">Deploy a Morpho Market adapter so this vault can allocate assets into Morpho Blue markets.</p>
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs text-secondary">
-          {isDeploying && <Spinner size={12} />}
-          <span>{adapterDetected ? `Adapter detected: ${shortenAddress(adapterAddress)}` : isDeploying ? 'Deploying adapter...' : ''}</span>
+          {(isDeploying || isCheckingAdapter) && <Spinner size={12} />}
+          <span>
+            {adapterDetected
+              ? `Adapter detected: ${shortenAddress(adapterAddress)}`
+              : isDeploying
+                ? 'Deploying adapter...'
+                : isCheckingAdapter
+                  ? 'Checking adapter...'
+                  : ''}
+          </span>
         </div>
       </div>
     </div>
@@ -232,7 +242,12 @@ export function VaultInitializationModal() {
   });
 
   // Fetch adapter
-  const { primaryAdapter: marketAdapter, refetch: refetchAdapter } = useMorphoMarketAdapters({
+  const {
+    primaryAdapter: marketAdapter,
+    refetch: refetchAdapter,
+    isLoading: isAdapterLoading,
+    isFetching: isAdapterFetching,
+  } = useMorphoMarketAdapters({
     vaultAddress: vaultAddressValue,
     chainId,
   });
@@ -254,6 +269,7 @@ export function VaultInitializationModal() {
   // Adapter is detected if Monarch has indexed it or we just deployed it locally.
   const adapterAddress = deployedAdapter === ZERO_ADDRESS ? (marketAdapter ?? ZERO_ADDRESS) : deployedAdapter;
   const adapterDetected = adapterAddress !== ZERO_ADDRESS;
+  const isCheckingAdapter = (isAdapterLoading || isAdapterFetching) && !adapterDetected;
 
   const { deploy, isDeploying, canDeploy, factoryAddress } = useDeployMorphoMarketAdapter({
     vaultAddress: vaultAddressValue,
@@ -339,10 +355,10 @@ export function VaultInitializationModal() {
 
   // Auto-advance when adapter already exists in Monarch data.
   useEffect(() => {
-    if (marketAdapter != null && marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
+    if (adapterDetected && stepIndex === 0) {
       setStepIndex(1);
     }
-  }, [marketAdapter, stepIndex, deployedAdapter]);
+  }, [adapterDetected, stepIndex]);
 
   const canCompleteInitialization = adapterAddress !== ZERO_ADDRESS && registryAddress !== ZERO_ADDRESS;
 
@@ -368,12 +384,12 @@ export function VaultInitializationModal() {
         <Button
           variant="primary"
           className="min-w-[150px]"
-          disabled={!canDeploy || isDeploying}
+          disabled={!canDeploy || isDeploying || isCheckingAdapter}
           onClick={() => void handleDeploy()}
         >
-          {isDeploying ? (
+          {isDeploying || isCheckingAdapter ? (
             <span className="flex items-center gap-2">
-              <Spinner size={12} /> Deploying...
+              <Spinner size={12} /> {isDeploying ? 'Deploying...' : 'Checking...'}
             </span>
           ) : (
             'Deploy adapter'
@@ -455,6 +471,7 @@ export function VaultInitializationModal() {
         {currentStep === 'deploy' && (
           <DeployAdapterStep
             isDeploying={isDeploying}
+            isCheckingAdapter={isCheckingAdapter}
             adapterDetected={adapterDetected}
             adapterAddress={adapterAddress}
           />

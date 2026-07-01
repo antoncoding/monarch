@@ -2,10 +2,33 @@ import type { Abi } from 'viem';
 
 export const adapterV2FactoryAbi = [
   {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'parentVault', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'morphoMarketV1AdapterV2', type: 'address' },
+    ],
+    name: 'CreateMorphoMarketV1AdapterV2',
+    type: 'event',
+  },
+  {
     inputs: [{ internalType: 'address', name: 'parentVault', type: 'address' }],
     name: 'createMorphoMarketV1AdapterV2',
-    outputs: [],
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
     stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
+    name: 'isMorphoMarketV1AdapterV2',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'parentVault', type: 'address' }],
+    name: 'morphoMarketV1AdapterV2',
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+    stateMutability: 'view',
     type: 'function',
   },
 ] as const satisfies Abi;
