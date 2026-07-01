@@ -20,12 +20,12 @@ const REWARD_SIDE_CONFIG: Record<RewardSide, { letter: string; label: string; ba
   supplier: {
     letter: 'S',
     label: 'Supplier rewards',
-    badgeClassName: 'bg-white text-green-800 dark:bg-white dark:text-green-800',
+    badgeClassName: 'bg-white text-green-500 dark:bg-white dark:text-green-500',
   },
   borrower: {
     letter: 'B',
     label: 'Borrower rewards',
-    badgeClassName: 'bg-white text-red-800 dark:bg-white dark:text-red-800',
+    badgeClassName: 'bg-white text-red-500 dark:bg-white dark:text-red-500',
   },
 };
 
