@@ -9,8 +9,10 @@ import {
   VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY,
   VAULT_V2_DEFAULT_MAX_RATE,
   VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS,
+  VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS,
   VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR,
 } from '@/utils/vaultV2Setup';
+import { getClient } from '@/utils/rpc';
 import { MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS, refetchVaultQueryData } from './useVaultQueryRefresh';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import type { Market } from '@/utils/types';
@@ -22,21 +24,27 @@ export type PerformanceFeeConfig = {
   recipient: Address;
 };
 
-function buildVaultV2GateAbdicationCalls(): `0x${string}`[] {
-  return VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS.flatMap((selector) => {
-    const abdicateGateSetterTx = encodeFunctionData({
+const normalizeAddress = (address: Address | string | undefined): string => address?.toLowerCase() ?? '';
+
+function buildTimelockedCall(tx: `0x${string}`): `0x${string}`[] {
+  const submitTx = encodeFunctionData({
+    abi: vaultv2Abi,
+    functionName: 'submit',
+    args: [tx],
+  });
+
+  return [submitTx, tx];
+}
+
+function buildVaultV2AbdicationCalls(selectors: readonly `0x${string}`[]): `0x${string}`[] {
+  return selectors.flatMap((selector) => {
+    const abdicateTx = encodeFunctionData({
       abi: vaultv2Abi,
       functionName: 'abdicate',
       args: [selector],
     });
 
-    const submitAbdicateGateSetterTx = encodeFunctionData({
-      abi: vaultv2Abi,
-      functionName: 'submit',
-      args: [abdicateGateSetterTx],
-    });
-
-    return [submitAbdicateGateSetterTx, abdicateGateSetterTx];
+    return buildTimelockedCall(abdicateTx);
   });
 }
 
@@ -54,13 +62,7 @@ function buildPerformanceFeeCalls(config: PerformanceFeeConfig): `0x${string}`[]
     args: [config.recipient],
   });
 
-  const submitSetRecipientTx = encodeFunctionData({
-    abi: vaultv2Abi,
-    functionName: 'submit',
-    args: [setRecipientTx],
-  });
-
-  txs.push(submitSetRecipientTx, setRecipientTx);
+  txs.push(...buildTimelockedCall(setRecipientTx));
 
   // Then set fee
   const setFeeTx = encodeFunctionData({
@@ -69,13 +71,7 @@ function buildPerformanceFeeCalls(config: PerformanceFeeConfig): `0x${string}`[]
     args: [config.fee],
   });
 
-  const submitSetFeeTx = encodeFunctionData({
-    abi: vaultv2Abi,
-    functionName: 'submit',
-    args: [setFeeTx],
-  });
-
-  txs.push(submitSetFeeTx, setFeeTx);
+  txs.push(...buildTimelockedCall(setFeeTx));
 
   return txs;
 }
@@ -247,6 +243,57 @@ export function useVaultV2({
     async (morphoRegistry: Address, marketAdapter: Address, allocator?: Address, _name?: string, _symbol?: string): Promise<boolean> => {
       if (!account || !vaultAddress || marketAdapter === zeroAddress) return false;
 
+      const client = getClient(chainIdToUse);
+      const contractBase = { address: vaultAddress, abi: vaultv2Abi } as const;
+      const allocatorToCheck = allocator ?? zeroAddress;
+      const [
+        currentCuratorResult,
+        currentRegistryResult,
+        isAdapterResult,
+        forceDeallocatePenaltyResult,
+        isSelfAllocatorResult,
+        maxRateResult,
+        isInitialAllocatorResult,
+        performanceFeeResult,
+        performanceFeeRecipientResult,
+      ] = await client.multicall({
+        contracts: [
+          { ...contractBase, functionName: 'curator', args: [] },
+          { ...contractBase, functionName: 'adapterRegistry', args: [] },
+          { ...contractBase, functionName: 'isAdapter', args: [marketAdapter] },
+          { ...contractBase, functionName: 'forceDeallocatePenalty', args: [marketAdapter] },
+          { ...contractBase, functionName: 'isAllocator', args: [account] },
+          { ...contractBase, functionName: 'maxRate', args: [] },
+          { ...contractBase, functionName: 'isAllocator', args: [allocatorToCheck] },
+          { ...contractBase, functionName: 'performanceFee', args: [] },
+          { ...contractBase, functionName: 'performanceFeeRecipient', args: [] },
+        ],
+        allowFailure: true,
+      });
+      const abdicationResults = await client.multicall({
+        contracts: VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS.map((selector) => ({
+          ...contractBase,
+          functionName: 'abdicated' as const,
+          args: [selector],
+        })),
+        allowFailure: true,
+      });
+      const currentCurator = currentCuratorResult.status === 'success' ? (currentCuratorResult.result as Address) : curator;
+      const currentRegistry = currentRegistryResult.status === 'success' ? (currentRegistryResult.result as Address) : zeroAddress;
+      const isAdapterLinked = isAdapterResult.status === 'success' && isAdapterResult.result === true;
+      const currentForceDeallocatePenalty =
+        forceDeallocatePenaltyResult.status === 'success' ? (forceDeallocatePenaltyResult.result as bigint) : 0n;
+      const isSelfAllocator = isSelfAllocatorResult.status === 'success' && isSelfAllocatorResult.result === true;
+      const currentMaxRate = maxRateResult.status === 'success' ? (maxRateResult.result as bigint) : 0n;
+      const isInitialAllocator = isInitialAllocatorResult.status === 'success' && isInitialAllocatorResult.result === true;
+      const currentPerformanceFee = performanceFeeResult.status === 'success' ? (performanceFeeResult.result as bigint) : undefined;
+      const currentPerformanceFeeRecipient =
+        performanceFeeRecipientResult.status === 'success' ? (performanceFeeRecipientResult.result as Address) : undefined;
+      const abdicatedSelectors = new Set(
+        VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS.filter(
+          (_selector, index) => abdicationResults[index]?.status === 'success' && abdicationResults[index]?.result === true,
+        ),
+      );
       const txs: `0x${string}`[] = [];
 
       // Step 0 (Optional). Set vault metadata if provided (no timelock needed)
@@ -269,7 +316,7 @@ export function useVaultV2({
       }
 
       // Step 1. Assign curator if unset.
-      if (curator === zeroAddress) {
+      if (currentCurator === zeroAddress) {
         const setCuratorTx = encodeFunctionData({
           abi: vaultv2Abi,
           functionName: 'setCurator',
@@ -280,115 +327,95 @@ export function useVaultV2({
 
       // Abdicate exit-critical gate setters during initialization so the curator
       // cannot later lock users out of shares or asset withdrawals.
-      txs.push(...buildVaultV2GateAbdicationCalls());
+      const gateSettersToAbdicate = VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS.filter((selector) => !abdicatedSelectors.has(selector));
+      txs.push(...buildVaultV2AbdicationCalls(gateSettersToAbdicate));
 
       // Step 2. Commit to Morpho registry.
-      const setRegistryTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'setAdapterRegistry',
-        args: [morphoRegistry],
-      });
+      if (normalizeAddress(currentRegistry) !== morphoRegistry.toLowerCase()) {
+        const setRegistryTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'setAdapterRegistry',
+          args: [morphoRegistry],
+        });
 
-      const submitSetRegistryTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'submit',
-        args: [setRegistryTx],
-      });
-
-      txs.push(submitSetRegistryTx, setRegistryTx);
+        txs.push(...buildTimelockedCall(setRegistryTx));
+      }
 
       // Step 3. Register the deployed adapter.
-      const addAdapterTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'addAdapter',
-        args: [marketAdapter],
-      });
+      if (!isAdapterLinked) {
+        const addAdapterTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'addAdapter',
+          args: [marketAdapter],
+        });
 
-      const submitAddAdapterTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'submit',
-        args: [addAdapterTx],
-      });
+        txs.push(...buildTimelockedCall(addAdapterTx));
+      }
 
-      txs.push(submitAddAdapterTx, addAdapterTx);
+      if (currentForceDeallocatePenalty !== VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY) {
+        const setForceDeallocatePenaltyTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'setForceDeallocatePenalty',
+          args: [marketAdapter, VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY],
+        });
 
-      const setForceDeallocatePenaltyTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'setForceDeallocatePenalty',
-        args: [marketAdapter, VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY],
-      });
-
-      const submitSetForceDeallocatePenaltyTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'submit',
-        args: [setForceDeallocatePenaltyTx],
-      });
-
-      txs.push(submitSetForceDeallocatePenaltyTx, setForceDeallocatePenaltyTx);
+        txs.push(...buildTimelockedCall(setForceDeallocatePenaltyTx));
+      }
 
       // Note: Adapter cap will be set when user configures market caps in settings
       // (EditCaps.tsx automatically ensures adapter cap is 100% + maxUint128)
 
       // Step 5. Abdicate registry control.
-      const abdicateSetAdapterRegistryTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'abdicate',
-        args: [VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR],
-      });
-
-      const submitAbdicateSetAdapterRegistryTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'submit',
-        args: [abdicateSetAdapterRegistryTx],
-      });
-
-      txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
+      if (!abdicatedSelectors.has(VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR)) {
+        txs.push(...buildVaultV2AbdicationCalls([VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR]));
+      }
 
       // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data)
-      const setSelfAllocatorTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'setIsAllocator',
-        args: [account, true],
-      });
+      if (!isSelfAllocator) {
+        const setSelfAllocatorTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'setIsAllocator',
+          args: [account, true],
+        });
 
-      const submitSetSelfAllocatorTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'submit',
-        args: [setSelfAllocatorTx],
-      });
-
-      txs.push(submitSetSelfAllocatorTx, setSelfAllocatorTx);
+        txs.push(...buildTimelockedCall(setSelfAllocatorTx));
+      }
 
       // Step 6.2 As allocator, set max apy
-      const setMaxAPYTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'setMaxRate',
-        args: [VAULT_V2_DEFAULT_MAX_RATE],
-      });
+      if (currentMaxRate !== VAULT_V2_DEFAULT_MAX_RATE) {
+        const setMaxAPYTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'setMaxRate',
+          args: [VAULT_V2_DEFAULT_MAX_RATE],
+        });
 
-      txs.push(setMaxAPYTx);
+        txs.push(setMaxAPYTx);
+      }
 
       // Step 6.3 (Optional). Set initial allocator if provided.
-      if (allocator && allocator !== zeroAddress) {
+      if (allocator && allocator !== zeroAddress && !isInitialAllocator) {
         const setAllocatorTx = encodeFunctionData({
           abi: vaultv2Abi,
           functionName: 'setIsAllocator',
           args: [allocator, true],
         });
 
-        const submitSetAllocatorTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'submit',
-          args: [setAllocatorTx],
-        });
+        txs.push(...buildTimelockedCall(setAllocatorTx));
+      }
 
-        txs.push(submitSetAllocatorTx, setAllocatorTx);
+      // Step 6.4 (Optional). Apply performance fee if allocator is a known agent with a fee.
+      const agent = allocator && allocator !== zeroAddress ? findAgent(allocator) : undefined;
+      if (
+        agent?.performanceFee !== undefined &&
+        agent.performanceFeeRecipient &&
+        (currentPerformanceFee !== agent.performanceFee ||
+          normalizeAddress(currentPerformanceFeeRecipient) !== agent.performanceFeeRecipient.toLowerCase())
+      ) {
+        txs.push(...buildPerformanceFeeCalls({ fee: agent.performanceFee, recipient: agent.performanceFeeRecipient }));
+      }
 
-        // Step 6.4 (Optional). Apply performance fee if allocator is a known agent with a fee.
-        const agent = findAgent(allocator);
-        if (agent?.performanceFee !== undefined && agent.performanceFeeRecipient) {
-          txs.push(...buildPerformanceFeeCalls({ fee: agent.performanceFee, recipient: agent.performanceFeeRecipient }));
-        }
+      if (txs.length === 0) {
+        return true;
       }
 
       // Step 7. Execute multicall with all steps.
