@@ -1,10 +1,16 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, toFunctionSelector, zeroAddress } from 'viem';
+import { type Address, encodeFunctionData, zeroAddress } from 'viem';
 import { useQueryClient } from '@tanstack/react-query';
 import { useConnection, useChainId, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import type { SupportedNetworks } from '@/utils/networks';
+import {
+  VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY,
+  VAULT_V2_DEFAULT_MAX_RATE,
+  VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS,
+  VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR,
+} from '@/utils/vaultV2Setup';
 import { MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS, refetchVaultQueryData } from './useVaultQueryRefresh';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import type { Market } from '@/utils/types';
@@ -16,17 +22,8 @@ export type PerformanceFeeConfig = {
   recipient: Address;
 };
 
-const VAULT_V2_ABDICATED_GATE_SETTER_SIGNATURES = [
-  'setReceiveSharesGate(address)',
-  'setSendSharesGate(address)',
-  'setReceiveAssetsGate(address)',
-  'setSendAssetsGate(address)',
-] as const;
-
-const VAULT_V2_ABDICATED_GATE_SETTER_SELECTORS = VAULT_V2_ABDICATED_GATE_SETTER_SIGNATURES.map(toFunctionSelector);
-
 function buildVaultV2GateAbdicationCalls(): `0x${string}`[] {
-  return VAULT_V2_ABDICATED_GATE_SETTER_SELECTORS.flatMap((selector) => {
+  return VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS.flatMap((selector) => {
     const abdicateGateSetterTx = encodeFunctionData({
       abi: vaultv2Abi,
       functionName: 'abdicate',
@@ -281,9 +278,8 @@ export function useVaultV2({
         txs.push(setCuratorTx);
       }
 
-      // Abdicate the full gate setter surface during initialization. The first three
-      // gates preserve non-custodial exits; send-assets only gates deposits, but
-      // Monarch-created vaults should not retain curator control over any gate.
+      // Abdicate exit-critical gate setters during initialization so the curator
+      // cannot later lock users out of shares or asset withdrawals.
       txs.push(...buildVaultV2GateAbdicationCalls());
 
       // Step 2. Commit to Morpho registry.
@@ -316,26 +312,37 @@ export function useVaultV2({
 
       txs.push(submitAddAdapterTx, addAdapterTx);
 
+      const setForceDeallocatePenaltyTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'setForceDeallocatePenalty',
+        args: [marketAdapter, VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY],
+      });
+
+      const submitSetForceDeallocatePenaltyTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'submit',
+        args: [setForceDeallocatePenaltyTx],
+      });
+
+      txs.push(submitSetForceDeallocatePenaltyTx, setForceDeallocatePenaltyTx);
+
       // Note: Adapter cap will be set when user configures market caps in settings
       // (EditCaps.tsx automatically ensures adapter cap is 100% + maxUint128)
 
-      // Note: do not do this for maximized flexibility for now: open in the future!
       // Step 5. Abdicate registry control.
-      // const setAdapterRegistrySelector = toFunctionSelector('setAdapterRegistry(address)');
+      const abdicateSetAdapterRegistryTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'abdicate',
+        args: [VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR],
+      });
 
-      // const abdicateSetAdapterRegistryTx = encodeFunctionData({
-      //   abi: vaultv2Abi,
-      //   functionName: 'abdicate',
-      //   args: [setAdapterRegistrySelector],
-      // });
+      const submitAbdicateSetAdapterRegistryTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'submit',
+        args: [abdicateSetAdapterRegistryTx],
+      });
 
-      // const submitAbdicateSetAdapterRegistryTx = encodeFunctionData({
-      //   abi: vaultv2Abi,
-      //   functionName: 'submit',
-      //   args: [abdicateSetAdapterRegistryTx],
-      // });
-
-      // txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
+      txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
 
       // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data)
       const setSelfAllocatorTx = encodeFunctionData({
@@ -356,7 +363,7 @@ export function useVaultV2({
       const setMaxAPYTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'setMaxRate',
-        args: [63419583967n], // max max rate = 200e16 / (86400 * 365) // 200% APR
+        args: [VAULT_V2_DEFAULT_MAX_RATE],
       });
 
       txs.push(setMaxAPYTx);

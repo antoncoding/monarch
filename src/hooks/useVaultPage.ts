@@ -5,6 +5,7 @@ import { useMorphoMarketAdapters } from './useMorphoMarketAdapters';
 import { useVaultAllocations } from './useVaultAllocations';
 import { useVaultV2 } from './useVaultV2';
 import { useVaultV2Data } from './useVaultV2Data';
+import { useVaultV2InitializationStatus } from './useVaultV2InitializationStatus';
 import { formatBalance } from '@/utils/balance';
 
 type UseVaultPageArgs = {
@@ -31,20 +32,34 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   const vaultDataQuery = useVaultV2Data({ vaultAddress, chainId });
   const contract = useVaultV2({ vaultAddress, chainId, connectedAddress, onTransactionSuccess: vaultDataQuery.refetch });
   const adapterQuery = useMorphoMarketAdapters({ vaultAddress, chainId });
+  const initializationStatus = useVaultV2InitializationStatus({
+    adapterAddress: adapterQuery.primaryAdapter,
+    chainId,
+    vaultAddress,
+  });
   const allocationsQuery = useVaultAllocations({ vaultAddress, chainId });
   const { refetch: refetchVaultData } = vaultDataQuery;
   const { refetch: refetchContract } = contract;
   const { refetch: refetchAdapter } = adapterQuery;
+  const { refetch: refetchInitializationStatus } = initializationStatus;
   const { refetch: refetchAllocations } = allocationsQuery;
   const hasResolvedAdapterState = !adapterQuery.isLoading && !adapterQuery.error;
+  const hasResolvedInitializationState = !initializationStatus.isLoading && !initializationStatus.error;
   const hasResolvedVaultState = !vaultDataQuery.isLoading && !vaultDataQuery.isError;
 
   // Complex derived state: isVaultInitialized (needs multiple sources)
   const isVaultInitialized = useMemo(() => {
-    if (!hasResolvedAdapterState || !hasResolvedVaultState) return false;
+    if (!hasResolvedAdapterState || !hasResolvedInitializationState || !hasResolvedVaultState) return false;
     if (!adapterQuery.primaryAdapter) return false;
-    return vaultDataQuery.data !== null && vaultDataQuery.data !== undefined;
-  }, [adapterQuery.primaryAdapter, hasResolvedAdapterState, hasResolvedVaultState, vaultDataQuery.data]);
+    return vaultDataQuery.data !== null && vaultDataQuery.data !== undefined && initializationStatus.isComplete;
+  }, [
+    adapterQuery.primaryAdapter,
+    hasResolvedAdapterState,
+    hasResolvedInitializationState,
+    hasResolvedVaultState,
+    initializationStatus.isComplete,
+    vaultDataQuery.data,
+  ]);
 
   const needsAdapterDeployment = useMemo(
     () => hasResolvedAdapterState && !adapterQuery.primaryAdapter,
@@ -76,9 +91,9 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
 
   // Complex derived state: needsInitialization
   const needsInitialization = useMemo(() => {
-    const isLoading = vaultDataQuery.isLoading || contract.isLoading || adapterQuery.isLoading;
+    const isLoading = vaultDataQuery.isLoading || contract.isLoading || adapterQuery.isLoading || initializationStatus.isLoading;
     if (isLoading) return false;
-    if (!hasResolvedAdapterState || !hasResolvedVaultState) return false;
+    if (!hasResolvedAdapterState || !hasResolvedInitializationState || !hasResolvedVaultState) return false;
     if (isVaultInitialized) return false;
     return true;
   }, [
@@ -86,7 +101,9 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     contract.isLoading,
     adapterQuery.isLoading,
     hasResolvedAdapterState,
+    hasResolvedInitializationState,
     hasResolvedVaultState,
+    initializationStatus.isLoading,
     isVaultInitialized,
   ]);
 
@@ -95,8 +112,9 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     void refetchVaultData();
     void refetchContract();
     void refetchAdapter();
+    void refetchInitializationStatus();
     void refetchAllocations();
-  }, [refetchVaultData, refetchContract, refetchAdapter, refetchAllocations]);
+  }, [refetchVaultData, refetchContract, refetchAdapter, refetchInitializationStatus, refetchAllocations]);
 
   // Return ONLY computed/derived state - no raw data!
   return {
@@ -104,6 +122,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     isVaultInitialized,
     needsAdapterDeployment,
     needsInitialization,
+    missingInitializationRequirements: initializationStatus.missingRequirements,
     vaultAPY,
     vault24hEarnings: null,
     isAPYLoading: allocationsQuery.loading,
