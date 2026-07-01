@@ -16,9 +16,17 @@ type RewardSide = 'supplier' | 'borrower';
 
 const REWARD_SIDES: RewardSide[] = ['supplier', 'borrower'];
 
-const REWARD_SIDE_CONFIG: Record<RewardSide, { letter: string; label: string }> = {
-  supplier: { letter: 'S', label: 'Supplier rewards' },
-  borrower: { letter: 'B', label: 'Borrower rewards' },
+const REWARD_SIDE_CONFIG: Record<RewardSide, { letter: string; label: string; badgeClassName: string }> = {
+  supplier: {
+    letter: 'S',
+    label: 'Supplier rewards',
+    badgeClassName: 'bg-green-500 text-white',
+  },
+  borrower: {
+    letter: 'B',
+    label: 'Borrower rewards',
+    badgeClassName: 'bg-red-500 text-white',
+  },
 };
 
 function RewardSideIcon({ side, size }: { side: RewardSide; size: number }) {
@@ -38,7 +46,7 @@ function RewardSideIcon({ side, size }: { side: RewardSide; size: number }) {
         aria-hidden="true"
       />
       <span
-        className="absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full border border-background bg-surface font-monospace font-medium text-primary shadow-sm ring-1 ring-border"
+        className={`absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full border border-background font-monospace font-medium ${config.badgeClassName}`}
         style={{
           width: badgeSize,
           height: badgeSize,
