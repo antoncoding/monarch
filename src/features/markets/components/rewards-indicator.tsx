@@ -20,12 +20,12 @@ const REWARD_SIDE_CONFIG: Record<RewardSide, { letter: string; label: string; ba
   supplier: {
     letter: 'S',
     label: 'Supplier rewards',
-    badgeClassName: 'bg-green-100 text-green-700 ring-green-500/40 dark:bg-green-800/30 dark:text-green-400 dark:ring-green-400/40',
+    badgeClassName: 'bg-green-800 text-green-200',
   },
   borrower: {
     letter: 'B',
     label: 'Borrower rewards',
-    badgeClassName: 'bg-red-100 text-red-700 ring-red-500/40 dark:bg-red-800/30 dark:text-red-400 dark:ring-red-400/40',
+    badgeClassName: 'bg-red-800 text-red-200',
   },
 };
 
@@ -46,7 +46,7 @@ function RewardSideIcon({ side, size }: { side: RewardSide; size: number }) {
         aria-hidden="true"
       />
       <span
-        className={`absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full border border-background font-monospace font-medium shadow-sm ring-1 ${config.badgeClassName}`}
+        className={`absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full border border-background font-monospace font-medium ${config.badgeClassName}`}
         style={{
           width: badgeSize,
           height: badgeSize,
