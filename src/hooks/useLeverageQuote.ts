@@ -4,6 +4,7 @@ import { useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { BPS_SCALE, computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
+import { LEVERAGE_SWAP_EXCLUDED_DEXS, LEVERAGE_SWAP_ROUTE_POLICY_KEY } from './leverage/swap-route-policy';
 import { toUserFacingVeloraQuoteError } from './leverage/velora-quote-errors';
 import type { LeverageRoute } from './leverage/types';
 
@@ -129,6 +130,7 @@ const resolveInitialSellAmountForTargetCollateral = async ({
       network: chainId,
       userAddress: swapExecutionAddress,
       side: 'BUY',
+      excludeDexs: LEVERAGE_SWAP_EXCLUDED_DEXS,
     });
 
     const initialSellAmount = BigInt(buyRoute.srcAmount);
@@ -199,6 +201,7 @@ const quoteVeloraCollateralInputRoute = async ({
       network: chainId,
       userAddress: swapExecutionAddress,
       side: 'SELL',
+      excludeDexs: LEVERAGE_SWAP_EXCLUDED_DEXS,
     });
     const quotedCollateralTokenAmount = BigInt(sellRoute.destAmount);
 
@@ -347,6 +350,7 @@ export function useLeverageQuote({
       collateralTokenAddress,
       collateralTokenDecimals,
       swapExecutionAddress,
+      LEVERAGE_SWAP_ROUTE_POLICY_KEY,
       targetFlashCollateralTokenAmount.toString(),
       slippageBps,
       userAddress ?? null,
@@ -376,6 +380,7 @@ export function useLeverageQuote({
       collateralTokenAddress,
       collateralTokenDecimals,
       swapExecutionAddress,
+      LEVERAGE_SWAP_ROUTE_POLICY_KEY,
       isPositionDebtInput ? 'position' : 'wallet-loan',
       exactLoanInputSellAmount.toString(),
       exactLoanInputFlashLoanAssetAmount.toString(),
@@ -402,6 +407,7 @@ export function useLeverageQuote({
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
         side: 'SELL',
+        excludeDexs: LEVERAGE_SWAP_EXCLUDED_DEXS,
       });
 
       const totalCollateralTokenAmountAdded = withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps);

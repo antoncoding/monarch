@@ -29,6 +29,7 @@ Universal coding-agent rules for the Monarch codebase.
 - Remove temporary debugging code before finishing.
 - Run `npx ultracite fix` before committing, and `npx ultracite check` to verify, when code changes make those checks relevant.
 - Try to see if you can fix the issue by removing complexity. Always question whether all lines of code are necessary and remove unnecessary experiments.
+- For external API or protocol-shape bugs, validate the exact observed response shape at the smallest shared boundary. Do not add broad normalizers, diagnostic collectors, or hypothetical-shape handling unless the current evidence requires it.
 
 ## Final Validation Gate
 For every non-trivial code or docs change, do this immediately before the final response:

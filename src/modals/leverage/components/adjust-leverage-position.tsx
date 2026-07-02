@@ -350,11 +350,15 @@ export function AdjustLeveragePosition({
         ? withdrawCollateralAmount > 0n && !deleverageQuote.isLoading && deleverageQuote.error == null
         : false;
   const projectedOverLimit = projectedLTV >= lltv;
+  const targetLtvWad = effectiveTargetLtvBps * WAD_TO_BPS_SCALE;
   const positionProjectedAboveTarget =
+    action === 'leverage' && isLeverageFeeReady && targetWasEdited && projectedLTV > targetLtvWad + WAD_TO_BPS_SCALE;
+  const positionProjectedBelowTarget =
     action === 'leverage' &&
+    isSwapRoute &&
     isLeverageFeeReady &&
     targetWasEdited &&
-    projectedLTV > effectiveTargetLtvBps * WAD_TO_BPS_SCALE + WAD_TO_BPS_SCALE;
+    projectedLTV + LEVERAGE_SAFE_LTV_BUFFER_BPS * WAD_TO_BPS_SCALE < targetLtvWad;
   const marketLiquidity = parseUnsignedBigInt(market.state?.liquidityAssets) ?? 0n;
   const insufficientLiquidity = action === 'leverage' && leverageQuote.flashLoanAssetAmount > marketLiquidity;
   const leverageFeeReadinessError = useMemo(() => {
@@ -583,6 +587,7 @@ export function AdjustLeveragePosition({
         !isLeverageFeeReady ||
         leverageQuote.flashLoanAssetAmount <= 0n ||
         positionProjectedAboveTarget ||
+        positionProjectedBelowTarget ||
         insufficientLiquidity)) ||
     (action === 'deleverage' &&
       (addedCapitalBlocksDeleverage ||
@@ -601,6 +606,7 @@ export function AdjustLeveragePosition({
     executionError != null ||
     leverageFeeReadinessError != null ||
     positionProjectedAboveTarget ||
+    positionProjectedBelowTarget ||
     insufficientLiquidity ||
     isDeleverageCloseRouteResolving;
 
@@ -807,6 +813,9 @@ export function AdjustLeveragePosition({
                 )}
                 {positionProjectedAboveTarget && (
                   <p className="mt-2 text-xs text-red-500">Projected LTV is above target after route quote. Lower the target or refresh.</p>
+                )}
+                {positionProjectedBelowTarget && (
+                  <p className="mt-2 text-xs text-red-500">Swap quote output is inconsistent with target LTV. Refresh and try again.</p>
                 )}
                 {insufficientLiquidity && (
                   <p className="mt-2 text-xs text-red-500">
