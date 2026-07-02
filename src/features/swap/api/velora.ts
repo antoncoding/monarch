@@ -11,6 +11,13 @@ export type VeloraPriceRoute = {
   destAmount: string;
   tokenTransferProxy?: string;
   contractAddress?: string;
+  bestRoute?: Array<{
+    swaps?: Array<{
+      swapExchanges?: Array<{
+        exchange?: string;
+      }>;
+    }>;
+  }>;
 };
 
 export type VeloraTransactionPayload = {
@@ -53,6 +60,7 @@ export type FetchVeloraPriceRouteParams = {
   userAddress: Address;
   partner?: string;
   side?: VeloraSwapSide;
+  excludeDexs?: readonly string[];
 };
 
 export type BuildVeloraTransactionPayloadParams = {
@@ -241,6 +249,13 @@ const resolveCanonicalRouteTokenAddress = (priceRoute: VeloraPriceRoute, fields:
   return null;
 };
 
+const getVeloraRouteExchanges = (priceRoute: VeloraPriceRoute): string[] =>
+  (priceRoute.bestRoute ?? []).flatMap((route) =>
+    (route.swaps ?? []).flatMap((swap) =>
+      (swap.swapExchanges ?? []).flatMap((swapExchange) => (swapExchange.exchange ? [swapExchange.exchange] : [])),
+    ),
+  );
+
 export const getVeloraApprovalTarget = (priceRoute: VeloraPriceRoute | null): Address | null => {
   const spender = priceRoute?.tokenTransferProxy ?? priceRoute?.contractAddress;
   if (!spender || !isAddress(spender)) return null;
@@ -262,6 +277,7 @@ export const fetchVeloraPriceRoute = async ({
   userAddress,
   partner = SWAP_PARTNER,
   side = 'SELL',
+  excludeDexs = [],
 }: FetchVeloraPriceRouteParams): Promise<VeloraPriceRoute> => {
   const requestedSourceTokenAddress = toCanonicalTokenAddress(srcToken);
   const requestedDestinationTokenAddress = toCanonicalTokenAddress(destToken);
@@ -285,6 +301,9 @@ export const fetchVeloraPriceRoute = async ({
     partner,
     version: VELORA_PRICES_API_VERSION,
   });
+  if (excludeDexs.length > 0) {
+    query.set('excludeDEXS', excludeDexs.join(','));
+  }
 
   const response = await fetchVeloraJson<VeloraPriceResponse | null>(`${VELORA_API_BASE_URL}/prices?${query.toString()}`, {
     method: 'GET',
@@ -295,6 +314,18 @@ export const fetchVeloraPriceRoute = async ({
   }
 
   const validatedPriceRoute = validateVeloraPriceRouteShape(response.priceRoute, response);
+  if (excludeDexs.length > 0) {
+    const normalizedExcludedDexs = new Set(excludeDexs.map((dex) => dex.toLowerCase()));
+    const returnedExcludedDex = getVeloraRouteExchanges(validatedPriceRoute).find((exchange) =>
+      normalizedExcludedDexs.has(exchange.toLowerCase()),
+    );
+    if (returnedExcludedDex) {
+      throw new VeloraApiError(`Velora returned excluded ${returnedExcludedDex} route`, 400, {
+        excludeDexs,
+        response,
+      });
+    }
+  }
 
   const routeSourceTokenAddress = resolveCanonicalRouteTokenAddress(validatedPriceRoute, PRICE_ROUTE_SOURCE_TOKEN_FIELDS);
   if (routeSourceTokenAddress && routeSourceTokenAddress !== requestedSourceTokenAddress) {

@@ -5,6 +5,7 @@ import { useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { withSlippageCeil, withSlippageFloor } from './leverage/math';
+import { LEVERAGE_SWAP_EXCLUDED_DEXS, LEVERAGE_SWAP_ROUTE_POLICY_KEY } from './leverage/swap-route-policy';
 import { toUserFacingVeloraQuoteError } from './leverage/velora-quote-errors';
 import type { LeverageRoute } from './leverage/types';
 
@@ -84,6 +85,7 @@ export function useDeleverageQuote({
       loanTokenAddress,
       loanTokenDecimals,
       swapExecutionAddress,
+      LEVERAGE_SWAP_ROUTE_POLICY_KEY,
       withdrawCollateralAmount.toString(),
       slippageBps,
       userAddress ?? null,
@@ -99,6 +101,7 @@ export function useDeleverageQuote({
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
         side: 'SELL',
+        excludeDexs: LEVERAGE_SWAP_EXCLUDED_DEXS,
       });
 
       return {
@@ -120,6 +123,7 @@ export function useDeleverageQuote({
       loanTokenAddress,
       loanTokenDecimals,
       swapExecutionAddress,
+      LEVERAGE_SWAP_ROUTE_POLICY_KEY,
       bufferedBorrowAssets.toString(),
       slippageBps,
       userAddress ?? null,
@@ -135,6 +139,7 @@ export function useDeleverageQuote({
         network: chainId,
         userAddress: swapExecutionAddress as `0x${string}`,
         side: 'BUY',
+        excludeDexs: LEVERAGE_SWAP_EXCLUDED_DEXS,
       });
 
       const quotedDebtCloseAmount = BigInt(buyRoute.destAmount);

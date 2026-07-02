@@ -25,6 +25,7 @@ import {
   parseUnsignedBigInt,
   toScaledRatio,
   targetLtvBpsFromMultiplier,
+  WAD_TO_BPS_SCALE,
 } from '@/hooks/leverage/math';
 import { LEVERAGE_DEFAULT_MULTIPLIER_BPS } from '@/hooks/leverage/types';
 import { useMerklHoldIncentivesQuery } from '@/hooks/queries/useMerklHoldIncentivesQuery';
@@ -307,6 +308,8 @@ export function AddCollateralAndLeverage({
   }, [isLeverageFeeReady, usePermit2Setting, permit2Authorized, signAndLeverage, approveAndLeverage]);
 
   const projectedOverLimit = projectedLTV >= lltv;
+  const projectedBelowTarget =
+    hasChanges && isSwapRoute && projectedLTV + LEVERAGE_SAFE_LTV_BUFFER_BPS * WAD_TO_BPS_SCALE < targetLtvBps * WAD_TO_BPS_SCALE;
   const insufficientLiquidity = quote.flashLoanAssetAmount > marketLiquidity;
   const inputAssetSymbol = useLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
   const inputAssetDecimals = useLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
@@ -862,6 +865,9 @@ export function AddCollateralAndLeverage({
               </div>
               {quote.error && <p className="mt-2 text-xs text-red-500">{quote.error}</p>}
               {!quote.error && leverageFeeReadinessError && <p className="mt-2 text-xs text-red-500">{leverageFeeReadinessError}</p>}
+              {projectedBelowTarget && (
+                <p className="mt-2 text-xs text-red-500">Swap quote output is inconsistent with target LTV. Refresh and try again.</p>
+              )}
               {isErc4626Route && vaultRateInsight.error && (
                 <p className="mt-2 text-xs text-red-500">Failed to fetch 3-day vault/borrow rates: {vaultRateInsight.error}</p>
               )}
@@ -893,6 +899,7 @@ export function AddCollateralAndLeverage({
                   !isLeverageFeeReady ||
                   quote.flashLoanAssetAmount <= 0n ||
                   projectedOverLimit ||
+                  projectedBelowTarget ||
                   insufficientLiquidity
                 }
                 variant="primary"
