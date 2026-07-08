@@ -127,6 +127,16 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'USD1',
+    img: require('../imgs/tokens/usd1.webp') as string,
+    decimals: 6,
+    networks: [{ chain: monad, address: '0x111111d2bf19e43c34263401e0cad979ed1cdb61' }],
+    protocol: {
+      name: 'World Liberty Financial',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
     symbol: 'hyUSD',
     img: require('../imgs/tokens/hyusd.svg') as string,
     decimals: 18,
