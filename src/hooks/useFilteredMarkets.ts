@@ -10,6 +10,7 @@ import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useOfficialTrendingMarketKeys, useCustomTagMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { useMarketDiscoveryPriorityMap } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
+import { isMarketDiscoveryEligible } from '@/features/markets/market-discovery';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getMarketRateEnrichmentKey, type MarketRateEnrichmentMap } from '@/utils/market-rate-enrichment';
 import { isMarketVisibleWithWhitelistGuard } from '@/utils/markets';
@@ -59,8 +60,8 @@ const prioritizeDiscoveryMarkets = (markets: Market[], discoveryPriorityMap: Map
   return [...markets].sort((a, b) => {
     const aKey = getMetricsKey(a.morphoBlue.chain.id, a.uniqueKey);
     const bKey = getMetricsKey(b.morphoBlue.chain.id, b.uniqueKey);
-    const aPriority = discoveryPriorityMap.get(aKey);
-    const bPriority = discoveryPriorityMap.get(bKey);
+    const aPriority = isMarketDiscoveryEligible(a) ? discoveryPriorityMap.get(aKey) : undefined;
+    const bPriority = isMarketDiscoveryEligible(b) ? discoveryPriorityMap.get(bKey) : undefined;
 
     if (aPriority === undefined && bPriority === undefined) {
       return 0;

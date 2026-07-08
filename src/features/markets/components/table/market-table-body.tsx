@@ -12,6 +12,7 @@ import { TrustedByCell } from '@/features/autovault/components/trusted-vault-bad
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import type { MarketV2SupplyingVault } from '@/data-sources/monarch-api/vaults';
 import type { MarketDiscoveryCategory } from '@/features/markets/market-discovery';
+import { isMarketDiscoveryEligible } from '@/features/markets/market-discovery';
 import { useMarketDiscoveryFlagsMap } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -135,8 +136,9 @@ export function MarketTableBody({
         const isStared = starredMarkets.includes(item.uniqueKey);
         const marketKey = getMetricsKey(item.morphoBlue.chain.id, item.uniqueKey);
         const metrics = metricsMap.get(marketKey);
-        const discoveryFlags = flagsByMarket.get(marketKey) ?? [];
-        const marketDiscoveryCategories = categoriesByMarket.get(marketKey);
+        const isDiscoveryEligible = isMarketDiscoveryEligible(item);
+        const discoveryFlags = isDiscoveryEligible ? (flagsByMarket.get(marketKey) ?? []) : [];
+        const marketDiscoveryCategories = isDiscoveryEligible ? categoriesByMarket.get(marketKey) : undefined;
         const resolvedDiscoveryCategories = discoveryDataLoaded
           ? (marketDiscoveryCategories ?? new Set<MarketDiscoveryCategory>())
           : marketDiscoveryCategories;

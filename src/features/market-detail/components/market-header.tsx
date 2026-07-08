@@ -35,6 +35,7 @@ import {
   MARKET_DISCOVERY_CATEGORIES,
   MARKET_DISCOVERY_CATEGORY_META,
   getMarketDiscoveryKey,
+  isMarketDiscoveryEligible,
   type MarketDiscoveryCategory,
 } from '@/features/markets/market-discovery';
 import { useMarketDiscoveryFlagsMap, type MarketDiscoveryFlag } from '@/hooks/queries/useMarketDiscoveryFlagsQuery';
@@ -520,12 +521,12 @@ export function MarketHeader({
     defer: true,
   });
   const discoveryItems = useMemo(() => {
-    if (!discoveryKey || !discoveryFlagsResponse?.flags) {
+    if (!market || !discoveryKey || !discoveryFlagsResponse?.flags || !isMarketDiscoveryEligible(market)) {
       return [];
     }
 
     return getDiscoveryItems(flagsByMarket.get(discoveryKey) ?? [], categoriesByMarket.get(discoveryKey));
-  }, [categoriesByMarket, discoveryFlagsResponse?.flags, discoveryKey, flagsByMarket]);
+  }, [categoriesByMarket, discoveryFlagsResponse?.flags, discoveryKey, flagsByMarket, market]);
 
   if (isLoading || !market) {
     return <MarketHeaderSkeleton />;
