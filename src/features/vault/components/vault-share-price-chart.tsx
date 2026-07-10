@@ -7,10 +7,13 @@ import { TableContainerWithDescription } from '@/components/common/table-contain
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { useChartColors } from '@/constants/chartColors';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { useVaultSharePriceHistory } from '@/hooks/useVaultSharePriceHistory';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { type ChartTimeframe, useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import { formatChartTime } from '@/utils/chart';
 import type { SupportedNetworks } from '@/utils/networks';
+import { computeAnnualizedApyFromValueGrowth, formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
 import {
   ChartGradients,
   ChartTooltipContent,
@@ -81,6 +84,15 @@ function formatChangePercent(value: number | null): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(4)}%`;
 }
 
+function formatAnnualizedRate(annualizedApy: number | null, isAprDisplay: boolean): string {
+  if (annualizedApy === null || !Number.isFinite(annualizedApy)) {
+    return '--';
+  }
+
+  const displayRate = toDisplayRateFromApy(annualizedApy, isAprDisplay);
+  return formatRateAsPercentage(displayRate, 4);
+}
+
 function changeTextColor(value: number | null): string {
   if (value === null) {
     return 'text-secondary';
@@ -99,6 +111,8 @@ export function VaultSharePriceChart({
   const selectedTimeframe = useMarketDetailChartState((state) => state.selectedTimeframe);
   const selectedTimeRange = useMarketDetailChartState((state) => state.selectedTimeRange);
   const setTimeframe = useMarketDetailChartState((state) => state.setTimeframe);
+  const { isAprDisplay } = useAppSettings();
+  const { short: rateLabel } = useRateLabel();
   const chartColors = useChartColors();
 
   const { data, isError, isFetching, isLoading } = useVaultSharePriceHistory({
@@ -140,6 +154,15 @@ export function VaultSharePriceChart({
   const changePercent =
     firstPoint && lastPoint && firstPoint.sharePrice > 0
       ? ((lastPoint.sharePrice - firstPoint.sharePrice) / firstPoint.sharePrice) * 100
+      : null;
+  const periodSeconds = firstPoint && lastPoint ? lastPoint.x - firstPoint.x : 0;
+  const annualizedApy =
+    firstPoint && lastPoint
+      ? computeAnnualizedApyFromValueGrowth({
+          currentValue: lastPoint.sharePrice,
+          pastValue: firstPoint.sharePrice,
+          periodSeconds,
+        })
       : null;
   const yAxisDomain = useMemo(() => getSharePriceDomain(chartData, selectedTimeframe), [chartData, selectedTimeframe]);
   const isInitialLoading = isLoading;
@@ -188,6 +211,10 @@ export function VaultSharePriceChart({
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">{TIMEFRAME_LABELS[selectedTimeframe]} Change</p>
             <p className={`tabular-nums text-lg ${changeTextColor(changePercent)}`}>{formatChangePercent(changePercent)}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-secondary">Annualized {rateLabel}</p>
+            <p className={`tabular-nums text-lg ${changeTextColor(annualizedApy)}`}>{formatAnnualizedRate(annualizedApy, isAprDisplay)}</p>
           </div>
         </div>
       </div>
