@@ -128,11 +128,11 @@ export function calculateLifetimeEarningsFromHistory(
         return timestamp > history.lastSupplyActivityTimestamp;
       }
 
-      // Aggregate and event queries can observe adjacent indexer states. The
-      // exact event cursor prevents replaying a transaction already included
-      // in the aggregate when timestamps are equal or requests race.
+      // Aggregate and event queries can observe adjacent indexer states. A
+      // strictly later timestamp is safe, but equal timestamps need the exact
+      // event cursor to avoid replaying an event already in the aggregate.
       if (transaction.blockNumber === undefined || transaction.logIndex === undefined) {
-        return false;
+        return timestamp > history.lastSupplyActivityTimestamp;
       }
 
       return (
