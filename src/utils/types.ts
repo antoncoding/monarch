@@ -9,6 +9,18 @@ export type MarketParams = {
   lltv: bigint;
 };
 
+export type SupplyPositionHistory = {
+  firstSupplyTimestamp: number;
+  lastSupplyActivityTimestamp: number;
+  lastSupplyActivityBlockNumber?: number;
+  lastSupplyActivityLogIndex?: number;
+  supplyAssetsPrincipal: string;
+  totalSuppliedAssets: string;
+  totalWithdrawnAssets: string;
+  supplyWeightedAssetsSeconds: string;
+  supplyActiveSeconds: number;
+};
+
 export type MarketPosition = {
   state: {
     supplyShares: string;
@@ -19,6 +31,7 @@ export type MarketPosition = {
   };
   oraclePrice?: string | null;
   hasSupplyHistory?: boolean;
+  supplyHistory?: SupplyPositionHistory;
   market: Market; // Now using the full Market type
 };
 
@@ -44,6 +57,9 @@ export enum UserTxTypes {
 
 export type UserTransaction = {
   id?: string;
+  chainId?: number;
+  blockNumber?: number;
+  logIndex?: number;
   hash: string;
   timestamp: number;
   type: UserTxTypes;

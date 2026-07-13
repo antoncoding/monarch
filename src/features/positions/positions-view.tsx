@@ -46,7 +46,6 @@ export default function Positions() {
     isRefetching: isPositionsRefetching,
     isEarningsLoading,
     actualBlockData,
-    transactions,
     snapshotsByChain,
     earningsRangesByChain,
   } = useUserPositionsSummaryData(account, period, undefined, { enabled: shouldFetchNativeAccountData });
@@ -164,7 +163,6 @@ export default function Positions() {
               isRefetching={isPositionsRefetching}
               isEarningsLoading={isEarningsLoading}
               actualBlockData={actualBlockData}
-              transactions={transactions}
               snapshotsByChain={snapshotsByChain}
             />
           )}

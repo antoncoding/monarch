@@ -35,6 +35,23 @@ export const envioBorrowersPageQuery = `
   }
 `;
 
+const envioUserPositionSelection = `
+  marketId
+  chainId
+  supplyShares
+  borrowShares
+  collateral
+  firstSupplyTimestamp
+  lastSupplyActivityTimestamp
+  lastSupplyActivityBlockNumber
+  lastSupplyActivityLogIndex
+  supplyAssetsPrincipal
+  totalSuppliedAssets
+  totalWithdrawnAssets
+  supplyWeightedAssetsSeconds
+  supplyActiveSeconds
+`;
+
 export const envioUserPositionsPageQuery = `
   query EnvioUserPositionsPage($user: String!, $chainIds: [Int!], $limit: Int!, $offset: Int!) {
     Position(
@@ -46,11 +63,7 @@ export const envioUserPositionsPageQuery = `
       offset: $offset
       order_by: [{ chainId: asc }, { marketId: asc }]
     ) {
-      marketId
-      chainId
-      supplyShares
-      borrowShares
-      collateral
+      ${envioUserPositionSelection}
     }
   }
 `;
@@ -65,11 +78,44 @@ export const envioUserPositionForMarketQuery = `
       }
       limit: 1
     ) {
+      ${envioUserPositionSelection}
+    }
+  }
+`;
+
+export const buildEnvioPositionDailyFlowsPageQuery = (afterCursor: boolean): string => `
+  query EnvioPositionDailyFlowsPage(
+    $user: String!
+    $chainId: Int!
+    $marketIds: [String!]!
+    $startBucket: numeric!
+    $endBucket: numeric!
+    $limit: Int!
+    ${afterCursor ? '$cursorBucket: numeric! $cursorId: String!' : ''}
+  ) {
+    PositionDailyFlow(
+      where: {
+        user: { _eq: $user }
+        chainId: { _eq: $chainId }
+        marketId: { _in: $marketIds }
+        bucketStart: { _gte: $startBucket, _lt: $endBucket }
+        ${
+          afterCursor
+            ? `_or: [
+          { bucketStart: { _gt: $cursorBucket } }
+          { _and: [{ bucketStart: { _eq: $cursorBucket } }, { id: { _gt: $cursorId } }] }
+        ]`
+            : ''
+        }
+      }
+      limit: $limit
+      order_by: [{ bucketStart: asc }, { id: asc }]
+    ) {
+      id
       marketId
-      chainId
-      supplyShares
-      borrowShares
-      collateral
+      bucketStart
+      lastActivityTimestamp
+      netSupplyAssets
     }
   }
 `;

@@ -48,7 +48,7 @@ import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { getPositionsPeriodShortLabel } from './positions-period-settings';
 import { RiArrowRightLine, RiSparklingFill } from 'react-icons/ri';
-import type { MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
+import type { MarketPositionWithEarnings } from '@/utils/types';
 import type { PositionSnapshot } from '@/utils/positions';
 
 type SuppliedMorphoBlueGroupedTableProps = {
@@ -58,7 +58,6 @@ type SuppliedMorphoBlueGroupedTableProps = {
   isRefetching: boolean;
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
-  transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
 };
 
@@ -354,7 +353,6 @@ export function SuppliedMorphoBlueGroupedTable({
   isRefetching,
   isEarningsLoading,
   actualBlockData,
-  transactions,
   snapshotsByChain,
 }: SuppliedMorphoBlueGroupedTableProps) {
   const { address } = useConnection();
@@ -711,11 +709,12 @@ export function SuppliedMorphoBlueGroupedTable({
                             >
                               <SuppliedMarketsDetail
                                 groupedPosition={groupedPosition}
-                                transactions={transactions}
+                                account={account}
                                 snapshotsByChain={snapshotsByChain}
                                 chainBlockData={actualBlockData}
                                 isEarningsLoading={isEarningsLoading}
                                 isOwner={isOwner}
+                                useDailyBuckets={period === 'all'}
                               />
                             </motion.div>
                           </TableCell>

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
@@ -19,10 +20,26 @@ type UsePositionSnapshotsOptions = {
 export const usePositionSnapshots = ({ positions, user, snapshotBlocks, boundaryBlockData, transactions }: UsePositionSnapshotsOptions) => {
   const { customRpcUrls } = useCustomRpcContext();
   const chainIds = Object.keys(snapshotBlocks).map(Number);
+  const requiresIndexedTransactionHistory = chainIds.some((chainId) => !supportsHistoricalStateRead(chainId));
   const hasBoundaryDataForIndexedChains = chainIds.every(
     (chainId) => supportsHistoricalStateRead(chainId) || Boolean(boundaryBlockData[chainId]?.timestamp),
   );
-  const transactionSignature = transactions.map(getUserTransactionIdentity).join(',');
+  const transactionSignature = useMemo(() => {
+    if (!requiresIndexedTransactionHistory) {
+      return '';
+    }
+
+    let hash = 2_166_136_261;
+    for (const transaction of transactions) {
+      const identity = getUserTransactionIdentity(transaction);
+      for (let index = 0; index < identity.length; index++) {
+        hash ^= identity.charCodeAt(index);
+        hash = Math.imul(hash, 16_777_619);
+      }
+    }
+
+    return `${transactions.length}:${hash >>> 0}`;
+  }, [requiresIndexedTransactionHistory, transactions]);
 
   return useQuery({
     queryKey: [

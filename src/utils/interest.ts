@@ -1,4 +1,4 @@
-import { type UserTransaction, UserTxTypes } from './types';
+import { type SupplyPositionHistory, type UserTransaction, UserTxTypes } from './types';
 
 export type EarningsCalculation = {
   earned: bigint;
@@ -10,6 +10,14 @@ export type EarningsCalculation = {
 };
 
 const ONE_YEAR = 86_400 * 365;
+
+const calculateApy = (earned: bigint, averageSuppliedAssets: bigint, effectiveTime: number): number => {
+  if (earned <= 0n || averageSuppliedAssets <= 0n || effectiveTime <= 0) {
+    return 0;
+  }
+
+  return (Number(earned) / Number(averageSuppliedAssets) + 1) ** (ONE_YEAR / effectiveTime) - 1;
+};
 
 export function calculateEarningsFromSnapshot(
   endingBalance: bigint,
@@ -75,8 +83,7 @@ export function calculateEarningsFromSnapshot(
 
   const averageSuppliedAssets = weightedSuppliedAssets / BigInt(effectiveTime);
 
-  const periods = ONE_YEAR / effectiveTime;
-  const apy = earned > 0 ? (Number(earned) / Number(averageSuppliedAssets) + 1) ** periods - 1 : 0;
+  const apy = calculateApy(earned, averageSuppliedAssets, effectiveTime);
 
   return {
     earned,
@@ -85,6 +92,99 @@ export function calculateEarningsFromSnapshot(
     effectiveTime: effectiveTime,
     totalDeposits: depositsAfter,
     totalWithdraws: withdrawsAfter,
+  };
+}
+
+export function calculateLifetimeEarningsFromHistory(
+  endingBalance: bigint,
+  history: SupplyPositionHistory,
+  recentTransactions: UserTransaction[],
+  end: number = Math.floor(Date.now() / 1000),
+): EarningsCalculation {
+  let movingSupply = BigInt(history.supplyAssetsPrincipal);
+  let movingTimestamp = history.lastSupplyActivityTimestamp;
+  let weightedSuppliedAssets = BigInt(history.supplyWeightedAssetsSeconds);
+  let effectiveTime = history.supplyActiveSeconds;
+  let totalDeposits = BigInt(history.totalSuppliedAssets);
+  let totalWithdraws = BigInt(history.totalWithdrawnAssets);
+
+  const historyCursor =
+    history.lastSupplyActivityBlockNumber !== undefined && history.lastSupplyActivityLogIndex !== undefined
+      ? { blockNumber: history.lastSupplyActivityBlockNumber, logIndex: history.lastSupplyActivityLogIndex }
+      : null;
+
+  const transactionsAfterHistory = recentTransactions
+    .filter((transaction) => {
+      if (transaction.type !== UserTxTypes.MarketSupply && transaction.type !== UserTxTypes.MarketWithdraw) {
+        return false;
+      }
+
+      const timestamp = Number(transaction.timestamp);
+      if (timestamp >= end) {
+        return false;
+      }
+
+      if (!historyCursor) {
+        return timestamp > history.lastSupplyActivityTimestamp;
+      }
+
+      // Aggregate and event queries can observe adjacent indexer states. The
+      // exact event cursor prevents replaying a transaction already included
+      // in the aggregate when timestamps are equal or requests race.
+      if (transaction.blockNumber === undefined || transaction.logIndex === undefined) {
+        return false;
+      }
+
+      return (
+        transaction.blockNumber > historyCursor.blockNumber ||
+        (transaction.blockNumber === historyCursor.blockNumber && transaction.logIndex > historyCursor.logIndex)
+      );
+    })
+    .sort((left, right) => {
+      if (left.blockNumber !== undefined && right.blockNumber !== undefined && left.blockNumber !== right.blockNumber) {
+        return left.blockNumber - right.blockNumber;
+      }
+      if (left.logIndex !== undefined && right.logIndex !== undefined && left.logIndex !== right.logIndex) {
+        return left.logIndex - right.logIndex;
+      }
+      return left.timestamp - right.timestamp;
+    });
+
+  for (const transaction of transactionsAfterHistory) {
+    const timestamp = Number(transaction.timestamp);
+    const timeElapsed = timestamp - movingTimestamp;
+
+    if (movingSupply > 0n && timeElapsed > 0) {
+      effectiveTime += timeElapsed;
+      weightedSuppliedAssets += movingSupply * BigInt(timeElapsed);
+    }
+
+    const assets = BigInt(transaction.data.assets || '0');
+    if (transaction.type === UserTxTypes.MarketSupply) {
+      movingSupply += assets;
+      totalDeposits += assets;
+    } else {
+      movingSupply -= assets;
+      totalWithdraws += assets;
+    }
+    movingTimestamp = timestamp;
+  }
+
+  if (movingSupply > 0n && end - movingTimestamp > 0) {
+    effectiveTime += end - movingTimestamp;
+    weightedSuppliedAssets += movingSupply * BigInt(end - movingTimestamp);
+  }
+
+  const earned = endingBalance + totalWithdraws - totalDeposits;
+  const averageSuppliedAssets = effectiveTime > 0 ? weightedSuppliedAssets / BigInt(effectiveTime) : 0n;
+
+  return {
+    earned,
+    apy: calculateApy(earned, averageSuppliedAssets, effectiveTime),
+    avgCapital: averageSuppliedAssets,
+    effectiveTime,
+    totalDeposits,
+    totalWithdraws,
   };
 }
 

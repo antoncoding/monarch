@@ -10,7 +10,7 @@ import { getMarketDetailCacheKey } from '@/utils/marketDetailCacheKey';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import { fetchLatestPositionSnapshotsWithOraclePrices, type PositionSnapshot, type PositionMarketOracleInput } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
-import type { Market, MarketPosition } from '@/utils/types';
+import type { Market, MarketPosition, SupplyPositionHistory } from '@/utils/types';
 import { isSupplyPositionTransaction } from '@/utils/transactionGrouping';
 import { useApiResponseCache } from '@/stores/useApiResponseCache';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
@@ -23,6 +23,7 @@ type PositionMarket = {
   marketUniqueKey: string;
   chainId: number;
   hasSupplyHistory?: boolean;
+  supplyHistory?: SupplyPositionHistory;
 };
 
 export type UserPositionMarketHint = PositionMarket & {
@@ -65,6 +66,11 @@ type InitialDataResponse = {
   finalMarketKeys: PositionMarket[];
 };
 
+type PositionMarketSourceResult = {
+  markets: PositionMarket[];
+  includesSupplyHistory: boolean;
+};
+
 // Type for the final processed position data
 type EnhancedMarketPosition = MarketPosition;
 
@@ -82,7 +88,25 @@ export const positionKeys = {
       user,
       showEmpty ? 'include-empty' : 'active-only',
       initialData?.finalMarketKeys
-        .map((k) => `${k.marketUniqueKey.toLowerCase()}-${k.chainId}-${k.hasSupplyHistory ? 'history' : 'active'}`)
+        .map((k) => {
+          const history = k.supplyHistory;
+          const historyIdentity = history
+            ? [
+                history.lastSupplyActivityTimestamp,
+                history.lastSupplyActivityBlockNumber,
+                history.lastSupplyActivityLogIndex,
+                history.supplyAssetsPrincipal,
+                history.totalSuppliedAssets,
+                history.totalWithdrawnAssets,
+                history.supplyWeightedAssetsSeconds,
+                history.supplyActiveSeconds,
+              ].join(':')
+            : k.hasSupplyHistory
+              ? 'history'
+              : 'active';
+
+          return `${k.marketUniqueKey.toLowerCase()}-${k.chainId}-${historyIdentity}`;
+        })
         .sort()
         .join(','),
     ] as const,
@@ -123,11 +147,14 @@ const appendFulfilledPositionMarkets = (
 };
 
 // Fetches market keys only from Monarch and Morpho API sources.
-const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarket[]> => {
+const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarketSourceResult> => {
   const networksToFetch = chainIds ?? ALL_SUPPORTED_NETWORKS;
 
   try {
-    return await fetchMonarchUserPositionMarketsForNetworks(user, networksToFetch);
+    return {
+      markets: await fetchMonarchUserPositionMarketsForNetworks(user, networksToFetch),
+      includesSupplyHistory: true,
+    };
   } catch (error) {
     console.error('[Positions] Failed batched Monarch position lookup, falling back to Morpho API strategy:', error);
   }
@@ -157,7 +184,10 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
     throw fetchErrors[0];
   }
 
-  return sourcePositionMarkets;
+  return {
+    markets: sourcePositionMarkets,
+    includesSupplyHistory: false,
+  };
 };
 
 const appendUniquePositionMarkets = (markets: PositionMarket[], positionMarkets: Map<string, PositionMarket>): void => {
@@ -167,6 +197,7 @@ const appendUniquePositionMarkets = (markets: PositionMarket[], positionMarkets:
     positionMarkets.set(key, {
       ...market,
       hasSupplyHistory: Boolean(existingMarket?.hasSupplyHistory || market.hasSupplyHistory),
+      supplyHistory: market.supplyHistory ?? existingMarket?.supplyHistory,
     });
   }
 };
@@ -308,10 +339,14 @@ const useUserPositions = (
   }, [chainIds, getUserMarkets, hasMarketHints]);
 
   const initialPositionData = useMemo<InitialDataResponse | undefined>(() => {
+    if (showEmpty) {
+      return undefined;
+    }
+
     const seedMarkets = hasMarketHints ? marketHints : cachedPositionMarkets;
     const finalMarketKeys = filterBlacklistedPositionMarkets(seedMarkets);
     return finalMarketKeys.length > 0 ? { finalMarketKeys } : undefined;
-  }, [cachedPositionMarkets, filterBlacklistedPositionMarkets, hasMarketHints, marketHints]);
+  }, [cachedPositionMarkets, filterBlacklistedPositionMarkets, hasMarketHints, marketHints, showEmpty]);
 
   // 1. Query for relevant market keys, seeded from local cache so refreshes do not block first paint.
   const {
@@ -331,9 +366,20 @@ const useUserPositions = (
     queryFn: async () => {
       if (!user) throw new Error('Assertion failed: User should be defined here.');
 
-      const [sourceMarketKeys, transactionMarketKeys] = hasMarketHints
-        ? [marketHints, []]
-        : await Promise.all([fetchSourceMarketKeys(user, chainIds), showEmpty ? fetchSupplyTransactionMarketKeys(user, chainIds) : []]);
+      let sourceMarketKeys: PositionMarket[];
+      let transactionMarketKeys: PositionMarket[];
+
+      if (hasMarketHints) {
+        const sourceResult = await fetchSourceMarketKeys(user, chainIds);
+        const hintedMarketKeys = new Set(marketHints.map(getPositionMarketKey));
+        sourceMarketKeys = [...marketHints, ...sourceResult.markets.filter((market) => hintedMarketKeys.has(getPositionMarketKey(market)))];
+        transactionMarketKeys = [];
+      } else {
+        const sourceResult = await fetchSourceMarketKeys(user, chainIds);
+        sourceMarketKeys = sourceResult.markets;
+        transactionMarketKeys =
+          showEmpty && !sourceResult.includesSupplyHistory ? await fetchSupplyTransactionMarketKeys(user, chainIds) : [];
+      }
 
       const uniqueMarketsMap = new Map<string, PositionMarket>();
       appendUniquePositionMarkets(sourceMarketKeys, uniqueMarketsMap);
@@ -466,6 +512,7 @@ const useUserPositions = (
             market: market,
             oraclePrice: allOraclePrices.get(marketKey) ?? null,
             hasSupplyHistory: marketInfo.hasSupplyHistory,
+            supplyHistory: marketInfo.supplyHistory,
           });
         }
       }

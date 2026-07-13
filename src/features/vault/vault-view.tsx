@@ -124,7 +124,7 @@ function VaultAdapterPositionDetail({
     [marketAllocations],
   );
 
-  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, transactions, snapshotsByChain } = useUserPositionsSummaryData(
+  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain } = useUserPositionsSummaryData(
     adapterAddress,
     period,
     [chainId],
@@ -146,12 +146,6 @@ function VaultAdapterPositionDetail({
       (position) => position.chainId === chainId && position.loanAssetAddress.toLowerCase() === assetAddress.toLowerCase(),
     );
   }, [assetAddress, chainId, groupedPositions]);
-
-  const relevantTransactions = useMemo(() => {
-    if (!currentPosition) return [];
-    const marketKeys = new Set(currentPosition.markets.map((marketPosition) => marketPosition.market.uniqueKey.toLowerCase()));
-    return transactions.filter((tx) => tx.data.market && marketKeys.has(tx.data.market.uniqueKey.toLowerCase()));
-  }, [currentPosition, transactions]);
 
   if (!adapterAddress && !isResolvingAdapter) {
     return <VaultStatusPanel message="No connected vault adapter found for this vault." />;
@@ -182,7 +176,6 @@ function VaultAdapterPositionDetail({
             isEarningsLoading={isEarningsLoading}
             actualBlockData={actualBlockData}
             period={period}
-            transactions={relevantTransactions}
             snapshotsByChain={snapshotsByChain}
             marketAllocations={marketAllocations}
             assetAddress={assetAddress}

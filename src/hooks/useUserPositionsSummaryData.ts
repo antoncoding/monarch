@@ -11,9 +11,12 @@ import { usePositionsWithEarnings, getPeriodTimestamp, type EarningsTimeRange } 
 import { mergeUserTransactionsWithRecentCache, reconcileUserTransactionHistoryCache } from '@/utils/user-transaction-history-cache';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { buildAllTimePositionBoundary } from '@/utils/position-boundary-snapshots';
+import { hasActiveSupplyPosition } from '@/utils/positions';
 
 export type { EarningsPeriod } from '@/stores/usePositionsFilters';
 export type { EarningsTimeRange } from './usePositionsWithEarnings';
+
+const RECENT_POSITION_TRANSACTION_WINDOW_SECONDS = 10 * 60;
 
 type UseUserPositionsSummaryDataOptions = {
   enabled?: boolean;
@@ -85,6 +88,11 @@ const useUserPositionsSummaryData = (
 
   const hasCustomRange = Boolean(validatedCustomRange);
   const isAllTime = period === 'all' && !hasCustomRange;
+  const requiresFullAllTimeHistory =
+    isAllTime &&
+    Boolean(
+      positions?.some((position) => (Boolean(position.hasSupplyHistory) || hasActiveSupplyPosition(position)) && !position.supplyHistory),
+    );
 
   const snapshotBlocks = useMemo(() => {
     if (isAllTime || !currentBlocks) return {};
@@ -128,6 +136,15 @@ const useUserPositionsSummaryData = (
     isFetching: isFetchingEndBlockTimestamps,
   } = useBlockTimestamps(endSnapshotBlocks);
 
+  const transactionTimestampGte = useMemo(() => {
+    if (isAllTime) {
+      return requiresFullAllTimeHistory ? undefined : Math.max(0, selectedRange.endTimestamp - RECENT_POSITION_TRANSACTION_WINDOW_SECONDS);
+    }
+
+    const boundaryTimestamps = Object.values(actualBlockData ?? {}).map((blockData) => blockData.timestamp);
+    return boundaryTimestamps.length > 0 ? Math.min(...boundaryTimestamps) : selectedRange.startTimestamp;
+  }, [actualBlockData, isAllTime, requiresFullAllTimeHistory, selectedRange.endTimestamp, selectedRange.startTimestamp]);
+
   const {
     data: txData,
     isLoading: isLoadingTransactions,
@@ -137,6 +154,7 @@ const useUserPositionsSummaryData = (
       userAddress: activeUser ? [activeUser] : [],
       marketUniqueKeys: positions?.map((p) => p.market.uniqueKey) ?? [],
       chainIds: uniqueChainIds,
+      timestampGte: transactionTimestampGte,
     },
     paginate: true,
     enabled: !!positions && !!activeUser,
@@ -205,6 +223,7 @@ const useUserPositionsSummaryData = (
     endBlockData: endBlockData ?? {},
     fallbackEndTimestamp: selectedRange.endTimestamp,
     requiresEndSnapshots: hasCustomRange,
+    useLifetimeHistory: isAllTime,
   });
 
   const earningsRangesByChain = useMemo(() => {
@@ -285,7 +304,6 @@ const useUserPositionsSummaryData = (
     actualBlockData: startBlockData,
     endSnapshotsByChain: endSnapshots ?? {},
     earningsRangesByChain,
-    transactions: mergedTransactions,
     snapshotsByChain: startSnapshotsByChain,
   };
 };

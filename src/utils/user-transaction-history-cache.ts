@@ -18,6 +18,7 @@ type ReceiptLogLike = {
 };
 
 type ReceiptLike = {
+  blockNumber?: bigint | null;
   logs?: readonly ReceiptLogLike[];
 };
 
@@ -153,6 +154,9 @@ export function cacheUserTransactionHistoryFromReceipt({
         logIndex: log.logIndex ?? index,
         tx: {
           id: `${chainId}:${txHash.toLowerCase()}:${log.logIndex ?? index}`,
+          chainId,
+          blockNumber: receipt.blockNumber === null || receipt.blockNumber === undefined ? undefined : Number(receipt.blockNumber),
+          logIndex: log.logIndex ?? index,
           hash: txHash,
           timestamp,
           type: txType,
@@ -222,7 +226,11 @@ export function mergeUserTransactionsWithRecentCache({
       }
       return !apiTransactionKeys.has(getUserTransactionMergeKey(entry.tx));
     })
-    .map((entry) => entry.tx);
+    .map((entry) => ({
+      ...entry.tx,
+      chainId: entry.chainId,
+      logIndex: entry.tx.logIndex ?? entry.logIndex,
+    }));
 
   if (cachedTransactions.length === 0) {
     return apiTransactions;
