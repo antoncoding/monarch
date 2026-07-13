@@ -28,6 +28,42 @@ const ZERO_POSITION_SNAPSHOT: PositionSnapshot = {
 
 const getTransactionMarketKey = (transaction: UserTransaction): string | null => transaction.data?.market?.uniqueKey?.toLowerCase() ?? null;
 
+export const buildAllTimePositionBoundary = (positions: MarketPosition[], transactions: UserTransaction[]) => {
+  const blockData: Record<number, { block: number; timestamp: number }> = {};
+  const snapshotsByChain: Record<number, Map<string, PositionSnapshot>> = {};
+  const firstSupplyByMarket = new Map<string, number>();
+
+  for (const transaction of transactions) {
+    const marketKey = getTransactionMarketKey(transaction);
+    const timestamp = Number(transaction.timestamp);
+    if (transaction.type !== UserTxTypes.MarketSupply || !marketKey || !Number.isFinite(timestamp)) continue;
+
+    const currentTimestamp = firstSupplyByMarket.get(marketKey);
+    if (currentTimestamp === undefined || timestamp < currentTimestamp) {
+      firstSupplyByMarket.set(marketKey, timestamp);
+    }
+  }
+
+  for (const position of positions) {
+    const marketKey = position.market.uniqueKey.toLowerCase();
+    const firstSupplyTimestamp = firstSupplyByMarket.get(marketKey);
+    if (firstSupplyTimestamp === undefined) continue;
+
+    const chainId = position.market.morphoBlue.chain.id;
+    const startTimestamp = Math.max(0, firstSupplyTimestamp - 1);
+    const currentBoundary = blockData[chainId];
+    if (!currentBoundary || startTimestamp < currentBoundary.timestamp) {
+      blockData[chainId] = { block: 0, timestamp: startTimestamp };
+    }
+
+    const chainSnapshots = snapshotsByChain[chainId] ?? new Map<string, PositionSnapshot>();
+    chainSnapshots.set(marketKey, ZERO_POSITION_SNAPSHOT);
+    snapshotsByChain[chainId] = chainSnapshots;
+  }
+
+  return { blockData, snapshotsByChain };
+};
+
 const isTransactionInBoundaryWindow = (transaction: UserTransaction, start: number, end: number): boolean => {
   const timestamp = Number(transaction.timestamp);
   return timestamp > start && timestamp < end;

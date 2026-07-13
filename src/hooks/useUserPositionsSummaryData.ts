@@ -10,6 +10,7 @@ import { useUserTransactionsQuery } from './queries/useUserTransactionsQuery';
 import { usePositionsWithEarnings, getPeriodTimestamp, type EarningsTimeRange } from './usePositionsWithEarnings';
 import { mergeUserTransactionsWithRecentCache, reconcileUserTransactionHistoryCache } from '@/utils/user-transaction-history-cache';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
+import { buildAllTimePositionBoundary } from '@/utils/position-boundary-snapshots';
 
 export type { EarningsPeriod } from '@/stores/usePositionsFilters';
 export type { EarningsTimeRange } from './usePositionsWithEarnings';
@@ -83,9 +84,10 @@ const useUserPositionsSummaryData = (
   }, [period, validatedCustomRange]);
 
   const hasCustomRange = Boolean(validatedCustomRange);
+  const isAllTime = period === 'all' && !hasCustomRange;
 
   const snapshotBlocks = useMemo(() => {
-    if (!currentBlocks) return {};
+    if (isAllTime || !currentBlocks) return {};
 
     const blocks: Record<number, number> = {};
 
@@ -97,7 +99,7 @@ const useUserPositionsSummaryData = (
     });
 
     return blocks;
-  }, [selectedRange.startTimestamp, uniqueChainIds, currentBlocks]);
+  }, [isAllTime, selectedRange.startTimestamp, uniqueChainIds, currentBlocks]);
 
   const endSnapshotBlocks = useMemo(() => {
     if (!hasCustomRange || !currentBlocks) return {};
@@ -164,6 +166,13 @@ const useUserPositionsSummaryData = (
     });
   }, [activeUser, uniqueChainIds, txData?.items]);
 
+  // Lifetime earnings start from a zero balance immediately before the first supply.
+  // Deriving that boundary from complete history avoids an invalid contract read at chain block 0.
+  const allTimeBoundary = useMemo(
+    () => (isAllTime ? buildAllTimePositionBoundary(positions ?? [], mergedTransactions) : null),
+    [isAllTime, mergedTransactions, positions],
+  );
+
   const {
     data: allSnapshots,
     isLoading: isLoadingSnapshots,
@@ -175,6 +184,9 @@ const useUserPositionsSummaryData = (
     boundaryBlockData: actualBlockData ?? {},
     transactions: mergedTransactions,
   });
+
+  const startBlockData = allTimeBoundary?.blockData ?? actualBlockData ?? {};
+  const startSnapshotsByChain = allTimeBoundary?.snapshotsByChain ?? allSnapshots ?? {};
 
   const {
     data: endSnapshots,
@@ -188,7 +200,7 @@ const useUserPositionsSummaryData = (
     transactions: mergedTransactions,
   });
 
-  const positionsWithEarnings = usePositionsWithEarnings(positions ?? [], mergedTransactions, allSnapshots ?? {}, actualBlockData ?? {}, {
+  const positionsWithEarnings = usePositionsWithEarnings(positions ?? [], mergedTransactions, startSnapshotsByChain, startBlockData, {
     endSnapshotsByChain: endSnapshots ?? {},
     endBlockData: endBlockData ?? {},
     fallbackEndTimestamp: selectedRange.endTimestamp,
@@ -199,7 +211,7 @@ const useUserPositionsSummaryData = (
     const ranges: Record<number, EarningsTimeRange> = {};
 
     uniqueChainIds.forEach((chainId) => {
-      const startTimestamp = actualBlockData?.[chainId]?.timestamp;
+      const startTimestamp = startBlockData[chainId]?.timestamp;
       if (!startTimestamp) return;
 
       ranges[chainId] = {
@@ -209,7 +221,7 @@ const useUserPositionsSummaryData = (
     });
 
     return ranges;
-  }, [uniqueChainIds, actualBlockData, endBlockData, selectedRange.endTimestamp]);
+  }, [uniqueChainIds, startBlockData, endBlockData, selectedRange.endTimestamp]);
 
   const refetch = async (onSuccess?: () => void) => {
     if (!activeUser) {
@@ -270,11 +282,11 @@ const useUserPositionsSummaryData = (
     error: positionsError,
     refetch,
     loadingStates,
-    actualBlockData: actualBlockData ?? {},
+    actualBlockData: startBlockData,
     endSnapshotsByChain: endSnapshots ?? {},
     earningsRangesByChain,
     transactions: mergedTransactions,
-    snapshotsByChain: allSnapshots ?? {},
+    snapshotsByChain: startSnapshotsByChain,
   };
 };
 
