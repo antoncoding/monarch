@@ -74,7 +74,6 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
     isRefetching,
     refetch,
     actualBlockData,
-    transactions,
     snapshotsByChain,
     endSnapshotsByChain,
     earningsRangesByChain,
@@ -90,13 +89,6 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
   const hasCustomRange = Boolean(reportCustomRange);
   const periodLabel = hasCustomRange && customRange ? formatReportRangeLabel(customRange) : PERIOD_LABELS[period];
   const reportRange = earningsRangesByChain[chainId];
-
-  // Filter transactions relevant to this position's markets
-  const relevantTransactions = useMemo(() => {
-    if (!currentPosition) return [];
-    const marketKeys = new Set(currentPosition.markets.map((m) => m.market.uniqueKey.toLowerCase()));
-    return transactions.filter((tx) => tx.data.market && marketKeys.has(tx.data.market.uniqueKey.toLowerCase()));
-  }, [transactions, currentPosition]);
 
   // Handle refetch
   const handleRefetch = () => {
@@ -230,12 +222,12 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
                   groupedPosition={currentPosition}
                   chainId={chainId as SupportedNetworks}
                   userAddress={userAddress}
-                  transactions={relevantTransactions}
                   snapshotsByChain={snapshotsByChain}
                   endSnapshotsByChain={endSnapshotsByChain}
                   actualBlockData={actualBlockData}
                   reportRange={reportRange}
                   requiresEndSnapshots={hasCustomRange}
+                  period={period}
                 />
               </TabsContent>
             </>

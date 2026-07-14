@@ -40,12 +40,14 @@ const MORPHO_MARKET_TRANSACTION_TYPE_MAP: Record<MorphoMarketTransactionType, Us
   WithdrawCollateral: UserTxTypes.MarketWithdrawCollateral,
 };
 
-const toUserTransaction = (transaction: MorphoMarketTransaction): UserTransaction => {
+const toUserTransaction = (transaction: MorphoMarketTransaction, chainId: number): UserTransaction => {
   const type = MORPHO_MARKET_TRANSACTION_TYPE_MAP[transaction.type];
 
   return {
     hash: transaction.hash,
     id: `${transaction.hash.toLowerCase()}-${transaction.logIndex}`,
+    chainId,
+    logIndex: transaction.logIndex,
     timestamp: Number(transaction.timestamp),
     type,
     data: {
@@ -108,7 +110,7 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
 
     return {
       ...transactions,
-      items: transactions.items.map(toUserTransaction),
+      items: transactions.items.map((transaction) => toUserTransaction(transaction, filters.chainId)),
       error: null,
     };
   } catch (err) {

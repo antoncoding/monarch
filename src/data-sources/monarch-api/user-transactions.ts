@@ -42,9 +42,31 @@ const toTimestamp = (value: string | number): number => {
   return typeof value === 'number' ? value : Number(value);
 };
 
-const mapActivityRows = (rows: MonarchUserActivityRow[] | undefined, type: UserTxTypes, sharesFallback = '0'): UserTransaction[] => {
+const getEventCursor = (id: string, expectedChainId: number): Pick<UserTransaction, 'blockNumber' | 'logIndex'> => {
+  const [chainId, blockNumber, logIndex, ...rest] = id.split('_');
+  if (rest.length > 0 || Number(chainId) !== expectedChainId || !blockNumber || !logIndex) {
+    return {};
+  }
+
+  const parsedBlockNumber = Number(blockNumber);
+  const parsedLogIndex = Number(logIndex);
+  if (!Number.isSafeInteger(parsedBlockNumber) || !Number.isSafeInteger(parsedLogIndex)) {
+    return {};
+  }
+
+  return { blockNumber: parsedBlockNumber, logIndex: parsedLogIndex };
+};
+
+const mapActivityRows = (
+  rows: MonarchUserActivityRow[] | undefined,
+  type: UserTxTypes,
+  chainId: number,
+  sharesFallback = '0',
+): UserTransaction[] => {
   return (rows ?? []).map((row) => ({
     id: row.id,
+    chainId,
+    ...getEventCursor(row.id, chainId),
     hash: row.txHash,
     timestamp: toTimestamp(row.timestamp),
     type,
@@ -59,9 +81,11 @@ const mapActivityRows = (rows: MonarchUserActivityRow[] | undefined, type: UserT
   }));
 };
 
-const mapLiquidationRows = (rows: MonarchUserLiquidationRow[] | undefined): UserTransaction[] => {
+const mapLiquidationRows = (rows: MonarchUserLiquidationRow[] | undefined, chainId: number): UserTransaction[] => {
   return (rows ?? []).map((row) => ({
     id: row.id,
+    chainId,
+    ...getEventCursor(row.id, chainId),
     hash: row.txHash,
     timestamp: toTimestamp(row.timestamp),
     type: UserTxTypes.MarketLiquidation,
@@ -132,6 +156,13 @@ const getUserAddressVariants = (userAddresses: string[]): string[] => {
 
 export const fetchMonarchUserTransactions = async (filters: TransactionFilters): Promise<TransactionResponse> => {
   const effectiveTimestampLte = filters.timestampLte ?? Math.floor(Date.now() / 1000);
+  const requestedSkip = filters.skip ?? 0;
+  const requestedFirst = filters.first;
+  const boundedResultSize = requestedFirst === undefined ? undefined : requestedSkip + requestedFirst;
+  if (boundedResultSize === 0) {
+    return emptyTransactionResponse();
+  }
+
   const query = buildEnvioUserTransactionsPageQuery({
     useHashFilter: Boolean(filters.hash),
     useMarketFilter: Boolean(filters.marketUniqueKeys?.length),
@@ -141,7 +172,7 @@ export const fetchMonarchUserTransactions = async (filters: TransactionFilters):
   const variables: Record<string, unknown> = {
     chainId: filters.chainId,
     userAddresses: getUserAddressVariants(filters.userAddress),
-    limit: MONARCH_USER_TRANSACTIONS_BATCH_SIZE,
+    limit: boundedResultSize ?? MONARCH_USER_TRANSACTIONS_BATCH_SIZE,
     offset: 0,
     timestampLte: effectiveTimestampLte,
   };
@@ -160,35 +191,40 @@ export const fetchMonarchUserTransactions = async (filters: TransactionFilters):
 
   const allTransactions: UserTransaction[] = [];
 
-  for (let page = 0; page < MAX_PAGES; page++) {
+  const pageCount = boundedResultSize === undefined ? MAX_PAGES : 1;
+  for (let page = 0; page < pageCount; page++) {
     variables.offset = page * MONARCH_USER_TRANSACTIONS_BATCH_SIZE;
 
     const response = await fetchMonarchUserTransactionsPage(query, variables);
     const data = response.data;
 
     allTransactions.push(
-      ...mapActivityRows(data?.supplies, UserTxTypes.MarketSupply),
-      ...mapActivityRows(data?.withdraws, UserTxTypes.MarketWithdraw),
-      ...mapActivityRows(data?.borrows, UserTxTypes.MarketBorrow),
-      ...mapActivityRows(data?.repays, UserTxTypes.MarketRepay),
-      ...mapActivityRows(data?.supplyCollateral, UserTxTypes.MarketSupplyCollateral),
-      ...mapActivityRows(data?.withdrawCollateral, UserTxTypes.MarketWithdrawCollateral),
-      ...mapLiquidationRows(data?.liquidations),
+      ...mapActivityRows(data?.supplies, UserTxTypes.MarketSupply, filters.chainId),
+      ...mapActivityRows(data?.withdraws, UserTxTypes.MarketWithdraw, filters.chainId),
+      ...mapActivityRows(data?.borrows, UserTxTypes.MarketBorrow, filters.chainId),
+      ...mapActivityRows(data?.repays, UserTxTypes.MarketRepay, filters.chainId),
+      ...mapActivityRows(data?.supplyCollateral, UserTxTypes.MarketSupplyCollateral, filters.chainId),
+      ...mapActivityRows(data?.withdrawCollateral, UserTxTypes.MarketWithdrawCollateral, filters.chainId),
+      ...mapLiquidationRows(data?.liquidations, filters.chainId),
     );
+
+    if (boundedResultSize !== undefined) {
+      break;
+    }
 
     const hasNextPage = shouldContinuePaging(response, MONARCH_USER_TRANSACTIONS_BATCH_SIZE);
     if (!hasNextPage) {
       break;
     }
 
-    if (page === MAX_PAGES - 1) {
+    if (page === pageCount - 1) {
       return emptyTransactionResponse('Monarch user transaction history exceeded the safe pagination limit');
     }
   }
 
   const dedupedTransactions = sortUserTransactions(dedupeUserTransactions(allTransactions));
 
-  const skip = filters.skip ?? 0;
+  const skip = requestedSkip;
   const first = filters.first ?? dedupedTransactions.length;
   const items = dedupedTransactions.slice(skip, skip + first);
 

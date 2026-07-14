@@ -6,11 +6,12 @@ import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
+import { usePositionChartTransactions } from '@/hooks/usePositionChartTransactions';
 import { VaultMarketAllocationsTable } from '@/features/vault/components/vault-market-allocations-table';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import type { MarketAllocation } from '@/types/vaultAllocations';
 import type { PositionSnapshot } from '@/utils/positions';
-import type { GroupedPosition, MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
+import type { GroupedPosition, MarketPositionWithEarnings } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
 const PERIOD_LABELS: Record<EarningsPeriod, string> = {
@@ -29,7 +30,6 @@ type VaultAdapterPositionOverviewProps = {
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   period: EarningsPeriod;
-  transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   marketAllocations: MarketAllocation[];
   assetAddress?: Address;
@@ -97,7 +97,6 @@ export function VaultAdapterPositionOverview({
   isEarningsLoading,
   actualBlockData,
   period,
-  transactions,
   snapshotsByChain,
   marketAllocations,
   assetAddress,
@@ -105,17 +104,43 @@ export function VaultAdapterPositionOverview({
 }: VaultAdapterPositionOverviewProps) {
   const periodLabel = PERIOD_LABELS[period];
   const detailHref = `/position/${chainId}/${groupedPosition.loanAssetAddress}/${adapterAddress}`;
+  const {
+    transactions,
+    isLoading: isLoadingTransactions,
+    error: transactionError,
+  } = usePositionChartTransactions({
+    account: adapterAddress,
+    groupedPosition,
+    startTimestamp: actualBlockData[chainId]?.timestamp,
+    useDailyBuckets: period === 'all',
+  });
 
   return (
     <div className="space-y-4">
-      <UserPositionsChart
-        variant="grouped"
-        groupedPosition={groupedPosition}
-        transactions={transactions}
-        snapshotsByChain={snapshotsByChain}
-        chainBlockData={actualBlockData}
-        height={220}
-      />
+      {isLoadingTransactions ? (
+        <div
+          role="status"
+          className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
+        >
+          Loading position history...
+        </div>
+      ) : transactionError ? (
+        <div
+          role="alert"
+          className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
+        >
+          Position history is temporarily unavailable.
+        </div>
+      ) : (
+        <UserPositionsChart
+          variant="grouped"
+          groupedPosition={groupedPosition}
+          transactions={transactions}
+          snapshotsByChain={snapshotsByChain}
+          chainBlockData={actualBlockData}
+          height={220}
+        />
+      )}
       <VaultMarketBreakdownTable
         positions={groupedPosition.markets}
         chainId={chainId}

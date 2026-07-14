@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import useUserPositionsSummaryData, { type EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
 import { groupPositionsByLoanAsset, processCollaterals, type PositionSnapshot } from '@/utils/positions';
-import type { GroupedPosition, UserTransaction } from '@/utils/types';
+import type { GroupedPosition } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
 type UsePositionDetailDataParams = {
@@ -22,7 +22,6 @@ type UsePositionDetailDataResult = {
   refetch: (onSuccess?: () => void) => Promise<void>;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   earningsRangesByChain: Record<number, EarningsTimeRange>;
-  transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   endSnapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
 };
@@ -43,7 +42,6 @@ export function usePositionDetailData({
     refetch,
     actualBlockData,
     earningsRangesByChain,
-    transactions,
     snapshotsByChain,
     endSnapshotsByChain,
   } = useUserPositionsSummaryData(userAddress, period, undefined, {
@@ -77,7 +75,6 @@ export function usePositionDetailData({
     refetch,
     actualBlockData,
     earningsRangesByChain,
-    transactions,
     snapshotsByChain,
     endSnapshotsByChain,
   };

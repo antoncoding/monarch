@@ -57,7 +57,7 @@ function ExposureStatus({ message }: { message: string }) {
 function AdapterExposure({ adapterAddress, adapterType, chainId, period }: AdapterExposureProps) {
   const chainIds = useMemo(() => [chainId as SupportedNetworks], [chainId]);
 
-  const { isPositionsLoading, positions, refetch, isRefetching, isEarningsLoading, actualBlockData, transactions, snapshotsByChain } =
+  const { isPositionsLoading, positions, refetch, isRefetching, isEarningsLoading, actualBlockData, snapshotsByChain } =
     useUserPositionsSummaryData(adapterAddress, period, chainIds);
 
   const hasSuppliedMarkets = positions.some(hasSupplyPositionHistory);
@@ -84,7 +84,6 @@ function AdapterExposure({ adapterAddress, adapterType, chainId, period }: Adapt
           isRefetching={isRefetching}
           isEarningsLoading={isEarningsLoading}
           actualBlockData={actualBlockData}
-          transactions={transactions}
           snapshotsByChain={snapshotsByChain}
         />
       )}

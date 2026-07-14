@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { now, getLocalTimeZone, type ZonedDateTime } from '@internationalized/date';
 import moment from 'moment';
 import { formatUnits } from 'viem';
@@ -21,15 +21,17 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
 import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
+import { usePositionChartTransactions } from '@/hooks/usePositionChartTransactions';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
 import { UserTxTypes, type Market } from '@/utils/types';
 import { actionTypeToText } from '@/utils/morpho';
-import type { GroupedPosition, UserTransaction } from '@/utils/types';
+import type { GroupedPosition } from '@/utils/types';
 import type { PositionSnapshot } from '@/utils/positions';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
+import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
 const PAGE_SIZE = 10;
 
@@ -39,24 +41,24 @@ type HistoryTabProps = {
   groupedPosition: GroupedPosition;
   chainId: SupportedNetworks;
   userAddress: string;
-  transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   endSnapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   reportRange?: EarningsTimeRange;
   requiresEndSnapshots?: boolean;
+  period: EarningsPeriod;
 };
 
 export function HistoryTab({
   groupedPosition,
   chainId,
   userAddress,
-  transactions,
   snapshotsByChain,
   endSnapshotsByChain,
   actualBlockData,
   reportRange,
   requiresEndSnapshots,
+  period,
 }: HistoryTabProps) {
   const toast = useStyledToast();
 
@@ -83,8 +85,9 @@ export function HistoryTab({
       chainId,
       timestampGte: startDate ? Math.floor(startDate.toDate().getTime() / 1000) : undefined,
       timestampLte: endDate ? Math.floor(endDate.toDate().getTime() / 1000) : undefined,
+      first: PAGE_SIZE + 1,
+      skip: (currentPage - 1) * PAGE_SIZE,
     },
-    paginate: true,
     enabled: marketIdFilter.length > 0,
   });
 
@@ -99,22 +102,22 @@ export function HistoryTab({
     return nextMap;
   }, [groupedPosition.markets]);
   const filteredHistory = data?.items ?? [];
-  const totalEntries = filteredHistory.length;
-  const totalPages = Math.ceil(totalEntries / PAGE_SIZE);
-  const history = useMemo(() => {
-    const safeTotalPages = Math.max(1, totalPages);
-    const safePage = Math.max(1, Math.min(currentPage, safeTotalPages));
-    const startIndex = (safePage - 1) * PAGE_SIZE;
-    return filteredHistory.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [currentPage, filteredHistory, totalPages]);
+  const hasNextPage = filteredHistory.length > PAGE_SIZE;
+  const history = filteredHistory.slice(0, PAGE_SIZE);
+  const totalEntries = (currentPage - 1) * PAGE_SIZE + history.length + Number(hasNextPage);
+  const {
+    transactions: chartTransactions,
+    isLoading: isLoadingChart,
+    error: chartError,
+  } = usePositionChartTransactions({
+    account: userAddress,
+    groupedPosition,
+    startTimestamp: reportRange?.startTimestamp ?? actualBlockData[chainId]?.timestamp,
+    endTimestamp: reportRange?.endTimestamp,
+    useDailyBuckets: period === 'all' && !requiresEndSnapshots,
+  });
 
   const maxDate = useMemo(() => now(getLocalTimeZone()), []);
-
-  useEffect(() => {
-    if (totalPages > 0 && currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
 
   const handleStartDateChange = (date: ZonedDateTime) => {
     if (endDate && date > endDate) setEndDate(date);
@@ -267,17 +270,33 @@ export function HistoryTab({
 
   return (
     <div className="space-y-4">
-      <UserPositionsChart
-        variant="grouped"
-        groupedPosition={groupedPosition}
-        transactions={transactions}
-        snapshotsByChain={snapshotsByChain}
-        endSnapshotsByChain={endSnapshotsByChain}
-        chainBlockData={actualBlockData}
-        endTimestamp={reportRange?.endTimestamp}
-        requiresEndSnapshots={requiresEndSnapshots}
-        height={220}
-      />
+      {isLoadingChart ? (
+        <div
+          role="status"
+          className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
+        >
+          Loading position history...
+        </div>
+      ) : chartError ? (
+        <div
+          role="alert"
+          className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
+        >
+          Position history is temporarily unavailable.
+        </div>
+      ) : (
+        <UserPositionsChart
+          variant="grouped"
+          groupedPosition={groupedPosition}
+          transactions={chartTransactions}
+          snapshotsByChain={snapshotsByChain}
+          endSnapshotsByChain={endSnapshotsByChain}
+          chainBlockData={actualBlockData}
+          endTimestamp={reportRange?.endTimestamp}
+          requiresEndSnapshots={requiresEndSnapshots}
+          height={220}
+        />
+      )}
       <TableContainerWithHeader
         title="Transaction History"
         actions={headerActions}
@@ -418,16 +437,16 @@ export function HistoryTab({
       </TableContainerWithHeader>
 
       {/* Pagination */}
-      {!loading && totalPages > 1 && (
+      {!loading && (currentPage > 1 || hasNextPage) && (
         <TablePagination
-          mode="fixed"
+          mode="open"
           currentPage={currentPage}
-          totalPages={totalPages}
+          hasNextPage={hasNextPage}
           totalEntries={totalEntries}
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
           isLoading={loading}
-          showEntryCount
+          showEntryCount={false}
         />
       )}
 

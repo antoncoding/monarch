@@ -10,21 +10,22 @@ import { MarketRiskIndicators } from '@/features/markets/components/market-risk-
 import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useModal } from '@/hooks/useModal';
+import { usePositionChartTransactions } from '@/hooks/usePositionChartTransactions';
 import { formatBalance } from '@/utils/balance';
 import { formatTokenAmountPreview } from '@/utils/token-amount-format';
 import type { GroupedPosition, MarketPositionWithEarnings } from '@/utils/types';
 import { AllocationCell } from './allocation-cell';
 import { UserPositionsChart } from './user-positions-chart';
-import type { UserTransaction } from '@/utils/types';
 import { hasActiveSupplyPosition, type PositionSnapshot } from '@/utils/positions';
 
 type SuppliedMarketsDetailProps = {
+  account: string;
   groupedPosition: GroupedPosition;
-  transactions: UserTransaction[];
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   chainBlockData: Record<number, { block: number; timestamp: number }>;
   isEarningsLoading: boolean;
   isOwner: boolean;
+  useDailyBuckets?: boolean;
 };
 
 function MarketRow({
@@ -159,14 +160,25 @@ function MarketRow({
 
 // shared similar style with @vault-allocation-detail.tsx
 export function SuppliedMarketsDetail({
+  account,
   groupedPosition,
-  transactions,
   snapshotsByChain,
   chainBlockData,
   isEarningsLoading,
   isOwner,
+  useDailyBuckets,
 }: SuppliedMarketsDetailProps) {
   const { short: rateLabel } = useRateLabel();
+  const {
+    transactions,
+    isLoading: isLoadingTransactions,
+    error: transactionError,
+  } = usePositionChartTransactions({
+    account,
+    groupedPosition,
+    startTimestamp: chainBlockData[groupedPosition.chainId]?.timestamp,
+    useDailyBuckets,
+  });
 
   // Sort markets by size
   const sortedMarkets = [...groupedPosition.markets].sort(
@@ -186,7 +198,7 @@ export function SuppliedMarketsDetail({
       className="overflow-hidden"
     >
       <div className="space-y-4">
-        {isEarningsLoading ? (
+        {isEarningsLoading || isLoadingTransactions ? (
           <div
             role="status"
             aria-label="Calculating earnings"
@@ -197,6 +209,13 @@ export function SuppliedMarketsDetail({
               color="#f45f2d"
               margin={4}
             />
+          </div>
+        ) : transactionError ? (
+          <div
+            role="alert"
+            className="flex min-h-[180px] items-center justify-center text-sm text-secondary"
+          >
+            Position history is temporarily unavailable.
           </div>
         ) : (
           <UserPositionsChart
