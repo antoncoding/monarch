@@ -13,6 +13,7 @@ import type { MarketAllocation } from '@/types/vaultAllocations';
 import type { PositionSnapshot } from '@/utils/positions';
 import type { GroupedPosition, MarketPositionWithEarnings } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
+import { usesCompletedUtcDays } from '@/utils/earnings-period';
 
 const PERIOD_LABELS: Record<EarningsPeriod, string> = {
   day: '24h',
@@ -31,6 +32,8 @@ type VaultAdapterPositionOverviewProps = {
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   period: EarningsPeriod;
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  endSnapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  endTimestamp?: number;
   marketAllocations: MarketAllocation[];
   assetAddress?: Address;
   totalAssets?: bigint;
@@ -98,6 +101,8 @@ export function VaultAdapterPositionOverview({
   actualBlockData,
   period,
   snapshotsByChain,
+  endSnapshotsByChain,
+  endTimestamp,
   marketAllocations,
   assetAddress,
   totalAssets,
@@ -112,7 +117,8 @@ export function VaultAdapterPositionOverview({
     account: adapterAddress,
     groupedPosition,
     startTimestamp: actualBlockData[chainId]?.timestamp,
-    useDailyBuckets: period === 'all',
+    endTimestamp,
+    useDailyBuckets: period === 'all' || usesCompletedUtcDays(period),
   });
 
   return (
@@ -137,7 +143,9 @@ export function VaultAdapterPositionOverview({
           groupedPosition={groupedPosition}
           transactions={transactions}
           snapshotsByChain={snapshotsByChain}
+          endSnapshotsByChain={endSnapshotsByChain}
           chainBlockData={actualBlockData}
+          endTimestamp={endTimestamp}
           height={220}
         />
       )}

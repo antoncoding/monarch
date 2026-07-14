@@ -83,15 +83,25 @@ export const envioUserPositionForMarketQuery = `
   }
 `;
 
-export const buildEnvioPositionDailyFlowsPageQuery = (afterCursor: boolean): string => `
+export const buildEnvioPositionDailyFlowsPageQuery = ({
+  afterFlowCursor,
+  afterMarketCursor,
+  includeMarketSnapshots,
+}: {
+  afterFlowCursor: boolean;
+  afterMarketCursor: boolean;
+  includeMarketSnapshots: boolean;
+}): string => `
   query EnvioPositionDailyFlowsPage(
     $user: String!
     $chainId: Int!
     $marketIds: [String!]!
     $startBucket: numeric!
     $endBucket: numeric!
-    $limit: Int!
-    ${afterCursor ? '$cursorBucket: numeric! $cursorId: String!' : ''}
+    $flowLimit: Int!
+    ${afterFlowCursor ? '$flowCursorBucket: numeric! $flowCursorId: String!' : ''}
+    ${includeMarketSnapshots ? '$marketStartBucket: numeric! $marketLimit: Int!' : ''}
+    ${afterMarketCursor ? '$marketCursorBucket: numeric! $marketCursorId: String!' : ''}
   ) {
     PositionDailyFlow(
       where: {
@@ -100,22 +110,54 @@ export const buildEnvioPositionDailyFlowsPageQuery = (afterCursor: boolean): str
         marketId: { _in: $marketIds }
         bucketStart: { _gte: $startBucket, _lt: $endBucket }
         ${
-          afterCursor
+          afterFlowCursor
             ? `_or: [
-          { bucketStart: { _gt: $cursorBucket } }
-          { _and: [{ bucketStart: { _eq: $cursorBucket } }, { id: { _gt: $cursorId } }] }
+          { bucketStart: { _gt: $flowCursorBucket } }
+          { _and: [{ bucketStart: { _eq: $flowCursorBucket } }, { id: { _gt: $flowCursorId } }] }
         ]`
             : ''
         }
       }
-      limit: $limit
+      limit: $flowLimit
       order_by: [{ bucketStart: asc }, { id: asc }]
     ) {
       id
       marketId
       bucketStart
       lastActivityTimestamp
+      suppliedAssets
+      withdrawnAssets
       netSupplyAssets
+      closingSupplyShares
+      supplyWeightedSharesSeconds
+      supplyActiveSeconds
+    }
+    ${
+      includeMarketSnapshots
+        ? `markets: MarketDailySnapshot(
+      where: {
+        chainId: { _eq: $chainId }
+        marketId: { _in: $marketIds }
+        bucketStart: { _gte: $marketStartBucket, _lt: $endBucket }
+        ${
+          afterMarketCursor
+            ? `_or: [
+          { bucketStart: { _gt: $marketCursorBucket } }
+          { _and: [{ bucketStart: { _eq: $marketCursorBucket } }, { id: { _gt: $marketCursorId } }] }
+        ]`
+            : ''
+        }
+      }
+      limit: $marketLimit
+      order_by: [{ bucketStart: asc }, { id: asc }]
+    ) {
+      id
+      marketId
+      bucketStart
+      totalSupplyAssets
+      totalSupplyShares
+    }`
+        : ''
     }
   }
 `;

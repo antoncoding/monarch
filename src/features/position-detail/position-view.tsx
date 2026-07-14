@@ -24,6 +24,7 @@ import {
 } from './components/report-range-picker';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
+import { usesCompletedUtcDays } from '@/utils/earnings-period';
 
 type PositionDetailContentProps = {
   chainId: number;
@@ -89,6 +90,7 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
   const hasCustomRange = Boolean(reportCustomRange);
   const periodLabel = hasCustomRange && customRange ? formatReportRangeLabel(customRange) : PERIOD_LABELS[period];
   const reportRange = earningsRangesByChain[chainId];
+  const requiresEndSnapshots = hasCustomRange || usesCompletedUtcDays(period);
 
   // Handle refetch
   const handleRefetch = () => {
@@ -226,7 +228,7 @@ export default function PositionDetailContent({ chainId, loanAssetAddress, userA
                   endSnapshotsByChain={endSnapshotsByChain}
                   actualBlockData={actualBlockData}
                   reportRange={reportRange}
-                  requiresEndSnapshots={hasCustomRange}
+                  requiresEndSnapshots={requiresEndSnapshots}
                   period={period}
                 />
               </TabsContent>

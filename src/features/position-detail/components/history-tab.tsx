@@ -32,6 +32,7 @@ import type { PositionSnapshot } from '@/utils/positions';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
+import { usesCompletedUtcDays } from '@/utils/earnings-period';
 
 const PAGE_SIZE = 10;
 
@@ -114,7 +115,7 @@ export function HistoryTab({
     groupedPosition,
     startTimestamp: reportRange?.startTimestamp ?? actualBlockData[chainId]?.timestamp,
     endTimestamp: reportRange?.endTimestamp,
-    useDailyBuckets: period === 'all' && !requiresEndSnapshots,
+    useDailyBuckets: period === 'all' || usesCompletedUtcDays(period),
   });
 
   const maxDate = useMemo(() => now(getLocalTimeZone()), []);
@@ -292,8 +293,7 @@ export function HistoryTab({
           snapshotsByChain={snapshotsByChain}
           endSnapshotsByChain={endSnapshotsByChain}
           chainBlockData={actualBlockData}
-          endTimestamp={reportRange?.endTimestamp}
-          requiresEndSnapshots={requiresEndSnapshots}
+          endTimestamp={requiresEndSnapshots ? reportRange?.endTimestamp : undefined}
           height={220}
         />
       )}

@@ -1,3 +1,5 @@
+import { SharesMath } from '@morpho-org/blue-sdk';
+import type { MarketDailySupplySnapshot, PositionDailyAnalytics, PositionDailyFlow } from '@/data-sources/monarch-api';
 import { type SupplyPositionHistory, type UserTransaction, UserTxTypes } from './types';
 
 export type EarningsCalculation = {
@@ -9,7 +11,8 @@ export type EarningsCalculation = {
   apy: number;
 };
 
-const ONE_YEAR = 86_400 * 365;
+const SECONDS_PER_DAY = 86_400;
+const ONE_YEAR = SECONDS_PER_DAY * 365;
 
 const calculateApy = (earned: bigint, averageSuppliedAssets: bigint, effectiveTime: number): number => {
   if (earned <= 0n || averageSuppliedAssets <= 0n || effectiveTime <= 0) {
@@ -92,6 +95,102 @@ export function calculateEarningsFromSnapshot(
     effectiveTime: effectiveTime,
     totalDeposits: depositsAfter,
     totalWithdraws: withdrawsAfter,
+  };
+}
+
+const getDailyExposure = (
+  flow: PositionDailyFlow | undefined,
+  currentShares: bigint,
+  bucketEnd: number,
+): { weightedSharesSeconds: bigint; activeSeconds: number; closingShares: bigint } => {
+  if (!flow) {
+    return {
+      weightedSharesSeconds: currentShares * BigInt(SECONDS_PER_DAY),
+      activeSeconds: currentShares > 0n ? SECONDS_PER_DAY : 0,
+      closingShares: currentShares,
+    };
+  }
+
+  const closingShares = BigInt(flow.closingSupplyShares);
+  const tailSeconds = Math.max(0, bucketEnd - flow.lastActivityTimestamp);
+
+  return {
+    weightedSharesSeconds: BigInt(flow.supplyWeightedSharesSeconds) + closingShares * BigInt(tailSeconds),
+    activeSeconds: flow.supplyActiveSeconds + (closingShares > 0n ? tailSeconds : 0),
+    closingShares,
+  };
+};
+
+const toWeightedAssets = (weightedSharesSeconds: bigint, snapshot: MarketDailySupplySnapshot): bigint =>
+  SharesMath.toAssets(weightedSharesSeconds, BigInt(snapshot.totalSupplyAssets), BigInt(snapshot.totalSupplyShares), 'Down');
+
+/** Completed presets use immutable daily flows; only 24H continues through the rolling event path. */
+export function calculateEarningsFromDailyAnalytics({
+  marketId,
+  startingBalance,
+  endingBalance,
+  startingShares,
+  endingShares,
+  startTimestamp,
+  endTimestamp,
+  analytics,
+}: {
+  marketId: string;
+  startingBalance: bigint;
+  endingBalance: bigint;
+  startingShares: bigint;
+  endingShares: bigint;
+  startTimestamp: number;
+  endTimestamp: number;
+  analytics: PositionDailyAnalytics;
+}): EarningsCalculation {
+  const normalizedMarketId = marketId.toLowerCase();
+  const flows = analytics.flows.filter((flow) => flow.marketId.toLowerCase() === normalizedMarketId);
+  const marketSnapshots = analytics.marketSnapshots
+    .filter((snapshot) => snapshot.marketId.toLowerCase() === normalizedMarketId)
+    .sort((left, right) => left.bucketStart - right.bucketStart);
+  const flowByBucket = new Map(flows.map((flow) => [flow.bucketStart, flow]));
+  const marketSnapshotByBucket = new Map(marketSnapshots.map((snapshot) => [snapshot.bucketStart, snapshot]));
+  const totalDeposits = flows.reduce((sum, flow) => sum + BigInt(flow.suppliedAssets), 0n);
+  const totalWithdraws = flows.reduce((sum, flow) => sum + BigInt(flow.withdrawnAssets), 0n);
+  const earned = endingBalance + totalWithdraws - (startingBalance + totalDeposits);
+
+  let currentShares = startingShares;
+  let weightedSuppliedAssets = 0n;
+  let effectiveTime = 0;
+  let latestMarketSnapshot = marketSnapshots.filter((snapshot) => snapshot.bucketStart < startTimestamp).at(-1);
+
+  for (let bucketStart = startTimestamp; bucketStart < endTimestamp; bucketStart += SECONDS_PER_DAY) {
+    const exposure = getDailyExposure(flowByBucket.get(bucketStart), currentShares, bucketStart + SECONDS_PER_DAY);
+    const endMarketSnapshot = marketSnapshotByBucket.get(bucketStart) ?? latestMarketSnapshot;
+    const startMarketSnapshot = latestMarketSnapshot ?? endMarketSnapshot;
+
+    if (exposure.weightedSharesSeconds > 0n) {
+      if (startMarketSnapshot && endMarketSnapshot) {
+        const startWeightedAssets = toWeightedAssets(exposure.weightedSharesSeconds, startMarketSnapshot);
+        const endWeightedAssets = toWeightedAssets(exposure.weightedSharesSeconds, endMarketSnapshot);
+        weightedSuppliedAssets += (startWeightedAssets + endWeightedAssets) / 2n;
+      } else if (startingShares > 0n) {
+        weightedSuppliedAssets += (exposure.weightedSharesSeconds * startingBalance) / startingShares;
+      } else if (endingShares > 0n) {
+        weightedSuppliedAssets += (exposure.weightedSharesSeconds * endingBalance) / endingShares;
+      }
+    }
+
+    effectiveTime += exposure.activeSeconds;
+    currentShares = exposure.closingShares;
+    latestMarketSnapshot = endMarketSnapshot;
+  }
+
+  const averageSuppliedAssets = effectiveTime > 0 ? weightedSuppliedAssets / BigInt(effectiveTime) : 0n;
+
+  return {
+    earned,
+    totalDeposits,
+    totalWithdraws,
+    avgCapital: averageSuppliedAssets,
+    effectiveTime,
+    apy: calculateApy(earned, averageSuppliedAssets, effectiveTime),
   };
 }
 

@@ -243,9 +243,9 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `useUserPositions` | Discover all current and exited markets where a user has positions, then attach lifetime supply aggregates and live balances | Monarch batched `Position` discovery/aggregates + RPC snapshots/oracle reads + market metadata from `useProcessedMarkets`; Morpho API and transaction-discovery fallback | Monarch market registry/detail if position objects should no longer depend on Morpho API market metadata |
 | `useUserPosition` | Single-market user position | RPC snapshot first; if snapshot unavailable, Monarch position state when local market exists; then Morpho API fallback | Same market-registry/detail gap as `useUserPositions` |
 | `useUserTransactionsQuery` / `fetchUserTransactions` | User history across one or many chains | Monarch user-event tables first; fallback Morpho API; `assetIds` filter still bypasses Monarch | Asset-address filtered history support to fully back reports and any asset-scoped history views |
-| `useUserPositionsSummaryData` | Portfolio earnings summary for current and exited supply positions | Lifetime `Position` aggregates plus cursor-filtered recent events for all time; bounded period events + RPC boundary snapshots otherwise | Inherits the remaining `useUserPositions` and `useUserTransactionsQuery` gaps; the aggregate path requires the earnings-enabled Envio schema |
+| `useUserPositionsSummaryData` | Portfolio earnings summary for current and exited supply positions | Lifetime `Position` aggregates plus cursor-filtered recent events for all time; completed UTC periods use sparse daily position/market aggregates plus RPC boundary snapshots; rolling 24h and custom ranges use bounded events | Inherits the remaining `useUserPositions` and `useUserTransactionsQuery` gaps; aggregate periods require the earnings-enabled Envio schema |
 | `usePositionReport` | Asset-scoped earnings/report generation | `fetchUserTransactions(assetIds=...)` + RPC block/snapshot helpers | Still blocked on Monarch support for `assetIds`-scoped user history |
-| `usePositionHistoryChart` | Derive chart points for one asset/market group | Daily net-flow buckets for all time; bounded period transactions and boundary snapshots otherwise | The daily path requires Envio `PositionDailyFlow`; a data-API join could further reduce multi-market payloads |
+| `usePositionHistoryChart` | Derive chart points for one asset/market group | Daily net-flow buckets for all time and completed UTC periods; bounded period transactions and boundary snapshots otherwise | The daily path requires Envio `PositionDailyFlow`; a data-API join could further reduce multi-market payloads |
 
 #### Market Detail And Admin Reads
 
@@ -296,8 +296,9 @@ Split: allMarkets vs whitelistedMarkets
 2. Fetch on-chain snapshots per market (`usePositionSnapshots`)
 3. Combine live balances with market metadata from `useProcessedMarkets`
 4. Group by loan asset
-5. Calculate all-time earnings from lifetime aggregates plus events strictly after the indexed block/log cursor; use boundary snapshots and bounded event windows for shorter periods
-6. Build all-time charts from completed sparse `PositionDailyFlow` buckets, with current balances as the live endpoint
+5. Calculate all-time earnings from lifetime aggregates plus events strictly after the indexed block/log cursor
+6. Calculate completed 7d/30d/3m/6m UTC periods from sparse `PositionDailyFlow` and `MarketDailySnapshot` rows plus boundary snapshots; keep 24h rolling and custom ranges on bounded events
+7. Build all-time and completed-period charts from sparse `PositionDailyFlow` buckets, with current balances as the live endpoint for all time
 ```
 
 **Vault Data Flow:**

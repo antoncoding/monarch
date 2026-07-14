@@ -1,14 +1,12 @@
 import { useMemo } from 'react';
-import { calculateEarningsFromSnapshot, calculateLifetimeEarningsFromHistory } from '@/utils/interest';
+import type { PositionDailyAnalytics } from '@/data-sources/monarch-api';
+import { calculateEarningsFromDailyAnalytics, calculateEarningsFromSnapshot, calculateLifetimeEarningsFromHistory } from '@/utils/interest';
 import type { MarketPosition, UserTransaction, MarketPositionWithEarnings } from '@/utils/types';
 import { hasActiveSupplyPosition, initializePositionWithEmptyEarnings, type PositionSnapshot } from '@/utils/positions';
 import { isSupplyPositionTransaction } from '@/utils/transactionGrouping';
-import type { EarningsPeriod } from '@/stores/usePositionsFilters';
+import type { EarningsTimeRange } from '@/utils/earnings-period';
 
-export type EarningsTimeRange = {
-  startTimestamp: number;
-  endTimestamp: number;
-};
+export type { EarningsTimeRange } from '@/utils/earnings-period';
 
 type UsePositionsWithEarningsOptions = {
   endSnapshotsByChain?: Record<number, Map<string, PositionSnapshot>>;
@@ -16,26 +14,8 @@ type UsePositionsWithEarningsOptions = {
   fallbackEndTimestamp?: number;
   requiresEndSnapshots?: boolean;
   useLifetimeHistory?: boolean;
-};
-
-// Simple helper for the period timestamp calculation
-export const getPeriodTimestamp = (period: EarningsPeriod, endTimestamp: number = Math.floor(Date.now() / 1000)): number => {
-  switch (period) {
-    case 'day':
-      return endTimestamp - 86_400;
-    case 'week':
-      return endTimestamp - 7 * 86_400;
-    case 'month':
-      return endTimestamp - 30 * 86_400;
-    case 'threemonth':
-      return endTimestamp - 90 * 86_400;
-    case 'sixmonth':
-      return endTimestamp - 180 * 86_400;
-    case 'all':
-      return 0;
-    default:
-      return endTimestamp - 86_400;
-  }
+  dailyAnalyticsByChain?: Record<number, PositionDailyAnalytics>;
+  dailyRange?: EarningsTimeRange;
 };
 
 export const usePositionsWithEarnings = (
@@ -71,8 +51,12 @@ export const usePositionsWithEarnings = (
         return initializePositionWithEmptyEarnings(position, hasSupplyHistory);
       }
 
-      const startTimestamp = chainData.timestamp;
-      const endTimestamp = options.endBlockData?.[chainId]?.timestamp ?? defaultEndTimestamp;
+      const dailyAnalytics = options.dailyAnalyticsByChain?.[chainId];
+      const startTimestamp = dailyAnalytics && options.dailyRange ? options.dailyRange.startTimestamp : chainData.timestamp;
+      const endTimestamp =
+        dailyAnalytics && options.dailyRange
+          ? options.dailyRange.endTimestamp
+          : (options.endBlockData?.[chainId]?.timestamp ?? defaultEndTimestamp);
       if (endTimestamp <= startTimestamp) {
         return initializePositionWithEmptyEarnings(position, hasSupplyHistory);
       }
@@ -96,7 +80,18 @@ export const usePositionsWithEarnings = (
       const earnings =
         options.useLifetimeHistory && position.supplyHistory
           ? calculateLifetimeEarningsFromHistory(endingBalance, position.supplyHistory, marketTxs, endTimestamp)
-          : calculateEarningsFromSnapshot(endingBalance, pastBalance, marketTxs, startTimestamp, endTimestamp);
+          : dailyAnalytics
+            ? calculateEarningsFromDailyAnalytics({
+                marketId: position.market.uniqueKey,
+                startingBalance: pastBalance,
+                endingBalance,
+                startingShares: BigInt(pastSnapshot.supplyShares),
+                endingShares: BigInt(endSnapshot?.supplyShares ?? position.state.supplyShares),
+                startTimestamp,
+                endTimestamp,
+                analytics: dailyAnalytics,
+              })
+            : calculateEarningsFromSnapshot(endingBalance, pastBalance, marketTxs, startTimestamp, endTimestamp);
 
       return {
         ...position,
@@ -119,5 +114,7 @@ export const usePositionsWithEarnings = (
     options.fallbackEndTimestamp,
     options.requiresEndSnapshots,
     options.useLifetimeHistory,
+    options.dailyAnalyticsByChain,
+    options.dailyRange,
   ]);
 };

@@ -1,17 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import type { SupportedNetworks } from '@/utils/networks';
+import { findBlockAtTimestamp } from '@/utils/blockEstimation';
 import { getClient } from '@/utils/rpc';
 
 /**
  *
  * @param snapshotBlocks { chainId: blockNumber }
  */
-export const useBlockTimestamps = (snapshotBlocks: Record<number, number>) => {
+export const useBlockTimestamps = (
+  snapshotBlocks: Record<number, number>,
+  targetTimestamp: number,
+  latestBlocks: Record<number, number> | undefined,
+) => {
   const { customRpcUrls } = useCustomRpcContext();
 
   return useQuery({
-    queryKey: ['block-timestamps', snapshotBlocks],
+    queryKey: ['block-timestamps', snapshotBlocks, targetTimestamp, latestBlocks],
     queryFn: async () => {
       const blockData: Record<number, { block: number; timestamp: number }> = {};
 
@@ -19,10 +24,15 @@ export const useBlockTimestamps = (snapshotBlocks: Record<number, number>) => {
         Object.entries(snapshotBlocks).map(async ([chainId, blockNum]) => {
           try {
             const client = getClient(Number(chainId) as SupportedNetworks, customRpcUrls[Number(chainId) as SupportedNetworks]);
-            const block = await client.getBlock({ blockNumber: BigInt(blockNum) });
+            const chainIdNumber = Number(chainId) as SupportedNetworks;
+            const latestBlock = latestBlocks?.[chainIdNumber];
+            if (latestBlock === undefined) {
+              throw new Error(`Missing latest block for chain ${chainId}`);
+            }
+            const blockDataAtTimestamp = await findBlockAtTimestamp(client, chainIdNumber, blockNum, targetTimestamp, latestBlock);
             blockData[Number(chainId)] = {
-              block: blockNum,
-              timestamp: Number(block.timestamp),
+              block: blockDataAtTimestamp.blockNumber,
+              timestamp: blockDataAtTimestamp.timestamp,
             };
           } catch (error) {
             console.error(`Failed to get block ${blockNum} on chain ${chainId}:`, error);

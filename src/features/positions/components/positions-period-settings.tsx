@@ -1,9 +1,11 @@
 import { CheckIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { cn } from '@/utils/components';
+import { formatEarningsTimeRange, getEarningsTimeRange } from '@/utils/earnings-period';
 
 type PeriodOption = {
   value: EarningsPeriod;
@@ -39,15 +41,22 @@ export function PositionsPeriodSettingsButton({ period, onPeriodChange, classNam
 
   return (
     <>
-      <Button
-        variant="surface"
-        size="xs"
-        className={cn('h-5 min-w-0 px-1.5 text-[11px] font-normal leading-none text-secondary shadow-none', className)}
-        onClick={onOpen}
-        aria-label={`Analytics period settings, currently ${selectedLabel}`}
+      <Tooltip
+        content={formatEarningsTimeRange(period, getEarningsTimeRange(period))}
+        placement="bottom"
       >
-        {selectedShortLabel}
-      </Button>
+        <span className="inline-flex">
+          <Button
+            variant="surface"
+            size="xs"
+            className={cn('h-5 min-w-0 px-1.5 text-[11px] font-normal leading-none text-secondary shadow-none', className)}
+            onClick={onOpen}
+            aria-label={`Analytics period settings, currently ${selectedLabel}`}
+          >
+            {selectedShortLabel}
+          </Button>
+        </span>
+      </Tooltip>
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}

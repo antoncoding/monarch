@@ -6,11 +6,11 @@ import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
+import { getEarningsTimeRange, usesCompletedUtcDays } from '@/utils/earnings-period';
 import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import { useCurrentBlocks } from './queries/useCurrentBlocks';
 import { useBlockTimestamps } from './queries/useBlockTimestamps';
-import { getPeriodTimestamp } from './usePositionsWithEarnings';
 
 const ONE_SHARE = 10n ** 18n;
 
@@ -21,11 +21,12 @@ type VaultApyData = {
 };
 
 /**
- * Fetches historical APY for vaults by comparing share prices at current and past blocks.
- * APY = (currentSharePrice / pastSharePrice) ^ (365 * 86400 / periodSeconds) - 1
+ * Fetches historical APY for vaults by comparing share prices at the period boundaries.
  */
 export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPeriod) => {
   const { customRpcUrls } = useCustomRpcContext();
+  const range = useMemo(() => getEarningsTimeRange(period), [period]);
+  const requiresHistoricalEnd = usesCompletedUtcDays(period);
 
   // Get unique chain IDs from vaults
   const uniqueChainIds = useMemo(() => [...new Set(vaults.map((v) => v.networkId))], [vaults]);
@@ -37,21 +38,34 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
   const snapshotBlocks = useMemo(() => {
     if (!currentBlocks) return {};
 
-    const timestamp = getPeriodTimestamp(period);
     const blocks: Record<number, number> = {};
 
     for (const chainId of uniqueChainIds) {
       const currentBlock = currentBlocks[chainId];
       if (currentBlock) {
-        blocks[chainId] = estimateBlockAtTimestamp(chainId, timestamp, currentBlock);
+        blocks[chainId] = estimateBlockAtTimestamp(chainId, range.startTimestamp, currentBlock);
       }
     }
 
     return blocks;
-  }, [period, uniqueChainIds, currentBlocks]);
+  }, [range.startTimestamp, uniqueChainIds, currentBlocks]);
+
+  const endSnapshotBlocks = useMemo(() => {
+    if (!currentBlocks || !requiresHistoricalEnd) return {};
+
+    const blocks: Record<number, number> = {};
+    for (const chainId of uniqueChainIds) {
+      const currentBlock = currentBlocks[chainId];
+      if (currentBlock) {
+        blocks[chainId] = estimateBlockAtTimestamp(chainId, range.endTimestamp, currentBlock);
+      }
+    }
+    return blocks;
+  }, [currentBlocks, range.endTimestamp, requiresHistoricalEnd, uniqueChainIds]);
 
   // Get actual timestamps for the snapshot blocks
-  const { data: actualBlockData } = useBlockTimestamps(snapshotBlocks);
+  const { data: actualBlockData } = useBlockTimestamps(snapshotBlocks, range.startTimestamp, currentBlocks);
+  const { data: endBlockData } = useBlockTimestamps(endSnapshotBlocks, range.endTimestamp, currentBlocks);
 
   // Create a stable key for the query
   const vaultAddresses = useMemo(
@@ -64,14 +78,14 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
   );
 
   return useQuery({
-    queryKey: ['vault-historical-apy', vaultAddresses, period, actualBlockData],
+    queryKey: ['vault-historical-apy', vaultAddresses, range, actualBlockData, endBlockData],
     queryFn: async () => {
       if (!currentBlocks || !actualBlockData) {
         return new Map<string, VaultApyData>();
       }
 
       const results = new Map<string, VaultApyData>();
-      const endTimestamp = Math.floor(Date.now() / 1000);
+      const fallbackEndTimestamp = Math.floor(Date.now() / 1000);
 
       // Group vaults by network for efficient batching
       const vaultsByNetwork = vaults.reduce(
@@ -94,14 +108,17 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
           }
 
           const client = getClient(networkId, customRpcUrls[networkId]);
-          const pastBlock = snapshotBlocks[networkId];
           const blockData = actualBlockData[networkId];
+          const historicalEndBlockData = endBlockData?.[networkId];
 
-          if (!pastBlock || !blockData) {
+          if (!blockData) {
             return;
           }
 
+          const pastBlock = blockData.block;
+          const endBlock = historicalEndBlockData?.block;
           const startTimestamp = blockData.timestamp;
+          const endTimestamp = historicalEndBlockData?.timestamp ?? fallbackEndTimestamp;
 
           // Create multicall contracts for share price queries (same for current and past)
           const contracts = networkVaults.map((vault) => ({
@@ -114,7 +131,11 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
           try {
             // Fetch current and past share prices in parallel
             const [currentResults, pastResults] = await Promise.all([
-              client.multicall({ contracts, allowFailure: true }),
+              client.multicall({
+                contracts,
+                allowFailure: true,
+                blockNumber: endBlock ? BigInt(endBlock) : undefined,
+              }),
               client.multicall({ contracts, allowFailure: true, blockNumber: BigInt(pastBlock) }),
             ]);
 
@@ -161,7 +182,7 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
 
       return results;
     },
-    enabled: vaults.length > 0 && !!currentBlocks && !!actualBlockData,
+    enabled: vaults.length > 0 && !!currentBlocks && !!actualBlockData && (!requiresHistoricalEnd || !!endBlockData),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

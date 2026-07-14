@@ -37,6 +37,7 @@ import {
   processCollaterals,
 } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
+import { usesCompletedUtcDays } from '@/utils/earnings-period';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
 import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
@@ -50,6 +51,7 @@ import { getPositionsPeriodShortLabel } from './positions-period-settings';
 import { RiArrowRightLine, RiSparklingFill } from 'react-icons/ri';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import type { PositionSnapshot } from '@/utils/positions';
+import type { EarningsTimeRange } from '@/utils/earnings-period';
 
 type SuppliedMorphoBlueGroupedTableProps = {
   account: string;
@@ -59,6 +61,8 @@ type SuppliedMorphoBlueGroupedTableProps = {
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  endSnapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  earningsRangesByChain: Record<number, EarningsTimeRange>;
 };
 
 type SuppliedMarketPositionsTableProps = {
@@ -354,6 +358,8 @@ export function SuppliedMorphoBlueGroupedTable({
   isEarningsLoading,
   actualBlockData,
   snapshotsByChain,
+  endSnapshotsByChain,
+  earningsRangesByChain,
 }: SuppliedMorphoBlueGroupedTableProps) {
   const { address } = useConnection();
   const period = usePositionsFilters((s) => s.period);
@@ -384,7 +390,14 @@ export function SuppliedMorphoBlueGroupedTable({
     () => (hideClosedPositions ? supplyPositions.filter(hasActiveSupplyPosition) : supplyPositions),
     [supplyPositions, hideClosedPositions],
   );
-  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(visiblePositions, actualBlockData), [visiblePositions, actualBlockData]);
+  const endTimestampsByChain = useMemo(
+    () => Object.fromEntries(Object.entries(earningsRangesByChain).map(([chainId, range]) => [chainId, range.endTimestamp])),
+    [earningsRangesByChain],
+  );
+  const groupedPositions = useMemo(
+    () => groupPositionsByLoanAsset(visiblePositions, actualBlockData, endTimestampsByChain),
+    [visiblePositions, actualBlockData, endTimestampsByChain],
+  );
   const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
 
   const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
@@ -711,10 +724,14 @@ export function SuppliedMorphoBlueGroupedTable({
                                 groupedPosition={groupedPosition}
                                 account={account}
                                 snapshotsByChain={snapshotsByChain}
+                                endSnapshotsByChain={endSnapshotsByChain}
                                 chainBlockData={actualBlockData}
+                                endTimestamp={
+                                  usesCompletedUtcDays(period) ? earningsRangesByChain[groupedPosition.chainId]?.endTimestamp : undefined
+                                }
                                 isEarningsLoading={isEarningsLoading}
                                 isOwner={isOwner}
-                                useDailyBuckets={period === 'all'}
+                                useDailyBuckets={period === 'all' || usesCompletedUtcDays(period)}
                               />
                             </motion.div>
                           </TableCell>

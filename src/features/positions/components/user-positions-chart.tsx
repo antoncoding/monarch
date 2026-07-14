@@ -33,7 +33,6 @@ type GroupedPositionChartProps = BaseChartProps & {
   chainBlockData: Record<number, { block: number; timestamp: number }>;
   endSnapshotsByChain?: Record<number, Map<string, PositionSnapshot>>;
   endTimestamp?: number;
-  requiresEndSnapshots?: boolean;
 };
 
 // Props for standalone usage (history page)
@@ -380,7 +379,7 @@ function useChartParams(props: UserPositionsChartProps) {
         collateralAddress: position.market.collateralAsset?.address ?? '',
         currentSupplyAssets:
           chainEndSnapshots?.get(position.market.uniqueKey.toLowerCase())?.supplyAssets ??
-          (props.requiresEndSnapshots ? '0' : position.state.supplyAssets),
+          (props.endTimestamp === undefined ? position.state.supplyAssets : '0'),
       }));
 
       return {

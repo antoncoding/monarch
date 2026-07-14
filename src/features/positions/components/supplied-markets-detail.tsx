@@ -22,7 +22,9 @@ type SuppliedMarketsDetailProps = {
   account: string;
   groupedPosition: GroupedPosition;
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  endSnapshotsByChain?: Record<number, Map<string, PositionSnapshot>>;
   chainBlockData: Record<number, { block: number; timestamp: number }>;
+  endTimestamp?: number;
   isEarningsLoading: boolean;
   isOwner: boolean;
   useDailyBuckets?: boolean;
@@ -163,7 +165,9 @@ export function SuppliedMarketsDetail({
   account,
   groupedPosition,
   snapshotsByChain,
+  endSnapshotsByChain,
   chainBlockData,
+  endTimestamp,
   isEarningsLoading,
   isOwner,
   useDailyBuckets,
@@ -177,6 +181,7 @@ export function SuppliedMarketsDetail({
     account,
     groupedPosition,
     startTimestamp: chainBlockData[groupedPosition.chainId]?.timestamp,
+    endTimestamp,
     useDailyBuckets,
   });
 
@@ -223,7 +228,9 @@ export function SuppliedMarketsDetail({
             groupedPosition={groupedPosition}
             transactions={transactions}
             snapshotsByChain={snapshotsByChain}
+            endSnapshotsByChain={endSnapshotsByChain}
             chainBlockData={chainBlockData}
+            endTimestamp={endTimestamp}
           />
         )}
 

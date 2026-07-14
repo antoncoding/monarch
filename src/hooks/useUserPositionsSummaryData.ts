@@ -6,12 +6,15 @@ import useUserPositions, { positionKeys, type UserPositionMarketHint } from './u
 import { useCurrentBlocks } from './queries/useCurrentBlocks';
 import { useBlockTimestamps } from './queries/useBlockTimestamps';
 import { usePositionSnapshots } from './queries/usePositionSnapshots';
+import { usePositionDailyAnalyticsQuery } from './queries/usePositionDailyAnalyticsQuery';
 import { useUserTransactionsQuery } from './queries/useUserTransactionsQuery';
-import { usePositionsWithEarnings, getPeriodTimestamp, type EarningsTimeRange } from './usePositionsWithEarnings';
+import { usePositionsWithEarnings, type EarningsTimeRange } from './usePositionsWithEarnings';
 import { mergeUserTransactionsWithRecentCache, reconcileUserTransactionHistoryCache } from '@/utils/user-transaction-history-cache';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { buildAllTimePositionBoundary } from '@/utils/position-boundary-snapshots';
 import { hasActiveSupplyPosition } from '@/utils/positions';
+import { getEarningsTimeRange, isRollingEarningsPeriod } from '@/utils/earnings-period';
+import { supportsHistoricalStateRead } from '@/utils/networks';
 
 export type { EarningsPeriod } from '@/stores/usePositionsFilters';
 export type { EarningsTimeRange } from './usePositionsWithEarnings';
@@ -80,14 +83,13 @@ const useUserPositionsSummaryData = (
       return validatedCustomRange;
     }
 
-    return {
-      startTimestamp: getPeriodTimestamp(period, nowTimestamp),
-      endTimestamp: nowTimestamp,
-    };
+    return getEarningsTimeRange(period, nowTimestamp);
   }, [period, validatedCustomRange]);
 
   const hasCustomRange = Boolean(validatedCustomRange);
   const isAllTime = period === 'all' && !hasCustomRange;
+  // 24H stays rolling; 7D/30D/3M/6M use completed UTC daily aggregates.
+  const usesCompletedDailyAnalytics = !hasCustomRange && !isAllTime && !isRollingEarningsPeriod(period);
   const requiresFullAllTimeHistory =
     isAllTime &&
     Boolean(
@@ -110,7 +112,7 @@ const useUserPositionsSummaryData = (
   }, [isAllTime, selectedRange.startTimestamp, uniqueChainIds, currentBlocks]);
 
   const endSnapshotBlocks = useMemo(() => {
-    if (!hasCustomRange || !currentBlocks) return {};
+    if ((!hasCustomRange && !usesCompletedDailyAnalytics) || !currentBlocks) return {};
 
     const blocks: Record<number, number> = {};
 
@@ -122,19 +124,43 @@ const useUserPositionsSummaryData = (
     });
 
     return blocks;
-  }, [hasCustomRange, selectedRange.endTimestamp, uniqueChainIds, currentBlocks]);
+  }, [hasCustomRange, usesCompletedDailyAnalytics, selectedRange.endTimestamp, uniqueChainIds, currentBlocks]);
 
   const {
     data: actualBlockData,
     isLoading: isLoadingBlockTimestamps,
     isFetching: isFetchingBlockTimestamps,
-  } = useBlockTimestamps(snapshotBlocks);
+  } = useBlockTimestamps(snapshotBlocks, selectedRange.startTimestamp, currentBlocks);
 
   const {
     data: endBlockData,
     isLoading: isLoadingEndBlockTimestamps,
     isFetching: isFetchingEndBlockTimestamps,
-  } = useBlockTimestamps(endSnapshotBlocks);
+  } = useBlockTimestamps(endSnapshotBlocks, selectedRange.endTimestamp, currentBlocks);
+
+  const resolvedSnapshotBlocks = useMemo(
+    () => Object.fromEntries(Object.entries(actualBlockData ?? {}).map(([chainId, data]) => [chainId, data.block])),
+    [actualBlockData],
+  );
+  const resolvedEndSnapshotBlocks = useMemo(
+    () => Object.fromEntries(Object.entries(endBlockData ?? {}).map(([chainId, data]) => [chainId, data.block])),
+    [endBlockData],
+  );
+
+  const dailyAnalyticsQuery = usePositionDailyAnalyticsQuery({
+    userAddress: activeUser,
+    positions,
+    range: selectedRange,
+    enabled: usesCompletedDailyAnalytics,
+  });
+
+  const transactionChainIds = useMemo(() => {
+    if (!usesCompletedDailyAnalytics || dailyAnalyticsQuery.isError) {
+      return uniqueChainIds;
+    }
+
+    return uniqueChainIds.filter((chainId) => !supportsHistoricalStateRead(chainId));
+  }, [dailyAnalyticsQuery.isError, uniqueChainIds, usesCompletedDailyAnalytics]);
 
   const transactionTimestampGte = useMemo(() => {
     if (isAllTime) {
@@ -153,11 +179,11 @@ const useUserPositionsSummaryData = (
     filters: {
       userAddress: activeUser ? [activeUser] : [],
       marketUniqueKeys: positions?.map((p) => p.market.uniqueKey) ?? [],
-      chainIds: uniqueChainIds,
+      chainIds: transactionChainIds,
       timestampGte: transactionTimestampGte,
     },
     paginate: true,
-    enabled: !!positions && !!activeUser,
+    enabled: !!positions && !!activeUser && transactionChainIds.length > 0,
   });
 
   const mergedTransactions = useMemo(
@@ -198,7 +224,7 @@ const useUserPositionsSummaryData = (
   } = usePositionSnapshots({
     positions,
     user: activeUser,
-    snapshotBlocks,
+    snapshotBlocks: resolvedSnapshotBlocks,
     boundaryBlockData: actualBlockData ?? {},
     transactions: mergedTransactions,
   });
@@ -213,7 +239,7 @@ const useUserPositionsSummaryData = (
   } = usePositionSnapshots({
     positions,
     user: activeUser,
-    snapshotBlocks: endSnapshotBlocks,
+    snapshotBlocks: resolvedEndSnapshotBlocks,
     boundaryBlockData: endBlockData ?? {},
     transactions: mergedTransactions,
   });
@@ -222,14 +248,21 @@ const useUserPositionsSummaryData = (
     endSnapshotsByChain: endSnapshots ?? {},
     endBlockData: endBlockData ?? {},
     fallbackEndTimestamp: selectedRange.endTimestamp,
-    requiresEndSnapshots: hasCustomRange,
+    requiresEndSnapshots: hasCustomRange || usesCompletedDailyAnalytics,
     useLifetimeHistory: isAllTime,
+    dailyAnalyticsByChain: usesCompletedDailyAnalytics ? dailyAnalyticsQuery.data : undefined,
+    dailyRange: usesCompletedDailyAnalytics ? selectedRange : undefined,
   });
 
   const earningsRangesByChain = useMemo(() => {
     const ranges: Record<number, EarningsTimeRange> = {};
 
     uniqueChainIds.forEach((chainId) => {
+      if (usesCompletedDailyAnalytics) {
+        ranges[chainId] = selectedRange;
+        return;
+      }
+
       const startTimestamp = startBlockData[chainId]?.timestamp;
       if (!startTimestamp) return;
 
@@ -240,7 +273,7 @@ const useUserPositionsSummaryData = (
     });
 
     return ranges;
-  }, [uniqueChainIds, startBlockData, endBlockData, selectedRange.endTimestamp]);
+  }, [uniqueChainIds, usesCompletedDailyAnalytics, selectedRange, startBlockData, endBlockData]);
 
   const refetch = async (onSuccess?: () => void) => {
     if (!activeUser) {
@@ -260,6 +293,9 @@ const useUserPositionsSummaryData = (
       });
       await queryClient.invalidateQueries({
         queryKey: ['user-transactions'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['position-daily-analytics'],
       });
       await queryClient.invalidateQueries({
         queryKey: ['current-blocks'],
@@ -285,7 +321,9 @@ const useUserPositionsSummaryData = (
       isLoadingBlockTimestamps ||
       isFetchingBlockTimestamps ||
       isLoadingEndBlockTimestamps ||
-      isFetchingEndBlockTimestamps);
+      isFetchingEndBlockTimestamps ||
+      dailyAnalyticsQuery.isLoading ||
+      dailyAnalyticsQuery.isFetching);
 
   const loadingStates = {
     positions: positionsLoading,

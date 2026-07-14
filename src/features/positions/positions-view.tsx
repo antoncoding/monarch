@@ -47,6 +47,7 @@ export default function Positions() {
     isEarningsLoading,
     actualBlockData,
     snapshotsByChain,
+    endSnapshotsByChain,
     earningsRangesByChain,
   } = useUserPositionsSummaryData(account, period, undefined, { enabled: shouldFetchNativeAccountData });
 
@@ -164,6 +165,8 @@ export default function Positions() {
               isEarningsLoading={isEarningsLoading}
               actualBlockData={actualBlockData}
               snapshotsByChain={snapshotsByChain}
+              endSnapshotsByChain={endSnapshotsByChain}
+              earningsRangesByChain={earningsRangesByChain}
             />
           )}
           {!loading && hasBorrowPositions && (

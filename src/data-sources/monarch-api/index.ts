@@ -6,7 +6,13 @@ export {
   type MonarchUserPositionState,
 } from './positions';
 export { fetchMonarchUserTransactions } from './user-transactions';
-export { fetchCompletedPositionDailyFlows } from './position-daily-flows';
+export {
+  fetchCompletedPositionDailyAnalytics,
+  fetchCompletedPositionDailyFlows,
+  type MarketDailySupplySnapshot,
+  type PositionDailyAnalytics,
+  type PositionDailyFlow,
+} from './position-daily-flows';
 export {
   fetchMonarchMarketBorrowers,
   fetchMonarchMarketBorrows,

@@ -39,6 +39,7 @@ import { getSlicedAddress } from '@/utils/address';
 import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { parseCapIdParams } from '@/utils/morpho';
 import { groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
+import { usesCompletedUtcDays } from '@/utils/earnings-period';
 import { convertAprToApy, formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
 import { ALL_SUPPORTED_NETWORKS, getNetworkConfig, SupportedNetworks } from '@/utils/networks';
 import { formatVaultAdapterType } from '@/utils/vaults';
@@ -124,21 +125,25 @@ function VaultAdapterPositionDetail({
     [marketAllocations],
   );
 
-  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain } = useUserPositionsSummaryData(
-    adapterAddress,
-    period,
-    [chainId],
-    {
-      enabled: hasAdapterPositionTarget && marketHints.length > 0,
-      marketHints,
-      showEmpty: true,
-    },
-  );
+  const {
+    positions,
+    isPositionsLoading,
+    isEarningsLoading,
+    actualBlockData,
+    snapshotsByChain,
+    endSnapshotsByChain,
+    earningsRangesByChain,
+  } = useUserPositionsSummaryData(adapterAddress, period, [chainId], {
+    enabled: hasAdapterPositionTarget && marketHints.length > 0,
+    marketHints,
+    showEmpty: true,
+  });
 
   const groupedPositions = useMemo(() => {
-    const grouped = groupPositionsByLoanAsset(positions ?? [], actualBlockData);
+    const endTimestamp = earningsRangesByChain[chainId]?.endTimestamp;
+    const grouped = groupPositionsByLoanAsset(positions ?? [], actualBlockData, endTimestamp ? { [chainId]: endTimestamp } : {});
     return processCollaterals(grouped);
-  }, [positions, actualBlockData]);
+  }, [positions, actualBlockData, chainId, earningsRangesByChain]);
 
   const currentPosition = useMemo(() => {
     if (!assetAddress) return undefined;
@@ -177,6 +182,8 @@ function VaultAdapterPositionDetail({
             actualBlockData={actualBlockData}
             period={period}
             snapshotsByChain={snapshotsByChain}
+            endSnapshotsByChain={endSnapshotsByChain}
+            endTimestamp={usesCompletedUtcDays(period) ? earningsRangesByChain[chainId]?.endTimestamp : undefined}
             marketAllocations={marketAllocations}
             assetAddress={assetAddress}
             totalAssets={totalAssets}

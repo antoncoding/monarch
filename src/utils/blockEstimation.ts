@@ -41,6 +41,44 @@ export const estimateBlockAtTimestamp = (
   return Math.max(0, currentBlock - blockDiff);
 };
 
+/** Refines an estimated block to the last block at or before the target timestamp. */
+export async function findBlockAtTimestamp(
+  client: PublicClient,
+  chainId: SupportedNetworks,
+  estimatedBlock: number,
+  targetTimestamp: number,
+  latestBlock: number,
+): Promise<BlockWithTimestamp> {
+  const blockTime = getBlocktime(chainId);
+  let blockNumber = Math.min(Math.max(0, estimatedBlock), latestBlock);
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const block = await client.getBlock({ blockNumber: BigInt(blockNumber) });
+    const timestamp = Number(block.timestamp);
+    const delta = targetTimestamp - timestamp;
+
+    if ((blockNumber === 0 && delta < 0) || (blockNumber === latestBlock && delta >= 0)) {
+      return { blockNumber, timestamp, targetTimestamp };
+    }
+
+    if (delta >= 0 && delta < blockTime * 5) {
+      const nextBlock = await client.getBlock({ blockNumber: BigInt(blockNumber + 1) });
+      if (Number(nextBlock.timestamp) > targetTimestamp) {
+        return { blockNumber, timestamp, targetTimestamp };
+      }
+
+      blockNumber++;
+      continue;
+    }
+
+    const estimatedDelta = Math.trunc(delta / blockTime);
+    const step = estimatedDelta || (delta > 0 ? 1 : -1);
+    blockNumber = Math.min(Math.max(0, blockNumber + step), latestBlock);
+  }
+
+  throw new Error(`Unable to find block at timestamp ${targetTimestamp} on chain ${chainId}`);
+}
+
 /**
  * Fetches real block timestamps for multiple estimated blocks in parallel.
  * Uses batched RPC calls for efficiency.
