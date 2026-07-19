@@ -19,7 +19,7 @@ function DataPrefetcherContent() {
 export function DataPrefetcher() {
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/ui-lab') || pathname?.startsWith('/analysis')) {
+  if (pathname?.startsWith('/analysis')) {
     return null;
   }
 
