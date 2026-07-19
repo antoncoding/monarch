@@ -7,7 +7,6 @@
     "build:clean": "rm -rf .next && next build",
     "check": "pnpm lint:check && pnpm typecheck",
     "dev": "next dev --turbo",
-    "dev:ui-lab": "NEXT_PUBLIC_ENABLE_UI_LAB=true next dev --turbo",
     "format": "biome format --write .",
     "lint": "biome check --write .",
     "lint:check": "biome check",

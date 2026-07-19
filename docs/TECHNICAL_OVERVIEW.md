@@ -62,6 +62,8 @@ RootLayout
 └── ModalRenderer
 ```
 
+`DataPrefetcher` warms token and market-whitelist metadata for product routes. The standalone analysis route skips this global prefetch because it manages its own data dependencies.
+
 ---
 
 ## Core Domain Objects
