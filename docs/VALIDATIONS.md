@@ -62,6 +62,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Use an existing persisted Zustand store for user preferences or shared app state.
 - Use the project storage adapter (`local-storage-fallback`) only inside a small shared utility when the value is a browser-scoped hint or cache, not durable app state.
 - Storage utilities must namespace keys, normalize values, and catch unavailable-storage or quota failures.
+- Large API responses and metadata caches must use the IndexedDB-backed API response cache, not persisted Zustand/localStorage. Measure representative serialized payloads when cache size is not obviously bounded below WebKit's quota.
 - Validate SSR/client boundaries when persistence touches browser-only APIs.
 - Preset or subscription toggles must not delete user-owned persisted selections. Preserve the raw user list and dedupe or hide preset overlaps in derived views unless the user explicitly removes them.
 
