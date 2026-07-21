@@ -214,6 +214,7 @@ Market metrics: external data API via `/v1/markets/metrics`
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
 | User autovault metadata | Monarch GraphQL + on-chain enrichment | 60s | `useUserVaultsV2Query` |
 | Vault detail/settings metadata | Monarch GraphQL + narrow RPC fallback | 30s | `useVaultV2Data` |
+| Vault detail native-yield/deposits/share-price history | Morpho Vault V2 historical state → archive RPC fallback for deposits and share price | 5 min stale | `useVaultHistoryQuery` |
 | Vault V2 rewards | Merkl API opportunities via `/api/merkl` | 5 min | `useVaultV2RewardsQuery` |
 | Market detail participants/activity | Monarch GraphQL + Morpho API fallback | 2-5 min stale | `useMarketSuppliers` / `useMarketBorrowers` / `useMarketSupplies` / `useMarketBorrows` |
 | Vault allocations | On-chain multicall | 30s | `useAllocationsQuery` |
@@ -268,6 +269,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `usePublicAllocatorVaults` | Public allocator config for supplying vaults in a market | Morpho API only | Intentionally Morpho-only today |
 | `useAllocationsQuery` | Live vault `allocation(capId)` values | Pure RPC multicall | No Envio gap |
 | `usePublicAllocatorLiveData` | Live flow caps, vault supply, and liquidity for allocator UX | Pure RPC multicall | No Envio gap |
+| `useVaultHistoryQuery` | Vault detail 6-hour native-yield, total-deposit, and share-price charts | Morpho Vault V2 historical `avgApy` + `totalAssets` + `sharePrice`; archive RPC data source for `totalAssets` + `previewRedeem` fallback | Historical vault state snapshots or an equivalent accrued-assets series; cumulative Monarch deposit/withdraw totals do not include accrued yield |
 | `useVaultHistoricalApy` / `useErc4626VaultAPR` | Historical 4626 yield and expected carry calculations | Pure RPC share-price snapshots + RPC Morpho market reads | No Envio gap |
 
 #### RPC Helpers And External Reads
@@ -306,7 +308,8 @@ Split: allMarkets vs whitelistedMarkets
 2. Enrich user-specific balances / totalAssets via multicall where needed
 3. Use narrow RPC fallback only when Monarch vault metadata is unavailable
 4. Fetch live allocations from on-chain `allocation(capId)` reads
-5. After vault writes, use shared bounded retry refreshes so Monarch indexing can catch up
+5. Fetch detail-page native yield, deposits, and share price from Morpho Vault V2 history; fall back to archive RPC reads for deposits and share price
+6. After vault writes, use shared bounded retry refreshes so Monarch indexing can catch up
 ```
 
 ---

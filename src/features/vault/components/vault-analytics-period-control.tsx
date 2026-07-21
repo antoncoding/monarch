@@ -1,6 +1,6 @@
 'use client';
 
-import { PeriodSelector, type PeriodSelectorOption } from '@/components/common/period-selector';
+import { Button } from '@/components/ui/button';
 import type { ChartTimeframe } from '@/stores/useMarketDetailChartState';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 
@@ -11,12 +11,12 @@ type VaultAnalyticsPeriodControlProps = {
   onChange: (period: VaultAnalyticsPeriod) => void;
 };
 
-const PERIOD_OPTIONS: PeriodSelectorOption[] = [
-  { value: 'day', label: '24h' },
-  { value: 'week', label: '7 days' },
-  { value: 'month', label: '30 days' },
-  { value: 'threemonth', label: '3 months' },
-  { value: 'sixmonth', label: '6 months' },
+const PERIOD_OPTIONS: { value: VaultAnalyticsPeriod; label: string }[] = [
+  { value: 'day', label: '1D' },
+  { value: 'week', label: '7D' },
+  { value: 'month', label: '30D' },
+  { value: 'threemonth', label: '3M' },
+  { value: 'sixmonth', label: '6M' },
 ];
 
 export const vaultAnalyticsTimeframeToEarningsPeriod: Record<ChartTimeframe, VaultAnalyticsPeriod> = {
@@ -37,20 +37,29 @@ export const vaultAnalyticsPeriodToTimeframe: Record<VaultAnalyticsPeriod, Chart
 
 export function VaultAnalyticsPeriodControl({ value, onChange }: VaultAnalyticsPeriodControlProps) {
   return (
-    <div className="flex items-center justify-end">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <span className="text-xs uppercase tracking-wider text-secondary">Period</span>
-        <PeriodSelector
-          period={value}
-          onPeriodChange={(period) => {
-            if (period !== 'all') {
-              onChange(period);
-            }
-          }}
-          options={PERIOD_OPTIONS}
-          className="h-8 w-[110px] text-xs"
-          contentClassName="z-[3600]"
-        />
+    <div className="flex justify-end overflow-x-auto">
+      <div
+        role="group"
+        aria-label="Vault history period"
+        className="flex items-center gap-1 rounded bg-surface p-1 shadow-sm ring-1 ring-border"
+      >
+        {PERIOD_OPTIONS.map((option) => {
+          const isSelected = option.value === value;
+
+          return (
+            <Button
+              key={option.value}
+              type="button"
+              variant={isSelected ? 'surface' : 'ghost'}
+              size="sm"
+              aria-pressed={isSelected}
+              className="h-7 min-w-10 px-2.5 text-xs tabular-nums"
+              onClick={() => onChange(option.value)}
+            >
+              {option.label}
+            </Button>
+          );
+        })}
       </div>
     </div>
   );

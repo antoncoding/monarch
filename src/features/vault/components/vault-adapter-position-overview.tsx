@@ -5,7 +5,7 @@ import { ArrowRightIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
-import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
+import { UserPositionsChart, UserPositionsChartSkeleton } from '@/features/positions/components/user-positions-chart';
 import { usePositionChartTransactions } from '@/hooks/usePositionChartTransactions';
 import { VaultMarketAllocationsTable } from '@/features/vault/components/vault-market-allocations-table';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
@@ -118,12 +118,10 @@ export function VaultAdapterPositionOverview({
   return (
     <div className="space-y-4">
       {isLoadingTransactions ? (
-        <div
-          role="status"
-          className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
-        >
-          Loading position history...
-        </div>
+        <UserPositionsChartSkeleton
+          height={220}
+          title="Vault exposure over time"
+        />
       ) : transactionError ? (
         <div
           role="alert"
@@ -139,6 +137,7 @@ export function VaultAdapterPositionOverview({
           snapshotsByChain={snapshotsByChain}
           chainBlockData={actualBlockData}
           height={220}
+          title="Vault exposure over time"
         />
       )}
       <VaultMarketBreakdownTable

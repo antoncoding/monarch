@@ -19,7 +19,7 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
-import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
+import { UserPositionsChart, UserPositionsChartSkeleton } from '@/features/positions/components/user-positions-chart';
 import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import { usePositionChartTransactions } from '@/hooks/usePositionChartTransactions';
 import { useDisclosure } from '@/hooks/useDisclosure';
@@ -271,12 +271,7 @@ export function HistoryTab({
   return (
     <div className="space-y-4">
       {isLoadingChart ? (
-        <div
-          role="status"
-          className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
-        >
-          Loading position history...
-        </div>
+        <UserPositionsChartSkeleton height={220} />
       ) : chartError ? (
         <div
           role="alert"

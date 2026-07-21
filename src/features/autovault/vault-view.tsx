@@ -18,9 +18,15 @@ import { parseCapIdParams } from '@/utils/morpho';
 import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
 import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings';
-import { VaultSharePriceChart } from '@/features/vault/components/vault-share-price-chart';
+import {
+  VaultAnalyticsPeriodControl,
+  vaultAnalyticsPeriodToTimeframe,
+  vaultAnalyticsTimeframeToEarningsPeriod,
+} from '@/features/vault/components/vault-analytics-period-control';
+import { VaultHistoryCharts } from '@/features/vault/components/vault-history-charts';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
+import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
 import { useModal } from '@/hooks/useModal';
 import { formatBalance } from '@/utils/balance';
@@ -37,6 +43,16 @@ export default function VaultContent() {
   const [hasMounted, setHasMounted] = useState(false);
   const { open: openModal } = useModal();
   const { findToken } = useTokensQuery();
+  const selectedAnalyticsTimeframe = useMarketDetailChartState((state) => state.selectedTimeframe);
+  const setAnalyticsTimeframe = useMarketDetailChartState((state) => state.setTimeframe);
+  const analyticsPeriod = vaultAnalyticsTimeframeToEarningsPeriod[selectedAnalyticsTimeframe];
+
+  const handleAnalyticsPeriodChange = useCallback(
+    (period: typeof analyticsPeriod) => {
+      setAnalyticsTimeframe(vaultAnalyticsPeriodToTimeframe[period]);
+    },
+    [setAnalyticsTimeframe],
+  );
 
   useEffect(() => {
     setHasMounted(true);
@@ -291,12 +307,25 @@ export default function VaultContent() {
             </div>
           )}
 
-          <VaultSharePriceChart
-            vaultAddress={vaultAddressValue}
-            chainId={chainId}
-            assetDecimals={tokenDecimals}
-            assetSymbol={tokenSymbol}
-          />
+          <div className="space-y-4">
+            <VaultAnalyticsPeriodControl
+              value={analyticsPeriod}
+              onChange={handleAnalyticsPeriodChange}
+            />
+            <VaultHistoryCharts
+              vaultAddress={vaultAddressValue}
+              chainId={chainId}
+              assetDecimals={tokenDecimals}
+              assetSymbol={tokenSymbol}
+            />
+            <VaultHistoryCharts
+              vaultAddress={vaultAddressValue}
+              chainId={chainId}
+              assetDecimals={tokenDecimals}
+              assetSymbol={tokenSymbol}
+              mode="share-price"
+            />
+          </div>
 
           {/* Market Allocations */}
           <VaultMarketAllocations
