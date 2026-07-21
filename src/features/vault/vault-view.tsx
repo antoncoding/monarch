@@ -124,16 +124,12 @@ function VaultAdapterPositionDetail({
     [marketAllocations],
   );
 
-  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain } = useUserPositionsSummaryData(
-    adapterAddress,
-    period,
-    [chainId],
-    {
+  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain, transactions, loadingStates } =
+    useUserPositionsSummaryData(adapterAddress, period, [chainId], {
       enabled: hasAdapterPositionTarget && marketHints.length > 0,
       marketHints,
       showEmpty: true,
-    },
-  );
+    });
 
   const groupedPositions = useMemo(() => {
     const grouped = groupPositionsByLoanAsset(positions ?? [], actualBlockData);
@@ -174,9 +170,12 @@ function VaultAdapterPositionDetail({
             chainId={chainId}
             adapterAddress={adapterAddress}
             isEarningsLoading={isEarningsLoading}
+            isSnapshotsLoading={loadingStates.snapshots}
+            isTransactionsLoading={loadingStates.transactions}
             actualBlockData={actualBlockData}
             period={period}
             snapshotsByChain={snapshotsByChain}
+            transactions={transactions}
             marketAllocations={marketAllocations}
             assetAddress={assetAddress}
             totalAssets={totalAssets}

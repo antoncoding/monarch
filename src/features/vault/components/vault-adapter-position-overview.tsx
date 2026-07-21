@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { UserPositionsChart, UserPositionsChartSkeleton } from '@/features/positions/components/user-positions-chart';
 import { usePositionChartTransactions } from '@/hooks/usePositionChartTransactions';
@@ -11,7 +12,7 @@ import { VaultMarketAllocationsTable } from '@/features/vault/components/vault-m
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import type { MarketAllocation } from '@/types/vaultAllocations';
 import type { PositionSnapshot } from '@/utils/positions';
-import type { GroupedPosition, MarketPositionWithEarnings } from '@/utils/types';
+import type { GroupedPosition, MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
 const PERIOD_LABELS: Record<EarningsPeriod, string> = {
@@ -28,12 +29,15 @@ type VaultAdapterPositionOverviewProps = {
   chainId: SupportedNetworks;
   adapterAddress: Address;
   isEarningsLoading: boolean;
+  isSnapshotsLoading: boolean;
+  isTransactionsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   period: EarningsPeriod;
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   marketAllocations: MarketAllocation[];
   assetAddress?: Address;
   totalAssets?: bigint;
+  transactions: UserTransaction[];
 };
 
 type VaultMarketBreakdownTableProps = {
@@ -95,34 +99,49 @@ export function VaultAdapterPositionOverview({
   chainId,
   adapterAddress,
   isEarningsLoading,
+  isSnapshotsLoading,
+  isTransactionsLoading,
   actualBlockData,
   period,
   snapshotsByChain,
   marketAllocations,
   assetAddress,
   totalAssets,
+  transactions,
 }: VaultAdapterPositionOverviewProps) {
   const periodLabel = PERIOD_LABELS[period];
   const detailHref = `/position/${chainId}/${groupedPosition.loanAssetAddress}/${adapterAddress}`;
+  const chartStartTimestamp = actualBlockData[chainId]?.timestamp;
   const {
-    transactions,
-    isLoading: isLoadingTransactions,
-    error: transactionError,
+    transactions: allTimeTransactions,
+    isLoading: isLoadingAllTimeTransactions,
+    error: allTimeTransactionError,
   } = usePositionChartTransactions({
     account: adapterAddress,
+    enabled: period === 'all',
     groupedPosition,
-    startTimestamp: actualBlockData[chainId]?.timestamp,
-    useDailyBuckets: period === 'all',
+    startTimestamp: chartStartTimestamp,
+    useDailyBuckets: true,
   });
+  const chartTransactions = period === 'all' ? allTimeTransactions : transactions;
+  const isChartLoading = chartStartTimestamp === undefined || isSnapshotsLoading || (period === 'all' && isLoadingAllTimeTransactions);
+  const chartError = period === 'all' ? allTimeTransactionError : null;
+  const chartActions =
+    period !== 'all' && isTransactionsLoading ? (
+      <span className="flex items-center gap-1.5 text-[11px] text-secondary">
+        <Spinner size={12} />
+        Updating
+      </span>
+    ) : undefined;
 
   return (
     <div className="space-y-4">
-      {isLoadingTransactions ? (
+      {isChartLoading ? (
         <UserPositionsChartSkeleton
           height={220}
           title="Vault exposure over time"
         />
-      ) : transactionError ? (
+      ) : chartError ? (
         <div
           role="alert"
           className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
@@ -133,9 +152,10 @@ export function VaultAdapterPositionOverview({
         <UserPositionsChart
           variant="grouped"
           groupedPosition={groupedPosition}
-          transactions={transactions}
+          transactions={chartTransactions}
           snapshotsByChain={snapshotsByChain}
           chainBlockData={actualBlockData}
+          actions={chartActions}
           height={220}
           title="Vault exposure over time"
         />

@@ -10,12 +10,14 @@ const SECONDS_PER_DAY = 86_400;
 
 export function usePositionChartTransactions({
   account,
+  enabled = true,
   groupedPosition,
   startTimestamp,
   endTimestamp,
   useDailyBuckets = false,
 }: {
   account: string;
+  enabled?: boolean;
   groupedPosition: GroupedPosition;
   startTimestamp: number | undefined;
   endTimestamp?: number;
@@ -33,7 +35,7 @@ export function usePositionChartTransactions({
       timestampLte: endTimestamp,
     },
     paginate: true,
-    enabled: Boolean(startTimestamp) && !useDailyBuckets,
+    enabled: enabled && Boolean(startTimestamp) && !useDailyBuckets,
   });
   const dailyFlowQuery = useQuery({
     queryKey: ['position-daily-flows', account.toLowerCase(), chainId, [...marketUniqueKeys].sort(), startTimestamp, effectiveEndTimestamp],
@@ -50,7 +52,7 @@ export function usePositionChartTransactions({
         endTimestamp: effectiveEndTimestamp,
       });
     },
-    enabled: Boolean(startTimestamp) && useDailyBuckets,
+    enabled: enabled && Boolean(startTimestamp) && useDailyBuckets,
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,

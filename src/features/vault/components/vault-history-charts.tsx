@@ -51,7 +51,6 @@ type MetricChartProps = {
 type MetricSummaryItem = {
   label: string;
   value: string;
-  emphasized?: boolean;
 };
 
 function formatCompactAmount(value: number, symbol?: string): string {
@@ -87,15 +86,15 @@ function formatChangePercent(value: number | null): string {
 
 function MetricSummary({ items }: { items: MetricSummaryItem[] }) {
   return (
-    <div className="flex flex-wrap items-end gap-x-10 gap-y-4 px-1">
-      {items.map((item) => (
-        <div key={item.label}>
-          <p className="text-sm text-secondary">{item.label}</p>
-          <p className={item.emphasized ? 'mt-1 tabular-nums text-3xl tracking-tight' : 'mt-1 tabular-nums text-xl tracking-tight'}>
-            {item.value}
-          </p>
-        </div>
-      ))}
+    <div className="border-b border-border/40 px-6 py-4">
+      <dl className="flex flex-wrap items-start gap-x-8 gap-y-3">
+        {items.map((item) => (
+          <div key={item.label}>
+            <dt className="text-xs uppercase tracking-wider text-secondary">{item.label}</dt>
+            <dd className="mt-1 tabular-nums text-lg leading-6">{item.value}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -191,84 +190,87 @@ function MetricChart({
       ) : data.length < 2 ? (
         <ChartStatus>{emptyMessage}</ChartStatus>
       ) : (
-        <div className="px-4 pb-4 pt-5 sm:px-6">
-          {summary ?? (
-            <div className="px-1">
-              <p className="text-sm text-secondary">{metricLabel}</p>
-              <p className="mt-1 tabular-nums text-3xl font-normal tracking-tight">{formatValue(currentPoint?.value ?? Number.NaN)}</p>
-            </div>
-          )}
+        <>
+          {summary}
+          <div className={`px-4 pb-4 sm:px-6 ${summary ? 'pt-4' : 'pt-5'}`}>
+            {summary ? null : (
+              <div className="px-1">
+                <p className="text-sm text-secondary">{metricLabel}</p>
+                <p className="mt-1 tabular-nums text-3xl font-normal tracking-tight">{formatValue(currentPoint?.value ?? Number.NaN)}</p>
+              </div>
+            )}
 
-          <div
-            className="mt-5 h-[280px] w-full"
-            aria-label={`${title} history chart`}
-          >
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
+            <div
+              className={`${summary ? '' : 'mt-5'} h-[280px] w-full`}
+              aria-label={`${title} history chart`}
             >
-              <LineChart
-                data={data}
-                margin={{ top: 12, right: 2, left: 2, bottom: 2 }}
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
               >
-                <CartesianGrid
-                  vertical={false}
-                  stroke="var(--color-border)"
-                  strokeOpacity={0.55}
-                />
-                <XAxis
-                  dataKey="timestamp"
-                  {...getTimeSeriesXAxisProps(chartRange)}
-                  axisLine={false}
-                  tickLine={false}
-                  tickMargin={12}
-                  minTickGap={56}
-                  tickFormatter={(time) => formatChartTime(time, chartRange.endTimestamp - chartRange.startTimestamp)}
-                  tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-                />
-                <YAxis
-                  orientation="right"
-                  axisLine={false}
-                  tickLine={false}
-                  tickCount={3}
-                  tickMargin={10}
-                  tickFormatter={(value) => formatAxisValue(Number(value))}
-                  tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-                  width={64}
-                  domain={yDomain}
-                />
-                {average === undefined ? null : (
-                  <ReferenceLine
-                    y={average}
-                    stroke="var(--color-text-secondary)"
-                    strokeDasharray="4 4"
-                    strokeOpacity={0.5}
+                <LineChart
+                  data={data}
+                  margin={{ top: 12, right: 2, left: 2, bottom: 2 }}
+                >
+                  <CartesianGrid
+                    vertical={false}
+                    stroke="var(--color-border)"
+                    strokeOpacity={0.55}
                   />
-                )}
-                <Tooltip
-                  cursor={chartTooltipCursor}
-                  content={({ active, payload, label }) => (
-                    <ChartTooltipContent
-                      active={active}
-                      payload={payload}
-                      label={label}
-                      formatValue={formatValue}
+                  <XAxis
+                    dataKey="timestamp"
+                    {...getTimeSeriesXAxisProps(chartRange)}
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={12}
+                    minTickGap={56}
+                    tickFormatter={(time) => formatChartTime(time, chartRange.endTimestamp - chartRange.startTimestamp)}
+                    tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+                  />
+                  <YAxis
+                    orientation="right"
+                    axisLine={false}
+                    tickLine={false}
+                    tickCount={3}
+                    tickMargin={10}
+                    tickFormatter={(value) => formatAxisValue(Number(value))}
+                    tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
+                    width={64}
+                    domain={yDomain}
+                  />
+                  {average === undefined ? null : (
+                    <ReferenceLine
+                      y={average}
+                      stroke="var(--color-text-secondary)"
+                      strokeDasharray="4 4"
+                      strokeOpacity={0.5}
                     />
                   )}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  name={name}
-                  stroke={chartColors.supply.stroke}
-                  strokeWidth={2.25}
-                  dot={false}
-                  activeDot={{ r: 3, strokeWidth: 0 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                  <Tooltip
+                    cursor={chartTooltipCursor}
+                    content={({ active, payload, label }) => (
+                      <ChartTooltipContent
+                        active={active}
+                        payload={payload}
+                        label={label}
+                        formatValue={formatValue}
+                      />
+                    )}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    name={name}
+                    stroke={chartColors.supply.stroke}
+                    strokeWidth={2.25}
+                    dot={false}
+                    activeDot={{ r: 3, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </TableContainerWithDescription>
   );
@@ -340,9 +342,8 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
           <MetricSummary
             items={[
               {
-                label: 'Current share price',
+                label: 'Current',
                 value: formatSharePrice(sharePrice.at(-1)?.value ?? Number.NaN, assetSymbol),
-                emphasized: true,
               },
               { label: `${periodLabel} change`, value: formatChangePercent(sharePriceChange) },
               { label: `${periodLabel} implied ${rateLabel}`, value: formatPercent(impliedRate) },
@@ -371,7 +372,7 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
           summary={
             <MetricSummary
               items={[
-                { label: `${periodLabel} realized ${rateLabel}`, value: formatPercent(impliedRate), emphasized: true },
+                { label: `${periodLabel} realized ${rateLabel}`, value: formatPercent(impliedRate) },
                 { label: `Current ${rateLabel} (6h)`, value: formatPercent(currentRate) },
               ]}
             />
