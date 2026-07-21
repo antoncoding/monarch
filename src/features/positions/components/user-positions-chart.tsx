@@ -68,7 +68,7 @@ export function UserPositionsChartSkeleton({ height = 220, title = 'Position His
         role="status"
         className="flex animate-pulse flex-col items-stretch py-4 sm:flex-row"
       >
-        <span className="sr-only">Loading position history</span>
+        <span className="sr-only">Loading: {title}</span>
         <div
           className="flex min-w-0 flex-1 items-end gap-2 px-4 pb-7 pt-4"
           style={{ minHeight: height }}
