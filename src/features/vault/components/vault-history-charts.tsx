@@ -172,6 +172,9 @@ function MetricChart({
   const chartColors = useChartColors();
   const currentPoint = data.at(-1);
   const chartRange = useMemo(() => getChartRange(data), [data]);
+  const metricSummary = summary ?? (
+    <MetricSummary items={[{ label: metricLabel, value: formatValue(currentPoint?.value ?? Number.NaN) }]} />
+  );
   const actions = updating ? (
     <span className="flex items-center gap-1.5 text-[11px] text-secondary">
       <Spinner size={12} />
@@ -191,17 +194,10 @@ function MetricChart({
         <ChartStatus>{emptyMessage}</ChartStatus>
       ) : (
         <>
-          {summary}
-          <div className={`px-4 pb-4 sm:px-6 ${summary ? 'pt-4' : 'pt-5'}`}>
-            {summary ? null : (
-              <div className="px-1">
-                <p className="text-sm text-secondary">{metricLabel}</p>
-                <p className="mt-1 tabular-nums text-3xl font-normal tracking-tight">{formatValue(currentPoint?.value ?? Number.NaN)}</p>
-              </div>
-            )}
-
+          {metricSummary}
+          <div className="px-4 py-4 sm:px-6">
             <div
-              className={`${summary ? '' : 'mt-5'} h-[280px] w-full`}
+              className="h-[280px] w-full"
               aria-label={`${title} history chart`}
             >
               <ResponsiveContainer
