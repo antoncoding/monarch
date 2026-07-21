@@ -35,6 +35,10 @@ type VaultV2HistoryResponse = {
 function normalizePoints(points: RawHistoryPoint[] | null | undefined): MorphoVaultHistoryPoint[] {
   return (points ?? [])
     .map((point) => {
+      if (point.x === null || point.x === undefined || point.y === null || point.y === undefined) {
+        return null;
+      }
+
       const timestamp = Number(point.x);
       const value = Number(point.y);
 
