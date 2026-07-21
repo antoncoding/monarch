@@ -71,7 +71,7 @@ export function UserPositionsChartSkeleton({ height = 220, title = 'Position His
         <span className="sr-only">Loading: {title}</span>
         <div
           className="flex min-w-0 flex-1 items-end gap-2 px-4 pb-7 pt-4"
-          style={{ minHeight: height }}
+          style={{ height }}
         >
           {[32, 38, 44, 40, 52, 58, 54, 66, 62, 72, 76, 70].map((barHeight, index) => (
             <div

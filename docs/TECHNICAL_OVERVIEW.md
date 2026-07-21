@@ -269,7 +269,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `usePublicAllocatorVaults` | Public allocator config for supplying vaults in a market | Morpho API only | Intentionally Morpho-only today |
 | `useAllocationsQuery` | Live vault `allocation(capId)` values | Pure RPC multicall | No Envio gap |
 | `usePublicAllocatorLiveData` | Live flow caps, vault supply, and liquidity for allocator UX | Pure RPC multicall | No Envio gap |
-| `useVaultHistoryQuery` | Vault detail 6-hour native-yield, total-deposit, and share-price charts | Morpho Vault V2 historical `avgApy` + `totalAssets` + `sharePrice`; archive RPC data source for `totalAssets` + `previewRedeem` fallback | Historical vault state snapshots or an equivalent accrued-assets series; cumulative Monarch deposit/withdraw totals do not include accrued yield |
+| `useVaultHistoryQuery` | Vault detail selected-period realized yield, current 6-hour native yield, total-deposit, and share-price charts | Morpho Vault V2 historical `avgApy` + `totalAssets` + `sharePrice`; realized/implied yield derived from share-price growth; archive RPC data source for `totalAssets` + `previewRedeem` fallback | Historical vault state snapshots or an equivalent accrued-assets series; cumulative Monarch deposit/withdraw totals do not include accrued yield |
 | `useVaultHistoricalApy` / `useErc4626VaultAPR` | Historical 4626 yield and expected carry calculations | Pure RPC share-price snapshots + RPC Morpho market reads | No Envio gap |
 
 #### RPC Helpers And External Reads

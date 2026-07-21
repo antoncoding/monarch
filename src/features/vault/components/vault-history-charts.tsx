@@ -10,11 +10,11 @@ import { useChartColors } from '@/constants/chartColors';
 import { ChartTooltipContent, chartTooltipCursor, getTimeSeriesXAxisProps } from '@/features/market-detail/components/charts/chart-utils';
 import { useVaultHistoryQuery, type VaultHistoryPoint } from '@/hooks/queries/useVaultHistoryQuery';
 import { useAppSettings } from '@/stores/useAppSettings';
-import { type ChartTimeframe, useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
+import { type ChartTimeframe, TIMEFRAME_CONFIG, useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import { formatReadableTokenAmount } from '@/utils/balance';
 import { formatChartTime } from '@/utils/chart';
 import type { SupportedNetworks } from '@/utils/networks';
-import { formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
+import { computeAnnualizedApyFromValueGrowth, formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { TimeseriesOptions } from '@/utils/types';
 
 type VaultHistoryChartsProps = {
@@ -40,12 +40,18 @@ type MetricChartProps = {
   isLoading: boolean;
   metricLabel: string;
   name: string;
-  sourceLabel: string;
   title: string;
   updating: boolean;
   average?: number;
   emptyMessage: string;
+  summary?: ReactNode;
   yDomain?: [number | 'auto', number | 'auto'];
+};
+
+type MetricSummaryItem = {
+  label: string;
+  value: string;
+  emphasized?: boolean;
 };
 
 function formatCompactAmount(value: number, symbol?: string): string {
@@ -71,6 +77,27 @@ function formatSharePrice(value: number, symbol?: string): string {
   });
 
   return symbol ? `${formatted} ${symbol}` : formatted;
+}
+
+function formatChangePercent(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return '--';
+
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+}
+
+function MetricSummary({ items }: { items: MetricSummaryItem[] }) {
+  return (
+    <div className="flex flex-wrap items-end gap-x-10 gap-y-4 px-1">
+      {items.map((item) => (
+        <div key={item.label}>
+          <p className="text-sm text-secondary">{item.label}</p>
+          <p className={item.emphasized ? 'mt-1 tabular-nums text-3xl tracking-tight' : 'mt-1 tabular-nums text-xl tracking-tight'}>
+            {item.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function ChartStatus({ children }: { children: ReactNode }) {
@@ -138,7 +165,7 @@ function MetricChart({
   isLoading,
   metricLabel,
   name,
-  sourceLabel,
+  summary,
   title,
   updating,
   yDomain = [0, 'auto'],
@@ -146,17 +173,12 @@ function MetricChart({
   const chartColors = useChartColors();
   const currentPoint = data.at(-1);
   const chartRange = useMemo(() => getChartRange(data), [data]);
-  const actions = (
-    <div className="flex items-center gap-3 text-[11px] text-secondary">
-      {updating ? (
-        <span className="flex items-center gap-1.5">
-          <Spinner size={12} />
-          Updating
-        </span>
-      ) : null}
-      <span>{sourceLabel}</span>
-    </div>
-  );
+  const actions = updating ? (
+    <span className="flex items-center gap-1.5 text-[11px] text-secondary">
+      <Spinner size={12} />
+      Updating
+    </span>
+  ) : undefined;
 
   return (
     <TableContainerWithDescription
@@ -170,10 +192,12 @@ function MetricChart({
         <ChartStatus>{emptyMessage}</ChartStatus>
       ) : (
         <div className="px-4 pb-4 pt-5 sm:px-6">
-          <div className="px-1">
-            <p className="text-sm text-secondary">{metricLabel}</p>
-            <p className="mt-1 tabular-nums text-3xl font-normal tracking-tight">{formatValue(currentPoint?.value ?? Number.NaN)}</p>
-          </div>
+          {summary ?? (
+            <div className="px-1">
+              <p className="text-sm text-secondary">{metricLabel}</p>
+              <p className="mt-1 tabular-nums text-3xl font-normal tracking-tight">{formatValue(currentPoint?.value ?? Number.NaN)}</p>
+            </div>
+          )}
 
           <div
             className="mt-5 h-[280px] w-full"
@@ -274,12 +298,33 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
   }, [nativeRate]);
   const nativeRateDomain = useMemo(() => getRateDomain(nativeRate), [nativeRate]);
   const sharePriceDomain = useMemo(() => getSharePriceDomain(sharePrice, selectedTimeframe), [selectedTimeframe, sharePrice]);
+  const impliedApy = useMemo(() => {
+    const firstPoint = sharePrice[0];
+    const lastPoint = sharePrice.at(-1);
+
+    if (!firstPoint || !lastPoint) return null;
+
+    return computeAnnualizedApyFromValueGrowth({
+      currentValue: lastPoint.value,
+      pastValue: firstPoint.value,
+      periodSeconds: lastPoint.timestamp - firstPoint.timestamp,
+    });
+  }, [sharePrice]);
+  const sharePriceChange = useMemo(() => {
+    const firstPoint = sharePrice[0];
+    const lastPoint = sharePrice.at(-1);
+
+    if (!firstPoint || !lastPoint || firstPoint.value <= 0) return null;
+
+    return ((lastPoint.value - firstPoint.value) / firstPoint.value) * 100;
+  }, [sharePrice]);
   const isMorphoSupported = supportsMorphoApi(chainId);
-  const totalAssetsSourceLabel = data?.totalAssetsSource === 'rpc' || !isMorphoSupported ? 'On-chain history' : 'Morpho API';
-  const sharePriceSourceLabel = data?.sharePriceSource === 'rpc' || !isMorphoSupported ? 'On-chain history' : 'Morpho API';
   const isInitialLoading = assetDecimals === undefined || (isLoading && !data);
   const isUpdating = isFetching && !isInitialLoading;
   const rateLabel = isAprDisplay ? 'APR' : 'APY';
+  const periodLabel = TIMEFRAME_CONFIG[selectedTimeframe].label;
+  const impliedRate = impliedApy === null ? Number.NaN : toDisplayRateFromApy(impliedApy, isAprDisplay);
+  const currentRate = nativeRate.at(-1)?.value ?? Number.NaN;
 
   if (mode === 'share-price') {
     return (
@@ -291,7 +336,19 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
         yDomain={sharePriceDomain}
         isLoading={isInitialLoading}
         updating={isUpdating}
-        sourceLabel={sharePriceSourceLabel}
+        summary={
+          <MetricSummary
+            items={[
+              {
+                label: 'Current share price',
+                value: formatSharePrice(sharePrice.at(-1)?.value ?? Number.NaN, assetSymbol),
+                emphasized: true,
+              },
+              { label: `${periodLabel} change`, value: formatChangePercent(sharePriceChange) },
+              { label: `${periodLabel} implied ${rateLabel}`, value: formatPercent(impliedRate) },
+            ]}
+          />
+        }
         formatAxisValue={(value) => formatSharePrice(value)}
         formatValue={(value) => formatSharePrice(value, assetSymbol)}
         emptyMessage="Historical share price is unavailable for this vault."
@@ -311,7 +368,14 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
           yDomain={nativeRateDomain}
           isLoading={isInitialLoading}
           updating={isUpdating}
-          sourceLabel="Morpho API"
+          summary={
+            <MetricSummary
+              items={[
+                { label: `${periodLabel} realized ${rateLabel}`, value: formatPercent(impliedRate), emphasized: true },
+                { label: `Current ${rateLabel} (6h)`, value: formatPercent(currentRate) },
+              ]}
+            />
+          }
           formatAxisValue={formatPercent}
           formatValue={formatPercent}
           emptyMessage="Native yield history is unavailable for this vault."
@@ -325,7 +389,6 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
         data={totalAssets}
         isLoading={isInitialLoading}
         updating={isUpdating}
-        sourceLabel={totalAssetsSourceLabel}
         formatAxisValue={(value) => formatCompactAmount(value)}
         formatValue={(value) => formatCompactAmount(value, assetSymbol)}
         emptyMessage="Historical deposits are unavailable for this vault."
