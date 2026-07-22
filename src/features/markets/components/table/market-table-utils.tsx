@@ -2,6 +2,7 @@ import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-ic
 import { TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { EstimatedValueTooltip } from '@/components/shared/estimated-value-tooltip';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import type { SortColumn } from '../constants';
@@ -33,7 +34,8 @@ export function HTSortable({ label, sortColumn, titleOnclick, sortDirection, tar
 }
 
 export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; chainId: number; symbol: string; dataLabel?: string }) {
-  const displayedSymbol = symbol.length > 5 ? `${symbol.slice(0, 5)}...` : symbol;
+  const showFullTokenSymbols = useAppSettings((state) => state.showFullTokenSymbols);
+  const displayedSymbol = showFullTokenSymbols || symbol.length <= 5 ? symbol : `${symbol.slice(0, 5)}...`;
 
   return (
     <TableCell
