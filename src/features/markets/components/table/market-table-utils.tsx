@@ -1,9 +1,7 @@
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { TableHead, TableCell } from '@/components/ui/table';
-import { Tooltip } from '@/components/ui/tooltip';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { EstimatedValueTooltip } from '@/components/shared/estimated-value-tooltip';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import type { SortColumn } from '../constants';
@@ -36,20 +34,6 @@ export function HTSortable({ label, sortColumn, titleOnclick, sortDirection, tar
 
 export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; chainId: number; symbol: string; dataLabel?: string }) {
   const displayedSymbol = symbol.length > 5 ? `${symbol.slice(0, 5)}...` : symbol;
-  const assetLink = (
-    <a
-      className="group flex items-center gap-0.5 no-underline hover:underline"
-      href={getAssetURL(asset, chainId)}
-      target="_blank"
-      onClick={(e) => e.stopPropagation()}
-      rel="noopener"
-    >
-      <p className="text-sm whitespace-nowrap">{displayedSymbol}</p>
-      <p className="opacity-0 group-hover:opacity-100">
-        <ExternalLinkIcon className="h-3 w-3" />
-      </p>
-    </a>
-  );
 
   return (
     <TableCell
@@ -64,8 +48,22 @@ export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; 
           width={16}
           height={16}
           symbol={symbol}
+          renderTrigger={(icon) => (
+            <a
+              className="group flex items-center gap-1 no-underline hover:underline"
+              href={getAssetURL(asset, chainId)}
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+              rel="noopener"
+            >
+              {icon}
+              <p className="text-sm whitespace-nowrap">{displayedSymbol}</p>
+              <p className="opacity-0 group-hover:opacity-100">
+                <ExternalLinkIcon className="h-3 w-3" />
+              </p>
+            </a>
+          )}
         />
-        {displayedSymbol === symbol ? assetLink : <Tooltip content={<TooltipContent title={symbol} />}>{assetLink}</Tooltip>}
       </div>
     </TableCell>
   );

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactElement, type ReactNode } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
@@ -20,6 +20,7 @@ type TokenIconProps = {
   showExplorerLink?: boolean;
   showTokenSource?: boolean;
   disableTooltip?: boolean;
+  renderTrigger?: (icon: ReactNode) => ReactElement;
 };
 
 export function TokenIcon({
@@ -30,9 +31,11 @@ export function TokenIcon({
   opacity,
   customTooltipTitle,
   customTooltipDetail,
+  symbol,
   showExplorerLink = false,
   showTokenSource = true,
   disableTooltip = false,
+  renderTrigger,
 }: TokenIconProps) {
   const { findToken } = useTokensQuery();
   const token = useMemo(() => findToken(address, chainId), [address, chainId, findToken]);
@@ -51,6 +54,7 @@ export function TokenIcon({
         unoptimized
       />
     );
+    const trigger = renderTrigger?.(img) ?? img;
 
     const title = customTooltipTitle ?? token.symbol;
 
@@ -88,7 +92,7 @@ export function TokenIcon({
     const secondaryDetail = customTooltipDetail && showTokenSource ? tokenSource : undefined;
 
     if (disableTooltip) {
-      return img;
+      return trigger;
     }
 
     return (
@@ -103,15 +107,22 @@ export function TokenIcon({
           />
         }
       >
-        {img}
+        {trigger}
       </Tooltip>
     );
   }
 
-  return (
+  const fallbackIcon = (
     <div
       className="rounded-full bg-gray-300 dark:bg-gray-700"
       style={{ width, height }}
     />
   );
+  const trigger = renderTrigger?.(fallbackIcon) ?? fallbackIcon;
+
+  if (disableTooltip || !renderTrigger || !symbol) {
+    return trigger;
+  }
+
+  return <Tooltip content={<TooltipContent title={customTooltipTitle ?? symbol} />}>{trigger}</Tooltip>;
 }
