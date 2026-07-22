@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchCompletedPositionDailyFlows } from '@/data-sources/monarch-api';
+import { fetchPositionDailyFlows } from '@/data-sources/monarch-api';
 import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import type { SupportedNetworks } from '@/utils/networks';
 import { type GroupedPosition, type UserTransaction, UserTxTypes } from '@/utils/types';
@@ -15,6 +15,7 @@ export function usePositionChartTransactions({
   startTimestamp,
   endTimestamp,
   useDailyBuckets = false,
+  includeCurrentDailyBucket = false,
 }: {
   account: string;
   enabled?: boolean;
@@ -22,6 +23,7 @@ export function usePositionChartTransactions({
   startTimestamp: number | undefined;
   endTimestamp?: number;
   useDailyBuckets?: boolean;
+  includeCurrentDailyBucket?: boolean;
 }) {
   const chainId = groupedPosition.chainId as SupportedNetworks;
   const effectiveEndTimestamp = endTimestamp ?? Math.floor(Date.now() / (SECONDS_PER_DAY * 1000)) * SECONDS_PER_DAY;
@@ -38,18 +40,27 @@ export function usePositionChartTransactions({
     enabled: enabled && Boolean(startTimestamp) && !useDailyBuckets,
   });
   const dailyFlowQuery = useQuery({
-    queryKey: ['position-daily-flows', account.toLowerCase(), chainId, [...marketUniqueKeys].sort(), startTimestamp, effectiveEndTimestamp],
+    queryKey: [
+      'position-daily-flows',
+      account.toLowerCase(),
+      chainId,
+      [...marketUniqueKeys].sort(),
+      startTimestamp,
+      effectiveEndTimestamp,
+      includeCurrentDailyBucket,
+    ],
     queryFn: () => {
       if (startTimestamp === undefined) {
         return [];
       }
 
-      return fetchCompletedPositionDailyFlows({
+      return fetchPositionDailyFlows({
         userAddress: account,
         chainId,
         marketIds: marketUniqueKeys,
         startTimestamp,
         endTimestamp: effectiveEndTimestamp,
+        includeCurrentBucket: includeCurrentDailyBucket,
       });
     },
     enabled: enabled && Boolean(startTimestamp) && useDailyBuckets,

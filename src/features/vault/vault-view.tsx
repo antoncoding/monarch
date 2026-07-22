@@ -124,7 +124,7 @@ function VaultAdapterPositionDetail({
     [marketAllocations],
   );
 
-  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain, transactions, loadingStates } =
+  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain, loadingStates } =
     useUserPositionsSummaryData(adapterAddress, period, [chainId], {
       enabled: hasAdapterPositionTarget && marketHints.length > 0,
       marketHints,
@@ -171,11 +171,9 @@ function VaultAdapterPositionDetail({
             adapterAddress={adapterAddress}
             isEarningsLoading={isEarningsLoading}
             isSnapshotsLoading={loadingStates.snapshots}
-            isTransactionsLoading={loadingStates.transactions}
             actualBlockData={actualBlockData}
             period={period}
             snapshotsByChain={snapshotsByChain}
-            transactions={transactions}
             marketAllocations={marketAllocations}
             assetAddress={assetAddress}
             totalAssets={totalAssets}

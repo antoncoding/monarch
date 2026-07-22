@@ -6,7 +6,7 @@ import { dedupeUserTransactions, sortUserTransactions } from '@/utils/user-trans
 import { monarchGraphqlFetcher } from './fetchers';
 
 const MAX_PAGES = 50;
-const MONARCH_USER_TRANSACTIONS_BATCH_SIZE = 500;
+const MONARCH_USER_TRANSACTIONS_BATCH_SIZE = 1_000;
 const MONARCH_USER_TRANSACTIONS_TIMEOUT_MS = 15_000;
 
 type MonarchUserActivityRow = {

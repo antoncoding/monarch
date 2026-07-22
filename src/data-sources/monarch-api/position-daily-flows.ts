@@ -25,23 +25,30 @@ const MAX_PAGES = 50;
 
 const getDayStart = (timestamp: number): number => Math.floor(timestamp / SECONDS_PER_DAY) * SECONDS_PER_DAY;
 
-export async function fetchCompletedPositionDailyFlows({
+export async function fetchPositionDailyFlows({
   userAddress,
   chainId,
   marketIds,
   startTimestamp,
   endTimestamp,
+  includeCurrentBucket = false,
 }: {
   userAddress: string;
   chainId: number;
   marketIds: string[];
   startTimestamp: number;
   endTimestamp: number;
+  includeCurrentBucket?: boolean;
 }): Promise<PositionDailyFlow[]> {
   const startBucket = getDayStart(startTimestamp);
-  // The current UTC bucket is mutable. Excluding it keeps every paged row
-  // stable; the chart uses the live on-chain position for its final point.
-  const endBucket = Math.min(getDayStart(endTimestamp), getDayStart(Math.floor(Date.now() / 1000)));
+  const currentBucket = getDayStart(Math.floor(Date.now() / 1000));
+  const shouldIncludeCurrentBucket = includeCurrentBucket && endTimestamp >= currentBucket;
+  // All-time history excludes the mutable current bucket so pagination stays
+  // stable. Bounded charts include it to avoid a stale penultimate point; the
+  // live on-chain position remains the final source of truth.
+  const lastBucket = shouldIncludeCurrentBucket ? currentBucket + SECONDS_PER_DAY : currentBucket;
+  const requestedEndBucket = getDayStart(endTimestamp) + (shouldIncludeCurrentBucket ? SECONDS_PER_DAY : 0);
+  const endBucket = Math.min(requestedEndBucket, lastBucket);
   if (marketIds.length === 0 || endBucket <= startBucket) {
     return [];
   }
@@ -87,3 +94,6 @@ export async function fetchCompletedPositionDailyFlows({
 
   throw new Error(`Position daily flow history exceeded the safe pagination limit (${MAX_PAGES * PAGE_SIZE} rows)`);
 }
+
+export const fetchCompletedPositionDailyFlows = (options: Omit<Parameters<typeof fetchPositionDailyFlows>[0], 'includeCurrentBucket'>) =>
+  fetchPositionDailyFlows(options);

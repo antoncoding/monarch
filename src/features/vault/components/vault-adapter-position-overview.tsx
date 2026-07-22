@@ -11,7 +11,7 @@ import { VaultMarketAllocationsTable } from '@/features/vault/components/vault-m
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import type { MarketAllocation } from '@/types/vaultAllocations';
 import type { PositionSnapshot } from '@/utils/positions';
-import type { GroupedPosition, MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
+import type { GroupedPosition, MarketPositionWithEarnings } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 
 const PERIOD_LABELS: Record<EarningsPeriod, string> = {
@@ -29,14 +29,12 @@ type VaultAdapterPositionOverviewProps = {
   adapterAddress: Address;
   isEarningsLoading: boolean;
   isSnapshotsLoading: boolean;
-  isTransactionsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   period: EarningsPeriod;
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
   marketAllocations: MarketAllocation[];
   assetAddress?: Address;
   totalAssets?: bigint;
-  transactions: UserTransaction[];
 };
 
 type VaultMarketBreakdownTableProps = {
@@ -99,33 +97,28 @@ export function VaultAdapterPositionOverview({
   adapterAddress,
   isEarningsLoading,
   isSnapshotsLoading,
-  isTransactionsLoading,
   actualBlockData,
   period,
   snapshotsByChain,
   marketAllocations,
   assetAddress,
   totalAssets,
-  transactions,
 }: VaultAdapterPositionOverviewProps) {
   const periodLabel = PERIOD_LABELS[period];
   const detailHref = `/position/${chainId}/${groupedPosition.loanAssetAddress}/${adapterAddress}`;
   const chartStartTimestamp = actualBlockData[chainId]?.timestamp;
   const {
-    transactions: allTimeTransactions,
-    isLoading: isLoadingAllTimeTransactions,
-    error: allTimeTransactionError,
+    transactions: chartTransactions,
+    isLoading: isLoadingChartTransactions,
+    error: chartTransactionError,
   } = usePositionChartTransactions({
     account: adapterAddress,
-    enabled: period === 'all',
     groupedPosition,
     startTimestamp: chartStartTimestamp,
     useDailyBuckets: true,
+    includeCurrentDailyBucket: period !== 'all',
   });
-  const chartTransactions = period === 'all' ? allTimeTransactions : transactions;
-  const isChartLoading =
-    chartStartTimestamp === undefined || isSnapshotsLoading || (period === 'all' ? isLoadingAllTimeTransactions : isTransactionsLoading);
-  const chartError = period === 'all' ? allTimeTransactionError : null;
+  const isChartLoading = chartStartTimestamp === undefined || isSnapshotsLoading || isLoadingChartTransactions;
 
   return (
     <div className="space-y-4">
@@ -134,7 +127,7 @@ export function VaultAdapterPositionOverview({
           height={220}
           title="Vault exposure over time"
         />
-      ) : chartError ? (
+      ) : chartTransactionError ? (
         <div
           role="alert"
           className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
