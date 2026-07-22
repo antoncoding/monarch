@@ -131,7 +131,6 @@ export function MarketTableBody({
   return (
     <TableBody className="text-sm">
       {currentEntries.map((item) => {
-        const collatToShow = item.collateralAsset.symbol.slice(0, 6).concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
         const isStared = starredMarkets.includes(item.uniqueKey);
         const marketKey = getMetricsKey(item.morphoBlue.chain.id, item.uniqueKey);
         const metrics = metricsMap.get(marketKey);
@@ -206,7 +205,7 @@ export function MarketTableBody({
                 dataLabel="Collateral"
                 asset={item.collateralAsset.address}
                 chainId={item.morphoBlue.chain.id}
-                symbol={collatToShow}
+                symbol={item.collateralAsset.symbol}
               />
               <TableCell
                 data-label="Oracle"

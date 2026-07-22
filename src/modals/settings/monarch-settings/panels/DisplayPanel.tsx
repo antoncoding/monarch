@@ -10,7 +10,8 @@ import { useChartPalette } from '@/stores/useChartPalette';
 import { SettingToggleItem } from '../SettingItem';
 
 export function DisplayPanel() {
-  const { isAprDisplay, setIsAprDisplay, showFullRewardAPY, setShowFullRewardAPY } = useAppSettings();
+  const { isAprDisplay, setIsAprDisplay, showFullRewardAPY, setShowFullRewardAPY, showFullTokenSymbols, setShowFullTokenSymbols } =
+    useAppSettings();
   const { palette: selectedPalette, setPalette } = useChartPalette();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -40,6 +41,14 @@ export function DisplayPanel() {
             />
           )}
         </div>
+        <Divider />
+        <SettingToggleItem
+          title="Show Full Token Symbols"
+          description="Display complete token symbols in market tables instead of shortening them."
+          selected={showFullTokenSymbols}
+          onChange={setShowFullTokenSymbols}
+          ariaLabel="Toggle full token symbols"
+        />
       </div>
 
       <div className="flex flex-col gap-4 rounded bg-surface p-4">

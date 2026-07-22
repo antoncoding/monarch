@@ -2,6 +2,7 @@ import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-ic
 import { TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { EstimatedValueTooltip } from '@/components/shared/estimated-value-tooltip';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import type { SortColumn } from '../constants';
@@ -33,6 +34,9 @@ export function HTSortable({ label, sortColumn, titleOnclick, sortDirection, tar
 }
 
 export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; chainId: number; symbol: string; dataLabel?: string }) {
+  const showFullTokenSymbols = useAppSettings((state) => state.showFullTokenSymbols);
+  const displayedSymbol = showFullTokenSymbols || symbol.length <= 5 ? symbol : `${symbol.slice(0, 5)}...`;
+
   return (
     <TableCell
       data-label={dataLabel ?? symbol}
@@ -46,19 +50,22 @@ export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; 
           width={16}
           height={16}
           symbol={symbol}
+          renderTrigger={(icon) => (
+            <a
+              className="group flex items-center gap-1 no-underline hover:underline"
+              href={getAssetURL(asset, chainId)}
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+              rel="noopener"
+            >
+              {icon}
+              <p className="text-sm whitespace-nowrap">{displayedSymbol}</p>
+              <p className="opacity-0 group-hover:opacity-100">
+                <ExternalLinkIcon className="h-3 w-3" />
+              </p>
+            </a>
+          )}
         />
-        <a
-          className="group flex items-center gap-0.5 no-underline hover:underline"
-          href={getAssetURL(asset, chainId)}
-          target="_blank"
-          onClick={(e) => e.stopPropagation()}
-          rel="noopener"
-        >
-          <p className="text-sm whitespace-nowrap">{symbol.length > 5 ? `${symbol.slice(0, 5)}...` : symbol}</p>
-          <p className="opacity-0 group-hover:opacity-100">
-            <ExternalLinkIcon className="h-3 w-3" />
-          </p>
-        </a>
       </div>
     </TableCell>
   );

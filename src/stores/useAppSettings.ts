@@ -11,6 +11,7 @@ type AppSettingsState = {
   // Display settings
   showUnwhitelistedMarkets: boolean;
   showFullRewardAPY: boolean;
+  showFullTokenSymbols: boolean;
   isAprDisplay: boolean;
 
   // UI dismissals
@@ -34,6 +35,7 @@ type AppSettingsActions = {
   setUseEth: (use: boolean) => void;
   setShowUnwhitelistedMarkets: (show: boolean) => void;
   setShowFullRewardAPY: (show: boolean) => void;
+  setShowFullTokenSymbols: (show: boolean) => void;
   setIsAprDisplay: (isApr: boolean) => void;
   setSpecialBundlerWarningAcknowledged: (warningStorageKey: string, acknowledged: boolean) => void;
   setShowDeveloperOptions: (show: boolean) => void;
@@ -64,6 +66,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       useEth: false,
       showUnwhitelistedMarkets: false,
       showFullRewardAPY: true,
+      showFullTokenSymbols: false,
       isAprDisplay: false,
       specialBundlerWarningAcknowledgements: {},
       showDeveloperOptions: false,
@@ -76,6 +79,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       setUseEth: (use) => set({ useEth: use }),
       setShowUnwhitelistedMarkets: (show) => set({ showUnwhitelistedMarkets: show }),
       setShowFullRewardAPY: (show) => set({ showFullRewardAPY: show }),
+      setShowFullTokenSymbols: (show) => set({ showFullTokenSymbols: show }),
       setIsAprDisplay: (isApr) => set({ isAprDisplay: isApr }),
       setSpecialBundlerWarningAcknowledged: (warningStorageKey, acknowledged) =>
         set((state) => ({

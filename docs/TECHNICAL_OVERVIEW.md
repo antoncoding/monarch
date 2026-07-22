@@ -330,7 +330,7 @@ GraphQL errors: No retry
 **Persisted to localStorage (11 stores):**
 | Store | Key | Purpose |
 |-------|-----|---------|
-| `useAppSettings` | `monarch_store_appSettings` | Permit2, ETH, APR display |
+| `useAppSettings` | `monarch_store_appSettings` | Permit2, ETH, rate and token-symbol display |
 | `useMarketPreferences` | `monarch_store_marketPreferences` | Sort, filters, columns |
 | `useTrustedVaults` | `monarch_store_trustedVaults` | User's vault whitelist |
 | `useBlacklistedMarkets` | `monarch_store_blacklistedMarkets` | Custom blacklist |
