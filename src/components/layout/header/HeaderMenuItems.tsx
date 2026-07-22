@@ -6,19 +6,20 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { LuSunMedium } from 'react-icons/lu';
-import { RiBookLine, RiBriefcaseLine, RiDiscordFill, RiLineChartLine, RiSafeLine, RiSwapLine } from 'react-icons/ri';
+import { RiBarChart2Line, RiBookLine, RiBriefcaseLine, RiDiscordFill, RiLineChartLine, RiSafeLine, RiSwapLine } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useModal } from '@/hooks/useModal';
 import { EXTERNAL_LINKS } from '@/utils/external';
 
 type HeaderMenuItemsProps = {
+  includeAutovault?: boolean;
   iconSide?: 'start' | 'end';
   itemClassName?: string;
   onSelect?: () => void;
 };
 
-export function HeaderMenuItems({ iconSide = 'end', itemClassName, onSelect }: HeaderMenuItemsProps) {
+export function HeaderMenuItems({ includeAutovault = true, iconSide = 'end', itemClassName, onSelect }: HeaderMenuItemsProps) {
   const router = useRouter();
   const { open: openModal } = useModal();
   const { address } = useConnection();
@@ -84,12 +85,21 @@ export function HeaderMenuItems({ iconSide = 'end', itemClassName, onSelect }: H
       >
         Positions
       </DropdownMenuItem>
+      {includeAutovault && (
+        <DropdownMenuItem
+          {...iconProps(<RiSafeLine className="h-4 w-4" />)}
+          className={itemClassName}
+          onClick={() => handleNavigation('/autovault')}
+        >
+          Autovaults
+        </DropdownMenuItem>
+      )}
       <DropdownMenuItem
-        {...iconProps(<RiSafeLine className="h-4 w-4" />)}
+        {...iconProps(<RiBarChart2Line className="h-4 w-4" />)}
         className={itemClassName}
-        onClick={() => handleNavigation('/autovault')}
+        onClick={() => handleNavigation('/analysis')}
       >
-        Autovaults
+        Analytics
       </DropdownMenuItem>
 
       <DropdownMenuSeparator />

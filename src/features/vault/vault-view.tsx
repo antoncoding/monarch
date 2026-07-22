@@ -17,7 +17,7 @@ import {
   vaultAnalyticsTimeframeToEarningsPeriod,
 } from '@/features/vault/components/vault-analytics-period-control';
 import { VaultAdapterPositionOverview } from '@/features/vault/components/vault-adapter-position-overview';
-import { VaultSharePriceChart } from '@/features/vault/components/vault-share-price-chart';
+import { VaultHistoryCharts } from '@/features/vault/components/vault-history-charts';
 import { useModal } from '@/hooks/useModal';
 import { type VaultMarketAdapter, useMorphoMarketAdapters } from '@/hooks/useMorphoMarketAdapters';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
@@ -124,16 +124,12 @@ function VaultAdapterPositionDetail({
     [marketAllocations],
   );
 
-  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain } = useUserPositionsSummaryData(
-    adapterAddress,
-    period,
-    [chainId],
-    {
+  const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain, loadingStates } =
+    useUserPositionsSummaryData(adapterAddress, period, [chainId], {
       enabled: hasAdapterPositionTarget && marketHints.length > 0,
       marketHints,
       showEmpty: true,
-    },
-  );
+    });
 
   const groupedPositions = useMemo(() => {
     const grouped = groupPositionsByLoanAsset(positions ?? [], actualBlockData);
@@ -174,6 +170,7 @@ function VaultAdapterPositionDetail({
             chainId={chainId}
             adapterAddress={adapterAddress}
             isEarningsLoading={isEarningsLoading}
+            isSnapshotsLoading={loadingStates.snapshots}
             actualBlockData={actualBlockData}
             period={period}
             snapshotsByChain={snapshotsByChain}
@@ -544,12 +541,11 @@ export default function VaultContent() {
               onChange={handleAnalyticsPeriodChange}
             />
 
-            <VaultSharePriceChart
+            <VaultHistoryCharts
               vaultAddress={vaultAddressValue}
               chainId={chainId}
               assetDecimals={tokenDecimals}
               assetSymbol={tokenSymbol}
-              showPeriodControl={false}
             />
 
             <VaultAdaptersPositionDetail
@@ -560,6 +556,14 @@ export default function VaultContent() {
               isResolvingAdapter={vaultDataLoading || adapterQuery.isLoading || adapterQuery.isFetching || !vaultData}
               period={analyticsPeriod}
               totalAssets={vaultContract.totalAssets}
+            />
+
+            <VaultHistoryCharts
+              vaultAddress={vaultAddressValue}
+              chainId={chainId}
+              assetDecimals={tokenDecimals}
+              assetSymbol={tokenSymbol}
+              mode="share-price"
             />
           </div>
 

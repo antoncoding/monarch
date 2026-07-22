@@ -22,6 +22,7 @@ type BaseChartProps = {
   height?: number;
   debug?: boolean;
   actions?: ReactNode;
+  title?: string;
 };
 
 // Props for using with GroupedPosition (positions page)
@@ -57,6 +58,39 @@ type StandaloneChartProps = BaseChartProps & {
 
 export type UserPositionsChartProps = GroupedPositionChartProps | StandaloneChartProps;
 
+export function UserPositionsChartSkeleton({ height = 220, title = 'Position History' }: { height?: number; title?: string }) {
+  const chartHeight = Math.max(height, 160);
+
+  return (
+    <TableContainerWithDescription
+      title={title}
+      className="mb-4 overflow-hidden"
+    >
+      <div
+        role="status"
+        className="flex animate-pulse flex-col items-stretch py-4 sm:flex-row"
+      >
+        <span className="sr-only">Loading: {title}</span>
+        <div
+          className="flex min-w-0 flex-1 items-end gap-2 px-4 pb-7 pt-4"
+          style={{ height: chartHeight }}
+        >
+          {[32, 38, 44, 40, 52, 58, 54, 66, 62, 72, 76, 70].map((barHeight, index) => (
+            <div
+              key={`${barHeight}-${index}`}
+              className="min-w-0 flex-1 rounded-t-sm bg-hovered/80"
+              style={{ height: Math.max(24, Math.round((barHeight / 100) * (chartHeight - 48))) }}
+            />
+          ))}
+        </div>
+        <div className="flex w-full shrink-0 items-center justify-center border-t border-border/40 px-4 py-5 sm:w-[180px] sm:border-l sm:border-t-0">
+          <div className="h-24 w-24 rounded-full border-[18px] border-hovered" />
+        </div>
+      </div>
+    </TableContainerWithDescription>
+  );
+}
+
 // Pie chart data type
 type PieDataPoint = {
   key: string; // unique market key
@@ -72,12 +106,14 @@ function ChartContent({
   loanAssetSymbol,
   height,
   actions,
+  title,
 }: {
   dataPoints: PositionHistoryDataPoint[];
   markets: MarketInfo[];
   loanAssetSymbol: string;
   height: number;
   actions?: ReactNode;
+  title: string;
 }) {
   const chartColors = useChartColors();
 
@@ -163,7 +199,7 @@ function ChartContent({
 
   return (
     <TableContainerWithDescription
-      title="Position History"
+      title={title}
       className="mb-4 overflow-hidden"
       actions={actions}
     >
@@ -437,6 +473,7 @@ export function UserPositionsChart(props: UserPositionsChartProps) {
       loanAssetSymbol={chartParams.loanAssetSymbol}
       height={height}
       actions={props.actions}
+      title={props.title ?? 'Position History'}
     />
   );
 }

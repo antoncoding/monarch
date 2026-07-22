@@ -305,6 +305,7 @@ const useUserPositionsSummaryData = (
     endSnapshotsByChain: endSnapshots ?? {},
     earningsRangesByChain,
     snapshotsByChain: startSnapshotsByChain,
+    transactions: mergedTransactions,
   };
 };
 

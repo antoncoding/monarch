@@ -5,7 +5,7 @@ import { ArrowRightIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
-import { UserPositionsChart } from '@/features/positions/components/user-positions-chart';
+import { UserPositionsChart, UserPositionsChartSkeleton } from '@/features/positions/components/user-positions-chart';
 import { usePositionChartTransactions } from '@/hooks/usePositionChartTransactions';
 import { VaultMarketAllocationsTable } from '@/features/vault/components/vault-market-allocations-table';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
@@ -28,6 +28,7 @@ type VaultAdapterPositionOverviewProps = {
   chainId: SupportedNetworks;
   adapterAddress: Address;
   isEarningsLoading: boolean;
+  isSnapshotsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   period: EarningsPeriod;
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
@@ -95,6 +96,7 @@ export function VaultAdapterPositionOverview({
   chainId,
   adapterAddress,
   isEarningsLoading,
+  isSnapshotsLoading,
   actualBlockData,
   period,
   snapshotsByChain,
@@ -104,27 +106,28 @@ export function VaultAdapterPositionOverview({
 }: VaultAdapterPositionOverviewProps) {
   const periodLabel = PERIOD_LABELS[period];
   const detailHref = `/position/${chainId}/${groupedPosition.loanAssetAddress}/${adapterAddress}`;
+  const chartStartTimestamp = actualBlockData[chainId]?.timestamp;
   const {
-    transactions,
-    isLoading: isLoadingTransactions,
-    error: transactionError,
+    transactions: chartTransactions,
+    isLoading: isLoadingChartTransactions,
+    error: chartTransactionError,
   } = usePositionChartTransactions({
     account: adapterAddress,
     groupedPosition,
-    startTimestamp: actualBlockData[chainId]?.timestamp,
-    useDailyBuckets: period === 'all',
+    startTimestamp: chartStartTimestamp,
+    useDailyBuckets: true,
+    includeCurrentDailyBucket: period !== 'all',
   });
+  const isChartLoading = chartStartTimestamp === undefined || isSnapshotsLoading || isLoadingChartTransactions;
 
   return (
     <div className="space-y-4">
-      {isLoadingTransactions ? (
-        <div
-          role="status"
-          className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
-        >
-          Loading position history...
-        </div>
-      ) : transactionError ? (
+      {isChartLoading ? (
+        <UserPositionsChartSkeleton
+          height={220}
+          title="Vault exposure over time"
+        />
+      ) : chartTransactionError ? (
         <div
           role="alert"
           className="flex min-h-[220px] items-center justify-center text-sm text-secondary"
@@ -135,10 +138,11 @@ export function VaultAdapterPositionOverview({
         <UserPositionsChart
           variant="grouped"
           groupedPosition={groupedPosition}
-          transactions={transactions}
+          transactions={chartTransactions}
           snapshotsByChain={snapshotsByChain}
           chainBlockData={actualBlockData}
           height={220}
+          title="Vault exposure over time"
         />
       )}
       <VaultMarketBreakdownTable

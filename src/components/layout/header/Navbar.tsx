@@ -100,10 +100,10 @@ export function Navbar() {
           </NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
           <NavbarLink
-            href="/analysis"
-            matchKey="/analysis"
+            href="/autovault"
+            matchKey="/autovault"
           >
-            Analytics
+            Autovaults
           </NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
 
@@ -129,7 +129,7 @@ export function Navbar() {
               align="end"
               className="min-w-[180px]"
             >
-              <HeaderMenuItems />
+              <HeaderMenuItems includeAutovault={false} />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -47,10 +47,18 @@ export const vaultApysQuery = `
   }
 `;
 
-export const vaultV2SharePriceHistoryQuery = `
-  query VaultV2SharePriceHistory($address: String!, $chainId: Int!, $options: TimeseriesOptions!) {
+export const vaultV2HistoryQuery = `
+  query VaultV2History($address: String!, $chainId: Int!, $options: TimeseriesOptions!) {
     vaultV2ByAddress(address: $address, chainId: $chainId) {
       historicalState {
+        totalAssets(options: $options) {
+          x
+          y
+        }
+        avgApy(options: $options, lookbackHours: 6) {
+          x
+          y
+        }
         sharePrice(options: $options) {
           x
           y
