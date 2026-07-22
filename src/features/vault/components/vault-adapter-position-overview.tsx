@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { UserPositionsChart, UserPositionsChartSkeleton } from '@/features/positions/components/user-positions-chart';
 import { usePositionChartTransactions } from '@/hooks/usePositionChartTransactions';
@@ -124,15 +123,9 @@ export function VaultAdapterPositionOverview({
     useDailyBuckets: true,
   });
   const chartTransactions = period === 'all' ? allTimeTransactions : transactions;
-  const isChartLoading = chartStartTimestamp === undefined || isSnapshotsLoading || (period === 'all' && isLoadingAllTimeTransactions);
+  const isChartLoading =
+    chartStartTimestamp === undefined || isSnapshotsLoading || (period === 'all' ? isLoadingAllTimeTransactions : isTransactionsLoading);
   const chartError = period === 'all' ? allTimeTransactionError : null;
-  const chartActions =
-    period !== 'all' && isTransactionsLoading ? (
-      <span className="flex items-center gap-1.5 text-[11px] text-secondary">
-        <Spinner size={12} />
-        Updating
-      </span>
-    ) : undefined;
 
   return (
     <div className="space-y-4">
@@ -155,7 +148,6 @@ export function VaultAdapterPositionOverview({
           transactions={chartTransactions}
           snapshotsByChain={snapshotsByChain}
           chainBlockData={actualBlockData}
-          actions={chartActions}
           height={220}
           title="Vault exposure over time"
         />
