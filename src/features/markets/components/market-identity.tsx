@@ -1,6 +1,7 @@
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import type { Market, TokenInfo } from '@/utils/types';
 
@@ -41,10 +42,16 @@ export function MarketIdentity({
   showExplorerLink = false,
   wide = false,
 }: MarketIdentityProps) {
+  const showFullTokenSymbols = useAppSettings((state) => state.showFullTokenSymbols);
+  const shouldShowFullSymbols = showFullTokenSymbols && mode !== MarketIdentityMode.Minimum && mode !== MarketIdentityMode.Badge;
   const lltv = (Number(market.lltv) / 1e16).toFixed(0);
-  const loanSymbol = getTruncatedAssetName(market.loanAsset.symbol);
+  const loanSymbol = shouldShowFullSymbols ? market.loanAsset.symbol : getTruncatedAssetName(market.loanAsset.symbol);
   const collateralAsset = (market.collateralAsset as TokenInfo | null) ?? null;
-  const collateralSymbol = collateralAsset ? getTruncatedAssetName(collateralAsset.symbol) : 'Idle Market';
+  const collateralSymbol = collateralAsset
+    ? shouldShowFullSymbols
+      ? collateralAsset.symbol
+      : getTruncatedAssetName(collateralAsset.symbol)
+    : 'Idle Market';
 
   // Badge mode: show ID - icon - LLTV% or just symbol
   if (mode === MarketIdentityMode.Badge) {
