@@ -489,6 +489,24 @@ const supportedTokens = [
     },
   },
   {
+    symbol: 'XAUE',
+    img: require('../imgs/tokens/xaue.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0xd5d6840ed95f58faf537865dca15d5f99195f87a' }],
+    protocol: {
+      name: 'Aurise Foundation',
+    },
+  },
+  {
+    symbol: 'XAUt',
+    img: require('../imgs/tokens/xaut.svg') as string,
+    decimals: 6,
+    networks: [{ chain: mainnet, address: '0x68749665ff8d2d112fa859aa293f07a622782f38' }],
+    protocol: {
+      name: 'Tether',
+    },
+  },
+  {
     symbol: 'mMEV',
     img: require('../imgs/tokens/mmev.svg') as string,
     decimals: 18,
