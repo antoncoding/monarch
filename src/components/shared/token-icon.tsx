@@ -119,10 +119,26 @@ export function TokenIcon({
     />
   );
   const trigger = renderTrigger?.(fallbackIcon) ?? fallbackIcon;
+  const tokenSource = 'This token is not recognized by Monarch';
+  const detail = customTooltipDetail || (showTokenSource ? tokenSource : undefined);
+  const secondaryDetail = customTooltipDetail && showTokenSource ? tokenSource : undefined;
 
-  if (disableTooltip || !renderTrigger || !symbol) {
+  if (disableTooltip || !symbol) {
     return trigger;
   }
 
-  return <Tooltip content={<TooltipContent title={customTooltipTitle ?? symbol} />}>{trigger}</Tooltip>;
+  return (
+    <Tooltip
+      content={
+        <TooltipContent
+          icon={fallbackIcon}
+          title={customTooltipTitle ?? symbol}
+          detail={detail}
+          secondaryDetail={secondaryDetail}
+        />
+      }
+    >
+      {trigger}
+    </Tooltip>
+  );
 }
