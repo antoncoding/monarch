@@ -256,7 +256,8 @@ export function FeedInspectionSection({
   const heartbeat = leg?.heartbeat ?? leg?.updateInterval ?? null;
   const deviationThreshold = leg?.deviationThreshold ?? leg?.updateSpread ?? null;
   const isChainlink = isChainlinkFeedLeg(leg);
-  const isMonarchVerified = isMonarchVerifiedFeed(leg) && !isCappedChainlinkFeed(leg);
+  const isCappedChainlink = isCappedChainlinkFeed(leg);
+  const isMonarchVerified = isMonarchVerifiedFeed(leg) && !isCappedChainlink;
   const formattedAnswer = answer != null && decimals != null ? formatOraclePrice(answer, decimals) : 'Unavailable';
 
   return (
@@ -303,7 +304,7 @@ export function FeedInspectionSection({
               value="No admin"
             />
           )}
-          {leg?.tier && !isMonarchVerified && (
+          {leg?.tier && !isMonarchVerified && !isCappedChainlink && (
             <DetailRow
               label={isChainlink ? 'Chainlink risk tier' : 'Risk tier'}
               value={`${leg.tier.toUpperCase()} risk`}
