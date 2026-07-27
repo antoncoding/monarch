@@ -22,6 +22,8 @@ export type FeedDependencyLeg = (EnrichedFeed | EnrichedVault) & {
   builtBy?: string;
   noAdmin?: boolean;
   feedType?: string;
+  feedSubtype?: string;
+  underlyingFeed?: string;
   decimals?: number;
   tier?: string;
   heartbeat?: number;

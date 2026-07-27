@@ -183,6 +183,17 @@ export function FeedMetadataSection({
             }
           />
         )}
+        {leg?.underlyingFeed && (
+          <DetailRow
+            label="Underlying feed"
+            value={
+              <AddressIdentity
+                address={leg.underlyingFeed}
+                chainId={chainId}
+              />
+            }
+          />
+        )}
         {leg?.conversionSample && (
           <DetailRow
             label="Conversion sample"

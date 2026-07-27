@@ -128,6 +128,14 @@ export function FeedProvenanceBadges({ leg }: { leg: FeedDependencyLeg | null })
   return (
     <>
       {isMonarchVerifiedFeed(leg) && <MonarchVerifiedBadge />}
+      {leg.feedSubtype === 'capped_chainlink' && (
+        <Badge
+          size="sm"
+          className="border border-blue-500/20 bg-blue-500/10 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
+        >
+          Capped Chainlink
+        </Badge>
+      )}
       {leg.noAdmin && (
         <Badge
           size="sm"

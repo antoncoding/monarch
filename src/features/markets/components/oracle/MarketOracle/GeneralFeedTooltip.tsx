@@ -58,7 +58,7 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
         <div className="font-zen font-bold">{tooltipTitle}</div>
       </div>
 
-      {(isMonarchVerified || feed.noAdmin) && (
+      {(isMonarchVerified || feed.noAdmin || feed.feedSubtype === 'capped_chainlink') && (
         <div className="flex flex-wrap items-center gap-1.5">
           {isMonarchVerified && (
             <Badge
@@ -67,6 +67,14 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
             >
               <MonarchVerifiedIcon size={12} />
               Monarch verified
+            </Badge>
+          )}
+          {feed.feedSubtype === 'capped_chainlink' && (
+            <Badge
+              size="sm"
+              className="border border-blue-500/20 bg-blue-500/10 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
+            >
+              Capped Chainlink
             </Badge>
           )}
           {feed.noAdmin && (

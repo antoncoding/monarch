@@ -42,9 +42,11 @@ export type EnrichedFeed = {
   updateInterval?: number; // Chronicle update cadence in seconds
   updateSpread?: number; // Chronicle deviation threshold percentage
   feedType?: OracleFeedType; // Scanner feed category: "market", "fundamental", "dex", "nav", or future categories
+  feedSubtype?: string; // Scanner subtype tag, e.g. "capped_chainlink"
   links?: Array<{ label: string; url: string }>;
   baseDiscountPerYear?: string; // Pendle base discount per year (raw 18-decimal value)
   innerOracle?: string; // Pendle inner oracle address
+  underlyingFeed?: string; // Source feed used by wrapper feeds
   pt?: string; // Pendle PT token address
   ptSymbol?: string; // Pendle PT token symbol
   pendleFeedKind?: string; // Pendle feed kind (e.g. "PendleChainlinkOracle", "LinearDiscount")
