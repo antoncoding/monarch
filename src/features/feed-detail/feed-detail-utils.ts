@@ -7,7 +7,7 @@ import {
   type OracleOutput,
   type OracleOutputData,
 } from '@/hooks/useOracleMetadata';
-import { isMonarchVerifiedFeed } from '@/utils/oracle';
+import { isCappedChainlinkFeed, isMonarchVerifiedFeed } from '@/utils/oracle';
 import type { Market } from '@/utils/types';
 
 export type FeedDependencyKind = 'feed' | 'vault';
@@ -247,6 +247,10 @@ export function getFeedTitle(leg: FeedDependencyLeg | null, address: string): st
 }
 
 export function getFeedProviderLabel(leg: FeedDependencyLeg | null): string {
+  if (isCappedChainlinkFeed(leg)) {
+    return 'Chainlink';
+  }
+
   if (isMonarchVerifiedFeed(leg)) {
     return leg?.builtBy ?? 'Monarch verified';
   }

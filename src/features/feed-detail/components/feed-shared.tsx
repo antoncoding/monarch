@@ -12,6 +12,7 @@ import { FeedTypeBadge, getFeedTypeInfo } from '@/features/markets/components/or
 import {
   getChainlinkFeedUrl,
   getChronicleFeedUrl,
+  isCappedChainlinkFeed,
   isMonarchVerifiedFeed,
   mapProviderToVendor,
   OracleVendorIcons,
@@ -22,6 +23,7 @@ import { getFeedPairLabel, getFeedProviderLabel, type FeedDependencyLeg, type Fe
 
 export function getFeedVendorIcon(leg: FeedDependencyLeg | null): string {
   if (!leg) return '';
+  if (isCappedChainlinkFeed(leg)) return OracleVendorIcons[PriceFeedVendors.Chainlink];
   if (isMonarchVerifiedFeed(leg)) return '';
   const vendor = leg.provider ? mapProviderToVendor(leg.provider) : PriceFeedVendors.Unknown;
   return OracleVendorIcons[vendor] || '';
@@ -44,6 +46,10 @@ function getVendorUrl(leg: FeedDependencyLeg | null, chainId: number): string {
   const provider = leg.provider?.toLowerCase() ?? '';
   const baseAsset = leg.pair?.[0] ?? '';
   const quoteAsset = leg.pair?.[1] ?? '';
+
+  if (isCappedChainlinkFeed(leg)) {
+    return 'https://data.chain.link/';
+  }
 
   if (provider.includes('chronicle')) {
     return getChronicleFeedUrl(baseAsset, quoteAsset);
@@ -83,6 +89,7 @@ export function getDistinctFeedDescription(leg: FeedDependencyLeg | null): strin
 }
 
 export function isChainlinkFeedLeg(leg: FeedDependencyLeg | null): boolean {
+  if (isCappedChainlinkFeed(leg)) return true;
   const provider = getFeedProviderLabel(leg).toLowerCase();
   return provider.includes('chainlink') || Boolean(leg?.tier);
 }
@@ -127,8 +134,8 @@ export function FeedProvenanceBadges({ leg }: { leg: FeedDependencyLeg | null })
 
   return (
     <>
-      {isMonarchVerifiedFeed(leg) && <MonarchVerifiedBadge />}
-      {leg.feedSubtype === 'capped_chainlink' && (
+      {isMonarchVerifiedFeed(leg) && !isCappedChainlinkFeed(leg) && <MonarchVerifiedBadge />}
+      {isCappedChainlinkFeed(leg) && (
         <Badge
           size="sm"
           className="border border-blue-500/20 bg-blue-500/10 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"

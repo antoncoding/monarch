@@ -15,6 +15,7 @@ import {
   formatOraclePrice,
   getFeedFreshnessStatus,
   getTruncatedAssetName,
+  isCappedChainlinkFeed,
   isMonarchVerifiedFeed,
   OracleVendorIcons,
   PriceFeedVendors,
@@ -89,7 +90,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
 
   const vendorIcon = OracleVendorIcons[vendor];
   const hasKnownVendorIcon = vendor !== PriceFeedVendors.Unknown && Boolean(vendorIcon);
-  const isMonarchVerified = isMonarchVerifiedFeed(feed);
+  const isMonarchVerified = isMonarchVerifiedFeed(feed) && !isCappedChainlinkFeed(feed);
   const feedAddressKey = feed.address.toLowerCase();
   const snapshot = feedSnapshotsByAddress?.[feedAddressKey];
   const directAnswer =

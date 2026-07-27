@@ -104,6 +104,10 @@ export function isMonarchVerifiedProvider(provider: OracleFeedProvider | undefin
   return normalizedProvider === 'monarchverified' || normalizedProvider === 'monarch verified';
 }
 
+export function isCappedChainlinkFeed(feed: { feedSubtype?: string | undefined } | null | undefined): boolean {
+  return feed?.feedSubtype?.trim().toLowerCase() === 'capped_chainlink';
+}
+
 export function isMonarchVerifiedFeed(
   feed: { provider?: OracleFeedProvider | undefined; tier?: string | undefined } | null | undefined,
 ): boolean {
@@ -167,7 +171,11 @@ export function detectFeedVendorFromMetadata(feed: EnrichedFeed | null | undefin
     feed.baseDiscountPerYear != null ||
     feed.pt != null ||
     feed.ptSymbol != null;
-  const vendor = isPendleFeed ? PriceFeedVendors.Pendle : mapProviderToVendor(feed.provider);
+  const vendor = isPendleFeed
+    ? PriceFeedVendors.Pendle
+    : isCappedChainlinkFeed(feed)
+      ? PriceFeedVendors.Chainlink
+      : mapProviderToVendor(feed.provider);
 
   // Try to extract pair from feed.pair, or fallback to parsing description
   let baseAsset = 'Unknown';
@@ -253,6 +261,11 @@ function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
 
   for (const feed of feeds) {
     if (feed?.address) {
+      if (isCappedChainlinkFeed(feed)) {
+        coreVendors.add(PriceFeedVendors.Chainlink);
+        continue;
+      }
+
       if (isMonarchVerifiedFeed(feed)) {
         hasMonarchVerified = true;
         continue;

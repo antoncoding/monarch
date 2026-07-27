@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { FeedTypeBadge } from '@/features/markets/components/oracle/MarketOracle/FeedTypeBadge';
-import { formatOracleDuration, formatOraclePrice, isMonarchVerifiedFeed } from '@/utils/oracle';
+import { formatOracleDuration, formatOraclePrice, isCappedChainlinkFeed, isMonarchVerifiedFeed } from '@/utils/oracle';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { MARKETS_PAGE_SIZE, ORACLE_CONTRACTS_PAGE_SIZE } from '../feed-detail-constants';
 import { formatOptionalTimestamp, formatScannerTimestamp } from '../feed-detail-formatters';
@@ -61,7 +61,7 @@ export function FeedHero({
 }) {
   const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
   const networkImg = getNetworkImg(chainId);
-  const isMonarchVerified = isMonarchVerifiedFeed(leg);
+  const isMonarchVerified = isMonarchVerifiedFeed(leg) && !isCappedChainlinkFeed(leg);
   const hasProviderBadge = !isMonarchVerified && Boolean(leg?.provider || leg?.vendor);
   const statValue = (value: string): string => (isStatsLoading ? 'Calculating' : value);
 
@@ -139,7 +139,7 @@ export function FeedMetadataSection({
 }) {
   const description = getDistinctFeedDescription(leg);
   const isVault = kind === 'vault';
-  const isMonarchVerified = isMonarchVerifiedFeed(leg);
+  const isMonarchVerified = isMonarchVerifiedFeed(leg) && !isCappedChainlinkFeed(leg);
 
   return (
     <SectionShell title={isVault ? 'Vault Conversion' : 'Feed Overview'}>
@@ -256,7 +256,7 @@ export function FeedInspectionSection({
   const heartbeat = leg?.heartbeat ?? leg?.updateInterval ?? null;
   const deviationThreshold = leg?.deviationThreshold ?? leg?.updateSpread ?? null;
   const isChainlink = isChainlinkFeedLeg(leg);
-  const isMonarchVerified = isMonarchVerifiedFeed(leg);
+  const isMonarchVerified = isMonarchVerifiedFeed(leg) && !isCappedChainlinkFeed(leg);
   const formattedAnswer = answer != null && decimals != null ? formatOraclePrice(answer, decimals) : 'Unavailable';
 
   return (

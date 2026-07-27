@@ -11,6 +11,7 @@ import {
   detectFeedVendorFromMetadata,
   getChainlinkFeedUrl,
   getChronicleFeedUrl,
+  isCappedChainlinkFeed,
   OracleVendorIcons,
   PriceFeedVendors,
   type FeedFreshnessStatus,
@@ -51,12 +52,13 @@ export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: Chainlink
   const baseAsset = assetPair.baseAsset;
   const quoteAsset = assetPair.quoteAsset;
   const isChronicle = vendor === PriceFeedVendors.Chronicle;
-  const feedTitle = isChronicle ? 'Chronicle Feed Details' : 'Chainlink Feed Details';
+  const isCappedChainlink = isCappedChainlinkFeed(feed);
+  const feedTitle = isChronicle ? 'Chronicle Feed Details' : isCappedChainlink ? 'Capped Chainlink Feed Details' : 'Chainlink Feed Details';
   const vendorLabel = isChronicle ? 'Chronicle' : 'Chainlink';
   const intervalValue = isChronicle ? (feed.updateInterval ?? feed.heartbeat) : (feed.heartbeat ?? null);
   const deviationValue = isChronicle ? (feed.updateSpread ?? feed.deviationThreshold) : (feed.deviationThreshold ?? null);
   const chronicleRiskTier = isChronicle ? feed.riskTier : null;
-  const chainlinkTier = isChronicle ? null : feed.tier;
+  const chainlinkTier = isChronicle || isCappedChainlink ? null : feed.tier;
 
   const vendorIcon = OracleVendorIcons[vendor] || OracleVendorIcons[PriceFeedVendors.Chainlink];
 
@@ -87,6 +89,17 @@ export function ChainlinkFeedTooltip({ feed, chainId, feedFreshness }: Chainlink
           {baseAsset} / {quoteAsset}
         </div>
       </div>
+
+      {isCappedChainlink && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge
+            size="sm"
+            className="border border-blue-500/20 bg-blue-500/10 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
+          >
+            Capped Chainlink
+          </Badge>
+        </div>
+      )}
 
       <FeedTypeSection feed={feed} />
 

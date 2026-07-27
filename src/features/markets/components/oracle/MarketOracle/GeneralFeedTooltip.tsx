@@ -6,7 +6,14 @@ import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { isMonarchVerifiedFeed, mapProviderToVendor, OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
+import {
+  isCappedChainlinkFeed,
+  isMonarchVerifiedFeed,
+  mapProviderToVendor,
+  OracleVendorIcons,
+  PriceFeedVendors,
+  type FeedFreshnessStatus,
+} from '@/utils/oracle';
 import { FeedTypeSection } from './FeedTypeSection';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
@@ -34,11 +41,20 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
   const baseAsset = feed.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair[1] ?? 'Unknown';
   const customLinks = feed.links?.map(getSafeCustomLink).filter((link): link is { label: string; url: string } => link != null) ?? [];
-  const isMonarchVerified = isMonarchVerifiedFeed(feed);
+  const isCappedChainlink = isCappedChainlinkFeed(feed);
+  const isMonarchVerified = isMonarchVerifiedFeed(feed) && !isCappedChainlink;
 
-  const vendor = feed.provider ? mapProviderToVendor(feed.provider) : PriceFeedVendors.Unknown;
+  const vendor = isCappedChainlink
+    ? PriceFeedVendors.Chainlink
+    : feed.provider
+      ? mapProviderToVendor(feed.provider)
+      : PriceFeedVendors.Unknown;
   const vendorIcon = OracleVendorIcons[vendor] || OracleVendorIcons[PriceFeedVendors.Unknown];
-  const tooltipTitle = isMonarchVerified ? 'Monarch verified feed' : `${feed.provider ?? 'Price'} Feed`;
+  const tooltipTitle = isCappedChainlink
+    ? 'Capped Chainlink feed'
+    : isMonarchVerified
+      ? 'Monarch verified feed'
+      : `${feed.provider ?? 'Price'} Feed`;
 
   return (
     <div className="flex w-fit max-w-[22rem] flex-col gap-3">
@@ -58,7 +74,7 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
         <div className="font-zen font-bold">{tooltipTitle}</div>
       </div>
 
-      {(isMonarchVerified || feed.noAdmin || feed.feedSubtype === 'capped_chainlink') && (
+      {(isMonarchVerified || feed.noAdmin || isCappedChainlink) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {isMonarchVerified && (
             <Badge
@@ -69,7 +85,7 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
               Monarch verified
             </Badge>
           )}
-          {feed.feedSubtype === 'capped_chainlink' && (
+          {isCappedChainlink && (
             <Badge
               size="sm"
               className="border border-blue-500/20 bg-blue-500/10 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
