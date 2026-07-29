@@ -735,6 +735,62 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'USP',
+    img: require('../imgs/tokens/usp.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        chain: mainnet,
+        address: '0x098697bA3Fee4eA76294C5d6A466a4e3b3E95FE6',
+      },
+    ],
+    protocol: {
+      name: 'Piku',
+    },
+  },
+  {
+    symbol: 'StockMarketTRBasisTrade',
+    img: require('../imgs/tokens/stockMarketTRBasisTrade.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        chain: mainnet,
+        address: '0x827Ce7E8e35861D9Ac7fE002755767b695A5594a',
+      },
+    ],
+    protocol: {
+      name: 'Piku',
+    },
+  },
+  {
+    symbol: 'CarryTradeUSDTRYLeverage',
+    img: require('../imgs/tokens/carryTradeUSDTRYLeverage.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        chain: mainnet,
+        address: '0x2bf11d2E04Bc40daa95c24B8b90EC4F5c57Dd326',
+      },
+    ],
+    protocol: {
+      name: 'Piku',
+    },
+  },
+  {
+    symbol: 'aFXArbUSDTRY',
+    img: require('../imgs/tokens/aFXArbUSDTRY.svg') as string,
+    decimals: 6,
+    networks: [
+      {
+        chain: mainnet,
+        address: '0x99351BaEd3d8aB544CCb08aF96A105910fdA71E7',
+      },
+    ],
+    protocol: {
+      name: 'Piku',
+    },
+  },
+  {
     symbol: 'wUSDL',
     img: require('../imgs/tokens/wusdl.webp') as string,
     decimals: 6,
