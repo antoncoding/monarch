@@ -19,6 +19,14 @@ const localTokensWithSource: ERC20Token[] = supportedTokens.map((token) => ({
   ...token,
   source: 'local',
 }));
+const PENDLE_SUPPORTED_NETWORKS = [
+  SupportedNetworks.Mainnet,
+  SupportedNetworks.Optimism,
+  SupportedNetworks.Base,
+  SupportedNetworks.Arbitrum,
+  SupportedNetworks.HyperEVM,
+  SupportedNetworks.Monad,
+] as const;
 const TOKEN_METADATA_STALE_TIME = 30 * 60 * 1000;
 const TOKEN_METADATA_REFETCH_INTERVAL = 30 * 60 * 1000;
 
@@ -28,8 +36,13 @@ async function fetchPendleAssets(chainId: number): Promise<PendleAsset[]> {
     throw new Error(`Failed to fetch Pendle assets for chain ${chainId}: ${response.status}`);
   }
 
-  const data = (await response.json()) as PendleAsset[];
-  return z.array(PendleAssetSchema).parse(data);
+  const data = z.array(z.unknown()).parse(await response.json());
+  const assets: PendleAsset[] = [];
+  for (const item of data) {
+    const parsedAsset = PendleAssetSchema.safeParse(item);
+    if (parsedAsset.success) assets.push(parsedAsset.data);
+  }
+  return assets;
 }
 
 function convertPendleAssetToToken(asset: PendleAsset, chainId: SupportedNetworks): ERC20Token {
@@ -56,19 +69,13 @@ export const useTokensQuery = () => {
   const query = useQuery({
     queryKey: ['tokens'],
     queryFn: async () => {
-      const [mainnetAssets, baseAssets, arbitrumAssets, hyperevmAssets] = await Promise.all([
-        fetchPendleAssets(SupportedNetworks.Mainnet),
-        fetchPendleAssets(SupportedNetworks.Base),
-        fetchPendleAssets(SupportedNetworks.Arbitrum),
-        fetchPendleAssets(SupportedNetworks.HyperEVM),
-      ]);
-
-      const pendleTokens = [
-        ...mainnetAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Mainnet)),
-        ...baseAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Base)),
-        ...arbitrumAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Arbitrum)),
-        ...hyperevmAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.HyperEVM)),
-      ];
+      const assetsByNetwork = await Promise.all(
+        PENDLE_SUPPORTED_NETWORKS.map(async (network) => {
+          const assets = await fetchPendleAssets(network);
+          return assets.map((asset) => convertPendleAssetToToken(asset, network));
+        }),
+      );
+      const pendleTokens = assetsByNetwork.flat();
 
       const filteredPendleTokens = pendleTokens.filter((pendleToken) => {
         return !pendleToken.networks.some((pendleNetwork) =>
