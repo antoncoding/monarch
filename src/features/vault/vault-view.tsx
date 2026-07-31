@@ -123,9 +123,12 @@ function VaultAdapterPositionDetail({
       })),
     [marketAllocations],
   );
+  // Keep the period snapshot query anchored; a new array on every live vault update
+  // would recalculate its time-based block estimate and restart the chart.
+  const positionChainIds = useMemo(() => [chainId], [chainId]);
 
   const { positions, isPositionsLoading, isEarningsLoading, actualBlockData, snapshotsByChain, loadingStates } =
-    useUserPositionsSummaryData(adapterAddress, period, [chainId], {
+    useUserPositionsSummaryData(adapterAddress, period, positionChainIds, {
       enabled: hasAdapterPositionTarget && marketHints.length > 0,
       marketHints,
       showEmpty: true,

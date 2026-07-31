@@ -5,7 +5,10 @@ import { fetchMorphoVaultV2History } from '@/data-sources/morpho-api/vault-histo
 import { fetchRpcVaultHistory } from '@/data-sources/rpc/vault-history';
 import { TIMEFRAME_CONFIG, type ChartTimeframe } from '@/stores/useMarketDetailChartState';
 import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
+import { computeAnnualizedApySeriesFromValueGrowth, getLatestSeriesIntervalSeconds } from '@/utils/rateMath';
 import type { TimeseriesOptions } from '@/utils/types';
+
+const NATIVE_APY_API_LOOKBACK_SECONDS = 6 * 60 * 60;
 
 const API_INTERVAL_BY_TIMEFRAME: Record<ChartTimeframe, TimeseriesOptions['interval']> = {
   '1d': 'HOUR',
@@ -23,6 +26,7 @@ export type VaultHistoryPoint = {
 
 export type VaultHistory = {
   nativeApy: VaultHistoryPoint[];
+  nativeApyLookbackSeconds: number | null;
   sharePrice: VaultHistoryPoint[];
   sharePriceSource: 'morpho-api' | 'none' | 'rpc';
   totalAssets: VaultHistoryPoint[];
@@ -68,7 +72,7 @@ export function useVaultHistoryQuery({
         chainId,
         options: { ...timeRange, interval: API_INTERVAL_BY_TIMEFRAME[timeframe] },
       });
-      const nativeApy = (morphoHistory?.nativeApy ?? []).map((point) => ({
+      const apiNativeApy = (morphoHistory?.nativeApy ?? []).map((point) => ({
         timestamp: point.timestamp,
         value: point.value,
       }));
@@ -82,10 +86,12 @@ export function useVaultHistoryQuery({
       }));
       const hasApiSharePrice = sharePrice.length >= 2;
       const hasApiTotalAssets = apiTotalAssets.length >= 2;
+      const hasApiNativeApy = apiNativeApy.length >= 2;
 
       if (hasApiSharePrice && hasApiTotalAssets) {
         return {
-          nativeApy,
+          nativeApy: hasApiNativeApy ? apiNativeApy : computeAnnualizedApySeriesFromValueGrowth(sharePrice),
+          nativeApyLookbackSeconds: hasApiNativeApy ? NATIVE_APY_API_LOOKBACK_SECONDS : getLatestSeriesIntervalSeconds(sharePrice),
           sharePrice,
           sharePriceSource: 'morpho-api',
           totalAssets: apiTotalAssets,
@@ -95,7 +101,12 @@ export function useVaultHistoryQuery({
 
       if (!supportsHistoricalStateRead(chainId)) {
         return {
-          nativeApy,
+          nativeApy: hasApiNativeApy ? apiNativeApy : computeAnnualizedApySeriesFromValueGrowth(sharePrice),
+          nativeApyLookbackSeconds: hasApiNativeApy
+            ? NATIVE_APY_API_LOOKBACK_SECONDS
+            : hasApiSharePrice
+              ? getLatestSeriesIntervalSeconds(sharePrice)
+              : null,
           sharePrice,
           sharePriceSource: hasApiSharePrice ? 'morpho-api' : 'none',
           totalAssets: apiTotalAssets,
@@ -112,10 +123,19 @@ export function useVaultHistoryQuery({
         startTimestamp: timeRange.startTimestamp,
         vaultAddress,
       });
+      const resolvedSharePrice = hasApiSharePrice ? sharePrice : rpcHistory.sharePrice;
+      // Morpho can omit V2 history for an otherwise supported chain. Share-price
+      // growth is the canonical on-chain fallback for the vault's native yield.
+      const resolvedNativeApy = hasApiNativeApy ? apiNativeApy : computeAnnualizedApySeriesFromValueGrowth(resolvedSharePrice);
 
       return {
-        nativeApy,
-        sharePrice: hasApiSharePrice ? sharePrice : rpcHistory.sharePrice,
+        nativeApy: resolvedNativeApy,
+        nativeApyLookbackSeconds: hasApiNativeApy
+          ? NATIVE_APY_API_LOOKBACK_SECONDS
+          : resolvedNativeApy.length >= 2
+            ? getLatestSeriesIntervalSeconds(resolvedSharePrice)
+            : null,
+        sharePrice: resolvedSharePrice,
         sharePriceSource: hasApiSharePrice ? 'morpho-api' : rpcHistory.sharePrice.length >= 2 ? 'rpc' : 'none',
         totalAssets: hasApiTotalAssets ? apiTotalAssets : rpcHistory.totalAssets,
         totalAssetsSource: hasApiTotalAssets ? 'morpho-api' : rpcHistory.totalAssets.length >= 2 ? 'rpc' : 'none',

@@ -13,7 +13,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { type ChartTimeframe, TIMEFRAME_CONFIG, useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import { formatReadableTokenAmount } from '@/utils/balance';
 import { formatChartTime } from '@/utils/chart';
-import type { SupportedNetworks } from '@/utils/networks';
+import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { computeAnnualizedApyFromValueGrowth, formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { TimeseriesOptions } from '@/utils/types';
 
@@ -82,6 +82,16 @@ function formatChangePercent(value: number | null): string {
   if (value === null || !Number.isFinite(value)) return '--';
 
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+}
+
+function formatRateLookback(seconds: number | null | undefined): string {
+  if (!seconds) return '';
+
+  const hours = seconds / (60 * 60);
+  if (hours < 24) return ` (${hours.toLocaleString('en-US', { maximumFractionDigits: 1 })}h)`;
+
+  const days = hours / 24;
+  return ` (${days.toLocaleString('en-US', { maximumFractionDigits: 1 })}d)`;
 }
 
 function MetricSummary({ items }: { items: MetricSummaryItem[] }) {
@@ -316,13 +326,14 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
 
     return ((lastPoint.value - firstPoint.value) / firstPoint.value) * 100;
   }, [sharePrice]);
-  const isMorphoSupported = supportsMorphoApi(chainId);
+  const canLoadNativeYield = supportsMorphoApi(chainId) || supportsHistoricalStateRead(chainId);
   const isInitialLoading = assetDecimals === undefined || (isLoading && !data);
   const isUpdating = isFetching && !isInitialLoading;
   const rateLabel = isAprDisplay ? 'APR' : 'APY';
   const periodLabel = TIMEFRAME_CONFIG[selectedTimeframe].label;
   const impliedRate = impliedApy === null ? Number.NaN : toDisplayRateFromApy(impliedApy, isAprDisplay);
   const currentRate = nativeRate.at(-1)?.value ?? Number.NaN;
+  const nativeRateLookback = formatRateLookback(data?.nativeApyLookbackSeconds);
 
   if (mode === 'share-price') {
     return (
@@ -355,11 +366,11 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
 
   return (
     <div className="space-y-4">
-      {isMorphoSupported ? (
+      {canLoadNativeYield ? (
         <MetricChart
           title="Native yield"
-          metricLabel={`${rateLabel} (6h)`}
-          name={`Native ${rateLabel} (6h)`}
+          metricLabel={`${rateLabel}${nativeRateLookback}`}
+          name={`Native ${rateLabel}${nativeRateLookback}`}
           data={nativeRate}
           average={nativeRateAverage}
           yDomain={nativeRateDomain}
@@ -369,7 +380,7 @@ export function VaultHistoryCharts({ vaultAddress, chainId, assetDecimals, asset
             <MetricSummary
               items={[
                 { label: `${periodLabel} realized ${rateLabel}`, value: formatPercent(impliedRate) },
-                { label: `Current ${rateLabel} (6h)`, value: formatPercent(currentRate) },
+                { label: `Current ${rateLabel}${nativeRateLookback}`, value: formatPercent(currentRate) },
               ]}
             />
           }
