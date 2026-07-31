@@ -89,6 +89,8 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Vault-scoped pages with configured cap or market IDs must use targeted market reads for first render; do not wait on the global market registry when the vault metadata already identifies the relevant markets.
 - Vault adapter selection must be cap-aware when a vault has multiple active adapters; do not let list order alone choose the adapter used for positions, activity, withdrawals, or settings.
 - Expensive queries must not start with placeholder dependency data that immediately invalidates the same query. Gate on prerequisite readiness, or use a stable query key that does not refetch equivalent work.
+- Vault analytics must keep chain lists and period boundaries stable after first resolution; background dependency updates must preserve rendered chart data instead of re-entering a cold skeleton.
+- When vault-native APY history is unavailable but share-price history exists, derive APY at the shared history-query boundary and label the actual sampling lookback.
 - Expensive enrichment queries derived from filtered, sorted, or paginated rows must wait for the inputs that can change those rows, such as USD price enrichment, before they start.
 - Periodic refreshes for RPC or API data must use React Query polling with background refetch disabled, or explicitly pause when `document.visibilityState` is hidden. Do not use raw `setInterval` for mounted data refresh unless hidden-tab behavior is handled.
 - Portfolio and position analysis must preserve transaction-discovered market IDs even when current on-chain balances are zero. Generic list-level hide settings must not remove those markets from summary or history inputs.

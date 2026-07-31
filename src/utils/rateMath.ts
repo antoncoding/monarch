@@ -1,6 +1,11 @@
 const APY_RATIO_SCALE = 1_000_000_000n;
 const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 
+export type TimestampedValue = {
+  timestamp: number;
+  value: number;
+};
+
 export const toScaledRatio = (numerator: bigint, denominator: bigint): number | null => {
   if (denominator <= 0n) return null;
   const scaledRatio = (numerator * APY_RATIO_SCALE) / denominator;
@@ -102,6 +107,41 @@ export function computeAnnualizedApyFromValueGrowth({
   const annualizedApy = (currentValue / pastValue) ** annualizationFactor - 1;
 
   return Number.isFinite(annualizedApy) ? annualizedApy : null;
+}
+
+export function computeAnnualizedApySeriesFromValueGrowth(points: readonly TimestampedValue[]): TimestampedValue[] {
+  const annualizedApy: TimestampedValue[] = [];
+  let previousPoint: TimestampedValue | undefined;
+
+  for (const currentPoint of points) {
+    if (!previousPoint) {
+      previousPoint = currentPoint;
+      continue;
+    }
+
+    const value = computeAnnualizedApyFromValueGrowth({
+      currentValue: currentPoint.value,
+      pastValue: previousPoint.value,
+      periodSeconds: currentPoint.timestamp - previousPoint.timestamp,
+    });
+
+    if (value !== null) {
+      annualizedApy.push({ timestamp: currentPoint.timestamp, value });
+    }
+
+    previousPoint = currentPoint;
+  }
+
+  return annualizedApy;
+}
+
+export function getLatestSeriesIntervalSeconds(points: readonly TimestampedValue[]): number | null {
+  const currentPoint = points.at(-1);
+  const previousPoint = points.at(-2);
+  if (!currentPoint || !previousPoint) return null;
+
+  const intervalSeconds = currentPoint.timestamp - previousPoint.timestamp;
+  return intervalSeconds > 0 ? intervalSeconds : null;
 }
 
 export function computeAnnualizedApyFromGrowth({
