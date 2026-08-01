@@ -61,14 +61,14 @@ export const katana = defineChain({
 
 export const robinhood = defineChain({
   id: SupportedNetworkId.Robinhood,
-  name: 'Robinhood Chain',
+  name: 'Robinhood',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
   },
   blockExplorers: {
     default: {
-      name: 'Robinhood Chain Explorer',
+      name: 'Robinhood Explorer',
       url: 'https://robinhoodchain.blockscout.com',
     },
   },
@@ -224,7 +224,7 @@ export const networks: NetworkConfig[] = [
     network: SupportedNetworkId.Robinhood,
     chain: robinhood,
     logo: require('../imgs/chains/robinhood.svg') as string,
-    name: 'Robinhood Chain',
+    name: 'Robinhood',
     defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ROBINHOOD_RPC || 'https://rpc.mainnet.chain.robinhood.com', 'robinhood-mainnet'),
     vaultConfig: {
       v2FactoryAddress: '0x0FBad98595b0186dA120E41f77C102beb49f803c',

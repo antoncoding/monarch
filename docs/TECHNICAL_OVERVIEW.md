@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Optimism, Base, Polygon, Arbitrum, Unichain, Etherlink, HyperEVM, Monad, Robinhood Chain, Katana) and presents markets, vaults, and user positions in a unified interface. The app has **no app-owned backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads or call protected infrastructure endpoints such as API-key creation.
+Monarch is a DeFi dashboard for the Morpho Blue lending protocol. It aggregates data from multiple chains (Ethereum, Optimism, Base, Polygon, Arbitrum, Unichain, Etherlink, HyperEVM, Monad, Robinhood, Katana) and presents markets, vaults, and user positions in a unified interface. The app has **no app-owned backend database** and persists user preferences in localStorage, while shared Next.js server routes can cache selected expensive reads or call protected infrastructure endpoints such as API-key creation.
 
 **Key Architectural Decisions:**
 - Next.js 15 App Router with React 18
@@ -193,7 +193,7 @@ Market detail participants/activity + admin stats transactions:
 Market metrics: external data API via `/v1/markets/metrics`
 ```
 
-**App-supported Morpho API Chains:** Mainnet, Optimism, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad, Robinhood Chain, Katana
+**App-supported Morpho API Chains:** Mainnet, Optimism, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad, Robinhood, Katana
 
 ### Static Data (Build-time or cached)
 | Data Type | Source | Location |
@@ -376,7 +376,7 @@ All hooks in `/src/hooks/queries/` follow React Query patterns:
 
 ```
 supportsMorphoApi(network) returns true for:
-- Mainnet, Optimism, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad, Robinhood Chain, Katana
+- Mainnet, Optimism, Base, Unichain, Polygon, Arbitrum, HyperEVM, Monad, Robinhood, Katana
 
 Fallback Strategy:
 1. `useMarketsQuery` tries one shared Monarch market-registry read first
@@ -475,7 +475,7 @@ Fallback Strategy:
 | Etherlink | 42793 | 4.83s |
 | HyperEVM | 999 | 1s |
 | Monad | 143 | 0.4s |
-| Robinhood Chain | 4663 | 0.1s |
+| Robinhood | 4663 | 0.1s |
 | Katana | 747474 | 1s |
 
 ---
