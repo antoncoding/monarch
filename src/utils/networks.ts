@@ -59,6 +59,26 @@ export const katana = defineChain({
   },
 });
 
+export const robinhood = defineChain({
+  id: SupportedNetworkId.Robinhood,
+  name: 'Robinhood Chain',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
+  },
+  blockExplorers: {
+    default: {
+      name: 'Robinhood Chain Explorer',
+      url: 'https://robinhoodchain.blockscout.com',
+    },
+  },
+  contracts: {
+    multicall3: {
+      address: '0xcA11bde05977b3631167028862bE2a173976CA11',
+    },
+  },
+});
+
 type VaultAgentConfig = {
   v2FactoryAddress: Address;
   morphoRegistry: Address; // the RegistryList contract deployed by morpho!
@@ -199,6 +219,22 @@ export const networks: NetworkConfig[] = [
     nativeTokenSymbol: 'MON',
     wrappedNativeToken: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
     explorerUrl: 'https://monadscan.com',
+  },
+  {
+    network: SupportedNetworkId.Robinhood,
+    chain: robinhood,
+    logo: require('../imgs/chains/robinhood.svg') as string,
+    name: 'Robinhood Chain',
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ROBINHOOD_RPC || 'https://rpc.mainnet.chain.robinhood.com', 'robinhood-mainnet'),
+    vaultConfig: {
+      v2FactoryAddress: '0x0FBad98595b0186dA120E41f77C102beb49f803c',
+      morphoRegistry: '0xe785a2eFD384BA7B95BaEd3851BC76aeD67C676f',
+      marketAdapterFactory: '0x79370Ed003CE325C088E530d5e8655c99c2993e1',
+    },
+    blocktime: 0.1,
+    maxBlockDelay: 2,
+    explorerUrl: 'https://robinhoodchain.blockscout.com',
+    wrappedNativeToken: '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73',
   },
   {
     network: SupportedNetworkId.Katana,

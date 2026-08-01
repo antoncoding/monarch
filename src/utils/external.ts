@@ -8,6 +8,9 @@ export const getMorphoNetworkSlug = (chainId: number): string | undefined => {
   if (chainId === SupportedNetworks.Mainnet) {
     return 'ethereum';
   }
+  if (chainId === SupportedNetworks.Robinhood) {
+    return 'robinhood';
+  }
   if (chainId === SupportedNetworks.Etherlink) {
     return undefined;
   }
@@ -60,6 +63,8 @@ const getChainNameForMerkl = (chainId: number): string => {
       return 'hyperevm';
     case SupportedNetworks.Monad:
       return 'monad';
+    case SupportedNetworks.Robinhood:
+      return 'robinhood';
     case SupportedNetworks.Katana:
       return 'katana';
     default:

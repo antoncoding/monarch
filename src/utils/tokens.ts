@@ -1,6 +1,6 @@
 import { type Chain, arbitrum, base, etherlink, mainnet, monad, optimism, polygon, unichain } from 'viem/chains';
 import { toChainAssetKey } from './chain-asset-key';
-import { getWrappedNativeToken, hyperEvm, katana } from './networks';
+import { getWrappedNativeToken, hyperEvm, katana, robinhood } from './networks';
 
 export type TokenSource = 'local' | 'external' | 'unknown';
 
@@ -127,6 +127,36 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'USDG',
+    img: require('../imgs/tokens/usdg.svg') as string,
+    decimals: 6,
+    networks: [{ chain: robinhood, address: '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168' }],
+    protocol: {
+      name: 'Paxos',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'syrupUSDG',
+    img: require('../imgs/tokens/syrupusdg.svg') as string,
+    decimals: 6,
+    networks: [{ chain: robinhood, address: '0x40858070814a57FdF33a613ae84fE0a8b4a874f7' }],
+    protocol: {
+      name: 'Maple',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'spUSDG',
+    img: require('../imgs/tokens/spusdg.svg') as string,
+    decimals: 6,
+    networks: [{ chain: robinhood, address: '0xde770c84FE66E063336b31737cFE9790f18c4087' }],
+    protocol: {
+      name: 'Spark',
+    },
+    peg: TokenPeg.USD,
+  },
+  {
     symbol: 'USD1',
     img: require('../imgs/tokens/usd1.webp') as string,
     decimals: 6,
@@ -158,7 +188,10 @@ const supportedTokens = [
     symbol: 'USDe',
     img: require('../imgs/tokens/usde.png') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0x4c9EDD5852cd905f086C759E8383e09bff1E68B3' }],
+    networks: [
+      { chain: mainnet, address: '0x4c9EDD5852cd905f086C759E8383e09bff1E68B3' },
+      { chain: robinhood, address: '0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34' },
+    ],
     peg: TokenPeg.USD,
   },
   {
@@ -334,6 +367,7 @@ const supportedTokens = [
       // This is solely for displaying and linking to eth.
       { chain: polygon, address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619' },
       { chain: monad, address: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242' },
+      { chain: robinhood, address: '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73' },
     ],
     peg: TokenPeg.ETH,
   },

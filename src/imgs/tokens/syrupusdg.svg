@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="16" cy="16" r="16" fill="url(#syrup)"/>
+  <path d="M21.8 10.7A8 8 0 1 0 23 19h-7v-4h10v1c0 5.5-4.5 10-10 10S6 21.5 6 16 10.5 6 16 6c2.8 0 5.3 1.1 7.1 3l-1.3 1.7Z" fill="white"/>
+  <defs>
+    <linearGradient id="syrup" x1="4" y1="29" x2="29" y2="3" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF7A45"/>
+      <stop offset="1" stop-color="#FFB26B"/>
+    </linearGradient>
+  </defs>
+</svg>
