@@ -314,6 +314,7 @@ export function useAllOracleMetadata(options?: OracleMetadataQueryOptions) {
   const etherlinkQuery = useOracleMetadata(SupportedNetworks.Etherlink, options);
   const hyperEvmQuery = useOracleMetadata(SupportedNetworks.HyperEVM, options);
   const monadQuery = useOracleMetadata(SupportedNetworks.Monad, options);
+  const robinhoodQuery = useOracleMetadata(SupportedNetworks.Robinhood, options);
   const katanaQuery = useOracleMetadata(SupportedNetworks.Katana, options);
   const queries = [
     mainnetQuery,
@@ -325,6 +326,7 @@ export function useAllOracleMetadata(options?: OracleMetadataQueryOptions) {
     etherlinkQuery,
     hyperEvmQuery,
     monadQuery,
+    robinhoodQuery,
     katanaQuery,
   ];
   const isLoading = requestedEnabled && queries.some((query) => query.isLoading);

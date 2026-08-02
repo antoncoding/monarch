@@ -18,8 +18,11 @@ importers:
         specifier: ^3.8.2
         version: 3.8.2
       '@morpho-org/blue-sdk':
-        specifier: ^5.3.0
-        version: 5.3.0(@morpho-org/morpho-ts@2.4.4)
+        specifier: ^6.4.0
+        version: 6.4.0(@morpho-org/morpho-ts@2.8.0)
+      '@morpho-org/morpho-ts':
+        specifier: ^2.8.0
+        version: 2.8.0
       '@paper-design/shaders-react':
         specifier: ^0.0.68
         version: 0.0.68(@types/react@18.3.23)(react@18.3.1)
@@ -1493,13 +1496,13 @@ packages:
     resolution: {integrity: sha512-w8CVbdkDrVXFJbfBSlDfafDR6BAkpDmv1bC1UJVCoVny5tW2RKAdn9i68Xf7asYT4TnUhl/hN4zfUiKQq9II4g==}
     engines: {node: '>=16.0.0'}
 
-  '@morpho-org/blue-sdk@5.3.0':
-    resolution: {integrity: sha512-fHjpNJZZF+zi/ElDkh2pCsWCODcmxJmgwgkNeRPRtHK5ITeQ3hJ+Eccr7sLg6R1dsqC4JNbxkQPDtIaa8h5QHw==}
+  '@morpho-org/blue-sdk@6.4.0':
+    resolution: {integrity: sha512-k0GvaelRU0/ngaKLunQamh32Wl4T100WZ3lwz0NW2L3YYfcvjCxkOYpgQ5o+cViKRNLUXgQAWS1AUC2QFZrZQQ==}
     peerDependencies:
-      '@morpho-org/morpho-ts': ^2.4.3
+      '@morpho-org/morpho-ts': ^2.7.0
 
-  '@morpho-org/morpho-ts@2.4.4':
-    resolution: {integrity: sha512-Nb6sVXOtE6CajMBceXpEnPbV42nszvTIeDOJt4+E66nWtTHLvk2z5xAx/qbrQyiBtyDQmCWhP1oQnjf7yg8Zow==}
+  '@morpho-org/morpho-ts@2.8.0':
+    resolution: {integrity: sha512-I+fSrYjx8VYHgzaTGUdGmxKM7qDrOWNBM4Yz/6hgum2tlCcgb5MN1sJVgztbO4nOk5C9Ly9I752CiyyYr2oeOg==}
 
   '@next/env@15.4.10':
     resolution: {integrity: sha512-knhmoJ0Vv7VRf6pZEPSnciUG1S4bIhWx+qTYBW/AjxEtlzsiNORPk8sFDCEvqLfmKuey56UB9FL1UdHEV3uBrg==}
@@ -1594,6 +1597,10 @@ packages:
   '@noble/hashes@1.8.0':
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
+
+  '@noble/hashes@2.2.0':
+    resolution: {integrity: sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==}
+    engines: {node: '>= 20.19.0'}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3147,15 +3154,6 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-
-  '@types/lodash.isplainobject@4.0.9':
-    resolution: {integrity: sha512-QC8nKcap5hRrbtIaPRjUMlcXXnLeayqQZPSaWJDx3xeuN17+2PW5wkmEJ4+lZgNnQRlSPzxjTYKCfV1uTnPaEg==}
-
-  '@types/lodash.mergewith@4.6.9':
-    resolution: {integrity: sha512-fgkoCAOF47K7sxrQ7Mlud2TH023itugZs2bUg8h/KzT+BnZNrR2jAOmaokbLunHNnobXVWOezAeNn/lZqwxkcw==}
-
-  '@types/lodash@4.17.20':
-    resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
@@ -4809,14 +4807,8 @@ packages:
   lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
 
-  lodash.isplainobject@4.0.6:
-    resolution: {integrity: sha512-oSXzaWypCMHkPC3NvBEaPHf0KsA5mvPrOPgQWDsbg8n7orZ290M0BmC/jgRZ4vcJ6DTAhjrsSYgdsW/F+MFOBA==}
-
   lodash.memoize@4.1.2:
     resolution: {integrity: sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==}
-
-  lodash.mergewith@4.6.2:
-    resolution: {integrity: sha512-GK3g5RPZWTRSeLSpgP8Xhra+pnjBC56q9FZYe1d5RN3TJ35dbkGy3YqBSMbyCrlbi+CM9Z3Jk5yTL7RCsqboyQ==}
 
   lodash.truncate@4.4.2:
     resolution: {integrity: sha512-jttmRe7bRse52OsWIMDLaXxWqRAmtIUccAQ3garviCqJjafXOfNMO0yMfNpdD6zbGaTU0P5Nz7e7gAT6cKmJRw==}
@@ -7768,16 +7760,12 @@ snapshots:
       - supports-color
     optional: true
 
-  '@morpho-org/blue-sdk@5.3.0(@morpho-org/morpho-ts@2.4.4)':
+  '@morpho-org/blue-sdk@6.4.0(@morpho-org/morpho-ts@2.8.0)':
     dependencies:
-      '@morpho-org/morpho-ts': 2.4.4
-      '@noble/hashes': 1.8.0
-      '@types/lodash.isplainobject': 4.0.9
-      '@types/lodash.mergewith': 4.6.9
-      lodash.isplainobject: 4.0.6
-      lodash.mergewith: 4.6.2
+      '@morpho-org/morpho-ts': 2.8.0
+      '@noble/hashes': 2.2.0
 
-  '@morpho-org/morpho-ts@2.4.4': {}
+  '@morpho-org/morpho-ts@2.8.0': {}
 
   '@next/env@15.4.10': {}
 
@@ -7843,6 +7831,8 @@ snapshots:
     optional: true
 
   '@noble/hashes@1.8.0': {}
+
+  '@noble/hashes@2.2.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -9955,16 +9945,6 @@ snapshots:
   '@types/identity-obj-proxy@3.0.2': {}
 
   '@types/json-schema@7.0.15': {}
-
-  '@types/lodash.isplainobject@4.0.9':
-    dependencies:
-      '@types/lodash': 4.17.20
-
-  '@types/lodash.mergewith@4.6.9':
-    dependencies:
-      '@types/lodash': 4.17.20
-
-  '@types/lodash@4.17.20': {}
 
   '@types/ms@2.1.0':
     optional: true
@@ -12123,12 +12103,8 @@ snapshots:
 
   lodash.debounce@4.0.8: {}
 
-  lodash.isplainobject@4.0.6: {}
-
   lodash.memoize@4.1.2:
     optional: true
-
-  lodash.mergewith@4.6.2: {}
 
   lodash.truncate@4.4.2: {}
 

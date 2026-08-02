@@ -1,6 +1,6 @@
 import { createPublicClient, type PublicClient } from 'viem';
 import { arbitrum, base, etherlink, mainnet, monad, optimism, polygon, unichain } from 'viem/chains';
-import { getDefaultRPC, getViemChain, SupportedNetworks, hyperEvm, katana } from './networks';
+import { getDefaultRPC, getViemChain, SupportedNetworks, hyperEvm, katana, robinhood } from './networks';
 import { createRpcTransport } from './rpc-transport';
 
 // Default clients (cached)
@@ -45,6 +45,10 @@ const initializeDefaultClients = () => {
       [SupportedNetworks.Monad]: createPublicClient({
         chain: monad,
         transport: createRpcTransport(SupportedNetworks.Monad, getDefaultRPC(SupportedNetworks.Monad)),
+      }) as PublicClient,
+      [SupportedNetworks.Robinhood]: createPublicClient({
+        chain: robinhood,
+        transport: createRpcTransport(SupportedNetworks.Robinhood, getDefaultRPC(SupportedNetworks.Robinhood)),
       }) as PublicClient,
       [SupportedNetworks.Katana]: createPublicClient({
         chain: katana,

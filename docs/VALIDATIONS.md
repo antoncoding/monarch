@@ -70,6 +70,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 
 - Data fetching should use existing React Query hooks and established cache keys where possible.
 - Please respect the setting in "useCustomRPC" whenever a request is RPC-related.
+- Default RPC selection must use each chain's configured `NEXT_PUBLIC_*_RPC` directly. Do not add a shared provider-priority layer that can override a chain-specific endpoint; verify env-backed RPC changes in the compiled client bundle without exposing credential-bearing URL paths.
 - External GraphQL API field removals should be checked against the live schema or official changelog, then handled at the shared query/module boundary with aliases or shared mappers when preserving Monarch's internal domain contract.
 - Shared Morpho API callers must gate requested chain IDs with the Morpho API support helper before building GraphQL variables; Monarch-supported chains are not always Morpho-API-supported chains.
 - External API list mappers must isolate nullable or malformed records at the item boundary so one bad record does not fail an entire page, chain, or batch; pagination offsets should still use the raw API page size/count, not the post-filtered valid item count.
@@ -79,6 +80,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Address grouping/comparison must normalize case at the shared domain chokepoint; mixed primary/fallback sources may return the same token with different casing.
 - Address equality checks must compare lowercase-normalized values, or use a helper that normalizes both sides; do not compare raw wallet, SDK, or API address strings directly.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
+- All-chain metadata aggregators that call hooks explicitly must cover every entry in `ALL_SUPPORTED_NETWORKS`. When adding a chain, compare the hook query list with the supported-network list and verify the live metadata source serves that chain ID.
 - Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
 - Market reward campaign display must use Merkl campaign/opportunity data through the shared `/api/merkl` path; do not attach generic HOLD/vault opportunities to Morpho markets unless the campaign identifies a market or an explicit single-token "any Morpho Market" incentive.
@@ -110,6 +112,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Do not introduce duplicate Sentry capture for `sendTransaction` mutation errors; `useTransactionWithToast` already reports send failures.
 - Use shared logic hooks like useBundlerAuthorizationStep, useTransactionWithToast, useTransactionProcessStore...etc. Look at a similar hook and try to follow the pattern instead of creating from scratch.
 - Validate chain IDs, token addresses, and allowance/permit assumptions at the transaction boundary.
+- Verify chain-specific bundler and approval targets against the canonical deployment address for that chain. Deployed bytecode alone is insufficient because compatible bundler code may exist at multiple addresses.
 - Make sure chain switching and wallet connection are handled. Use shared component like `ExecuteTransactionButton`.
 - Post-confirmation referral attribution must be fire-and-forget; it must not block, fail, or change the user transaction success flow.
 
