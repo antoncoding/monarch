@@ -148,7 +148,7 @@ const supportedTokens = [
   },
   {
     symbol: 'spUSDG',
-    img: require('../imgs/tokens/spusdg.svg') as string,
+    img: require('../imgs/tokens/spusdg.png') as string,
     decimals: 6,
     networks: [{ chain: robinhood, address: '0xde770c84FE66E063336b31737cFE9790f18c4087' }],
     protocol: {
