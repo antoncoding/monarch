@@ -16,28 +16,6 @@ import { v2AgentsBase } from './monarch-agent';
 import type { AgentMetadata } from './types';
 export { ALL_SUPPORTED_NETWORKS, SupportedNetworks, isSupportedNetwork } from './supported-networks';
 
-const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
-const rpcPriority = process.env.NEXT_PUBLIC_RPC_PRIORITY;
-
-/**
- * Helper function to get RPC URL with fallback logic. Priority behavior:
- * - If NEXT_PUBLIC_RPC_PRIORITY === 'ALCHEMY': Use Alchemy first, fall back to specific RPC
- * - Otherwise (default): Use specific network RPC first, fall back to Alchemy
- */
-const getRpcUrl = (specificRpcUrl: string | undefined, alchemySubdomain?: string): string => {
-  // Sanitize empty strings to undefined for correct fallback behavior
-  const targetRpc = specificRpcUrl || undefined;
-  const alchemyUrl = alchemyKey && alchemySubdomain ? `https://${alchemySubdomain}.g.alchemy.com/v2/${alchemyKey}` : undefined;
-
-  if (rpcPriority === 'ALCHEMY') {
-    // Prioritize Alchemy when explicitly set
-    return alchemyUrl ?? targetRpc ?? '';
-  }
-
-  // Default: prioritize specific network RPC
-  return targetRpc ?? alchemyUrl ?? '';
-};
-
 // use hyperevm as custom chain
 export const hyperEvm = defineChain({
   ...hyperEvmOld,
@@ -115,7 +93,7 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/eth.svg') as string,
     name: 'Mainnet',
     chain: mainnet,
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ETHEREUM_RPC, 'eth-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_ETHEREUM_RPC || '',
     blocktime: 12,
     maxBlockDelay: 0,
     explorerUrl: 'https://etherscan.io',
@@ -126,7 +104,7 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/op.svg') as string,
     name: 'Optimism',
     chain: optimism,
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_OPTIMISM_RPC, 'opt-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_OPTIMISM_RPC || '',
     blocktime: 2,
     maxBlockDelay: 10,
     explorerUrl: 'https://optimistic.etherscan.io/',
@@ -137,7 +115,7 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/base.webp') as string,
     name: 'Base',
     chain: base,
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_BASE_RPC, 'base-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_BASE_RPC || '',
     vaultConfig: {
       v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
       strategies: v2AgentsBase,
@@ -154,7 +132,7 @@ export const networks: NetworkConfig[] = [
     chain: polygon,
     logo: require('../imgs/chains/polygon.png') as string,
     name: 'Polygon',
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_POLYGON_RPC, 'polygon-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_POLYGON_RPC || '',
     blocktime: 2,
     maxBlockDelay: 20,
     explorerUrl: 'https://polygonscan.com',
@@ -165,7 +143,7 @@ export const networks: NetworkConfig[] = [
     network: SupportedNetworkId.Unichain,
     chain: unichain,
     logo: require('../imgs/chains/unichain.svg') as string,
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_UNICHAIN_RPC, 'unichain-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_UNICHAIN_RPC || '',
     name: 'Unichain',
     blocktime: 1,
     maxBlockDelay: 10,
@@ -177,7 +155,7 @@ export const networks: NetworkConfig[] = [
     chain: arbitrum,
     logo: require('../imgs/chains/arbitrum.png') as string,
     name: 'Arbitrum',
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ARBITRUM_RPC, 'arb-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_ARBITRUM_RPC || '',
     blocktime: 0.25,
     maxBlockDelay: 2,
     explorerUrl: 'https://arbiscan.io',
@@ -188,7 +166,7 @@ export const networks: NetworkConfig[] = [
     chain: etherlinkChain,
     logo: require('../imgs/chains/etherlink.svg') as string,
     name: 'Etherlink',
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ETHERLINK_RPC),
+    defaultRPC: process.env.NEXT_PUBLIC_ETHERLINK_RPC || '',
     blocktime: 4.83,
     maxBlockDelay: 10,
     explorerUrl: 'https://explorer.etherlink.com',
@@ -200,7 +178,7 @@ export const networks: NetworkConfig[] = [
     chain: hyperEvm,
     logo: require('../imgs/chains/hyperevm.png') as string,
     name: 'HyperEVM',
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_HYPEREVM_RPC, 'hyperliquid-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_HYPEREVM_RPC || '',
     blocktime: 1,
     maxBlockDelay: 5,
     supportsHistoricalStateRead: false,
@@ -213,7 +191,7 @@ export const networks: NetworkConfig[] = [
     chain: monad,
     logo: require('../imgs/chains/monad.svg') as string,
     name: 'Monad',
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_MONAD_RPC, 'monad-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_MONAD_RPC || '',
     blocktime: 0.4,
     maxBlockDelay: 5,
     nativeTokenSymbol: 'MON',
@@ -225,7 +203,7 @@ export const networks: NetworkConfig[] = [
     chain: robinhood,
     logo: require('../imgs/chains/robinhood.svg') as string,
     name: 'Robinhood',
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ROBINHOOD_RPC || 'https://rpc.mainnet.chain.robinhood.com', 'robinhood-mainnet'),
+    defaultRPC: process.env.NEXT_PUBLIC_ROBINHOOD_RPC || 'https://rpc.mainnet.chain.robinhood.com',
     vaultConfig: {
       v2FactoryAddress: '0x0FBad98595b0186dA120E41f77C102beb49f803c',
       morphoRegistry: '0xe785a2eFD384BA7B95BaEd3851BC76aeD67C676f',
@@ -241,7 +219,7 @@ export const networks: NetworkConfig[] = [
     chain: katana,
     logo: require('../imgs/chains/katana.svg') as string,
     name: 'Katana',
-    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_KATANA_RPC),
+    defaultRPC: process.env.NEXT_PUBLIC_KATANA_RPC || '',
     blocktime: 1,
     maxBlockDelay: 10,
     explorerUrl: 'https://katanascan.com',

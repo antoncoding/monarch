@@ -455,7 +455,6 @@ Fallback Strategy:
 | Monarch Metrics | External data API `/v1/markets/metrics` | Market metrics and admin stats |
 | Merkl API | `https://api.merkl.xyz` via `/api/merkl` | Market reward campaigns, Vault V2 reward opportunities, configured HOLD opportunity lookups, and user claimable rewards with server-side API-key auth |
 | Velora API | `https://api.paraswap.io` | Swap quotes and executable tx payloads |
-| Alchemy | Per-chain RPC | Default RPC provider |
 
 ### Smart Contracts
 - Morpho Blue core contracts

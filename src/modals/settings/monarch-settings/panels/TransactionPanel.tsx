@@ -39,7 +39,7 @@ export function TransactionPanel({ onNavigateToDetail }: TransactionPanelProps) 
       <div className="rounded bg-surface p-4">
         <SettingActionItem
           title="Custom RPC Endpoints"
-          description="Set custom RPC URLs to override the default Alchemy connections for each network."
+          description="Set custom RPC URLs to override the configured default for each network."
           buttonLabel={hasCustomRpcs ? 'Edit' : 'Configure'}
           onClick={() => onNavigateToDetail?.('rpc-config')}
           badge={

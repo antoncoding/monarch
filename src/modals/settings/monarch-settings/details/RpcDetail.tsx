@@ -117,7 +117,7 @@ export function RpcDetail() {
       if (url) {
         success('RPC Updated', `Custom RPC configured for ${selectedNetworkInfo?.name}. Please refresh the page to apply changes.`);
       } else {
-        success('RPC Reset', `${selectedNetworkInfo?.name} now uses default Alchemy RPC. Please refresh the page to apply changes.`);
+        success('RPC Reset', `${selectedNetworkInfo?.name} now uses the configured default RPC. Please refresh the page to apply changes.`);
       }
 
       setError('');
@@ -135,7 +135,7 @@ export function RpcDetail() {
     if (!selectedNetwork) return;
 
     resetRpcUrl(selectedNetwork);
-    success('RPC Reset', `${selectedNetworkInfo?.name} reset to default Alchemy RPC. Please refresh the page to apply changes.`);
+    success('RPC Reset', `${selectedNetworkInfo?.name} reset to the configured default RPC. Please refresh the page to apply changes.`);
 
     setInputValue('');
     setError('');
@@ -195,7 +195,7 @@ export function RpcDetail() {
                 />
                 <div className="flex flex-col">
                   <span className="text-xs font-medium text-primary">{network.name}</span>
-                  <span className="text-[10px] text-secondary">{isCustom ? 'Custom RPC configured' : 'Using default Alchemy RPC'}</span>
+                  <span className="text-[10px] text-secondary">{isCustom ? 'Custom RPC configured' : 'Using configured default RPC'}</span>
                 </div>
               </div>
 
