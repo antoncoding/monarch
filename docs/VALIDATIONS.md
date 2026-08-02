@@ -70,6 +70,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 
 - Data fetching should use existing React Query hooks and established cache keys where possible.
 - Please respect the setting in "useCustomRPC" whenever a request is RPC-related.
+- Default RPC selection must use each chain's configured `NEXT_PUBLIC_*_RPC` directly. Do not add a shared provider-priority layer that can override a chain-specific endpoint; verify env-backed RPC changes in the compiled client bundle without exposing credential-bearing URL paths.
 - External GraphQL API field removals should be checked against the live schema or official changelog, then handled at the shared query/module boundary with aliases or shared mappers when preserving Monarch's internal domain contract.
 - Shared Morpho API callers must gate requested chain IDs with the Morpho API support helper before building GraphQL variables; Monarch-supported chains are not always Morpho-API-supported chains.
 - External API list mappers must isolate nullable or malformed records at the item boundary so one bad record does not fail an entire page, chain, or batch; pagination offsets should still use the raw API page size/count, not the post-filtered valid item count.
