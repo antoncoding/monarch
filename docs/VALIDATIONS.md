@@ -80,6 +80,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Address grouping/comparison must normalize case at the shared domain chokepoint; mixed primary/fallback sources may return the same token with different casing.
 - Address equality checks must compare lowercase-normalized values, or use a helper that normalizes both sides; do not compare raw wallet, SDK, or API address strings directly.
 - Fallback data should be marked or shaped consistently with primary data so downstream components can reason about it safely.
+- All-chain metadata aggregators that call hooks explicitly must cover every entry in `ALL_SUPPORTED_NETWORKS`. When adding a chain, compare the hook query list with the supported-network list and verify the live metadata source serves that chain ID.
 - Metadata-backed display guards must expose readiness through the shared dependency-status layer, must not treat missing metadata as a negative match, and must preserve the list or previous data while the guard cannot be evaluated.
 - Market-table data enrichments that affect visible columns or sorting must report degraded readiness to the shared market-data notice surface instead of silently replacing values with empty placeholders.
 - Market reward campaign display must use Merkl campaign/opportunity data through the shared `/api/merkl` path; do not attach generic HOLD/vault opportunities to Morpho markets unless the campaign identifies a market or an explicit single-token "any Morpho Market" incentive.
