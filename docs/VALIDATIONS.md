@@ -112,6 +112,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Do not introduce duplicate Sentry capture for `sendTransaction` mutation errors; `useTransactionWithToast` already reports send failures.
 - Use shared logic hooks like useBundlerAuthorizationStep, useTransactionWithToast, useTransactionProcessStore...etc. Look at a similar hook and try to follow the pattern instead of creating from scratch.
 - Validate chain IDs, token addresses, and allowance/permit assumptions at the transaction boundary.
+- Verify chain-specific bundler and approval targets against the canonical deployment address for that chain. Deployed bytecode alone is insufficient because compatible bundler code may exist at multiple addresses.
 - Make sure chain switching and wallet connection are handled. Use shared component like `ExecuteTransactionButton`.
 - Post-confirmation referral attribution must be fire-and-forget; it must not block, fail, or change the user transaction success flow.
 

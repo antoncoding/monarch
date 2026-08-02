@@ -56,7 +56,7 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
     case SupportedNetworks.Monad:
       return '0x5738366B9348f22607294007e75114922dF2a16A';
     case SupportedNetworks.Robinhood:
-      return '0x5738366B9348f22607294007e75114922dF2a16A';
+      return '0x5B0b35c12aAC51Fb6A9034559710f27811677953';
     case SupportedNetworks.Katana:
       return '0x5738366B9348f22607294007e75114922dF2a16A';
     default:
