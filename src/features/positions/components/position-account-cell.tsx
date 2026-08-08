@@ -16,6 +16,7 @@ export function PositionAccountCell({ account, chainId }: { account: Address; ch
       <AccountActionsPopover
         address={account}
         chainId={chainId}
+        buttonTrigger
       >
         <Tooltip
           content={

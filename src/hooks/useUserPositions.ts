@@ -361,6 +361,7 @@ const useUserPositions = (
       showEmpty ? 'include-empty' : 'active-only',
       chainIdsSignature,
       marketHintsSignature,
+      options.sourceMarketKeysProvided ? 'provided-source-market-keys' : 'discovered-source-market-keys',
       showBlacklistedPositions ? 'include-blacklisted-markets' : 'exclude-blacklisted-markets',
       blacklistedPositionKeysSignature,
     ],

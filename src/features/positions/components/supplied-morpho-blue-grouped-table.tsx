@@ -758,7 +758,9 @@ export function SuppliedMorphoBlueGroupedTable({
                               <SuppliedMarketsDetail
                                 groupedPosition={groupedPosition}
                                 account={rowAccount}
-                                snapshotsByChain={snapshotsByAccount?.[rowAccount.toLowerCase()] ?? snapshotsByChain}
+                                snapshotsByChain={
+                                  snapshotsByAccount ? (snapshotsByAccount[rowAccount.toLowerCase()] ?? {}) : snapshotsByChain
+                                }
                                 chainBlockData={actualBlockData}
                                 isEarningsLoading={isEarningsLoading}
                                 isOwner={isOwner}

@@ -130,6 +130,7 @@ export const fetchMonarchPortfolioPositionMarketsForNetworks = async (
   if (userAddresses.length === 0 || networks.length === 0) return [];
 
   const users = Array.from(new Set(userAddresses.map((address) => address.toLowerCase())));
+  const requestedUsers = new Set(users);
   const requestedNetworks = new Set(networks);
   const supportedNetworks = new Set(ALL_SUPPORTED_NETWORKS);
   const positionMarkets = new Map<string, MonarchAccountPositionMarket>();
@@ -147,7 +148,7 @@ export const fetchMonarchPortfolioPositionMarketsForNetworks = async (
     for (const position of positions) {
       const account = position.user?.toLowerCase();
       const chainId = position.chainId as SupportedNetworks;
-      if (!account || !users.includes(account) || !supportedNetworks.has(chainId) || !requestedNetworks.has(chainId)) continue;
+      if (!account || !requestedUsers.has(account) || !supportedNetworks.has(chainId) || !requestedNetworks.has(chainId)) continue;
 
       const supplyHistory = getSupplyHistory(position);
       if (!supplyHistory && !isNonZero(position.supplyShares) && !isNonZero(position.borrowShares) && !isNonZero(position.collateral)) {

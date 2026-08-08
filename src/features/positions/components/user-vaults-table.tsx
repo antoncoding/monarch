@@ -215,12 +215,15 @@ export function UserVaultsTable({
                         </div>
                       </TableCell>
 
-                      {showAccount && rowAccount && (
-                        <PositionAccountCell
-                          account={rowAccount}
-                          chainId={vault.networkId}
-                        />
-                      )}
+                      {showAccount &&
+                        (rowAccount ? (
+                          <PositionAccountCell
+                            account={rowAccount}
+                            chainId={vault.networkId}
+                          />
+                        ) : (
+                          <TableCell className="w-16" />
+                        ))}
 
                       {/* Size */}
                       <TableCell data-label="Size">

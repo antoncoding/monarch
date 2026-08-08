@@ -31,6 +31,7 @@ type AccountActionsPopoverProps = {
   extraLinks?: AccountActionLink[];
   profileHref?: string;
   profileLabel?: string;
+  buttonTrigger?: boolean;
 };
 
 type AccountActionLink = {
@@ -56,6 +57,7 @@ export function AccountActionsPopover({
   extraLinks = [],
   profileHref = `/positions/${address}`,
   profileLabel = 'View Positions',
+  buttonTrigger = false,
 }: AccountActionsPopoverProps) {
   const toast = useStyledToast();
   const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
@@ -127,7 +129,17 @@ export function AccountActionsPopover({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="inline-flex cursor-pointer items-center">{children}</div>
+        {buttonTrigger ? (
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center border-0 bg-transparent p-0"
+            aria-label={`Open account actions for ${address}`}
+          >
+            {children}
+          </button>
+        ) : (
+          <div className="inline-flex cursor-pointer items-center">{children}</div>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem

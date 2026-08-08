@@ -140,8 +140,9 @@ export function PositionBreadcrumbs({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => router.push('/positions')}>Positions</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push('/portfolios')}>Portfolios</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push(rootHref)}>{rootLabel}</DropdownMenuItem>
+          {rootHref !== '/positions' && <DropdownMenuItem onClick={() => router.push('/positions')}>Positions</DropdownMenuItem>}
+          {rootHref !== '/portfolios' && <DropdownMenuItem onClick={() => router.push('/portfolios')}>Portfolios</DropdownMenuItem>}
           {portfolios.length > 0 && <DropdownMenuSeparator />}
           {portfolios.length > 0 && <DropdownMenuLabel className="text-xs text-secondary">Local portfolios</DropdownMenuLabel>}
           {portfolios.map((portfolio) => (

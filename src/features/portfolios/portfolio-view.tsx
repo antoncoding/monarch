@@ -108,25 +108,36 @@ function PortfolioAccountLoader({
     ...Object.entries(summary.actualBlockData).map(([chainId, block]) => `${chainId}:${block.block}:${block.timestamp}`),
   ].join('|');
   const previousResultSignature = useRef('');
-  const currentResult = useRef<AccountResult | null>(null);
-  currentResult.current = {
-    positions: positionsWithAccount,
-    vaults: vaultsWithAccount,
-    loading: summary.isPositionsLoading,
-    earningsLoading: summary.isEarningsLoading || vaultApyQuery.isLoading,
-    vaultsLoading: vaultsQuery.isLoading,
-    actualBlockData: summary.actualBlockData,
-    snapshotsByChain: summary.snapshotsByChain,
-    earningsRangesByChain: summary.earningsRangesByChain,
-  };
 
   // Summary hooks derive new container objects while background queries settle. Only publish
   // domain changes so the invisible loader cannot create a parent/child update loop.
   useEffect(() => {
     if (previousResultSignature.current === resultSignature) return;
     previousResultSignature.current = resultSignature;
-    if (currentResult.current) onChange(account, currentResult.current);
-  }, [account, onChange, resultSignature]);
+    onChange(account, {
+      positions: positionsWithAccount,
+      vaults: vaultsWithAccount,
+      loading: summary.isPositionsLoading,
+      earningsLoading: summary.isEarningsLoading || vaultApyQuery.isLoading,
+      vaultsLoading: vaultsQuery.isLoading,
+      actualBlockData: summary.actualBlockData,
+      snapshotsByChain: summary.snapshotsByChain,
+      earningsRangesByChain: summary.earningsRangesByChain,
+    });
+  }, [
+    account,
+    onChange,
+    positionsWithAccount,
+    resultSignature,
+    summary.actualBlockData,
+    summary.earningsRangesByChain,
+    summary.isEarningsLoading,
+    summary.isPositionsLoading,
+    summary.snapshotsByChain,
+    vaultApyQuery.isLoading,
+    vaultsQuery.isLoading,
+    vaultsWithAccount,
+  ]);
 
   return null;
 }
@@ -176,7 +187,7 @@ export default function PortfolioView() {
   }, []);
 
   useEffect(() => {
-    const activeAccounts = new Set(accounts.map((account) => account.toLowerCase()));
+    const activeAccounts = new Set(accountsSignature.split(',').filter(Boolean));
     setResults((current) => Object.fromEntries(Object.entries(current).filter(([account]) => activeAccounts.has(account))));
   }, [accountsSignature]);
 
@@ -194,7 +205,7 @@ export default function PortfolioView() {
   const snapshotsByAccount = Object.fromEntries(
     accounts.map((account) => [account.toLowerCase(), results[account.toLowerCase()]?.snapshotsByChain ?? {}]),
   );
-  const snapshotsByChain = accountResults[0]?.snapshotsByChain ?? {};
+  const snapshotsByChain = {};
 
   const {
     totalUsd,

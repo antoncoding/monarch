@@ -14,7 +14,9 @@ export function useRequirePositionAccount(expectedAccount?: Address) {
 
   const requestExpectedAccount = useCallback(async () => {
     if (!expectedAccount || address?.toLowerCase() === expectedAccount.toLowerCase()) return;
-    const targetConnection = connections.find((connection) => connection.accounts[0]?.toLowerCase() === expectedAccount.toLowerCase());
+    const targetConnection = connections.find((connection) =>
+      connection.accounts.some((account) => account.toLowerCase() === expectedAccount.toLowerCase()),
+    );
 
     if (targetConnection) {
       try {
