@@ -54,7 +54,7 @@ export function EditPortfolioModal({ portfolioId, onOpenChange }: EditPortfolioM
     >
       <ModalHeader
         variant="compact"
-        title="Edit portfolio"
+        title="Edit Portfolio"
         description="Rename this portfolio or change which accounts it contains."
         mainIcon={<RiStackLine />}
         onClose={() => onOpenChange(false)}
