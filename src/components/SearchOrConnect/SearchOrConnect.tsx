@@ -66,7 +66,7 @@ export default function SearchOrConnect({ path, title }: SearchOrConnectProps) {
 
         {/* Secondary text */}
         <p className="pb-8 text-lg text-secondary">
-          {address ? 'View your portfolio or search another address' : `Connect to view your ${title.toLowerCase()} or search an address`}
+          {address ? 'View your positions or search another address' : `Connect to view your ${title.toLowerCase()} or search an address`}
         </p>
 
         {/* Action row */}

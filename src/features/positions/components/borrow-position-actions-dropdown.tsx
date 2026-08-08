@@ -6,9 +6,12 @@ import { BsArrowDownLeftCircle, BsArrowUpRightCircle } from 'react-icons/bs';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import type { Address } from 'viem';
+import { SwitchPositionAccountMenuItem } from './switch-position-account-menu-item';
 
 type BorrowPositionActionsDropdownProps = {
   isOwner: boolean;
+  account: Address;
   isActiveDebt: boolean;
   onBorrowMoreClick: () => void;
   onRepayClick: () => void;
@@ -17,6 +20,7 @@ type BorrowPositionActionsDropdownProps = {
 
 export function BorrowPositionActionsDropdown({
   isOwner,
+  account,
   isActiveDebt,
   onBorrowMoreClick,
   onRepayClick,
@@ -48,31 +52,31 @@ export function BorrowPositionActionsDropdown({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={onBorrowMoreClick}
-            startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
-            disabled={!isOwner}
-            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
-          >
-            Borrow More
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={onRepayClick}
-            startContent={<BsArrowUpRightCircle className="h-4 w-4" />}
-            disabled={!isOwner}
-            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
-          >
-            {isActiveDebt ? 'Repay' : 'Manage'}
-          </DropdownMenuItem>
-          {isActiveDebt && (
-            <DropdownMenuItem
-              onClick={onAdjustLeverageClick}
-              startContent={<TbAdjustmentsHorizontal className="h-4 w-4" />}
-              disabled={!isOwner}
-              className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
-            >
-              Adjust Leverage
-            </DropdownMenuItem>
+          {isOwner ? (
+            <>
+              <DropdownMenuItem
+                onClick={onBorrowMoreClick}
+                startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
+              >
+                Borrow More
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onRepayClick}
+                startContent={<BsArrowUpRightCircle className="h-4 w-4" />}
+              >
+                {isActiveDebt ? 'Repay' : 'Manage'}
+              </DropdownMenuItem>
+              {isActiveDebt && (
+                <DropdownMenuItem
+                  onClick={onAdjustLeverageClick}
+                  startContent={<TbAdjustmentsHorizontal className="h-4 w-4" />}
+                >
+                  Adjust Leverage
+                </DropdownMenuItem>
+              )}
+            </>
+          ) : (
+            <SwitchPositionAccountMenuItem account={account} />
           )}
         </DropdownMenuContent>
       </DropdownMenu>

@@ -68,6 +68,23 @@ export const envioUserPositionsPageQuery = `
   }
 `;
 
+export const envioPortfolioPositionsPageQuery = `
+  query EnvioPortfolioPositionsPage($users: [String!]!, $chainIds: [Int!], $limit: Int!, $offset: Int!) {
+    Position(
+      where: {
+        user: { _in: $users }
+        chainId: { _in: $chainIds }
+      }
+      limit: $limit
+      offset: $offset
+      order_by: [{ user: asc }, { chainId: asc }, { marketId: asc }]
+    ) {
+      user
+      ${envioUserPositionSelection}
+    }
+  }
+`;
+
 export const envioUserPositionForMarketQuery = `
   query EnvioUserPositionForMarket($user: String!, $chainId: Int!, $marketId: String!) {
     Position(

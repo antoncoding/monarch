@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronRightIcon } from '@radix-ui/react-icons';
@@ -21,6 +20,8 @@ import {
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import type { GroupedPosition } from '@/utils/types';
+import { useLocalPortfolios } from '@/stores/useLocalPortfolios';
+import { AccountActionsPopover } from '@/components/shared/account-actions-popover';
 
 type PositionBreadcrumbsProps = {
   userAddress?: string;
@@ -43,12 +44,13 @@ export function PositionBreadcrumbs({
   allPositions = [],
   showPosition = true,
   placeholderLabel,
-  rootLabel = 'Portfolio',
+  rootLabel = 'Positions',
   rootHref = '/positions',
   addressPath = 'positions',
 }: PositionBreadcrumbsProps) {
   const router = useRouter();
   const toast = useStyledToast();
+  const portfolios = useLocalPortfolios((state) => state.portfolios);
   const [searchOpen, setSearchOpen] = useState(false);
   const [inputAddress, setInputAddress] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -127,12 +129,31 @@ export function PositionBreadcrumbs({
 
   return (
     <nav className="flex min-w-0 max-w-full items-center gap-2 overflow-hidden py-1 font-zen text-sm leading-none text-secondary">
-      <Link
-        href={rootHref}
-        className="no-underline hover:no-underline text-secondary hover:text-primary"
-      >
-        {rootLabel}
-      </Link>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-secondary hover:text-primary"
+          >
+            {rootLabel}
+            <ChevronDownIcon className="h-3.5 w-3.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => router.push('/positions')}>Positions</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push('/portfolios')}>Portfolios</DropdownMenuItem>
+          {portfolios.length > 0 && <DropdownMenuSeparator />}
+          {portfolios.length > 0 && <DropdownMenuLabel className="text-xs text-secondary">Local portfolios</DropdownMenuLabel>}
+          {portfolios.map((portfolio) => (
+            <DropdownMenuItem
+              key={portfolio.id}
+              onClick={() => router.push(`/portfolios/${portfolio.slug}`)}
+            >
+              {portfolio.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {!hasAddress && placeholderLabel && (
         <>
@@ -159,13 +180,20 @@ export function PositionBreadcrumbs({
                 className="w-48 align-middle sm:w-[260px]"
               />
             ) : (
-              <Link
-                href={`/${addressPath}/${addressValue}`}
-                title={addressValue}
-                className="block max-w-56 truncate border-secondary/60 border-b border-dotted text-secondary no-underline hover:border-secondary hover:border-solid hover:text-primary hover:underline hover:underline-offset-2 sm:max-w-none"
+              <AccountActionsPopover
+                address={addressValue as `0x${string}`}
+                chainId={chainId}
+                profileHref={`/${addressPath}/${addressValue}`}
+                profileLabel="View Positions"
               >
-                {addressValue}
-              </Link>
+                <button
+                  type="button"
+                  title={addressValue}
+                  className="block max-w-56 truncate border-secondary/60 border-b border-dotted text-secondary hover:border-secondary hover:border-solid hover:text-primary sm:max-w-none"
+                >
+                  {addressValue}
+                </button>
+              </AccountActionsPopover>
             )}
           </div>
           <Button

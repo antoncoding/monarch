@@ -54,6 +54,7 @@ export type PositionSnapshotsWithOracleResult = {
 };
 
 export type BorrowPositionRow = {
+  account?: Address;
   market: MorphoMarket;
   position: MarketPosition;
   state: {
@@ -626,6 +627,7 @@ export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[])
       const isActiveDebt = borrowShares > 0n;
 
       return {
+        account: (position as MarketPositionWithEarnings & { account?: Address }).account,
         market: position.market,
         position,
         state: {

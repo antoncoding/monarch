@@ -201,7 +201,7 @@ export default function PositionsLandingView() {
           <PositionBreadcrumbs
             showPosition={false}
             placeholderLabel="Search address"
-            rootLabel="Position"
+            rootLabel="Positions"
           />
         </div>
 
@@ -210,7 +210,7 @@ export default function PositionsLandingView() {
             <div className="flex flex-col gap-1">
               <span className="text-xs uppercase tracking-wider text-secondary">Quick start</span>
               <p className="text-sm text-secondary">
-                {address ? 'Search any address or jump back to your portfolio.' : 'Search any address or connect your wallet.'}
+                {address ? 'Search any address or jump back to your positions.' : 'Search any address or connect your wallet.'}
               </p>
             </div>
           </div>

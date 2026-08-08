@@ -5,13 +5,16 @@ import { TbArrowsRightLeft } from 'react-icons/tb';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import type { Address } from 'viem';
+import { SwitchPositionAccountMenuItem } from './switch-position-account-menu-item';
 
 type PositionActionsDropdownProps = {
   isOwner: boolean;
+  account: Address;
   onRebalanceClick: () => void;
 };
 
-export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionActionsDropdownProps) {
+export function PositionActionsDropdown({ isOwner, account, onRebalanceClick }: PositionActionsDropdownProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -38,14 +41,16 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionA
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={onRebalanceClick}
-            startContent={<TbArrowsRightLeft className="h-4 w-4" />}
-            disabled={!isOwner}
-            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
-          >
-            Rebalance
-          </DropdownMenuItem>
+          {isOwner ? (
+            <DropdownMenuItem
+              onClick={onRebalanceClick}
+              startContent={<TbArrowsRightLeft className="h-4 w-4" />}
+            >
+              Rebalance
+            </DropdownMenuItem>
+          ) : (
+            <SwitchPositionAccountMenuItem account={account} />
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

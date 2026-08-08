@@ -32,6 +32,7 @@ export type UserPositionMarketHint = PositionMarket & {
 
 type UseUserPositionsOptions = {
   marketHints?: UserPositionMarketHint[];
+  sourceMarketKeysProvided?: boolean;
 };
 
 const EMPTY_MARKET_HINTS: UserPositionMarketHint[] = [];
@@ -369,7 +370,10 @@ const useUserPositions = (
       let sourceMarketKeys: PositionMarket[];
       let transactionMarketKeys: PositionMarket[];
 
-      if (hasMarketHints) {
+      if (options.sourceMarketKeysProvided) {
+        sourceMarketKeys = marketHints;
+        transactionMarketKeys = [];
+      } else if (hasMarketHints) {
         const sourceResult = await fetchSourceMarketKeys(user, chainIds);
         const hintedMarketKeys = new Set(marketHints.map(getPositionMarketKey));
         sourceMarketKeys = [...marketHints, ...sourceResult.markets.filter((market) => hintedMarketKeys.has(getPositionMarketKey(market)))];

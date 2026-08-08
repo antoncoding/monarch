@@ -12,6 +12,15 @@ import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing
  * See docs/Styling.md for Pattern 1 (local state) vs Pattern 2 (Zustand) decision framework.
  */
 export type ModalProps = {
+  createPortfolio: {
+    initialAccounts?: Address[];
+    onCreated?: (portfolioSlug: string) => void;
+  };
+
+  editPortfolio: {
+    portfolioId: string;
+  };
+
   // Swap & Bridge
   bridgeSwap: {
     defaultTargetToken?: SwapToken;
@@ -19,6 +28,7 @@ export type ModalProps = {
 
   // Borrow & Repay
   borrow: {
+    expectedAccount?: Address;
     market: Market;
     defaultMode?: 'borrow' | 'repay';
     toggleBorrowRepay?: boolean;
@@ -28,6 +38,7 @@ export type ModalProps = {
 
   // Leverage
   leverage: {
+    expectedAccount?: Address;
     market: Market;
     position?: MarketPosition | null;
     intent?: 'create' | 'adjust';
@@ -36,6 +47,7 @@ export type ModalProps = {
 
   // Supply & Withdraw
   supply: {
+    expectedAccount?: Address;
     market: Market;
     position?: MarketPosition | null;
     defaultMode?: 'supply' | 'withdraw';
@@ -46,6 +58,7 @@ export type ModalProps = {
 
   // Rebalance
   rebalance: {
+    expectedAccount?: Address;
     groupedPosition: GroupedPosition;
     refetch: (onSuccess?: () => void) => void;
     isRefetching: boolean;
