@@ -4,22 +4,18 @@ import { persist } from 'zustand/middleware';
 
 export const MAX_PORTFOLIO_ACCOUNTS = 20;
 
-export type LocalPortfolio = {
-  id: string;
+type LocalPortfolio = {
   slug: string;
   name: string;
   accounts: `0x${string}`[];
-  createdAt: number;
-  updatedAt: number;
 };
 
 type LocalPortfoliosStore = {
   portfolios: LocalPortfolio[];
   createPortfolio: (name: string, accounts?: string[]) => LocalPortfolio;
-  updatePortfolio: (id: string, updates: { name: string; accounts: string[] }) => void;
-  deletePortfolio: (id: string) => void;
-  addAccount: (id: string, account: string) => void;
-  removeAccount: (id: string, account: string) => void;
+  updatePortfolio: (slug: string, updates: { name: string; accounts: string[] }) => void;
+  deletePortfolio: (slug: string) => void;
+  toggleAccount: (slug: string, account: string) => void;
 };
 
 const normalizeName = (name: string) => name.trim().slice(0, 64);
@@ -61,72 +57,52 @@ const normalizeAccounts = (accounts: string[]): `0x${string}`[] => {
   return Array.from(unique.values());
 };
 
-const createId = () => {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
-  return `portfolio-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-};
-
 export const useLocalPortfolios = create<LocalPortfoliosStore>()(
   persist(
     (set, get) => ({
       portfolios: [],
       createPortfolio: (name, accounts = []) => {
-        const id = createId();
-        const now = Date.now();
         const normalizedName = normalizeName(name) || 'Untitled portfolio';
         const portfolio: LocalPortfolio = {
-          id,
           slug: createUniqueSlug(normalizedName, new Set(get().portfolios.map((entry) => entry.slug))),
           name: normalizedName,
           accounts: normalizeAccounts(accounts),
-          createdAt: now,
-          updatedAt: now,
         };
         set((state) => ({ portfolios: [...state.portfolios, portfolio] }));
         return portfolio;
       },
-      updatePortfolio: (id, updates) => {
+      updatePortfolio: (slug, updates) => {
         const name = normalizeName(updates.name);
         if (!name) return;
         set((state) => ({
           portfolios: state.portfolios.map((portfolio) =>
-            portfolio.id === id
+            portfolio.slug === slug
               ? {
                   ...portfolio,
                   name,
                   accounts: normalizeAccounts(updates.accounts),
-                  updatedAt: Date.now(),
                 }
               : portfolio,
           ),
         }));
       },
-      deletePortfolio: (id) => {
-        set((state) => ({ portfolios: state.portfolios.filter((portfolio) => portfolio.id !== id) }));
+      deletePortfolio: (slug) => {
+        set((state) => ({ portfolios: state.portfolios.filter((portfolio) => portfolio.slug !== slug) }));
       },
-      addAccount: (id, account) => {
+      toggleAccount: (slug, account) => {
         if (!isAddress(account, { strict: false })) return;
+        const normalized = getAddress(account);
+        const accountKey = normalized.toLowerCase();
         set((state) => ({
           portfolios: state.portfolios.map((portfolio) => {
-            if (portfolio.id !== id || portfolio.accounts.length >= MAX_PORTFOLIO_ACCOUNTS) return portfolio;
-            const accounts = normalizeAccounts([...portfolio.accounts, account]);
-            if (accounts.length === portfolio.accounts.length) return portfolio;
-            return { ...portfolio, accounts, updatedAt: Date.now() };
+            if (portfolio.slug !== slug) return portfolio;
+            const included = portfolio.accounts.some((entry) => entry.toLowerCase() === accountKey);
+            if (included) {
+              return { ...portfolio, accounts: portfolio.accounts.filter((entry) => entry.toLowerCase() !== accountKey) };
+            }
+            if (portfolio.accounts.length >= MAX_PORTFOLIO_ACCOUNTS) return portfolio;
+            return { ...portfolio, accounts: [...portfolio.accounts, normalized] };
           }),
-        }));
-      },
-      removeAccount: (id, account) => {
-        const normalized = account.toLowerCase();
-        set((state) => ({
-          portfolios: state.portfolios.map((portfolio) =>
-            portfolio.id === id
-              ? {
-                  ...portfolio,
-                  accounts: portfolio.accounts.filter((entry) => entry.toLowerCase() !== normalized),
-                  updatedAt: Date.now(),
-                }
-              : portfolio,
-          ),
         }));
       },
     }),
@@ -134,21 +110,6 @@ export const useLocalPortfolios = create<LocalPortfoliosStore>()(
       name: 'monarch_store_localPortfolios',
       version: 2,
       partialize: (state) => ({ portfolios: state.portfolios }),
-      migrate: (state) => {
-        if (!state || typeof state !== 'object') return { portfolios: [] };
-
-        const persisted = state as {
-          portfolios?: Array<Omit<LocalPortfolio, 'slug'> & { slug?: string }>;
-        };
-        const usedSlugs = new Set<string>();
-        const portfolios = (persisted.portfolios ?? []).map((portfolio) => {
-          const slug = createUniqueSlug(portfolio.slug ?? portfolio.name, usedSlugs);
-          usedSlugs.add(slug);
-          return { ...portfolio, slug };
-        });
-
-        return { portfolios };
-      },
     },
   ),
 );

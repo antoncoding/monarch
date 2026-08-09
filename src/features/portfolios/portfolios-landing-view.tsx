@@ -73,7 +73,7 @@ export default function PortfoliosLandingView() {
             <div className="mt-3 space-y-2">
               {portfolios.map((portfolio) => (
                 <div
-                  key={portfolio.id}
+                  key={portfolio.slug}
                   className="flex items-center justify-between gap-3 rounded border border-border/60 bg-background px-3 py-2"
                 >
                   <Link
@@ -94,7 +94,7 @@ export default function PortfoliosLandingView() {
                     size="sm"
                     className="min-w-0 px-2 text-secondary"
                     aria-label={`Delete ${portfolio.name}`}
-                    onClick={() => deletePortfolio(portfolio.id)}
+                    onClick={() => deletePortfolio(portfolio.slug)}
                   >
                     <TrashIcon />
                   </Button>

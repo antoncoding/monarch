@@ -147,7 +147,7 @@ export function PositionBreadcrumbs({
           {portfolios.length > 0 && <DropdownMenuLabel className="text-xs text-secondary">Local portfolios</DropdownMenuLabel>}
           {portfolios.map((portfolio) => (
             <DropdownMenuItem
-              key={portfolio.id}
+              key={portfolio.slug}
               onClick={() => router.push(`/portfolios/${portfolio.slug}`)}
             >
               {portfolio.name}

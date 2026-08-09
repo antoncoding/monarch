@@ -18,7 +18,7 @@ export type ModalProps = {
   };
 
   editPortfolio: {
-    portfolioId: string;
+    portfolioSlug: string;
   };
 
   // Swap & Bridge

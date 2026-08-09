@@ -27,6 +27,7 @@ import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import useUserPositionsSummaryData, { type EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
+import type { UserPositionMarketHint } from '@/hooks/useUserPositions';
 import { useVaultHistoricalApy } from '@/hooks/useVaultHistoricalApy';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useLocalPortfolios } from '@/stores/useLocalPortfolios';
@@ -58,12 +59,7 @@ function PortfolioAccountLoader({
   onChange,
 }: {
   account: Address;
-  marketHints: Array<{
-    marketUniqueKey: string;
-    chainId: number;
-    hasSupplyHistory?: boolean;
-    supplyHistory?: AccountPosition['supplyHistory'];
-  }>;
+  marketHints: UserPositionMarketHint[];
   sourceMarketKeysProvided: boolean;
   period: ReturnType<typeof usePositionsFilters.getState>['period'];
   onChange: (account: Address, result: AccountResult) => void;
@@ -153,17 +149,12 @@ export default function PortfolioView() {
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const [results, setResults] = useState<Record<string, AccountResult>>({});
-  const portfolio = portfolios.find((entry) => entry.slug === portfolioRoute || entry.id === portfolioRoute);
+  const portfolio = portfolios.find((entry) => entry.slug === portfolioRoute);
   const accounts = useMemo(() => portfolio?.accounts ?? [], [portfolio?.accounts]);
   const accountsSignature = accounts
     .map((account) => account.toLowerCase())
     .sort()
     .join(',');
-
-  useEffect(() => {
-    if (!portfolio || portfolio.slug === portfolioRoute) return;
-    router.replace(`/portfolios/${portfolio.slug}`);
-  }, [portfolio, portfolioRoute, router]);
 
   const positionMarketsQuery = useQuery({
     queryKey: ['portfolio-position-markets', accountsSignature],
@@ -205,8 +196,6 @@ export default function PortfolioView() {
   const snapshotsByAccount = Object.fromEntries(
     accounts.map((account) => [account.toLowerCase(), results[account.toLowerCase()]?.snapshotsByChain ?? {}]),
   );
-  const snapshotsByChain = {};
-
   const {
     totalUsd,
     totalDebtUsd,
@@ -271,7 +260,7 @@ export default function PortfolioView() {
             <DropdownMenuContent align="start">
               {portfolios.map((entry) => (
                 <DropdownMenuItem
-                  key={entry.id}
+                  key={entry.slug}
                   onClick={() => router.push(`/portfolios/${entry.slug}`)}
                 >
                   {entry.name}
@@ -297,7 +286,7 @@ export default function PortfolioView() {
               <Button
                 variant="primary"
                 size="md"
-                onClick={() => open('editPortfolio', { portfolioId: portfolio.id })}
+                onClick={() => open('editPortfolio', { portfolioSlug: portfolio.slug })}
               >
                 <Pencil2Icon />
                 Edit portfolio
@@ -322,7 +311,7 @@ export default function PortfolioView() {
                 account={accounts[0]}
                 portfolioName={portfolio.name}
                 portfolioAccounts={accounts}
-                onEditPortfolio={() => open('editPortfolio', { portfolioId: portfolio.id })}
+                onEditPortfolio={() => open('editPortfolio', { portfolioSlug: portfolio.slug })}
                 period={period}
                 onPeriodChange={setPeriod}
                 rateLabel={rateLabel}
@@ -354,7 +343,7 @@ export default function PortfolioView() {
                   isRefetching={positionMarketsQuery.isFetching}
                   isEarningsLoading={isEarningsLoading}
                   actualBlockData={actualBlockData}
-                  snapshotsByChain={snapshotsByChain}
+                  snapshotsByChain={{}}
                   snapshotsByAccount={snapshotsByAccount}
                   showAccount
                 />

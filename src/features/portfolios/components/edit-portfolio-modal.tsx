@@ -13,12 +13,12 @@ import { PortfolioAccountAdder } from './portfolio-account-adder';
 import { usePortfolioAddressOptions } from '../hooks/use-portfolio-address-options';
 
 type EditPortfolioModalProps = {
-  portfolioId: string;
+  portfolioSlug: string;
   onOpenChange: (open: boolean) => void;
 };
 
-export function EditPortfolioModal({ portfolioId, onOpenChange }: EditPortfolioModalProps) {
-  const portfolio = useLocalPortfolios((state) => state.portfolios.find((entry) => entry.id === portfolioId));
+export function EditPortfolioModal({ portfolioSlug, onOpenChange }: EditPortfolioModalProps) {
+  const portfolio = useLocalPortfolios((state) => state.portfolios.find((entry) => entry.slug === portfolioSlug));
   const updatePortfolio = useLocalPortfolios((state) => state.updatePortfolio);
   const initialAccounts = useMemo(() => portfolio?.accounts ?? [], [portfolio?.accounts]);
   const accountOptions = usePortfolioAddressOptions(initialAccounts);
@@ -41,7 +41,7 @@ export function EditPortfolioModal({ portfolioId, onOpenChange }: EditPortfolioM
 
   const handleSave = () => {
     if (!name.trim()) return;
-    updatePortfolio(portfolio.id, { name, accounts });
+    updatePortfolio(portfolio.slug, { name, accounts });
     onOpenChange(false);
   };
 

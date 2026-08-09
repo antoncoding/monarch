@@ -62,8 +62,7 @@ export function AccountActionsPopover({
   const toast = useStyledToast();
   const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
   const portfolios = useLocalPortfolios((state) => state.portfolios);
-  const addAccount = useLocalPortfolios((state) => state.addAccount);
-  const removeAccount = useLocalPortfolios((state) => state.removeAccount);
+  const toggleAccount = useLocalPortfolios((state) => state.toggleAccount);
   const { open } = useModal();
   const { isExpectedAccount, requestExpectedAccount } = useRequirePositionAccount(address);
   const isBookmarked = isAddressBookmarked(address);
@@ -106,21 +105,6 @@ export function AccountActionsPopover({
   }, [address]);
 
   const openableExtraLinks = extraLinks.map((link) => ({ ...link, href: link.href.trim() })).filter((link) => isOpenableHref(link.href));
-
-  const togglePortfolioMembership = (portfolioId: string) => {
-    const portfolio = portfolios.find((entry) => entry.id === portfolioId);
-    if (!portfolio) return;
-    const isIncluded = portfolio.accounts.some((account) => account.toLowerCase() === address.toLowerCase());
-
-    if (isIncluded) {
-      removeAccount(portfolio.id, address);
-      toast.info('Account removed', `Removed from ${portfolio.name}.`);
-      return;
-    }
-
-    addAccount(portfolio.id, address);
-    toast.success('Added to portfolio', `Added to ${portfolio.name}.`);
-  };
 
   const openCreatePortfolio = () => {
     open('createPortfolio', { initialAccounts: [address] });
@@ -189,10 +173,14 @@ export function AccountActionsPopover({
                 const checked = portfolio.accounts.some((account) => account.toLowerCase() === address.toLowerCase());
                 return (
                   <DropdownMenuCheckboxItem
-                    key={portfolio.id}
+                    key={portfolio.slug}
                     checked={checked}
                     disabled={!checked && portfolio.accounts.length >= MAX_PORTFOLIO_ACCOUNTS}
-                    onCheckedChange={() => togglePortfolioMembership(portfolio.id)}
+                    onCheckedChange={() => {
+                      toggleAccount(portfolio.slug, address);
+                      if (checked) toast.info('Account removed', `Removed from ${portfolio.name}.`);
+                      else toast.success('Added to portfolio', `Added to ${portfolio.name}.`);
+                    }}
                   >
                     {portfolio.name}
                   </DropdownMenuCheckboxItem>
