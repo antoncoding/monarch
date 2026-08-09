@@ -6,12 +6,10 @@ import { BsArrowDownLeftCircle, BsArrowUpRightCircle } from 'react-icons/bs';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { Address } from 'viem';
 import { SwitchPositionAccountMenuItem } from './switch-position-account-menu-item';
 
 type BorrowPositionActionsDropdownProps = {
   isOwner: boolean;
-  account: Address;
   isActiveDebt: boolean;
   onBorrowMoreClick: () => void;
   onRepayClick: () => void;
@@ -20,7 +18,6 @@ type BorrowPositionActionsDropdownProps = {
 
 export function BorrowPositionActionsDropdown({
   isOwner,
-  account,
   isActiveDebt,
   onBorrowMoreClick,
   onRepayClick,
@@ -76,7 +73,7 @@ export function BorrowPositionActionsDropdown({
               )}
             </>
           ) : (
-            <SwitchPositionAccountMenuItem account={account} />
+            <SwitchPositionAccountMenuItem />
           )}
         </DropdownMenuContent>
       </DropdownMenu>

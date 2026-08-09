@@ -292,7 +292,6 @@ export function BorrowedMorphoBlueTable({
                       <div className="flex items-center justify-center">
                         <BorrowPositionActionsDropdown
                           isOwner={isOwner}
-                          account={rowAccount}
                           isActiveDebt={row.isActiveDebt}
                           onBorrowMoreClick={() =>
                             open('borrow', {

@@ -98,7 +98,7 @@ export function SuppliedMarketPositionActionsDropdown({
             </DropdownMenuItem>
           </>
         ) : (
-          <SwitchPositionAccountMenuItem account={account} />
+          <SwitchPositionAccountMenuItem />
         )}
       </DropdownMenuContent>
     </DropdownMenu>

@@ -12,7 +12,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LuCopy, LuExternalLink, LuFolderPlus, LuLink, LuUser, LuUserRoundCheck, LuWallet } from 'react-icons/lu';
+import { LuCopy, LuExternalLink, LuFolderPlus, LuLink, LuUser, LuWallet } from 'react-icons/lu';
 import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { SiEthereum } from 'react-icons/si';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -22,7 +22,6 @@ import { SupportedNetworks } from '@/utils/networks';
 import type { Address } from 'viem';
 import { MAX_PORTFOLIO_ACCOUNTS, useLocalPortfolios } from '@/stores/useLocalPortfolios';
 import { useModal } from '@/hooks/useModal';
-import { useRequirePositionAccount } from '@/hooks/useRequirePositionAccount';
 
 type AccountActionsPopoverProps = {
   address: Address;
@@ -64,7 +63,6 @@ export function AccountActionsPopover({
   const portfolios = useLocalPortfolios((state) => state.portfolios);
   const toggleAccount = useLocalPortfolios((state) => state.toggleAccount);
   const { open } = useModal();
-  const { isExpectedAccount, requestExpectedAccount } = useRequirePositionAccount(address);
   const isBookmarked = isAddressBookmarked(address);
 
   const handleCopy = useCallback(async () => {
@@ -147,14 +145,6 @@ export function AccountActionsPopover({
         >
           {isBookmarked ? 'Remove Bookmark' : 'Bookmark Address'}
         </DropdownMenuItem>
-        {!isExpectedAccount && (
-          <DropdownMenuItem
-            onClick={() => void requestExpectedAccount()}
-            startContent={<LuUserRoundCheck className="h-4 w-4" />}
-          >
-            Switch to this account
-          </DropdownMenuItem>
-        )}
         {portfolios.length === 0 ? (
           <DropdownMenuItem
             onClick={openCreatePortfolio}

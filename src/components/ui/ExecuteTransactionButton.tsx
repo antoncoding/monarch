@@ -5,7 +5,6 @@ import { useWalletModal } from '@/components/providers/WalletModalProvider';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { getNetworkName } from '@/utils/networks';
 import { type ModalProps, type ModalType, useModalStore } from '@/stores/useModalStore';
-import { useRequirePositionAccount } from '@/hooks/useRequirePositionAccount';
 
 /**
  * UI delay after chain switch to allow wagmi state to update
@@ -84,12 +83,12 @@ export function ExecuteTransactionButton({
   ...buttonProps
 }: ExecuteTransactionButtonProps): JSX.Element {
   const { openWalletModal } = useWalletModal();
-  const { isConnected } = useConnection();
+  const { address, isConnected } = useConnection();
   const expectedAccount = useModalStore((state) => {
     const transactionModal = state.stack.findLast((modal) => POSITION_TRANSACTION_MODAL_TYPES.has(modal.type));
     return (transactionModal?.props as PositionTransactionModalProps | undefined)?.expectedAccount;
   });
-  const { isExpectedAccount, requestExpectedAccount } = useRequirePositionAccount(expectedAccount);
+  const isExpectedAccount = !expectedAccount || address?.toLowerCase() === expectedAccount.toLowerCase();
   const [isSwitching, setIsSwitching] = useState(false);
 
   // Use the market network hook for chain validation and switching
@@ -131,7 +130,7 @@ export function ExecuteTransactionButton({
   if (!isExpectedAccount) {
     return (
       <Button
-        onClick={() => void requestExpectedAccount()}
+        disabled
         variant={variant}
         {...buttonProps}
       >

@@ -5,16 +5,14 @@ import { TbArrowsRightLeft } from 'react-icons/tb';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import type { Address } from 'viem';
 import { SwitchPositionAccountMenuItem } from './switch-position-account-menu-item';
 
 type PositionActionsDropdownProps = {
   isOwner: boolean;
-  account: Address;
   onRebalanceClick: () => void;
 };
 
-export function PositionActionsDropdown({ isOwner, account, onRebalanceClick }: PositionActionsDropdownProps) {
+export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionActionsDropdownProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -49,7 +47,7 @@ export function PositionActionsDropdown({ isOwner, account, onRebalanceClick }: 
               Rebalance
             </DropdownMenuItem>
           ) : (
-            <SwitchPositionAccountMenuItem account={account} />
+            <SwitchPositionAccountMenuItem />
           )}
         </DropdownMenuContent>
       </DropdownMenu>
