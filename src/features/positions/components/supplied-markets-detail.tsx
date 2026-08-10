@@ -29,14 +29,12 @@ type SuppliedMarketsDetailProps = {
 };
 
 function MarketRow({
-  account,
   position,
   totalSupply,
   rateLabel,
   isEarningsLoading,
   isOwner,
 }: {
-  account: string;
   position: MarketPositionWithEarnings;
   totalSupply: number;
   rateLabel: string;
@@ -130,7 +128,6 @@ function MarketRow({
                 variant="surface"
                 onClick={() => {
                   open('supply', {
-                    expectedAccount: account as `0x${string}`,
                     market: position.market,
                     position,
                     defaultMode: 'withdraw',
@@ -145,7 +142,6 @@ function MarketRow({
               variant="surface"
               onClick={() => {
                 open('supply', {
-                  expectedAccount: account as `0x${string}`,
                   market: position.market,
                   position,
                 });
@@ -247,7 +243,6 @@ export function SuppliedMarketsDetail({
               {sortedMarkets.map((position) => (
                 <MarketRow
                   key={position.market.uniqueKey}
-                  account={account}
                   position={position}
                   totalSupply={totalSupply}
                   rateLabel={rateLabel}

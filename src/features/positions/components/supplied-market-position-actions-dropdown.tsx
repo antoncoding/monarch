@@ -7,13 +7,10 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useModalStore } from '@/stores/useModalStore';
 import type { MarketPositionWithEarnings } from '@/utils/types';
-import type { Address } from 'viem';
-import { SwitchPositionAccountMenuItem } from './switch-position-account-menu-item';
 
 type SuppliedMarketPositionActionsDropdownProps = {
   position: MarketPositionWithEarnings;
   isOwner: boolean;
-  account: Address;
   isActiveSupply: boolean;
   refetch: (onSuccess?: () => void) => Promise<void>;
 };
@@ -21,7 +18,6 @@ type SuppliedMarketPositionActionsDropdownProps = {
 export function SuppliedMarketPositionActionsDropdown({
   position,
   isOwner,
-  account,
   isActiveSupply,
   refetch,
 }: SuppliedMarketPositionActionsDropdownProps) {
@@ -38,8 +34,8 @@ export function SuppliedMarketPositionActionsDropdown({
   };
 
   const handleWithdrawClick = () => {
+    if (!isOwner) return;
     open('supply', {
-      expectedAccount: account,
       market: position.market,
       position,
       defaultMode: 'withdraw',
@@ -53,7 +49,6 @@ export function SuppliedMarketPositionActionsDropdown({
     if (!canDeposit) return;
 
     open('supply', {
-      expectedAccount: account,
       market: position.market,
       position,
       defaultMode: 'supply',
@@ -73,33 +68,28 @@ export function SuppliedMarketPositionActionsDropdown({
           aria-label="Position actions"
           onClick={handleClick}
           onKeyDown={handleKeyDown}
+          disabled={!isOwner}
         >
           <IoEllipsisVertical className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {isOwner ? (
-          <>
-            <DropdownMenuItem
-              onClick={handleWithdrawClick}
-              startContent={<BsArrowDownCircle className="h-4 w-4" />}
-              disabled={!canWithdraw}
-              className={canWithdraw ? '' : 'cursor-not-allowed opacity-50'}
-            >
-              Withdraw
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleDepositClick}
-              startContent={<BsArrowUpCircle className="h-4 w-4" />}
-              disabled={!canDeposit}
-              className={canDeposit ? '' : 'cursor-not-allowed opacity-50'}
-            >
-              Deposit
-            </DropdownMenuItem>
-          </>
-        ) : (
-          <SwitchPositionAccountMenuItem />
-        )}
+        <DropdownMenuItem
+          onClick={handleWithdrawClick}
+          startContent={<BsArrowDownCircle className="h-4 w-4" />}
+          disabled={!canWithdraw}
+          className={canWithdraw ? '' : 'cursor-not-allowed opacity-50'}
+        >
+          Withdraw
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleDepositClick}
+          startContent={<BsArrowUpCircle className="h-4 w-4" />}
+          disabled={!canDeposit}
+          className={canDeposit ? '' : 'cursor-not-allowed opacity-50'}
+        >
+          Deposit
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

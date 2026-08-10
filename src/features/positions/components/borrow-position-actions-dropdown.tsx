@@ -6,7 +6,6 @@ import { BsArrowDownLeftCircle, BsArrowUpRightCircle } from 'react-icons/bs';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { SwitchPositionAccountMenuItem } from './switch-position-account-menu-item';
 
 type BorrowPositionActionsDropdownProps = {
   isOwner: boolean;
@@ -44,36 +43,31 @@ export function BorrowPositionActionsDropdown({
             size="xs"
             variant="surface"
             className="text-xs"
+            disabled={!isOwner}
           >
             <IoEllipsisVertical className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {isOwner ? (
-            <>
-              <DropdownMenuItem
-                onClick={onBorrowMoreClick}
-                startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
-              >
-                Borrow More
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onRepayClick}
-                startContent={<BsArrowUpRightCircle className="h-4 w-4" />}
-              >
-                {isActiveDebt ? 'Repay' : 'Manage'}
-              </DropdownMenuItem>
-              {isActiveDebt && (
-                <DropdownMenuItem
-                  onClick={onAdjustLeverageClick}
-                  startContent={<TbAdjustmentsHorizontal className="h-4 w-4" />}
-                >
-                  Adjust Leverage
-                </DropdownMenuItem>
-              )}
-            </>
-          ) : (
-            <SwitchPositionAccountMenuItem />
+          <DropdownMenuItem
+            onClick={onBorrowMoreClick}
+            startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
+          >
+            Borrow More
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onRepayClick}
+            startContent={<BsArrowUpRightCircle className="h-4 w-4" />}
+          >
+            {isActiveDebt ? 'Repay' : 'Manage'}
+          </DropdownMenuItem>
+          {isActiveDebt && (
+            <DropdownMenuItem
+              onClick={onAdjustLeverageClick}
+              startContent={<TbAdjustmentsHorizontal className="h-4 w-4" />}
+            >
+              Adjust Leverage
+            </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

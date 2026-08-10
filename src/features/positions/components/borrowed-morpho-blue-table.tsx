@@ -293,39 +293,39 @@ export function BorrowedMorphoBlueTable({
                         <BorrowPositionActionsDropdown
                           isOwner={isOwner}
                           isActiveDebt={row.isActiveDebt}
-                          onBorrowMoreClick={() =>
+                          onBorrowMoreClick={() => {
+                            if (!isOwner) return;
                             open('borrow', {
-                              expectedAccount: rowAccount,
                               market: row.market,
                               defaultMode: 'borrow',
                               toggleBorrowRepay: false,
                               refetch: () => {
                                 void onRefetch();
                               },
-                            })
-                          }
-                          onRepayClick={() =>
+                            });
+                          }}
+                          onRepayClick={() => {
+                            if (!isOwner) return;
                             open('borrow', {
-                              expectedAccount: rowAccount,
                               market: row.market,
                               defaultMode: 'repay',
                               toggleBorrowRepay: false,
                               refetch: () => {
                                 void onRefetch();
                               },
-                            })
-                          }
-                          onAdjustLeverageClick={() =>
+                            });
+                          }}
+                          onAdjustLeverageClick={() => {
+                            if (!isOwner) return;
                             open('leverage', {
-                              expectedAccount: rowAccount,
                               market: row.market,
                               position: row.position,
                               intent: 'adjust',
                               refetch: () => {
                                 void onRefetch();
                               },
-                            })
-                          }
+                            });
+                          }}
                         />
                       </div>
                     </TableCell>

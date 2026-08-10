@@ -353,7 +353,6 @@ function SuppliedMarketPositionsTable({
                   <SuppliedMarketPositionActionsDropdown
                     position={position}
                     isOwner={isOwner}
-                    account={rowAccount}
                     isActiveSupply={hasActiveSupply}
                     refetch={refetch}
                   />
@@ -709,7 +708,6 @@ export function SuppliedMorphoBlueGroupedTable({
                             onRebalanceClick={() => {
                               if (!isOwner) return;
                               openModal('rebalance', {
-                                expectedAccount: rowAccount,
                                 groupedPosition,
                                 refetch,
                                 isRefetching,

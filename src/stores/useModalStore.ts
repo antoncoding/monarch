@@ -28,7 +28,6 @@ export type ModalProps = {
 
   // Borrow & Repay
   borrow: {
-    expectedAccount?: Address;
     market: Market;
     defaultMode?: 'borrow' | 'repay';
     toggleBorrowRepay?: boolean;
@@ -38,7 +37,6 @@ export type ModalProps = {
 
   // Leverage
   leverage: {
-    expectedAccount?: Address;
     market: Market;
     position?: MarketPosition | null;
     intent?: 'create' | 'adjust';
@@ -47,7 +45,6 @@ export type ModalProps = {
 
   // Supply & Withdraw
   supply: {
-    expectedAccount?: Address;
     market: Market;
     position?: MarketPosition | null;
     defaultMode?: 'supply' | 'withdraw';
@@ -58,7 +55,6 @@ export type ModalProps = {
 
   // Rebalance
   rebalance: {
-    expectedAccount?: Address;
     groupedPosition: GroupedPosition;
     refetch: (onSuccess?: () => void) => void;
     isRefetching: boolean;

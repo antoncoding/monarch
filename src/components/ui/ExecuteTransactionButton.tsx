@@ -4,16 +4,12 @@ import { Button, type ButtonProps } from '@/components/ui/button';
 import { useWalletModal } from '@/components/providers/WalletModalProvider';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { getNetworkName } from '@/utils/networks';
-import { type ModalProps, type ModalType, useModalStore } from '@/stores/useModalStore';
 
 /**
  * UI delay after chain switch to allow wagmi state to update
  * Prevents button flicker during network transition
  */
 const CHAIN_SWITCH_UI_DELAY_MS = 500;
-
-const POSITION_TRANSACTION_MODAL_TYPES = new Set<ModalType>(['borrow', 'leverage', 'supply', 'rebalance']);
-type PositionTransactionModalProps = ModalProps['borrow'] | ModalProps['leverage'] | ModalProps['supply'] | ModalProps['rebalance'];
 
 type ExecuteTransactionButtonProps = Omit<ButtonProps, 'onClick' | 'children'> & {
   targetChainId: number;
@@ -83,12 +79,7 @@ export function ExecuteTransactionButton({
   ...buttonProps
 }: ExecuteTransactionButtonProps): JSX.Element {
   const { openWalletModal } = useWalletModal();
-  const { address, isConnected } = useConnection();
-  const expectedAccount = useModalStore((state) => {
-    const transactionModal = state.stack.findLast((modal) => POSITION_TRANSACTION_MODAL_TYPES.has(modal.type));
-    return (transactionModal?.props as PositionTransactionModalProps | undefined)?.expectedAccount;
-  });
-  const isExpectedAccount = !expectedAccount || address?.toLowerCase() === expectedAccount.toLowerCase();
+  const { isConnected } = useConnection();
   const [isSwitching, setIsSwitching] = useState(false);
 
   // Use the market network hook for chain validation and switching
@@ -123,18 +114,6 @@ export function ExecuteTransactionButton({
         {...buttonProps}
       >
         {connectText}
-      </Button>
-    );
-  }
-
-  if (!isExpectedAccount) {
-    return (
-      <Button
-        disabled
-        variant={variant}
-        {...buttonProps}
-      >
-        Switch to this account
       </Button>
     );
   }
