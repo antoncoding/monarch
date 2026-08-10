@@ -123,7 +123,10 @@ export function AccountActionsPopover({
           <div className="inline-flex cursor-pointer items-center">{children}</div>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent
+        align="start"
+        className="[&>[role=menuitem]]:pr-10"
+      >
         <DropdownMenuItem
           onClick={handleViewAccount}
           startContent={<LuUser className="h-4 w-4" />}
