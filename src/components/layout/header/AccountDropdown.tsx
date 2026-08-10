@@ -3,7 +3,9 @@
 import { useCallback } from 'react';
 import { ExitIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { LuCopy } from 'react-icons/lu';
+import { RiBriefcaseLine } from 'react-icons/ri';
 import { clsx } from 'clsx';
+import { useRouter } from 'next/navigation';
 import { useConnection, useDisconnect } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountIdentity } from '@/components/shared/account-identity';
@@ -14,6 +16,7 @@ import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
 
 export function AccountDropdown() {
+  const router = useRouter();
   const { address, chainId } = useConnection();
   const { disconnect } = useDisconnect();
   const { openWalletModal } = useWalletModal();
@@ -67,6 +70,13 @@ export function AccountDropdown() {
               showActions={false}
             />
           </div>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => router.push(`/positions/${address}`)}
+          endContent={<RiBriefcaseLine className="h-4 w-4" />}
+        >
+          View Positions
         </DropdownMenuItem>
 
         <DropdownMenuItem

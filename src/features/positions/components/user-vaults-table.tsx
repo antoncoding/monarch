@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { PulseLoader } from 'react-spinners';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { formatUnits } from 'viem';
+import type { Address } from 'viem';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -24,6 +25,7 @@ import { VaultAllocationDetail } from './vault-allocation-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { VaultActionsDropdown } from './vault-actions-dropdown';
 import { getPositionsPeriodShortLabel } from './positions-period-settings';
+import { PositionAccountCell } from './position-account-cell';
 
 const formatRate = (rate: number | null | undefined, isApr: boolean): string => {
   if (rate === null || rate === undefined) return '-';
@@ -77,14 +79,22 @@ function VaultInterestAccruedDisplay({
 }
 
 type UserVaultsTableProps = {
-  vaults: UserVaultV2[];
+  vaults: (UserVaultV2 & { account?: Address })[];
   period: EarningsPeriod;
   isEarningsLoading?: boolean;
   refetch?: () => void;
   isRefetching?: boolean;
+  showAccount?: boolean;
 };
 
-export function UserVaultsTable({ vaults, period, isEarningsLoading = false, refetch, isRefetching = false }: UserVaultsTableProps) {
+export function UserVaultsTable({
+  vaults,
+  period,
+  isEarningsLoading = false,
+  refetch,
+  isRefetching = false,
+  showAccount = false,
+}: UserVaultsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { findToken } = useTokensQuery();
   const { isAprDisplay } = useAppSettings();
@@ -143,6 +153,7 @@ export function UserVaultsTable({ vaults, period, isEarningsLoading = false, ref
           <TableHeader>
             <TableRow className="w-full justify-center text-secondary">
               <TableHead className="w-10">Network</TableHead>
+              {showAccount && <TableHead className="w-16">Account</TableHead>}
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
               <TableHead>
@@ -156,7 +167,7 @@ export function UserVaultsTable({ vaults, period, isEarningsLoading = false, ref
           <TableBody className="text-sm">
             {activeVaults.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={7 + (showAccount ? 1 : 0)}>
                   <div className="flex min-h-[200px] items-center justify-center">
                     <p className="text-sm text-secondary">No active positions in auto vaults.</p>
                   </div>
@@ -164,7 +175,8 @@ export function UserVaultsTable({ vaults, period, isEarningsLoading = false, ref
               </TableRow>
             ) : (
               activeVaults.map((vault) => {
-                const rowKey = `${vault.address}-${vault.networkId}`;
+                const rowAccount = vault.account;
+                const rowKey = `${rowAccount ?? ''}-${vault.address}-${vault.networkId}`;
                 const isExpanded = expandedRows.has(rowKey);
                 const token = findToken(vault.asset, vault.networkId);
                 const networkImg = getNetworkImg(vault.networkId);
@@ -202,6 +214,16 @@ export function UserVaultsTable({ vaults, period, isEarningsLoading = false, ref
                           )}
                         </div>
                       </TableCell>
+
+                      {showAccount &&
+                        (rowAccount ? (
+                          <PositionAccountCell
+                            account={rowAccount}
+                            chainId={vault.networkId}
+                          />
+                        ) : (
+                          <TableCell className="w-16" />
+                        ))}
 
                       {/* Size */}
                       <TableCell data-label="Size">
@@ -289,7 +311,7 @@ export function UserVaultsTable({ vaults, period, isEarningsLoading = false, ref
                       {isExpanded && (
                         <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                           <TableCell
-                            colSpan={7}
+                            colSpan={7 + (showAccount ? 1 : 0)}
                             className="bg-surface"
                           >
                             <motion.div

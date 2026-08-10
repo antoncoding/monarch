@@ -1,8 +1,18 @@
 'use client';
 
 import { useCallback, type ReactNode } from 'react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { LuCopy, LuExternalLink, LuLink, LuUser, LuWallet } from 'react-icons/lu';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { LuCopy, LuExternalLink, LuFolderPlus, LuLink, LuUser, LuWallet } from 'react-icons/lu';
 import { RiBookmarkFill, RiBookmarkLine } from 'react-icons/ri';
 import { SiEthereum } from 'react-icons/si';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -10,6 +20,8 @@ import { usePortfolioBookmarks } from '@/stores/usePortfolioBookmarks';
 import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
 import type { Address } from 'viem';
+import { MAX_PORTFOLIO_ACCOUNTS, useLocalPortfolios } from '@/stores/useLocalPortfolios';
+import { useModal } from '@/hooks/useModal';
 
 type AccountActionsPopoverProps = {
   address: Address;
@@ -18,6 +30,7 @@ type AccountActionsPopoverProps = {
   extraLinks?: AccountActionLink[];
   profileHref?: string;
   profileLabel?: string;
+  buttonTrigger?: boolean;
 };
 
 type AccountActionLink = {
@@ -42,10 +55,14 @@ export function AccountActionsPopover({
   children,
   extraLinks = [],
   profileHref = `/positions/${address}`,
-  profileLabel = 'View Portfolio',
+  profileLabel = 'View Positions',
+  buttonTrigger = false,
 }: AccountActionsPopoverProps) {
   const toast = useStyledToast();
   const { toggleAddressBookmark, isAddressBookmarked } = usePortfolioBookmarks();
+  const portfolios = useLocalPortfolios((state) => state.portfolios);
+  const toggleAccount = useLocalPortfolios((state) => state.toggleAccount);
+  const { open } = useModal();
   const isBookmarked = isAddressBookmarked(address);
 
   const handleCopy = useCallback(async () => {
@@ -87,12 +104,29 @@ export function AccountActionsPopover({
 
   const openableExtraLinks = extraLinks.map((link) => ({ ...link, href: link.href.trim() })).filter((link) => isOpenableHref(link.href));
 
+  const openCreatePortfolio = () => {
+    open('createPortfolio', { initialAccounts: [address] });
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="inline-flex cursor-pointer items-center">{children}</div>
+        {buttonTrigger ? (
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center border-0 bg-transparent p-0"
+            aria-label={`Open account actions for ${address}`}
+          >
+            {children}
+          </button>
+        ) : (
+          <div className="inline-flex cursor-pointer items-center">{children}</div>
+        )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent
+        align="start"
+        className="[&>[role=menuitem]]:pr-10"
+      >
         <DropdownMenuItem
           onClick={handleViewAccount}
           startContent={<LuUser className="h-4 w-4" />}
@@ -114,6 +148,47 @@ export function AccountActionsPopover({
         >
           {isBookmarked ? 'Remove Bookmark' : 'Bookmark Address'}
         </DropdownMenuItem>
+        {portfolios.length === 0 ? (
+          <DropdownMenuItem
+            onClick={openCreatePortfolio}
+            startContent={<LuFolderPlus className="h-4 w-4" />}
+          >
+            Add to portfolio
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <LuFolderPlus className="h-4 w-4" />
+              Add to portfolio
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              {portfolios.map((portfolio) => {
+                const checked = portfolio.accounts.some((account) => account.toLowerCase() === address.toLowerCase());
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={portfolio.slug}
+                    checked={checked}
+                    disabled={!checked && portfolio.accounts.length >= MAX_PORTFOLIO_ACCOUNTS}
+                    onCheckedChange={() => {
+                      toggleAccount(portfolio.slug, address);
+                      if (checked) toast.info('Account removed', `Removed from ${portfolio.name}.`);
+                      else toast.success('Added to portfolio', `Added to ${portfolio.name}.`);
+                    }}
+                  >
+                    {portfolio.name}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={openCreatePortfolio}
+                startContent={<LuFolderPlus className="h-4 w-4" />}
+              >
+                Create new portfolio…
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
         <DropdownMenuItem
           onClick={handleViewExplorer}
           startContent={<SiEthereum className="h-4 w-4" />}

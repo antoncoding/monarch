@@ -1,4 +1,4 @@
-import { envioUserPositionForMarketQuery, envioUserPositionsPageQuery } from '@/graphql/envio-queries';
+import { envioPortfolioPositionsPageQuery, envioUserPositionForMarketQuery, envioUserPositionsPageQuery } from '@/graphql/envio-queries';
 import { ALL_SUPPORTED_NETWORKS, type SupportedNetworks } from '@/utils/networks';
 import type { SupplyPositionHistory } from '@/utils/types';
 import { monarchGraphqlFetcher } from './fetchers';
@@ -11,6 +11,7 @@ type MonarchPositionMarket = {
 };
 
 type MonarchUserPositionRow = {
+  user?: string;
   marketId: string;
   chainId: number;
   supplyShares: string;
@@ -37,6 +38,10 @@ export type MonarchUserPositionState = {
   supplyShares: string;
   borrowShares: string;
   collateral: string;
+};
+
+export type MonarchAccountPositionMarket = MonarchPositionMarket & {
+  account: string;
 };
 
 const MONARCH_POSITION_MARKETS_PAGE_SIZE = 500;
@@ -112,6 +117,55 @@ export const fetchMonarchUserPositionMarketsForNetworks = async (
       break;
     }
 
+    offset += positions.length;
+  }
+
+  return Array.from(positionMarkets.values());
+};
+
+export const fetchMonarchPortfolioPositionMarketsForNetworks = async (
+  userAddresses: string[],
+  networks: SupportedNetworks[],
+): Promise<MonarchAccountPositionMarket[]> => {
+  if (userAddresses.length === 0 || networks.length === 0) return [];
+
+  const users = Array.from(new Set(userAddresses.map((address) => address.toLowerCase())));
+  const requestedUsers = new Set(users);
+  const requestedNetworks = new Set(networks);
+  const supportedNetworks = new Set(ALL_SUPPORTED_NETWORKS);
+  const positionMarkets = new Map<string, MonarchAccountPositionMarket>();
+  let offset = 0;
+
+  while (true) {
+    const response = await monarchGraphqlFetcher<MonarchUserPositionsPageResponse>(envioPortfolioPositionsPageQuery, {
+      users,
+      chainIds: networks,
+      limit: MONARCH_POSITION_MARKETS_PAGE_SIZE,
+      offset,
+    });
+    const positions = response.data?.Position ?? [];
+
+    for (const position of positions) {
+      const account = position.user?.toLowerCase();
+      const chainId = position.chainId as SupportedNetworks;
+      if (!account || !requestedUsers.has(account) || !supportedNetworks.has(chainId) || !requestedNetworks.has(chainId)) continue;
+
+      const supplyHistory = getSupplyHistory(position);
+      if (!supplyHistory && !isNonZero(position.supplyShares) && !isNonZero(position.borrowShares) && !isNonZero(position.collateral)) {
+        continue;
+      }
+
+      const positionMarket: MonarchAccountPositionMarket = {
+        account,
+        marketUniqueKey: position.marketId,
+        chainId,
+        hasSupplyHistory: Boolean(supplyHistory),
+        supplyHistory,
+      };
+      positionMarkets.set(`${account}-${position.marketId.toLowerCase()}-${chainId}`, positionMarket);
+    }
+
+    if (positions.length < MONARCH_POSITION_MARKETS_PAGE_SIZE) break;
     offset += positions.length;
   }
 

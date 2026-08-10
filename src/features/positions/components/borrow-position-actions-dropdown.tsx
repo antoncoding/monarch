@@ -43,6 +43,7 @@ export function BorrowPositionActionsDropdown({
             size="xs"
             variant="surface"
             className="text-xs"
+            disabled={!isOwner}
           >
             <IoEllipsisVertical className="h-3 w-3" />
           </Button>
@@ -51,16 +52,12 @@ export function BorrowPositionActionsDropdown({
           <DropdownMenuItem
             onClick={onBorrowMoreClick}
             startContent={<BsArrowDownLeftCircle className="h-4 w-4" />}
-            disabled={!isOwner}
-            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
           >
             Borrow More
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={onRepayClick}
             startContent={<BsArrowUpRightCircle className="h-4 w-4" />}
-            disabled={!isOwner}
-            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
           >
             {isActiveDebt ? 'Repay' : 'Manage'}
           </DropdownMenuItem>
@@ -68,8 +65,6 @@ export function BorrowPositionActionsDropdown({
             <DropdownMenuItem
               onClick={onAdjustLeverageClick}
               startContent={<TbAdjustmentsHorizontal className="h-4 w-4" />}
-              disabled={!isOwner}
-              className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
             >
               Adjust Leverage
             </DropdownMenuItem>

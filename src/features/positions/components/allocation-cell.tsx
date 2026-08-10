@@ -55,7 +55,7 @@ export function AllocationCell({
       </div>
     </div>
   ) : (
-    `${allocationLabel} of total portfolio`
+    `${allocationLabel} of total supplied balance`
   );
 
   return (

@@ -33,6 +33,7 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionA
             size="xs"
             variant="surface"
             className="text-xs"
+            disabled={!isOwner}
           >
             <IoEllipsisVertical className="h-3 w-3" />
           </Button>
@@ -41,8 +42,6 @@ export function PositionActionsDropdown({ isOwner, onRebalanceClick }: PositionA
           <DropdownMenuItem
             onClick={onRebalanceClick}
             startContent={<TbArrowsRightLeft className="h-4 w-4" />}
-            disabled={!isOwner}
-            className={isOwner ? '' : 'cursor-not-allowed opacity-50'}
           >
             Rebalance
           </DropdownMenuItem>

@@ -21,6 +21,7 @@ const RECENT_POSITION_TRANSACTION_WINDOW_SECONDS = 10 * 60;
 type UseUserPositionsSummaryDataOptions = {
   enabled?: boolean;
   marketHints?: UserPositionMarketHint[];
+  sourceMarketKeysProvided?: boolean;
   showEmpty?: boolean;
   customRange?: EarningsTimeRange | null;
 };
@@ -43,6 +44,7 @@ const useUserPositionsSummaryData = (
     positionsError,
   } = useUserPositions(activeUser, options.showEmpty ?? true, chainIds, {
     marketHints: options.marketHints,
+    sourceMarketKeysProvided: options.sourceMarketKeysProvided,
   });
 
   const uniqueChainIds = useMemo(

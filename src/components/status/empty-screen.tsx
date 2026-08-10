@@ -1,13 +1,15 @@
 import Image from 'next/image';
+import type { ReactNode } from 'react';
 import emptyImg from '../imgs/aragon/empty.png';
 
 type EmptyScreenProps = {
   message?: string;
   hint?: string;
   className?: string;
+  action?: ReactNode;
 };
 
-export default function EmptyScreen({ message = 'No data', hint, className }: EmptyScreenProps) {
+export default function EmptyScreen({ message = 'No data', hint, className, action }: EmptyScreenProps) {
   return (
     <div className={`bg-surface my-4 flex min-h-48 w-full flex-col items-center justify-center space-y-4 rounded py-8 ${className}`}>
       <Image
@@ -19,6 +21,7 @@ export default function EmptyScreen({ message = 'No data', hint, className }: Em
       />
       <p className="max-w-md text-center text-lg text-secondary">{message}</p>
       <p className="text-center text-sm text-gray-500">{hint}</p>
+      {action}
     </div>
   );
 }

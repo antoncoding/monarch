@@ -34,6 +34,7 @@ export function SuppliedMarketPositionActionsDropdown({
   };
 
   const handleWithdrawClick = () => {
+    if (!isOwner) return;
     open('supply', {
       market: position.market,
       position,
@@ -67,6 +68,7 @@ export function SuppliedMarketPositionActionsDropdown({
           aria-label="Position actions"
           onClick={handleClick}
           onKeyDown={handleKeyDown}
+          disabled={!isOwner}
         >
           <IoEllipsisVertical className="h-3 w-3" />
         </Button>

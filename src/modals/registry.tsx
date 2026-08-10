@@ -40,6 +40,13 @@ const MonarchSettingsModal = lazy(() =>
 const VaultDepositModal = lazy(() => import('@/modals/vault/vault-deposit-modal'));
 const VaultWithdrawModal = lazy(() => import('@/modals/vault/vault-withdraw-modal'));
 
+const CreatePortfolioModal = lazy(() =>
+  import('@/features/portfolios/components/create-portfolio-modal').then((m) => ({ default: m.CreatePortfolioModal })),
+);
+const EditPortfolioModal = lazy(() =>
+  import('@/features/portfolios/components/edit-portfolio-modal').then((m) => ({ default: m.EditPortfolioModal })),
+);
+
 /**
  * Central modal registry mapping modal types to their components.
  *
@@ -49,6 +56,8 @@ const VaultWithdrawModal = lazy(() => import('@/modals/vault/vault-withdraw-moda
 export const MODAL_REGISTRY: {
   [K in ModalType]: ComponentType<any>;
 } = {
+  createPortfolio: CreatePortfolioModal,
+  editPortfolio: EditPortfolioModal,
   borrow: BorrowModalGlobal,
   leverage: LeverageModalGlobal,
   bridgeSwap: SwapModal,

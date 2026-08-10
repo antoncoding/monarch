@@ -1,9 +1,14 @@
 import type { ReactNode } from 'react';
+import { Pencil2Icon } from '@radix-ui/react-icons';
+import { IoEllipsisVertical } from 'react-icons/io5';
 import type { Address } from 'viem';
 import { PulseLoader } from 'react-spinners';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { PortfolioAccountPreview } from '@/features/portfolios/components/portfolio-account-preview';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { cn } from '@/utils/components';
@@ -27,6 +32,9 @@ interface PortfolioAnalyticsBannerProps {
   isEarningsLoading: boolean;
   valueError: Error | null;
   showPortfolioStats: boolean;
+  portfolioName?: string;
+  portfolioAccounts?: Address[];
+  onEditPortfolio?: () => void;
 }
 
 const METRIC_VALUE_CLASS = 'font-zen text-xl font-normal leading-none tabular-nums text-primary';
@@ -199,6 +207,9 @@ export function PortfolioAnalyticsBanner({
   isEarningsLoading,
   valueError,
   showPortfolioStats,
+  portfolioName,
+  portfolioAccounts = [],
+  onEditPortfolio,
 }: PortfolioAnalyticsBannerProps) {
   const analyticsLoading = isValueLoading || isEarningsLoading;
   const displayRate = isAprDisplay ? portfolioAnalytics.annualizedApr : portfolioAnalytics.annualizedApy;
@@ -208,16 +219,55 @@ export function PortfolioAnalyticsBanner({
     <div className="flex flex-col gap-3 font-zen">
       <div className="flex min-w-0 items-start">
         <div className="min-w-0">
-          <div className="flex min-w-0 items-center gap-2">
-            <AccountIdentity
-              address={account as Address}
-              variant="full"
-              showAddress
-              showBookmark
-              chainId={accountChainId}
-            />
-          </div>
-          <AccountVaultInfo account={account as Address} />
+          {portfolioName ? (
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <h1 className="truncate !py-0 text-sm font-medium text-primary">{portfolioName}</h1>
+                <PortfolioAccountPreview
+                  accounts={portfolioAccounts}
+                  size={20}
+                />
+                {onEditPortfolio && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="xs"
+                        variant="surface"
+                        className="text-xs"
+                        aria-label="Portfolio actions"
+                      >
+                        <IoEllipsisVertical className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={onEditPortfolio}
+                        startContent={<Pencil2Icon className="h-4 w-4" />}
+                      >
+                        Edit portfolio
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+              <p className="text-xs text-secondary">
+                {portfolioAccounts.length} {portfolioAccounts.length === 1 ? 'account' : 'accounts'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex min-w-0 items-center gap-2">
+                <AccountIdentity
+                  address={account as Address}
+                  variant="full"
+                  showAddress
+                  showBookmark
+                  chainId={accountChainId}
+                />
+              </div>
+              <AccountVaultInfo account={account as Address} />
+            </>
+          )}
         </div>
       </div>
 

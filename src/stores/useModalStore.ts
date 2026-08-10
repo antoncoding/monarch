@@ -12,6 +12,15 @@ import type { LiquiditySourcingResult } from '@/hooks/useMarketLiquiditySourcing
  * See docs/Styling.md for Pattern 1 (local state) vs Pattern 2 (Zustand) decision framework.
  */
 export type ModalProps = {
+  createPortfolio: {
+    initialAccounts?: Address[];
+    onCreated?: (portfolioSlug: string) => void;
+  };
+
+  editPortfolio: {
+    portfolioSlug: string;
+  };
+
   // Swap & Bridge
   bridgeSwap: {
     defaultTargetToken?: SwapToken;

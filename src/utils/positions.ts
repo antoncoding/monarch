@@ -54,6 +54,7 @@ export type PositionSnapshotsWithOracleResult = {
 };
 
 export type BorrowPositionRow = {
+  account?: Address;
   market: MorphoMarket;
   position: MarketPosition;
   state: {
@@ -609,7 +610,7 @@ export function groupPositionsByLoanAsset(
  * Build flat borrow rows (no grouping) for the positions page.
  * Includes active borrow positions and fully repaid positions with remaining collateral.
  */
-export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[]): BorrowPositionRow[] {
+export function buildBorrowPositionRows(positions: (MarketPositionWithEarnings & { account?: Address })[]): BorrowPositionRow[] {
   return positions
     .filter((position) => {
       const borrowShares = BigInt(position.state.borrowShares);
@@ -626,6 +627,7 @@ export function buildBorrowPositionRows(positions: MarketPositionWithEarnings[])
       const isActiveDebt = borrowShares > 0n;
 
       return {
+        account: position.account,
         market: position.market,
         position,
         state: {

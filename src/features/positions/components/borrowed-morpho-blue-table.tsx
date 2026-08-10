@@ -22,6 +22,8 @@ import { getTruncatedAssetName } from '@/utils/oracle';
 import { buildBorrowPositionRows } from '@/utils/positions';
 import { computeHealthScoreFromLtv, formatHealthScore } from '@/modals/borrow/components/helpers';
 import type { MarketPositionWithEarnings } from '@/utils/types';
+import type { Address } from 'viem';
+import { PositionAccountCell } from './position-account-cell';
 import { BorrowPositionActionsDropdown } from './borrow-position-actions-dropdown';
 import { BorrowedMorphoBlueRowDetail, deriveBorrowPositionMetrics } from './borrowed-morpho-blue-row-detail';
 import { BorrowedTableSettingsModal } from './borrowed-table-settings-modal';
@@ -29,12 +31,19 @@ import { DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY } from './borrowed-table-colum
 
 type BorrowedMorphoBlueTableProps = {
   account: string;
-  positions: MarketPositionWithEarnings[];
+  positions: (MarketPositionWithEarnings & { account?: Address })[];
   onRefetch: (onSuccess?: () => void) => Promise<void>;
   isRefetching: boolean;
+  showAccount?: boolean;
 };
 
-export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefetching }: BorrowedMorphoBlueTableProps) {
+export function BorrowedMorphoBlueTable({
+  account,
+  positions,
+  onRefetch,
+  isRefetching,
+  showAccount = false,
+}: BorrowedMorphoBlueTableProps) {
   const { address } = useConnection();
   const { open } = useModal();
   const { short: rateLabel } = useRateLabel();
@@ -42,7 +51,6 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   const borrowRows = useMemo(() => buildBorrowPositionRows(positions), [positions]);
-  const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
   const { borrowedTableColumnVisibility, setBorrowedTableColumnVisibility } = usePositionsPreferences();
   const showHealthScore = borrowedTableColumnVisibility.healthScore ?? DEFAULT_BORROWED_TABLE_COLUMN_VISIBILITY.healthScore;
 
@@ -116,6 +124,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
           <TableHeader>
             <TableRow className="w-full justify-center text-secondary">
               <TableHead className="w-16">Network</TableHead>
+              {showAccount && <TableHead className="w-16">Account</TableHead>}
               <TableHead className="w-[28%]">Market</TableHead>
               <TableHead className="w-32">Loan</TableHead>
               <TableHead className="w-24">{rateLabel} (now)</TableHead>
@@ -127,7 +136,9 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
           </TableHeader>
           <TableBody className="text-sm">
             {borrowRows.map((row) => {
-              const rowKey = `${row.market.uniqueKey}-${row.market.morphoBlue.chain.id}`;
+              const rowAccount = (row.account ?? account) as Address;
+              const isOwner = !!address && rowAccount.toLowerCase() === address.toLowerCase();
+              const rowKey = `${rowAccount}-${row.market.uniqueKey}-${row.market.morphoBlue.chain.id}`;
               const detailRowId = `${rowKey}-detail`;
               const metrics = deriveBorrowPositionMetrics(row);
               const isExpanded = expandedRows.has(rowKey);
@@ -159,6 +170,13 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         />
                       </div>
                     </TableCell>
+
+                    {showAccount && (
+                      <PositionAccountCell
+                        account={rowAccount}
+                        chainId={row.market.morphoBlue.chain.id}
+                      />
+                    )}
 
                     <TableCell data-label="Market">
                       <div className="flex items-center gap-2">
@@ -275,7 +293,8 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         <BorrowPositionActionsDropdown
                           isOwner={isOwner}
                           isActiveDebt={row.isActiveDebt}
-                          onBorrowMoreClick={() =>
+                          onBorrowMoreClick={() => {
+                            if (!isOwner) return;
                             open('borrow', {
                               market: row.market,
                               defaultMode: 'borrow',
@@ -283,9 +302,10 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                               refetch: () => {
                                 void onRefetch();
                               },
-                            })
-                          }
-                          onRepayClick={() =>
+                            });
+                          }}
+                          onRepayClick={() => {
+                            if (!isOwner) return;
                             open('borrow', {
                               market: row.market,
                               defaultMode: 'repay',
@@ -293,9 +313,10 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                               refetch: () => {
                                 void onRefetch();
                               },
-                            })
-                          }
-                          onAdjustLeverageClick={() =>
+                            });
+                          }}
+                          onAdjustLeverageClick={() => {
+                            if (!isOwner) return;
                             open('leverage', {
                               market: row.market,
                               position: row.position,
@@ -303,8 +324,8 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                               refetch: () => {
                                 void onRefetch();
                               },
-                            })
-                          }
+                            });
+                          }}
                         />
                       </div>
                     </TableCell>
@@ -317,7 +338,7 @@ export function BorrowedMorphoBlueTable({ account, positions, onRefetch, isRefet
                         className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface"
                       >
                         <TableCell
-                          colSpan={7 + (showHealthScore ? 1 : 0)}
+                          colSpan={7 + (showHealthScore ? 1 : 0) + (showAccount ? 1 : 0)}
                           className="bg-surface"
                         >
                           <BorrowedMorphoBlueRowDetail row={row} />

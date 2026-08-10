@@ -6,7 +6,16 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { LuSunMedium } from 'react-icons/lu';
-import { RiBarChart2Line, RiBookLine, RiBriefcaseLine, RiDiscordFill, RiLineChartLine, RiSafeLine, RiSwapLine } from 'react-icons/ri';
+import {
+  RiBarChart2Line,
+  RiBookLine,
+  RiBriefcaseLine,
+  RiDiscordFill,
+  RiLineChartLine,
+  RiSafeLine,
+  RiStackLine,
+  RiSwapLine,
+} from 'react-icons/ri';
 import { useConnection } from 'wagmi';
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useModal } from '@/hooks/useModal';
@@ -84,6 +93,13 @@ export function HeaderMenuItems({ includeAutovault = true, iconSide = 'end', ite
         onClick={() => handleNavigation(positionsHref)}
       >
         Positions
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        {...iconProps(<RiStackLine className="h-4 w-4" />)}
+        className={itemClassName}
+        onClick={() => handleNavigation('/portfolios')}
+      >
+        Portfolios
       </DropdownMenuItem>
       {includeAutovault && (
         <DropdownMenuItem

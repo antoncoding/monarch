@@ -50,24 +50,32 @@ import { getPositionsPeriodShortLabel } from './positions-period-settings';
 import { RiArrowRightLine, RiSparklingFill } from 'react-icons/ri';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import type { PositionSnapshot } from '@/utils/positions';
+import type { Address } from 'viem';
+import { PositionAccountCell } from './position-account-cell';
+
+type AccountMarketPosition = MarketPositionWithEarnings & { account?: Address };
 
 type SuppliedMorphoBlueGroupedTableProps = {
   account: string;
-  positions: MarketPositionWithEarnings[];
+  positions: AccountMarketPosition[];
   refetch: (onSuccess?: () => void) => Promise<void>;
   isRefetching: boolean;
   isEarningsLoading: boolean;
   actualBlockData: Record<number, { block: number; timestamp: number }>;
   snapshotsByChain: Record<number, Map<string, PositionSnapshot>>;
+  snapshotsByAccount?: Record<string, Record<number, Map<string, PositionSnapshot>>>;
+  showAccount?: boolean;
 };
 
 type SuppliedMarketPositionsTableProps = {
-  positions: MarketPositionWithEarnings[];
+  positions: AccountMarketPosition[];
   periodLabel: string;
   rateLabel: string;
   hideEmptyPositions: boolean;
   isEarningsLoading: boolean;
-  isOwner: boolean;
+  account: Address;
+  connectedAddress?: Address;
+  showAccount: boolean;
   showEarningsInUsd: boolean;
   isAprDisplay: boolean;
   prices: Map<string, number>;
@@ -183,7 +191,9 @@ function SuppliedMarketPositionsTable({
   rateLabel,
   hideEmptyPositions,
   isEarningsLoading,
-  isOwner,
+  account,
+  connectedAddress,
+  showAccount,
   showEarningsInUsd,
   isAprDisplay,
   prices,
@@ -195,6 +205,7 @@ function SuppliedMarketPositionsTable({
       <TableHeader>
         <TableRow className="w-full justify-center text-secondary">
           <TableHead className="w-16">Network</TableHead>
+          {showAccount && <TableHead className="w-16">Account</TableHead>}
           <TableHead className="w-[30%]">Market</TableHead>
           <TableHead>Size</TableHead>
           <TableHead>{rateLabel} (now)</TableHead>
@@ -210,7 +221,7 @@ function SuppliedMarketPositionsTable({
         {positions.length === 0 && (
           <TableRow>
             <TableCell
-              colSpan={8}
+              colSpan={8 + (showAccount ? 1 : 0)}
               className="py-8 text-center text-secondary"
             >
               {hideEmptyPositions ? 'Empty supply positions are hidden.' : 'You have no supply positions.'}
@@ -218,8 +229,10 @@ function SuppliedMarketPositionsTable({
           </TableRow>
         )}
         {positions.map((position) => {
+          const rowAccount = position.account ?? account;
+          const isOwner = !!connectedAddress && rowAccount.toLowerCase() === connectedAddress.toLowerCase();
           const chainId = position.market.morphoBlue.chain.id;
-          const rowKey = `${position.market.uniqueKey}-${chainId}`;
+          const rowKey = `${rowAccount}-${position.market.uniqueKey}-${chainId}`;
           const hasActiveSupply = hasActiveSupplyPosition(position);
           const suppliedAmount = Number(position.state.supplyAssets) / 10 ** position.market.loanAsset.decimals;
           const earned = BigInt(position.earned ?? '0');
@@ -237,6 +250,13 @@ function SuppliedMarketPositionsTable({
                   />
                 </div>
               </TableCell>
+
+              {showAccount && (
+                <PositionAccountCell
+                  account={rowAccount}
+                  chainId={chainId}
+                />
+              )}
 
               <TableCell data-label="Market">
                 <MarketIdentity
@@ -354,6 +374,8 @@ export function SuppliedMorphoBlueGroupedTable({
   isEarningsLoading,
   actualBlockData,
   snapshotsByChain,
+  snapshotsByAccount,
+  showAccount = false,
 }: SuppliedMorphoBlueGroupedTableProps) {
   const { address } = useConnection();
   const period = usePositionsFilters((s) => s.period);
@@ -384,10 +406,23 @@ export function SuppliedMorphoBlueGroupedTable({
     () => (hideClosedPositions ? supplyPositions.filter(hasActiveSupplyPosition) : supplyPositions),
     [supplyPositions, hideClosedPositions],
   );
-  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(visiblePositions, actualBlockData), [visiblePositions, actualBlockData]);
-  const isOwner = useMemo(() => !!account && !!address && account.toLowerCase() === address.toLowerCase(), [account, address]);
+  const processedPositions = useMemo(() => {
+    const positionsByAccount = new Map<string, { account: Address; positions: AccountMarketPosition[] }>();
+    for (const position of visiblePositions) {
+      const owner = (position.account ?? account) as Address;
+      const key = owner.toLowerCase();
+      const group = positionsByAccount.get(key) ?? { account: owner, positions: [] };
+      group.positions.push(position);
+      positionsByAccount.set(key, group);
+    }
 
-  const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
+    return Array.from(positionsByAccount.values()).flatMap(({ account: owner, positions: ownerPositions }) =>
+      processCollaterals(groupPositionsByLoanAsset(ownerPositions, actualBlockData)).map((position) => ({
+        ...position,
+        account: owner,
+      })),
+    );
+  }, [account, actualBlockData, visiblePositions]);
   const marketPositions = useMemo(
     () =>
       [...visiblePositions].sort((a, b) => {
@@ -520,6 +555,7 @@ export function SuppliedMorphoBlueGroupedTable({
             <TableHeader>
               <TableRow className="w-full justify-center text-secondary">
                 <TableHead className="w-10">Network</TableHead>
+                {showAccount && <TableHead className="w-16">Account</TableHead>}
                 <TableHead>Size</TableHead>
                 <TableHead>{rateLabel} (now)</TableHead>
                 <TableHead>
@@ -534,7 +570,7 @@ export function SuppliedMorphoBlueGroupedTable({
               {processedPositions.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={7 + (showAccount ? 1 : 0)}
                     className="py-8 text-center text-secondary"
                   >
                     {hideClosedPositions ? 'Empty supply positions are hidden.' : 'You have no supply positions.'}
@@ -542,7 +578,9 @@ export function SuppliedMorphoBlueGroupedTable({
                 </TableRow>
               )}
               {processedPositions.map((groupedPosition) => {
-                const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
+                const rowAccount = groupedPosition.account;
+                const isOwner = !!address && rowAccount.toLowerCase() === address.toLowerCase();
+                const rowKey = `${rowAccount}-${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
                 const avgApy = groupedPosition.totalWeightedApy;
                 const isClosedSupplyGroup = groupedPosition.totalSupply === 0;
 
@@ -565,6 +603,13 @@ export function SuppliedMorphoBlueGroupedTable({
                           />
                         </div>
                       </TableCell>
+
+                      {showAccount && (
+                        <PositionAccountCell
+                          account={rowAccount}
+                          chainId={groupedPosition.chainId}
+                        />
+                      )}
 
                       {/* Loan asset details */}
                       <TableCell data-label="Size">
@@ -683,7 +728,7 @@ export function SuppliedMorphoBlueGroupedTable({
                               className="text-xs"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(`/position/${groupedPosition.chainId}/${groupedPosition.loanAssetAddress}/${account}`);
+                                router.push(`/position/${groupedPosition.chainId}/${groupedPosition.loanAssetAddress}/${rowAccount}`);
                               }}
                               aria-label="View position details"
                             >
@@ -697,7 +742,7 @@ export function SuppliedMorphoBlueGroupedTable({
                       {expandedRows.has(rowKey) && (
                         <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                           <TableCell
-                            colSpan={7}
+                            colSpan={7 + (showAccount ? 1 : 0)}
                             className="bg-surface"
                           >
                             <motion.div
@@ -709,8 +754,10 @@ export function SuppliedMorphoBlueGroupedTable({
                             >
                               <SuppliedMarketsDetail
                                 groupedPosition={groupedPosition}
-                                account={account}
-                                snapshotsByChain={snapshotsByChain}
+                                account={rowAccount}
+                                snapshotsByChain={
+                                  snapshotsByAccount ? (snapshotsByAccount[rowAccount.toLowerCase()] ?? {}) : snapshotsByChain
+                                }
                                 chainBlockData={actualBlockData}
                                 isEarningsLoading={isEarningsLoading}
                                 isOwner={isOwner}
@@ -733,7 +780,9 @@ export function SuppliedMorphoBlueGroupedTable({
             rateLabel={rateLabel}
             hideEmptyPositions={hideClosedPositions}
             isEarningsLoading={isEarningsLoading}
-            isOwner={isOwner}
+            account={account as Address}
+            connectedAddress={address}
+            showAccount={showAccount}
             showEarningsInUsd={showEarningsInUsd}
             isAprDisplay={isAprDisplay}
             prices={prices}

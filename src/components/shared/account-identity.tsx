@@ -174,7 +174,7 @@ export function AccountIdentity({
   const actionsProfileHref = isVaultV2Identity
     ? getMonarchVaultHref(vaultIdentity.chainId, vaultIdentity.vaultAddress)
     : `/positions/${address}`;
-  const actionsProfileLabel = isVaultV2Identity ? 'View Vault' : 'View Portfolio';
+  const actionsProfileLabel = isVaultV2Identity ? 'View Vault' : 'View Positions';
   const actionLinks = useMemo(() => {
     const links: { href: string; label: string }[] = [];
 
