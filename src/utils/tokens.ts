@@ -1127,6 +1127,20 @@ const supportedTokens = [
 
   // Monad
   {
+    symbol: 'mHYPER',
+    img: require('../imgs/tokens/mhyper.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: '0xd90F6bFEd23fFDE40106FC4498DD2e9EDB95E4e7',
+        chain: monad,
+      },
+    ],
+    protocol: {
+      name: 'Midas',
+    },
+  },
+  {
     symbol: 'WMON',
     img: require('../imgs/chains/monad.svg') as string,
     decimals: 18,

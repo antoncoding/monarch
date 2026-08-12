@@ -136,7 +136,7 @@ const getLockedMarketApyThreshold = (market: Market): number => {
 /**
  * Filter out locked/frozen markets with extreme supply APY.
  *
- * The generic threshold is 1500%, but ETH-pegged loan markets use 100%
+ * The generic threshold is 500%, but ETH-pegged loan markets use 100%
  * because locked WETH markets have appeared around 200%.
  */
 export const createLockedMarketFilter = (showLocked: boolean): MarketFilter => {

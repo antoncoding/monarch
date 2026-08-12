@@ -222,7 +222,7 @@ export function MarketFilter({ className, variant = 'ghost', zIndex = 'settings'
                 </FilterRow>
                 <FilterRow
                   title="Hide Locked Markets"
-                  description="Filter out frozen markets with extreme APY (> 1500%)."
+                  description="Filter out frozen markets with extreme APY (> 500%)."
                 >
                   <IconSwitch
                     selected={!showLockedMarkets}

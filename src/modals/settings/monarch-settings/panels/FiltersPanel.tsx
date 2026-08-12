@@ -72,7 +72,7 @@ export function FiltersPanel() {
         <Divider />
         <SettingToggleItem
           title="Hide Locked Markets"
-          description="Filter out frozen markets with extreme APY (> 1500%). These are typically dead markets with inflated rates."
+          description="Filter out frozen markets with extreme APY (> 500%). These are typically dead markets with inflated rates."
           selected={!showLockedMarkets}
           onChange={(checked) => setShowLockedMarkets(!checked)}
           ariaLabel="Toggle hide locked markets"
