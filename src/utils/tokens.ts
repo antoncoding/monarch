@@ -334,6 +334,18 @@ const supportedTokens = [
     networks: [{ chain: arbitrum, address: '0x59863989d080B22476DB95656d0C3CC18be92214' }],
   },
   {
+    symbol: 'BRAt',
+    img: require('../imgs/tokens/brat.svg') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0xc4ed6aba5373d78e160f4df39e011f078be54df8' }],
+  },
+  {
+    symbol: 'COLt',
+    img: require('../imgs/tokens/colt.svg') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0xa16d5db80a45157e0e451750b81ff0cc0b61d558' }],
+  },
+  {
     symbol: 'EUTBL',
     img: require('../imgs/tokens/eutbl.webp') as string,
     decimals: 5,
