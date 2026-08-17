@@ -15,6 +15,7 @@ type UseDeleverageQuoteParams = {
   withdrawCollateralAmount: bigint;
   currentBorrowAssets: bigint;
   currentBorrowShares: bigint;
+  isFullClose: boolean;
   slippageBps: number;
   loanTokenAddress: string;
   loanTokenDecimals: number;
@@ -40,7 +41,7 @@ export type DeleverageQuote = {
  *
  * Routes:
  * - ERC4626: `withdrawCollateralAmount -> previewRedeem`, then apply the slippage buffer to that conversion
- * - Swap: Velora SELL quote for repay preview and Velora BUY quote for max collateral to close debt
+ * - Swap: Velora SELL quote for repay preview/full close and Velora BUY quote for partial close bounds
  */
 export function useDeleverageQuote({
   chainId,
@@ -48,6 +49,7 @@ export function useDeleverageQuote({
   withdrawCollateralAmount,
   currentBorrowAssets,
   currentBorrowShares,
+  isFullClose,
   slippageBps,
   loanTokenAddress,
   loanTokenDecimals,
@@ -126,9 +128,10 @@ export function useDeleverageQuote({
       LEVERAGE_SWAP_ROUTE_POLICY_KEY,
       bufferedBorrowAssets.toString(),
       slippageBps,
+      isFullClose,
       userAddress ?? null,
     ],
-    enabled: route?.kind === 'swap' && bufferedBorrowAssets > 0n && !!userAddress,
+    enabled: route?.kind === 'swap' && !isFullClose && bufferedBorrowAssets > 0n && !!userAddress,
     queryFn: async () => {
       const buyRoute = await fetchVeloraPriceRoute({
         srcToken: collateralTokenAddress,
@@ -189,19 +192,25 @@ export function useDeleverageQuote({
   const maxCollateralForDebtRepay = useMemo(() => {
     if (!route || currentBorrowAssets <= 0n) return 0n;
     if (route.kind === 'swap') {
-      if (!userAddress || swapMaxCollateralForDebtQuery.error) return 0n;
+      if (!userAddress) return 0n;
+      // The explicit close sells all collateral, so the executable SELL quote is authoritative.
+      // Requiring a separate exact-output BUY route can reject closes that the SELL route fully covers.
+      if (isFullClose) return canCurrentSellCloseDebt ? withdrawCollateralAmount : 0n;
+      if (swapMaxCollateralForDebtQuery.error) return 0n;
       return swapMaxCollateralForDebtQuery.data?.maxCollateralForDebtRepay ?? 0n;
     }
     return rawRouteRepayAmount >= bufferedBorrowAssets ? withdrawCollateralAmount : 0n;
   }, [
     route,
     currentBorrowAssets,
+    isFullClose,
+    canCurrentSellCloseDebt,
+    withdrawCollateralAmount,
     swapMaxCollateralForDebtQuery.data,
     swapMaxCollateralForDebtQuery.error,
     userAddress,
     rawRouteRepayAmount,
     bufferedBorrowAssets,
-    withdrawCollateralAmount,
   ]);
 
   const closeRouteRequiresResolution = useMemo(() => {
@@ -226,7 +235,8 @@ export function useDeleverageQuote({
     if (!route || currentBorrowAssets <= 0n) return false;
 
     if (route.kind === 'swap') {
-      if (!userAddress || swapMaxCollateralForDebtQuery.error) return false;
+      if (!userAddress) return false;
+      if (!isFullClose && swapMaxCollateralForDebtQuery.error) return false;
       return canCurrentSellCloseDebt && currentBorrowShares > 0n && maxCollateralForDebtRepay > 0n;
     }
 
@@ -235,6 +245,7 @@ export function useDeleverageQuote({
     route,
     currentBorrowAssets,
     userAddress,
+    isFullClose,
     swapMaxCollateralForDebtQuery.error,
     canCurrentSellCloseDebt,
     currentBorrowShares,
@@ -267,7 +278,7 @@ export function useDeleverageQuote({
       if (closeRouteResolutionFailed) {
         return 'Failed to resolve the exact full-close collateral bound. Refresh the quote and try again.';
       }
-      if (canCurrentSellCloseDebt && currentBorrowShares > 0n && swapMaxCollateralForDebtQuery.error) {
+      if (!isFullClose && canCurrentSellCloseDebt && currentBorrowShares > 0n && swapMaxCollateralForDebtQuery.error) {
         return 'Failed to resolve the exact full-close collateral bound. Refresh the quote and try again.';
       }
       const routeError = withdrawCollateralAmount > 0n ? swapRepayQuoteQuery.error : null;
@@ -281,6 +292,7 @@ export function useDeleverageQuote({
     route,
     userAddress,
     withdrawCollateralAmount,
+    isFullClose,
     closeRouteResolutionFailed,
     canCurrentSellCloseDebt,
     currentBorrowShares,

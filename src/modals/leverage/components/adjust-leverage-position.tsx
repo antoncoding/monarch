@@ -281,6 +281,7 @@ export function AdjustLeveragePosition({
       action === 'deleverage' && !addedCapitalBlocksDeleverage && !hasInvalidPositionData ? withdrawCollateralAmount : 0n,
     currentBorrowAssets: action === 'deleverage' && !addedCapitalBlocksDeleverage ? currentBorrowAssets : 0n,
     currentBorrowShares: action === 'deleverage' && !addedCapitalBlocksDeleverage ? currentBorrowShares : 0n,
+    isFullClose: action === 'deleverage' && effectiveTargetLtvBps === 0n,
     loanTokenAddress: market.loanAsset.address,
     loanTokenDecimals: market.loanAsset.decimals,
     collateralTokenAddress: market.collateralAsset.address,
