@@ -513,8 +513,31 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' },
       { chain: base, address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' },
+      { chain: monad, address: '0xd18b7EC58Cdf4876f6AfEbd3eD1730E4Ce10414b' },
     ],
     peg: TokenPeg.BTC,
+  },
+  {
+    symbol: 'mHyperBTC',
+    img: require('../imgs/tokens/mhyperbtc.png') as string,
+    decimals: 18,
+    networks: [
+      { chain: mainnet, address: '0xC8495EAFf71D3A563b906295fCF2f685b1783085' },
+      { chain: monad, address: '0xf7Cf282eC810fDed974F99c0163E792f432892BC' },
+    ],
+    protocol: {
+      name: 'Midas',
+    },
+    peg: TokenPeg.BTC,
+  },
+  {
+    symbol: 'mGLO',
+    img: require('../imgs/tokens/mglo.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0xFCc9Cc1209651Ed8867332d6F664CF82743A2584' }],
+    protocol: {
+      name: 'Midas',
+    },
   },
   {
     symbol: 'mBASIS',
