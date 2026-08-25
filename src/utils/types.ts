@@ -345,6 +345,7 @@ export type MarketLiquidationTransaction = {
   hash: string;
   timestamp: number;
   liquidator: string;
+  borrower: string;
   repaidAssets: string;
   seizedAssets: string;
   badDebtAssets: string;
