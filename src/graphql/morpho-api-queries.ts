@@ -382,6 +382,9 @@ export const marketLiquidationsQuery = `
         hash: txHash
         timestamp
         type
+        user {
+          address
+        }
         data {
           ... on MarketTransactionLiquidationData {
             repaidAssets

@@ -61,6 +61,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-left">LIQUIDATOR</TableHead>
+                <TableHead className="text-left">LIQUIDATED ACCOUNT</TableHead>
                 <TableHead className="text-right">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableHead>
                 <TableHead className="text-right">SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})</TableHead>
                 <TableHead className="text-right">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableHead>
@@ -72,7 +73,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
               {liquidations.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center text-gray-400"
                   >
                     No liquidations found for this market
@@ -82,6 +83,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                 liquidations.map((liquidation: MarketLiquidationTransaction) => {
                   const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
                   const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
+                  const isBorrowerAddress = liquidation.borrower?.startsWith('0x');
 
                   return (
                     <TableRow key={`${liquidation.hash}-${liquidation.repaidAssets}`}>
@@ -95,6 +97,18 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                           />
                         ) : (
                           <span>{liquidation.liquidator}</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isBorrowerAddress ? (
+                          <AccountIdentity
+                            address={liquidation.borrower as Address}
+                            chainId={chainId}
+                            variant="compact"
+                            linkTo="profile"
+                          />
+                        ) : (
+                          <span>{liquidation.borrower}</span>
                         )}
                       </TableCell>
                       <TableCell className="text-sm">
