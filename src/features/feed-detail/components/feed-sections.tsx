@@ -9,8 +9,16 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
+import { FeedMechanismBadge } from '@/features/markets/components/oracle/MarketOracle/FeedMechanismBadge';
 import { FeedTypeBadge } from '@/features/markets/components/oracle/MarketOracle/FeedTypeBadge';
-import { formatOracleDuration, formatOraclePrice, isMonarchVerifiedFeed } from '@/utils/oracle';
+import {
+  formatOracleDuration,
+  formatOraclePrice,
+  formatPendleOracleType,
+  getFeedMechanism,
+  getFeedReferenceLinks,
+  isMonarchVerifiedFeed,
+} from '@/utils/oracle';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { MARKETS_PAGE_SIZE, ORACLE_CONTRACTS_PAGE_SIZE } from '../feed-detail-constants';
 import { formatOptionalTimestamp, formatScannerTimestamp } from '../feed-detail-formatters';
@@ -31,6 +39,8 @@ import {
   DependencyTypeValue,
   DetailRow,
   FeedProvenanceBadges,
+  FeedMechanismValue,
+  FeedReferenceLinks,
   FeedTypeValue,
   getDistinctFeedDescription,
   isChainlinkFeedLeg,
@@ -83,6 +93,7 @@ export function FeedHero({
               feedType={leg?.feedType}
               showUnknown
             />
+            <FeedMechanismBadge mechanism={getFeedMechanism(leg)} />
             <FeedProvenanceBadges leg={leg} />
           </div>
 
@@ -246,6 +257,8 @@ export function FeedInspectionSection({
   const deviationThreshold = leg?.deviationThreshold ?? leg?.updateSpread ?? null;
   const isChainlink = isChainlinkFeedLeg(leg);
   const isMonarchVerified = isMonarchVerifiedFeed(leg);
+  const mechanism = getFeedMechanism(leg);
+  const references = getFeedReferenceLinks(leg);
   const formattedAnswer = answer != null && decimals != null ? formatOraclePrice(answer, decimals) : 'Unavailable';
 
   return (
@@ -262,6 +275,35 @@ export function FeedInspectionSection({
             label="Type"
             value={<FeedTypeValue leg={leg} />}
           />
+          {mechanism && (
+            <DetailRow
+              label="Pricing mechanism"
+              value={<FeedMechanismValue leg={leg} />}
+            />
+          )}
+          {mechanism?.parameterLabel && mechanism.parameterValue && (
+            <DetailRow
+              label={mechanism.parameterLabel}
+              value={mechanism.parameterValue}
+            />
+          )}
+          {leg?.pendleOracleType && (
+            <DetailRow
+              label="Pricing path"
+              value={formatPendleOracleType(leg.pendleOracleType)}
+            />
+          )}
+          {leg?.underlyingFeed && (
+            <DetailRow
+              label="Underlying feed"
+              value={
+                <AddressIdentity
+                  address={leg.underlyingFeed}
+                  chainId={chainId}
+                />
+              }
+            />
+          )}
           {!isMonarchVerified && (
             <DetailRow
               label="Provider"
@@ -328,6 +370,12 @@ export function FeedInspectionSection({
             label="Decimals"
             value={decimals ?? leg?.decimals ?? 'Unknown'}
           />
+          {references.length > 0 && (
+            <DetailRow
+              label="References"
+              value={<FeedReferenceLinks leg={leg} />}
+            />
+          )}
         </div>
       </div>
     </SectionShell>

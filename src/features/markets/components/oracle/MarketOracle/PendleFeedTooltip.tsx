@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
-import { formatUnits } from 'viem';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
@@ -15,19 +14,11 @@ type PendleFeedTooltipProps = {
   feedFreshness?: FeedFreshnessStatus;
 };
 
-function formatDiscountPerYear(raw: string): string {
-  if (!/^\d+$/.test(raw)) return '—';
-  const formatted = formatUnits(BigInt(raw), 18);
-  const percent = Number(formatted) * 100;
-  return `${percent.toFixed(2)}%`;
-}
-
 export function PendleFeedTooltip({ feed, chainId, feedFreshness }: PendleFeedTooltipProps) {
   const baseAsset = feed.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair[1] ?? 'Unknown';
   const pendleFeedKind = feed.pendleFeedKind;
-  const isLinearDiscount = pendleFeedKind?.toLowerCase() === 'lineardiscount';
-  const typeLabel = isLinearDiscount ? 'Linear Discount' : pendleFeedKind;
+  const typeLabel = pendleFeedKind?.toLowerCase() === 'lineardiscount' ? 'Linear Discount' : pendleFeedKind;
 
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Pendle];
 
@@ -58,20 +49,12 @@ export function PendleFeedTooltip({ feed, chainId, feedFreshness }: PendleFeedTo
       <FeedTypeSection feed={feed} />
 
       {/* Pendle Specific Data */}
-      {(typeLabel != null || feed.baseDiscountPerYear != null) && (
+      {typeLabel != null && (
         <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          {typeLabel != null && (
-            <div className="flex justify-between font-zen text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Pendle Model:</span>
-              <span className="font-medium">{typeLabel}</span>
-            </div>
-          )}
-          {feed.baseDiscountPerYear != null && (
-            <div className="flex justify-between font-zen text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Base Discount:</span>
-              <span className="font-medium">{formatDiscountPerYear(feed.baseDiscountPerYear)}</span>
-            </div>
-          )}
+          <div className="flex justify-between font-zen text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Pendle Model:</span>
+            <span className="font-medium">{typeLabel}</span>
+          </div>
         </div>
       )}
 

@@ -149,6 +149,177 @@ export type FeedVendorResult = {
   };
 };
 
+export type FeedMechanismKind = 'twap' | 'linear' | 'capped';
+
+export type FeedMechanismInfo = {
+  label: string;
+  shortLabel: string;
+  description: string;
+};
+
+export const FEED_MECHANISM_INFO: Record<FeedMechanismKind, FeedMechanismInfo> = {
+  twap: {
+    label: 'TWAP',
+    shortLabel: 'TWAP',
+    description:
+      'Averages onchain market prices over time. Shorter windows react faster but are more sensitive to large trades in thin markets.',
+  },
+  linear: {
+    label: 'Linear or fixed discount',
+    shortLabel: 'Discount',
+    description:
+      'Applies a deterministic discount instead of tracking trades. This resists direct market manipulation but can diverge from market value.',
+  },
+  capped: {
+    label: 'Capped',
+    shortLabel: 'Capped',
+    description: 'Limits the reported price or collateralization ratio to a configured upper bound.',
+  },
+};
+
+export type FeedMechanism = {
+  kind: FeedMechanismKind;
+  label: string;
+  description: string;
+  parameterLabel?: string;
+  parameterValue?: string;
+};
+
+type FeedMechanismMetadata = Pick<
+  EnrichedFeed,
+  'baseDiscountPerYear' | 'discountPercentageBps' | 'feedSubtype' | 'oracleType' | 'pendleFeedKind' | 'pendleFeedSubtype' | 'twapDuration'
+>;
+
+function formatPercent(value: number): string {
+  return `${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}%`;
+}
+
+function formatBaseDiscountPerYear(raw: string | undefined): string | null {
+  if (!raw || !/^\d+$/.test(raw)) return null;
+
+  const percent = Number(formatUnits(BigInt(raw), 18)) * 100;
+  return Number.isFinite(percent) ? formatPercent(percent) : null;
+}
+
+export function getFeedMechanism(feed: FeedMechanismMetadata | null | undefined): FeedMechanism | null {
+  if (!feed) return null;
+
+  // Scanner fields are the source of truth because providers such as Ojo can expose
+  // Pendle pricing mechanics without using Pendle-specific classification fields.
+  if (feed.twapDuration != null) {
+    const duration = Number.isFinite(feed.twapDuration) && feed.twapDuration >= 0 ? formatOracleDuration(feed.twapDuration) : null;
+    return {
+      kind: 'twap',
+      label: duration ? `TWAP · ${duration}` : 'TWAP',
+      description: duration
+        ? `Averages onchain market prices over ${duration}. Shorter windows react faster but are more sensitive to large trades in thin markets.`
+        : FEED_MECHANISM_INFO.twap.description,
+      ...(duration ? { parameterLabel: 'TWAP window', parameterValue: duration } : {}),
+    };
+  }
+
+  const pendleFeedKind = feed.pendleFeedKind?.replace(/[-_\s]+/g, '').toLowerCase();
+  const pendleFeedSubtype = feed.pendleFeedSubtype?.replace(/[-_\s]+/g, '').toLowerCase();
+  const feedSubtype = feed.feedSubtype?.trim().toLowerCase();
+  if (pendleFeedKind === 'lineardiscount' || pendleFeedSubtype?.includes('lineardiscount') || feedSubtype === 'discounted') {
+    const annualDiscount = formatBaseDiscountPerYear(feed.baseDiscountPerYear);
+    const fixedDiscount =
+      feed.discountPercentageBps != null && Number.isFinite(feed.discountPercentageBps)
+        ? formatPercent(feed.discountPercentageBps / 100)
+        : null;
+
+    if (annualDiscount) {
+      return {
+        kind: 'linear',
+        label: `Linear · ${annualDiscount}/yr`,
+        description: `Applies a ${annualDiscount} annual discount toward par. It does not track market trades and can diverge from market value.`,
+        parameterLabel: 'Base discount per year',
+        parameterValue: annualDiscount,
+      };
+    }
+
+    if (fixedDiscount) {
+      return {
+        kind: 'linear',
+        label: `Discount · ${fixedDiscount}`,
+        description: `Applies a fixed ${fixedDiscount} discount to the underlying feed instead of tracking market trades.`,
+        parameterLabel: 'Fixed discount',
+        parameterValue: fixedDiscount,
+      };
+    }
+
+    return {
+      kind: 'linear',
+      label: 'Linear discount',
+      description: FEED_MECHANISM_INFO.linear.description,
+    };
+  }
+
+  const oracleType = feed.oracleType?.trim().toLowerCase();
+  if (oracleType?.startsWith('capped_') || feedSubtype === 'capped_chainlink') {
+    return {
+      kind: 'capped',
+      label: 'Capped',
+      description: FEED_MECHANISM_INFO.capped.description,
+    };
+  }
+
+  return null;
+}
+
+export function formatPendleOracleType(value: string): string {
+  const [source, target] = value.split('_TO_');
+  if (!source || !target) return value.replaceAll('_', ' ');
+
+  const targetLabel = target === 'ASSET' ? 'asset' : target;
+  return `${source} to ${targetLabel}`;
+}
+
+export type FeedReferenceLink = {
+  label: string;
+  url: string;
+};
+
+type FeedReferenceMetadata = Pick<EnrichedFeed, 'links' | 'sourceUrls'>;
+
+function normalizeFeedReference(label: string, candidate: string): FeedReferenceLink | null {
+  const normalizedLabel = label.trim();
+  const normalizedCandidate = candidate.trim();
+  if (!normalizedLabel || !normalizedCandidate) return null;
+
+  try {
+    const url = new URL(normalizedCandidate);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    return { label: normalizedLabel, url: url.toString() };
+  } catch {
+    return null;
+  }
+}
+
+export function getFeedReferenceLinks(feed: FeedReferenceMetadata | null | undefined): FeedReferenceLink[] {
+  if (!feed) return [];
+
+  const references = new Map<string, FeedReferenceLink>();
+  for (const link of feed.links ?? []) {
+    const reference = normalizeFeedReference(link.label, link.url);
+    if (reference) references.set(reference.url, reference);
+  }
+
+  for (const sourceUrl of feed.sourceUrls ?? []) {
+    let label = 'Reference';
+    try {
+      label = new URL(sourceUrl).hostname.replace(/^www\./, '');
+    } catch {
+      // Invalid URLs are discarded by normalizeFeedReference below.
+    }
+
+    const reference = normalizeFeedReference(label, sourceUrl);
+    if (reference && !references.has(reference.url)) references.set(reference.url, reference);
+  }
+
+  return Array.from(references.values());
+}
+
 /**
  * Detect feed vendor from enriched metadata (primary method)
  * Use this when oracle metadata is available from useOracleMetadata hook

@@ -8,10 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { FeedMechanismBadge } from '@/features/markets/components/oracle/MarketOracle/FeedMechanismBadge';
 import { FeedTypeBadge, getFeedTypeInfo } from '@/features/markets/components/oracle/MarketOracle/FeedTypeBadge';
 import {
   getChainlinkFeedUrl,
   getChronicleFeedUrl,
+  getFeedMechanism,
+  getFeedReferenceLinks,
   isMonarchVerifiedFeed,
   mapProviderToVendor,
   OracleVendorIcons,
@@ -207,13 +210,66 @@ export function FeedTypeValue({ leg }: { leg: FeedDependencyLeg | null }) {
           />
         }
       >
-        <span
+        <Link
+          href={feedTypeInfo.docsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex h-5 w-5 items-center justify-center rounded-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
-          aria-label={`${feedTypeInfo.label} feed description`}
+          aria-label={`Read ${feedTypeInfo.label} feed docs`}
+        >
+          <ExternalLinkIcon className="h-3.5 w-3.5" />
+        </Link>
+      </Tooltip>
+    </div>
+  );
+}
+
+export function FeedMechanismValue({ leg }: { leg: FeedDependencyLeg | null }) {
+  const mechanism = getFeedMechanism(leg);
+  if (!mechanism) return null;
+
+  return (
+    <div className="inline-flex items-center justify-end gap-1.5">
+      <FeedMechanismBadge mechanism={mechanism} />
+      <Tooltip
+        content={
+          <TooltipContent
+            title={`${mechanism.label} pricing`}
+            detail={mechanism.description}
+            className="max-w-xs"
+          />
+        }
+      >
+        <button
+          type="button"
+          className="inline-flex h-5 w-5 items-center justify-center rounded-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
+          aria-label={`${mechanism.label} pricing description`}
         >
           <LuInfo className="h-3.5 w-3.5" />
-        </span>
+        </button>
       </Tooltip>
+    </div>
+  );
+}
+
+export function FeedReferenceLinks({ leg }: { leg: FeedDependencyLeg | null }) {
+  const references = getFeedReferenceLinks(leg);
+  if (references.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
+      {references.map((reference) => (
+        <Link
+          key={reference.url}
+          href={reference.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-primary no-underline hover:underline"
+        >
+          {reference.label}
+          <ExternalLinkIcon className="h-3 w-3" />
+        </Link>
+      ))}
     </div>
   );
 }
