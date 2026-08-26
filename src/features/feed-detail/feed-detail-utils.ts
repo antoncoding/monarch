@@ -35,6 +35,15 @@ export type FeedDependencyLeg = (EnrichedFeed | EnrichedVault) & {
   asset?: string;
   assetSymbol?: string;
   oracleType?: string;
+  pendleFeedKind?: string;
+  pendleOracleType?: string;
+  twapDuration?: number;
+  baseDiscountPerYear?: string;
+  discountPercentageBps?: number;
+  feedSubtype?: string;
+  underlyingFeed?: string;
+  links?: Array<{ label: string; url: string }>;
+  sourceUrls?: string[];
   pair?: [string, string] | [];
 };
 

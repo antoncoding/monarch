@@ -43,12 +43,18 @@ export type EnrichedFeed = {
   updateSpread?: number; // Chronicle deviation threshold percentage
   feedType?: OracleFeedType; // Scanner feed category: "market", "fundamental", "dex", "nav", or future categories
   links?: Array<{ label: string; url: string }>;
+  sourceUrls?: string[];
   baseDiscountPerYear?: string; // Pendle base discount per year (raw 18-decimal value)
+  discountPercentageBps?: number; // Fixed discount applied to an underlying feed, in basis points
+  feedSubtype?: string;
   innerOracle?: string; // Pendle inner oracle address
+  underlyingFeed?: string;
   pt?: string; // Pendle PT token address
   ptSymbol?: string; // Pendle PT token symbol
   pendleFeedKind?: string; // Pendle feed kind (e.g. "PendleChainlinkOracle", "LinearDiscount")
   pendleFeedSubtype?: string; // Pendle subtype (e.g. "SparkLinearDiscountOracle")
+  pendleOracleType?: string; // Pendle pricing path (e.g. "PT_TO_ASSET")
+  twapDuration?: number; // Time-weighted average window in seconds
   oracleType?: string;
 };
 

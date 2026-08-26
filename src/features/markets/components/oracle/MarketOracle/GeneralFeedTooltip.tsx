@@ -6,7 +6,14 @@ import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { isMonarchVerifiedFeed, mapProviderToVendor, OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
+import {
+  getFeedReferenceLinks,
+  isMonarchVerifiedFeed,
+  mapProviderToVendor,
+  OracleVendorIcons,
+  PriceFeedVendors,
+  type FeedFreshnessStatus,
+} from '@/utils/oracle';
 import { FeedTypeSection } from './FeedTypeSection';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
@@ -16,24 +23,10 @@ type GeneralFeedTooltipProps = {
   feedFreshness?: FeedFreshnessStatus;
 };
 
-function getSafeCustomLink(link: { label: string; url: string }): { label: string; url: string } | null {
-  const label = link.label.trim();
-  const candidate = link.url.trim();
-  if (!label || !candidate) return null;
-
-  try {
-    const url = new URL(candidate);
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-    return { label, url: url.toString() };
-  } catch {
-    return null;
-  }
-}
-
 export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeedTooltipProps) {
   const baseAsset = feed.pair[0] ?? 'Unknown';
   const quoteAsset = feed.pair[1] ?? 'Unknown';
-  const customLinks = feed.links?.map(getSafeCustomLink).filter((link): link is { label: string; url: string } => link != null) ?? [];
+  const referenceLinks = getFeedReferenceLinks(feed);
   const isMonarchVerified = isMonarchVerifiedFeed(feed);
 
   const vendor = feed.provider ? mapProviderToVendor(feed.provider) : PriceFeedVendors.Unknown;
@@ -118,7 +111,7 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
       {/* External Links */}
       <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
         <div className="mb-2 font-zen text-sm font-medium text-gray-700 dark:text-gray-300">View on:</div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href={getExplorerURL(feed.address as Address, chainId)}
             target="_blank"
@@ -134,9 +127,9 @@ export function GeneralFeedTooltip({ feed, chainId, feedFreshness }: GeneralFeed
             />
             Explorer
           </Link>
-          {customLinks.map((link) => (
+          {referenceLinks.map((link) => (
             <Link
-              key={`${link.label}-${link.url}`}
+              key={link.url}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
