@@ -4,7 +4,7 @@ import type { Address } from 'viem';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
-import { getFeedReferenceLinks, OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
+import { OracleVendorIcons, PriceFeedVendors, type FeedFreshnessStatus } from '@/utils/oracle';
 import { FeedTypeSection } from './FeedTypeSection';
 import { FeedFreshnessSection } from './FeedFreshnessSection';
 
@@ -19,7 +19,6 @@ export function PendleFeedTooltip({ feed, chainId, feedFreshness }: PendleFeedTo
   const quoteAsset = feed.pair[1] ?? 'Unknown';
   const pendleFeedKind = feed.pendleFeedKind;
   const typeLabel = pendleFeedKind?.toLowerCase() === 'lineardiscount' ? 'Linear Discount' : pendleFeedKind;
-  const referenceLinks = getFeedReferenceLinks(feed);
 
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Pendle];
 
@@ -64,7 +63,7 @@ export function PendleFeedTooltip({ feed, chainId, feedFreshness }: PendleFeedTo
       {/* External Links */}
       <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
         <div className="mb-2 font-zen text-sm font-medium text-gray-700 dark:text-gray-300">View on:</div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <Link
             href={getExplorerURL(feed.address as Address, chainId)}
             target="_blank"
@@ -80,17 +79,6 @@ export function PendleFeedTooltip({ feed, chainId, feedFreshness }: PendleFeedTo
             />
             Etherscan
           </Link>
-          {referenceLinks.map((link) => (
-            <Link
-              key={link.url}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
-            >
-              {link.label}
-            </Link>
-          ))}
         </div>
       </div>
     </div>
