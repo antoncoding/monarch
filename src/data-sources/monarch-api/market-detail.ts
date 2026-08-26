@@ -311,6 +311,7 @@ const fetchMonarchLiquidationsWindow = async (
     hash: event.txHash,
     timestamp: toTimestamp(event.timestamp),
     liquidator: event.caller,
+    borrower: event.borrower,
     repaidAssets: event.repaidAssets,
     seizedAssets: event.seizedAssets,
     badDebtAssets: event.badDebtAssets,

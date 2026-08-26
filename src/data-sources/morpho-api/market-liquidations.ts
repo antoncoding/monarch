@@ -9,6 +9,9 @@ type MorphoAPILiquidationItem = {
   hash: string;
   timestamp: number;
   type: string; // Should be 'MarketLiquidation'
+  user: {
+    address: string;
+  };
   data: {
     repaidAssets: string;
     seizedAssets: string;
@@ -69,6 +72,7 @@ export const fetchMorphoMarketLiquidations = async (
         hash: item.hash,
         timestamp: item.timestamp,
         liquidator: item.data.liquidator,
+        borrower: item.user.address,
         repaidAssets: item.data.repaidAssets,
         seizedAssets: item.data.seizedAssets,
         badDebtAssets: item.data.badDebtAssets,
