@@ -21,29 +21,38 @@ export function FeedTypeSection({ feed }: FeedTypeSectionProps) {
 
   return (
     <div className="rounded-sm border border-gray-200/40 bg-hovered p-3 dark:border-gray-600/20">
-      <div className="flex items-center justify-between gap-3 font-zen text-sm">
-        <span className="text-gray-600 dark:text-gray-400">Feed Type:</span>
-        <div className="flex flex-wrap items-center justify-end gap-1">
-          <FeedTypeBadge feedType={feed.feedType} />
-          <FeedMechanismBadge mechanism={mechanism} />
-          <button
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              toggleModal(
-                <FeedTypesModal
-                  isOpen
-                  onClose={() => closeModal()}
-                />,
-              );
-            }}
-            className="cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
-            type="button"
-            aria-label="Learn about feed types and pricing mechanisms"
-          >
-            <IoHelpCircleOutline size={14} />
-          </button>
+      <div className="flex items-start gap-2 font-zen text-sm">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          {feed.feedType && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-600 dark:text-gray-400">Feed Type:</span>
+              <FeedTypeBadge feedType={feed.feedType} />
+            </div>
+          )}
+          {mechanism && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-gray-600 dark:text-gray-400">Mechanism:</span>
+              <FeedMechanismBadge mechanism={mechanism} />
+            </div>
+          )}
         </div>
+        <button
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleModal(
+              <FeedTypesModal
+                isOpen
+                onClose={() => closeModal()}
+              />,
+            );
+          }}
+          className="mt-0.5 cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
+          type="button"
+          aria-label="Learn about feed types and pricing mechanisms"
+        >
+          <IoHelpCircleOutline size={14} />
+        </button>
       </div>
       {feed.feedType && <p className="mt-2 font-zen text-xs text-gray-600 dark:text-gray-400">{info.description}</p>}
       {mechanism && (

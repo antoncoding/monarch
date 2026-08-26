@@ -240,12 +240,13 @@ export function FeedMechanismValue({ leg }: { leg: FeedDependencyLeg | null }) {
           />
         }
       >
-        <span
+        <button
+          type="button"
           className="inline-flex h-5 w-5 items-center justify-center rounded-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
           aria-label={`${mechanism.label} pricing description`}
         >
           <LuInfo className="h-3.5 w-3.5" />
-        </span>
+        </button>
       </Tooltip>
     </div>
   );

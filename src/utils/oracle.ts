@@ -187,7 +187,7 @@ export type FeedMechanism = {
 
 type FeedMechanismMetadata = Pick<
   EnrichedFeed,
-  'baseDiscountPerYear' | 'discountPercentageBps' | 'feedSubtype' | 'oracleType' | 'pendleFeedKind' | 'twapDuration'
+  'baseDiscountPerYear' | 'discountPercentageBps' | 'feedSubtype' | 'oracleType' | 'pendleFeedKind' | 'pendleFeedSubtype' | 'twapDuration'
 >;
 
 function formatPercent(value: number): string {
@@ -219,8 +219,9 @@ export function getFeedMechanism(feed: FeedMechanismMetadata | null | undefined)
   }
 
   const pendleFeedKind = feed.pendleFeedKind?.replace(/[-_\s]+/g, '').toLowerCase();
+  const pendleFeedSubtype = feed.pendleFeedSubtype?.replace(/[-_\s]+/g, '').toLowerCase();
   const feedSubtype = feed.feedSubtype?.trim().toLowerCase();
-  if (pendleFeedKind === 'lineardiscount' || feedSubtype === 'discounted') {
+  if (pendleFeedKind === 'lineardiscount' || pendleFeedSubtype?.includes('lineardiscount') || feedSubtype === 'discounted') {
     const annualDiscount = formatBaseDiscountPerYear(feed.baseDiscountPerYear);
     const fixedDiscount =
       feed.discountPercentageBps != null && Number.isFinite(feed.discountPercentageBps)
