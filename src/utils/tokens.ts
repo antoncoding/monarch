@@ -540,6 +540,15 @@ const supportedTokens = [
     },
   },
   {
+    symbol: 'nvPRIME',
+    img: require('../imgs/tokens/nvprime.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0xC360e625F19A7ea47e47810B13E386221d5187D1' }],
+    protocol: {
+      name: 'Nuva',
+    },
+  },
+  {
     symbol: 'mBASIS',
     img: require('../imgs/tokens/mbasis.png') as string,
     decimals: 18,
