@@ -138,7 +138,7 @@ const supportedTokens = [
   },
   {
     symbol: 'CASHCAT',
-    img: 'https://raw.githubusercontent.com/trustwallet/assets/1f71c062a623808f79e673f63ea0f587dd4d2edc/blockchains/robinhoodchain/assets/0x020bfC650A365f8BB26819deAAbF3E21291018b4/logo.png',
+    img: require('../imgs/tokens/cashcat.png') as string,
     decimals: 18,
     networks: [{ chain: robinhood, address: '0x020bfC650A365f8BB26819deAAbF3E21291018b4' }],
   },
