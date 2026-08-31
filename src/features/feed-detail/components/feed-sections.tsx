@@ -275,12 +275,8 @@ export function FeedInspectionSection({
               value={<span className="tabular-nums">{leg.constantValue ?? formattedAnswer}×</span>}
             />
             <DetailRow
-              label="Onchain value"
-              value={
-                <span className="font-monospace text-xs">
-                  {answer?.toLocaleString('en-US') ?? '1,000,000,000,000'} ({decimals ?? leg.decimals ?? 12} decimals)
-                </span>
-              }
+              label="Decimals"
+              value={decimals ?? leg.decimals ?? 12}
             />
             {references.length > 0 && (
               <DetailRow
