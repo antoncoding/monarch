@@ -56,26 +56,21 @@ const prioritizeDiscoveryMarkets = (markets: Market[], discoveryPriorityMap: Map
     return markets;
   }
 
-  return [...markets].sort((a, b) => {
-    const aKey = getMetricsKey(a.morphoBlue.chain.id, a.uniqueKey);
-    const bKey = getMetricsKey(b.morphoBlue.chain.id, b.uniqueKey);
-    const aPriority = discoveryPriorityMap.get(aKey);
-    const bPriority = discoveryPriorityMap.get(bKey);
+  const discoveryMarkets: Market[] = [];
+  const otherMarkets: Market[] = [];
 
-    if (aPriority === undefined && bPriority === undefined) {
-      return 0;
+  for (const market of markets) {
+    const key = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
+    if (discoveryPriorityMap.has(key)) {
+      discoveryMarkets.push(market);
+    } else {
+      otherMarkets.push(market);
     }
+  }
 
-    if (aPriority === undefined) {
-      return 1;
-    }
-
-    if (bPriority === undefined) {
-      return -1;
-    }
-
-    return aPriority - bPriority;
-  });
+  // Keep discovery markets highlighted at the top without overriding the
+  // active table sort within either section.
+  return [...discoveryMarkets, ...otherMarkets];
 };
 
 const getSortPropertyPath = (sortColumn: SortColumn): string => {

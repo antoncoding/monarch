@@ -88,6 +88,15 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'XSGD',
+    img: require('../imgs/tokens/xsgd.svg') as string,
+    decimals: 6,
+    networks: [{ chain: base, address: '0x0A4C9cb2778aB3302996A34BeFCF9a8Bc288C33b' }],
+    protocol: {
+      name: 'StraitsX',
+    },
+  },
+  {
     symbol: 'eUSD',
     img: require('../imgs/tokens/eusd.png') as string,
     decimals: 18,
@@ -113,6 +122,17 @@ const supportedTokens = [
     img: require('../imgs/tokens/usd0.png') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0x73A15FeD60Bf67631dC6cd7Bc5B6e8da8190aCF5' }],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'yoUSD',
+    img: require('../imgs/tokens/yousd.svg') as string,
+    decimals: 6,
+    networks: [{ chain: mainnet, address: '0x0000000f2eB9f69274678c76222B35eEc7588a65' }],
+    protocol: {
+      name: 'YO',
+      isProxy: true,
+    },
     peg: TokenPeg.USD,
   },
   {
@@ -776,6 +796,15 @@ const supportedTokens = [
     img: require('../imgs/tokens/link.png') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0x514910771AF9Ca656af840dff83E8264EcF986CA' }],
+  },
+  {
+    symbol: 'wstLINK',
+    img: require('../imgs/tokens/wstlink.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x911D86C72155c33993d594B0Ec7E6206B4C803da' }],
+    protocol: {
+      name: 'stake.link',
+    },
   },
   {
     symbol: 'USYC',
