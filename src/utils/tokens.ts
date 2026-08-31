@@ -137,6 +137,12 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'CASHCAT',
+    img: require('../imgs/tokens/cashcat.png') as string,
+    decimals: 18,
+    networks: [{ chain: robinhood, address: '0x020bfC650A365f8BB26819deAAbF3E21291018b4' }],
+  },
+  {
     symbol: 'syrupUSDG',
     img: require('../imgs/tokens/syrupusdg.svg') as string,
     decimals: 6,
@@ -950,6 +956,15 @@ const supportedTokens = [
     img: require('../imgs/tokens/eigen.png') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0xec53bF9167f50cDEB3Ae105f56099aaaB9061F83' }],
+  },
+  {
+    symbol: 'dCOMP',
+    img: require('../imgs/oracles/compound.webp') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x91d14789071e5E195FFC9F745348736677De3292' }],
+    protocol: {
+      name: 'API3',
+    },
   },
   {
     symbol: 'wsuperOETHb',
