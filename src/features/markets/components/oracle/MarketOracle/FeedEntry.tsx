@@ -9,7 +9,6 @@ import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
-import { LuEqual } from 'react-icons/lu';
 import type { FeedSnapshotByAddress } from '@/hooks/useFeedLastUpdatedByChain';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import {
@@ -118,7 +117,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
       return (
         <TooltipContent
           title="Scalar"
-          detail="Fixed 1× multiplier used to balance oracle decimals."
+          detail="Fixed 1× multiplier for oracle scaling."
         />
       );
     }
@@ -242,10 +241,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
 
         <div className="flex flex-shrink-0 items-center gap-1">
           {isConstantFeed ? (
-            <LuEqual
-              size={14}
-              className="flex-shrink-0 text-secondary"
-            />
+            <span className="flex-shrink-0 text-xs tabular-nums text-secondary">1×</span>
           ) : isMonarchVerified ? (
             <MonarchVerifiedIcon size={14} />
           ) : hasKnownVendorIcon ? (
