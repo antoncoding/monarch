@@ -22,6 +22,7 @@ export type FeedDependencyLeg = (EnrichedFeed | EnrichedVault) & {
   builtBy?: string;
   noAdmin?: boolean;
   feedType?: string;
+  constantValue?: string;
   decimals?: number;
   tier?: string;
   heartbeat?: number;
@@ -247,6 +248,7 @@ export function getFeedPairLabel(leg: FeedDependencyLeg | null): string {
 }
 
 export function getFeedTitle(leg: FeedDependencyLeg | null, address: string): string {
+  if (leg?.feedType === 'constant') return 'Scalar';
   const pairLabel = getFeedPairLabel(leg);
   if (pairLabel !== 'Unknown pair') return pairLabel;
   if (leg?.description) return leg.description;
@@ -256,6 +258,10 @@ export function getFeedTitle(leg: FeedDependencyLeg | null, address: string): st
 export function getFeedProviderLabel(leg: FeedDependencyLeg | null): string {
   if (isMonarchVerifiedFeed(leg)) {
     return leg?.builtBy ?? 'Monarch verified';
+  }
+
+  if (leg?.feedType === 'constant') {
+    return leg.builtBy ?? leg.vendor ?? leg.provider ?? 'Unknown provider';
   }
 
   return leg?.provider ?? leg?.vendor ?? 'Unknown provider';

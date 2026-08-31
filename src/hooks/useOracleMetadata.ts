@@ -22,7 +22,7 @@ import { createPersistedApiResponseKey } from '@/utils/persistedApiResponseCache
  */
 
 export type OracleFeedProvider = string | null;
-export type KnownOracleFeedType = 'market' | 'fundamental' | 'dex' | 'nav';
+export type KnownOracleFeedType = 'market' | 'fundamental' | 'dex' | 'nav' | 'constant';
 export type OracleFeedType = KnownOracleFeedType | (string & {});
 
 export type EnrichedFeed = {
@@ -42,6 +42,7 @@ export type EnrichedFeed = {
   updateInterval?: number; // Chronicle update cadence in seconds
   updateSpread?: number; // Chronicle deviation threshold percentage
   feedType?: OracleFeedType; // Scanner feed category: "market", "fundamental", "dex", "nav", or future categories
+  constantValue?: string;
   links?: Array<{ label: string; url: string }>;
   sourceUrls?: string[];
   baseDiscountPerYear?: string; // Pendle base discount per year (raw 18-decimal value)
@@ -141,6 +142,27 @@ export type OracleMetadataRecord = Record<string, OracleOutput>;
 export type OracleMetadataMap = Map<string, OracleOutput>;
 
 const ORACLE_GIST_BASE_URL = process.env.NEXT_PUBLIC_ORACLE_GIST_BASE_URL?.replace(/\/+$/, '');
+const STEAKHOUSE_DUMMY_FEED_ADDRESS = '0xc3866d726c204c0836e0677a31973c649888973d';
+
+// Existing cached scanner payloads classify this live contract as unknown. Normalize it at
+// metadata ingestion so every market and detail view receives the same feed semantics.
+const STEAKHOUSE_DUMMY_FEED_METADATA: Partial<EnrichedFeed> = {
+  description: 'Scalar adapter for Morpho oracle decimals',
+  pair: [],
+  provider: 'Steakhouse',
+  vendor: 'Steakhouse Financial',
+  builtBy: 'Steakhouse Financial',
+  noAdmin: true,
+  decimals: 12,
+  feedType: 'constant',
+  constantValue: '1',
+  feedSubtype: 'morpho_scale_adapter',
+  oracleType: 'morpho_scale_adapter',
+  sourceUrls: [
+    'https://github.com/Steakhouse-Financial/steakhouse-oracles/blob/main/src/DummyFeed.sol',
+    'https://etherscan.io/address/0xc3866d726c204c0836e0677a31973c649888973d#code',
+  ],
+};
 
 export function getOracleMetadataKey(chainId: number, oracleAddress: string): string {
   return `${chainId}-${oracleAddress.toLowerCase()}`;
@@ -189,10 +211,46 @@ function transformToRecord(data: OracleMetadataFile | null | undefined): OracleM
   const record: OracleMetadataRecord = {};
   for (const oracle of data.oracles) {
     if (oracle?.address) {
-      record[oracle.address.toLowerCase()] = oracle;
+      record[oracle.address.toLowerCase()] = applyKnownFeedMetadata(oracle);
     }
   }
   return record;
+}
+
+function applyKnownFeedMetadata(oracle: OracleOutput): OracleOutput {
+  if (oracle.chainId !== 1) return oracle;
+
+  const applyToFeed = (feed: EnrichedFeed | null): EnrichedFeed | null => {
+    if (feed?.address.toLowerCase() !== STEAKHOUSE_DUMMY_FEED_ADDRESS) return feed;
+    return { ...feed, ...STEAKHOUSE_DUMMY_FEED_METADATA };
+  };
+  const applyToData = (oracleData: OracleOutputData | null): OracleOutputData | null => {
+    if (!oracleData) return null;
+    return {
+      ...oracleData,
+      baseFeedOne: applyToFeed(oracleData.baseFeedOne),
+      baseFeedTwo: applyToFeed(oracleData.baseFeedTwo),
+      quoteFeedOne: applyToFeed(oracleData.quoteFeedOne),
+      quoteFeedTwo: applyToFeed(oracleData.quoteFeedTwo),
+    };
+  };
+
+  if (oracle.type === 'standard') {
+    return { ...oracle, data: applyToData(oracle.data) as OracleOutputData };
+  }
+  if (oracle.type === 'meta') {
+    return {
+      ...oracle,
+      data: {
+        ...oracle.data,
+        oracleSources: {
+          primary: applyToData(oracle.data.oracleSources.primary),
+          backup: applyToData(oracle.data.oracleSources.backup),
+        },
+      },
+    };
+  }
+  return oracle;
 }
 
 /**

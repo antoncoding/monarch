@@ -727,6 +727,7 @@ export function checkFeedsPath(
  */
 function getEnrichedFeedPath(feed: EnrichedFeed | null): { base: string; quote: string } {
   if (!feed?.address) return { base: 'EMPTY', quote: 'EMPTY' };
+  if (feed.feedType === 'constant') return { base: 'EMPTY', quote: 'EMPTY' };
   if (feed.pair?.length === 2) return { base: feed.pair[0], quote: feed.pair[1] };
   return { base: 'Unknown', quote: 'Unknown' };
 }

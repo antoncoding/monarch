@@ -38,6 +38,13 @@ export const FEED_TYPE_INFO: Record<KnownOracleFeedType, FeedTypeInfo> = {
     docsUrl: 'https://docs.monarchlend.xyz/docs/oracles-feed#nav-feed',
     badgeClassName: 'border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
   },
+  constant: {
+    label: 'Scalar',
+    shortLabel: 'Scalar',
+    description: 'Returns a fixed 1× multiplier used to balance oracle decimals.',
+    docsUrl: 'https://github.com/Steakhouse-Financial/steakhouse-oracles/blob/main/src/DummyFeed.sol',
+    badgeClassName: 'border border-gray-500/20 bg-gray-500/10 text-gray-700 dark:bg-gray-500/10 dark:text-gray-300',
+  },
 };
 
 const UNKNOWN_FEED_TYPE_INFO: FeedTypeInfo = {

@@ -261,6 +261,35 @@ export function FeedInspectionSection({
   const references = getFeedReferenceLinks(leg);
   const formattedAnswer = answer != null && decimals != null ? formatOraclePrice(answer, decimals) : 'Unavailable';
 
+  if (leg?.feedType === 'constant') {
+    return (
+      <SectionShell title="How It Works">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">
+          <div className="max-w-2xl text-sm leading-relaxed text-secondary">
+            <p>A fixed 1× multiplier. Its 12 decimal places keep Morpho&apos;s oracle scale valid without changing the price.</p>
+          </div>
+
+          <div>
+            <DetailRow
+              label="Multiplier"
+              value={<span className="tabular-nums">{leg.constantValue ?? formattedAnswer}×</span>}
+            />
+            <DetailRow
+              label="Decimals"
+              value={decimals ?? leg.decimals ?? 12}
+            />
+            {references.length > 0 && (
+              <DetailRow
+                label="References"
+                value={<FeedReferenceLinks leg={leg} />}
+              />
+            )}
+          </div>
+        </div>
+      </SectionShell>
+    );
+  }
+
   return (
     <SectionShell title="Price, Last 24 Hours">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">

@@ -131,7 +131,7 @@ export function FeedProvenanceBadges({ leg }: { leg: FeedDependencyLeg | null })
   return (
     <>
       {isMonarchVerifiedFeed(leg) && <MonarchVerifiedBadge />}
-      {leg.noAdmin && (
+      {leg.noAdmin && leg.feedType !== 'constant' && (
         <Badge
           size="sm"
           className="border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"

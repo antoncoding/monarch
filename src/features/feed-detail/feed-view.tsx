@@ -74,6 +74,7 @@ export default function FeedContent() {
   }, [occurrences, representativeLeg]);
   const dependencyKind = representativeOccurrence?.kind ?? null;
   const isVaultDependency = dependencyKind === 'vault';
+  const isConstantFeed = representativeLeg?.feedType === 'constant';
   const isChainlinkFeed = isChainlinkFeedLeg(representativeLeg);
 
   const {
@@ -134,7 +135,7 @@ export default function FeedContent() {
     address: feedAddress,
     chainId,
     decimals: feedDecimals,
-    enabled: isRouteSupported && !oracleMetadataLoading && !isVaultDependency,
+    enabled: isRouteSupported && !oracleMetadataLoading && !isVaultDependency && !isConstantFeed,
   });
   const totalSupplyUsd = dependencies.reduce((sum, dependency) => sum + toFiniteNumber(dependency.market.state.supplyAssetsUsd), 0);
   const totalBorrowUsd = dependencies.reduce((sum, dependency) => sum + toFiniteNumber(dependency.market.state.borrowAssetsUsd), 0);
