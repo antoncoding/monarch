@@ -39,9 +39,9 @@ export const FEED_TYPE_INFO: Record<KnownOracleFeedType, FeedTypeInfo> = {
     badgeClassName: 'border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
   },
   constant: {
-    label: 'Constant',
-    shortLabel: 'Constant',
-    description: 'Returns a fixed value for oracle scale calculations rather than tracking a market price.',
+    label: 'Scalar',
+    shortLabel: 'Scalar',
+    description: 'Returns a fixed 1× multiplier used to balance oracle decimals.',
     docsUrl: 'https://github.com/Steakhouse-Financial/steakhouse-oracles/blob/main/src/DummyFeed.sol',
     badgeClassName: 'border border-gray-500/20 bg-gray-500/10 text-gray-700 dark:bg-gray-500/10 dark:text-gray-300',
   },

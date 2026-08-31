@@ -264,16 +264,16 @@ export function FeedInspectionSection({
   if (leg?.feedType === 'constant') {
     return (
       <SectionShell
-        title="Constant Scale Adapter"
-        detail="Fixed-value input used for decimal scaling, not market pricing."
+        title="How It Works"
+        detail="Balances oracle decimals without changing the price."
       >
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">
           <div className="max-w-2xl space-y-3 text-sm leading-relaxed text-secondary">
             <p>
-              Morpho combines token and feed decimals into a scale factor. This adapter returns 1,000,000,000,000 with 12 decimals, which
-              normalizes to exactly 1. It corrects the scale calculation without changing the economic price.
+              This contract is a fixed 1× multiplier. Morpho uses its 12 decimal places to balance the oracle scale, so the adapter changes
+              the math&apos;s units, not the price.
             </p>
-            <p>Without this quote-side adapter, some oracle configurations would require a negative power of ten and could not deploy.</p>
+            <p>Some configurations need it to keep the scale exponent non-negative and deployable.</p>
           </div>
 
           <div>

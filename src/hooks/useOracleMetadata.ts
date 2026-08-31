@@ -147,7 +147,7 @@ const STEAKHOUSE_DUMMY_FEED_ADDRESS = '0xc3866d726c204c0836e0677a31973c649888973
 // Existing cached scanner payloads classify this live contract as unknown. Normalize it at
 // metadata ingestion so every market and detail view receives the same feed semantics.
 const STEAKHOUSE_DUMMY_FEED_METADATA: Partial<EnrichedFeed> = {
-  description: 'Constant scale adapter for Morpho oracle decimals',
+  description: 'Scalar adapter for Morpho oracle decimals',
   pair: [],
   provider: 'Steakhouse',
   vendor: 'Steakhouse Financial',

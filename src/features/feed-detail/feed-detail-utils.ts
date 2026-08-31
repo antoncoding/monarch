@@ -248,7 +248,7 @@ export function getFeedPairLabel(leg: FeedDependencyLeg | null): string {
 }
 
 export function getFeedTitle(leg: FeedDependencyLeg | null, address: string): string {
-  if (leg?.feedType === 'constant') return `Constant ${leg.constantValue ?? '1'}`;
+  if (leg?.feedType === 'constant') return 'Scalar';
   const pairLabel = getFeedPairLabel(leg);
   if (pairLabel !== 'Unknown pair') return pairLabel;
   if (leg?.description) return leg.description;

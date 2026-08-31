@@ -117,8 +117,8 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
     if (isConstantFeed) {
       return (
         <TooltipContent
-          title={`Constant ${feed.constantValue ?? '1'}`}
-          detail="Fixed-value scale adapter. Open the feed page for details."
+          title="Scalar"
+          detail="Fixed 1× multiplier used to balance oracle decimals."
         />
       );
     }
@@ -223,7 +223,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
       >
         {isConstantFeed ? (
           <div className="flex min-w-0 flex-1 items-center gap-1">
-            <span className="text-xs font-medium">Constant {feed.constantValue ?? '1'}</span>
+            <span className="text-xs font-medium">Scalar</span>
           </div>
         ) : showAssetPair ? (
           <div className="flex min-w-0 flex-1 items-center gap-1">
