@@ -372,6 +372,24 @@ const supportedTokens = [
     networks: [{ chain: arbitrum, address: '0xa16d5db80a45157e0e451750b81ff0cc0b61d558' }],
   },
   {
+    symbol: 'CHLt',
+    img: require('../imgs/tokens/chlt.svg') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0xe8dbc4680235ccaeff48e4c0b0eaceebb89e5e17' }],
+  },
+  {
+    symbol: 'PERt',
+    img: require('../imgs/tokens/pert.svg') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0x899438713f62b04d6cd8e8709986f7256fb6e3d9' }],
+  },
+  {
+    symbol: 'MEXt',
+    img: require('../imgs/tokens/mext.svg') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0xb96aa6babccd738d6644add4912fe5efbebf5a25' }],
+  },
+  {
     symbol: 'EUTBL',
     img: require('../imgs/tokens/eutbl.webp') as string,
     decimals: 5,
