@@ -263,58 +263,25 @@ export function FeedInspectionSection({
 
   if (leg?.feedType === 'constant') {
     return (
-      <SectionShell
-        title="How It Works"
-        detail="Balances oracle decimals without changing the price."
-      >
+      <SectionShell title="How It Works">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">
-          <div className="max-w-2xl space-y-3 text-sm leading-relaxed text-secondary">
-            <p>
-              This contract is a fixed 1× multiplier. Morpho uses its 12 decimal places to balance the oracle scale, so the adapter changes
-              the math&apos;s units, not the price.
-            </p>
-            <p>Some configurations need it to keep the scale exponent non-negative and deployable.</p>
+          <div className="max-w-2xl text-sm leading-relaxed text-secondary">
+            <p>A fixed 1× multiplier. Its 12 decimal places keep Morpho&apos;s oracle scale valid without changing the price.</p>
           </div>
 
           <div>
             <DetailRow
-              label="Type"
-              value={<FeedTypeValue leg={leg} />}
+              label="Multiplier"
+              value={<span className="tabular-nums">{leg.constantValue ?? formattedAnswer}×</span>}
             />
             <DetailRow
-              label="Value"
-              value={<span className="tabular-nums">{leg.constantValue ?? formattedAnswer}</span>}
-            />
-            <DetailRow
-              label="Raw answer"
-              value={<span className="font-monospace text-xs">{answer?.toLocaleString('en-US') ?? '1,000,000,000,000'}</span>}
-            />
-            <DetailRow
-              label="Decimals"
-              value={decimals ?? leg.decimals ?? 12}
-            />
-            <DetailRow
-              label="Provider"
+              label="Onchain value"
               value={
-                <ProviderLink
-                  leg={leg}
-                  chainId={chainId}
-                  className="inline-flex items-center justify-end gap-1.5 text-primary no-underline hover:underline"
-                />
+                <span className="font-monospace text-xs">
+                  {answer?.toLocaleString('en-US') ?? '1,000,000,000,000'} ({decimals ?? leg.decimals ?? 12} decimals)
+                </span>
               }
             />
-            {leg.builtBy && (
-              <DetailRow
-                label="Built by"
-                value={leg.builtBy}
-              />
-            )}
-            {leg.noAdmin && (
-              <DetailRow
-                label="Admin controls"
-                value="No admin"
-              />
-            )}
             {references.length > 0 && (
               <DetailRow
                 label="References"

@@ -260,6 +260,10 @@ export function getFeedProviderLabel(leg: FeedDependencyLeg | null): string {
     return leg?.builtBy ?? 'Monarch verified';
   }
 
+  if (leg?.feedType === 'constant') {
+    return leg.builtBy ?? leg.vendor ?? leg.provider ?? 'Unknown provider';
+  }
+
   return leg?.provider ?? leg?.vendor ?? 'Unknown provider';
 }
 
