@@ -11,4 +11,5 @@ export const FEED_TYPE_PAGE_COPY: Record<string, string> = {
   fundamental: 'A fundamental feed reports a protocol conversion rate or accounting relationship, not a traded spot price.',
   nav: 'A NAV feed reports net asset value based on assets, liabilities, reserves, or collateralization.',
   dex: 'A DEX feed derives price from onchain market structure such as a pool, TWAP, or Pendle market.',
+  constant: 'A constant feed returns a fixed value for oracle scale calculations rather than tracking a market price.',
 };

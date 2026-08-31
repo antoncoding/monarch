@@ -261,6 +261,72 @@ export function FeedInspectionSection({
   const references = getFeedReferenceLinks(leg);
   const formattedAnswer = answer != null && decimals != null ? formatOraclePrice(answer, decimals) : 'Unavailable';
 
+  if (leg?.feedType === 'constant') {
+    return (
+      <SectionShell
+        title="Constant Scale Adapter"
+        detail="Fixed-value input used for decimal scaling, not market pricing."
+      >
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">
+          <div className="max-w-2xl space-y-3 text-sm leading-relaxed text-secondary">
+            <p>
+              Morpho combines token and feed decimals into a scale factor. This adapter returns 1,000,000,000,000 with 12 decimals, which
+              normalizes to exactly 1. It corrects the scale calculation without changing the economic price.
+            </p>
+            <p>Without this quote-side adapter, some oracle configurations would require a negative power of ten and could not deploy.</p>
+          </div>
+
+          <div>
+            <DetailRow
+              label="Type"
+              value={<FeedTypeValue leg={leg} />}
+            />
+            <DetailRow
+              label="Value"
+              value={<span className="tabular-nums">{leg.constantValue ?? formattedAnswer}</span>}
+            />
+            <DetailRow
+              label="Raw answer"
+              value={<span className="font-monospace text-xs">{answer?.toLocaleString('en-US') ?? '1,000,000,000,000'}</span>}
+            />
+            <DetailRow
+              label="Decimals"
+              value={decimals ?? leg.decimals ?? 12}
+            />
+            <DetailRow
+              label="Provider"
+              value={
+                <ProviderLink
+                  leg={leg}
+                  chainId={chainId}
+                  className="inline-flex items-center justify-end gap-1.5 text-primary no-underline hover:underline"
+                />
+              }
+            />
+            {leg.builtBy && (
+              <DetailRow
+                label="Built by"
+                value={leg.builtBy}
+              />
+            )}
+            {leg.noAdmin && (
+              <DetailRow
+                label="Admin controls"
+                value="No admin"
+              />
+            )}
+            {references.length > 0 && (
+              <DetailRow
+                label="References"
+                value={<FeedReferenceLinks leg={leg} />}
+              />
+            )}
+          </div>
+        </div>
+      </SectionShell>
+    );
+  }
+
   return (
     <SectionShell title="Price, Last 24 Hours">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">

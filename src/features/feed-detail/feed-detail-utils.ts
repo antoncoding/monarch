@@ -22,6 +22,7 @@ export type FeedDependencyLeg = (EnrichedFeed | EnrichedVault) & {
   builtBy?: string;
   noAdmin?: boolean;
   feedType?: string;
+  constantValue?: string;
   decimals?: number;
   tier?: string;
   heartbeat?: number;
@@ -247,6 +248,7 @@ export function getFeedPairLabel(leg: FeedDependencyLeg | null): string {
 }
 
 export function getFeedTitle(leg: FeedDependencyLeg | null, address: string): string {
+  if (leg?.feedType === 'constant') return `Constant ${leg.constantValue ?? '1'}`;
   const pairLabel = getFeedPairLabel(leg);
   if (pairLabel !== 'Unknown pair') return pairLabel;
   if (leg?.description) return leg.description;

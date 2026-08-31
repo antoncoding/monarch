@@ -4,10 +4,12 @@ import type { Address } from 'viem';
 import { useReadContracts } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
 import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
+import { LuEqual } from 'react-icons/lu';
 import type { FeedSnapshotByAddress } from '@/hooks/useFeedLastUpdatedByChain';
 import type { EnrichedFeed } from '@/hooks/useOracleMetadata';
 import {
@@ -90,6 +92,7 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
   const vendorIcon = OracleVendorIcons[vendor];
   const hasKnownVendorIcon = vendor !== PriceFeedVendors.Unknown && Boolean(vendorIcon);
   const isMonarchVerified = isMonarchVerifiedFeed(feed);
+  const isConstantFeed = feed.feedType === 'constant';
   const feedAddressKey = feed.address.toLowerCase();
   const snapshot = feedSnapshotsByAddress?.[feedAddressKey];
   const directAnswer =
@@ -111,6 +114,15 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
   });
 
   const getTooltipContent = () => {
+    if (isConstantFeed) {
+      return (
+        <TooltipContent
+          title={`Constant ${feed.constantValue ?? '1'}`}
+          detail="Fixed-value scale adapter. Open the feed page for details."
+        />
+      );
+    }
+
     switch (vendor) {
       case PriceFeedVendors.Chainlink:
       case PriceFeedVendors.Chronicle:
@@ -209,7 +221,11 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
         className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80 gap-1 no-underline text-primary"
         onClick={(event) => event.stopPropagation()}
       >
-        {showAssetPair ? (
+        {isConstantFeed ? (
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            <span className="text-xs font-medium">Constant {feed.constantValue ?? '1'}</span>
+          </div>
+        ) : showAssetPair ? (
           <div className="flex min-w-0 flex-1 items-center gap-1">
             <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">{baseAsset}</span>
             <IoIosSwap
@@ -225,7 +241,12 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
         )}
 
         <div className="flex flex-shrink-0 items-center gap-1">
-          {isMonarchVerified ? (
+          {isConstantFeed ? (
+            <LuEqual
+              size={14}
+              className="flex-shrink-0 text-secondary"
+            />
+          ) : isMonarchVerified ? (
             <MonarchVerifiedIcon size={14} />
           ) : hasKnownVendorIcon ? (
             <Image
