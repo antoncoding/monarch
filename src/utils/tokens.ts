@@ -384,6 +384,12 @@ const supportedTokens = [
     networks: [{ chain: arbitrum, address: '0x899438713f62b04d6cd8e8709986f7256fb6e3d9' }],
   },
   {
+    symbol: 'BOLt',
+    img: require('../imgs/tokens/bolt.svg') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0x1edf5e61b6a4fe19fef3a695328f61aaa07728ea' }],
+  },
+  {
     symbol: 'MEXt',
     img: require('../imgs/tokens/mext.svg') as string,
     decimals: 18,
