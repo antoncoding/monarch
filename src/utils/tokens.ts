@@ -584,7 +584,10 @@ const supportedTokens = [
     symbol: 'mGLO',
     img: require('../imgs/tokens/mglo.png') as string,
     decimals: 18,
-    networks: [{ chain: base, address: '0xFCc9Cc1209651Ed8867332d6F664CF82743A2584' }],
+    networks: [
+      { chain: base, address: '0xFCc9Cc1209651Ed8867332d6F664CF82743A2584' },
+      { chain: robinhood, address: '0xFEd493F38c1aAcb4EA4e6A11F8b9287849EE0096' },
+    ],
     protocol: {
       name: 'Midas',
     },
