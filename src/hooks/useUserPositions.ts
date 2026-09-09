@@ -256,8 +256,8 @@ export const fetchPositionMarketShells = async (
 
   let markets: Market[] = [];
   try {
-    // Fetch only this account's missing markets together. Per-market requests
-    // overwhelm the indexer on cold loads and duplicate token metadata reads.
+    // Resolve this account's missing markets and shared token metadata together,
+    // avoiding one indexer request per position on cold loads.
     markets = await fetchMonarchMarkets(chainId, customRpcUrls, {
       marketIds: marketInfos.map((market) => market.marketUniqueKey),
     });
@@ -450,30 +450,24 @@ const useUserPositions = (
         }
       }
 
-      const hasMissingMarketData = finalMarketKeys.some(
-        (marketInfo) => !marketDataMap.has(getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey)),
+      const fetchedMarkets = await Promise.allSettled(
+        Array.from(marketsByChain.entries()).map(([chainId, markets]) =>
+          fetchPositionMarketShells(
+            markets.filter((market) => !marketDataMap.has(getMarketIdentityKey(chainId, market.marketUniqueKey))),
+            chainId as SupportedNetworks,
+            customRpcUrls,
+          ),
+        ),
       );
 
-      if (hasMissingMarketData) {
-        const fetchedMarkets = await Promise.allSettled(
-          Array.from(marketsByChain.entries()).map(([chainId, markets]) =>
-            fetchPositionMarketShells(
-              markets.filter((market) => !marketDataMap.has(getMarketIdentityKey(chainId, market.marketUniqueKey))),
-              chainId as SupportedNetworks,
-              customRpcUrls,
-            ),
-          ),
-        );
+      for (const result of fetchedMarkets) {
+        if (result.status !== 'fulfilled') {
+          continue;
+        }
 
-        for (const result of fetchedMarkets) {
-          if (result.status !== 'fulfilled') {
-            continue;
-          }
-
-          for (const market of result.value) {
-            marketDataMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
-            setCachedMarketDetail(getMarketDetailCacheKey(market.morphoBlue.chain.id, market.uniqueKey), market);
-          }
+        for (const market of result.value) {
+          marketDataMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
+          setCachedMarketDetail(getMarketDetailCacheKey(market.morphoBlue.chain.id, market.uniqueKey), market);
         }
       }
 
