@@ -4,7 +4,7 @@ require('tsx/cjs');
 for (const extension of ['.png', '.svg', '.webp', '.jpg']) {
   require.extensions[extension] = (module) => {
     // biome-ignore lint/suspicious/noExportsInTest: Image stub for transitive Next.js imports.
-    module.exports = { src: '' };
+    module.exports = { src: '/test-image.png', width: 16, height: 16 };
   };
 }
 const assert = require('node:assert/strict');
@@ -150,4 +150,49 @@ test('oracle breakdown attributes exposure to input vendors, while custom price-
   assert.equal(result.rows[0].oracleType, 'custom');
   assert.equal(result.rows[0].isValidPath, false);
   assert.equal(result.rows[0].unknownLegCount, 0);
+});
+
+test('existing table and market-page caller props render custom dependencies without opting into generic custom text', () => {
+  const Module = require('node:module');
+  const React = require('react');
+  const { renderToStaticMarkup } = require('react-dom/server');
+  const metadata = require('../src/hooks/useOracleMetadata');
+  const originalLoad = Module._load;
+  const originalReact = global.React;
+  let currentOracle = oracle;
+  // Match the existing JSX-preserve test runtime; the app compiler supplies the JSX runtime.
+  global.React = React;
+  Module._load = function loadWithMockedHooks(request, parent, isMain) {
+    if (request === '@/hooks/useOracleMetadata') {
+      return { ...metadata, useOracleMetadata: () => ({ data: record(currentOracle), isLoading: false }) };
+    }
+    if (request === '@/hooks/useFeedLastUpdatedByChain') return { useFeedLastUpdatedByChain: () => ({ data: {} }) };
+    if (request === '@/hooks/queries/useKlerosAddressTagsQuery') return { useKlerosAddressTagsQuery: () => ({ data: {} }) };
+    if (request === 'wagmi') return { ...originalLoad.call(this, request, parent, isMain), useReadContracts: () => ({ data: undefined }) };
+    return originalLoad.call(this, request, parent, isMain);
+  };
+  try {
+    const { TooltipProvider } = require('../src/components/ui/tooltip');
+    const { OracleTypeInfo } = require('../src/features/markets/components/oracle/MarketOracle/OracleTypeInfo');
+    const render = (props) =>
+      renderToStaticMarkup(
+        React.createElement(
+          TooltipProvider,
+          null,
+          React.createElement(OracleTypeInfo, { oracleAddress: address, chainId: 42793, ...props }),
+        ),
+      );
+    for (const props of [{}, { useBadge: true, variant: 'detail' }]) {
+      const markup = render(props);
+      assert.ok(markup.includes(`/feed/42793/${uranium.address}`));
+      assert.ok(markup.includes(`/feed/42793/${usdc.address}`));
+      assert.ok(markup.includes(oracle.data.metadata.underlyingOracle));
+      assert.ok(markup.includes('Underlying price ÷ 16'));
+    }
+    currentOracle = { ...oracle, data: { ...oracle.data, feeds: undefined } };
+    assert.ok(render({}).includes('Feed dependencies unavailable'));
+  } finally {
+    Module._load = originalLoad;
+    global.React = originalReact;
+  }
 });

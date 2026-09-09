@@ -74,7 +74,7 @@ export function OracleTypeInfo({ oracleAddress, chainId, showCustom, useBadge, v
           chainId={chainId}
           variant={variant}
         />
-      ) : customData && showCustom ? (
+      ) : customData ? (
         <div className="space-y-2">
           <p className="text-xs text-secondary">{customData.metadata?.description ?? customData.adapterName}</p>
           {customData.metadata?.underlyingOracle && (
