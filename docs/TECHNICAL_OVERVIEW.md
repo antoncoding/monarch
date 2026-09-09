@@ -209,7 +209,7 @@ Market metrics: external data API via `/v1/markets/metrics`
 | Market metrics and flags | Monarch API | 15 min stale | `useMarketMetricsQuery` and `useMarketDiscoveryFlagsQuery`; see `docs/MARKET_FLAGS.md` for the compact flags shape |
 | Market state (APY, utilization, balances) | Monarch market state + Morpho shell + RPC snapshot | 30s stale | `useMarketData` |
 | Market historical chart series | Monarch GraphQL → Morpho API | 5 min stale | `useMarketHistoricalData` |
-| User positions | Monarch position discovery/lifetime supply aggregates + on-chain snapshots + market registry from `useProcessedMarkets` | 5 min | `useUserPositions` |
+| User positions | Monarch position discovery/lifetime supply aggregates + targeted market batches per chain + on-chain snapshots | 5 min | `useUserPositions` |
 | User transaction history | Monarch GraphQL → Morpho API (`assetIds` queries still skip Monarch) | 60s | `useUserTransactionsQuery` |
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
 | User autovault metadata | Monarch GraphQL + on-chain enrichment | 60s | `useUserVaultsV2Query` |
@@ -241,7 +241,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 | `useMarketData` | Single-market detail shell with freshest live state | Monarch live-state overlay on Morpho shell, then RPC snapshot override | Whitelist, supplying-vault, and rolling-APY metadata parity if we want to remove the shell fallback entirely |
 | `useMarketHistoricalData` | Historical market chart series | Monarch historical snapshots first; Morpho API only for fallback | Already aligned for the current asset-only market charts |
 | `useTokenPrices` | Token USD price lookup and peg fallback used by markets/admin stats | Morpho price API + major price fallback | Intentionally Morpho/major-price backed today |
-| `useUserPositions` | Discover all current and exited markets where a user has positions, then attach lifetime supply aggregates and live balances | Monarch batched `Position` discovery/aggregates + RPC snapshots/oracle reads + market metadata from `useProcessedMarkets`; Morpho API and transaction-discovery fallback | Monarch market registry/detail if position objects should no longer depend on Morpho API market metadata |
+| `useUserPositions` | Discover all current and exited markets where a user has positions, then attach lifetime supply aggregates and live balances | Monarch batched `Position` discovery/aggregates + targeted market batches with token metadata resolution + RPC snapshots/oracle reads; Morpho API and transaction-discovery fallback | Remaining optional Morpho metadata parity |
 | `useUserPosition` | Single-market user position | RPC snapshot first; if snapshot unavailable, Monarch position state when local market exists; then Morpho API fallback | Same market-registry/detail gap as `useUserPositions` |
 | `useUserTransactionsQuery` / `fetchUserTransactions` | User history across one or many chains | Monarch user-event tables first; fallback Morpho API; `assetIds` filter still bypasses Monarch | Asset-address filtered history support to fully back reports and any asset-scoped history views |
 | `useUserPositionsSummaryData` | Portfolio earnings summary for current and exited supply positions | Lifetime `Position` aggregates plus cursor-filtered recent events for all time; bounded period events + RPC boundary snapshots otherwise | Inherits the remaining `useUserPositions` and `useUserTransactionsQuery` gaps; the aggregate path requires the earnings-enabled Envio schema |
@@ -296,7 +296,7 @@ Split: allMarkets vs whitelistedMarkets
 ```
 1. Discover current and exited market keys plus lifetime supply aggregates via Monarch batched `Position` reads; fall back to Morpho API and transaction discovery
 2. Fetch on-chain snapshots per market (`usePositionSnapshots`)
-3. Combine live balances with market metadata from `useProcessedMarkets`
+3. Combine live balances with cached market details and targeted Monarch market batches per chain; fall back to Morpho only for missing market shells
 4. Group by loan asset
 5. Calculate all-time earnings from lifetime aggregates plus events strictly after the indexed block/log cursor; use boundary snapshots and bounded event windows for shorter periods
 6. Build all-time charts from completed sparse `PositionDailyFlow` buckets, with current balances as the live endpoint
@@ -394,7 +394,7 @@ Fallback Strategy:
 
 **Monarch GraphQL** (`/src/data-sources/monarch-api/fetchers.ts`):
 - Endpoint: `NEXT_PUBLIC_MONARCH_API_NEW`
-- Browser fetch against a public endpoint. Production Monarch origins do not send an API key; Vercel preview builds can set `NEXT_PUBLIC_MONARCH_PREVIEW_API_KEY`, which is only sent when the app runs on a `*.vercel.app` host.
+- Browser fetch against the configured endpoint. If `NEXT_PUBLIC_MONARCH_PREVIEW_API_KEY` is set, requests send it as `X-API-Key`; the current helper does not gate this by browser origin.
 - Used as the primary read path for autovault V2 metadata, market-detail live state/history/activity, and admin transaction reads
 
 ### API Key Console

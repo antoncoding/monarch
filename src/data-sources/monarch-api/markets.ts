@@ -228,17 +228,30 @@ const mapMonarchMarketRows = async (
     trustedTokens: options.trustedTokens,
   });
 
-  return rows.map((market) => mapMonarchMarketToMarket(market, tokenInfos)).filter((market): market is Market => market !== null);
+  const markets: Market[] = [];
+  for (const row of rows) {
+    try {
+      const market = mapMonarchMarketToMarket(row, tokenInfos);
+      if (market) markets.push(market);
+    } catch (error) {
+      // Keep valid shells available; position callers can fall back for just this market.
+      console.warn(`[Markets] Failed to map market ${row.marketId} on ${row.chainId}:`, error);
+    }
+  }
+  return markets;
 };
 
 // If `network` is omitted, this fetches the merged multi-chain market registry in one query path.
 export const fetchMonarchMarkets = async (
   network?: SupportedNetworks,
   customRpcUrls: CustomRpcUrls = {},
-  options: MapMonarchMarketRowsOptions = {},
+  options: MapMonarchMarketRowsOptions & { marketIds?: string[] } = {},
 ): Promise<Market[]> => {
+  if (options.marketIds?.length === 0) return [];
+
   const query = buildEnvioMarketsPageQuery({
     useChainIdFilter: network !== undefined,
+    useMarketIdsFilter: options.marketIds !== undefined,
   });
   const allRows: MonarchMarketRow[] = [];
   let offset = 0;
@@ -252,6 +265,10 @@ export const fetchMonarchMarkets = async (
 
     if (network !== undefined) {
       variables.chainId = network;
+    }
+
+    if (options.marketIds) {
+      variables.marketIds = options.marketIds.map(normalizeAddress);
     }
 
     const rows = await fetchMonarchMarketsPage(query, variables);
