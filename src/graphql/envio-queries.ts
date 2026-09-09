@@ -229,13 +229,24 @@ export const envioMarketBoundarySnapshotQuery = `
   }
 `;
 
-export const buildEnvioMarketsPageQuery = ({ useChainIdFilter }: { useChainIdFilter: boolean }): string => {
+export const buildEnvioMarketsPageQuery = ({
+  useChainIdFilter,
+  useMarketIdsFilter = false,
+}: {
+  useChainIdFilter: boolean;
+  useMarketIdsFilter?: boolean;
+}): string => {
   const variableDeclarations = ['$limit: Int!', '$offset: Int!', '$zeroAddress: String!'];
   const whereClauses = ['collateralToken: { _neq: $zeroAddress }', 'irm: { _neq: $zeroAddress }'];
 
   if (useChainIdFilter) {
     variableDeclarations.push('$chainId: Int!');
     whereClauses.push('chainId: { _eq: $chainId }');
+  }
+
+  if (useMarketIdsFilter) {
+    variableDeclarations.push('$marketIds: [String!]!');
+    whereClauses.push('marketId: { _in: $marketIds }');
   }
 
   return `

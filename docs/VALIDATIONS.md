@@ -89,6 +89,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - User reward claiming must use Merkl `/v4/users/{address}/rewards/summary` claim/proof data; deprecated Morpho URD/non-Merkl reward claim paths and Merkl legacy combined reward endpoints should stay out of the app.
 - Large optional metadata or enrichment queries used only for secondary badges, warnings, filters, or tooltips must be gated or deferred so core table rendering does not wait on them during cold start.
 - Vault-scoped pages with configured cap or market IDs must use targeted market reads for first render; do not wait on the global market registry when the vault metadata already identifies the relevant markets.
+- Position cold loads must batch known market IDs per chain, including token metadata resolution, rather than issue one market request per position. Verify request counts, partial-result fallback, and chain isolation with a many-position account.
 - Vault adapter selection must be cap-aware when a vault has multiple active adapters; do not let list order alone choose the adapter used for positions, activity, withdrawals, or settings.
 - Expensive queries must not start with placeholder dependency data that immediately invalidates the same query. Gate on prerequisite readiness, or use a stable query key that does not refetch equivalent work.
 - Vault analytics must keep chain lists and period boundaries stable after first resolution; background dependency updates must preserve rendered chart data instead of re-entering a cold skeleton.

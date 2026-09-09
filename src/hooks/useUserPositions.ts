@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMonarchMarket, fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
+import { fetchMonarchMarkets, fetchMonarchUserPositionMarketsForNetworks } from '@/data-sources/monarch-api';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoUserPositionMarkets, fetchMorphoUserPositionMarketsForNetworks } from '@/data-sources/morpho-api/positions';
 import { getMarketIdentityKey } from '@/utils/market-identity';
@@ -247,33 +247,36 @@ const fetchSupplyTransactionMarketKeys = async (user: string, chainIds?: Support
   return markets;
 };
 
-const fetchPositionMarketShell = async (
-  marketInfo: PositionMarket,
+export const fetchPositionMarketShells = async (
+  marketInfos: PositionMarket[],
+  chainId: SupportedNetworks,
   customRpcUrls: Partial<Record<SupportedNetworks, string>>,
-): Promise<Market | null> => {
-  const chainId = marketInfo.chainId as SupportedNetworks;
+): Promise<Market[]> => {
+  if (marketInfos.length === 0) return [];
 
+  let markets: Market[] = [];
   try {
-    const monarchMarket = await fetchMonarchMarket(marketInfo.marketUniqueKey, chainId, customRpcUrls);
-    if (monarchMarket) {
-      return monarchMarket;
-    }
+    // Fetch only this account's missing markets together. Per-market requests
+    // overwhelm the indexer on cold loads and duplicate token metadata reads.
+    markets = await fetchMonarchMarkets(chainId, customRpcUrls, {
+      marketIds: marketInfos.map((market) => market.marketUniqueKey),
+    });
   } catch (error) {
-    console.warn(`[Positions] Failed to fetch Monarch market shell for ${marketInfo.marketUniqueKey} on ${chainId}:`, error);
+    console.warn(`[Positions] Failed to fetch Monarch market shells on ${chainId}:`, error);
   }
 
   if (supportsMorphoApi(chainId)) {
-    try {
-      const morphoMarket = await fetchMorphoMarket(marketInfo.marketUniqueKey, chainId);
-      if (morphoMarket) {
-        return morphoMarket;
+    const loadedKeys = new Set(markets.map((market) => market.uniqueKey.toLowerCase()));
+    const missingMarkets = marketInfos.filter((market) => !loadedKeys.has(market.marketUniqueKey.toLowerCase()));
+    const fallbackResults = await Promise.allSettled(missingMarkets.map((market) => fetchMorphoMarket(market.marketUniqueKey, chainId)));
+    for (const result of fallbackResults) {
+      if (result.status === 'fulfilled' && result.value) {
+        markets.push(result.value);
       }
-    } catch (error) {
-      console.warn(`[Positions] Failed to fetch Morpho market shell for ${marketInfo.marketUniqueKey} on ${chainId}:`, error);
     }
   }
 
-  return null;
+  return markets;
 };
 
 // --- Main Hook --- //
@@ -447,22 +450,30 @@ const useUserPositions = (
         }
       }
 
-      const missingMarketKeys = finalMarketKeys.filter(
+      const hasMissingMarketData = finalMarketKeys.some(
         (marketInfo) => !marketDataMap.has(getMarketIdentityKey(marketInfo.chainId, marketInfo.marketUniqueKey)),
       );
 
-      if (missingMarketKeys.length > 0) {
+      if (hasMissingMarketData) {
         const fetchedMarkets = await Promise.allSettled(
-          missingMarketKeys.map((marketInfo) => fetchPositionMarketShell(marketInfo, customRpcUrls)),
+          Array.from(marketsByChain.entries()).map(([chainId, markets]) =>
+            fetchPositionMarketShells(
+              markets.filter((market) => !marketDataMap.has(getMarketIdentityKey(chainId, market.marketUniqueKey))),
+              chainId as SupportedNetworks,
+              customRpcUrls,
+            ),
+          ),
         );
 
         for (const result of fetchedMarkets) {
-          if (result.status !== 'fulfilled' || !result.value) {
+          if (result.status !== 'fulfilled') {
             continue;
           }
 
-          marketDataMap.set(getMarketIdentityKey(result.value.morphoBlue.chain.id, result.value.uniqueKey), result.value);
-          setCachedMarketDetail(getMarketDetailCacheKey(result.value.morphoBlue.chain.id, result.value.uniqueKey), result.value);
+          for (const market of result.value) {
+            marketDataMap.set(getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market);
+            setCachedMarketDetail(getMarketDetailCacheKey(market.morphoBlue.chain.id, market.uniqueKey), market);
+          }
         }
       }
 
