@@ -160,15 +160,34 @@ test('existing table and market-page caller props render custom dependencies wit
   const originalLoad = Module._load;
   const originalReact = global.React;
   let currentOracle = oracle;
+  let snapshots = {};
+  let snapshotPending = false;
+  let directReadOptions = [];
+  let snapshotChains = [];
   // Match the existing JSX-preserve test runtime; the app compiler supplies the JSX runtime.
   global.React = React;
   Module._load = function loadWithMockedHooks(request, parent, isMain) {
     if (request === '@/hooks/useOracleMetadata') {
       return { ...metadata, useOracleMetadata: () => ({ data: record(currentOracle), isLoading: false }) };
     }
-    if (request === '@/hooks/useFeedLastUpdatedByChain') return { useFeedLastUpdatedByChain: () => ({ data: {} }) };
+    if (request === '@/hooks/useFeedLastUpdatedByChain') {
+      return {
+        useFeedLastUpdatedByChain: (chainId) => {
+          snapshotChains.push(chainId);
+          return { data: snapshots, isLoading: snapshotPending };
+        },
+      };
+    }
     if (request === '@/hooks/queries/useKlerosAddressTagsQuery') return { useKlerosAddressTagsQuery: () => ({ data: {} }) };
-    if (request === 'wagmi') return { ...originalLoad.call(this, request, parent, isMain), useReadContracts: () => ({ data: undefined }) };
+    if (request === 'wagmi') {
+      return {
+        ...originalLoad.call(this, request, parent, isMain),
+        useReadContracts: (options) => {
+          directReadOptions.push(options);
+          return { data: undefined };
+        },
+      };
+    }
     return originalLoad.call(this, request, parent, isMain);
   };
   try {
@@ -189,8 +208,45 @@ test('existing table and market-page caller props render custom dependencies wit
       assert.ok(markup.includes(oracle.data.metadata.underlyingOracle));
       assert.ok(markup.includes('Underlying price ÷ 16'));
     }
+    // These are actual FeedEntry query options, including the initial batch-loading state.
+    for (const type of ['custom', 'standard', 'meta']) {
+      currentOracle =
+        type === 'custom'
+          ? oracle
+          : type === 'standard'
+            ? { ...oracle, type, data: oracle.data.feeds }
+            : { ...oracle, type, data: { primaryOracle: address, currentOracle: address, oracleSources: { primary: oracle.data.feeds } } };
+      for (const phase of ['pending', 'ready', 'missing-price', 'missing-time', 'failed']) {
+        snapshotPending = phase === 'pending';
+        snapshots =
+          phase === 'ready' || phase.startsWith('missing-')
+            ? Object.fromEntries(
+                [uranium.address, usdc.address].map((key) => [
+                  key,
+                  {
+                    normalizedPrice: phase === 'missing-price' ? null : '1',
+                    updatedAt: phase === 'missing-time' ? null : 123,
+                    updateKind: 'reported',
+                  },
+                ]),
+              )
+            : {};
+        directReadOptions = [];
+        render({});
+        assert.equal(directReadOptions.length, 2);
+        const shouldFallback = phase === 'failed' || phase.startsWith('missing-');
+        assert.ok(directReadOptions.every((options) => options.query.enabled === shouldFallback));
+        assert.ok(directReadOptions.every((options) => options.query.refetchIntervalInBackground === false));
+      }
+    }
+    currentOracle = { ...oracle, data: { ...oracle.data, feeds: { baseFeedOne: { ...uranium, feedType: 'constant' } } } };
+    directReadOptions = [];
+    render({});
+    assert.equal(directReadOptions[0].query.enabled, false);
     currentOracle = { ...oracle, data: { ...oracle.data, feeds: undefined } };
+    snapshotChains = [];
     assert.ok(render({}).includes('Feed dependencies unavailable'));
+    assert.deepEqual(snapshotChains, [undefined]);
   } finally {
     Module._load = originalLoad;
     global.React = originalReact;

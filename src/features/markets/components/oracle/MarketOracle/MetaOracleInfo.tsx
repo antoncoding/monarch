@@ -18,11 +18,13 @@ function OracleFeedSection({
   chainId,
   label,
   feedSnapshotsByAddress,
+  isSnapshotPending,
 }: {
   oracleData: OracleOutputData | null;
   chainId: number;
   label: string;
   feedSnapshotsByAddress: FeedSnapshotByAddress;
+  isSnapshotPending: boolean;
 }) {
   if (!oracleData) return null;
 
@@ -57,6 +59,7 @@ function OracleFeedSection({
                     feed={enrichedFeed}
                     chainId={chainId}
                     feedSnapshotsByAddress={feedSnapshotsByAddress}
+                    isSnapshotPending={isSnapshotPending}
                   />
                 );
               })}
@@ -70,7 +73,7 @@ function OracleFeedSection({
 
 export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: MetaOracleInfoProps) {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
-  const { data: feedSnapshotsByAddress } = useFeedLastUpdatedByChain(chainId);
+  const { data: feedSnapshotsByAddress, isLoading: isSnapshotPending } = useFeedLastUpdatedByChain(chainId);
 
   const metaData = getMetaOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
   if (!metaData) return null;
@@ -100,6 +103,7 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
             chainId={chainId}
             label="primary"
             feedSnapshotsByAddress={feedSnapshotsByAddress}
+            isSnapshotPending={isSnapshotPending}
           />
         </div>
 
@@ -122,6 +126,7 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
             chainId={chainId}
             label="backup"
             feedSnapshotsByAddress={feedSnapshotsByAddress}
+            isSnapshotPending={isSnapshotPending}
           />
         </div>
 
@@ -154,6 +159,7 @@ export function MetaOracleInfo({ oracleAddress, chainId, variant = 'summary' }: 
       chainId={chainId}
       label="current"
       feedSnapshotsByAddress={feedSnapshotsByAddress}
+      isSnapshotPending={isSnapshotPending}
     />
   );
 }

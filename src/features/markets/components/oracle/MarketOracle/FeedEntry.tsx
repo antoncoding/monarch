@@ -32,9 +32,10 @@ type FeedEntryProps = {
   feed: EnrichedFeed | null;
   chainId: number;
   feedSnapshotsByAddress?: FeedSnapshotByAddress;
+  isSnapshotPending?: boolean;
 };
 
-export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryProps): JSX.Element | null {
+export function FeedEntry({ feed, chainId, feedSnapshotsByAddress, isSnapshotPending = false }: FeedEntryProps): JSX.Element | null {
   const feedVendorResult = useMemo(() => {
     return detectFeedVendorFromMetadata(feed);
   }, [feed]);
@@ -66,13 +67,17 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
     ];
   }, [chainId, feed?.address]);
 
+  const snapshot = feed?.address ? feedSnapshotsByAddress?.[feed.address.toLowerCase()] : undefined;
+  // The shared batch owns normal refreshes; legacy reads only fill missing results.
+  const needsDirectRead = !isSnapshotPending && (snapshot?.normalizedPrice == null || snapshot.updatedAt == null);
   const { data: directReadResults } = useReadContracts({
     contracts: directReadContracts,
     allowFailure: true,
     query: {
-      enabled: directReadContracts.length > 0,
+      enabled: directReadContracts.length > 0 && feed?.feedType !== 'constant' && needsDirectRead,
       staleTime: 60_000,
       refetchInterval: 60_000,
+      refetchIntervalInBackground: false,
       refetchOnWindowFocus: false,
     },
   });
@@ -92,8 +97,6 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
   const hasKnownVendorIcon = vendor !== PriceFeedVendors.Unknown && Boolean(vendorIcon);
   const isMonarchVerified = isMonarchVerifiedFeed(feed);
   const isConstantFeed = feed.feedType === 'constant';
-  const feedAddressKey = feed.address.toLowerCase();
-  const snapshot = feedSnapshotsByAddress?.[feedAddressKey];
   const directAnswer =
     directReadResults?.[0]?.status === 'success' && typeof directReadResults[0].result === 'bigint' ? directReadResults[0].result : null;
   const directTimestamp =
@@ -104,12 +107,12 @@ export function FeedEntry({ feed, chainId, feedSnapshotsByAddress }: FeedEntryPr
     directReadResults?.[2]?.status === 'success' && Number.isFinite(Number(directReadResults[2].result))
       ? Number(directReadResults[2].result)
       : (feed.decimals ?? null);
-  const directNormalizedPrice =
-    directAnswer != null && directDecimals != null ? formatOraclePrice(directAnswer, directDecimals) : (snapshot?.normalizedPrice ?? null);
+  const normalizedPrice =
+    snapshot?.normalizedPrice ?? (directAnswer != null && directDecimals != null ? formatOraclePrice(directAnswer, directDecimals) : null);
 
-  const freshness = getFeedFreshnessStatus(directTimestamp ?? snapshot?.updatedAt ?? null, feed.heartbeat, {
+  const freshness = getFeedFreshnessStatus(snapshot?.updatedAt ?? directTimestamp, feed.heartbeat, {
     updateKind: snapshot?.updateKind,
-    normalizedPrice: directNormalizedPrice,
+    normalizedPrice,
   });
 
   const getTooltipContent = () => {

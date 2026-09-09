@@ -12,7 +12,6 @@ type MarketOracleFeedInfoProps = {
 
 export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFeedInfoProps): JSX.Element {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
-  const { data: feedSnapshotsByAddress } = useFeedLastUpdatedByChain(chainId);
 
   const oracle = getOracleFromMetadata(oracleMetadataMap, oracleAddress, chainId);
   const oracleData = getOracleFeedData(oracle);
@@ -25,6 +24,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
 
   const hasAnyFeed = baseFeedOne || baseFeedTwo || quoteFeedOne || quoteFeedTwo;
   const hasAnyVault = baseVault || quoteVault;
+  const { data: feedSnapshotsByAddress, isLoading: isSnapshotPending } = useFeedLastUpdatedByChain(hasAnyFeed ? chainId : undefined);
 
   if (!hasAnyFeed && !hasAnyVault) {
     return (
@@ -51,6 +51,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={baseFeedOne}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                isSnapshotPending={isSnapshotPending}
               />
             )}
             {baseFeedTwo && (
@@ -58,6 +59,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={baseFeedTwo}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                isSnapshotPending={isSnapshotPending}
               />
             )}
           </div>
@@ -79,6 +81,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={quoteFeedOne}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                isSnapshotPending={isSnapshotPending}
               />
             )}
             {quoteFeedTwo && (
@@ -86,6 +89,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={quoteFeedTwo}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                isSnapshotPending={isSnapshotPending}
               />
             )}
           </div>

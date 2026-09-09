@@ -16,6 +16,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 const MAX_MULTICALL_FEEDS_PER_BATCH = 1000;
 const FEED_REFRESH_INTERVAL_MS = 60_000;
 const DEFAULT_FEED_DECIMALS = 8;
+const EMPTY_FEED_SNAPSHOTS: FeedSnapshotByAddress = {};
 
 type FeedSemanticHints = {
   derivedCandidate: boolean;
@@ -144,6 +145,7 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
     enabled: Boolean(chainId && publicClient && feedAddresses.length > 0),
     staleTime: FEED_REFRESH_INTERVAL_MS,
     refetchInterval: FEED_REFRESH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<FeedSnapshotByAddress> => {
       if (!publicClient) return {};
@@ -211,7 +213,7 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
   });
 
   return {
-    data: query.data ?? {},
+    data: query.data ?? EMPTY_FEED_SNAPSHOTS,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     error: query.error,
