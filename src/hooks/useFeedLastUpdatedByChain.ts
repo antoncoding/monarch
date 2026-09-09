@@ -134,7 +134,7 @@ function chunkAddresses(addresses: string[]): string[][] {
 
 export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | undefined) {
   const publicClient = usePublicClient({ chainId });
-  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const { data: oracleMetadataMap, isLoading: isMetadataLoading } = useOracleMetadata(chainId);
 
   const { addresses: feedAddresses, hintByAddress } = useMemo(() => getFeedMetadataSnapshot(oracleMetadataMap), [oracleMetadataMap]);
   const addressFingerprint = useMemo(() => createFingerprint(feedAddresses), [feedAddresses]);
@@ -214,7 +214,7 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
 
   return {
     data: query.data ?? EMPTY_FEED_SNAPSHOTS,
-    isLoading: query.isLoading,
+    isLoading: Boolean(chainId) && (isMetadataLoading || query.isLoading),
     isFetching: query.isFetching,
     error: query.error,
   };

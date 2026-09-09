@@ -252,3 +252,47 @@ test('existing table and market-page caller props render custom dependencies wit
     global.React = originalReact;
   }
 });
+
+test('shared feed loading includes metadata hydration and remains idle without a chain', () => {
+  const Module = require('node:module');
+  const React = require('react');
+  const { renderToStaticMarkup } = require('react-dom/server');
+  const { QueryClient, QueryClientProvider } = require('@tanstack/react-query');
+  const metadata = require('../src/hooks/useOracleMetadata');
+  const hookPath = require.resolve('../src/hooks/useFeedLastUpdatedByChain');
+  const cachedHook = require.cache[hookPath];
+  const originalLoad = Module._load;
+  let metadataLoading = true;
+  let metadataRecord = {};
+  let result;
+  const client = new QueryClient();
+  delete require.cache[hookPath];
+  Module._load = function loadFeedQuery(request, parent, isMain) {
+    if (request === '@/hooks/useOracleMetadata') {
+      return { ...metadata, useOracleMetadata: () => ({ data: metadataRecord, isLoading: metadataLoading }) };
+    }
+    if (request === 'wagmi') return { ...originalLoad.call(this, request, parent, isMain), usePublicClient: () => ({}) };
+    return originalLoad.call(this, request, parent, isMain);
+  };
+  try {
+    const { useFeedLastUpdatedByChain } = require(hookPath);
+    const Probe = ({ chainId }) => {
+      result = useFeedLastUpdatedByChain(chainId);
+      return null;
+    };
+    const render = (chainId) =>
+      renderToStaticMarkup(React.createElement(QueryClientProvider, { client }, React.createElement(Probe, { chainId })));
+    render(42793);
+    assert.equal(result.isLoading, true);
+    render(undefined);
+    assert.equal(result.isLoading, false);
+    metadataLoading = false;
+    metadataRecord = record();
+    render(42793);
+    assert.equal(result.isLoading, true);
+  } finally {
+    Module._load = originalLoad;
+    require.cache[hookPath] = cachedHook;
+    client.clear();
+  }
+});
