@@ -290,12 +290,6 @@ export async function fetchLatestPositionSnapshotsWithOraclePrices(
   const marketIds = markets.map((market) => market.marketUniqueKey);
   const latestSnapshots = await fetchPositionsSnapshots(marketIds, userAddress, chainId, undefined, client);
 
-  // A missing snapshot is a failed read, not a closed position. Reject incomplete
-  // refreshes so React Query retains the last successful portfolio.
-  if (marketIds.some((marketId) => !latestSnapshots.has(marketId))) {
-    throw new Error(`Unable to load all position balances on chain ${chainId}`);
-  }
-
   latestSnapshots.forEach((snapshot, marketId) => {
     snapshots.set(marketId.toLowerCase(), snapshot);
   });

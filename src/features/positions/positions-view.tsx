@@ -6,7 +6,6 @@ import type { Address } from 'viem';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { Button } from '@/components/ui/button';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
@@ -49,7 +48,6 @@ export default function Positions() {
     actualBlockData,
     snapshotsByChain,
     earningsRangesByChain,
-    error: positionsError,
   } = useUserPositionsSummaryData(account, period, undefined, { enabled: shouldFetchNativeAccountData });
 
   // Fetch user's auto vaults
@@ -98,15 +96,8 @@ export default function Positions() {
     showNativeAccountSections &&
     marketPositions.some((position) => BigInt(position.state.borrowShares) > 0n || BigInt(position.state.collateral) > 0n);
   const hasVaults = showNativeAccountSections && vaults && vaults.length > 0;
-  const showEmpty =
-    showNativeAccountSections &&
-    !loading &&
-    !positionsError &&
-    !isVaultsLoading &&
-    !hasSuppliedMarkets &&
-    !hasBorrowPositions &&
-    !hasVaults;
-  const showHeaderPortfolio = showNativeAccountSections && !loading && (!positionsError || marketPositions.length > 0);
+  const showEmpty = showNativeAccountSections && !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasBorrowPositions && !hasVaults;
+  const showHeaderPortfolio = showNativeAccountSections && !loading;
 
   useEffect(() => {
     if (account) {
@@ -155,25 +146,6 @@ export default function Positions() {
         )}
 
         <div className="space-y-6 mt-2 pb-20">
-          {showNativeAccountSections && positionsError && (
-            <div
-              role="alert"
-              className="rounded border border-border bg-surface p-4 text-sm"
-            >
-              <p className="mb-3 text-secondary">
-                {marketPositions.length > 0
-                  ? 'Positions could not refresh. Showing the last loaded balances.'
-                  : 'Positions could not load. Please try again.'}
-              </p>
-              <Button
-                size="sm"
-                onClick={() => void refetchPositions()}
-                isLoading={isPositionsRefetching}
-              >
-                Retry
-              </Button>
-            </div>
-          )}
           {/* Loading state for initial page load */}
           {loading && (
             <LoadingScreen
