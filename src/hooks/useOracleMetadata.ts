@@ -94,11 +94,17 @@ export type MetaOracleOutputData = {
   };
 };
 
-export type NonStandardOracleOutputData = {
-  reason?: string;
-  adapterId?: string;
-  adapterName?: string;
-  metadata?: { tier?: string };
+export type CustomOracleOutputData = {
+  adapterId: string;
+  adapterName: string;
+  feeds?: Partial<OracleOutputData>;
+  metadata?: {
+    tier?: string;
+    vendor?: string;
+    description?: string;
+    underlyingOracle?: string;
+    priceDivisor?: string;
+  };
 };
 
 type OracleOutputBase = {
@@ -125,10 +131,8 @@ export type MetaOracleOutput = OracleOutputBase & {
   data: MetaOracleOutputData;
 };
 
-export type NonStandardOracleOutput = OracleOutputBase & {
-  type: 'custom' | 'unknown';
-  data: NonStandardOracleOutputData;
-};
+export type NonStandardOracleOutput = OracleOutputBase &
+  ({ type: 'custom'; data: CustomOracleOutputData } | { type: 'unknown'; data: { reason: string } });
 
 export type OracleOutput = StandardOracleOutput | MetaOracleOutput | NonStandardOracleOutput;
 
@@ -350,6 +354,13 @@ export function getStandardOracleDataFromMetadata(
   }
 
   return oracle.data;
+}
+
+// For custom oracles these are input dependencies, not a decoded final price formula.
+export function getOracleFeedData(oracle: OracleOutput | undefined): Partial<OracleOutputData> | undefined {
+  if (oracle?.type === 'standard') return oracle.data;
+  if (oracle?.type === 'custom') return oracle.data.feeds;
+  return undefined;
 }
 
 export function getMetaOracleDataFromMetadata(

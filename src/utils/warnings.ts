@@ -1,7 +1,15 @@
 import { getMetaOracleDataFromMetadata, getStandardOracleDataFromMetadata, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
 import type { Market } from '@/utils/types';
 import { monarchWhitelistedMarkets, getMarketOverrideWarnings } from './markets';
-import { getOracleType, OracleType, parsePriceFeedVendors, parseMetaOracleVendors, checkFeedsPath, checkEnrichedFeedsPath } from './oracle';
+import {
+  getOracleType,
+  getOracleVendorInfo,
+  OracleType,
+  parsePriceFeedVendors,
+  parseMetaOracleVendors,
+  checkFeedsPath,
+  checkEnrichedFeedsPath,
+} from './oracle';
 import { WarningCategory, type WarningWithDetail } from './types';
 
 export const UNRECOGNIZED_LOAN = {
@@ -170,7 +178,11 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
   // Append our own oracle warnings
   const chainId = market.morphoBlue.chain.id;
   const oracleType = getOracleType(market.oracleAddress, chainId, oracleMetadataMap);
-  if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
+  if (oracleType === OracleType.Custom) {
+    const vendorInfo = getOracleVendorInfo(market.oracleAddress, chainId, oracleMetadataMap);
+    if (!vendorInfo.isMonarchVerifiedOracle) result.push(UNRECOGNIZED_ORACLE);
+    if (vendorInfo.hasCompletelyUnknown) result.push(UNRECOGNIZED_FEEDS);
+  }
 
   // if any of the feeds are not null but also not recognized, return appropriate feed warning
   const standardOracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, market.oracleAddress, chainId);

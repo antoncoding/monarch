@@ -6,7 +6,7 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MarketOracleFeedInfo } from '@/features/markets/components/oracle';
 import { Tooltip } from '@/components/ui/tooltip';
 import { formatKlerosAddressTagLabel, getKlerosAddressTagKey } from '@/data-sources/kleros/address-tags';
-import { useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { getOracleFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { useKlerosAddressTagsQuery } from '@/hooks/queries/useKlerosAddressTagsQuery';
 import { getOracleType, getOracleTypeDescription, OracleType } from '@/utils/oracle';
 import { MetaOracleInfo } from './MetaOracleInfo';
@@ -24,6 +24,8 @@ export function OracleTypeInfo({ oracleAddress, chainId, showCustom, useBadge, v
   const oracleAddresses = useMemo(() => [oracleAddress], [oracleAddress]);
   const { data: klerosAddressTags } = useKlerosAddressTagsQuery(chainId, oracleAddresses);
   const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
+  const oracle = getOracleFromMetadata(oracleMetadataMap, oracleAddress, chainId);
+  const customData = oracle?.type === 'custom' ? oracle.data : null;
   const typeDescription = getOracleTypeDescription(oracleType);
   const klerosTag = klerosAddressTags?.[getKlerosAddressTagKey(chainId, oracleAddress)];
   const klerosLabel = formatKlerosAddressTagLabel(klerosTag);
@@ -72,6 +74,29 @@ export function OracleTypeInfo({ oracleAddress, chainId, showCustom, useBadge, v
           chainId={chainId}
           variant={variant}
         />
+      ) : customData && showCustom ? (
+        <div className="space-y-2">
+          <p className="text-xs text-secondary">{customData.metadata?.description ?? customData.adapterName}</p>
+          {customData.metadata?.underlyingOracle && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-secondary">Underlying oracle:</span>
+              <AddressIdentity
+                address={customData.metadata.underlyingOracle}
+                chainId={chainId}
+              />
+            </div>
+          )}
+          {customData.metadata?.priceDivisor && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-secondary">Conversion:</span>
+              <span>Underlying price ÷ {customData.metadata.priceDivisor}</span>
+            </div>
+          )}
+          <MarketOracleFeedInfo
+            chainId={chainId}
+            oracleAddress={oracleAddress}
+          />
+        </div>
       ) : showCustom ? (
         <div className="text-xs text-gray-500 dark:text-gray-500">
           This market uses a custom oracle implementation that doesn't follow the standard feed structure.

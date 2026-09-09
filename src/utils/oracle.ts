@@ -26,6 +26,7 @@ type VendorInfo = {
   coreVendors: PriceFeedVendors[]; // Well-known vendors (Chainlink, Redstone, etc.)
   taggedVendors: string[]; // Known provider names without a core vendor badge/icon yet
   hasMonarchVerified: boolean; // Monarch allowlist status, separate from vendor filtering
+  isMonarchVerifiedOracle: boolean; // Custom-wrapper approval; feed approval does not imply this
   hasCompletelyUnknown: boolean; // True unknown feeds (no data found)
   hasTaggedUnknown: boolean; // Provider is tagged, but not widely used enough for a core vendor type
   // Legacy properties for backward compatibility
@@ -395,6 +396,7 @@ function emptyVendorInfo(): VendorInfo {
     coreVendors: [],
     taggedVendors: [],
     hasMonarchVerified: false,
+    isMonarchVerifiedOracle: false,
     hasCompletelyUnknown: false,
     hasTaggedUnknown: false,
     vendors: [],
@@ -402,7 +404,7 @@ function emptyVendorInfo(): VendorInfo {
   };
 }
 
-export function parsePriceFeedVendors(oracleData: OracleOutputData | null | undefined): VendorInfo {
+export function parsePriceFeedVendors(oracleData: Partial<OracleOutputData> | null | undefined): VendorInfo {
   if (!oracleData) {
     return emptyVendorInfo();
   }
@@ -415,7 +417,7 @@ export function parsePriceFeedVendors(oracleData: OracleOutputData | null | unde
  * Classify enriched feeds into vendor categories.
  * Shared by parsePriceFeedVendors (after enriched lookup) and parseMetaOracleVendors.
  */
-function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
+function classifyEnrichedFeeds(feeds: (EnrichedFeed | null | undefined)[]): VendorInfo {
   const coreVendors = new Set<PriceFeedVendors>();
   const taggedVendors = new Set<string>();
   let hasMonarchVerified = false;
@@ -451,6 +453,7 @@ function classifyEnrichedFeeds(feeds: (EnrichedFeed | null)[]): VendorInfo {
     coreVendors: Array.from(coreVendors),
     taggedVendors: Array.from(taggedVendors),
     hasMonarchVerified,
+    isMonarchVerifiedOracle: false,
     hasCompletelyUnknown,
     hasTaggedUnknown,
     vendors: legacyVendors,
@@ -493,9 +496,14 @@ export function getOracleVendorInfo(
   }
 
   if (metadata.type === 'custom' && metadata.chainId === chainId) {
+    const feeds = parsePriceFeedVendors(metadata.data.feeds);
+    const isMonarchVerifiedOracle = isMonarchVerifiedFeed(metadata.data.metadata);
     return {
-      ...emptyVendorInfo(),
-      hasMonarchVerified: isMonarchVerifiedFeed(metadata.data.metadata),
+      ...feeds,
+      isMonarchVerifiedOracle,
+      hasMonarchVerified: feeds.hasMonarchVerified || isMonarchVerifiedOracle,
+      hasCompletelyUnknown: feeds.hasCompletelyUnknown || !metadata.data.feeds,
+      hasUnknown: feeds.hasUnknown || !metadata.data.feeds,
     };
   }
 

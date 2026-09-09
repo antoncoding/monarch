@@ -118,8 +118,8 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMeta
     const info = getOracleVendorInfo(market.oracleAddress, chainId, oracleMetadataMap);
 
     if (oracleType === OracleType.Custom) {
-      // Recognition alone is insufficient: custom oracles need an explicit scanner whitelist.
-      return info.hasMonarchVerified;
+      // Wrapper approval never approves unknown input feeds or follows from feed approval.
+      return info.isMonarchVerifiedOracle && !info.hasUnknown;
     }
 
     return !info.hasUnknown;

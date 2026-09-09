@@ -135,18 +135,18 @@ const getCurrentOracleData = (oracle: OracleOutput | undefined): OracleOutputDat
   return oracle.data.oracleSources.primary ?? oracle.data.oracleSources.backup;
 };
 
-const feedHasUnknownPair = (feed: EnrichedFeed | null): boolean => {
+const feedHasUnknownPair = (feed: EnrichedFeed | null | undefined): boolean => {
   if (!feed?.address) return false;
   return feed.pair.length !== 2 || feed.pair.some((asset) => asset === 'Unknown' || asset.trim() === '');
 };
 
-const countUnknownLegs = (oracleData: OracleOutputData | null): number => {
+const countUnknownLegs = (oracleData: Partial<OracleOutputData> | null | undefined): number => {
   if (!oracleData) return 0;
   return [oracleData.baseFeedOne, oracleData.baseFeedTwo, oracleData.quoteFeedOne, oracleData.quoteFeedTwo].filter(feedHasUnknownPair)
     .length;
 };
 
-const getVaultDependency = (vault: EnrichedVault | null): AnalysisVaultDependency | null => {
+const getVaultDependency = (vault: EnrichedVault | null | undefined): AnalysisVaultDependency | null => {
   if (!vault?.pair || vault.pair.length !== 2) return null;
   const [base, quote] = vault.pair;
   if (!base || !quote || base === quote) return null;
@@ -158,7 +158,7 @@ const getVaultDependency = (vault: EnrichedVault | null): AnalysisVaultDependenc
   };
 };
 
-const getVaultDependencies = (oracleData: OracleOutputData | null): AnalysisVaultDependency[] => {
+const getVaultDependencies = (oracleData: Partial<OracleOutputData> | null | undefined): AnalysisVaultDependency[] => {
   if (!oracleData) return [];
   const dependencies = [getVaultDependency(oracleData.baseVault), getVaultDependency(oracleData.quoteVault)].filter(
     (dependency): dependency is AnalysisVaultDependency => dependency != null,
@@ -196,11 +196,13 @@ const buildMarketRow = (
   const chainId = market.morphoBlue.chain.id;
   const oracle = getOracleFromMetadata(oracleMetadataMap, market.oracleAddress, chainId);
   const oracleData = getCurrentOracleData(oracle);
+  // A custom wrapper's inputs expose dependencies but do not prove its final price path.
+  const dependencies = oracle?.type === 'custom' ? oracle.data.feeds : oracleData;
   const pathResult = oracleData ? checkFeedsPath(oracleData, market.collateralAsset.symbol, market.loanAsset.symbol) : null;
   const expectedPath = `${market.collateralAsset.symbol}/${market.loanAsset.symbol}`;
   const actualPath = pathResult?.actualPath ?? (pathResult?.isValid ? expectedPath : EMPTY_PATH);
   const pegAssumptions = unique(pathResult?.inferredAssumptions ?? []);
-  const vaultDependencies = getVaultDependencies(oracleData);
+  const vaultDependencies = getVaultDependencies(dependencies);
   const vaultAssumptions = vaultDependencies.map((dependency) => dependency.label);
 
   return {
@@ -220,7 +222,7 @@ const buildMarketRow = (
     vaultAssumptions,
     vaultDependencies,
     allAssumptions: unique([...pegAssumptions, ...vaultAssumptions]),
-    unknownLegCount: countUnknownLegs(oracleData),
+    unknownLegCount: countUnknownLegs(dependencies),
   };
 };
 

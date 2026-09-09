@@ -4,7 +4,13 @@ import { type Address, zeroAddress } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
 import { formatOraclePrice, type FeedUpdateKind } from '@/utils/oracle';
-import { useOracleMetadata, type EnrichedFeed, type OracleMetadataRecord, type OracleOutputData } from '@/hooks/useOracleMetadata';
+import {
+  getOracleFeedData,
+  useOracleMetadata,
+  type EnrichedFeed,
+  type OracleMetadataRecord,
+  type OracleOutputData,
+} from '@/hooks/useOracleMetadata';
 import type { SupportedNetworks } from '@/utils/networks';
 
 const MAX_MULTICALL_FEEDS_PER_BATCH = 1000;
@@ -41,7 +47,7 @@ function isDerivedCandidateFeed(feed: EnrichedFeed): boolean {
   return provider.includes('pendle');
 }
 
-function addFeedAddress(feedSet: Set<string>, hintByAddress: Record<string, FeedSemanticHints>, feed: EnrichedFeed | null) {
+function addFeedAddress(feedSet: Set<string>, hintByAddress: Record<string, FeedSemanticHints>, feed: EnrichedFeed | null | undefined) {
   if (!feed?.address) return;
 
   const normalizedAddress = feed.address.toLowerCase();
@@ -56,7 +62,7 @@ function addFeedAddress(feedSet: Set<string>, hintByAddress: Record<string, Feed
 function addStandardOracleFeeds(
   feedSet: Set<string>,
   hintByAddress: Record<string, FeedSemanticHints>,
-  oracleData: OracleOutputData | null,
+  oracleData: Partial<OracleOutputData> | null | undefined,
 ) {
   if (!oracleData) return;
 
@@ -66,7 +72,7 @@ function addStandardOracleFeeds(
   addFeedAddress(feedSet, hintByAddress, oracleData.quoteFeedTwo);
 }
 
-function getFeedMetadataSnapshot(metadataRecord: OracleMetadataRecord | undefined): FeedMetadataSnapshot {
+export function getFeedMetadataSnapshot(metadataRecord: OracleMetadataRecord | undefined): FeedMetadataSnapshot {
   if (!metadataRecord) {
     return {
       addresses: [],
@@ -84,9 +90,7 @@ function getFeedMetadataSnapshot(metadataRecord: OracleMetadataRecord | undefine
       continue;
     }
 
-    if (oracle?.type === 'standard') {
-      addStandardOracleFeeds(feedSet, hintByAddress, oracle.data);
-    }
+    addStandardOracleFeeds(feedSet, hintByAddress, getOracleFeedData(oracle));
   }
 
   return {
