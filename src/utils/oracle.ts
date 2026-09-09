@@ -492,6 +492,13 @@ export function getOracleVendorInfo(
     return parsePriceFeedVendors(metadata.data);
   }
 
+  if (metadata.type === 'custom' && metadata.chainId === chainId) {
+    return {
+      ...emptyVendorInfo(),
+      hasMonarchVerified: isMonarchVerifiedFeed(metadata.data.metadata),
+    };
+  }
+
   return emptyVendorInfo();
 }
 

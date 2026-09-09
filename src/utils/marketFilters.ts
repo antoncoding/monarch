@@ -115,11 +115,12 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean, oracleMeta
 
     const oracleType = getOracleType(market.oracleAddress, chainId, oracleMetadataMap);
 
-    if (oracleType === OracleType.Custom) {
-      return false;
-    }
-
     const info = getOracleVendorInfo(market.oracleAddress, chainId, oracleMetadataMap);
+
+    if (oracleType === OracleType.Custom) {
+      // Recognition alone is insufficient: custom oracles need an explicit scanner whitelist.
+      return info.hasMonarchVerified;
+    }
 
     return !info.hasUnknown;
   };

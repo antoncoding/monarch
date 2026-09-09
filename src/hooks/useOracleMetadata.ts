@@ -95,7 +95,10 @@ export type MetaOracleOutputData = {
 };
 
 export type NonStandardOracleOutputData = {
-  reason: string;
+  reason?: string;
+  adapterId?: string;
+  adapterName?: string;
+  metadata?: { tier?: string };
 };
 
 type OracleOutputBase = {
