@@ -134,13 +134,20 @@ MetaOracleOutput {
   data: MetaOracleOutputData; // { primaryOracle, backupOracle, currentOracle, oracleSources, ... }
 }
 
-NonStandardOracleOutput {
+CustomOracleOutputData {
+  adapterId: string;
+  adapterName: string;
+  feeds?: Partial<OracleOutputData>;
+  metadata?: { tier?: string; vendor?: string; description?: string; underlyingOracle?: string; priceDivisor?: string };
+}
+
+NonStandardOracleOutput = {
   address: string;
   chainId: number;
-  type: 'custom' | 'unknown';
-  data: { reason: string };
-}
+} & ({ type: 'custom'; data: CustomOracleOutputData } | { type: 'unknown'; data: { reason: string } });
 ```
+
+Custom `data.feeds` exposes input dependencies using the existing feed/vault slots and their vendor metadata. `getOracleFeedData` shares these inputs with the breakdown, feed refresh, and feed detail pages; it does not decode the wrapper's final price path. Vendor filters and exposure charts use dependency vendors, while `metadata.vendor` identifies the wrapper. The default unknown-oracle guard requires the wrapper's own `metadata.tier: 'monarch_verified'` and recognized inputs; feed approval alone cannot approve a wrapper. Missing dependency metadata stays unknown.
 
 ---
 

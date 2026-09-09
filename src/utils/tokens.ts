@@ -53,7 +53,7 @@ const MORPHO_LEGACY = '0x9994E35Db50125E0DF82e4c2dde62496CE330999';
 const supportedTokens = [
   {
     symbol: 'USDC',
-    img: require('../imgs/tokens/usdc.webp') as string,
+    img: require('../imgs/tokens/usdc.svg') as string,
     decimals: 6,
     networks: [
       { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
@@ -1284,7 +1284,7 @@ const supportedTokens = [
   },
   {
     symbol: 'vbUSDC',
-    img: require('../imgs/tokens/usdc.webp') as string,
+    img: require('../imgs/tokens/usdc.svg') as string,
     decimals: 6,
     networks: [
       {
@@ -1408,7 +1408,7 @@ const supportedTokens = [
   },
   {
     symbol: 'yvvbUSDC',
-    img: require('../imgs/tokens/usdc.webp') as string,
+    img: require('../imgs/tokens/usdc.svg') as string,
     decimals: 6,
     networks: [
       {

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { IoWarningOutline, IoHelpCircleOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
 import { MonarchVerifiedIcon } from '@/components/shared/monarch-verified-icon';
 import { Tooltip } from '@/components/ui/tooltip';
-import { getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { getOracleFromMetadata, getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { OracleType, OracleVendorIcons, getOracleVendorInfo, type PriceFeedVendors, getOracleType } from '@/utils/oracle';
 
 type OracleVendorBadgeProps = {
@@ -37,6 +37,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
 
   const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
   const isCustom = oracleType === OracleType.Custom;
+  const isRecognizedCustom = getOracleFromMetadata(oracleMetadataMap, oracleAddress, chainId)?.type === 'custom';
   const isMeta = oracleType === OracleType.Meta;
 
   const isVaultOnly =
@@ -48,7 +49,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
     (standardOracleData?.baseVault || standardOracleData?.quoteVault);
 
   const vendorInfo = getOracleVendorInfo(oracleAddress, chainId, oracleMetadataMap);
-  const { coreVendors, taggedVendors, hasMonarchVerified, hasCompletelyUnknown, hasTaggedUnknown } = vendorInfo;
+  const { coreVendors, taggedVendors, hasMonarchVerified, isMonarchVerifiedOracle, hasCompletelyUnknown, hasTaggedUnknown } = vendorInfo;
   const displayNames = [
     ...(hasMonarchVerified ? ['Monarch verified'] : []),
     ...coreVendors,
@@ -70,7 +71,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
   ) : (
     <div className="flex items-center space-x-1 rounded p-1">
       {showText && <span className="mr-1 text-xs font-medium">{displayNames.join(', ') || 'Oracle'}</span>}
-      {isCustom ? (
+      {isCustom && !hasMonarchVerified && coreVendors.length === 0 ? (
         <IoWarningOutline
           className="text-secondary"
           size={16}
@@ -118,7 +119,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
         );
       }
 
-      if (isCustom) {
+      if (isCustom && !isRecognizedCustom) {
         return (
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium text-primary font-zen">Custom Oracle</p>
@@ -136,7 +137,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
         );
       }
 
-      const oracleLabel = isMeta ? 'Meta Oracle' : 'Standard Oracle';
+      const oracleLabel = isCustom ? 'Custom Oracle' : isMeta ? 'Meta Oracle' : 'Standard Oracle';
       const allKnownVendors = [...coreVendors, ...taggedVendors];
 
       if (showGenericFallbackIcon && !hasCompletelyUnknown) {
@@ -163,7 +164,11 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-primary font-zen">{oracleLabel}</p>
           {feedSummary && <p className="text-xs text-secondary font-zen">Uses feeds from {feedSummary}.</p>}
-          {hasMonarchVerified && <p className="text-xs text-secondary font-zen">Includes feed metadata verified by Monarch.</p>}
+          {hasMonarchVerified && (
+            <p className="text-xs text-secondary font-zen">
+              {isMonarchVerifiedOracle ? 'Custom oracle verified by Monarch.' : 'Includes feed metadata verified by Monarch.'}
+            </p>
+          )}
           {hasTaggedUnknown && (
             <p className="text-xs text-secondary font-zen">
               {taggedVendors.join(', ')} {taggedVendors.length === 1 ? 'is' : 'are'} tagged, but not widely used.

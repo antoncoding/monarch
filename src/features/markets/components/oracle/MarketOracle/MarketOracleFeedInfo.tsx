@@ -1,7 +1,7 @@
 'use client';
 
 import { useFeedLastUpdatedByChain } from '@/hooks/useFeedLastUpdatedByChain';
-import { getStandardOracleDataFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
+import { getOracleFeedData, getOracleFromMetadata, useOracleMetadata } from '@/hooks/useOracleMetadata';
 import { FeedEntry } from './FeedEntry';
 import { VaultEntry } from './VaultEntry';
 
@@ -12,9 +12,9 @@ type MarketOracleFeedInfoProps = {
 
 export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFeedInfoProps): JSX.Element {
   const { data: oracleMetadataMap } = useOracleMetadata(chainId);
-  const { data: feedSnapshotsByAddress } = useFeedLastUpdatedByChain(chainId);
 
-  const oracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
+  const oracle = getOracleFromMetadata(oracleMetadataMap, oracleAddress, chainId);
+  const oracleData = getOracleFeedData(oracle);
   const baseVault = oracleData?.baseVault ?? null;
   const quoteVault = oracleData?.quoteVault ?? null;
   const baseFeedOne = oracleData?.baseFeedOne ?? null;
@@ -24,17 +24,22 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
 
   const hasAnyFeed = baseFeedOne || baseFeedTwo || quoteFeedOne || quoteFeedTwo;
   const hasAnyVault = baseVault || quoteVault;
+  const { data: feedSnapshotsByAddress, isLoading: isSnapshotPending } = useFeedLastUpdatedByChain(hasAnyFeed ? chainId : undefined);
 
   if (!hasAnyFeed && !hasAnyVault) {
-    return <div className="text-center text-sm text-gray-500 dark:text-gray-400">No feed routes available</div>;
+    return (
+      <div className="text-xs text-secondary">
+        {oracle?.type === 'custom' ? 'Feed dependencies unavailable' : 'No feed routes available'}
+      </div>
+    );
   }
 
   return (
     <div className="space-y-2">
       {(baseVault || baseFeedOne || baseFeedTwo) && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-2">
           <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Base:</span>
-          <div className="flex justify-end gap-2">
+          <div className="flex min-w-0 flex-wrap justify-end gap-2">
             {baseVault && (
               <VaultEntry
                 vault={baseVault}
@@ -46,6 +51,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={baseFeedOne}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                isSnapshotPending={isSnapshotPending}
               />
             )}
             {baseFeedTwo && (
@@ -53,6 +59,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={baseFeedTwo}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                isSnapshotPending={isSnapshotPending}
               />
             )}
           </div>
@@ -60,9 +67,9 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
       )}
 
       {(quoteVault || quoteFeedOne || quoteFeedTwo) && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-2">
           <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Quote:</span>
-          <div className="flex justify-end gap-2">
+          <div className="flex min-w-0 flex-wrap justify-end gap-2">
             {quoteVault && (
               <VaultEntry
                 vault={quoteVault}
@@ -74,6 +81,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={quoteFeedOne}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                isSnapshotPending={isSnapshotPending}
               />
             )}
             {quoteFeedTwo && (
@@ -81,6 +89,7 @@ export function MarketOracleFeedInfo({ chainId, oracleAddress }: MarketOracleFee
                 feed={quoteFeedTwo}
                 chainId={chainId}
                 feedSnapshotsByAddress={feedSnapshotsByAddress}
+                isSnapshotPending={isSnapshotPending}
               />
             )}
           </div>

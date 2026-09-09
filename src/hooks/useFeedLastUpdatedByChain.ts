@@ -4,12 +4,19 @@ import { type Address, zeroAddress } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { chainlinkAggregatorV3Abi } from '@/abis/chainlink-aggregator-v3';
 import { formatOraclePrice, type FeedUpdateKind } from '@/utils/oracle';
-import { useOracleMetadata, type EnrichedFeed, type OracleMetadataRecord, type OracleOutputData } from '@/hooks/useOracleMetadata';
+import {
+  getOracleFeedData,
+  useOracleMetadata,
+  type EnrichedFeed,
+  type OracleMetadataRecord,
+  type OracleOutputData,
+} from '@/hooks/useOracleMetadata';
 import type { SupportedNetworks } from '@/utils/networks';
 
 const MAX_MULTICALL_FEEDS_PER_BATCH = 1000;
 const FEED_REFRESH_INTERVAL_MS = 60_000;
 const DEFAULT_FEED_DECIMALS = 8;
+const EMPTY_FEED_SNAPSHOTS: FeedSnapshotByAddress = {};
 
 type FeedSemanticHints = {
   derivedCandidate: boolean;
@@ -41,7 +48,7 @@ function isDerivedCandidateFeed(feed: EnrichedFeed): boolean {
   return provider.includes('pendle');
 }
 
-function addFeedAddress(feedSet: Set<string>, hintByAddress: Record<string, FeedSemanticHints>, feed: EnrichedFeed | null) {
+function addFeedAddress(feedSet: Set<string>, hintByAddress: Record<string, FeedSemanticHints>, feed: EnrichedFeed | null | undefined) {
   if (!feed?.address) return;
 
   const normalizedAddress = feed.address.toLowerCase();
@@ -56,7 +63,7 @@ function addFeedAddress(feedSet: Set<string>, hintByAddress: Record<string, Feed
 function addStandardOracleFeeds(
   feedSet: Set<string>,
   hintByAddress: Record<string, FeedSemanticHints>,
-  oracleData: OracleOutputData | null,
+  oracleData: Partial<OracleOutputData> | null | undefined,
 ) {
   if (!oracleData) return;
 
@@ -66,7 +73,7 @@ function addStandardOracleFeeds(
   addFeedAddress(feedSet, hintByAddress, oracleData.quoteFeedTwo);
 }
 
-function getFeedMetadataSnapshot(metadataRecord: OracleMetadataRecord | undefined): FeedMetadataSnapshot {
+export function getFeedMetadataSnapshot(metadataRecord: OracleMetadataRecord | undefined): FeedMetadataSnapshot {
   if (!metadataRecord) {
     return {
       addresses: [],
@@ -84,9 +91,7 @@ function getFeedMetadataSnapshot(metadataRecord: OracleMetadataRecord | undefine
       continue;
     }
 
-    if (oracle?.type === 'standard') {
-      addStandardOracleFeeds(feedSet, hintByAddress, oracle.data);
-    }
+    addStandardOracleFeeds(feedSet, hintByAddress, getOracleFeedData(oracle));
   }
 
   return {
@@ -129,7 +134,7 @@ function chunkAddresses(addresses: string[]): string[][] {
 
 export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | undefined) {
   const publicClient = usePublicClient({ chainId });
-  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const { data: oracleMetadataMap, isLoading: isMetadataLoading } = useOracleMetadata(chainId);
 
   const { addresses: feedAddresses, hintByAddress } = useMemo(() => getFeedMetadataSnapshot(oracleMetadataMap), [oracleMetadataMap]);
   const addressFingerprint = useMemo(() => createFingerprint(feedAddresses), [feedAddresses]);
@@ -140,6 +145,7 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
     enabled: Boolean(chainId && publicClient && feedAddresses.length > 0),
     staleTime: FEED_REFRESH_INTERVAL_MS,
     refetchInterval: FEED_REFRESH_INTERVAL_MS,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<FeedSnapshotByAddress> => {
       if (!publicClient) return {};
@@ -207,8 +213,8 @@ export function useFeedLastUpdatedByChain(chainId: SupportedNetworks | number | 
   });
 
   return {
-    data: query.data ?? {},
-    isLoading: query.isLoading,
+    data: query.data ?? EMPTY_FEED_SNAPSHOTS,
+    isLoading: Boolean(chainId) && (isMetadataLoading || query.isLoading),
     isFetching: query.isFetching,
     error: query.error,
   };

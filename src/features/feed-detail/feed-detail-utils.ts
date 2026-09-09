@@ -1,6 +1,7 @@
 import { formatUnits } from 'viem';
 import {
   getOracleFromMetadata,
+  getOracleFeedData,
   type EnrichedFeed,
   type EnrichedVault,
   type OracleMetadataRecord,
@@ -11,7 +12,7 @@ import { isMonarchVerifiedFeed } from '@/utils/oracle';
 import type { Market } from '@/utils/types';
 
 export type FeedDependencyKind = 'feed' | 'vault';
-export type FeedDependencySource = 'standard' | 'primary' | 'backup';
+export type FeedDependencySource = 'standard' | 'custom' | 'primary' | 'backup';
 export type FeedDependencyRole = 'baseFeedOne' | 'baseFeedTwo' | 'quoteFeedOne' | 'quoteFeedTwo' | 'baseVault' | 'quoteVault';
 
 export type FeedDependencyLeg = (EnrichedFeed | EnrichedVault) & {
@@ -95,7 +96,7 @@ export function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function getOracleDataLegs(data: OracleOutputData | null): DataLeg[] {
+function getOracleDataLegs(data: Partial<OracleOutputData> | null | undefined): DataLeg[] {
   if (!data) return [];
 
   return DATA_LEGS.map(({ role, roleLabel, kind }) => ({
@@ -117,7 +118,7 @@ function addMatchingDataLegs({
 }: {
   matches: FeedDependencyOccurrence[];
   oracle: OracleOutput;
-  data: OracleOutputData | null;
+  data: Partial<OracleOutputData> | null | undefined;
   targetAddress: string;
   source: FeedDependencySource;
   sourceLabel: string;
@@ -145,14 +146,14 @@ export function getFeedOccurrencesForOracle(oracle: OracleOutput | undefined, fe
   const targetAddress = normalizeAddress(feedAddress);
   const matches: FeedDependencyOccurrence[] = [];
 
-  if (oracle.type === 'standard') {
+  if (oracle.type === 'standard' || oracle.type === 'custom') {
     addMatchingDataLegs({
       matches,
       oracle,
-      data: oracle.data,
+      data: getOracleFeedData(oracle),
       targetAddress,
-      source: 'standard',
-      sourceLabel: 'Standard oracle',
+      source: oracle.type,
+      sourceLabel: oracle.type === 'custom' ? 'Custom oracle inputs' : 'Standard oracle',
       isActiveSource: true,
     });
   }
@@ -273,7 +274,8 @@ export function getFeedDescription(leg: FeedDependencyLeg | null): string {
 }
 
 export function getOccurrenceLabel(occurrence: FeedDependencyOccurrence): string {
-  const activeSuffix = occurrence.source === 'standard' ? '' : occurrence.isActiveSource ? ' active' : ' standby';
+  const isMetaSource = occurrence.source === 'primary' || occurrence.source === 'backup';
+  const activeSuffix = isMetaSource ? (occurrence.isActiveSource ? ' active' : ' standby') : '';
   return `${occurrence.sourceLabel}${activeSuffix}, ${occurrence.roleLabel}`;
 }
 
