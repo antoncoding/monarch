@@ -1,7 +1,7 @@
-import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, zeroAddress } from 'viem';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { type Address, encodeFunctionData, erc20Abi, zeroAddress } from 'viem';
 import { useQueryClient } from '@tanstack/react-query';
-import { useConnection, useChainId, useReadContracts } from 'wagmi';
+import { useConnection, useChainId, usePublicClient, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/monarch-api/vaults';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -9,15 +9,17 @@ import {
   VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY,
   VAULT_V2_DEFAULT_MAX_RATE,
   VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS,
+  VAULT_V2_EXIT_CRITICAL_GATES,
   VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS,
   VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR,
 } from '@/utils/vaultV2Setup';
-import { getClient } from '@/utils/rpc';
 import { MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS, refetchVaultQueryData } from './useVaultQueryRefresh';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
 import { findAgent } from '@/utils/monarch-agent';
+import { useTransactionTracking } from './useTransactionTracking';
+import { prepareVaultV2DeadDeposit } from './vault-dead-deposit';
 
 export type PerformanceFeeConfig = {
   fee: bigint;
@@ -94,6 +96,10 @@ export function useVaultV2({
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
   const { address: account } = useConnection();
   const queryClient = useQueryClient();
+  const publicClient = usePublicClient({ chainId: chainIdToUse });
+  const initializationTracking = useTransactionTracking('vault-initialization');
+  const initializationInProgress = useRef(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const vaultContract = {
     address: vaultAddress ?? zeroAddress,
@@ -173,17 +179,22 @@ export function useVaultV2({
     [chainIdToUse, onTransactionSuccess, queryClient, refetchAll, vaultAddress],
   );
 
-  const { isConfirming: isInitializing, sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
+  const { sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
     toastId: `init-${vaultAddress ?? 'unknown'}`,
     pendingText: 'Completing vault initialization',
     successText: 'Vault initialized successfully',
     errorText: 'Failed to initialize vault',
-    pendingDescription: 'Setting up adapter, registry, and optional allocator',
+    pendingDescription: 'Seeding dead shares and completing vault configuration',
     successDescription: 'Vault is ready to use',
     chainId: chainIdToUse,
-    onSuccess: () => {
-      refreshVaultStateAfterTransaction(true);
-    },
+  });
+
+  const { sendTransactionAsync: sendSeedApprovalTx } = useTransactionWithToast({
+    toastId: `init-approval-${vaultAddress ?? 'unknown'}`,
+    pendingText: 'Approving dead deposit',
+    successText: 'Dead deposit approved',
+    errorText: 'Failed to approve dead deposit',
+    chainId: chainIdToUse,
   });
 
   const { isConfirming: isUpdatingMetadata, sendTransactionAsync: sendMetadataTx } = useTransactionWithToast({
@@ -241,208 +252,271 @@ export function useVaultV2({
   // All morpho v2 vault operations have to be proposed first, and then execute
   const completeInitialization = useCallback(
     async (morphoRegistry: Address, marketAdapter: Address, allocator?: Address, _name?: string, _symbol?: string): Promise<boolean> => {
-      if (!account || !vaultAddress || marketAdapter === zeroAddress) return false;
+      if (!account || !vaultAddress || !publicClient || marketAdapter === zeroAddress || initializationInProgress.current) return false;
 
-      const client = getClient(chainIdToUse);
-      const contractBase = { address: vaultAddress, abi: vaultv2Abi } as const;
-      const allocatorToCheck = allocator ?? zeroAddress;
-      const [
-        currentCuratorResult,
-        currentRegistryResult,
-        isAdapterResult,
-        forceDeallocatePenaltyResult,
-        isSelfAllocatorResult,
-        maxRateResult,
-        isInitialAllocatorResult,
-        performanceFeeResult,
-        performanceFeeRecipientResult,
-      ] = await client.multicall({
-        contracts: [
-          { ...contractBase, functionName: 'curator', args: [] },
-          { ...contractBase, functionName: 'adapterRegistry', args: [] },
-          { ...contractBase, functionName: 'isAdapter', args: [marketAdapter] },
-          { ...contractBase, functionName: 'forceDeallocatePenalty', args: [marketAdapter] },
-          { ...contractBase, functionName: 'isAllocator', args: [account] },
-          { ...contractBase, functionName: 'maxRate', args: [] },
-          { ...contractBase, functionName: 'isAllocator', args: [allocatorToCheck] },
-          { ...contractBase, functionName: 'performanceFee', args: [] },
-          { ...contractBase, functionName: 'performanceFeeRecipient', args: [] },
+      initializationInProgress.current = true;
+      setIsInitializing(true);
+      initializationTracking.start(
+        [
+          { id: 'prepare', title: 'Check dead deposit', description: 'Check the vault and approve its seed amount if needed' },
+          { id: 'initialize', title: 'Complete setup', description: 'Mint dead shares and confirm vault configuration' },
         ],
-        allowFailure: true,
-      });
-      const abdicationResults = await client.multicall({
-        contracts: VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS.map((selector) => ({
-          ...contractBase,
-          functionName: 'abdicated' as const,
-          args: [selector],
-        })),
-        allowFailure: true,
-      });
-      const currentCurator = currentCuratorResult.status === 'success' ? (currentCuratorResult.result as Address) : curator;
-      const currentRegistry = currentRegistryResult.status === 'success' ? (currentRegistryResult.result as Address) : zeroAddress;
-      const isAdapterLinked = isAdapterResult.status === 'success' && isAdapterResult.result === true;
-      const currentForceDeallocatePenalty =
-        forceDeallocatePenaltyResult.status === 'success' ? (forceDeallocatePenaltyResult.result as bigint) : 0n;
-      const isSelfAllocator = isSelfAllocatorResult.status === 'success' && isSelfAllocatorResult.result === true;
-      const currentMaxRate = maxRateResult.status === 'success' ? (maxRateResult.result as bigint) : 0n;
-      const isInitialAllocator = isInitialAllocatorResult.status === 'success' && isInitialAllocatorResult.result === true;
-      const currentPerformanceFee = performanceFeeResult.status === 'success' ? (performanceFeeResult.result as bigint) : undefined;
-      const currentPerformanceFeeRecipient =
-        performanceFeeRecipientResult.status === 'success' ? (performanceFeeRecipientResult.result as Address) : undefined;
-      const abdicatedSelectors = new Set(
-        VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS.filter(
-          (_selector, index) => abdicationResults[index]?.status === 'success' && abdicationResults[index]?.result === true,
-        ),
+        { title: 'Initialize vault' },
+        'prepare',
       );
-      const txs: `0x${string}`[] = [];
-
-      // Step 0 (Optional). Set vault metadata if provided (no timelock needed)
-      if (_name?.trim()) {
-        const setNameTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'setName',
-          args: [_name.trim()],
-        });
-        txs.push(setNameTx);
-      }
-
-      if (_symbol?.trim()) {
-        const setSymbolTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'setSymbol',
-          args: [_symbol.trim()],
-        });
-        txs.push(setSymbolTx);
-      }
-
-      // Step 1. Assign curator if unset.
-      if (currentCurator === zeroAddress) {
-        const setCuratorTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'setCurator',
-          args: [account],
-        });
-        txs.push(setCuratorTx);
-      }
-
-      // Abdicate exit-critical gate setters during initialization so the curator
-      // cannot later lock users out of shares or asset withdrawals.
-      const gateSettersToAbdicate = VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS.filter((selector) => !abdicatedSelectors.has(selector));
-      txs.push(...buildVaultV2AbdicationCalls(gateSettersToAbdicate));
-
-      // Step 2. Commit to Morpho registry.
-      if (normalizeAddress(currentRegistry) !== morphoRegistry.toLowerCase()) {
-        const setRegistryTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'setAdapterRegistry',
-          args: [morphoRegistry],
-        });
-
-        txs.push(...buildTimelockedCall(setRegistryTx));
-      }
-
-      // Step 3. Register the deployed adapter.
-      if (!isAdapterLinked) {
-        const addAdapterTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'addAdapter',
-          args: [marketAdapter],
-        });
-
-        txs.push(...buildTimelockedCall(addAdapterTx));
-      }
-
-      if (currentForceDeallocatePenalty !== VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY) {
-        const setForceDeallocatePenaltyTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'setForceDeallocatePenalty',
-          args: [marketAdapter, VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY],
-        });
-
-        txs.push(...buildTimelockedCall(setForceDeallocatePenaltyTx));
-      }
-
-      // Note: Adapter cap will be set when user configures market caps in settings
-      // (EditCaps.tsx automatically ensures adapter cap is 100% + maxUint128)
-
-      // Step 5. Abdicate registry control.
-      if (!abdicatedSelectors.has(VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR)) {
-        txs.push(...buildVaultV2AbdicationCalls([VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR]));
-      }
-
-      // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data)
-      if (!isSelfAllocator) {
-        const setSelfAllocatorTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'setIsAllocator',
-          args: [account, true],
-        });
-
-        txs.push(...buildTimelockedCall(setSelfAllocatorTx));
-      }
-
-      // Step 6.2 As allocator, set max apy
-      if (currentMaxRate !== VAULT_V2_DEFAULT_MAX_RATE) {
-        const setMaxAPYTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'setMaxRate',
-          args: [VAULT_V2_DEFAULT_MAX_RATE],
-        });
-
-        txs.push(setMaxAPYTx);
-      }
-
-      // Step 6.3 (Optional). Set initial allocator if provided.
-      if (allocator && allocator !== zeroAddress && !isInitialAllocator) {
-        const setAllocatorTx = encodeFunctionData({
-          abi: vaultv2Abi,
-          functionName: 'setIsAllocator',
-          args: [allocator, true],
-        });
-
-        txs.push(...buildTimelockedCall(setAllocatorTx));
-      }
-
-      // Step 6.4 (Optional). Apply performance fee if allocator is a known agent with a fee.
-      const agent = allocator && allocator !== zeroAddress ? findAgent(allocator) : undefined;
-      if (
-        agent?.performanceFee !== undefined &&
-        agent.performanceFeeRecipient &&
-        (currentPerformanceFee !== agent.performanceFee ||
-          normalizeAddress(currentPerformanceFeeRecipient) !== agent.performanceFeeRecipient.toLowerCase())
-      ) {
-        txs.push(...buildPerformanceFeeCalls({ fee: agent.performanceFee, recipient: agent.performanceFeeRecipient }));
-      }
-
-      if (txs.length === 0) {
-        return true;
-      }
-
-      // Step 7. Execute multicall with all steps.
-      const multicallTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'multicall',
-        args: [txs],
-      });
 
       try {
-        await sendInitializationTx({
+        const client = publicClient;
+
+        const contractBase = { address: vaultAddress, abi: vaultv2Abi } as const;
+        const allocatorToCheck = allocator ?? zeroAddress;
+        const [
+          currentCuratorResult,
+          currentRegistryResult,
+          isAdapterResult,
+          forceDeallocatePenaltyResult,
+          isSelfAllocatorResult,
+          maxRateResult,
+          isInitialAllocatorResult,
+          performanceFeeResult,
+          performanceFeeRecipientResult,
+        ] = await client.multicall({
+          contracts: [
+            { ...contractBase, functionName: 'curator', args: [] },
+            { ...contractBase, functionName: 'adapterRegistry', args: [] },
+            { ...contractBase, functionName: 'isAdapter', args: [marketAdapter] },
+            { ...contractBase, functionName: 'forceDeallocatePenalty', args: [marketAdapter] },
+            { ...contractBase, functionName: 'isAllocator', args: [account] },
+            { ...contractBase, functionName: 'maxRate', args: [] },
+            { ...contractBase, functionName: 'isAllocator', args: [allocatorToCheck] },
+            { ...contractBase, functionName: 'performanceFee', args: [] },
+            { ...contractBase, functionName: 'performanceFeeRecipient', args: [] },
+          ],
+          allowFailure: true,
+        });
+        const abdicationResults = await client.multicall({
+          contracts: VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS.map((selector) => ({
+            ...contractBase,
+            functionName: 'abdicated' as const,
+            args: [selector],
+          })),
+          allowFailure: true,
+        });
+        const currentCurator = currentCuratorResult.status === 'success' ? (currentCuratorResult.result as Address) : curator;
+        const currentRegistry = currentRegistryResult.status === 'success' ? (currentRegistryResult.result as Address) : zeroAddress;
+        const isAdapterLinked = isAdapterResult.status === 'success' && isAdapterResult.result === true;
+        const currentForceDeallocatePenalty =
+          forceDeallocatePenaltyResult.status === 'success' ? (forceDeallocatePenaltyResult.result as bigint) : 0n;
+        const isSelfAllocator = isSelfAllocatorResult.status === 'success' && isSelfAllocatorResult.result === true;
+        const currentMaxRate = maxRateResult.status === 'success' ? (maxRateResult.result as bigint) : 0n;
+        const isInitialAllocator = isInitialAllocatorResult.status === 'success' && isInitialAllocatorResult.result === true;
+        const currentPerformanceFee = performanceFeeResult.status === 'success' ? (performanceFeeResult.result as bigint) : undefined;
+        const currentPerformanceFeeRecipient =
+          performanceFeeRecipientResult.status === 'success' ? (performanceFeeRecipientResult.result as Address) : undefined;
+        const abdicatedSelectors = new Set(
+          VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS.filter(
+            (_selector, index) => abdicationResults[index]?.status === 'success' && abdicationResults[index]?.result === true,
+          ),
+        );
+        const currentGates = await client.multicall({
+          contracts: VAULT_V2_EXIT_CRITICAL_GATES.map(({ getter }) => ({ ...contractBase, functionName: getter })),
+          allowFailure: false,
+        });
+        const gateResetCalls = VAULT_V2_EXIT_CRITICAL_GATES.flatMap(({ getter, setter }, index) => {
+          if (normalizeAddress(currentGates[index]) === zeroAddress) return [];
+          if (abdicatedSelectors.has(VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS[index])) {
+            throw new Error(`The ${getter} is permanently set. Review this vault before completing setup.`);
+          }
+          return buildTimelockedCall(encodeFunctionData({ abi: vaultv2Abi, functionName: setter, args: [zeroAddress] }));
+        });
+        const seedCalls = await prepareVaultV2DeadDeposit({
+          client,
+          vaultAddress,
+          account,
+          approve: async (asset, amount) => {
+            const hash = await sendSeedApprovalTx({
+              account,
+              chainId: chainIdToUse,
+              to: asset,
+              data: encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [vaultAddress, amount] }),
+            });
+            const receipt = await client.waitForTransactionReceipt({ hash });
+            if (receipt.status !== 'success') throw new Error('Dead deposit approval reverted');
+          },
+        });
+
+        const txs: `0x${string}`[] = [];
+
+        // Step 0 (Optional). Set vault metadata if provided (no timelock needed)
+        if (_name?.trim()) {
+          const setNameTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setName',
+            args: [_name.trim()],
+          });
+          txs.push(setNameTx);
+        }
+
+        if (_symbol?.trim()) {
+          const setSymbolTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setSymbol',
+            args: [_symbol.trim()],
+          });
+          txs.push(setSymbolTx);
+        }
+
+        // Step 1. Assign curator if unset.
+        if (currentCurator === zeroAddress) {
+          const setCuratorTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setCurator',
+            args: [account],
+          });
+          txs.push(setCuratorTx);
+        }
+
+        // Clear existing exit gates before minting or permanently disabling their
+        // setters, matching Morpho's curator setup. Mint before adapter/rate/fee
+        // changes; a failed reset or mint reverts the entire setup multicall.
+        txs.push(...gateResetCalls, ...seedCalls);
+        const gateSettersToAbdicate = VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS.filter((selector) => !abdicatedSelectors.has(selector));
+        txs.push(...buildVaultV2AbdicationCalls(gateSettersToAbdicate));
+
+        // Step 2. Commit to Morpho registry.
+        if (normalizeAddress(currentRegistry) !== morphoRegistry.toLowerCase()) {
+          const setRegistryTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setAdapterRegistry',
+            args: [morphoRegistry],
+          });
+
+          txs.push(...buildTimelockedCall(setRegistryTx));
+        }
+
+        // Step 3. Register the deployed adapter.
+        if (!isAdapterLinked) {
+          const addAdapterTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'addAdapter',
+            args: [marketAdapter],
+          });
+
+          txs.push(...buildTimelockedCall(addAdapterTx));
+        }
+
+        if (currentForceDeallocatePenalty !== VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY) {
+          const setForceDeallocatePenaltyTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setForceDeallocatePenalty',
+            args: [marketAdapter, VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY],
+          });
+
+          txs.push(...buildTimelockedCall(setForceDeallocatePenaltyTx));
+        }
+
+        // Note: Adapter cap will be set when user configures market caps in settings
+        // (EditCaps.tsx automatically ensures adapter cap is 100% + maxUint128)
+
+        // Step 5. Abdicate registry control.
+        if (!abdicatedSelectors.has(VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR)) {
+          txs.push(...buildVaultV2AbdicationCalls([VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR]));
+        }
+
+        // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data)
+        if (!isSelfAllocator) {
+          const setSelfAllocatorTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setIsAllocator',
+            args: [account, true],
+          });
+
+          txs.push(...buildTimelockedCall(setSelfAllocatorTx));
+        }
+
+        // Step 6.2 As allocator, set max apy
+        if (currentMaxRate !== VAULT_V2_DEFAULT_MAX_RATE) {
+          const setMaxAPYTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setMaxRate',
+            args: [VAULT_V2_DEFAULT_MAX_RATE],
+          });
+
+          txs.push(setMaxAPYTx);
+        }
+
+        // Step 6.3 (Optional). Set initial allocator if provided.
+        if (allocator && allocator !== zeroAddress && !isInitialAllocator) {
+          const setAllocatorTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setIsAllocator',
+            args: [allocator, true],
+          });
+
+          txs.push(...buildTimelockedCall(setAllocatorTx));
+        }
+
+        // Step 6.4 (Optional). Apply performance fee if allocator is a known agent with a fee.
+        const agent = allocator && allocator !== zeroAddress ? findAgent(allocator) : undefined;
+        if (
+          agent?.performanceFee !== undefined &&
+          agent.performanceFeeRecipient &&
+          (currentPerformanceFee !== agent.performanceFee ||
+            normalizeAddress(currentPerformanceFeeRecipient) !== agent.performanceFeeRecipient.toLowerCase())
+        ) {
+          txs.push(...buildPerformanceFeeCalls({ fee: agent.performanceFee, recipient: agent.performanceFeeRecipient }));
+        }
+
+        if (txs.length === 0) {
+          initializationTracking.complete();
+          return true;
+        }
+
+        // Step 7. Execute multicall with all steps.
+        const multicallTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'multicall',
+          args: [txs],
+        });
+
+        initializationTracking.update('initialize');
+        // Surface reverts before opening the wallet. The exact seed allowance
+        // remains the on-chain spend bound after this simulation.
+        await client.simulateContract({ account, address: vaultAddress, abi: vaultv2Abi, functionName: 'multicall', args: [txs] });
+        const hash = await sendInitializationTx({
           account,
           to: vaultAddress,
           data: multicallTx,
           chainId: chainIdToUse,
         });
+        const receipt = await client.waitForTransactionReceipt({ hash });
+        if (receipt.status !== 'success') throw new Error('Vault initialization reverted');
+        initializationTracking.complete();
+        refreshVaultStateAfterTransaction(true);
         return true;
       } catch (initError) {
+        initializationTracking.fail();
         if (initError instanceof Error && initError.message.toLowerCase().includes('reject')) {
           // user rejected the transaction; treat as graceful cancellation
           return false;
         }
-        console.error('Failed to complete vault initialization', initError);
         throw initError;
+      } finally {
+        initializationInProgress.current = false;
+        setIsInitializing(false);
       }
     },
-    [account, chainIdToUse, curator, sendInitializationTx, vaultAddress],
+    [
+      account,
+      chainIdToUse,
+      curator,
+      initializationTracking,
+      publicClient,
+      refreshVaultStateAfterTransaction,
+      sendInitializationTx,
+      sendSeedApprovalTx,
+      vaultAddress,
+    ],
   );
 
   const updateNameAndSymbol = useCallback(

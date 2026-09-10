@@ -27,6 +27,7 @@ const refetchVaultQuerySet = async (queryClient: QueryClient, vaultAddress: Addr
 
   await Promise.all([
     queryClient.refetchQueries({ queryKey: ['vault-v2-data', normalizedVaultAddress, chainId], exact: false }),
+    queryClient.refetchQueries({ queryKey: ['vault-v2-dead-deposit', normalizedVaultAddress, chainId], exact: true }),
     queryClient.refetchQueries({ queryKey: ['vault-allocations', normalizedVaultAddress, chainId], exact: false }),
     queryClient.refetchQueries({ queryKey: ['user-vaults-v2'], exact: false }),
   ]);

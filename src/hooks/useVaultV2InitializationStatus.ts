@@ -3,9 +3,20 @@ import { type Address, zeroAddress } from 'viem';
 import { useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
-import { VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY, VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS } from '@/utils/vaultV2Setup';
+import {
+  VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY,
+  VAULT_V2_EXIT_CRITICAL_GATES,
+  VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS,
+} from '@/utils/vaultV2Setup';
+import { useVaultV2DeadDepositQuery } from './queries/useVaultV2DeadDepositQuery';
 
-export type VaultV2MissingSetupRequirement = 'adapter' | 'adapterRegistry' | 'curator' | 'forceDeallocatePenalty' | 'setupAbdications';
+export type VaultV2MissingSetupRequirement =
+  | 'adapter'
+  | 'adapterRegistry'
+  | 'curator'
+  | 'forceDeallocatePenalty'
+  | 'setupAbdications'
+  | 'deadDeposit';
 
 const normalizeAddress = (value: unknown): string => (typeof value === 'string' ? value.toLowerCase() : '');
 
@@ -29,6 +40,8 @@ export function useVaultV2InitializationStatus({
   const vaultAddressToCheck = vaultAddress ?? zeroAddress;
   const adapterAddressToCheck = adapterAddress ?? zeroAddress;
   const enabled = vaultAddressToCheck !== zeroAddress;
+  const deadDeposit = useVaultV2DeadDepositQuery(vaultAddress, chainId);
+  const vaultContract = { address: vaultAddressToCheck, abi: vaultv2Abi, chainId } as const;
 
   const {
     data: setupCoreResults,
@@ -40,34 +53,13 @@ export function useVaultV2InitializationStatus({
     allowFailure: true,
     contracts: enabled
       ? [
-          {
-            address: vaultAddressToCheck,
-            abi: vaultv2Abi,
-            functionName: 'adapterRegistry',
-            args: [],
-            chainId,
-          },
-          {
-            address: vaultAddressToCheck,
-            abi: vaultv2Abi,
-            functionName: 'curator',
-            args: [],
-            chainId,
-          },
-          {
-            address: vaultAddressToCheck,
-            abi: vaultv2Abi,
-            functionName: 'isAdapter',
-            args: [adapterAddressToCheck],
-            chainId,
-          },
-          {
-            address: vaultAddressToCheck,
-            abi: vaultv2Abi,
-            functionName: 'forceDeallocatePenalty',
-            args: [adapterAddressToCheck],
-            chainId,
-          },
+          { ...vaultContract, functionName: 'adapterRegistry' },
+          { ...vaultContract, functionName: 'curator' },
+          { ...vaultContract, functionName: 'isAdapter', args: [adapterAddressToCheck] },
+          { ...vaultContract, functionName: 'forceDeallocatePenalty', args: [adapterAddressToCheck] },
+          { ...vaultContract, functionName: 'receiveSharesGate' },
+          { ...vaultContract, functionName: 'sendSharesGate' },
+          { ...vaultContract, functionName: 'receiveAssetsGate' },
         ]
       : [],
     query: {
@@ -102,15 +94,21 @@ export function useVaultV2InitializationStatus({
   });
 
   const missingRequirements = useMemo<VaultV2MissingSetupRequirement[]>(() => {
-    const adapterRegistry = setupCoreResults?.[0]?.status === 'success' ? (setupCoreResults[0].result as Address) : undefined;
-    const curator = setupCoreResults?.[1]?.status === 'success' ? (setupCoreResults[1].result as Address) : undefined;
-    const isLinkedAdapter = setupCoreResults?.[2]?.status === 'success' ? setupCoreResults[2].result === true : false;
-    const forceDeallocatePenalty = setupCoreResults?.[3]?.status === 'success' ? (setupCoreResults[3].result as bigint) : undefined;
+    const [registryResult, curatorResult, adapterResult, penaltyResult, ...gateResults] = setupCoreResults ?? [];
+    const adapterRegistry = registryResult?.status === 'success' ? (registryResult.result as Address) : undefined;
+    const curator = curatorResult?.status === 'success' ? (curatorResult.result as Address) : undefined;
+    const isLinkedAdapter = adapterResult?.status === 'success' && adapterResult.result === true;
+    const forceDeallocatePenalty = penaltyResult?.status === 'success' ? (penaltyResult.result as bigint) : undefined;
     const setupAbdicationsComplete = VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS.every(
       (_selector, index) => abdicationResults?.[index]?.status === 'success' && abdicationResults[index]?.result === true,
     );
+    const exitGatesOpen = VAULT_V2_EXIT_CRITICAL_GATES.every(
+      (_gate, index) => gateResults[index]?.status === 'success' && normalizeAddress(gateResults[index]?.result) === zeroAddress,
+    );
 
     const missing: VaultV2MissingSetupRequirement[] = [];
+
+    if (!deadDeposit.data?.isSeeded) missing.push('deadDeposit');
 
     if (!adapterAddress || adapterAddress === zeroAddress || !isLinkedAdapter) {
       missing.push('adapter');
@@ -128,23 +126,25 @@ export function useVaultV2InitializationStatus({
       missing.push('forceDeallocatePenalty');
     }
 
-    if (!setupAbdicationsComplete) {
+    if (!setupAbdicationsComplete || !exitGatesOpen) {
       missing.push('setupAbdications');
     }
 
     return missing;
-  }, [adapterAddress, abdicationResults, expectedRegistry, setupCoreResults]);
+  }, [adapterAddress, abdicationResults, deadDeposit.data?.isSeeded, expectedRegistry, setupCoreResults]);
 
   const refetchSetupStatus = useCallback(async () => {
-    const [setupResult] = await Promise.all([refetch(), refetchAbdications()]);
+    const [setupResult] = await Promise.all([refetch(), refetchAbdications(), deadDeposit.refetch()]);
     return setupResult;
-  }, [refetch, refetchAbdications]);
+  }, [refetch, refetchAbdications, deadDeposit.refetch]);
 
   return {
-    error: error ?? abdicationError,
-    isComplete: enabled && !isLoading && !isLoadingAbdications && missingRequirements.length === 0,
-    isFetching: isFetching || isFetchingAbdications,
-    isLoading: isLoading || isLoadingAbdications,
+    deadDeposit,
+    error: error ?? abdicationError ?? deadDeposit.error,
+    isComplete:
+      enabled && !isLoading && !isLoadingAbdications && !deadDeposit.isPending && !deadDeposit.isError && missingRequirements.length === 0,
+    isFetching: isFetching || isFetchingAbdications || deadDeposit.isFetching,
+    isLoading: isLoading || isLoadingAbdications || deadDeposit.isPending,
     missingRequirements,
     refetch: refetchSetupStatus,
   };
