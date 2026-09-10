@@ -4,8 +4,15 @@ import { useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
 import { VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY, VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS } from '@/utils/vaultV2Setup';
+import { useVaultV2DeadDepositQuery } from './queries/useVaultV2DeadDepositQuery';
 
-export type VaultV2MissingSetupRequirement = 'adapter' | 'adapterRegistry' | 'curator' | 'forceDeallocatePenalty' | 'setupAbdications';
+export type VaultV2MissingSetupRequirement =
+  | 'adapter'
+  | 'adapterRegistry'
+  | 'curator'
+  | 'forceDeallocatePenalty'
+  | 'setupAbdications'
+  | 'deadDeposit';
 
 const normalizeAddress = (value: unknown): string => (typeof value === 'string' ? value.toLowerCase() : '');
 
@@ -29,6 +36,7 @@ export function useVaultV2InitializationStatus({
   const vaultAddressToCheck = vaultAddress ?? zeroAddress;
   const adapterAddressToCheck = adapterAddress ?? zeroAddress;
   const enabled = vaultAddressToCheck !== zeroAddress;
+  const deadDeposit = useVaultV2DeadDepositQuery(vaultAddress, chainId);
 
   const {
     data: setupCoreResults,
@@ -112,6 +120,8 @@ export function useVaultV2InitializationStatus({
 
     const missing: VaultV2MissingSetupRequirement[] = [];
 
+    if (!deadDeposit.data?.isSeeded) missing.push('deadDeposit');
+
     if (!adapterAddress || adapterAddress === zeroAddress || !isLinkedAdapter) {
       missing.push('adapter');
     }
@@ -133,18 +143,20 @@ export function useVaultV2InitializationStatus({
     }
 
     return missing;
-  }, [adapterAddress, abdicationResults, expectedRegistry, setupCoreResults]);
+  }, [adapterAddress, abdicationResults, deadDeposit.data?.isSeeded, expectedRegistry, setupCoreResults]);
 
   const refetchSetupStatus = useCallback(async () => {
-    const [setupResult] = await Promise.all([refetch(), refetchAbdications()]);
+    const [setupResult] = await Promise.all([refetch(), refetchAbdications(), deadDeposit.refetch()]);
     return setupResult;
-  }, [refetch, refetchAbdications]);
+  }, [refetch, refetchAbdications, deadDeposit.refetch]);
 
   return {
-    error: error ?? abdicationError,
-    isComplete: enabled && !isLoading && !isLoadingAbdications && missingRequirements.length === 0,
-    isFetching: isFetching || isFetchingAbdications,
-    isLoading: isLoading || isLoadingAbdications,
+    deadDeposit,
+    error: error ?? abdicationError ?? deadDeposit.error,
+    isComplete:
+      enabled && !isLoading && !isLoadingAbdications && !deadDeposit.isPending && !deadDeposit.isError && missingRequirements.length === 0,
+    isFetching: isFetching || isFetchingAbdications || deadDeposit.isFetching,
+    isLoading: isLoading || isLoadingAbdications || deadDeposit.isPending,
     missingRequirements,
     refetch: refetchSetupStatus,
   };
