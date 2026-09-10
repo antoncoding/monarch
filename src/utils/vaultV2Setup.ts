@@ -1,14 +1,16 @@
 import { toFunctionSelector } from 'viem';
 
-export const VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SIGNATURES = [
-  'setReceiveSharesGate(address)',
-  'setSendSharesGate(address)',
-  'setReceiveAssetsGate(address)',
+export const VAULT_V2_EXIT_CRITICAL_GATES = [
+  { getter: 'receiveSharesGate', setter: 'setReceiveSharesGate' },
+  { getter: 'sendSharesGate', setter: 'setSendSharesGate' },
+  { getter: 'receiveAssetsGate', setter: 'setReceiveAssetsGate' },
 ] as const;
 
 export const VAULT_V2_SET_ADAPTER_REGISTRY_SIGNATURE = 'setAdapterRegistry(address)' as const;
 
-export const VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS = VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SIGNATURES.map(toFunctionSelector);
+export const VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS = VAULT_V2_EXIT_CRITICAL_GATES.map(({ setter }) =>
+  toFunctionSelector(`${setter}(address)`),
+);
 
 export const VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR = toFunctionSelector(VAULT_V2_SET_ADAPTER_REGISTRY_SIGNATURE);
 

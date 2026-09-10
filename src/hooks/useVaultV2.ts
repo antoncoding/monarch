@@ -9,6 +9,7 @@ import {
   VAULT_V2_DEFAULT_FORCE_DEALLOCATE_PENALTY,
   VAULT_V2_DEFAULT_MAX_RATE,
   VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS,
+  VAULT_V2_EXIT_CRITICAL_GATES,
   VAULT_V2_INITIALIZATION_ABDICATED_SELECTORS,
   VAULT_V2_SET_ADAPTER_REGISTRY_SELECTOR,
 } from '@/utils/vaultV2Setup';
@@ -317,6 +318,17 @@ export function useVaultV2({
             (_selector, index) => abdicationResults[index]?.status === 'success' && abdicationResults[index]?.result === true,
           ),
         );
+        const currentGates = await client.multicall({
+          contracts: VAULT_V2_EXIT_CRITICAL_GATES.map(({ getter }) => ({ ...contractBase, functionName: getter })),
+          allowFailure: false,
+        });
+        const gateResetCalls = VAULT_V2_EXIT_CRITICAL_GATES.flatMap(({ getter, setter }, index) => {
+          if (normalizeAddress(currentGates[index]) === zeroAddress) return [];
+          if (abdicatedSelectors.has(VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS[index])) {
+            throw new Error(`The ${getter} is permanently set. Review this vault before completing setup.`);
+          }
+          return buildTimelockedCall(encodeFunctionData({ abi: vaultv2Abi, functionName: setter, args: [zeroAddress] }));
+        });
         const seedCalls = await prepareVaultV2DeadDeposit({
           client,
           vaultAddress,
@@ -333,9 +345,7 @@ export function useVaultV2({
           },
         });
 
-        // Mint before any adapter, rate, or fee changes. A failed mint reverts the
-        // entire setup multicall, so an unseeded vault cannot complete setup.
-        const txs: `0x${string}`[] = [...seedCalls];
+        const txs: `0x${string}`[] = [];
 
         // Step 0 (Optional). Set vault metadata if provided (no timelock needed)
         if (_name?.trim()) {
@@ -366,8 +376,10 @@ export function useVaultV2({
           txs.push(setCuratorTx);
         }
 
-        // Abdicate exit-critical gate setters during initialization so the curator
-        // cannot later lock users out of shares or asset withdrawals.
+        // Clear existing exit gates before minting or permanently disabling their
+        // setters, matching Morpho's curator setup. Mint before adapter/rate/fee
+        // changes; a failed reset or mint reverts the entire setup multicall.
+        txs.push(...gateResetCalls, ...seedCalls);
         const gateSettersToAbdicate = VAULT_V2_EXIT_CRITICAL_GATE_SETTER_SELECTORS.filter((selector) => !abdicatedSelectors.has(selector));
         txs.push(...buildVaultV2AbdicationCalls(gateSettersToAbdicate));
 
