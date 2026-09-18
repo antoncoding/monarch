@@ -602,6 +602,15 @@ const supportedTokens = [
     },
   },
   {
+    symbol: 'mWIN',
+    img: require('../imgs/tokens/mwin.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x4E72025984424E52838cf8953E2863eFf036B67A' }],
+    protocol: {
+      name: 'Midas',
+    },
+  },
+  {
     symbol: 'mBASIS',
     img: require('../imgs/tokens/mbasis.png') as string,
     decimals: 18,
