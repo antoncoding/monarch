@@ -134,7 +134,7 @@ export default function Positions() {
             portfolioAnalytics={portfolioAnalytics}
             isValueLoading={isPricesLoading || isVaultsLoading}
             isEarningsLoading={isEarningsLoading || isVaultApyLoading}
-            valueError={vaultsError ?? pricesError}
+            valueError={(hasVaults ? null : vaultsError) ?? pricesError}
             showPortfolioStats={showHeaderPortfolio}
           />
         </div>

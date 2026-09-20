@@ -361,7 +361,7 @@ export const fetchUserVaultV2PositionReferences = async (userAddress: string): P
   const positionsByChain = await Promise.all(
     MORPHO_API_SUPPORTED_NETWORKS.map(async (chainId) => {
       const response = await morphoGraphqlFetcher<{
-        data?: { userByAddress?: { vaultV2Positions: { vault: { address: string } }[] } };
+        data?: { userByAddress?: { vaultV2Positions: { vault: { address: string } }[] } | null };
       }>(
         `query UserVaultV2Positions($address: String!, $chainId: Int!) {
           userByAddress(address: $address, chainId: $chainId) {
@@ -370,7 +370,11 @@ export const fetchUserVaultV2PositionReferences = async (userAddress: string): P
         }`,
         { address: userAddress.toLowerCase(), chainId },
       );
-      const positions = response?.data?.userByAddress?.vaultV2Positions;
+      const user = response?.data?.userByAddress;
+      if (response === null || user === null) {
+        return [];
+      }
+      const positions = user?.vaultV2Positions;
       if (!Array.isArray(positions)) {
         throw new Error(`Vault positions unavailable on chain ${chainId}`);
       }

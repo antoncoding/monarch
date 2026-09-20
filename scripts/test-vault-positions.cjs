@@ -88,6 +88,30 @@ test('Morpho discovery includes unlisted and transferred-in candidates, scoped t
   );
 });
 
+test('missing users on other chains do not discard a held vault', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (_, request) => {
+    const { variables } = JSON.parse(request.body);
+    if (variables.chainId === 1) return Response.json({ data: { userByAddress: { vaultV2Positions: [{ vault: { address } }] } } });
+    if (variables.chainId === 8453) return Response.json({ data: { userByAddress: null } });
+    return Response.json({ data: null, errors: [{ status: 'NOT_FOUND', message: 'User not found' }] });
+  });
+  assert.deepEqual(await fetchUserVaultV2PositionReferences(user), [{ address, chainId: 1 }]);
+});
+
+test('all users absent resolves successfully with no holdings', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ data: null, errors: [{ status: 'NOT_FOUND' }] }));
+  assert.deepEqual(await fetchUserVaultV2PositionReferences(user), []);
+});
+
+test('a present user with a missing, null, or malformed positions field remains an error', async (t) => {
+  let payload = {};
+  mockApi(t, () => ({ userByAddress: payload }));
+  for (const malformed of [{}, { vaultV2Positions: null }, { vaultV2Positions: {} }]) {
+    payload = malformed;
+    await assert.rejects(fetchUserVaultV2PositionReferences(user), /unavailable/);
+  }
+});
+
 test('management discovery stays owner-only', async (t) => {
   mockApi(t, ({ query, variables }) => {
     assert.ok(query.includes('MonarchUserVaults'));
@@ -201,17 +225,25 @@ test('balance reads honor custom RPC and use chain-qualified keys', async (t) =>
 });
 
 test('query cache separates owners, holdings, account, and custom RPC settings', (t) => {
+  // SSR normally reads the boot snapshot. Use the browser snapshot here to test
+  // live store actions without changing initial state or cached key objects.
+  t.mock.method(React, 'useSyncExternalStore', (_, getSnapshot) => getSnapshot());
   const client = createClient(t);
   queryFor(client, {});
-  queryFor(client, { includePositions: true });
+  const originalQuery = queryFor(client, { includePositions: true });
+  const originalHash = originalQuery.queryHash;
   queryFor(client, { includePositions: true, userAddress: user.toUpperCase() });
   assert.equal(client.getQueryCache().findAll().length, 2);
   queryFor(client, { includePositions: true, userAddress: address });
-  const initialRpcSettings = useCustomRpc.getInitialState().customRpcUrls;
-  initialRpcSettings[1] = 'https://vault-test.invalid';
+  const previousRpcSettings = useCustomRpc.getState().customRpcUrls;
+  useCustomRpc.getState().setRpcUrl(1, 'https://vault-test.invalid');
   t.after(() => {
-    initialRpcSettings[1] = undefined;
+    useCustomRpc.getState().resetRpcUrl(1);
   });
   queryFor(client, { includePositions: true });
   assert.equal(client.getQueryCache().findAll().length, 4);
+  assert.equal(previousRpcSettings[1], undefined);
+  assert.deepEqual(originalQuery.queryKey.at(-1), {});
+  assert.equal(originalQuery.queryHash, originalHash);
+  assert.notEqual(useCustomRpc.getState().customRpcUrls, previousRpcSettings);
 });

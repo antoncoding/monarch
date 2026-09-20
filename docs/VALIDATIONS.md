@@ -55,6 +55,10 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Prefer `async`/`await` over promise chains.
 - Handle errors at a meaningful boundary. Do not catch just to rethrow.
 - Throw `Error` objects with descriptive messages.
+- Define and follow API outcome contracts at the shared transport/data-source boundary: confirmed absence is `null` for a nullable entity or an empty collection; transport, timeout, decoding, malformed required fields, and unexpected GraphQL failures are errors. Never use the same `null`/empty fallback for both absence and unavailability.
+- Normalize only recognized not-found responses. Preserve valid partial data for not-found-only errors, but reject mixed not-found and other GraphQL errors. Model explicit nullable fields in TypeScript and distinguish them from missing required fields.
+- Test these contracts through the real shared fetcher with raw response envelopes: success, empty, NOT_FOUND, explicit entity null, malformed data, unexpected/mixed errors, and mixed-chain success/absence. Caller-only mocks of already-normalized results are insufficient.
+- A background refresh error must preserve last-good rows and aggregate values with a warning/retry; first-load failures must not look like confirmed empty state. Retaining holdings must not suppress independent price errors.
 
 ## State Persistence
 
@@ -64,6 +68,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Storage utilities must namespace keys, normalize values, and catch unavailable-storage or quota failures.
 - Large API responses and metadata caches must use the IndexedDB-backed API response cache, not persisted Zustand/localStorage. Measure representative serialized payloads when cache size is not obviously bounded below WebKit's quota.
 - Validate SSR/client boundaries when persistence touches browser-only APIs.
+- State-transition tests must use store actions and verify prior snapshots/query keys remain unchanged. Do not mutate `getState()`/`getInitialState()` results to make an SSR harness behave like a client.
 - Preset or subscription toggles must not delete user-owned persisted selections. Preserve the raw user list and dedupe or hide preset overlaps in derived views unless the user explicitly removes them.
 
 ## Data And Domain Flows

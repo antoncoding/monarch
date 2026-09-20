@@ -28,7 +28,12 @@ const formatGraphqlError = (error: MorphoGraphqlError): string => {
   return parts.join(' ');
 };
 
-// Generic fetcher for Morpho API
+/**
+ * Returns the GraphQL envelope, preserving partial data for NOT_FOUND-only errors.
+ * Returns null only for confirmed NOT_FOUND without data. Transport, decoding,
+ * malformed-envelope, and other GraphQL failures reject; null never means outage.
+ * Callers distinguish explicit nullable entities from missing required fields.
+ */
 export const morphoGraphqlFetcher = async <T extends Record<string, unknown>>(
   query: string,
   variables: Record<string, unknown>,
@@ -56,28 +61,23 @@ export const morphoGraphqlFetcher = async <T extends Record<string, unknown>>(
     }
 
     const result = (await response.json()) as MorphoGraphqlResponse<T> | null;
-    if (!result) {
-      return null;
+    if (!result || typeof result !== 'object' || Array.isArray(result)) {
+      throw new Error('Invalid GraphQL response from Morpho API');
     }
 
-    // Check for GraphQL errors
     if (Array.isArray(result.errors) && result.errors.length > 0) {
-      // If it's known "NOT FOUND" error, handle gracefully
-      const notFoundError = result.errors.find((err) => err.status?.includes('NOT_FOUND'));
-
-      if (notFoundError) {
-        // Morpho API sometimes returns NOT_FOUND error alongside valid data
-        // Only return null if there's truly no data
-        if ('data' in result && result.data !== null) {
-          return result;
-        }
+      // One missing entity must not mask a simultaneous service/auth/schema failure.
+      const onlyNotFoundErrors = result.errors.every((error) => error.status?.includes('NOT_FOUND'));
+      if (!onlyNotFoundErrors) {
+        throw new Error(`GraphQL error from Morpho API: ${result.errors.map(formatGraphqlError).join('; ')}`);
+      }
+      if (result.data === null || result.data === undefined) {
         return null;
       }
+    }
 
-      // Log the full error for debugging
-      console.error('Morpho API GraphQL Error:', result.errors);
-
-      throw new Error(`GraphQL error from Morpho API: ${result.errors.map(formatGraphqlError).join('; ')}`);
+    if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data)) {
+      throw new Error('Invalid GraphQL data from Morpho API');
     }
 
     return result;
