@@ -2,9 +2,8 @@
 
 import type React from 'react';
 import { useRouter } from 'next/navigation';
-// import { GoHistory } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
-import { GearIcon } from '@radix-ui/react-icons';
+import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { getMonarchVaultHref } from '@/utils/vaults';
@@ -26,14 +25,9 @@ export function VaultActionsDropdown({ vaultAddress, chainId }: VaultActionsDrop
     e.stopPropagation();
   };
 
-  const handleManageClick = () => {
+  const handleViewClick = () => {
     router.push(getMonarchVaultHref(chainId, vaultAddress));
   };
-
-  // const handleHistoryClick = () => {
-  //   const historyUrl = `/history/${account}?chainId=${chainId}`;
-  //   router.push(historyUrl);
-  // };
 
   return (
     <div
@@ -48,24 +42,18 @@ export function VaultActionsDropdown({ vaultAddress, chainId }: VaultActionsDrop
             size="xs"
             variant="surface"
             className="text-xs"
+            aria-label="Vault actions"
           >
             <IoEllipsisVertical className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={handleManageClick}
-            startContent={<GearIcon className="h-4 w-4" />}
+            onClick={handleViewClick}
+            startContent={<ArrowTopRightIcon className="h-4 w-4" />}
           >
-            Manage
+            View vault
           </DropdownMenuItem>
-
-          {/* <DropdownMenuItem
-            onClick={handleHistoryClick}
-            startContent={<GoHistory className="h-4 w-4" />}
-          >
-            History
-          </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

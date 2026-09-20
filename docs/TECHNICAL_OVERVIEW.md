@@ -219,7 +219,7 @@ Market metrics: external data API via `/v1/markets/metrics`
 | User positions | Monarch position discovery/lifetime supply aggregates + on-chain snapshots + market registry from `useProcessedMarkets` | 5 min | `useUserPositions` |
 | User transaction history | Monarch GraphQL → Morpho API (`assetIds` queries still skip Monarch) | 60s | `useUserTransactionsQuery` |
 | Vaults list | Morpho API | 5 min | `useAllMorphoVaultsQuery` |
-| User autovault metadata | Monarch GraphQL + on-chain enrichment | 60s | `useUserVaultsV2Query` |
+| User V2 vault metadata/holdings | Monarch GraphQL + Morpho holder discovery + on-chain enrichment | 60s | `useUserVaultsV2Query` |
 | Vault detail/settings metadata | Monarch GraphQL + narrow RPC fallback | 30s | `useVaultV2Data` |
 | Vault detail native-yield/deposits/share-price history | Morpho Vault V2 historical state → archive RPC fallback for deposits and share price | 5 min stale | `useVaultHistoryQuery` |
 | Vault V2 rewards | Merkl API opportunities via `/api/merkl` | 5 min | `useVaultV2RewardsQuery` |
@@ -269,7 +269,7 @@ Hooks omitted from this matrix are local-state hooks or pure view/composition he
 
 | Hook / Family | Responsibility | Infra Today | Full Monarch Support Still Needs |
 |---------------|----------------|-------------|----------------------------------|
-| `useUserVaultsV2Query` | User vault list with optional balance, TVL, and yield enrichment | Monarch vault metadata + RPC balances/totalAssets + RPC 4626 yield snapshots | Already off Morpho for yield; no new Envio schema gap identified |
+| `useUserVaultsV2Query` | Owner list by default; Positions opts into deposited/held V2 vaults | Monarch deposit receivers/metadata + Morpho V2 holders + RPC balances/totalAssets/yield | Morpho holder discovery covers transferred shares on supported chains; Monarch has deposit events but no holder/transfer table |
 | `useVaultV2Data` | Vault detail/settings metadata for a single vault | Monarch vault detail first, narrow RPC fallback if metadata unavailable | Already aligned with Monarch-first design |
 | `useVaultV2RewardsQuery` | Vault detail reward APR enrichment | Merkl API opportunity lookup by vault address through `/api/merkl` | Outside Monarch/Envio scope today |
 | `useAllMorphoVaultsQuery` | Global whitelisted vault registry | Morpho API only | Intentionally Morpho-only today |

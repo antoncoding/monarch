@@ -2,10 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { fetchUserVaultV2DetailsAllNetworks, type UserVaultV2 } from '@/data-sources/monarch-api/vaults';
+import { fetchUserVaultV2PositionReferences } from '@/data-sources/morpho-api/vaults';
+import { useCustomRpc, type CustomRpcUrls } from '@/stores/useCustomRpc';
 import { fetchUserVaultShares, fetchVaultTotalAssets, getVaultReadKey } from '@/utils/vaultAllocation';
 import { fetchVaultYieldSnapshots, type VaultYieldSnapshot } from '@/utils/vaultYield';
 
 type UseUserVaultsV2Options = {
+  /** Include deposited/held vaults and return only current positive positions. Defaults to owned vaults. */
+  includePositions?: boolean;
   includeApy?: boolean;
   includeBalances?: boolean;
   includeTotalAssets?: boolean;
@@ -22,47 +26,50 @@ async function fetchAndProcessVaults({
   includeBalances,
   includeTotalAssets,
   userAddress,
+  includePositions,
+  customRpcUrls,
 }: {
+  includePositions: boolean;
+  customRpcUrls: CustomRpcUrls;
   includeApy: boolean;
   includeBalances: boolean;
   includeTotalAssets: boolean;
   userAddress: Address;
 }): Promise<UserVaultV2[]> {
-  const validVaults = filterValidVaults(await fetchUserVaultV2DetailsAllNetworks(userAddress));
+  const positions = includePositions ? await fetchUserVaultV2PositionReferences(userAddress) : undefined;
+  const validVaults = filterValidVaults(await fetchUserVaultV2DetailsAllNetworks(userAddress, positions));
 
   if (validVaults.length === 0) {
     return [];
   }
 
-  const [yieldSnapshotsByVault, shareBalances, totalAssetsByVault] = await Promise.all([
-    includeApy
-      ? fetchVaultYieldSnapshots({
-          vaults: validVaults.map((vault) => ({
-            address: vault.address as Address,
-            networkId: vault.networkId,
-          })),
-        })
-      : Promise.resolve(new Map<string, VaultYieldSnapshot>()),
-    includeBalances
-      ? fetchUserVaultShares(
-          validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })),
-          userAddress,
-        )
-      : Promise.resolve(new Map<string, bigint>()),
-    includeTotalAssets
-      ? fetchVaultTotalAssets(validVaults.map((v) => ({ address: v.address as Address, networkId: v.networkId })))
-      : Promise.resolve(new Map<string, bigint>()),
+  const shareBalances = includeBalances
+    ? await fetchUserVaultShares(
+        validVaults.map((vault) => ({ address: vault.address as Address, networkId: vault.networkId })),
+        userAddress,
+        customRpcUrls,
+      )
+    : new Map<string, bigint>();
+  const visibleVaults = includePositions
+    ? validVaults.filter((vault) => (shareBalances.get(getVaultReadKey(vault.address, vault.networkId)) ?? 0n) > 0n)
+    : validVaults;
+  const vaultReads = visibleVaults.map((vault) => ({ address: vault.address as Address, networkId: vault.networkId }));
+
+  // Do not fetch historical share prices for positions the user has exited.
+  const [yieldSnapshotsByVault, totalAssetsByVault] = await Promise.all([
+    includeApy ? fetchVaultYieldSnapshots({ vaults: vaultReads, customRpcUrls }) : Promise.resolve(new Map<string, VaultYieldSnapshot>()),
+    includeTotalAssets ? fetchVaultTotalAssets(vaultReads, customRpcUrls) : Promise.resolve(new Map<string, bigint>()),
   ]);
 
   // Combine Monarch vault metadata with optional balances and supplemental APY
-  return validVaults.map((vault) => {
+  return visibleVaults.map((vault) => {
     const vaultKey = getVaultReadKey(vault.address, vault.networkId);
 
     return {
       ...vault,
       adapter: vault.adapters[0] as Address | undefined,
       avgApy: yieldSnapshotsByVault.get(vaultKey)?.vaultApy ?? undefined,
-      balance: includeBalances ? (shareBalances.has(vaultKey) ? shareBalances.get(vaultKey) : undefined) : undefined,
+      balance: shareBalances.get(vaultKey),
       totalAssets: totalAssetsByVault.get(vaultKey),
     };
   });
@@ -93,26 +100,29 @@ async function fetchAndProcessVaults({
 export const useUserVaultsV2Query = (options: UseUserVaultsV2Options = {}) => {
   const { address: connectedAddress } = useConnection();
 
+  const customRpcUrls = useCustomRpc((state) => state.customRpcUrls);
+  const includePositions = options.includePositions ?? false;
   const includeApy = options.includeApy ?? true;
-  const includeBalances = options.includeBalances ?? true;
+  const includeBalances = includePositions || (options.includeBalances ?? true);
   const includeTotalAssets = options.includeTotalAssets ?? false;
-  const userAddress = (options.userAddress ?? connectedAddress) as Address;
+  const userAddress = (options.userAddress ?? connectedAddress)?.toLowerCase() as Address;
   const enabled = options.enabled ?? true;
 
   return useQuery<UserVaultV2[], Error>({
-    queryKey: ['user-vaults-v2', userAddress, { includeApy, includeBalances, includeTotalAssets }],
+    queryKey: ['user-vaults-v2', userAddress, { includePositions, includeApy, includeBalances, includeTotalAssets }, customRpcUrls],
     queryFn: async () => {
       if (!userAddress) {
         return [];
       }
 
-      try {
-        return await fetchAndProcessVaults({ includeApy, includeBalances, includeTotalAssets, userAddress });
-      } catch (err) {
-        const fetchError = err instanceof Error ? err : new Error('Failed to fetch user vaults');
-        console.error('Error fetching user V2 vaults:', fetchError);
-        throw fetchError;
-      }
+      return fetchAndProcessVaults({
+        includeApy,
+        includeBalances,
+        includeTotalAssets,
+        userAddress,
+        includePositions,
+        customRpcUrls,
+      });
     },
     enabled: enabled && Boolean(userAddress),
     staleTime: 60_000, // 60 seconds - complex multi-step fetch

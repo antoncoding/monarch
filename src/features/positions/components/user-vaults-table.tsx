@@ -11,6 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
+import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -134,6 +135,7 @@ export function UserVaultsTable({
           variant="ghost"
           size="sm"
           onClick={refetch}
+          aria-label="Refresh vault positions"
           disabled={isRefetching}
           className="text-secondary min-w-0 px-2"
         >
@@ -146,7 +148,7 @@ export function UserVaultsTable({
   return (
     <div className="space-y-4 overflow-x-auto">
       <TableContainerWithHeader
-        title="Auto Vaults"
+        title="Vault Positions"
         actions={headerActions}
       >
         <Table className="responsive w-full min-w-[640px]">
@@ -154,6 +156,7 @@ export function UserVaultsTable({
             <TableRow className="w-full justify-center text-secondary">
               <TableHead className="w-10">Network</TableHead>
               {showAccount && <TableHead className="w-16">Account</TableHead>}
+              <TableHead>Vault</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
               <TableHead>
@@ -167,9 +170,9 @@ export function UserVaultsTable({
           <TableBody className="text-sm">
             {activeVaults.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7 + (showAccount ? 1 : 0)}>
+                <TableCell colSpan={8 + (showAccount ? 1 : 0)}>
                   <div className="flex min-h-[200px] items-center justify-center">
-                    <p className="text-sm text-secondary">No active positions in auto vaults.</p>
+                    <p className="text-sm text-secondary">No active vault positions.</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -200,6 +203,14 @@ export function UserVaultsTable({
                     <TableRow
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => toggleRow(rowKey)}
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      onKeyDown={(event) => {
+                        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                          event.preventDefault();
+                          toggleRow(rowKey);
+                        }
+                      }}
                     >
                       {/* Network */}
                       <TableCell className="w-10">
@@ -225,13 +236,23 @@ export function UserVaultsTable({
                           <TableCell className="w-16" />
                         ))}
 
+                      <TableCell data-label="Vault">
+                        <VaultIdentity
+                          address={vault.address as Address}
+                          chainId={vault.networkId}
+                          vaultName={vault.name || undefined}
+                          variant="inline"
+                          className="whitespace-nowrap"
+                        />
+                      </TableCell>
+
                       {/* Size */}
                       <TableCell data-label="Size">
                         <div className="flex items-center justify-center gap-2">
                           <span className="font-medium">
-                            {vault.balance && token ? formatReadable(formatUnits(vault.balance, token.decimals)) : '0'}
+                            {vault.balance && token ? formatReadable(formatUnits(vault.balance, token.decimals)) : '-'}
                           </span>
-                          <span>{token?.symbol ?? 'USDC'}</span>
+                          <span>{token?.symbol ?? 'Unknown'}</span>
                           <TokenIcon
                             address={vault.asset}
                             chainId={vault.networkId}
@@ -311,7 +332,7 @@ export function UserVaultsTable({
                       {isExpanded && (
                         <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                           <TableCell
-                            colSpan={7 + (showAccount ? 1 : 0)}
+                            colSpan={8 + (showAccount ? 1 : 0)}
                             className="bg-surface"
                           >
                             <motion.div

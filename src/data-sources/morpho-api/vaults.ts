@@ -353,3 +353,30 @@ export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Pro
     return new Map();
   }
 };
+
+export type VaultV2PositionReference = { address: string; chainId: number };
+
+/** Discover share holders, including unlisted vaults and transferred shares. */
+export const fetchUserVaultV2PositionReferences = async (userAddress: string): Promise<VaultV2PositionReference[]> => {
+  const positionsByChain = await Promise.all(
+    MORPHO_API_SUPPORTED_NETWORKS.map(async (chainId) => {
+      const response = await morphoGraphqlFetcher<{
+        data?: { userByAddress?: { vaultV2Positions: { vault: { address: string } }[] } };
+      }>(
+        `query UserVaultV2Positions($address: String!, $chainId: Int!) {
+          userByAddress(address: $address, chainId: $chainId) {
+            vaultV2Positions { vault { address } }
+          }
+        }`,
+        { address: userAddress.toLowerCase(), chainId },
+      );
+      const positions = response?.data?.userByAddress?.vaultV2Positions;
+      if (!Array.isArray(positions)) {
+        throw new Error(`Vault positions unavailable on chain ${chainId}`);
+      }
+      // Keep even indexed zero balances: current holdings are confirmed onchain.
+      return positions.map(({ vault }) => ({ address: vault.address.toLowerCase(), chainId }));
+    }),
+  );
+  return positionsByChain.flat();
+};

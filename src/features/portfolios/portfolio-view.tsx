@@ -32,6 +32,7 @@ import { useVaultHistoricalApy } from '@/hooks/useVaultHistoricalApy';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useLocalPortfolios } from '@/stores/useLocalPortfolios';
 import { usePositionsFilters } from '@/stores/usePositionsFilters';
+import { getVaultReadKey } from '@/utils/vaultAllocation';
 import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 import { hasSupplyPositionHistory, type PositionSnapshot } from '@/utils/positions';
 import type { MarketPositionWithEarnings } from '@/utils/types';
@@ -76,7 +77,7 @@ function PortfolioAccountLoader({
   const vaultsWithAccount = useMemo(
     () =>
       vaults.map((vault) => {
-        const periodData = vaultApyQuery.data?.get(vault.address.toLowerCase());
+        const periodData = vaultApyQuery.data?.get(getVaultReadKey(vault.address, vault.networkId));
         return {
           ...vault,
           account,
