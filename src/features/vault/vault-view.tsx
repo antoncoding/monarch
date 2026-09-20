@@ -35,6 +35,7 @@ import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import { formatBalance } from '@/utils/balance';
+import { formatCompactTokenAmount } from '@/utils/token-amount-format';
 import { getSlicedAddress } from '@/utils/address';
 import { getVaultURL, supportsMorphoAppLinks } from '@/utils/external';
 import { parseCapIdParams } from '@/utils/morpho';
@@ -369,10 +370,7 @@ export default function VaultContent() {
   const userShareBalanceLabel = useMemo(() => {
     if (vaultContract.userAssets === undefined || tokenDecimals === undefined || vaultContract.userAssets === 0n) return undefined;
     try {
-      const numericAssets = formatBalance(vaultContract.userAssets, tokenDecimals);
-      const formattedAssets = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 2,
-      }).format(numericAssets);
+      const formattedAssets = formatCompactTokenAmount(vaultContract.userAssets, tokenDecimals);
       return `${formattedAssets}${tokenSymbol ? ` ${tokenSymbol}` : ''}`.trim();
     } catch (_error) {
       return undefined;
@@ -465,6 +463,8 @@ export default function VaultContent() {
             rewards={vaultRewardRows}
             showRewardSparkle={showFullRewardAPY && vaultRewardRows.length > 0}
             userShareBalance={userShareBalanceLabel}
+            isUserPositionLoading={vaultContract.isUserPositionLoading}
+            hasUserPositionError={Boolean(vaultContract.userPositionError)}
             allocators={vaultData?.allocators}
             sentinels={vaultData?.sentinels}
             owner={vaultData?.owner}
@@ -477,7 +477,6 @@ export default function VaultContent() {
             onWithdraw={handleWithdraw}
             onRefresh={handleRefreshVault}
             onSettings={() => openSettings('general')}
-            showWithdrawWhenEmpty
             isRefetching={isRefetching}
             isLoading={vaultDataLoading || vaultContract.isLoading}
             morphoHref={morphoVaultHref}

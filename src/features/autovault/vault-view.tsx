@@ -30,6 +30,7 @@ import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import { VaultHeader } from '@/features/autovault/components/vault-detail/vault-header';
 import { useModal } from '@/hooks/useModal';
 import { formatBalance } from '@/utils/balance';
+import { formatCompactTokenAmount } from '@/utils/token-amount-format';
 
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 
@@ -148,10 +149,7 @@ export default function VaultContent() {
   const userShareBalanceLabel = useMemo(() => {
     if (vaultContract.userAssets === undefined || tokenDecimals === undefined || vaultContract.userAssets === 0n) return undefined;
     try {
-      const numericAssets = formatBalance(vaultContract.userAssets, tokenDecimals);
-      const formattedAssets = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 2,
-      }).format(numericAssets);
+      const formattedAssets = formatCompactTokenAmount(vaultContract.userAssets, tokenDecimals);
       return `${formattedAssets}${tokenSymbol ? ` ${tokenSymbol}` : ''}`.trim();
     } catch (_error) {
       return undefined;
@@ -236,6 +234,8 @@ export default function VaultContent() {
             totalAssetsLabel={totalAssetsLabel}
             apyLabel={apyLabel}
             userShareBalance={userShareBalanceLabel}
+            isUserPositionLoading={vaultContract.isUserPositionLoading}
+            hasUserPositionError={Boolean(vaultContract.userPositionError)}
             allocators={vaultData?.allocators}
             collaterals={collateralAddresses}
             curator={vaultData?.curator}

@@ -8,7 +8,9 @@ import { IoEllipsisVertical } from 'react-icons/io5';
 import { FiExternalLink } from 'react-icons/fi';
 import { LuCopy } from 'react-icons/lu';
 import { RiSparklingFill } from 'react-icons/ri';
+import { BsArrowDownCircle, BsArrowUpCircle } from 'react-icons/bs';
 import { Button } from '@/components/ui/button';
+import { SplitActionButton } from '@/components/ui/split-action-button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { AddressIdentity } from '@/components/shared/address-identity';
@@ -52,6 +54,8 @@ type VaultHeaderProps = {
   rewards?: VaultHeaderRewardRow[];
   showRewardSparkle?: boolean;
   userShareBalance?: string;
+  isUserPositionLoading: boolean;
+  hasUserPositionError: boolean;
   allocators?: string[];
   sentinels?: string[];
   owner?: string;
@@ -64,7 +68,6 @@ type VaultHeaderProps = {
   onWithdraw: () => void;
   onRefresh: () => void;
   onSettings: () => void;
-  showWithdrawWhenEmpty?: boolean;
   isRefetching: boolean;
   isLoading: boolean;
   morphoHref?: string;
@@ -84,6 +87,8 @@ export function VaultHeader({
   rewards = [],
   showRewardSparkle = false,
   userShareBalance,
+  isUserPositionLoading,
+  hasUserPositionError,
   allocators = [],
   sentinels = [],
   owner,
@@ -96,7 +101,6 @@ export function VaultHeader({
   onWithdraw,
   onRefresh,
   onSettings,
-  showWithdrawWhenEmpty = false,
   isRefetching,
   isLoading,
   morphoHref,
@@ -278,36 +282,73 @@ export function VaultHeader({
                   )}
                 </div>
               </div>
-              {userShareBalance && (
+              {(userShareBalance || isUserPositionLoading || hasUserPositionError) && (
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-secondary">My Balance</p>
+                  <p className="text-xs uppercase tracking-wider text-secondary">
+                    {hasUserPositionError && userShareBalance ? 'Last Balance' : 'My Balance'}
+                  </p>
                   <div className="flex items-center gap-2">
-                    <p className="tabular-nums text-lg font-medium">{userShareBalance}</p>
+                    {isUserPositionLoading ? (
+                      <span
+                        className="text-sm text-foreground"
+                        role="status"
+                      >
+                        Loading…
+                      </span>
+                    ) : (
+                      <p className="tabular-nums text-lg font-medium">{userShareBalance ?? 'Unavailable'}</p>
+                    )}
                   </div>
+                  {hasUserPositionError && (
+                    <button
+                      type="button"
+                      onClick={onRefresh}
+                      disabled={isRefetching}
+                      className="text-xs text-foreground underline underline-offset-2 hover:text-primary disabled:opacity-50"
+                    >
+                      {isRefetching ? 'Retrying…' : 'Retry balance'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="primary"
-                size="sm"
+              <SplitActionButton
+                label="Deposit"
+                icon={<BsArrowUpCircle className="h-4 w-4 opacity-60" />}
                 onClick={onDeposit}
                 disabled={isLoading}
-              >
-                Deposit
-              </Button>
-              {(userShareBalance || showWithdrawWhenEmpty) && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={onWithdraw}
-                  disabled={isLoading || !userShareBalance}
-                >
-                  Withdraw
-                </Button>
-              )}
+                indicator={{
+                  show: Boolean(userShareBalance),
+                  tooltip: (
+                    <div className="flex items-center gap-3">
+                      {assetAddress && (
+                        <TokenIcon
+                          address={assetAddress}
+                          chainId={chainId}
+                          symbol={assetSymbol ?? ''}
+                          width={20}
+                          height={20}
+                        />
+                      )}
+                      <div>
+                        <p className="text-xs text-secondary">{hasUserPositionError ? 'Last Balance' : 'Deposited'}</p>
+                        <p className="text-sm font-medium tabular-nums">{userShareBalance}</p>
+                      </div>
+                    </div>
+                  ),
+                }}
+                dropdownItems={[
+                  {
+                    label: 'Withdraw',
+                    icon: <BsArrowDownCircle className="h-4 w-4 opacity-60" />,
+                    onClick: onWithdraw,
+                    disabled: isLoading || isUserPositionLoading || hasUserPositionError || !userShareBalance,
+                  },
+                ]}
+              />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

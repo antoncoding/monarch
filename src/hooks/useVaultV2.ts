@@ -15,6 +15,7 @@ import {
 import { getClient } from '@/utils/rpc';
 import { MONARCH_VAULT_QUERY_REFETCH_DELAYS_MS, refetchVaultQueryData } from './useVaultQueryRefresh';
 import { useTransactionWithToast } from './useTransactionWithToast';
+import { useVaultUserPositionQuery } from './queries/useVaultUserPositionQuery';
 import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
 import { findAgent } from '@/utils/monarch-agent';
@@ -103,7 +104,7 @@ export function useVaultV2({
 
   const {
     data: batchData,
-    refetch: refetchAll,
+    refetch: refetchContract,
     isRefetching,
     isLoading,
   } = useReadContracts({
@@ -126,39 +127,23 @@ export function useVaultV2({
         functionName: 'totalAssets',
         args: [],
       },
-      {
-        // balanceOf (user's share balance)
-        ...vaultContract,
-        functionName: 'balanceOf',
-        args: [connectedAddress ?? zeroAddress],
-      },
-      {
-        // totalSupply (for share-to-asset conversion)
-        ...vaultContract,
-        functionName: 'totalSupply',
-        args: [],
-      },
     ],
     query: {
       enabled: vaultContract.address !== zeroAddress,
     },
   });
 
-  const [owner, curator, totalAssets, userShares, totalSupply] = useMemo(() => {
-    return [
-      batchData?.[0].result ?? zeroAddress,
-      batchData?.[1].result ?? zeroAddress,
-      batchData?.[2].result ?? 0n,
-      batchData?.[3].result ?? 0n,
-      batchData?.[4].result ?? 0n,
-    ];
+  const [owner, curator, totalAssets] = useMemo(() => {
+    return [batchData?.[0].result ?? zeroAddress, batchData?.[1].result ?? zeroAddress, batchData?.[2].result ?? 0n];
   }, [batchData]);
 
-  // ERC4626: convert user's shares to underlying asset value
-  const userAssets = useMemo(() => {
-    if (!connectedAddress || userShares === 0n || totalSupply === 0n) return undefined;
-    return (userShares * totalAssets) / totalSupply;
-  }, [connectedAddress, userShares, totalAssets, totalSupply]);
+  const userPosition = useVaultUserPositionQuery({ vaultAddress, chainId: chainIdToUse, userAddress: connectedAddress });
+  const { refetch: refetchUserPosition } = userPosition;
+  const userAssets = userPosition.data?.assets;
+  const refetchAll = useCallback(
+    () => Promise.all([refetchContract(), ...(connectedAddress ? [refetchUserPosition()] : [])]),
+    [connectedAddress, refetchContract, refetchUserPosition],
+  );
 
   const refreshVaultStateAfterTransaction = useCallback(
     (includeMonarchRetries: boolean) => {
@@ -884,7 +869,7 @@ export function useVaultV2({
 
   return {
     isLoading,
-    isRefetching,
+    isRefetching: isRefetching || userPosition.isRefetching,
     refetch: refetchAll,
     completeInitialization,
     isInitializing,
@@ -904,5 +889,7 @@ export function useVaultV2({
     isWithdrawing,
     totalAssets,
     userAssets,
+    isUserPositionLoading: userPosition.isLoading,
+    userPositionError: userPosition.error,
   };
 }

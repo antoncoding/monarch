@@ -25,6 +25,7 @@ type SplitActionButtonProps = {
   indicator?: IndicatorConfig;
   dropdownItems: DropdownItem[];
   className?: string;
+  disabled?: boolean;
 };
 
 export function SplitActionButton({
@@ -34,6 +35,7 @@ export function SplitActionButton({
   indicator,
   dropdownItems,
   className,
+  disabled = false,
 }: SplitActionButtonProps): ReactNode {
   const showIndicator = indicator?.show ?? false;
 
@@ -41,11 +43,12 @@ export function SplitActionButton({
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         'inline-flex items-center gap-1.5 pl-3 pr-2 py-2 text-sm font-medium transition-all duration-200',
         'rounded-l-sm rounded-r-none',
         'bg-surface text-foreground hover:brightness-95',
-        'active:scale-[0.98] active:brightness-90',
+        'active:scale-[0.98] active:brightness-90 disabled:opacity-50 disabled:pointer-events-none',
       )}
     >
       {showIndicator && <span className="h-2 w-2 rounded-full bg-primary block" />}
@@ -70,6 +73,7 @@ export function SplitActionButton({
         <DropdownMenuTrigger asChild>
           <button
             type="button"
+            aria-label={`${label} actions`}
             className={cn(
               'inline-flex items-center justify-center px-1 transition-all duration-200',
               'rounded-l-none rounded-r-sm',
