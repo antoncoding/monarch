@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AccountIdentity } from '@/components/shared/account-identity';
-import { NetworkIcon } from '@/components/shared/network-icon';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { PortfolioAccountPreview } from '@/features/portfolios/components/portfolio-account-preview';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
@@ -123,20 +122,14 @@ function BreakdownContent({ title, items, vaultsUsd }: { title: string; items: A
           </div>
         </div>
       )}
-      {groups.map((group) => (
+      {groups.map((group, index) => (
         <div
           key={group.chainId}
-          className="space-y-2"
+          className={cn('space-y-2', index > 0 && 'border-t border-border/50 pt-3')}
         >
-          <div className="flex items-center justify-between gap-4 text-xs">
-            <span className="flex items-center gap-2">
-              <NetworkIcon
-                networkId={group.chainId}
-                size={14}
-              />
-              {getNetworkName(group.chainId) ?? `Chain ${group.chainId}`}
-            </span>
-            <span className="tabular-nums text-secondary">{formatUsdValue(group.usdValue)}</span>
+          <div className="flex items-center justify-between gap-4 text-[11px] text-secondary">
+            <span>{getNetworkName(group.chainId) ?? `Chain ${group.chainId}`}</span>
+            <span className="tabular-nums">{formatUsdValue(group.usdValue)}</span>
           </div>
           <div className="space-y-2 pl-1">
             {group.items.map((item) => {
