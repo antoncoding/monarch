@@ -122,14 +122,18 @@ function BreakdownContent({ title, items, vaultsUsd }: { title: string; items: A
           </div>
         </div>
       )}
-      {groups.map((group, index) => (
+      {groups.map((group) => (
         <div
           key={group.chainId}
-          className={cn('space-y-2', index > 0 && 'border-t border-border/50 pt-3')}
+          className="space-y-2"
         >
-          <div className="flex items-center justify-between gap-4 text-[11px] text-secondary">
-            <span>{getNetworkName(group.chainId) ?? `Chain ${group.chainId}`}</span>
-            <span className="tabular-nums">{formatUsdValue(group.usdValue)}</span>
+          <div className="flex items-center gap-2 text-[11px] text-secondary">
+            <span className="shrink-0">{getNetworkName(group.chainId) ?? `Chain ${group.chainId}`}</span>
+            <span
+              aria-hidden
+              className="flex-1 border-t border-border/50"
+            />
+            <span className="shrink-0 tabular-nums">{formatUsdValue(group.usdValue)}</span>
           </div>
           <div className="space-y-2 pl-1">
             {group.items.map((item) => {

@@ -14,6 +14,7 @@ type VaultIdentityVariant = 'chip' | 'inline' | 'icon';
 type VaultIdentityProps = {
   address: `0x${string}`;
   asset?: `0x${string}`;
+  curator?: string;
   chainId: number;
   vaultName?: string;
   imageSrc?: string;
@@ -31,6 +32,7 @@ type VaultIdentityProps = {
 export function VaultIdentity({
   address,
   asset,
+  curator,
   chainId,
   vaultName,
   imageSrc,
@@ -53,6 +55,8 @@ export function VaultIdentity({
     return (
       <VaultIcon
         imageSrc={imageSrc}
+        asset={asset ? { address: asset, chainId } : undefined}
+        curator={curator}
         width={size}
         height={size}
         alt={iconAlt}

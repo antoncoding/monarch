@@ -239,6 +239,8 @@ export function UserVaultsTable({
                       <TableCell data-label="Vault">
                         <VaultIdentity
                           address={vault.address as Address}
+                          asset={vault.asset as Address}
+                          curator={vault.curator}
                           chainId={vault.networkId}
                           vaultName={vault.name || undefined}
                           variant="inline"
