@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import { PulseLoader } from 'react-spinners';
@@ -14,6 +14,8 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { useMorphoVaultV2MetadataQuery } from '@/hooks/queries/useMorphoVaultV2MetadataQuery';
+import { getVaultKey } from '@/constants/vaults/known_vaults';
 import { useAppSettings } from '@/stores/useAppSettings';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -115,7 +117,13 @@ export function UserVaultsTable({
   };
 
   // Filter out vaults where user has no balance
-  const activeVaults = vaults.filter((vault) => vault.balance && vault.balance > 0n);
+  const activeVaults = useMemo(() => vaults.filter((vault) => vault.balance && vault.balance > 0n), [vaults]);
+  // Curator branding enriches already-visible holdings; it never gates balances or actions.
+  const { data: vaultMetadata } = useMorphoVaultV2MetadataQuery({ vaults: activeVaults });
+  const metadataByVault = useMemo(
+    () => new Map(vaultMetadata?.map((vault) => [getVaultKey(vault.address, vault.chainId), vault])),
+    [vaultMetadata],
+  );
 
   if (vaults.length === 0) {
     return null;
@@ -240,7 +248,7 @@ export function UserVaultsTable({
                         <VaultIdentity
                           address={vault.address as Address}
                           asset={vault.asset as Address}
-                          curator={vault.curator}
+                          curator={metadataByVault.get(getVaultKey(vault.address, vault.networkId))?.curator}
                           chainId={vault.networkId}
                           vaultName={vault.name || undefined}
                           variant="inline"

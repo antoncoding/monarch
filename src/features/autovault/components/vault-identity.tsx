@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AddressIdentity } from '@/components/shared/address-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
+import type { MorphoVaultCurator } from '@/data-sources/morpho-api/vaults';
 import { getMonarchVaultHref } from '@/utils/vaults';
 import { VaultIcon } from './vault-icon';
 
@@ -14,7 +15,7 @@ type VaultIdentityVariant = 'chip' | 'inline' | 'icon';
 type VaultIdentityProps = {
   address: `0x${string}`;
   asset?: `0x${string}`;
-  curator?: string;
+  curator?: MorphoVaultCurator;
   chainId: number;
   vaultName?: string;
   imageSrc?: string;

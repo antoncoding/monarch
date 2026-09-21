@@ -2,6 +2,7 @@ import { formatUnits } from 'viem';
 import { getTokenPriceKey, type TokenPriceInput } from '@/data-sources/morpho-api/prices';
 import type { MarketPositionWithEarnings } from './types';
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
+import type { ERC20Token } from './tokens';
 
 const ONE_YEAR_IN_SECONDS = 86_400 * 365;
 
@@ -49,6 +50,35 @@ export type AssetBreakdownItem = AssetBreakdownSourceCounts & {
   price: number;
   usdValue: number;
 };
+
+/** Combine known representations of an asset after each chain has been priced. */
+export function groupAssetBreakdown(
+  items: AssetBreakdownItem[],
+  findToken: (address: string, chainId: number) => Pick<ERC20Token, 'networks' | 'symbol'> | undefined,
+): AssetBreakdownItem[] {
+  const groups = new Map<string, AssetBreakdownItem>();
+
+  for (const item of items) {
+    const token = findToken(item.tokenAddress, item.chainId);
+    // Registry membership identifies the same asset across chains; a ticker alone does not.
+    const canonicalNetwork = token?.networks[0];
+    const key = getTokenPriceKey(canonicalNetwork?.address ?? item.tokenAddress, canonicalNetwork?.chain.id ?? item.chainId);
+    const group = groups.get(key);
+
+    if (group) {
+      group.balance += item.balance;
+      group.usdValue += item.usdValue;
+      group.price = group.balance > 0 ? group.usdValue / group.balance : 0;
+      group.supplyMarketCount += item.supplyMarketCount;
+      group.vaultCount += item.vaultCount;
+      group.borrowMarketCount += item.borrowMarketCount;
+    } else {
+      groups.set(key, { ...item, symbol: token?.symbol ?? item.symbol });
+    }
+  }
+
+  return [...groups.values()].sort((a, b) => b.usdValue - a.usdValue);
+}
 
 export type PortfolioAnalyticsRange = {
   startTimestamp: number;

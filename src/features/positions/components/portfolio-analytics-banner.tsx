@@ -12,7 +12,6 @@ import { PortfolioAccountPreview } from '@/features/portfolios/components/portfo
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { cn } from '@/utils/components';
-import { getNetworkName } from '@/utils/networks';
 import { type AssetBreakdownItem, formatUsdValue, type PortfolioAnalytics } from '@/utils/portfolio';
 import { AccountVaultInfo } from './account-vault-info';
 import { PositionsPeriodSettingsButton } from './positions-period-settings';
@@ -86,27 +85,8 @@ function formatDebtSourceCaption(items: AssetBreakdownItem[]): string {
   return formatSourceCount(borrowMarketCount, 'borrow market') ?? '';
 }
 
-function formatAssetSourceDetail(item: AssetBreakdownItem): string {
-  return joinSourceCounts([
-    formatSourceCount(item.supplyMarketCount, 'Morpho market'),
-    formatSourceCount(item.vaultCount, 'vault'),
-    formatSourceCount(item.borrowMarketCount, 'borrow market'),
-  ]);
-}
-
 function BreakdownContent({ title, items, vaultsUsd }: { title: string; items: AssetBreakdownItem[]; vaultsUsd?: number }) {
-  const networks = new Map<number, { chainId: number; usdValue: number; items: AssetBreakdownItem[] }>();
-  for (const item of items) {
-    const group = networks.get(item.chainId);
-    if (group) {
-      group.usdValue += item.usdValue;
-      group.items.push(item);
-    } else {
-      networks.set(item.chainId, { chainId: item.chainId, usdValue: item.usdValue, items: [item] });
-    }
-  }
-  const groups = [...networks.values()].sort((a, b) => b.usdValue - a.usdValue);
-  const totalUsd = groups.reduce((sum, group) => sum + group.usdValue, 0);
+  const totalUsd = items.reduce((sum, item) => sum + item.usdValue, 0);
 
   return (
     <div className="space-y-3">
@@ -126,44 +106,25 @@ function BreakdownContent({ title, items, vaultsUsd }: { title: string; items: A
           <div className={cn(BREAKDOWN_HEADING_CLASS, 'pt-1')}>Breakdown</div>
         </>
       )}
-      {groups.map((group) => (
+      {items.map((item) => (
         <div
-          key={group.chainId}
-          className="space-y-2"
+          key={`${item.tokenAddress}-${item.chainId}`}
+          className="flex items-center justify-between gap-4 text-xs"
         >
-          <div className="flex items-center justify-between gap-4 text-[11px] text-secondary">
-            <span className="shrink-0">{getNetworkName(group.chainId) ?? `Chain ${group.chainId}`}</span>
-            <span className="shrink-0 tabular-nums">{formatUsdValue(group.usdValue)}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            <TokenIcon
+              address={item.tokenAddress}
+              chainId={item.chainId}
+              symbol={item.symbol}
+              width={16}
+              height={16}
+              disableTooltip
+            />
+            <span className="truncate">
+              {formatReadableTokenAmount(item.balance, { precision: 2, minDisplayDecimals: 2 })} {item.symbol}
+            </span>
           </div>
-          <div className="space-y-2 pl-1">
-            {group.items.map((item) => {
-              const sourceDetail = formatAssetSourceDetail(item);
-
-              return (
-                <div
-                  key={`${item.tokenAddress}-${item.chainId}`}
-                  className="flex items-start justify-between gap-4 text-xs"
-                >
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <TokenIcon
-                        address={item.tokenAddress}
-                        chainId={item.chainId}
-                        symbol={item.symbol}
-                        width={16}
-                        height={16}
-                      />
-                      <span className="truncate">
-                        {formatReadableTokenAmount(item.balance, { precision: 2, minDisplayDecimals: 2 })} {item.symbol}
-                      </span>
-                    </div>
-                    {sourceDetail && <div className="mt-0.5 pl-6 text-[11px] leading-4 text-secondary">{sourceDetail}</div>}
-                  </div>
-                  <span className="shrink-0 tabular-nums text-secondary">{formatUsdValue(item.usdValue)}</span>
-                </div>
-              );
-            })}
-          </div>
+          <span className="shrink-0 tabular-nums text-secondary">{formatUsdValue(item.usdValue)}</span>
         </div>
       ))}
     </div>

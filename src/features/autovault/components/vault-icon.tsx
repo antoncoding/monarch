@@ -1,14 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import { isAddress, zeroAddress } from 'viem';
-import { Avatar } from '@/components/Avatar/Avatar';
+import { useState } from 'react';
 import { TokenIcon } from '@/components/shared/token-icon';
+import type { MorphoVaultCurator } from '@/data-sources/morpho-api/vaults';
 
 type VaultIconProps = {
   imageSrc?: string;
   asset?: { address: string; chainId: number };
-  curator?: string;
+  curator?: MorphoVaultCurator;
   width?: number;
   height?: number;
   className?: string;
@@ -32,8 +32,10 @@ function getTrustedVaultImageSrc(imageSrc?: string) {
 }
 
 export function VaultIcon({ imageSrc, asset, curator, width = 24, height = 24, className = '', alt }: VaultIconProps) {
+  const [failedCuratorImage, setFailedCuratorImage] = useState<string | null>(null);
   const altText = alt ?? 'Vault logo';
   const trustedImageSrc = getTrustedVaultImageSrc(imageSrc);
+  const curatorImageSrc = getTrustedVaultImageSrc(curator?.image);
 
   if (!trustedImageSrc && asset) {
     const curatorSize = Math.round(Math.min(width, height) * 0.6);
@@ -50,14 +52,19 @@ export function VaultIcon({ imageSrc, asset, curator, width = 24, height = 24, c
           height={height}
           disableTooltip
         />
-        {curator && isAddress(curator) && curator !== zeroAddress && (
+        {curator && curatorImageSrc && curatorImageSrc !== failedCuratorImage && (
           <span
             className="absolute -bottom-0.5 -right-0.5 rounded-full bg-surface ring-2 ring-surface"
-            title={`Curator ${curator}`}
+            title={`Curated by ${curator.name}`}
           >
-            <Avatar
-              address={curator}
-              size={curatorSize}
+            <Image
+              src={curatorImageSrc}
+              alt={`${curator.name} curator logo`}
+              width={curatorSize}
+              height={curatorSize}
+              className="rounded-full object-contain"
+              unoptimized
+              onError={() => setFailedCuratorImage(curatorImageSrc)}
             />
           </span>
         )}
