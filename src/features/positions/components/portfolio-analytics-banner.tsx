@@ -1,17 +1,19 @@
 import type { ReactNode } from 'react';
-import { Pencil2Icon } from '@radix-ui/react-icons';
+import { ChevronDownIcon, Pencil2Icon } from '@radix-ui/react-icons';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import type { Address } from 'viem';
 import { PulseLoader } from 'react-spinners';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tooltip } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AccountIdentity } from '@/components/shared/account-identity';
+import { NetworkIcon } from '@/components/shared/network-icon';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { PortfolioAccountPreview } from '@/features/portfolios/components/portfolio-account-preview';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { cn } from '@/utils/components';
+import { getNetworkName } from '@/utils/networks';
 import { type AssetBreakdownItem, formatUsdValue, type PortfolioAnalytics } from '@/utils/portfolio';
 import { AccountVaultInfo } from './account-vault-info';
 import { PositionsPeriodSettingsButton } from './positions-period-settings';
@@ -25,6 +27,7 @@ interface PortfolioAnalyticsBannerProps {
   isAprDisplay: boolean;
   totalUsd: number;
   totalDebtUsd: number;
+  vaultsUsd: number;
   assetBreakdown: AssetBreakdownItem[];
   debtBreakdown: AssetBreakdownItem[];
   portfolioAnalytics: PortfolioAnalytics;
@@ -91,39 +94,81 @@ function formatAssetSourceDetail(item: AssetBreakdownItem): string {
   ]);
 }
 
-function BreakdownTooltipContent({ title, items }: { title: string; items: AssetBreakdownItem[] }) {
-  return (
-    <div className="min-w-[220px] space-y-3">
-      <div className="font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{title}</div>
-      <div className="space-y-2">
-        {items.map((item) => {
-          const sourceDetail = formatAssetSourceDetail(item);
+function BreakdownContent({ title, items, vaultsUsd }: { title: string; items: AssetBreakdownItem[]; vaultsUsd?: number }) {
+  const networks = new Map<number, { chainId: number; usdValue: number; items: AssetBreakdownItem[] }>();
+  for (const item of items) {
+    const group = networks.get(item.chainId);
+    if (group) {
+      group.usdValue += item.usdValue;
+      group.items.push(item);
+    } else {
+      networks.set(item.chainId, { chainId: item.chainId, usdValue: item.usdValue, items: [item] });
+    }
+  }
+  const groups = [...networks.values()].sort((a, b) => b.usdValue - a.usdValue);
+  const totalUsd = groups.reduce((sum, group) => sum + group.usdValue, 0);
 
-          return (
-            <div
-              key={`${item.tokenAddress}-${item.chainId}`}
-              className="flex items-start justify-between gap-4 text-xs"
-            >
-              <div className="min-w-0">
-                <div className="flex min-w-0 items-center gap-2">
-                  <TokenIcon
-                    address={item.tokenAddress}
-                    chainId={item.chainId}
-                    symbol={item.symbol}
-                    width={16}
-                    height={16}
-                  />
-                  <span className="truncate">
-                    {formatReadableTokenAmount(item.balance, { precision: 2, minDisplayDecimals: 2 })} {item.symbol}
-                  </span>
+  return (
+    <div className="space-y-3">
+      <div className="font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{title}</div>
+      {vaultsUsd !== undefined && (
+        <div className="space-y-1.5 border-b border-border pb-3 text-xs">
+          <div className="flex justify-between gap-4">
+            <span className="text-secondary">Market deposits</span>
+            <span className="tabular-nums">{formatUsdValue(totalUsd - vaultsUsd)}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-secondary">Vault deposits</span>
+            <span className="tabular-nums">{formatUsdValue(vaultsUsd)}</span>
+          </div>
+        </div>
+      )}
+      {groups.map((group) => (
+        <div
+          key={group.chainId}
+          className="space-y-2"
+        >
+          <div className="flex items-center justify-between gap-4 text-xs">
+            <span className="flex items-center gap-2">
+              <NetworkIcon
+                networkId={group.chainId}
+                size={14}
+              />
+              {getNetworkName(group.chainId) ?? `Chain ${group.chainId}`}
+            </span>
+            <span className="tabular-nums text-secondary">{formatUsdValue(group.usdValue)}</span>
+          </div>
+          <div className="space-y-2 pl-1">
+            {group.items.map((item) => {
+              const sourceDetail = formatAssetSourceDetail(item);
+
+              return (
+                <div
+                  key={`${item.tokenAddress}-${item.chainId}`}
+                  className="flex items-start justify-between gap-4 text-xs"
+                >
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <TokenIcon
+                        address={item.tokenAddress}
+                        chainId={item.chainId}
+                        symbol={item.symbol}
+                        width={16}
+                        height={16}
+                      />
+                      <span className="truncate">
+                        {formatReadableTokenAmount(item.balance, { precision: 2, minDisplayDecimals: 2 })} {item.symbol}
+                      </span>
+                    </div>
+                    {sourceDetail && <div className="mt-0.5 pl-6 text-[11px] leading-4 text-secondary">{sourceDetail}</div>}
+                  </div>
+                  <span className="shrink-0 tabular-nums text-secondary">{formatUsdValue(item.usdValue)}</span>
                 </div>
-                {sourceDetail && <div className="mt-0.5 pl-6 text-[11px] leading-4 text-secondary">{sourceDetail}</div>}
-              </div>
-              <span className="shrink-0 text-secondary">{formatUsdValue(item.usdValue)}</span>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -136,7 +181,7 @@ function PortfolioMetricBox({
   isLoading,
   error,
   muted = false,
-  tooltip,
+  breakdown,
 }: {
   label: string;
   value: string;
@@ -145,13 +190,36 @@ function PortfolioMetricBox({
   isLoading: boolean;
   error?: Error | null;
   muted?: boolean;
-  tooltip?: ReactNode;
+  breakdown?: ReactNode;
 }) {
-  const content = (
+  return (
     <div className="flex h-full min-h-[5.5rem] min-w-0 flex-col rounded border border-border bg-surface px-3 py-2.5 shadow-[0_1px_1px_rgb(0_0_0_/_0.025)] dark:shadow-none">
       <div className="flex min-w-0 items-center justify-between gap-2">
         <span className="truncate font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{label}</span>
-        {action}
+        {breakdown && !isLoading && !error ? (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0 text-secondary"
+                aria-label={`${label.toLowerCase()} breakdown`}
+              >
+                <ChevronDownIcon className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              aria-label={`${label.toLowerCase()} breakdown`}
+              align="start"
+              side="bottom"
+              className="max-h-[min(32rem,var(--radix-popover-content-available-height))] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto"
+            >
+              {breakdown}
+            </PopoverContent>
+          </Popover>
+        ) : (
+          action
+        )}
       </div>
       <div className="mt-2 flex min-h-6 items-center">
         {isLoading ? (
@@ -176,19 +244,6 @@ function PortfolioMetricBox({
       )}
     </div>
   );
-
-  if (!tooltip || isLoading) {
-    return <div className="h-full min-w-0">{content}</div>;
-  }
-
-  return (
-    <Tooltip
-      content={tooltip}
-      placement="bottom"
-    >
-      <div className="h-full min-w-0 cursor-help">{content}</div>
-    </Tooltip>
-  );
 }
 
 export function PortfolioAnalyticsBanner({
@@ -200,6 +255,7 @@ export function PortfolioAnalyticsBanner({
   isAprDisplay,
   totalUsd,
   totalDebtUsd,
+  vaultsUsd,
   assetBreakdown,
   debtBreakdown,
   portfolioAnalytics,
@@ -279,11 +335,12 @@ export function PortfolioAnalyticsBanner({
             caption={formatDepositSourceCaption(assetBreakdown)}
             isLoading={isValueLoading}
             error={valueError}
-            tooltip={
+            breakdown={
               assetBreakdown.length > 0 ? (
-                <BreakdownTooltipContent
+                <BreakdownContent
                   title="Deposit sources"
                   items={assetBreakdown}
+                  vaultsUsd={vaultsUsd}
                 />
               ) : undefined
             }
@@ -308,9 +365,9 @@ export function PortfolioAnalyticsBanner({
             isLoading={isValueLoading}
             error={valueError}
             muted={totalDebtUsd <= 0}
-            tooltip={
+            breakdown={
               debtBreakdown.length > 0 ? (
-                <BreakdownTooltipContent
+                <BreakdownContent
                   title="Debt sources"
                   items={debtBreakdown}
                 />

@@ -200,6 +200,7 @@ export default function PortfolioView() {
   const {
     totalUsd,
     totalDebtUsd,
+    vaultsUsd,
     assetBreakdown,
     debtBreakdown,
     portfolioAnalytics,
@@ -319,6 +320,7 @@ export default function PortfolioView() {
                 isAprDisplay={isAprDisplay}
                 totalUsd={totalUsd}
                 totalDebtUsd={totalDebtUsd}
+                vaultsUsd={vaultsUsd}
                 assetBreakdown={assetBreakdown}
                 debtBreakdown={debtBreakdown}
                 portfolioAnalytics={portfolioAnalytics}

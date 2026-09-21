@@ -17,7 +17,7 @@ import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAppSettings } from '@/stores/useAppSettings';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useRateLabel } from '@/hooks/useRateLabel';
-import { formatReadable } from '@/utils/balance';
+import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { formatTokenAmountPreview } from '@/utils/token-amount-format';
 import { getNetworkImg } from '@/utils/networks';
 import { parseCapIdParams } from '@/utils/morpho';
@@ -250,7 +250,7 @@ export function UserVaultsTable({
                       <TableCell data-label="Size">
                         <div className="flex items-center justify-center gap-2">
                           <span className="font-medium">
-                            {vault.balance && token ? formatReadable(formatUnits(vault.balance, token.decimals)) : '-'}
+                            {vault.balance && token ? formatReadableTokenAmount(formatUnits(vault.balance, token.decimals)) : '-'}
                           </span>
                           <span>{token?.symbol ?? 'Unknown'}</span>
                           <TokenIcon

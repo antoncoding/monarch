@@ -83,6 +83,7 @@ export default function Positions() {
   const {
     totalUsd,
     totalDebtUsd,
+    vaultsUsd,
     assetBreakdown,
     debtBreakdown,
     portfolioAnalytics,
@@ -129,6 +130,7 @@ export default function Positions() {
             isAprDisplay={isAprDisplay}
             totalUsd={totalUsd}
             totalDebtUsd={totalDebtUsd}
+            vaultsUsd={vaultsUsd}
             assetBreakdown={assetBreakdown}
             debtBreakdown={debtBreakdown}
             portfolioAnalytics={portfolioAnalytics}
