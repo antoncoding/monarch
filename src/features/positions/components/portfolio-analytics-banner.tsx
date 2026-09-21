@@ -40,6 +40,7 @@ interface PortfolioAnalyticsBannerProps {
 }
 
 const METRIC_VALUE_CLASS = 'font-zen text-xl font-normal leading-none tabular-nums text-primary';
+const BREAKDOWN_HEADING_CLASS = 'font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary';
 
 function formatRate(value: number | null): string {
   if (value === null || !Number.isFinite(value)) {
@@ -109,30 +110,29 @@ function BreakdownContent({ title, items, vaultsUsd }: { title: string; items: A
 
   return (
     <div className="space-y-3">
-      <div className="font-monospace text-[10px] uppercase leading-4 tracking-[0.14em] text-secondary">{title}</div>
+      <div className={BREAKDOWN_HEADING_CLASS}>{title}</div>
       {vaultsUsd !== undefined && (
-        <div className="space-y-1.5 border-b border-border pb-3 text-xs">
-          <div className="flex justify-between gap-4">
-            <span className="text-secondary">Market deposits</span>
-            <span className="tabular-nums">{formatUsdValue(totalUsd - vaultsUsd)}</span>
+        <>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between gap-4">
+              <span className="text-secondary">Market deposits</span>
+              <span className="tabular-nums">{formatUsdValue(totalUsd - vaultsUsd)}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-secondary">Vault deposits</span>
+              <span className="tabular-nums">{formatUsdValue(vaultsUsd)}</span>
+            </div>
           </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-secondary">Vault deposits</span>
-            <span className="tabular-nums">{formatUsdValue(vaultsUsd)}</span>
-          </div>
-        </div>
+          <div className={cn(BREAKDOWN_HEADING_CLASS, 'pt-1')}>Breakdown</div>
+        </>
       )}
       {groups.map((group) => (
         <div
           key={group.chainId}
           className="space-y-2"
         >
-          <div className="flex items-center gap-2 text-[11px] text-secondary">
+          <div className="flex items-center justify-between gap-4 text-[11px] text-secondary">
             <span className="shrink-0">{getNetworkName(group.chainId) ?? `Chain ${group.chainId}`}</span>
-            <span
-              aria-hidden
-              className="flex-1 border-t border-border/50"
-            />
             <span className="shrink-0 tabular-nums">{formatUsdValue(group.usdValue)}</span>
           </div>
           <div className="space-y-2 pl-1">
