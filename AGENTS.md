@@ -29,6 +29,7 @@ Universal coding-agent rules for the Monarch codebase.
 - Remove temporary debugging code before finishing.
 - Run `npx ultracite fix` before committing, and `npx ultracite check` to verify, when code changes make those checks relevant.
 - Try to see if you can fix the issue by removing complexity. Always question whether all lines of code are necessary and remove unnecessary experiments.
+- Before integrating an API caller, read the shared fetcher’s documented outcome contract. Distinguish confirmed absence (`null` entity or empty collection) from unavailable/malformed data (errors), and test raw responses through the fetcher, including mixed-chain results. Follow the API outcome rules in `docs/VALIDATIONS.md`.
 - For external API or protocol-shape bugs, validate the exact observed response shape at the smallest shared boundary. Do not add broad normalizers, diagnostic collectors, or hypothetical-shape handling unless the current evidence requires it.
 
 ## Final Validation Gate

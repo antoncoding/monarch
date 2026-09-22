@@ -29,6 +29,19 @@ Local UI State (single component) → useState
 ```
 
 
+### API Outcome Contracts
+
+Read the shared fetcher's return/error contract before writing a caller; do not infer domain meaning from truthiness.
+
+- Confirmed absence: return `[]` for a collection lookup or `null` for a nullable entity lookup. An absent user on one chain must not reject holdings from another chain.
+- Unavailable data: transport, timeout, decoding, unexpected GraphQL errors, and missing required fields reject. Do not turn them into successful empty results.
+- Morpho specifically: `morphoGraphqlFetcher` returns `null` for NOT_FOUND-only responses without data and preserves partial data when the remaining fields are valid. Explicit `userByAddress: null` means an absent user; a missing field or null positions list on a present user is malformed.
+- A response with both NOT_FOUND and another GraphQL error must reject. Do not let one recognized absence mask another failure.
+- A background failure retains last-good rows and totals and shows a refresh warning/retry. Price failures still prevent presenting unverified USD totals.
+- Test the real fetcher/caller boundary with raw success, empty, NOT_FOUND, explicit entity null, malformed, mixed-error, and mixed-chain payloads. Use store actions in state-transition tests; never mutate snapshots or objects already used in query keys.
+
+Run `pnpm test:contracts` for the shared API and vault position contracts.
+
 ### React Query (External Data)
 
 **Location:** `src/hooks/queries/use{Entity}Query.ts`

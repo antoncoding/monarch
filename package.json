@@ -5,7 +5,8 @@
   "scripts": {
     "build": "rm -rf .next/cache && next build",
     "build:clean": "rm -rf .next && next build",
-    "check": "pnpm lint:check && pnpm typecheck",
+    "check": "pnpm lint:check && pnpm typecheck && pnpm test:contracts",
+    "test:contracts": "node --test scripts/test-morpho-graphql-fetcher.cjs scripts/test-vault-positions.cjs scripts/test-vault-user-position.cjs",
     "dev": "next dev --turbo",
     "format": "biome format --write .",
     "lint": "biome check --write .",

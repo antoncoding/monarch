@@ -179,6 +179,8 @@ type MonarchMarketV2AdapterPositionsResponse = {
   };
 };
 
+const MONARCH_VAULT_DEPOSIT_PAGE_SIZE = 1000;
+const MONARCH_VAULT_DEPOSIT_MAX_PAGES = 20;
 const MONARCH_ADAPTER_RELATION_PAGE_SIZE = 1000;
 const MONARCH_ADAPTER_RELATION_MAX_PAGES = 20;
 const MONARCH_MARKET_V2_POSITIONS_PAGE_SIZE = 1000;
@@ -268,8 +270,8 @@ const transformVault = (vault: MonarchVault, adapterDetails: VaultAdapterDetails
 };
 
 const userVaultsQuery = `
-  query MonarchUserVaults($owner: String!) {
-    Vault(where: { owner: { _eq: $owner } }, order_by: [{ lastUpdate: desc }]) {
+  query MonarchUserVaults($owner: String!, $depositIds: [String!]!, $positions: [Vault_bool_exp!]!) {
+    Vault(where: { _or: [{ owner: { _eq: $owner } }, { id: { _in: $depositIds } }, { _or: $positions }] }, order_by: [{ lastUpdate: desc }]) {
       ${MONARCH_VAULT_FIELDS}
     }
   }
@@ -373,12 +375,54 @@ const marketV2AdapterPositionsQuery = `
   }
 `;
 
-export const fetchUserVaultV2DetailsAllNetworks = async (owner: string): Promise<UserVaultV2[]> => {
+/** Deposit receivers cover Monarch-indexed chains, including those without Morpho API support. */
+async function fetchUserVaultDepositIds(userAddress: string): Promise<string[]> {
+  const ids = new Set<string>();
+  for (let page = 0; page < MONARCH_VAULT_DEPOSIT_MAX_PAGES; page++) {
+    const response = await monarchGraphqlFetcher<{
+      data?: { VaultV2_Deposit?: { vault_id: string; chainId: number }[] };
+    }>(
+      `query UserVaultDeposits($user: String!, $limit: Int!, $offset: Int!) {
+        VaultV2_Deposit(where: { onBehalf: { _eq: $user } }, distinct_on: [vault_id],
+          order_by: [{ vault_id: asc }], limit: $limit, offset: $offset) { vault_id chainId }
+      }`,
+      { user: userAddress.toLowerCase(), limit: MONARCH_VAULT_DEPOSIT_PAGE_SIZE, offset: page * MONARCH_VAULT_DEPOSIT_PAGE_SIZE },
+    );
+    const deposits = response.data?.VaultV2_Deposit;
+    if (!Array.isArray(deposits)) throw new Error('Vault deposits unavailable');
+    for (const deposit of deposits) {
+      if (toSupportedNetwork(deposit.chainId)) ids.add(deposit.vault_id);
+    }
+    if (deposits.length < MONARCH_VAULT_DEPOSIT_PAGE_SIZE) return [...ids];
+  }
+  throw new Error('Vault deposit discovery exceeded the page limit');
+}
+
+// Omitting positions preserves the owner-only management list.
+export const fetchUserVaultV2DetailsAllNetworks = async (
+  owner: string,
+  positions?: { address: string; chainId: number }[],
+): Promise<UserVaultV2[]> => {
+  const depositIds = positions ? await fetchUserVaultDepositIds(owner) : [];
   const response = await monarchGraphqlFetcher<MonarchVaultsResponse>(userVaultsQuery, {
     owner: owner.toLowerCase(),
+    depositIds,
+    positions: (positions ?? []).map(({ address, chainId }) => ({
+      vaultAddress: { _eq: address.toLowerCase() },
+      chainId: { _eq: chainId },
+    })),
   });
 
-  const vaults = response.data?.Vault ?? [];
+  const vaults = response.data?.Vault;
+  if (!Array.isArray(vaults)) throw new Error('Vault details unavailable');
+  const vaultIds = new Set(vaults.map((vault) => vault.id));
+  const vaultKeys = new Set(vaults.map((vault) => `${vault.chainId}:${vault.vaultAddress.toLowerCase()}`));
+  if (
+    depositIds.some((id) => !vaultIds.has(id)) ||
+    positions?.some(({ address, chainId }) => !vaultKeys.has(`${chainId}:${address.toLowerCase()}`))
+  ) {
+    throw new Error('Some vault position details are unavailable');
+  }
   return vaults.map((vault) => transformVault(vault)).filter((vault): vault is UserVaultV2 => vault !== null);
 };
 

@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import { PulseLoader } from 'react-spinners';
@@ -9,14 +9,18 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { AutovaultBadge } from '@/components/shared/agent-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
+import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { useMorphoVaultV2MetadataQuery } from '@/hooks/queries/useMorphoVaultV2MetadataQuery';
+import { getVaultKey } from '@/constants/vaults/known_vaults';
 import { useAppSettings } from '@/stores/useAppSettings';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useRateLabel } from '@/hooks/useRateLabel';
-import { formatReadable } from '@/utils/balance';
+import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { formatTokenAmountPreview } from '@/utils/token-amount-format';
 import { getNetworkImg } from '@/utils/networks';
 import { parseCapIdParams } from '@/utils/morpho';
@@ -114,7 +118,13 @@ export function UserVaultsTable({
   };
 
   // Filter out vaults where user has no balance
-  const activeVaults = vaults.filter((vault) => vault.balance && vault.balance > 0n);
+  const activeVaults = useMemo(() => vaults.filter((vault) => vault.balance && vault.balance > 0n), [vaults]);
+  // Curator branding enriches already-visible holdings; it never gates balances or actions.
+  const { data: vaultMetadata } = useMorphoVaultV2MetadataQuery({ vaults: activeVaults });
+  const metadataByVault = useMemo(
+    () => new Map(vaultMetadata?.map((vault) => [getVaultKey(vault.address, vault.chainId), vault])),
+    [vaultMetadata],
+  );
 
   if (vaults.length === 0) {
     return null;
@@ -134,6 +144,7 @@ export function UserVaultsTable({
           variant="ghost"
           size="sm"
           onClick={refetch}
+          aria-label="Refresh vault positions"
           disabled={isRefetching}
           className="text-secondary min-w-0 px-2"
         >
@@ -146,7 +157,7 @@ export function UserVaultsTable({
   return (
     <div className="space-y-4 overflow-x-auto">
       <TableContainerWithHeader
-        title="Auto Vaults"
+        title="Vault Positions"
         actions={headerActions}
       >
         <Table className="responsive w-full min-w-[640px]">
@@ -154,6 +165,7 @@ export function UserVaultsTable({
             <TableRow className="w-full justify-center text-secondary">
               <TableHead className="w-10">Network</TableHead>
               {showAccount && <TableHead className="w-16">Account</TableHead>}
+              <TableHead>Vault</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
               <TableHead>
@@ -167,9 +179,9 @@ export function UserVaultsTable({
           <TableBody className="text-sm">
             {activeVaults.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7 + (showAccount ? 1 : 0)}>
+                <TableCell colSpan={8 + (showAccount ? 1 : 0)}>
                   <div className="flex min-h-[200px] items-center justify-center">
-                    <p className="text-sm text-secondary">No active positions in auto vaults.</p>
+                    <p className="text-sm text-secondary">No active vault positions.</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -200,6 +212,14 @@ export function UserVaultsTable({
                     <TableRow
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => toggleRow(rowKey)}
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      onKeyDown={(event) => {
+                        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                          event.preventDefault();
+                          toggleRow(rowKey);
+                        }
+                      }}
                     >
                       {/* Network */}
                       <TableCell className="w-10">
@@ -225,13 +245,28 @@ export function UserVaultsTable({
                           <TableCell className="w-16" />
                         ))}
 
+                      <TableCell data-label="Vault">
+                        <div className="inline-flex items-center gap-2">
+                          <VaultIdentity
+                            address={vault.address as Address}
+                            asset={vault.asset as Address}
+                            curator={metadataByVault.get(getVaultKey(vault.address, vault.networkId))?.curator}
+                            chainId={vault.networkId}
+                            vaultName={vault.name || undefined}
+                            variant="inline"
+                            className="whitespace-nowrap"
+                          />
+                          <AutovaultBadge allocators={vault.allocators} />
+                        </div>
+                      </TableCell>
+
                       {/* Size */}
                       <TableCell data-label="Size">
                         <div className="flex items-center justify-center gap-2">
                           <span className="font-medium">
-                            {vault.balance && token ? formatReadable(formatUnits(vault.balance, token.decimals)) : '0'}
+                            {vault.balance && token ? formatReadableTokenAmount(formatUnits(vault.balance, token.decimals)) : '-'}
                           </span>
-                          <span>{token?.symbol ?? 'USDC'}</span>
+                          <span>{token?.symbol ?? 'Unknown'}</span>
                           <TokenIcon
                             address={vault.asset}
                             chainId={vault.networkId}
@@ -311,7 +346,7 @@ export function UserVaultsTable({
                       {isExpanded && (
                         <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                           <TableCell
-                            colSpan={7 + (showAccount ? 1 : 0)}
+                            colSpan={8 + (showAccount ? 1 : 0)}
                             className="bg-surface"
                           >
                             <motion.div

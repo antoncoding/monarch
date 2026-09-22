@@ -26,11 +26,17 @@ export type MorphoVault = {
   metadataImage?: string;
 };
 
+export type MorphoVaultCurator = {
+  name: string;
+  image?: string;
+};
+
 export type MorphoVaultV2Metadata = {
   address: string;
   assetAddress: string;
   assetSymbol: string;
   chainId: number;
+  curator?: MorphoVaultCurator;
   listed: boolean;
   metadataDescription?: string;
   metadataImage?: string;
@@ -83,6 +89,16 @@ type VaultApysApiResponse = {
 
 type ApiVaultV2 = {
   address: string;
+  curator: { address: string };
+  curators: {
+    items:
+      | {
+          name: string;
+          image: string | null;
+          addresses: { address: string; chainId: number }[];
+        }[]
+      | null;
+  };
   asset?: {
     address: string;
     symbol: string;
@@ -145,11 +161,18 @@ function transformVaultV2Metadata(apiVault: ApiVaultV2 | null): MorphoVaultV2Met
     return null;
   }
 
+  const curator = apiVault.curators?.items?.find((candidate) =>
+    candidate.addresses.some(
+      (account) => account.chainId === apiVault.chain?.id && account.address.toLowerCase() === apiVault.curator?.address.toLowerCase(),
+    ),
+  );
+
   return {
     address: apiVault.address,
     assetAddress: apiVault.asset.address,
     assetSymbol: apiVault.asset.symbol,
     chainId: apiVault.chain.id,
+    curator: curator ? { name: curator.name, image: curator.image ?? undefined } : undefined,
     listed: apiVault.listed,
     metadataDescription: apiVault.metadata?.description ?? undefined,
     metadataImage: apiVault.metadata?.image ?? undefined,
@@ -220,42 +243,36 @@ export const fetchMorphoVaultV2Metadata = async (vaults: VaultAddressByNetwork[]
 
   const metadataByKey = new Map<string, MorphoVaultV2Metadata>();
 
-  try {
-    for (let skip = 0; ; skip += MAX_VAULT_V2_METADATA_PAGE_SIZE) {
-      const response = await morphoGraphqlFetcher<VaultV2MetadataApiResponse>(vaultV2MetadataQuery, {
-        first: MAX_VAULT_V2_METADATA_PAGE_SIZE,
-        skip,
-        where: {
-          address_in: addresses,
-          chainId_in: chainIds,
-        },
-      });
+  for (let skip = 0; ; skip += MAX_VAULT_V2_METADATA_PAGE_SIZE) {
+    const response = await morphoGraphqlFetcher<VaultV2MetadataApiResponse>(vaultV2MetadataQuery, {
+      first: MAX_VAULT_V2_METADATA_PAGE_SIZE,
+      skip,
+      where: {
+        address_in: addresses,
+        chainId_in: chainIds,
+      },
+    });
+    if (response === null) break;
 
-      const items = response?.data?.vaultV2s?.items ?? [];
-      for (const item of items) {
-        const metadata = transformVaultV2Metadata(item);
-        if (!metadata) {
-          continue;
-        }
+    const items = response.data?.vaultV2s?.items;
+    if (!Array.isArray(items)) {
+      throw new Error('Morpho V2 vault metadata is unavailable');
+    }
 
-        const key = getVaultRequestKey({ address: metadata.address, chainId: metadata.chainId });
-        if (!key || !requestedKeys.has(key)) {
-          continue;
-        }
+    for (const item of items) {
+      const metadata = transformVaultV2Metadata(item);
+      if (!metadata) continue;
 
+      const key = getVaultRequestKey({ address: metadata.address, chainId: metadata.chainId });
+      if (key && requestedKeys.has(key)) {
         metadataByKey.set(key, metadata);
-      }
-
-      if (items.length < MAX_VAULT_V2_METADATA_PAGE_SIZE) {
-        break;
       }
     }
 
-    return Array.from(metadataByKey.values());
-  } catch (error) {
-    console.warn('Error fetching Morpho V2 vault metadata:', error);
-    return [];
+    if (items.length < MAX_VAULT_V2_METADATA_PAGE_SIZE) break;
   }
+
+  return Array.from(metadataByKey.values());
 };
 
 export const fetchListedMorphoVaultV2Metadata = async (): Promise<MorphoVaultV2Metadata[]> => {
@@ -352,4 +369,35 @@ export const fetchMorphoVaultApys = async (vaults: VaultAddressByNetwork[]): Pro
     console.warn('Error fetching Morpho vault APYs:', error);
     return new Map();
   }
+};
+
+export type VaultV2PositionReference = { address: string; chainId: number };
+
+/** Discover share holders, including unlisted vaults and transferred shares. */
+export const fetchUserVaultV2PositionReferences = async (userAddress: string): Promise<VaultV2PositionReference[]> => {
+  const positionsByChain = await Promise.all(
+    MORPHO_API_SUPPORTED_NETWORKS.map(async (chainId) => {
+      const response = await morphoGraphqlFetcher<{
+        data?: { userByAddress?: { vaultV2Positions: { vault: { address: string } }[] } | null };
+      }>(
+        `query UserVaultV2Positions($address: String!, $chainId: Int!) {
+          userByAddress(address: $address, chainId: $chainId) {
+            vaultV2Positions { vault { address } }
+          }
+        }`,
+        { address: userAddress.toLowerCase(), chainId },
+      );
+      const user = response?.data?.userByAddress;
+      if (response === null || user === null) {
+        return [];
+      }
+      const positions = user?.vaultV2Positions;
+      if (!Array.isArray(positions)) {
+        throw new Error(`Vault positions unavailable on chain ${chainId}`);
+      }
+      // Keep even indexed zero balances: current holdings are confirmed onchain.
+      return positions.map(({ vault }) => ({ address: vault.address.toLowerCase(), chainId }));
+    }),
+  );
+  return positionsByChain.flat();
 };

@@ -46,8 +46,8 @@ export const robinhood = defineChain({
   },
   blockExplorers: {
     default: {
-      name: 'Robinhood Explorer',
-      url: 'https://robinhoodchain.blockscout.com',
+      name: 'Robinhood Etherscan',
+      url: 'https://robin.etherscan.io',
     },
   },
   contracts: {
@@ -211,7 +211,7 @@ export const networks: NetworkConfig[] = [
     },
     blocktime: 0.1,
     maxBlockDelay: 2,
-    explorerUrl: 'https://robinhoodchain.blockscout.com',
+    explorerUrl: robinhood.blockExplorers.default.url,
     wrappedNativeToken: '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73',
   },
   {

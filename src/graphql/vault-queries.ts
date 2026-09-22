@@ -79,6 +79,19 @@ export const vaultV2MetadataQuery = `
         name
         symbol
         listed
+        curator {
+          address
+        }
+        curators(first: 10) {
+          items {
+            name
+            image
+            addresses {
+              address
+              chainId
+            }
+          }
+        }
         metadata {
           description
           image

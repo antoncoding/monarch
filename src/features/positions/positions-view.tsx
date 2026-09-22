@@ -3,6 +3,8 @@
 import { useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import type { Address } from 'viem';
+import { Button } from '@/components/ui/button';
+import { getVaultReadKey } from '@/utils/vaultAllocation';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
@@ -50,13 +52,14 @@ export default function Positions() {
     earningsRangesByChain,
   } = useUserPositionsSummaryData(account, period, undefined, { enabled: shouldFetchNativeAccountData });
 
-  // Fetch user's auto vaults
+  // Discover vault share holdings for the viewed account.
   const {
     data: vaults = [],
     isLoading: isVaultsLoading,
+    error: vaultsError,
     isRefetching: isVaultsRefetching,
     refetch: refetchVaults,
-  } = useUserVaultsV2Query({ userAddress: account as Address, enabled: shouldFetchNativeAccountData });
+  } = useUserVaultsV2Query({ userAddress: account as Address, enabled: shouldFetchNativeAccountData, includePositions: true });
 
   // Fetch historical APY for vaults
   const { data: vaultApyData, isLoading: isVaultApyLoading } = useVaultHistoricalApy(vaults, period);
@@ -65,7 +68,7 @@ export default function Positions() {
   const vaultsWithApy = useMemo(() => {
     if (!vaultApyData) return vaults;
     return vaults.map((vault) => {
-      const periodData = vaultApyData.get(vault.address.toLowerCase());
+      const periodData = vaultApyData.get(getVaultReadKey(vault.address, vault.networkId));
 
       return {
         ...vault,
@@ -80,6 +83,7 @@ export default function Positions() {
   const {
     totalUsd,
     totalDebtUsd,
+    vaultsUsd,
     assetBreakdown,
     debtBreakdown,
     portfolioAnalytics,
@@ -96,7 +100,8 @@ export default function Positions() {
     showNativeAccountSections &&
     marketPositions.some((position) => BigInt(position.state.borrowShares) > 0n || BigInt(position.state.collateral) > 0n);
   const hasVaults = showNativeAccountSections && vaults && vaults.length > 0;
-  const showEmpty = showNativeAccountSections && !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasBorrowPositions && !hasVaults;
+  const showEmpty =
+    showNativeAccountSections && !loading && !isVaultsLoading && !vaultsError && !hasSuppliedMarkets && !hasBorrowPositions && !hasVaults;
   const showHeaderPortfolio = showNativeAccountSections && !loading;
 
   useEffect(() => {
@@ -125,12 +130,13 @@ export default function Positions() {
             isAprDisplay={isAprDisplay}
             totalUsd={totalUsd}
             totalDebtUsd={totalDebtUsd}
+            vaultsUsd={vaultsUsd}
             assetBreakdown={assetBreakdown}
             debtBreakdown={debtBreakdown}
             portfolioAnalytics={portfolioAnalytics}
-            isValueLoading={isPricesLoading}
+            isValueLoading={isPricesLoading || isVaultsLoading}
             isEarningsLoading={isEarningsLoading || isVaultApyLoading}
-            valueError={pricesError}
+            valueError={(hasVaults ? null : vaultsError) ?? pricesError}
             showPortfolioStats={showHeaderPortfolio}
           />
         </div>
@@ -175,12 +181,31 @@ export default function Positions() {
             />
           )}
 
-          {/* Auto Vaults Section (progressive loading) */}
+          {/* Vault positions load independently of direct market positions. */}
           {isVaultsLoading && !loading && (
             <LoadingScreen
               message="Loading vaults..."
               className="mt-10"
             />
+          )}
+
+          {showNativeAccountSections && vaultsError && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded bg-surface p-4 text-sm"
+            >
+              <p className="text-secondary">
+                {hasVaults ? 'Could not refresh vault positions. Showing last loaded balances.' : 'Could not load vault positions.'}
+              </p>
+              <Button
+                variant="surface"
+                size="sm"
+                onClick={() => void refetchVaults()}
+                disabled={isVaultsRefetching}
+              >
+                Retry
+              </Button>
+            </div>
           )}
 
           {!isVaultsLoading && hasVaults && (

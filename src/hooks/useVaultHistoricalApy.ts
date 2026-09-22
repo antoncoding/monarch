@@ -7,6 +7,7 @@ import type { UserVaultV2 } from '@/data-sources/monarch-api/vaults';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
+import { getVaultReadKey } from '@/utils/vaultAllocation';
 import { getClient } from '@/utils/rpc';
 import { useCurrentBlocks } from './queries/useCurrentBlocks';
 import { useBlockTimestamps } from './queries/useBlockTimestamps';
@@ -57,14 +58,14 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
   const vaultAddresses = useMemo(
     () =>
       vaults
-        .map((v) => v.address.toLowerCase())
+        .map((v) => `${getVaultReadKey(v.address, v.networkId)}:${v.balance?.toString() ?? ''}`)
         .sort()
         .join(','),
     [vaults],
   );
 
   return useQuery({
-    queryKey: ['vault-historical-apy', vaultAddresses, period, actualBlockData],
+    queryKey: ['vault-historical-apy', vaultAddresses, period, actualBlockData, customRpcUrls],
     queryFn: async () => {
       if (!currentBlocks || !actualBlockData) {
         return new Map<string, VaultApyData>();
@@ -149,7 +150,7 @@ export const useVaultHistoricalApy = (vaults: UserVaultV2[], period: EarningsPer
 
                 // Only include valid, non-negative APY
                 if (Number.isFinite(apy) && apy >= 0) {
-                  results.set(vault.address.toLowerCase(), { actualApy: apy, earnedAssets, periodSeconds });
+                  results.set(getVaultReadKey(vault.address, vault.networkId), { actualApy: apy, earnedAssets, periodSeconds });
                 }
               }
             }

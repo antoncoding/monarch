@@ -154,14 +154,19 @@ export const useMarketV2SupplyingVaultsQuery = ({ enabled = true, markets, trust
         return vaults;
       }
 
-      const morphoMetadata = await fetchMorphoVaultV2Metadata(
-        vaults.map((vault) => ({
-          address: vault.vaultAddress,
-          chainId: vault.chainId,
-        })),
-      );
-
-      return mergeMorphoV2Metadata(vaults, morphoMetadata);
+      try {
+        const morphoMetadata = await fetchMorphoVaultV2Metadata(
+          vaults.map((vault) => ({
+            address: vault.vaultAddress,
+            chainId: vault.chainId,
+          })),
+        );
+        return mergeMorphoV2Metadata(vaults, morphoMetadata);
+      } catch (error) {
+        // Optional branding must not discard the confirmed supplying-vault relationships.
+        console.warn('Unable to enrich supplying vault metadata:', error);
+        return vaults;
+      }
     },
     enabled: shouldLoadAdapterRelations && relevantAdapterRelations.length > 0 && chainMarketRequests.length > 0,
     staleTime: MARKET_V2_SUPPLYING_VAULTS_STALE_TIME_MS,

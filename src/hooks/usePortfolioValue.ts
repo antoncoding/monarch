@@ -13,6 +13,7 @@ import {
   EMPTY_PORTFOLIO_ANALYTICS,
   extractTokensFromPositions,
   extractTokensFromVaults,
+  groupAssetBreakdown,
 } from '@/utils/portfolio';
 import { useTokenPrices } from './useTokenPrices';
 
@@ -79,8 +80,8 @@ export const usePortfolioValue = (
 
     return {
       portfolioValue: calculatePortfolioValue(positions, vaults, prices, findToken),
-      assetBreakdown: calculateAssetBreakdown(positions, vaults, prices, findToken),
-      debtBreakdown: calculateDebtBreakdown(positions, prices),
+      assetBreakdown: groupAssetBreakdown(calculateAssetBreakdown(positions, vaults, prices, findToken), findToken),
+      debtBreakdown: groupAssetBreakdown(calculateDebtBreakdown(positions, prices), findToken),
       portfolioAnalytics: calculatePortfolioAnalytics(positions, vaults, prices, findToken, earningsRangesByChain),
     };
   }, [positions, vaults, prices, isLoading, findToken, earningsRangesByChain]);

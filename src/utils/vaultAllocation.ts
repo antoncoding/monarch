@@ -2,6 +2,7 @@ import { maxUint128, type Address } from 'viem';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
+import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import { getClient } from '@/utils/rpc';
 
 export const RELATIVE_CAP_SCALE = 1e16;
@@ -69,111 +70,54 @@ const groupVaultsByNetwork = (vaults: { address: Address; networkId: SupportedNe
 export async function fetchUserVaultShares(
   vaults: { address: Address; networkId: SupportedNetworks }[],
   userAddress: Address,
+  customRpcUrls: CustomRpcUrls = {},
 ): Promise<Map<string, bigint>> {
-  // Group vaults by network for efficient batching
-  const vaultsByNetwork = groupVaultsByNetwork(vaults);
-
   const results = new Map<string, bigint>();
-
-  // Process each network in parallel
   await Promise.all(
-    Object.entries(vaultsByNetwork).map(async ([networkIdStr, vaultAddresses]) => {
-      const networkId = Number(networkIdStr) as SupportedNetworks;
-      const client = getClient(networkId);
-
-      try {
-        // Step 1: Batch fetch balanceOf for all vaults
-        const balanceContracts = vaultAddresses.map((vaultAddress) => ({
-          address: vaultAddress,
-          abi: vaultv2Abi,
-          functionName: 'balanceOf' as const,
-          args: [userAddress],
-        }));
-
-        const balanceResults = await client.multicall({
-          contracts: balanceContracts,
-          allowFailure: true,
-        });
-
-        // Step 2: Batch fetch previewRedeem for vaults with non-zero balance
-        const redeemContracts = vaultAddresses
-          .map((vaultAddress, index) => {
-            const balanceResult = balanceResults[index];
-            if (balanceResult.status === 'success' && balanceResult.result) {
-              const shares = balanceResult.result as bigint;
-              if (shares > 0n) {
-                return {
-                  address: vaultAddress,
-                  abi: vaultv2Abi,
-                  functionName: 'previewRedeem' as const,
-                  args: [shares],
-                  _vaultAddress: vaultAddress,
-                };
-              }
-            }
-            return null;
-          })
-          .filter((c) => c !== null);
-
-        if (redeemContracts.length === 0) {
-          // No vaults with balance, return zeros
-          vaultAddresses.forEach((addr) => {
-            results.set(getVaultReadKey(addr, networkId), 0n);
-          });
-          return;
-        }
-
-        const redeemResults = await client.multicall({
-          contracts: redeemContracts.map((c) => ({
-            address: c!.address,
-            abi: c!.abi,
-            functionName: c!.functionName,
-            args: c!.args,
-          })),
-          allowFailure: true,
-        });
-
-        // Map results back to vault addresses
-        redeemContracts.forEach((contract, index) => {
-          if (contract) {
-            const result = redeemResults[index];
-            const vaultAddress = getVaultReadKey(contract._vaultAddress, networkId);
-            if (result.status === 'success' && result.result) {
-              results.set(vaultAddress, result.result as bigint);
-            } else {
-              results.set(vaultAddress, 0n);
-            }
-          }
-        });
-
-        // Set 0 for vaults that had 0 balance
-        vaultAddresses.forEach((addr) => {
-          const vaultKey = getVaultReadKey(addr, networkId);
-          if (!results.has(vaultKey)) {
-            results.set(vaultKey, 0n);
-          }
-        });
-      } catch (error) {
-        console.error(`Failed to fetch vault shares for network ${networkId}:`, error);
-        // Set all to 0 on error
-        vaultAddresses.forEach((addr) => {
-          results.set(getVaultReadKey(addr, networkId), 0n);
-        });
+    Object.entries(groupVaultsByNetwork(vaults)).map(async ([chainId, addresses]) => {
+      const networkId = Number(chainId) as SupportedNetworks;
+      const client = getClient(networkId, customRpcUrls[networkId]);
+      const shares = await client.multicall({
+        contracts: addresses.map((address) => ({ address, abi: vaultv2Abi, functionName: 'balanceOf', args: [userAddress] }) as const),
+        allowFailure: false,
+      });
+      const heldVaults = addresses.flatMap((address, index) => {
+        if (shares[index] > 0n) return [{ address, shares: shares[index] }];
+        results.set(getVaultReadKey(address, networkId), 0n);
+        return [];
+      });
+      if (heldVaults.length === 0) return;
+      const assets = await client.multicall({
+        contracts: heldVaults.map(
+          ({ address, shares: balance }) =>
+            ({
+              address,
+              abi: vaultv2Abi,
+              functionName: 'previewRedeem',
+              args: [balance],
+            }) as const,
+        ),
+        allowFailure: false,
+      });
+      for (const [index, { address }] of heldVaults.entries()) {
+        results.set(getVaultReadKey(address, networkId), assets[index]);
       }
     }),
   );
-
   return results;
 }
 
-export async function fetchVaultTotalAssets(vaults: { address: Address; networkId: SupportedNetworks }[]): Promise<Map<string, bigint>> {
+export async function fetchVaultTotalAssets(
+  vaults: { address: Address; networkId: SupportedNetworks }[],
+  customRpcUrls: CustomRpcUrls = {},
+): Promise<Map<string, bigint>> {
   const vaultsByNetwork = groupVaultsByNetwork(vaults);
   const results = new Map<string, bigint>();
 
   await Promise.all(
     Object.entries(vaultsByNetwork).map(async ([networkIdStr, vaultAddresses]) => {
       const networkId = Number(networkIdStr) as SupportedNetworks;
-      const client = getClient(networkId);
+      const client = getClient(networkId, customRpcUrls[networkId]);
 
       try {
         const totalAssetsResults = await client.multicall({

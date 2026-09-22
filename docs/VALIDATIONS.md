@@ -55,6 +55,10 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Prefer `async`/`await` over promise chains.
 - Handle errors at a meaningful boundary. Do not catch just to rethrow.
 - Throw `Error` objects with descriptive messages.
+- Define and follow API outcome contracts at the shared transport/data-source boundary: confirmed absence is `null` for a nullable entity or an empty collection; transport, timeout, decoding, malformed required fields, and unexpected GraphQL failures are errors. Never use the same `null`/empty fallback for both absence and unavailability.
+- Normalize only recognized not-found responses. Preserve valid partial data for not-found-only errors, but reject mixed not-found and other GraphQL errors. Model explicit nullable fields in TypeScript and distinguish them from missing required fields.
+- Test these contracts through the real shared fetcher with raw response envelopes: success, empty, NOT_FOUND, explicit entity null, malformed data, unexpected/mixed errors, and mixed-chain success/absence. Caller-only mocks of already-normalized results are insufficient.
+- A background refresh error must preserve last-good rows and aggregate values with a warning/retry; first-load failures must not look like confirmed empty state. Retaining holdings must not suppress independent price errors.
 
 ## State Persistence
 
@@ -64,6 +68,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Storage utilities must namespace keys, normalize values, and catch unavailable-storage or quota failures.
 - Large API responses and metadata caches must use the IndexedDB-backed API response cache, not persisted Zustand/localStorage. Measure representative serialized payloads when cache size is not obviously bounded below WebKit's quota.
 - Validate SSR/client boundaries when persistence touches browser-only APIs.
+- State-transition tests must use store actions and verify prior snapshots/query keys remain unchanged. Do not mutate `getState()`/`getInitialState()` results to make an SSR harness behave like a client.
 - Preset or subscription toggles must not delete user-owned persisted selections. Preserve the raw user list and dedupe or hide preset overlaps in derived views unless the user explicitly removes them.
 
 ## Data And Domain Flows
@@ -90,6 +95,7 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 - Large optional metadata or enrichment queries used only for secondary badges, warnings, filters, or tooltips must be gated or deferred so core table rendering does not wait on them during cold start.
 - Vault-scoped pages with configured cap or market IDs must use targeted market reads for first render; do not wait on the global market registry when the vault metadata already identifies the relevant markets.
 - Opened V2 vault pages must resolve the connected wallet's shares independently of vault ownership or discovery lists, use the vault's share-to-asset conversion, and distinguish failed reads from confirmed zero balances. Verify a non-owner depositor, wallet changes, and post-transaction refresh.
+- Wallet-level V2 vault positions must discover deposit receivers and share holders independently of vault ownership and listing status. Confirm positive balances onchain, preserve last good data on failed reads, and test a non-owner depositor plus an exited position. Management lists must keep their owner-only scope.
 - Vault adapter selection must be cap-aware when a vault has multiple active adapters; do not let list order alone choose the adapter used for positions, activity, withdrawals, or settings.
 - Expensive queries must not start with placeholder dependency data that immediately invalidates the same query. Gate on prerequisite readiness, or use a stable query key that does not refetch equivalent work.
 - Vault analytics must keep chain lists and period boundaries stable after first resolution; background dependency updates must preserve rendered chart data instead of re-entering a cold skeleton.
