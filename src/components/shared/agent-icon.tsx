@@ -1,5 +1,5 @@
 import { Tooltip } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { RiRobot2Line } from 'react-icons/ri';
@@ -18,21 +18,22 @@ export function AutovaultBadge({ allocators }: { allocators: string[] }) {
 
   return (
     <Tooltip content="Autovault">
-      <span className="inline-flex shrink-0">
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          aria-label="Autovault"
-          onClick={(event) => event.stopPropagation()}
-          className="min-w-0 cursor-help bg-primary/15 p-1 hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary"
+      <button
+        type="button"
+        aria-label="Autovault"
+        onClick={(event) => event.stopPropagation()}
+        className="inline-flex shrink-0 cursor-help rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+      >
+        <Badge
+          size="sm"
+          className="bg-primary/10 text-[var(--color-primary)] dark:bg-primary/15 dark:text-[var(--color-primary)]"
         >
           <RiRobot2Line
             aria-hidden
-            className="h-4 w-4 text-[var(--color-primary)]"
+            className="h-3 w-3"
           />
-        </Button>
-      </span>
+        </Badge>
+      </button>
     </Tooltip>
   );
 }
