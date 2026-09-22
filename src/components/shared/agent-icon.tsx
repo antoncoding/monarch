@@ -1,8 +1,10 @@
 import { Tooltip } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
 import type { Address } from 'viem';
 import { findAgent } from '@/utils/monarch-agent';
+import agentImage from '@/imgs/agent/agent.png';
 import { TooltipContent } from './tooltip-content';
 
 type AgentIconProps = {
@@ -10,6 +12,32 @@ type AgentIconProps = {
   width: number;
   height: number;
 };
+
+export function AutovaultBadge({ allocators }: { allocators: string[] }) {
+  if (!allocators.some((address) => findAgent(address) !== undefined)) return null;
+
+  return (
+    <Tooltip content="Autovault">
+      <span className="inline-flex shrink-0">
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          aria-label="Autovault"
+          onClick={(event) => event.stopPropagation()}
+          className="min-w-0 cursor-help bg-primary/15 p-1 hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <Image
+            src={agentImage}
+            alt=""
+            width={16}
+            height={16}
+          />
+        </Button>
+      </span>
+    </Tooltip>
+  );
+}
 
 export function AgentIcon({ address, width, height }: AgentIconProps) {
   const agent = findAgent(address);

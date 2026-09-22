@@ -9,6 +9,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { AutovaultBadge } from '@/components/shared/agent-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
@@ -245,15 +246,18 @@ export function UserVaultsTable({
                         ))}
 
                       <TableCell data-label="Vault">
-                        <VaultIdentity
-                          address={vault.address as Address}
-                          asset={vault.asset as Address}
-                          curator={metadataByVault.get(getVaultKey(vault.address, vault.networkId))?.curator}
-                          chainId={vault.networkId}
-                          vaultName={vault.name || undefined}
-                          variant="inline"
-                          className="whitespace-nowrap"
-                        />
+                        <div className="inline-flex items-center gap-2">
+                          <VaultIdentity
+                            address={vault.address as Address}
+                            asset={vault.asset as Address}
+                            curator={metadataByVault.get(getVaultKey(vault.address, vault.networkId))?.curator}
+                            chainId={vault.networkId}
+                            vaultName={vault.name || undefined}
+                            variant="inline"
+                            className="whitespace-nowrap"
+                          />
+                          <AutovaultBadge allocators={vault.allocators} />
+                        </div>
                       </TableCell>
 
                       {/* Size */}
