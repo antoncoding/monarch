@@ -2,9 +2,9 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
+import { RiRobot2Line } from 'react-icons/ri';
 import type { Address } from 'viem';
 import { findAgent } from '@/utils/monarch-agent';
-import agentImage from '@/imgs/agent/agent.png';
 import { TooltipContent } from './tooltip-content';
 
 type AgentIconProps = {
@@ -27,11 +27,9 @@ export function AutovaultBadge({ allocators }: { allocators: string[] }) {
           onClick={(event) => event.stopPropagation()}
           className="min-w-0 cursor-help bg-primary/15 p-1 hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <Image
-            src={agentImage}
-            alt=""
-            width={16}
-            height={16}
+          <RiRobot2Line
+            aria-hidden
+            className="h-4 w-4 text-[var(--color-primary)]"
           />
         </Button>
       </span>
