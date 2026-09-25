@@ -154,6 +154,13 @@ const rawKnownVaults: TrustedVault[] = [
     version: 'v2',
   },
   {
+    address: '0xBeEff033F34C046626B8D0A041844C5d1A5409dd',
+    chainId: 4663,
+    name: 'Steakhouse USDG',
+    asset: '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',
+    version: 'v2',
+  },
+  {
     address: '0x43e623Ff7D14d5b105F7bE9c488F36dbF11D1F46',
     chainId: 8453,
     name: 'Clearstar Boring USDC',

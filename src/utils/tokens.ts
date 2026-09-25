@@ -1462,6 +1462,37 @@ const supportedTokens = [
   },
   // End of Katana
   {
+    symbol: 'AAPLc',
+    img: require('../imgs/tokens/aaplc.svg') as string,
+    decimals: 8,
+    networks: [{ chain: base, address: '0xb200000000000000000000c2e324d24d7eecd1fb' }],
+  },
+  {
+    symbol: 'NVDAc',
+    img: require('../imgs/tokens/nvdac.svg') as string,
+    decimals: 8,
+    networks: [{ chain: base, address: '0xb20000000000000000000078ee7ce2fe4908108c' }],
+  },
+  {
+    symbol: 'METAc',
+    img: require('../imgs/tokens/metac.svg') as string,
+    decimals: 8,
+    networks: [{ chain: base, address: '0xb2000000000000000000008bc8786b856e61707c' }],
+  },
+  // Keep Base SPCXc and Robinhood SPCX separate: they are distinct products with different decimals.
+  {
+    symbol: 'SPCXc',
+    img: require('../imgs/tokens/spcxc.svg') as string,
+    decimals: 8,
+    networks: [{ chain: base, address: '0xb2000000000000000000007b9fcbd005511acbd5' }],
+  },
+  {
+    symbol: 'SPCX',
+    img: require('../imgs/tokens/spcx.png') as string,
+    decimals: 18,
+    networks: [{ chain: robinhood, address: '0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea' }],
+  },
+  {
     symbol: 'MORPHO',
     img: require('../imgs/tokens/morpho.svg') as string,
     decimals: 18,
