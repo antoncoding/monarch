@@ -164,7 +164,10 @@ test('unavailable browser storage does not prevent live oracle loading', async (
   const client = newClient();
   const initial = await hydrateOracle(client, 1);
   assert.equal(initial.isLoading, true);
-  mock.method(globalThis, 'fetch', async () => Response.json(metadata(1)));
+  mock.method(globalThis, 'fetch', async (_url, options) => {
+    assert.equal(options?.cache, 'no-store');
+    return Response.json(metadata(1));
+  });
   await oracleQuery(client, 1).fetch();
   const result = renderProbes(client, OracleProbe, { chainId: 1 })[0];
   assert.equal(result.isLoading, false);

@@ -188,7 +188,7 @@ async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile>
     throw new Error('Oracle metadata source is not configured.');
   }
 
-  const response = await fetch(`${ORACLE_GIST_BASE_URL}/oracles.${chainId}.json`);
+  const response = await fetch(`${ORACLE_GIST_BASE_URL}/oracles.${chainId}.json`, { cache: 'no-store' });
   if (!response.ok) {
     // A failed refresh must preserve the last successful query/cache result.
     throw new Error(`Failed to fetch oracle metadata for chain ${chainId}: ${response.status}`);
