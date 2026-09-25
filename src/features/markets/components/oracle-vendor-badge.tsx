@@ -31,8 +31,10 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
   );
 
 function OracleVendorBadge({ chainId, oracleAddress, showText = false, useTooltip = true }: OracleVendorBadgeProps) {
-  const { data: oracleMetadataMap, isLoading: isOracleMetadataLoading } = useOracleMetadata(chainId);
-  const isWaitingForOracleMetadata = isOracleMetadataLoading && Object.keys(oracleMetadataMap).length === 0;
+  const { data: oracleMetadataMap, isLoading, isError } = useOracleMetadata(chainId);
+  const hasMetadata = Boolean(getOracleFromMetadata(oracleMetadataMap, oracleAddress, chainId));
+  const isWaitingForOracleMetadata = isLoading && !hasMetadata;
+  const showMetadataStatus = !hasMetadata && (isLoading || isError);
   const standardOracleData = getStandardOracleDataFromMetadata(oracleMetadataMap, oracleAddress, chainId);
 
   const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
@@ -60,7 +62,7 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
   const showGenericFallbackIcon =
     !isCustom && !isVaultOnly && !hasMonarchVerified && coreVendors.length === 0 && taggedVendors.length === 0;
 
-  const content = isWaitingForOracleMetadata ? (
+  const content = showMetadataStatus ? (
     <div className="flex items-center space-x-1 rounded p-1">
       {showText && <span className="mr-1 text-xs font-medium">Oracle</span>}
       <IoHelpCircleOutline
@@ -110,11 +112,13 @@ function OracleVendorBadge({ chainId, oracleAddress, showText = false, useToolti
 
   if (useTooltip) {
     const getTooltipContent = () => {
-      if (isWaitingForOracleMetadata) {
+      if (showMetadataStatus) {
         return (
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium text-primary font-zen">Oracle metadata</p>
-            <p className="text-xs text-secondary font-zen">Classification is loading.</p>
+            <p className="text-xs text-secondary font-zen">
+              {isWaitingForOracleMetadata ? 'Classification is loading.' : 'Oracle metadata could not be loaded.'}
+            </p>
           </div>
         );
       }

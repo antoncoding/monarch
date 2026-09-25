@@ -20,13 +20,19 @@ type OracleTypeInfoProps = {
 };
 
 export function OracleTypeInfo({ oracleAddress, chainId, showCustom, useBadge, variant }: OracleTypeInfoProps) {
-  const { data: oracleMetadataMap } = useOracleMetadata(chainId);
+  const { data: oracleMetadataMap, isLoading, isError } = useOracleMetadata(chainId);
   const oracleAddresses = useMemo(() => [oracleAddress], [oracleAddress]);
   const { data: klerosAddressTags } = useKlerosAddressTagsQuery(chainId, oracleAddresses);
   const oracleType = getOracleType(oracleAddress, chainId, oracleMetadataMap);
   const oracle = getOracleFromMetadata(oracleMetadataMap, oracleAddress, chainId);
   const customData = oracle?.type === 'custom' ? oracle.data : null;
-  const typeDescription = getOracleTypeDescription(oracleType);
+  const isMetadataPending = !oracle && isLoading;
+  const isMetadataUnavailable = !oracle && isError;
+  const typeDescription = isMetadataPending
+    ? 'Loading oracle…'
+    : isMetadataUnavailable
+      ? 'Oracle metadata unavailable'
+      : getOracleTypeDescription(oracleType);
   const klerosTag = klerosAddressTags?.[getKlerosAddressTagKey(chainId, oracleAddress)];
   const klerosLabel = formatKlerosAddressTagLabel(klerosTag);
 
@@ -97,7 +103,7 @@ export function OracleTypeInfo({ oracleAddress, chainId, showCustom, useBadge, v
             oracleAddress={oracleAddress}
           />
         </div>
-      ) : showCustom ? (
+      ) : showCustom && !isMetadataPending && !isMetadataUnavailable ? (
         <div className="text-xs text-gray-500 dark:text-gray-500">
           This market uses a custom oracle implementation that doesn't follow the standard feed structure.
         </div>

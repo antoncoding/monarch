@@ -183,30 +183,18 @@ const getOracleMetadataCacheKey = (chainId: number): string =>
 /**
  * Fetch oracle metadata directly from the centralized Gist.
  */
-async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile | null> {
+async function fetchOracleMetadata(chainId: number): Promise<OracleMetadataFile> {
   if (!ORACLE_GIST_BASE_URL) {
-    console.warn('[oracle-metadata] NEXT_PUBLIC_ORACLE_GIST_BASE_URL is not configured');
-    return null;
+    throw new Error('Oracle metadata source is not configured.');
   }
 
-  try {
-    const response = await fetch(`${ORACLE_GIST_BASE_URL}/oracles.${chainId}.json`, {
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      console.warn(`[oracle-metadata] Failed to fetch for chain ${chainId}: ${response.status}`);
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.warn(`[oracle-metadata] Error fetching for chain ${chainId}:`, error);
-    return null;
+  const response = await fetch(`${ORACLE_GIST_BASE_URL}/oracles.${chainId}.json`, { cache: 'no-store' });
+  if (!response.ok) {
+    // A failed refresh must preserve the last successful query/cache result.
+    throw new Error(`Failed to fetch oracle metadata for chain ${chainId}: ${response.status}`);
   }
+
+  return response.json();
 }
 
 /**

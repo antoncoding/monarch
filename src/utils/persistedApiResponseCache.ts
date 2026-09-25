@@ -89,30 +89,35 @@ const runStoreRequest = async <T, TResult>(
   getSuccessValue: (request: IDBRequest<TResult>) => T,
   fallbackValue: T,
 ): Promise<T> => {
-  const database = await openDatabase();
-  if (!database) {
+  try {
+    const database = await openDatabase();
+    if (!database) {
+      return fallbackValue;
+    }
+
+    return await new Promise((resolve) => {
+      let settled = false;
+      const settle = (value: T) => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        resolve(value);
+      };
+
+      const transaction = database.transaction(STORE_NAME, mode);
+      const request = createRequest(transaction.objectStore(STORE_NAME));
+
+      request.onsuccess = () => settle(getSuccessValue(request));
+      request.onerror = () => settle(fallbackValue);
+      transaction.onerror = () => settle(fallbackValue);
+      transaction.onabort = () => settle(fallbackValue);
+    });
+  } catch {
+    // Browser storage is optional; unavailable storage must not block live queries.
     return fallbackValue;
   }
-
-  return new Promise((resolve) => {
-    let settled = false;
-    const settle = (value: T) => {
-      if (settled) {
-        return;
-      }
-
-      settled = true;
-      resolve(value);
-    };
-
-    const transaction = database.transaction(STORE_NAME, mode);
-    const request = createRequest(transaction.objectStore(STORE_NAME));
-
-    request.onsuccess = () => settle(getSuccessValue(request));
-    request.onerror = () => settle(fallbackValue);
-    transaction.onerror = () => settle(fallbackValue);
-    transaction.onabort = () => settle(fallbackValue);
-  });
 };
 
 export const readPersistedApiResponse = async <T>(key: string): Promise<CachedApiResponse<T> | null> =>

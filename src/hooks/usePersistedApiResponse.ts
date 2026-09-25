@@ -1,42 +1,34 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readPersistedApiResponse, writePersistedApiResponse, type CachedApiResponse } from '@/utils/persistedApiResponseCache';
 
-type PersistedApiResponseState<T> = {
-  entry: CachedApiResponse<T> | null;
-  isReady: boolean;
-};
-
 export function usePersistedApiResponse<T>(key: string) {
-  const [state, setState] = useState<PersistedApiResponseState<T>>({
-    entry: null,
-    isReady: false,
+  const queryClient = useQueryClient();
+  const queryKey = useMemo(() => ['persisted-api-response', key], [key]);
+  // Rows sharing a payload must hydrate it once, not clone it from IndexedDB per row.
+  const query = useQuery({
+    queryKey,
+    queryFn: () => readPersistedApiResponse<T>(key),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 60 * 60 * 1000,
+    networkMode: 'always',
+    retry: false,
   });
-
-  useEffect(() => {
-    let shouldApplyCache = true;
-
-    setState({ entry: null, isReady: false });
-    void readPersistedApiResponse<T>(key).then((entry) => {
-      if (shouldApplyCache) {
-        setState({ entry, isReady: true });
-      }
-    });
-
-    return () => {
-      shouldApplyCache = false;
-    };
-  }, [key]);
 
   const write = useCallback(
     (entry: CachedApiResponse<T>) => {
-      setState({ entry, isReady: true });
+      const current = queryClient.getQueryData<CachedApiResponse<T> | null>(queryKey);
+      if (current && current.updatedAt >= entry.updatedAt) return;
+
+      queryClient.setQueryData(queryKey, entry);
       void writePersistedApiResponse(key, entry);
     },
-    [key],
+    [key, queryClient, queryKey],
   );
 
   return {
-    ...state,
+    entry: query.data ?? null,
+    isReady: !query.isPending,
     write,
   };
 }
