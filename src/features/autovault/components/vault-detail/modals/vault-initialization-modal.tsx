@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiZap } from 'react-icons/fi';
-import { type Address, zeroAddress } from 'viem';
+import { type Address, formatUnits, zeroAddress } from 'viem';
 import { useParams } from 'next/navigation';
 import { usePublicClient } from 'wagmi';
 import { Button } from '@/components/ui/button';
+import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Input } from '@/components/ui/input';
 import { AllocatorCard } from '@/components/shared/allocator-card';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -18,6 +19,8 @@ import { useVaultV2 } from '@/hooks/useVaultV2';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
+import { useVaultV2InitializationStatus } from '@/hooks/useVaultV2InitializationStatus';
+import type { VaultV2DeadDeposit } from '@/data-sources/rpc/vault-dead-deposit';
 
 const ZERO_ADDRESS = zeroAddress;
 const MORPHO_MARKET_ADAPTER_V2_CREATED_TOPIC = '0x2d5aa62fff752ff7caa68d3c82c1ae04ccb2053bd3be0ffee086953f6adc894e';
@@ -130,11 +133,13 @@ function MetadataStep({
 function FinalizeSetupStep({
   adapter,
   registryAddress,
-  isInitializing,
+  seed,
+  tokenSymbol,
 }: {
   adapter: Address;
   registryAddress: Address;
-  isInitializing: boolean;
+  seed?: VaultV2DeadDeposit;
+  tokenSymbol: string;
 }) {
   const adapterIsReady = adapter !== ZERO_ADDRESS;
 
@@ -153,6 +158,16 @@ function FinalizeSetupStep({
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Morpho registry</span>
           <div className="text-xs text-secondary">{shortenAddress(registryAddress)}</div>
+        </div>
+        <div className="space-y-1">
+          <span className="text-xs uppercase text-secondary">Dead deposit</span>
+          <p className="text-sm text-secondary">
+            {seed
+              ? seed.isSeeded
+                ? 'Required dead shares are already present. No additional seed will be spent.'
+                : `${formatUnits(seed.assets, seed.assetDecimals)} ${tokenSymbol} will be permanently locked to protect the initial share price. This amount cannot be withdrawn.`
+              : 'Checking the vault and seed amount...'}
+          </p>
         </div>
       </div>
     </div>
@@ -222,6 +237,7 @@ export function VaultInitializationModal() {
     vaultAddress: vaultAddressValue,
     chainId,
   });
+  const [initializationError, setInitializationError] = useState<string | null>(null);
 
   // Transaction success handler
   const handleTransactionSuccess = useCallback(() => {
@@ -257,7 +273,6 @@ export function VaultInitializationModal() {
   const [vaultName, setVaultName] = useState<string>('');
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
   const [deployedAdapter, setDeployedAdapter] = useState<Address>(ZERO_ADDRESS);
-  const currentStep = STEP_SEQUENCE[stepIndex];
 
   const publicClient = usePublicClient({ chainId });
   const registryAddress = useMemo(() => {
@@ -269,6 +284,15 @@ export function VaultInitializationModal() {
   // Adapter is detected if Monarch has indexed it or we just deployed it locally.
   const adapterAddress = deployedAdapter === ZERO_ADDRESS ? (marketAdapter ?? ZERO_ADDRESS) : deployedAdapter;
   const adapterDetected = adapterAddress !== ZERO_ADDRESS;
+  const { deadDeposit, refetch: refetchSetupStatus } = useVaultV2InitializationStatus({
+    vaultAddress: vaultAddressValue,
+    chainId,
+    adapterAddress,
+  });
+  const currentStep =
+    deadDeposit.data && !deadDeposit.data.isSeeded && (deadDeposit.data.totalSupply !== 0n || deadDeposit.data.totalAssets !== 0n)
+      ? 'review'
+      : STEP_SEQUENCE[stepIndex];
   const isCheckingAdapter = (isAdapterLoading || isAdapterFetching) && !adapterDetected;
 
   const { deploy, isDeploying, canDeploy, factoryAddress } = useDeployMorphoMarketAdapter({
@@ -308,6 +332,7 @@ export function VaultInitializationModal() {
   const handleCompleteInitialization = useCallback(async () => {
     if (adapterAddress === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS || !vaultAddress || !chainId) return;
 
+    setInitializationError(null);
     try {
       // Note: Adapter cap will be set when user configures market caps
       // Pass name and symbol if provided (will be trimmed and checked in useVaultV2)
@@ -322,16 +347,18 @@ export function VaultInitializationModal() {
         return;
       }
 
-      await refetchVaultQueries({ includeRetries: true });
+      await Promise.all([refetchVaultQueries({ includeRetries: true }), refetchSetupStatus()]);
 
       close();
-    } catch (_error) {
-      // Error is handled by useVaultV2 hook (toast shown to user)
+    } catch (error) {
+      setInitializationError(error instanceof Error ? error.message : 'Unable to complete vault setup. Please try again.');
+      void deadDeposit.refetch();
     }
   }, [
     completeInitialization,
     close,
     refetchVaultQueries,
+    refetchSetupStatus,
     registryAddress,
     selectedAgent,
     adapterAddress,
@@ -340,6 +367,7 @@ export function VaultInitializationModal() {
     vaultAddress,
     vaultAddressValue,
     chainId,
+    deadDeposit.refetch,
   ]);
 
   // Reset state when modal closes
@@ -350,6 +378,7 @@ export function VaultInitializationModal() {
       setVaultName('');
       setVaultSymbol('');
       setDeployedAdapter(ZERO_ADDRESS);
+      setInitializationError(null);
     }
   }, [isOpen]);
 
@@ -360,7 +389,12 @@ export function VaultInitializationModal() {
     }
   }, [adapterDetected, stepIndex]);
 
-  const canCompleteInitialization = adapterAddress !== ZERO_ADDRESS && registryAddress !== ZERO_ADDRESS;
+  const canCompleteInitialization =
+    adapterAddress !== ZERO_ADDRESS &&
+    registryAddress !== ZERO_ADDRESS &&
+    !deadDeposit.isError &&
+    !!deadDeposit.data &&
+    (deadDeposit.data.isSeeded || (deadDeposit.data.totalSupply === 0n && deadDeposit.data.totalAssets === 0n));
 
   const stepTitle = useMemo(() => {
     switch (currentStep) {
@@ -372,12 +406,24 @@ export function VaultInitializationModal() {
         return 'Choose an Allocator';
       case 'finalize':
         return 'Review & finalize';
+      case 'review':
+        return 'Review existing deposits';
       default:
         return '';
     }
   }, [currentStep]);
 
   const renderCta = () => {
+    if (currentStep === 'review') {
+      return (
+        <Button
+          variant="primary"
+          onClick={close}
+        >
+          Close
+        </Button>
+      );
+    }
     // Step 0: Deploy adapter
     if (stepIndex === 0) {
       return (
@@ -429,20 +475,16 @@ export function VaultInitializationModal() {
 
     // Step 3: Finalize - execute initialization
     return (
-      <Button
+      <ExecuteTransactionButton
+        targetChainId={chainId}
         variant="primary"
         className="min-w-[170px]"
+        isLoading={isInitializing}
         disabled={isInitializing || !canCompleteInitialization}
         onClick={() => void handleCompleteInitialization()}
       >
-        {isInitializing ? (
-          <span className="flex items-center gap-2">
-            <Spinner size={12} /> Completing...
-          </span>
-        ) : (
-          'Complete setup'
-        )}
-      </Button>
+        {isInitializing ? 'Completing...' : deadDeposit.data?.isSeeded ? 'Complete setup' : 'Approve & complete setup'}
+      </ExecuteTransactionButton>
     );
   };
 
@@ -468,6 +510,15 @@ export function VaultInitializationModal() {
         onClose={close}
       />
       <ModalBody className="space-y-6 px-6 py-8">
+        {currentStep === 'review' && (
+          <p
+            role="alert"
+            className="text-sm text-secondary"
+          >
+            This vault already has deposits without the required dead shares. The initial dead deposit must come before user deposits.
+            Review its first deposit and share price before deciding how to proceed; this setup flow cannot repair it retroactively.
+          </p>
+        )}
         {currentStep === 'deploy' && (
           <DeployAdapterStep
             isDeploying={isDeploying}
@@ -488,8 +539,32 @@ export function VaultInitializationModal() {
           <FinalizeSetupStep
             adapter={adapterAddress}
             registryAddress={registryAddress}
-            isInitializing={isInitializing}
+            seed={deadDeposit.data}
+            tokenSymbol={vaultDataQuery.data?.tokenSymbol ?? 'tokens'}
           />
+        )}
+        {currentStep === 'finalize' && deadDeposit.isError && (
+          <div
+            role="alert"
+            className="space-y-2 text-sm text-red-500"
+          >
+            <p>Unable to verify the dead deposit. Try again before completing setup.</p>
+            <Button
+              variant="ghost"
+              onClick={() => void deadDeposit.refetch()}
+              disabled={deadDeposit.isFetching}
+            >
+              Retry check
+            </Button>
+          </div>
+        )}
+        {initializationError && (
+          <p
+            role="alert"
+            className="text-sm text-red-500"
+          >
+            {initializationError}
+          </p>
         )}
         {currentStep === 'agents' && (
           <AgentSelectionStep
@@ -499,7 +574,7 @@ export function VaultInitializationModal() {
         )}
       </ModalBody>
       <ModalFooter className="flex flex-col items-center gap-4 border-t border-divider/40 pt-6 px-8 pb-6">
-        <StepIndicator currentStep={currentStep} />
+        {currentStep !== 'review' && <StepIndicator currentStep={currentStep} />}
         <div className="flex items-center gap-3">{renderCta()}</div>
       </ModalFooter>
     </Modal>
