@@ -47,7 +47,7 @@ const getCampaignMode = (campaign: SimplifiedCampaign): RateMode | null => {
   return null;
 };
 
-const filterCampaignsByMode = (campaigns: SimplifiedCampaign[], mode: RateMode): SimplifiedCampaign[] => {
+export const filterCampaignsByMode = (campaigns: SimplifiedCampaign[], mode: RateMode): SimplifiedCampaign[] => {
   return campaigns.filter((campaign) => getCampaignMode(campaign) === mode);
 };
 
@@ -59,7 +59,7 @@ const getRewardRatePrefix = (mode: RateMode): string => {
   return mode === 'borrow' ? '-' : '+';
 };
 
-const getDisplayRewardRate = (rewardAprPercent: number, isAprDisplay: boolean): number => {
+export const getDisplayRewardRate = (rewardAprPercent: number, isAprDisplay: boolean): number => {
   if (!Number.isFinite(rewardAprPercent)) return 0;
   if (isAprDisplay) return rewardAprPercent;
   const rewardApyPercent = convertAprToApy(rewardAprPercent / 100) * 100;
