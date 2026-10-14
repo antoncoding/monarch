@@ -21,53 +21,44 @@ type UseMarketCampaignsReturn = {
   error: string | null;
 };
 
-type MarketCampaignsOptions = {
+export type MarketCampaignsOptions = {
   marketId: string;
   loanTokenAddress?: string;
   chainId: number;
   whitelisted: boolean;
 };
 
+export function isCampaignForMarket(
+  campaign: SimplifiedCampaign,
+  { marketId, loanTokenAddress, chainId, whitelisted }: MarketCampaignsOptions,
+): boolean {
+  const isDirectMarketCampaign = campaign.chainId === chainId && campaign.marketId.toLowerCase() === marketId.toLowerCase();
+  const isSingleTokenCampaign =
+    !!loanTokenAddress &&
+    whitelisted &&
+    campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' &&
+    campaign.chainId === chainId &&
+    campaign.targetToken?.address.toLowerCase() === loanTokenAddress.toLowerCase();
+
+  if (!(isDirectMarketCampaign || isSingleTokenCampaign)) return false;
+  if (BLACKLISTED_CAMPAIGN_IDS.includes(campaign.campaignId.toLowerCase())) return false;
+  return !campaign.name?.includes('Morpho Vault V2');
+}
+
 export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCampaignsReturn {
   const { campaigns: allCampaigns, loading, error } = useMerklCampaignsQuery();
   const { marketId, loanTokenAddress, chainId, whitelisted } = options;
 
   const result = useMemo(() => {
-    const normalizedMarketId = marketId.toLowerCase();
-
-    // Filter campaigns for this specific market
-    const directMarketCampaigns = allCampaigns.filter(
-      (campaign) => campaign.chainId === chainId && campaign.marketId.toLowerCase() === normalizedMarketId,
+    const campaigns = allCampaigns.filter((campaign) =>
+      isCampaignForMarket(campaign, { marketId, loanTokenAddress, chainId, whitelisted }),
     );
-
-    // For SINGLETOKEN campaigns, also include campaigns where the loan token matches the target token
-    // the market has to be whitelisted
-    const singleTokenCampaigns =
-      loanTokenAddress && chainId && whitelisted
-        ? allCampaigns.filter(
-            (campaign) =>
-              campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' &&
-              campaign.chainId === chainId &&
-              campaign.targetToken?.address.toLowerCase() === loanTokenAddress.toLowerCase(),
-          )
-        : [];
-
-    // Combine both types of campaigns and filter out blacklisted ones
-    const allMarketCampaigns = [...directMarketCampaigns, ...singleTokenCampaigns].filter((campaign) => {
-      if (BLACKLISTED_CAMPAIGN_IDS.includes(campaign.campaignId.toLowerCase())) return false;
-
-      // temp: remove all Morpho Vault V2 campaigns until we find better way to filter
-      if (campaign.name?.includes('Morpho Vault V2')) return false;
-
-      return true;
-    });
-
-    const activeCampaigns = allMarketCampaigns.filter((campaign) => campaign.isActive);
+    const activeCampaigns = campaigns.filter((campaign) => campaign.isActive);
 
     return {
-      campaigns: allMarketCampaigns,
+      campaigns,
       activeCampaigns,
-      hasRewards: allMarketCampaigns.length > 0,
+      hasRewards: campaigns.length > 0,
       hasActiveRewards: activeCampaigns.length > 0,
       loading,
       error,

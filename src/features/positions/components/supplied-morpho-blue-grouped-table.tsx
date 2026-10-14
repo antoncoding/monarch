@@ -38,8 +38,15 @@ import {
 } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
 import { useTokenPrices } from '@/hooks/useTokenPrices';
+import { useMerklCampaignsQuery } from '@/hooks/queries/useMerklCampaignsQuery';
+import { isCampaignForMarket } from '@/hooks/useMarketCampaigns';
 import { getTokenPriceKey } from '@/data-sources/morpho-api/prices';
-import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
+import {
+  APYCell,
+  APYBreakdownTooltip,
+  filterCampaignsByMode,
+  getDisplayRewardRate,
+} from '@/features/markets/components/apy-breakdown-tooltip';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { MarketRiskIndicators } from '@/features/markets/components/market-risk-indicators';
 import { PositionActionsDropdown } from './position-actions-dropdown';
@@ -48,7 +55,8 @@ import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 import { getPositionsPeriodShortLabel } from './positions-period-settings';
 import { RiArrowRightLine, RiSparklingFill } from 'react-icons/ri';
-import type { MarketPositionWithEarnings } from '@/utils/types';
+import type { GroupedPosition, MarketPositionWithEarnings } from '@/utils/types';
+import type { SimplifiedCampaign } from '@/utils/merklTypes';
 import type { PositionSnapshot } from '@/utils/positions';
 import type { Address } from 'viem';
 import { PositionAccountCell } from './position-account-cell';
@@ -182,6 +190,86 @@ function NewSettingBadge() {
       <RiSparklingFill className="h-3 w-3" />
       New
     </Badge>
+  );
+}
+
+function GroupedSupplyRateCell({
+  groupedPosition,
+  isAprDisplay,
+  showFullRewardAPY,
+}: {
+  groupedPosition: GroupedPosition;
+  isAprDisplay: boolean;
+  showFullRewardAPY: boolean;
+}) {
+  const { campaigns } = useMerklCampaignsQuery();
+  const baseRate = (isAprDisplay ? convertApyToApr(groupedPosition.totalWeightedApy) : groupedPosition.totalWeightedApy) * 100;
+  const rewardCampaigns = useMemo(() => {
+    if (groupedPosition.totalSupply <= 0) return [];
+
+    // Each campaign contributes only in proportion to the balance supplied to its market.
+    const weightedCampaigns: SimplifiedCampaign[] = [];
+
+    for (const position of groupedPosition.markets) {
+      const suppliedAmount = Number(position.state.supplyAssets) / 10 ** position.market.loanAsset.decimals;
+      if (suppliedAmount <= 0) continue;
+
+      const market = position.market;
+      const activeCampaigns = campaigns.filter(
+        (campaign) =>
+          campaign.isActive &&
+          isCampaignForMarket(campaign, {
+            marketId: market.uniqueKey,
+            loanTokenAddress: market.loanAsset.address,
+            chainId: market.morphoBlue.chain.id,
+            whitelisted: market.whitelisted,
+          }),
+      );
+      const weight = suppliedAmount / groupedPosition.totalSupply;
+
+      for (const campaign of filterCampaignsByMode(activeCampaigns, 'supply')) {
+        const weightedRate = getDisplayRewardRate(campaign.apr, isAprDisplay) * weight;
+        weightedCampaigns.push({
+          ...campaign,
+          campaignId: `${market.uniqueKey}:${campaign.campaignId}`,
+          apr: isAprDisplay ? weightedRate : convertApyToApr(weightedRate / 100) * 100,
+        });
+      }
+    }
+
+    return weightedCampaigns;
+  }, [campaigns, groupedPosition, isAprDisplay]);
+  const rewardRate = rewardCampaigns.reduce((sum, campaign) => sum + getDisplayRewardRate(campaign.apr, isAprDisplay), 0);
+  const showRewardsInline = showFullRewardAPY && rewardCampaigns.length > 0;
+  const displayRate = showRewardsInline ? baseRate + rewardRate : baseRate;
+  const rateDisplay = (
+    <span className="inline-flex items-center gap-1">
+      <span>{formatReadable(displayRate)}%</span>
+      {showRewardsInline && (
+        <RiSparklingFill
+          className="h-3 w-3"
+          color="var(--palette-orange)"
+        />
+      )}
+    </span>
+  );
+
+  if (rewardCampaigns.length === 0) return rateDisplay;
+
+  return (
+    <APYBreakdownTooltip
+      baseAPY={groupedPosition.totalWeightedApy * 100}
+      activeCampaigns={rewardCampaigns}
+    >
+      <button
+        type="button"
+        className="inline-flex cursor-help items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+        aria-label="Show weighted supply rate breakdown"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {rateDisplay}
+      </button>
+    </APYBreakdownTooltip>
   );
 }
 
@@ -392,7 +480,7 @@ export function SuppliedMorphoBlueGroupedTable({
     markPositionsSettingsSeen,
   } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
-  const { isAprDisplay } = useAppSettings();
+  const { isAprDisplay, showFullRewardAPY } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
   const { open: openModal } = useModalStore();
   const router = useRouter();
@@ -581,7 +669,6 @@ export function SuppliedMorphoBlueGroupedTable({
                 const rowAccount = groupedPosition.account;
                 const isOwner = !!address && rowAccount.toLowerCase() === address.toLowerCase();
                 const rowKey = `${rowAccount}-${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
-                const avgApy = groupedPosition.totalWeightedApy;
                 const isClosedSupplyGroup = groupedPosition.totalSupply === 0;
 
                 const earnings = getGroupedEarnings(groupedPosition);
@@ -634,7 +721,13 @@ export function SuppliedMorphoBlueGroupedTable({
                           {isClosedSupplyGroup ? (
                             <span className="font-medium text-secondary">-</span>
                           ) : (
-                            <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
+                            <span className="font-medium">
+                              <GroupedSupplyRateCell
+                                groupedPosition={groupedPosition}
+                                isAprDisplay={isAprDisplay}
+                                showFullRewardAPY={showFullRewardAPY}
+                              />
+                            </span>
                           )}
                         </div>
                       </TableCell>
