@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { ArrowDownIcon, ArrowUpIcon, CheckIcon, Cross2Icon, MinusIcon, Pencil2Icon } from '@radix-ui/react-icons';
-import { FaRegLightbulb } from 'react-icons/fa';
-import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ArrowBottomRightIcon, ArrowTopRightIcon, CheckIcon, Cross2Icon, MinusIcon, Pencil2Icon } from '@radix-ui/react-icons';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Tooltip as UiTooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Card } from '@/components/ui/card';
@@ -107,10 +106,16 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
     [currentRateAtTarget, desiredApy, market.state.utilization],
   );
   const projectionSeconds = horizonDays * SECONDS_PER_DAY;
-  const targetComparison =
-    desiredDisplayRate == null ? 0 : projectedRate > desiredDisplayRate ? 1 : projectedRate < desiredDisplayRate ? -1 : 0;
-  const TargetComparisonIcon = targetComparison > 0 ? ArrowUpIcon : targetComparison < 0 ? ArrowDownIcon : MinusIcon;
-  const targetComparisonLabel = targetComparison > 0 ? 'Above target' : targetComparison < 0 ? 'Below target' : 'At target';
+  const chartData = useMemo(
+    () => projection.map((point) => ({ ...point, goalRate: desiredDisplayRate })),
+    [desiredDisplayRate, projection],
+  );
+  const TrendIcon = direction > 0 ? ArrowTopRightIcon : direction < 0 ? ArrowBottomRightIcon : MinusIcon;
+  const trendTitle = direction > 0 ? 'Target rate trending up' : direction < 0 ? 'Target rate trending down' : 'Target rate stable';
+  const trendDetail =
+    direction === 0
+      ? 'Utilization is at the 90% IRM target.'
+      : `Utilization is ${formatPercentage(market.state.utilization)}, ${direction > 0 ? 'above' : 'below'} the 90% IRM target. Projection holds it constant.`;
 
   const openTargetEditor = () => {
     setTargetDraft(desiredDisplayRate == null ? '' : (desiredDisplayRate * 100).toFixed(2));
@@ -136,25 +141,40 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
       <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-start gap-6 sm:gap-8">
           <div>
-            <p className="text-xs uppercase tracking-wider text-secondary">Rate at Target</p>
+            <p className="text-xs uppercase tracking-wider text-secondary">Current Rate @ 90%</p>
             <p className="mt-1 tabular-nums text-lg">{formatPercentage(currentDisplayRate)}</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wider text-secondary">{horizonDays}D Projection</p>
             <div className="mt-1 flex items-center gap-2">
               <p className="tabular-nums text-lg">{formatPercentage(projectedRate)}</p>
-              <TargetComparisonIcon
-                className="h-4 w-4 text-secondary"
-                role="img"
-                aria-label={targetComparisonLabel}
-              />
+              <UiTooltip
+                content={
+                  <TooltipContent
+                    title={trendTitle}
+                    detail={trendDetail}
+                  />
+                }
+              >
+                <button
+                  type="button"
+                  aria-label={trendTitle}
+                  className="inline-flex cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  <TrendIcon
+                    className="h-4 w-4 text-secondary"
+                    aria-hidden="true"
+                  />
+                </button>
+              </UiTooltip>
             </div>
           </div>
           <div className="min-w-[180px]">
-            <p className="text-xs uppercase tracking-wider text-secondary">Utilization</p>
-            <p className="mt-1 tabular-nums text-lg">{formatPercentage(market.state.utilization)}</p>
+            <p className="text-xs uppercase tracking-wider text-secondary">
+              ETA to {desiredDisplayRate == null ? 'goal' : `${(desiredDisplayRate * 100).toFixed(2)}%`}
+            </p>
             {isEditingTarget ? (
-              <div className="mt-1 flex items-center gap-1">
+              <div className="mt-2 flex items-center gap-1">
                 <div className="flex h-7 w-[100px] items-center rounded-sm border border-border bg-hovered px-2 focus-within:border-primary/60">
                   <input
                     type="text"
@@ -189,40 +209,30 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
                 </button>
               </div>
             ) : (
-              <div className="mt-1 flex items-center gap-1 text-xs text-secondary">
-                <span>{desiredDisplayRate == null ? '—' : `${(desiredDisplayRate * 100).toFixed(2)}%`}</span>
-                <span>·</span>
-                <span>{formatTimeToTarget(targetEstimate)}</span>
-                <button
-                  type="button"
-                  onClick={openTargetEditor}
-                  aria-label={`Edit target ${rateLabel}`}
-                  className="rounded-sm p-0.5 hover:bg-hovered hover:text-primary"
+              <div className="mt-1 flex items-center gap-2">
+                <p className="tabular-nums text-lg">{formatTimeToTarget(targetEstimate)}</p>
+                <UiTooltip
+                  content={
+                    <TooltipContent
+                      title="Edit goal rate"
+                      detail="The initial goal is one percentage point in the projected direction."
+                    />
+                  }
                 >
-                  <Pencil2Icon className="h-3 w-3" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={openTargetEditor}
+                    aria-label={`Edit target ${rateLabel}`}
+                    className="rounded-sm p-0.5 text-secondary hover:bg-hovered hover:text-primary"
+                  >
+                    <Pencil2Icon className="h-3.5 w-3.5" />
+                  </button>
+                </UiTooltip>
               </div>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <UiTooltip
-            content={
-              <TooltipContent
-                icon={<FaRegLightbulb className="h-4 w-4" />}
-                title="Constant-utilization projection"
-                detail="Utilization and market parameters stay constant."
-              />
-            }
-          >
-            <button
-              type="button"
-              aria-label="Projection assumptions"
-              className="rounded-sm p-1 text-secondary transition-colors hover:bg-hovered hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-            >
-              <FaRegLightbulb className="h-3.5 w-3.5" />
-            </button>
-          </UiTooltip>
           <Select
             value={String(horizonDays)}
             onValueChange={(value) => setHorizonDays(Number(value) as (typeof HORIZON_OPTIONS)[number])}
@@ -254,7 +264,7 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
           id="rate-at-target-projection"
         >
           <LineChart
-            data={projection}
+            data={chartData}
             margin={{ top: 12, right: 24, left: 8, bottom: 4 }}
           >
             <CartesianGrid
@@ -294,11 +304,16 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
               )}
             />
             {desiredDisplayRate == null ? null : (
-              <ReferenceLine
-                y={desiredDisplayRate}
+              <Line
+                type="linear"
+                dataKey="goalRate"
+                name={`Goal ${rateLabel}`}
                 stroke="var(--color-text-secondary)"
                 strokeDasharray="4 4"
-                label={{ value: 'Target', position: 'insideTopRight', fill: 'var(--color-text-secondary)', fontSize: 11 }}
+                strokeWidth={1}
+                dot={false}
+                activeDot={false}
+                isAnimationActive={false}
               />
             )}
             <Line
