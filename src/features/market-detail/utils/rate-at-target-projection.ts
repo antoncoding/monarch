@@ -8,6 +8,7 @@ const MAX_TARGET_ESTIMATE_DAYS = 3650;
 export type BorrowRateProjectionPoint = {
   timestamp: number;
   borrowApy: number;
+  rateAtTargetApy: number;
 };
 
 export type TargetRateEstimate =
@@ -26,14 +27,19 @@ const toUtilizationWad = (utilization: number): bigint => {
   return BigInt(Math.round(clamped * Number(UTILIZATION_PRECISION))) * UTILIZATION_PRECISION;
 };
 
-export function projectBorrowApy({ utilization, rateAtTarget, elapsedSeconds }: ProjectionState & { elapsedSeconds: number }): number {
+const projectAdaptiveRates = ({ utilization, rateAtTarget, elapsedSeconds }: ProjectionState & { elapsedSeconds: number }) => {
   const projected = AdaptiveCurveIrmLib.getBorrowRate(
     toUtilizationWad(utilization),
     rateAtTarget,
     BigInt(Math.max(0, Math.round(elapsedSeconds))),
   );
-  return MarketUtils.rateToApy(projected.endBorrowRate);
-}
+  return {
+    borrowApy: MarketUtils.rateToApy(projected.endBorrowRate),
+    rateAtTargetApy: MarketUtils.rateToApy(projected.endRateAtTarget),
+  };
+};
+
+export const projectBorrowApy = (input: ProjectionState & { elapsedSeconds: number }): number => projectAdaptiveRates(input).borrowApy;
 
 export function getCurrentAdaptiveRates({
   utilization,
@@ -65,9 +71,10 @@ export function buildBorrowRateProjection({
 
   return Array.from({ length: PROJECTION_POINT_COUNT + 1 }, (_, index) => {
     const elapsedSeconds = Math.round((horizonSeconds * index) / PROJECTION_POINT_COUNT);
+    const projected = projectAdaptiveRates({ utilization, rateAtTarget, elapsedSeconds });
     return {
       timestamp: startTimestamp + elapsedSeconds,
-      borrowApy: projectBorrowApy({ utilization, rateAtTarget, elapsedSeconds }),
+      ...projected,
     };
   });
 }
