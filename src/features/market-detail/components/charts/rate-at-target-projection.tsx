@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
+import { ArrowDownIcon, ArrowUpIcon, MinusIcon } from '@radix-ui/react-icons';
+import { FaRegLightbulb } from 'react-icons/fa';
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Tooltip as UiTooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useChartColors } from '@/constants/chartColors';
@@ -29,14 +33,12 @@ type RateAtTargetProjectionProps = {
 const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;
 
 const formatTimeToTarget = (estimate: TargetRateEstimate): string => {
-  if (estimate.status === 'static') return 'No change at target utilization';
-  if (estimate.status === 'unreachable') return 'Not reached at constant utilization';
-  if (estimate.status === 'invalid') return 'Enter a valid target';
-  if (estimate.seconds === 0) return 'Already at desired rate';
+  if (estimate.status !== 'reached') return '—';
+  if (estimate.seconds === 0) return 'Now';
 
   const days = estimate.seconds / SECONDS_PER_DAY;
-  if (days < 1) return `${Math.max(1, Math.round(days * 24))} hours`;
-  return `${days < 10 ? days.toFixed(1) : Math.round(days)} days`;
+  if (days < 1) return `${Math.max(1, Math.round(days * 24))}h`;
+  return `${days < 10 ? days.toFixed(1) : Math.round(days)}d`;
 };
 
 export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) {
@@ -101,18 +103,33 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
     [currentRateAtTarget, desiredApy, market.state.utilization],
   );
   const projectionSeconds = horizonDays * SECONDS_PER_DAY;
+  const DirectionIcon = direction > 0 ? ArrowUpIcon : direction < 0 ? ArrowDownIcon : MinusIcon;
+  const directionLabel = direction > 0 ? 'Rising' : direction < 0 ? 'Falling' : 'Stable';
 
   if (getIRMTitle(market.irmAddress) !== 'Adaptive Curve' || storedRateAtTarget <= 0n) return null;
 
   return (
     <Card className="mt-6 overflow-hidden border border-border bg-surface shadow-sm">
       <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-wider text-secondary">Constant-utilization scenario</p>
-          <h3 className="mt-1 text-base font-medium">Rate at Target Projection</h3>
-          <p className="mt-1 max-w-2xl text-xs text-secondary">
-            Shows how the Adaptive Curve IRM shifts if utilization remains at {formatPercentage(market.state.utilization)}.
-          </p>
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-medium">Target Rate Projection</h3>
+          <UiTooltip
+            content={
+              <TooltipContent
+                icon={<FaRegLightbulb className="h-4 w-4" />}
+                title="Projection assumptions"
+                detail="Utilization and market parameters stay constant."
+              />
+            }
+          >
+            <button
+              type="button"
+              aria-label="Projection assumptions"
+              className="rounded-sm text-secondary transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              <FaRegLightbulb className="h-3.5 w-3.5" />
+            </button>
+          </UiTooltip>
         </div>
         <Select
           value={String(horizonDays)}
@@ -139,16 +156,23 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
 
       <div className="grid gap-px border-b border-border/40 bg-border/40 sm:grid-cols-3">
         <div className="bg-surface px-6 py-3">
-          <p className="text-xs text-secondary">Current target {rateLabel}</p>
+          <p className="text-xs uppercase tracking-wider text-secondary">Now</p>
           <p className="mt-1 tabular-nums text-lg">{formatPercentage(currentDisplayRate)}</p>
         </div>
         <div className="bg-surface px-6 py-3">
-          <p className="text-xs text-secondary">Projected in {horizonDays} days</p>
-          <p className="mt-1 tabular-nums text-lg">{formatPercentage(projectedRate)}</p>
+          <p className="text-xs uppercase tracking-wider text-secondary">{horizonDays}D</p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="tabular-nums text-lg">{formatPercentage(projectedRate)}</p>
+            <DirectionIcon
+              className="h-4 w-4 text-secondary"
+              role="img"
+              aria-label={directionLabel}
+            />
+          </div>
         </div>
         <div className="bg-surface px-6 py-3">
-          <p className="text-xs text-secondary">Direction at current utilization</p>
-          <p className="mt-1 text-lg">{direction > 0 ? 'Rising' : direction < 0 ? 'Falling' : 'Stable'}</p>
+          <p className="text-xs uppercase tracking-wider text-secondary">Utilization</p>
+          <p className="mt-1 tabular-nums text-lg">{formatPercentage(market.state.utilization)}</p>
         </div>
       </div>
 
@@ -203,7 +227,7 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
                 y={desiredDisplayRate}
                 stroke="var(--color-text-secondary)"
                 strokeDasharray="4 4"
-                label={{ value: 'Desired', position: 'insideTopRight', fill: 'var(--color-text-secondary)', fontSize: 11 }}
+                label={{ value: 'Target', position: 'insideTopRight', fill: 'var(--color-text-secondary)', fontSize: 11 }}
               />
             )}
             <Line
@@ -222,7 +246,7 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
 
       <div className="flex flex-col gap-4 border-t border-border px-6 py-4 sm:flex-row sm:items-end sm:justify-between">
         <label className="flex w-full max-w-[220px] flex-col gap-1 text-xs text-secondary">
-          Desired target {rateLabel}
+          Target {rateLabel}
           <div className="flex h-9 items-center rounded-sm border border-border bg-hovered px-3 focus-within:border-primary/60">
             <input
               key={`${market.uniqueKey}-${rateLabel}`}
@@ -241,9 +265,8 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
           </div>
         </label>
         <div className="sm:text-right">
-          <p className="text-xs text-secondary">Estimated time to desired rate</p>
+          <p className="text-xs uppercase tracking-wider text-secondary">ETA</p>
           <p className="mt-1 text-sm font-medium">{formatTimeToTarget(targetEstimate)}</p>
-          <p className="mt-1 text-xs text-secondary">Assumes utilization and market parameters do not change.</p>
         </div>
       </div>
     </Card>
