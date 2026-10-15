@@ -8,15 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useChartColors } from '@/constants/chartColors';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { formatReadable } from '@/utils/balance';
 import { formatChartTime } from '@/utils/chart';
 import { getIRMTitle } from '@/utils/morpho';
 import { toApyFromDisplayRate, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { Market } from '@/utils/types';
+import { formatUnits } from 'viem';
 import {
-  buildRateAtTargetProjection,
-  estimateTimeToTargetRate,
-  getCurrentRateAtTarget,
-  projectRateAtTargetApy,
+  buildBorrowRateProjection,
+  estimateTimeToBorrowRate,
+  getCurrentAdaptiveRates,
+  getTargetUtilizationDeltas,
   RATE_AT_TARGET_UTILIZATION,
   type TargetRateEstimate,
 } from '../../utils/rate-at-target-projection';
@@ -57,9 +59,9 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
     }
   }, [market.state.rateAtTarget]);
 
-  const currentRateAtTarget = useMemo(
+  const currentRates = useMemo(
     () =>
-      getCurrentRateAtTarget({
+      getCurrentAdaptiveRates({
         utilization: market.state.utilization,
         storedRateAtTarget,
         lastUpdateTimestamp: market.state.timestamp,
@@ -67,30 +69,25 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
       }),
     [market.state.timestamp, market.state.utilization, projectionTimestamp, storedRateAtTarget],
   );
-  const currentApyAtTarget = projectRateAtTargetApy({
-    utilization: market.state.utilization,
-    rateAtTarget: currentRateAtTarget,
-    elapsedSeconds: 0,
-  });
   const direction =
     market.state.utilization > RATE_AT_TARGET_UTILIZATION ? 1 : market.state.utilization < RATE_AT_TARGET_UTILIZATION ? -1 : 0;
-  const currentDisplayRate = toDisplayRateFromApy(currentApyAtTarget, isAprDisplay);
+  const currentDisplayRate = toDisplayRateFromApy(currentRates.borrowApy, isAprDisplay);
   const [desiredApy, setDesiredApy] = useState<number | null>(() =>
     toApyFromDisplayRate(Math.max(0, currentDisplayRate + direction * 0.01), isAprDisplay),
   );
 
   const projection = useMemo(
     () =>
-      buildRateAtTargetProjection({
+      buildBorrowRateProjection({
         utilization: market.state.utilization,
-        rateAtTarget: currentRateAtTarget,
+        rateAtTarget: currentRates.rateAtTarget,
         startTimestamp: projectionTimestamp,
         horizonDays,
       }).map((point) => ({
         x: point.timestamp,
-        projectedRate: toDisplayRateFromApy(point.apyAtTarget, isAprDisplay),
+        projectedRate: toDisplayRateFromApy(point.borrowApy, isAprDisplay),
       })),
-    [currentRateAtTarget, horizonDays, isAprDisplay, market.state.utilization, projectionTimestamp],
+    [currentRates.rateAtTarget, horizonDays, isAprDisplay, market.state.utilization, projectionTimestamp],
   );
   const projectedRate = projection.at(-1)?.projectedRate ?? 0;
   const desiredDisplayRate = desiredApy == null ? null : toDisplayRateFromApy(desiredApy, isAprDisplay);
@@ -98,12 +95,12 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
     () =>
       desiredApy == null
         ? ({ status: 'invalid' } as const)
-        : estimateTimeToTargetRate({
+        : estimateTimeToBorrowRate({
             utilization: market.state.utilization,
-            rateAtTarget: currentRateAtTarget,
+            rateAtTarget: currentRates.rateAtTarget,
             desiredApy,
           }),
-    [currentRateAtTarget, desiredApy, market.state.utilization],
+    [currentRates.rateAtTarget, desiredApy, market.state.utilization],
   );
   const projectionSeconds = horizonDays * SECONDS_PER_DAY;
   const chartData = useMemo(
@@ -111,11 +108,21 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
     [desiredDisplayRate, projection],
   );
   const TrendIcon = direction > 0 ? ArrowTopRightIcon : direction < 0 ? ArrowBottomRightIcon : MinusIcon;
-  const trendTitle = direction > 0 ? 'Target rate trending up' : direction < 0 ? 'Target rate trending down' : 'Target rate stable';
+  const trendTitle = direction > 0 ? 'Borrow rate trending up' : direction < 0 ? 'Borrow rate trending down' : 'Borrow rate stable';
   const trendDetail =
     direction === 0
       ? 'Utilization is at the 90% IRM target.'
       : `Utilization is ${formatPercentage(market.state.utilization)}, ${direction > 0 ? 'above' : 'below'} the 90% IRM target. Projection holds it constant.`;
+  const targetUtilizationDeltas = useMemo(
+    () =>
+      getTargetUtilizationDeltas({
+        supplyAssets: BigInt(market.state.supplyAssets),
+        borrowAssets: BigInt(market.state.borrowAssets),
+      }),
+    [market.state.borrowAssets, market.state.supplyAssets],
+  );
+  const formatAssetDelta = (value: bigint) =>
+    `${formatReadable(Number(formatUnits(value, market.loanAsset.decimals)))} ${market.loanAsset.symbol}`;
 
   const openTargetEditor = () => {
     setTargetDraft(desiredDisplayRate == null ? '' : (desiredDisplayRate * 100).toFixed(2));
@@ -141,7 +148,7 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
       <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-start gap-6 sm:gap-8">
           <div>
-            <p className="text-xs uppercase tracking-wider text-secondary">Current Rate @ 90%</p>
+            <p className="text-xs uppercase tracking-wider text-secondary">Current Borrow {rateLabel}</p>
             <p className="mt-1 tabular-nums text-lg">{formatPercentage(currentDisplayRate)}</p>
           </div>
           <div>
@@ -307,7 +314,7 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
               <Line
                 type="linear"
                 dataKey="goalRate"
-                name={`Goal ${rateLabel}`}
+                name={`Goal Borrow ${rateLabel}`}
                 stroke="var(--color-text-secondary)"
                 strokeDasharray="4 4"
                 strokeWidth={1}
@@ -319,7 +326,7 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
             <Line
               type="monotone"
               dataKey="projectedRate"
-              name={`Projected target ${rateLabel}`}
+              name={`Projected Borrow ${rateLabel}`}
               stroke={chartColors.apyAtTarget.stroke}
               strokeWidth={2}
               strokeDasharray="6 4"
@@ -328,6 +335,38 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+      <div className="grid gap-px border-t border-border/40 bg-border/40 sm:grid-cols-3">
+        <div className="bg-surface px-6 py-3">
+          <p className="text-xs uppercase tracking-wider text-secondary">Rate @ 90%</p>
+          <p className="mt-1 tabular-nums text-sm">{formatPercentage(toDisplayRateFromApy(currentRates.rateAtTargetApy, isAprDisplay))}</p>
+        </div>
+        <div className="bg-surface px-6 py-3">
+          <UiTooltip
+            content={
+              <TooltipContent
+                title="Supply Delta to 90%"
+                detail="Supply change needed to reach 90% utilization while borrow stays constant."
+              />
+            }
+          >
+            <span className="cursor-help text-xs uppercase tracking-wider text-secondary">Supply Δ to 90%</span>
+          </UiTooltip>
+          <p className="mt-1 tabular-nums text-sm">{formatAssetDelta(targetUtilizationDeltas.supplyDelta)}</p>
+        </div>
+        <div className="bg-surface px-6 py-3">
+          <UiTooltip
+            content={
+              <TooltipContent
+                title="Borrow Delta to 90%"
+                detail="Borrow change needed to reach 90% utilization while supply stays constant."
+              />
+            }
+          >
+            <span className="cursor-help text-xs uppercase tracking-wider text-secondary">Borrow Δ to 90%</span>
+          </UiTooltip>
+          <p className="mt-1 tabular-nums text-sm">{formatAssetDelta(targetUtilizationDeltas.borrowDelta)}</p>
+        </div>
       </div>
     </Card>
   );

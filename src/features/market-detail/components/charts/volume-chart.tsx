@@ -1214,19 +1214,6 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
 
   const legendHandlers = createLegendClickHandler({ visibleLines, setVisibleLines });
 
-  const targetUtilizationData = useMemo(() => {
-    const supply = market.state.supplyAssets ? BigInt(market.state.supplyAssets) : 0n;
-    const borrow = market.state.borrowAssets ? BigInt(market.state.borrowAssets) : 0n;
-
-    const targetBorrow = (supply * 9n) / 10n;
-    const borrowDelta = targetBorrow - borrow;
-
-    const targetSupply = (borrow * 10n) / 9n;
-    const supplyDelta = targetSupply - supply;
-
-    return { borrowDelta, supplyDelta };
-  }, [market.state.supplyAssets, market.state.borrowAssets]);
-
   const supplyStats = getVolumeStats('supply');
   const borrowStats = getVolumeStats('borrow');
   const liquidityStats = getVolumeStats('liquidity');
@@ -1387,69 +1374,29 @@ function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
         )}
       </div>
 
-      {/* Footer: IRM Targets + Historical Averages */}
-      <div className="relative z-0 grid grid-cols-1 divide-y border-t border-border lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-        {/* IRM Targets */}
-        <div className="px-6 py-4">
-          <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">IRM Rebalancing Targets</h4>
+      {/* Footer: Historical Averages */}
+      <div className="border-t border-border px-6 py-4">
+        <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{TIMEFRAME_LABELS[selectedTimeframe]} Averages</h4>
+        {isLoading ? (
+          <div className="flex h-8 items-center">
+            <Spinner size={16} />
+          </div>
+        ) : (
           <div className="flex flex-wrap gap-x-8 gap-y-2">
             <div className="flex items-center gap-2">
-              <HeroTooltip
-                content={
-                  <TooltipContent
-                    title="Supply Delta to Target"
-                    detail="Supply change needed to reach 90% target utilization (keeping borrow constant)."
-                  />
-                }
-              >
-                <span className="cursor-help border-b border-dotted border-secondary text-sm text-secondary">Supply Δ</span>
-              </HeroTooltip>
-              <span className="tabular-nums text-sm">
-                {formatValue(Number(formatUnits(targetUtilizationData.supplyDelta, market.loanAsset.decimals)))}
-              </span>
+              <span className="text-sm text-secondary">Supply</span>
+              <span className="tabular-nums text-sm">{formatValue(supplyStats.average)}</span>
             </div>
             <div className="flex items-center gap-2">
-              <HeroTooltip
-                content={
-                  <TooltipContent
-                    title="Borrow Delta to Target"
-                    detail="Borrow change needed to reach 90% target utilization (keeping supply constant)."
-                  />
-                }
-              >
-                <span className="cursor-help border-b border-dotted border-secondary text-sm text-secondary">Borrow Δ</span>
-              </HeroTooltip>
-              <span className="tabular-nums text-sm">
-                {formatValue(Number(formatUnits(targetUtilizationData.borrowDelta, market.loanAsset.decimals)))}
-              </span>
+              <span className="text-sm text-secondary">Borrow</span>
+              <span className="tabular-nums text-sm">{formatValue(borrowStats.average)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-secondary">Liquidity</span>
+              <span className="tabular-nums text-sm">{formatValue(liquidityStats.average)}</span>
             </div>
           </div>
-        </div>
-
-        {/* Historical Averages */}
-        <div className="px-6 py-4">
-          <h4 className="mb-3 text-xs uppercase tracking-wider text-secondary">{TIMEFRAME_LABELS[selectedTimeframe]} Averages</h4>
-          {isLoading ? (
-            <div className="flex h-8 items-center">
-              <Spinner size={16} />
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-x-8 gap-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-secondary">Supply</span>
-                <span className="tabular-nums text-sm">{formatValue(supplyStats.average)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-secondary">Borrow</span>
-                <span className="tabular-nums text-sm">{formatValue(borrowStats.average)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-secondary">Liquidity</span>
-                <span className="tabular-nums text-sm">{formatValue(liquidityStats.average)}</span>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </Card>
   );

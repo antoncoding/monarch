@@ -5,9 +5,9 @@ const UTILIZATION_PRECISION = 1_000_000_000n;
 const PROJECTION_POINT_COUNT = 30;
 const MAX_TARGET_ESTIMATE_DAYS = 3650;
 
-export type RateAtTargetProjectionPoint = {
+export type BorrowRateProjectionPoint = {
   timestamp: number;
-  apyAtTarget: number;
+  borrowApy: number;
 };
 
 export type TargetRateEstimate =
@@ -26,20 +26,16 @@ const toUtilizationWad = (utilization: number): bigint => {
   return BigInt(Math.round(clamped * Number(UTILIZATION_PRECISION))) * UTILIZATION_PRECISION;
 };
 
-export function projectRateAtTargetApy({
-  utilization,
-  rateAtTarget,
-  elapsedSeconds,
-}: ProjectionState & { elapsedSeconds: number }): number {
+export function projectBorrowApy({ utilization, rateAtTarget, elapsedSeconds }: ProjectionState & { elapsedSeconds: number }): number {
   const projected = AdaptiveCurveIrmLib.getBorrowRate(
     toUtilizationWad(utilization),
     rateAtTarget,
     BigInt(Math.max(0, Math.round(elapsedSeconds))),
   );
-  return MarketUtils.rateToApy(projected.endRateAtTarget);
+  return MarketUtils.rateToApy(projected.endBorrowRate);
 }
 
-export function getCurrentRateAtTarget({
+export function getCurrentAdaptiveRates({
   utilization,
   storedRateAtTarget,
   lastUpdateTimestamp,
@@ -49,36 +45,41 @@ export function getCurrentRateAtTarget({
   storedRateAtTarget: bigint;
   lastUpdateTimestamp: number;
   currentTimestamp: number;
-}): bigint {
+}): { borrowApy: number; rateAtTarget: bigint; rateAtTargetApy: number } {
   const elapsedSeconds = Math.max(0, currentTimestamp - lastUpdateTimestamp);
-  return AdaptiveCurveIrmLib.getBorrowRate(toUtilizationWad(utilization), storedRateAtTarget, BigInt(elapsedSeconds)).endRateAtTarget;
+  const projected = AdaptiveCurveIrmLib.getBorrowRate(toUtilizationWad(utilization), storedRateAtTarget, BigInt(elapsedSeconds));
+  return {
+    borrowApy: MarketUtils.rateToApy(projected.endBorrowRate),
+    rateAtTarget: projected.endRateAtTarget,
+    rateAtTargetApy: MarketUtils.rateToApy(projected.endRateAtTarget),
+  };
 }
 
-export function buildRateAtTargetProjection({
+export function buildBorrowRateProjection({
   utilization,
   rateAtTarget,
   startTimestamp,
   horizonDays,
-}: ProjectionState & { startTimestamp: number; horizonDays: number }): RateAtTargetProjectionPoint[] {
+}: ProjectionState & { startTimestamp: number; horizonDays: number }): BorrowRateProjectionPoint[] {
   const horizonSeconds = Math.max(1, Math.round(horizonDays * SECONDS_PER_DAY));
 
   return Array.from({ length: PROJECTION_POINT_COUNT + 1 }, (_, index) => {
     const elapsedSeconds = Math.round((horizonSeconds * index) / PROJECTION_POINT_COUNT);
     return {
       timestamp: startTimestamp + elapsedSeconds,
-      apyAtTarget: projectRateAtTargetApy({ utilization, rateAtTarget, elapsedSeconds }),
+      borrowApy: projectBorrowApy({ utilization, rateAtTarget, elapsedSeconds }),
     };
   });
 }
 
-export function estimateTimeToTargetRate({
+export function estimateTimeToBorrowRate({
   utilization,
   rateAtTarget,
   desiredApy,
 }: ProjectionState & { desiredApy: number }): TargetRateEstimate {
   if (!Number.isFinite(desiredApy) || desiredApy < 0) return { status: 'invalid' };
 
-  const currentApy = MarketUtils.rateToApy(rateAtTarget);
+  const currentApy = projectBorrowApy({ utilization, rateAtTarget, elapsedSeconds: 0 });
   const targetUtilization = Number(AdaptiveCurveIrmLib.TARGET_UTILIZATION) / 1e18;
   const isRising = utilization > targetUtilization;
   const isFalling = utilization < targetUtilization;
@@ -89,7 +90,7 @@ export function estimateTimeToTargetRate({
 
   const maxSeconds = MAX_TARGET_ESTIMATE_DAYS * SECONDS_PER_DAY;
   const reachesTarget = (elapsedSeconds: number) => {
-    const projectedApy = projectRateAtTargetApy({ utilization, rateAtTarget, elapsedSeconds });
+    const projectedApy = projectBorrowApy({ utilization, rateAtTarget, elapsedSeconds });
     return isRising ? projectedApy >= desiredApy : projectedApy <= desiredApy;
   };
 
@@ -107,6 +108,15 @@ export function estimateTimeToTargetRate({
   }
 
   return { status: 'reached', seconds: lower };
+}
+
+export function getTargetUtilizationDeltas({ supplyAssets, borrowAssets }: { supplyAssets: bigint; borrowAssets: bigint }): {
+  supplyDelta: bigint;
+  borrowDelta: bigint;
+} {
+  const borrowDelta = (supplyAssets * AdaptiveCurveIrmLib.TARGET_UTILIZATION) / 10n ** 18n - borrowAssets;
+  const supplyDelta = (borrowAssets * 10n ** 18n) / AdaptiveCurveIrmLib.TARGET_UTILIZATION - supplyAssets;
+  return { supplyDelta, borrowDelta };
 }
 
 export const RATE_AT_TARGET_UTILIZATION = Number(AdaptiveCurveIrmLib.TARGET_UTILIZATION) / 1e18;
