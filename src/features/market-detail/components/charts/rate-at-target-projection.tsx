@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowDownIcon, ArrowUpIcon, MinusIcon } from '@radix-ui/react-icons';
+import { ArrowDownIcon, ArrowUpIcon, CheckIcon, Cross2Icon, MinusIcon, Pencil2Icon } from '@radix-ui/react-icons';
 import { FaRegLightbulb } from 'react-icons/fa';
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Tooltip as UiTooltip } from '@/components/ui/tooltip';
@@ -47,6 +47,8 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
   const chartColors = useChartColors();
   const [horizonDays, setHorizonDays] = useState<(typeof HORIZON_OPTIONS)[number]>(30);
   const [projectionTimestamp] = useState(() => Math.floor(Date.now() / 1000));
+  const [isEditingTarget, setIsEditingTarget] = useState(false);
+  const [targetDraft, setTargetDraft] = useState('');
 
   const storedRateAtTarget = useMemo(() => {
     try {
@@ -73,7 +75,10 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
   });
   const direction =
     market.state.utilization > RATE_AT_TARGET_UTILIZATION ? 1 : market.state.utilization < RATE_AT_TARGET_UTILIZATION ? -1 : 0;
-  const [desiredApy, setDesiredApy] = useState<number | null>(() => currentApyAtTarget * (direction > 0 ? 1.25 : direction < 0 ? 0.75 : 1));
+  const currentDisplayRate = toDisplayRateFromApy(currentApyAtTarget, isAprDisplay);
+  const [desiredApy, setDesiredApy] = useState<number | null>(() =>
+    toApyFromDisplayRate(Math.max(0, currentDisplayRate + direction * 0.01), isAprDisplay),
+  );
 
   const projection = useMemo(
     () =>
@@ -89,7 +94,6 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
     [currentRateAtTarget, horizonDays, isAprDisplay, market.state.utilization, projectionTimestamp],
   );
   const projectedRate = projection.at(-1)?.projectedRate ?? 0;
-  const currentDisplayRate = toDisplayRateFromApy(currentApyAtTarget, isAprDisplay);
   const desiredDisplayRate = desiredApy == null ? null : toDisplayRateFromApy(desiredApy, isAprDisplay);
   const targetEstimate = useMemo(
     () =>
@@ -103,21 +107,110 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
     [currentRateAtTarget, desiredApy, market.state.utilization],
   );
   const projectionSeconds = horizonDays * SECONDS_PER_DAY;
-  const DirectionIcon = direction > 0 ? ArrowUpIcon : direction < 0 ? ArrowDownIcon : MinusIcon;
-  const directionLabel = direction > 0 ? 'Rising' : direction < 0 ? 'Falling' : 'Stable';
+  const targetComparison =
+    desiredDisplayRate == null ? 0 : projectedRate > desiredDisplayRate ? 1 : projectedRate < desiredDisplayRate ? -1 : 0;
+  const TargetComparisonIcon = targetComparison > 0 ? ArrowUpIcon : targetComparison < 0 ? ArrowDownIcon : MinusIcon;
+  const targetComparisonLabel = targetComparison > 0 ? 'Above target' : targetComparison < 0 ? 'Below target' : 'At target';
+
+  const openTargetEditor = () => {
+    setTargetDraft(desiredDisplayRate == null ? '' : (desiredDisplayRate * 100).toFixed(2));
+    setIsEditingTarget(true);
+  };
+
+  const closeTargetEditor = () => {
+    setIsEditingTarget(false);
+    setTargetDraft('');
+  };
+
+  const applyTarget = () => {
+    const parsed = Number.parseFloat(targetDraft);
+    if (!Number.isFinite(parsed) || parsed < 0) return;
+    setDesiredApy(toApyFromDisplayRate(parsed / 100, isAprDisplay));
+    closeTargetEditor();
+  };
 
   if (getIRMTitle(market.irmAddress) !== 'Adaptive Curve' || storedRateAtTarget <= 0n) return null;
 
   return (
     <Card className="mt-6 overflow-hidden border border-border bg-surface shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-border/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-start gap-6 sm:gap-8">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-secondary">Rate at Target</p>
+            <p className="mt-1 tabular-nums text-lg">{formatPercentage(currentDisplayRate)}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-secondary">{horizonDays}D Projection</p>
+            <div className="mt-1 flex items-center gap-2">
+              <p className="tabular-nums text-lg">{formatPercentage(projectedRate)}</p>
+              <TargetComparisonIcon
+                className="h-4 w-4 text-secondary"
+                role="img"
+                aria-label={targetComparisonLabel}
+              />
+            </div>
+          </div>
+          <div className="min-w-[180px]">
+            <p className="text-xs uppercase tracking-wider text-secondary">Utilization</p>
+            <p className="mt-1 tabular-nums text-lg">{formatPercentage(market.state.utilization)}</p>
+            {isEditingTarget ? (
+              <div className="mt-1 flex items-center gap-1">
+                <div className="flex h-7 w-[100px] items-center rounded-sm border border-border bg-hovered px-2 focus-within:border-primary/60">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={targetDraft}
+                    onChange={(event) => setTargetDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') applyTarget();
+                      if (event.key === 'Escape') closeTargetEditor();
+                    }}
+                    className="w-full bg-transparent tabular-nums text-xs text-primary outline-none"
+                    aria-label={`Target ${rateLabel}`}
+                    autoFocus
+                  />
+                  <span className="text-xs">%</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={applyTarget}
+                  aria-label="Apply target rate"
+                  className="rounded-sm p-1 text-secondary hover:bg-hovered hover:text-primary"
+                >
+                  <CheckIcon className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={closeTargetEditor}
+                  aria-label="Cancel target rate edit"
+                  className="rounded-sm p-1 text-secondary hover:bg-hovered hover:text-primary"
+                >
+                  <Cross2Icon className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="mt-1 flex items-center gap-1 text-xs text-secondary">
+                <span>{desiredDisplayRate == null ? '—' : `${(desiredDisplayRate * 100).toFixed(2)}%`}</span>
+                <span>·</span>
+                <span>{formatTimeToTarget(targetEstimate)}</span>
+                <button
+                  type="button"
+                  onClick={openTargetEditor}
+                  aria-label={`Edit target ${rateLabel}`}
+                  className="rounded-sm p-0.5 hover:bg-hovered hover:text-primary"
+                >
+                  <Pencil2Icon className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-medium">Target Rate Projection</h3>
           <UiTooltip
             content={
               <TooltipContent
                 icon={<FaRegLightbulb className="h-4 w-4" />}
-                title="Projection assumptions"
+                title="Constant-utilization projection"
                 detail="Utilization and market parameters stay constant."
               />
             }
@@ -125,54 +218,32 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
             <button
               type="button"
               aria-label="Projection assumptions"
-              className="rounded-sm text-secondary transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="rounded-sm p-1 text-secondary transition-colors hover:bg-hovered hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               <FaRegLightbulb className="h-3.5 w-3.5" />
             </button>
           </UiTooltip>
-        </div>
-        <Select
-          value={String(horizonDays)}
-          onValueChange={(value) => setHorizonDays(Number(value) as (typeof HORIZON_OPTIONS)[number])}
-        >
-          <SelectTrigger
-            className="h-8 w-[92px] px-3 text-sm"
-            aria-label="Projection horizon"
+          <Select
+            value={String(horizonDays)}
+            onValueChange={(value) => setHorizonDays(Number(value) as (typeof HORIZON_OPTIONS)[number])}
           >
-            <SelectValue>{horizonDays}D</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {HORIZON_OPTIONS.map((days) => (
-              <SelectItem
-                key={days}
-                value={String(days)}
-              >
-                {days}D
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid gap-px border-b border-border/40 bg-border/40 sm:grid-cols-3">
-        <div className="bg-surface px-6 py-3">
-          <p className="text-xs uppercase tracking-wider text-secondary">Now</p>
-          <p className="mt-1 tabular-nums text-lg">{formatPercentage(currentDisplayRate)}</p>
-        </div>
-        <div className="bg-surface px-6 py-3">
-          <p className="text-xs uppercase tracking-wider text-secondary">{horizonDays}D</p>
-          <div className="mt-1 flex items-center gap-2">
-            <p className="tabular-nums text-lg">{formatPercentage(projectedRate)}</p>
-            <DirectionIcon
-              className="h-4 w-4 text-secondary"
-              role="img"
-              aria-label={directionLabel}
-            />
-          </div>
-        </div>
-        <div className="bg-surface px-6 py-3">
-          <p className="text-xs uppercase tracking-wider text-secondary">Utilization</p>
-          <p className="mt-1 tabular-nums text-lg">{formatPercentage(market.state.utilization)}</p>
+            <SelectTrigger
+              className="h-8 w-[92px] px-3 text-sm"
+              aria-label="Projection horizon"
+            >
+              <SelectValue>{horizonDays}D</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {HORIZON_OPTIONS.map((days) => (
+                <SelectItem
+                  key={days}
+                  value={String(days)}
+                >
+                  {days}D
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -242,32 +313,6 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
             />
           </LineChart>
         </ResponsiveContainer>
-      </div>
-
-      <div className="flex flex-col gap-4 border-t border-border px-6 py-4 sm:flex-row sm:items-end sm:justify-between">
-        <label className="flex w-full max-w-[220px] flex-col gap-1 text-xs text-secondary">
-          Target {rateLabel}
-          <div className="flex h-9 items-center rounded-sm border border-border bg-hovered px-3 focus-within:border-primary/60">
-            <input
-              key={`${market.uniqueKey}-${rateLabel}`}
-              type="number"
-              min="0"
-              step="0.1"
-              defaultValue={desiredApy == null ? '' : (toDisplayRateFromApy(desiredApy, isAprDisplay) * 100).toFixed(2)}
-              onChange={(event) => {
-                const parsed = Number.parseFloat(event.target.value);
-                setDesiredApy(Number.isFinite(parsed) && parsed >= 0 ? toApyFromDisplayRate(parsed / 100, isAprDisplay) : null);
-              }}
-              className="w-full bg-transparent tabular-nums text-sm text-primary outline-none"
-              aria-label={`Desired target ${rateLabel}`}
-            />
-            <span>%</span>
-          </div>
-        </label>
-        <div className="sm:text-right">
-          <p className="text-xs uppercase tracking-wider text-secondary">ETA</p>
-          <p className="mt-1 text-sm font-medium">{formatTimeToTarget(targetEstimate)}</p>
-        </div>
       </div>
     </Card>
   );
