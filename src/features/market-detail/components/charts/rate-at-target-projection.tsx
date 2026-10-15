@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ArrowBottomRightIcon, ArrowTopRightIcon, CheckIcon, Cross2Icon, MinusIcon, Pencil2Icon } from '@radix-ui/react-icons';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Tooltip as UiTooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Card } from '@/components/ui/card';
@@ -22,7 +22,7 @@ import {
   RATE_AT_TARGET_UTILIZATION,
   type TargetRateEstimate,
 } from '../../utils/rate-at-target-projection';
-import { chartTooltipCursor, ChartTooltipContent } from './chart-utils';
+import { chartLegendStyle, chartTooltipCursor, ChartTooltipContent } from './chart-utils';
 
 const SECONDS_PER_DAY = 86_400;
 const HORIZON_OPTIONS = [7, 30, 90] as const;
@@ -86,6 +86,7 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
       }).map((point) => ({
         x: point.timestamp,
         projectedRate: toDisplayRateFromApy(point.borrowApy, isAprDisplay),
+        projectedRateAt90: toDisplayRateFromApy(point.rateAtTargetApy, isAprDisplay),
       })),
     [currentRates.rateAtTarget, horizonDays, isAprDisplay, market.state.utilization, projectionTimestamp],
   );
@@ -310,6 +311,26 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
                 />
               )}
             />
+            <Legend {...chartLegendStyle} />
+            <Line
+              type="monotone"
+              dataKey="projectedRate"
+              name={`Projected Borrow ${rateLabel}`}
+              stroke={chartColors.borrow.stroke}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="projectedRateAt90"
+              name="Projected Rate @ 90%"
+              stroke={chartColors.apyAtTarget.stroke}
+              strokeWidth={2}
+              strokeDasharray="6 4"
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
             {desiredDisplayRate == null ? null : (
               <Line
                 type="linear"
@@ -323,16 +344,6 @@ export function RateAtTargetProjection({ market }: RateAtTargetProjectionProps) 
                 isAnimationActive={false}
               />
             )}
-            <Line
-              type="monotone"
-              dataKey="projectedRate"
-              name={`Projected Borrow ${rateLabel}`}
-              stroke={chartColors.apyAtTarget.stroke}
-              strokeWidth={2}
-              strokeDasharray="6 4"
-              dot={false}
-              activeDot={{ r: 4 }}
-            />
           </LineChart>
         </ResponsiveContainer>
       </div>
