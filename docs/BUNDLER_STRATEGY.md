@@ -50,6 +50,32 @@ For Monarch, this implies:
 - Validate locally computed slippage and Morpho share-price bounds in addition to API-provided limits, and support the canonical post-expiry `redeemPyToToken` unwind path.
 - Build and validate the complete external call graph before asking for persistent token approvals or Morpho authorization.
 
+## How Pendle Routing Works
+
+The Pendle API supplies a proposed route, but it does not decide which contracts Monarch trusts.
+
+| Value | Source | Check before execution |
+|---|---|---|
+| Bundler3, GeneralAdapter1, ParaswapAdapter | Morpho's chain address registry | Must exactly match the canonical addresses for the selected chain |
+| Pendle Router (`0x888888888889758F76e7103c6CbF23ABbF58F946`) | Hardcoded canonical address | The API's `tx.to` must equal this address |
+| Pendle Limit Router (`0x000000000000c9B3E2C3Ec88B1B4c0cD853f4321`) | Hardcoded canonical address | Calldata may use either no limit router or this address |
+| Pendle market | Decoded from the API calldata | Its PT/SY/YT are read onchain; its factory must be allowlisted and must recognize the market |
+| PT, SY, YT, expiry, and yield factory | Read onchain starting from the collateral PT | The yield factory must be allowlisted and must recognize the PT/YT pair |
+| Supported SY input/output tokens | Read from `SY.getTokensIn()` and `SY.getTokensOut()` | The encoded Pendle input/output must be one of the verified tokens |
+| Amounts and swap calldata | Pendle `/v3/sdk/{chainId}/convert` API | Re-decode and verify receiver, tokens, exact input, minimum output, slippage, and limit orders |
+
+`enableAggregator` is disabled in the Pendle request. If the loan token is not the chosen SY token, Velora/ParaSwap only performs the loan-token ↔ SY-token leg. The canonical Pendle Router performs the SY-token ↔ PT leg.
+
+Leverage runs as:
+
+1. Transfer wallet funds to GeneralAdapter1.
+2. Optionally swap loan token to an accepted SY input through ParaswapAdapter.
+3. Transfer that SY input to Bundler3, approve the canonical Pendle Router, and buy PT.
+4. Supply the PT as Morpho collateral.
+5. Flash loan the debt leg and repeat conversion → supply → borrow inside the callback.
+
+Deleverage reverses the flow: flash loan → repay → withdraw PT → sell/redeem PT through Pendle → optionally swap the SY output to the loan token → repay the flash loan. After maturity, Pendle redemption replaces the market swap.
+
 ## Historical Approval Incident (April 2025)
 
 Morpho published a security notice on April 10, 2025 regarding approvals to Bundler3 contracts. The guidance was to revoke approvals to affected Bundler3 addresses on specific networks.
