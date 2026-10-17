@@ -1,8 +1,11 @@
+import Image, { type ImageProps } from 'next/image';
 import type { ReactNode } from 'react';
-import { HelpTooltipIcon } from '@/components/shared/help-tooltip-icon';
-import { TooltipContent } from '@/components/shared/tooltip-content';
+import { ArrowRightIcon } from '@radix-ui/react-icons';
+import { Tooltip } from '@/components/ui/tooltip';
 import { type ExecutableSwapQuote, isPendlePtLeveragePlan, isPendlePtSwapQuote } from '@/hooks/leverage/pendle';
 import type { LeverageRoute } from '@/hooks/leverage/types';
+import pendleLogo from '@/imgs/oracles/pendle.png';
+import veloraLogo from '@/imgs/providers/velora.svg';
 
 type RouteDisclosureProps = {
   action: 'leverage' | 'deleverage';
@@ -10,25 +13,26 @@ type RouteDisclosureProps = {
   route: LeverageRoute | null;
 };
 
-const row = (label: ReactNode, value: string): ReactNode => (
-  <div className="flex items-center justify-between gap-3">
-    <span className="text-secondary">{label}</span>
-    <span className="text-right">{value}</span>
-  </div>
-);
+type RouteProvider = 'pendle' | 'velora';
+
+const PROVIDERS: Record<RouteProvider, { detail: string; logo: ImageProps['src']; name: string }> = {
+  pendle: {
+    detail: 'Route calldata from Pendle API, verified against the canonical Pendle contracts.',
+    logo: pendleLogo,
+    name: 'Pendle',
+  },
+  velora: {
+    detail: 'Route data from Velora, executed through the canonical ParaSwap adapter.',
+    logo: veloraLogo,
+    name: 'Velora',
+  },
+};
 
 export function RouteDisclosure({ action, quote, route }: RouteDisclosureProps): ReactNode {
-  if (!route) return null;
+  if (!route || route.kind !== 'swap') return null;
 
-  let execution: string;
-  let source: string;
-  let detail: string;
-
-  if (route.kind === 'erc4626') {
-    execution = 'ERC-4626 vault';
-    source = 'Onchain preview';
-    detail = 'The vault conversion is previewed onchain before the transaction is built.';
-  } else if (route.conversion === 'pendle-pt') {
+  let providers: RouteProvider[];
+  if (route.conversion === 'pendle-pt') {
     if (!quote) return null;
     const legs = isPendlePtLeveragePlan(quote)
       ? [quote.initialCapital, quote.flash].filter((leg) => leg !== null)
@@ -38,35 +42,58 @@ export function RouteDisclosure({ action, quote, route }: RouteDisclosureProps):
     if (legs.length === 0) return null;
 
     const usesExternalSwap = legs.some((leg) => leg.externalSwap !== null);
-    execution = usesExternalSwap ? (action === 'leverage' ? 'ParaSwap → Pendle Router' : 'Pendle Router → ParaSwap') : 'Pendle Router';
-    source = usesExternalSwap ? 'Velora + Pendle API' : 'Pendle API';
-    detail =
-      'Pendle API supplies route calldata. Monarch verifies its router, market, tokens, receiver, amounts, and slippage before execution.';
+    providers = usesExternalSwap ? (action === 'leverage' ? ['velora', 'pendle'] : ['pendle', 'velora']) : ['pendle'];
   } else {
-    execution = 'ParaSwap';
-    source = 'Velora';
-    detail = 'Velora supplies the swap route. Monarch verifies its execution target, tokens, amounts, and slippage before execution.';
+    providers = ['velora'];
   }
 
   return (
-    <>
-      {row('Execution Route', execution)}
-      {row(
-        <span className="inline-flex items-center gap-0.5">
-          Route Data
-          <HelpTooltipIcon
-            content={
-              <TooltipContent
-                title="Route data"
-                detail={detail}
-              />
-            }
-            ariaLabel="Explain route data source"
-            className="h-auto w-auto"
-          />
-        </span>,
-        source,
-      )}
-    </>
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-secondary">Route</span>
+      <span
+        className="inline-flex items-center gap-1"
+        role="group"
+        aria-label={`Route: ${providers.map((provider) => PROVIDERS[provider].name).join(' to ')}`}
+      >
+        {providers.map((provider, index) => {
+          const item = PROVIDERS[provider];
+          return (
+            <span
+              key={provider}
+              className="contents"
+            >
+              {index > 0 && (
+                <ArrowRightIcon
+                  className="h-3 w-3 text-secondary"
+                  aria-hidden
+                />
+              )}
+              <Tooltip
+                content={
+                  <span className="block max-w-56 text-xs">
+                    <span className="font-medium">{item.name}</span>
+                    <span className="mt-1 block text-secondary">{item.detail}</span>
+                  </span>
+                }
+              >
+                <button
+                  type="button"
+                  aria-label={`${item.name} route provider`}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+                >
+                  <Image
+                    src={item.logo}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className={provider === 'pendle' ? 'rounded-full' : 'rounded-sm'}
+                  />
+                </button>
+              </Tooltip>
+            </span>
+          );
+        })}
+      </span>
+    </div>
   );
 }
