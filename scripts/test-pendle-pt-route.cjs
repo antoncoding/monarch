@@ -7,10 +7,22 @@ for (const extension of ['.jpeg', '.jpg', '.png', '.svg', '.webp']) {
 }
 require('tsx/cjs');
 
-const { decodeAbiParameters, decodeFunctionData, encodeFunctionData, getAddress, keccak256, zeroAddress } = require('viem');
+const {
+  decodeAbiParameters,
+  decodeFunctionData,
+  encodeFunctionData,
+  erc20Abi,
+  getAddress,
+  isAddressEqual,
+  keccak256,
+  maxUint256,
+  zeroAddress,
+} = require('viem');
 const { bundlerV3Abi } = require('../src/abis/bundlerV3.ts');
 const { morphoGeneralAdapterV1Abi } = require('../src/abis/morphoGeneralAdapterV1.ts');
+const { paraswapAdapterAbi } = require('../src/abis/paraswapAdapter.ts');
 const { pendleRouterAbi } = require('../src/abis/pendle.ts');
+const permit2Abi = require('../src/abis/permit2.ts').default;
 const { deleverageWithSwap } = require('../src/hooks/deleverage/deleverageWithSwap.ts');
 const { getDeleverageRepayBounds } = require('../src/hooks/deleverage/transaction-shared.ts');
 const { leverageWithSwap } = require('../src/hooks/leverage/leverageWithSwap.ts');
@@ -61,6 +73,14 @@ const BUNDLER_CALLS_ABI = [
   },
 ];
 const decodeCallback = (flashCall) => decodeAbiParameters(BUNDLER_CALLS_ABI, flashCall.args[2])[0];
+const decodeCall = (abi, call) => decodeFunctionData({ abi, data: call.data });
+const hasFunction = (abi, call, functionName) => {
+  try {
+    return decodeCall(abi, call).functionName === functionName;
+  } catch {
+    return false;
+  }
+};
 
 const metadata = {
   acceptedInputs: [UNDERLYING],
@@ -656,7 +676,7 @@ test('validates the full leverage route before creating approvals or Morpho auth
   assert.equal(authorized, false);
 });
 
-test('matches the reference external-DEX then Pendle transaction phases', async () => {
+test('composes the external swap and Pendle legs in the reference phase order', async () => {
   let transaction;
   const initialCapital = externalLeverageQuote();
   const flashQuote = externalLeverageQuote();
@@ -710,31 +730,69 @@ test('matches the reference external-DEX then Pendle transaction phases', async 
   }
 
   const outer = decodeFunctionData({ abi: bundlerV3Abi, data: transaction.data.slice(0, -4) }).args[0];
-  const outerSelectors = outer.map((entry) => entry.data.slice(0, 10));
-  const flashIndex = outerSelectors.indexOf('0xe2975912');
-  assert.deepEqual(outerSelectors.slice(0, flashIndex), [
-    '0x2b67b570',
-    '0x827fcfcc',
-    '0x3790767d',
-    '0x678215ac',
-    '0x3790767d',
-    '0x095ea7b3',
-    '0xc81f847a',
-    '0xca463673',
-  ]);
+  const flashIndex = outer.findIndex(
+    (entry) => isAddressEqual(entry.to, RECEIVER) && hasFunction(morphoGeneralAdapterV1Abi, entry, 'morphoFlashLoan'),
+  );
+  assert.notEqual(flashIndex, -1);
+  const beforeFlash = outer.slice(0, flashIndex);
+  const beforeFlashAbis = [
+    permit2Abi,
+    morphoGeneralAdapterV1Abi,
+    morphoGeneralAdapterV1Abi,
+    paraswapAdapterAbi,
+    morphoGeneralAdapterV1Abi,
+    erc20Abi,
+    pendleRouterAbi,
+    morphoGeneralAdapterV1Abi,
+  ];
   assert.deepEqual(
-    outer.slice(0, flashIndex).map((entry) => entry.to),
+    beforeFlash.map((entry, index) => decodeCall(beforeFlashAbis[index], entry).functionName),
+    ['permit', 'permit2TransferFrom', 'erc20Transfer', 'sell', 'erc20Transfer', 'approve', 'swapExactTokenForPt', 'morphoSupplyCollateral'],
+  );
+  assert.deepEqual(
+    beforeFlash.map((entry) => entry.to),
     [PERMIT2_ADDRESS, RECEIVER, RECEIVER, PARASWAP_ADAPTER, RECEIVER, UNDERLYING, PENDLE_ROUTER_ADDRESS, RECEIVER],
   );
+  assert.deepEqual(decodeCall(morphoGeneralAdapterV1Abi, beforeFlash[1]).args, [LOAN, RECEIVER, AMOUNT]);
+  assert.deepEqual(decodeCall(morphoGeneralAdapterV1Abi, beforeFlash[2]).args, [LOAN, PARASWAP_ADAPTER, AMOUNT]);
+  const initialExternalSwap = decodeCall(paraswapAdapterAbi, beforeFlash[3]);
+  assert.equal(initialExternalSwap.args[2], LOAN);
+  assert.equal(initialExternalSwap.args[3], UNDERLYING);
+  assert.equal(initialExternalSwap.args[6], RECEIVER);
+  const initialPendleSwap = decodeCall(pendleRouterAbi, beforeFlash[6]);
+  assert.equal(initialPendleSwap.args[0], RECEIVER);
+  assert.equal(initialPendleSwap.args[1], MARKET);
+  assert.equal(initialPendleSwap.args[4].netTokenIn, AMOUNT);
+  const initialSupply = decodeCall(morphoGeneralAdapterV1Abi, beforeFlash[7]);
+  assert.equal(initialSupply.args[1], maxUint256);
+  assert.equal(initialSupply.args[2], OTHER_RECEIVER);
 
   const flash = decodeFunctionData({ abi: morphoGeneralAdapterV1Abi, data: outer[flashIndex].data });
+  assert.equal(flash.functionName, 'morphoFlashLoan');
+  assert.equal(flash.args[0], LOAN);
+  assert.equal(flash.args[1], AMOUNT);
   const callback = decodeCallback(flash);
-  const callbackSelectors = callback.map((entry) => entry.data.slice(0, 10));
-  assert.deepEqual(callbackSelectors, ['0x3790767d', '0x678215ac', '0x3790767d', '0x095ea7b3', '0xc81f847a', '0xca463673', '0x62577ad0']);
+  const callbackAbis = [
+    morphoGeneralAdapterV1Abi,
+    paraswapAdapterAbi,
+    morphoGeneralAdapterV1Abi,
+    erc20Abi,
+    pendleRouterAbi,
+    morphoGeneralAdapterV1Abi,
+    morphoGeneralAdapterV1Abi,
+  ];
+  assert.deepEqual(
+    callback.map((entry, index) => decodeCall(callbackAbis[index], entry).functionName),
+    ['erc20Transfer', 'sell', 'erc20Transfer', 'approve', 'swapExactTokenForPt', 'morphoSupplyCollateral', 'morphoBorrow'],
+  );
   assert.deepEqual(
     callback.map((entry) => entry.to),
     [RECEIVER, PARASWAP_ADAPTER, RECEIVER, UNDERLYING, PENDLE_ROUTER_ADDRESS, RECEIVER, RECEIVER],
   );
+  const borrow = decodeCall(morphoGeneralAdapterV1Abi, callback[6]);
+  assert.equal(borrow.args[1], AMOUNT);
+  assert.ok(borrow.args[3] > 0n);
+  assert.equal(borrow.args[4], RECEIVER);
   assert.equal(outer[flashIndex].callbackHash, keccak256(flash.args[2]));
   assert.ok([...outer, ...callback].every((entry) => entry.value === 0n && entry.skipRevert === false));
 });
@@ -847,27 +905,45 @@ test('composes deleverage as repay then withdraw then Pendle conversion', async 
   });
 
   const outer = decodeFunctionData({ abi: bundlerV3Abi, data: transaction.data.slice(0, -4) }).args[0];
-  assert.equal(outer[0].data.slice(0, 10), '0xe2975912');
-  const flash = decodeFunctionData({ abi: morphoGeneralAdapterV1Abi, data: outer[0].data });
+  const flash = decodeCall(morphoGeneralAdapterV1Abi, outer[0]);
+  assert.equal(flash.functionName, 'morphoFlashLoan');
+  assert.equal(flash.args[0], LOAN);
+  assert.equal(flash.args[1], AMOUNT);
   const callback = decodeCallback(flash);
+  const callbackAbis = [morphoGeneralAdapterV1Abi, morphoGeneralAdapterV1Abi, morphoGeneralAdapterV1Abi, erc20Abi, pendleRouterAbi];
   assert.deepEqual(
-    callback.map((entry) => entry.data.slice(0, 10)),
-    ['0x4d5fcf68', '0x1af3bbc6', '0x3790767d', '0x095ea7b3', '0x594a88cc'],
+    callback.map((entry, index) => decodeCall(callbackAbis[index], entry).functionName),
+    ['morphoRepay', 'morphoWithdrawCollateral', 'erc20Transfer', 'approve', 'swapExactPtForToken'],
   );
   assert.deepEqual(
     callback.map((entry) => entry.to),
     [RECEIVER, RECEIVER, RECEIVER, PT, PENDLE_ROUTER_ADDRESS],
   );
+  const repay = decodeCall(morphoGeneralAdapterV1Abi, callback[0]);
+  assert.equal(repay.args[1], AMOUNT);
+  assert.ok(repay.args[3] > 0n);
+  assert.equal(repay.args[4], OTHER_RECEIVER);
+  const withdraw = decodeCall(morphoGeneralAdapterV1Abi, callback[1]);
+  assert.equal(withdraw.args[1], AMOUNT);
+  assert.equal(withdraw.args[2], RECEIVER);
+  const pendleSell = decodeCall(pendleRouterAbi, callback[4]);
+  assert.equal(pendleSell.args[0], RECEIVER);
+  assert.equal(pendleSell.args[1], MARKET);
+  assert.equal(pendleSell.args[2], AMOUNT);
   assert.equal(outer[0].callbackHash, keccak256(flash.args[2]));
   assert.ok([...outer, ...callback].every((entry) => entry.value === 0n && entry.skipRevert === false));
 });
 
-test('derives nonzero Morpho borrow and repay share-price bounds from live market totals', () => {
+test('derives conservative Morpho borrow and repay share-price bounds', () => {
   const totalBorrowAssets = 1_000_000_000n;
   const totalBorrowShares = 1_000_000_000_000_000_000n;
   const assets = 100_000_000n;
+  const nominalShares = (assets * totalBorrowShares) / totalBorrowAssets;
+  const nominalSharePriceE27 = (assets * 10n ** 27n) / nominalShares;
   const maxBorrowShares = getBorrowSharesSlippageAmount({ borrowAssets: assets, totalBorrowAssets, totalBorrowShares });
-  assert.ok(computeMinSharePriceE27(assets, maxBorrowShares) > 0n);
+  const minBorrowSharePriceE27 = computeMinSharePriceE27(assets, maxBorrowShares);
+  assert.ok(maxBorrowShares > nominalShares);
+  assert.ok(minBorrowSharePriceE27 > 0n && minBorrowSharePriceE27 < nominalSharePriceE27);
 
   const repayBounds = getDeleverageRepayBounds({
     flashLoanRepayAssets: assets,
@@ -876,6 +952,6 @@ test('derives nonzero Morpho borrow and repay share-price bounds from live marke
     totalBorrowShares,
     useRepayByShares: false,
   });
-  assert.ok(repayBounds.bundlerV2RepaySlippageAmount > 1n);
-  assert.ok(repayBounds.generalAdapterRepayMaxSharePriceE27 > 0n);
+  assert.ok(repayBounds.bundlerV2RepaySlippageAmount > 1n && repayBounds.bundlerV2RepaySlippageAmount < nominalShares);
+  assert.ok(repayBounds.generalAdapterRepayMaxSharePriceE27 > nominalSharePriceE27);
 });
