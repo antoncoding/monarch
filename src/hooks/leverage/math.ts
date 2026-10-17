@@ -428,6 +428,22 @@ export const getBorrowSharesSlippageAmount = ({
   return expectedShares + (expectedShares * ASSET_INPUT_SHARE_SLIPPAGE_BUFFER_BPS) / BPS_SCALE + 1n;
 };
 
+export const getRepaySharesSlippageFloor = ({
+  repayAssets,
+  totalBorrowAssets,
+  totalBorrowShares,
+}: {
+  repayAssets: bigint;
+  totalBorrowAssets: bigint;
+  totalBorrowShares: bigint;
+}): bigint => {
+  if (repayAssets <= 0n) return 0n;
+
+  const expectedShares = (repayAssets * (totalBorrowShares + MORPHO_VIRTUAL_SHARES)) / (totalBorrowAssets + MORPHO_VIRTUAL_ASSETS);
+  const bufferedShares = (expectedShares * (BPS_SCALE - ASSET_INPUT_SHARE_SLIPPAGE_BUFFER_BPS)) / BPS_SCALE;
+  return bufferedShares > 0n ? bufferedShares : 1n;
+};
+
 export const computeRepaySharesWithBuffer = ({
   repayAssets,
   totalBorrowAssets,

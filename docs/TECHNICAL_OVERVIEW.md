@@ -158,9 +158,10 @@ Custom `data.feeds` exposes input dependencies using the existing feed/vault slo
 | Path | Bundler | Notes |
 |------|---------|-------|
 | Multi-supply / direct supply / borrow / repay / rebalance | Bundler V2 | Current production path |
-| Leverage/deleverage (current deterministic ERC4626 route) | Bundler V2 | Existing route remains unchanged |
+| Leverage/deleverage (deterministic ERC4626 route) | Bundler V2 | Existing deterministic route remains unchanged |
+| Leverage/deleverage (generic swap and Pendle PT routes) | Bundler V3 | Velora executes generic swaps; PT routes optionally bridge through Velora before a separately validated Pendle Router call |
 | Generic swap-only modal | No bundler (Velora direct tx) | Quote + tx payload from Velora API |
-| Planned: `rebalanceWithSwap`, generalized `useLeverage` (any pair) | Bundler V3 | Planned migration path for swap-dependent actions |
+| Planned: `rebalanceWithSwap` | Bundler V3 | Planned migration path for remaining swap-dependent actions |
 
 ### Authorization Model
 

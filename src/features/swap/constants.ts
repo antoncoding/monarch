@@ -26,6 +26,7 @@ export const DEFAULT_SLIPPAGE_PERCENT = 0.5;
  */
 export const MIN_SLIPPAGE_PERCENT = 0.001;
 export const MAX_SLIPPAGE_PERCENT = 5;
+export const MAX_SLIPPAGE_BPS = MAX_SLIPPAGE_PERCENT * 100;
 
 export const clampSlippagePercent = (value: number): number => {
   return Math.min(MAX_SLIPPAGE_PERCENT, Math.max(MIN_SLIPPAGE_PERCENT, value));

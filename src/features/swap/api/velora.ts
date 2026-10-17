@@ -1,6 +1,6 @@
 import { isAddress, isHex, type Address } from 'viem';
 import { toCanonicalTokenAddress } from '@/types/token';
-import { SWAP_PARTNER, VELORA_API_BASE_URL, VELORA_PRICES_API_VERSION } from '../constants';
+import { MAX_SLIPPAGE_BPS, SWAP_PARTNER, VELORA_API_BASE_URL, VELORA_PRICES_API_VERSION } from '../constants';
 
 export type VeloraSwapSide = 'SELL' | 'BUY';
 
@@ -364,8 +364,8 @@ export const buildVeloraTransactionPayload = async ({
   if (srcAmount <= 0n) {
     throw new VeloraApiError('SELL transaction payload requires a source amount greater than zero', 400, { srcAmount });
   }
-  if (slippageBps <= 0) {
-    throw new VeloraApiError('SELL transaction payload requires positive slippage', 400, { slippageBps });
+  if (!Number.isFinite(slippageBps) || slippageBps <= 0 || slippageBps > MAX_SLIPPAGE_BPS) {
+    throw new VeloraApiError('SELL transaction payload requires valid bounded slippage', 400, { slippageBps });
   }
 
   const requestedSourceTokenAddress = toCanonicalTokenAddress(srcToken);
