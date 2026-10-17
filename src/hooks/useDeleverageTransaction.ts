@@ -2,11 +2,11 @@ import { useCallback, useMemo, useState } from 'react';
 import { type Address, isAddress } from 'viem';
 import { useConnection } from 'wagmi';
 import { resolveErc4626RouteBundler } from '@/config/leverage';
-import type { VeloraPriceRoute } from '@/features/swap/api/velora';
 import { deleverageWithErc4626Redeem } from '@/hooks/deleverage/deleverageWithErc4626Redeem';
 import { deleverageWithSwap } from '@/hooks/deleverage/deleverageWithSwap';
 import type { DeleverageStepType } from '@/hooks/deleverage/transaction-shared';
 import { buildMorphoMarketParams } from '@/hooks/leverage/transaction-shared';
+import type { ExecutableSwapQuote } from '@/hooks/leverage/pendle';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -30,7 +30,7 @@ type UseDeleverageTransactionProps = {
   repayBySharesAmount: bigint;
   route: LeverageRoute | null;
   slippageBps: number;
-  swapSellPriceRoute: VeloraPriceRoute | null;
+  swapSellPriceRoute: ExecutableSwapQuote | null;
   useCloseRoute: boolean;
   withdrawCollateralAmount: bigint;
 };
@@ -178,7 +178,7 @@ export function useDeleverageTransaction({
 
     if (route.kind === 'swap') {
       if (!swapSellPriceRoute) {
-        throw new Error('Missing Velora swap quote for deleverage.');
+        throw new Error('Missing executable swap quote for deleverage.');
       }
 
       await deleverageWithSwap({

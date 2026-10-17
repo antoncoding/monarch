@@ -1,8 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { Address } from 'viem';
-import type { VeloraPriceRoute } from '@/features/swap/api/velora';
 import { useConnection } from 'wagmi';
-import { getLeverageFee } from '@/config/fees';
+import { getRouteLeverageFee } from '@/hooks/leverage/fees';
 import { resolveErc4626RouteBundler } from '@/config/leverage';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
@@ -13,6 +12,7 @@ import { useTransactionTracking } from '@/hooks/useTransactionTracking';
 import { leverageWithErc4626Deposit } from '@/hooks/leverage/leverageWithErc4626Deposit';
 import { leverageWithSwap } from '@/hooks/leverage/leverageWithSwap';
 import { buildMorphoMarketParams, type LeverageStepType } from '@/hooks/leverage/transaction-shared';
+import type { ExecutableSwapQuote } from '@/hooks/leverage/pendle';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -36,7 +36,7 @@ type UseLeverageTransactionProps = {
   /** Total market collateral-token amount added before leverage fee. */
   totalCollateralTokenAmountAdded: bigint;
   collateralAssetPriceUsd: number | null;
-  swapPriceRoute: VeloraPriceRoute | null;
+  swapPriceRoute: ExecutableSwapQuote | null;
   slippageBps: number;
   useLoanAssetInput: boolean;
   onSuccess?: () => void;
@@ -47,7 +47,7 @@ type LeverageExecutionPreflight =
       account: Address;
       leverageFeeAmount: bigint;
       route: Extract<LeverageRoute, { kind: 'swap' }>;
-      swapPriceRoute: VeloraPriceRoute;
+      swapPriceRoute: ExecutableSwapQuote;
     }
   | {
       account: Address;
@@ -293,11 +293,16 @@ export function useLeverageTransaction({
       toast.info('Invalid leverage inputs', 'Set leverage inputs above zero before submitting.');
       return null;
     }
-    const leverageFeeAmount = getLeverageFee({
+    const leverageFeeAmount = getRouteLeverageFee({
       amount: totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
+      route,
     });
+    if (leverageFeeAmount == null) {
+      toast.info('Fee unavailable', 'Collateral USD price is required to apply the $10 Pendle leverage fee cap.');
+      return null;
+    }
     if (totalCollateralTokenAmountAdded - leverageFeeAmount <= 0n) {
       toast.info('Leverage unavailable', 'Net collateral after fee must be positive.');
       return null;
@@ -305,7 +310,7 @@ export function useLeverageTransaction({
 
     if (route.kind === 'swap') {
       if (!swapPriceRoute) {
-        toast.info('Quote unavailable', 'Missing swap quote for leverage. Refresh the preview and try again.');
+        toast.info('Quote unavailable', 'Missing executable swap quote for leverage. Refresh the preview and try again.');
         return null;
       }
 
@@ -347,7 +352,7 @@ export function useLeverageTransaction({
       if (execution.route.kind === 'swap') {
         const swapExecutionPriceRoute = execution.swapPriceRoute;
         if (!swapExecutionPriceRoute) {
-          throw new Error('Missing Velora swap quote for leverage.');
+          throw new Error('Missing executable swap quote for leverage.');
         }
 
         await leverageWithSwap({

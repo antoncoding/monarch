@@ -7,7 +7,7 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Tooltip } from '@/components/ui/tooltip';
-import { getLeverageFee } from '@/config/fees';
+import { getRouteLeverageFee, isPendlePtLeverageRoute } from '@/hooks/leverage/fees';
 import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineEditor';
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
@@ -45,6 +45,7 @@ import {
   getCollateralValueInLoan,
   LTV_WAD,
 } from '@/modals/borrow/components/helpers';
+import { RouteDisclosure } from './route-disclosure';
 
 type AdjustLeveragePositionProps = {
   market: Market;
@@ -153,6 +154,7 @@ export function AdjustLeveragePosition({
   const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const _isPendlePtRoute = isPendlePtLeverageRoute(route);
   const hasAddedCapital = addedCapitalAmount > 0n;
   const hasUserIntent = targetWasEdited || hasAddedCapital;
 
@@ -218,19 +220,20 @@ export function AdjustLeveragePosition({
     const priceUsd = totalCollateralAssetsUsd / totalCollateralToken;
     return Number.isFinite(priceUsd) && priceUsd > 0 ? priceUsd : null;
   }, [market.state.collateralAssets, market.state.collateralAssetsUsd, market.collateralAsset.decimals]);
-  const leverageTransferFee = useMemo<bigint>(() => {
-    return getLeverageFee({
+  const leverageTransferFee = useMemo(() => {
+    return getRouteLeverageFee({
       amount: leverageQuote.totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
+      route,
     });
-  }, [leverageQuote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals]);
+  }, [leverageQuote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals, route]);
   const netAddedCollateral = useMemo<bigint>(() => {
-    return leverageQuote.totalCollateralTokenAmountAdded - leverageTransferFee;
+    return leverageQuote.totalCollateralTokenAmountAdded - (leverageTransferFee ?? 0n);
   }, [leverageQuote.totalCollateralTokenAmountAdded, leverageTransferFee]);
   const isLeverageFeeReady = useMemo(
-    () => action === 'leverage' && leverageQuote.flashLoanAssetAmount > 0n && netAddedCollateral > 0n,
-    [action, leverageQuote.flashLoanAssetAmount, netAddedCollateral],
+    () => action === 'leverage' && leverageQuote.flashLoanAssetAmount > 0n && leverageTransferFee != null && netAddedCollateral > 0n,
+    [action, leverageQuote.flashLoanAssetAmount, leverageTransferFee, netAddedCollateral],
   );
   const leverageAddedCollateralAssets = isLeverageFeeReady ? netAddedCollateral : 0n;
   const leverageAddedBorrowAssets = isLeverageFeeReady ? leverageQuote.flashLoanAssetAmount : 0n;
@@ -364,9 +367,10 @@ export function AdjustLeveragePosition({
   const insufficientLiquidity = action === 'leverage' && leverageQuote.flashLoanAssetAmount > marketLiquidity;
   const leverageFeeReadinessError = useMemo(() => {
     if (action !== 'leverage' || leverageQuote.flashLoanAssetAmount <= 0n) return null;
+    if (leverageTransferFee == null) return 'Collateral USD price is required to apply the $10 fee cap.';
     if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
     return null;
-  }, [action, leverageQuote.flashLoanAssetAmount, netAddedCollateral]);
+  }, [action, leverageQuote.flashLoanAssetAmount, leverageTransferFee, netAddedCollateral]);
   const {
     transaction: leverageTransaction,
     isLoadingPermit2,
@@ -509,7 +513,7 @@ export function AdjustLeveragePosition({
   ]);
 
   const leverageFeePreview = useMemo(() => {
-    if (!isLeverageFeeReady) return null;
+    if (!isLeverageFeeReady || leverageTransferFee == null) return null;
     return formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals);
   }, [isLeverageFeeReady, leverageTransferFee, market.collateralAsset.decimals]);
   const flashBorrowPreview = useMemo(
@@ -532,13 +536,13 @@ export function AdjustLeveragePosition({
     () => formatTokenAmountPreview(deleverageProjection.flashLoanAmountForTx, market.loanAsset.decimals),
     [deleverageProjection.flashLoanAmountForTx, market.loanAsset.decimals],
   );
+  const routeQuote = action === 'leverage' ? leverageQuote.swapPriceRoute : deleverageQuote.swapSellPriceRoute;
   const swapRatePreviewText = useMemo(() => {
-    const priceRoute = action === 'leverage' ? leverageQuote.swapPriceRoute : deleverageQuote.swapSellPriceRoute;
-    if (!isSwapRoute || !priceRoute) return null;
+    if (!isSwapRoute || !routeQuote) return null;
 
     try {
-      const baseAmount = BigInt(action === 'leverage' ? priceRoute.destAmount : priceRoute.srcAmount);
-      const quoteAmount = BigInt(action === 'leverage' ? priceRoute.srcAmount : priceRoute.destAmount);
+      const baseAmount = BigInt(action === 'leverage' ? routeQuote.destAmount : routeQuote.srcAmount);
+      const quoteAmount = BigInt(action === 'leverage' ? routeQuote.srcAmount : routeQuote.destAmount);
       return formatSwapRatePreview({
         baseAmount,
         baseTokenDecimals: market.collateralAsset.decimals,
@@ -553,8 +557,7 @@ export function AdjustLeveragePosition({
   }, [
     action,
     isSwapRoute,
-    leverageQuote.swapPriceRoute,
-    deleverageQuote.swapSellPriceRoute,
+    routeQuote,
     market.collateralAsset.decimals,
     market.collateralAsset.symbol,
     market.loanAsset.decimals,
@@ -783,6 +786,13 @@ export function AdjustLeveragePosition({
                         />
                       </PreviewRow>
                     </>
+                  )}
+                  {(action === 'leverage' || action === 'deleverage') && (
+                    <RouteDisclosure
+                      action={action}
+                      quote={routeQuote}
+                      route={route}
+                    />
                   )}
                   {swapRatePreviewText != null && (
                     <PreviewRow label="Swap Quote">

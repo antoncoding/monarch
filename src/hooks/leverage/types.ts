@@ -8,6 +8,7 @@ export type Erc4626LeverageRoute = {
 
 export type SwapLeverageRoute = {
   kind: 'swap';
+  conversion: 'generic' | 'pendle-pt';
   bundler3Address: Address;
   generalAdapterAddress: Address;
   paraswapAdapterAddress: Address;

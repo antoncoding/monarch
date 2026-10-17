@@ -36,13 +36,14 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineEditor';
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
-import { getLeverageFee } from '@/config/fees';
+import { getRouteLeverageFee, getRouteLeverageFeeCeilingUsd, isPendlePtLeverageRoute } from '@/hooks/leverage/fees';
 import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { formatBalance } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
 import { convertAprToApy, toApyFromDisplayRate, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
+import { RouteDisclosure } from './route-disclosure';
 
 type AddCollateralAndLeverageProps = {
   market: Market;
@@ -100,6 +101,7 @@ export function AddCollateralAndLeverage({
   const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const isPendlePtRoute = isPendlePtLeverageRoute(route);
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
 
   const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
@@ -172,22 +174,28 @@ export function AddCollateralAndLeverage({
     const priceUsd = totalCollateralAssetsUsd / totalCollateralToken;
     return Number.isFinite(priceUsd) && priceUsd > 0 ? priceUsd : null;
   }, [market.state.collateralAssets, market.state.collateralAssetsUsd, market.collateralAsset.decimals]);
-  const leverageTransferFee = useMemo<bigint>(() => {
-    return getLeverageFee({
+  const leverageTransferFee = useMemo(() => {
+    return getRouteLeverageFee({
       amount: quote.totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
+      route,
     });
-  }, [quote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals]);
+  }, [quote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals, route]);
+  const leverageFeeCeilingUsd = getRouteLeverageFeeCeilingUsd(route);
   const netAddedCollateral = useMemo<bigint>(() => {
-    return quote.totalCollateralTokenAmountAdded - leverageTransferFee;
+    return quote.totalCollateralTokenAmountAdded - (leverageTransferFee ?? 0n);
   }, [quote.totalCollateralTokenAmountAdded, leverageTransferFee]);
-  const isLeverageFeeReady = useMemo(() => hasQuoteChanges && netAddedCollateral > 0n, [hasQuoteChanges, netAddedCollateral]);
+  const isLeverageFeeReady = useMemo(
+    () => hasQuoteChanges && leverageTransferFee != null && netAddedCollateral > 0n,
+    [hasQuoteChanges, leverageTransferFee, netAddedCollateral],
+  );
   const leverageFeeReadinessError = useMemo(() => {
     if (!hasQuoteChanges) return null;
+    if (leverageTransferFee == null) return 'Collateral USD price is required to apply the $10 fee cap.';
     if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
     return null;
-  }, [hasQuoteChanges, netAddedCollateral]);
+  }, [hasQuoteChanges, leverageTransferFee, netAddedCollateral]);
   const addedCollateralAssets = useMemo(() => (isLeverageFeeReady ? netAddedCollateral : 0n), [isLeverageFeeReady, netAddedCollateral]);
   const addedBorrowAssets = useMemo(
     () => (isLeverageFeeReady ? quote.flashLoanAssetAmount : 0n),
@@ -324,11 +332,11 @@ export function AddCollateralAndLeverage({
     [quote.totalCollateralTokenAmountAdded, market.collateralAsset.decimals],
   );
   const leverageFeePreview = useMemo(() => {
-    if (!isLeverageFeeReady) return null;
+    if (!isLeverageFeeReady || leverageTransferFee == null) return null;
     return formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals);
   }, [isLeverageFeeReady, leverageTransferFee, market.collateralAsset.decimals]);
   const leverageFeeUsdValue = useMemo(() => {
-    if (!isLeverageFeeReady || collateralAssetPriceUsd == null) return null;
+    if (!isLeverageFeeReady || leverageTransferFee == null || collateralAssetPriceUsd == null) return null;
     return computeAssetUsdValue(leverageTransferFee, market.collateralAsset.decimals, collateralAssetPriceUsd);
   }, [isLeverageFeeReady, leverageTransferFee, collateralAssetPriceUsd, market.collateralAsset.decimals]);
   const leverageFeeUsdDisplay = useMemo(
@@ -744,7 +752,11 @@ export function AddCollateralAndLeverage({
                         content={
                           <SharedTooltipContent
                             title="Fee policy"
-                            detail="0.0075% of added collateral, capped at $5 per transaction."
+                            detail={
+                              isPendlePtRoute
+                                ? '0.0075% of added collateral, capped at $10. A valid collateral USD price is required.'
+                                : `0.0075% of added collateral. The $${leverageFeeCeilingUsd} cap applies when a valid collateral USD price is available.`
+                            }
                           />
                         }
                         ariaLabel="Explain leverage fee policy"
@@ -781,6 +793,11 @@ export function AddCollateralAndLeverage({
                     </span>
                   </div>
                 )}
+                <RouteDisclosure
+                  action="leverage"
+                  quote={quote.swapPriceRoute}
+                  route={route}
+                />
                 {shouldShowSwapPreviewDetails && (
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-secondary">Swap Quote</span>

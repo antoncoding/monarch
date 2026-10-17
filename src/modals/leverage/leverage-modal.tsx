@@ -111,6 +111,7 @@ export function LeverageModal({
     useLeverageRouteAvailability({
       chainId: market.morphoBlue.chain.id,
       collateralTokenAddress: market.collateralAsset.address,
+      collateralTokenSymbol: market.collateralAsset.symbol,
       loanTokenAddress: market.loanAsset.address,
     });
 
