@@ -293,6 +293,10 @@ export function useLeverageTransaction({
       toast.info('Invalid leverage inputs', 'Set leverage inputs above zero before submitting.');
       return null;
     }
+    if (route.kind === 'swap' && route.conversion === 'pendle-pt' && collateralAssetPriceUsd == null) {
+      toast.info('Fee unavailable', 'Collateral USD price is required to apply the $10 Pendle leverage fee cap.');
+      return null;
+    }
     const leverageFeeAmount = getLeverageFee({
       amount: totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,

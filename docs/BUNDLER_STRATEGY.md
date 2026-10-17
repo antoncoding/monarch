@@ -76,7 +76,7 @@ Leverage runs as:
 
 Deleverage reverses the flow: flash loan → repay → withdraw PT → sell/redeem PT through Pendle → optionally swap the SY output to the loan token → repay the flash loan. After maturity, Pendle redemption replaces the market swap.
 
-Pendle leverage charges 0.0075% of added collateral, capped at $10 when a valid collateral USD price is available. Pendle deleverage has no Monarch fee.
+Pendle leverage charges 0.0075% of added collateral, capped at $10. A valid collateral USD price is required so the cap can always be enforced. Pendle deleverage has no Monarch fee.
 
 ## Historical Approval Incident (April 2025)
 

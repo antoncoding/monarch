@@ -186,12 +186,16 @@ export function AddCollateralAndLeverage({
   const netAddedCollateral = useMemo<bigint>(() => {
     return quote.totalCollateralTokenAmountAdded - leverageTransferFee;
   }, [quote.totalCollateralTokenAmountAdded, leverageTransferFee]);
-  const isLeverageFeeReady = useMemo(() => hasQuoteChanges && netAddedCollateral > 0n, [hasQuoteChanges, netAddedCollateral]);
+  const isLeverageFeeReady = useMemo(
+    () => hasQuoteChanges && (!isPendlePtRoute || collateralAssetPriceUsd != null) && netAddedCollateral > 0n,
+    [hasQuoteChanges, isPendlePtRoute, collateralAssetPriceUsd, netAddedCollateral],
+  );
   const leverageFeeReadinessError = useMemo(() => {
     if (!hasQuoteChanges) return null;
+    if (isPendlePtRoute && collateralAssetPriceUsd == null) return 'Collateral USD price is required to apply the $10 fee cap.';
     if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
     return null;
-  }, [hasQuoteChanges, netAddedCollateral]);
+  }, [hasQuoteChanges, isPendlePtRoute, collateralAssetPriceUsd, netAddedCollateral]);
   const addedCollateralAssets = useMemo(() => (isLeverageFeeReady ? netAddedCollateral : 0n), [isLeverageFeeReady, netAddedCollateral]);
   const addedBorrowAssets = useMemo(
     () => (isLeverageFeeReady ? quote.flashLoanAssetAmount : 0n),
@@ -748,7 +752,11 @@ export function AddCollateralAndLeverage({
                         content={
                           <SharedTooltipContent
                             title="Fee policy"
-                            detail={`0.0075% of added collateral. The $${leverageFeeCeilingUsd} cap applies when a valid collateral USD price is available.`}
+                            detail={
+                              isPendlePtRoute
+                                ? '0.0075% of added collateral, capped at $10. A valid collateral USD price is required.'
+                                : `0.0075% of added collateral. The $${leverageFeeCeilingUsd} cap applies when a valid collateral USD price is available.`
+                            }
                           />
                         }
                         ariaLabel="Explain leverage fee policy"

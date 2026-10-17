@@ -232,8 +232,12 @@ export function AdjustLeveragePosition({
     return leverageQuote.totalCollateralTokenAmountAdded - leverageTransferFee;
   }, [leverageQuote.totalCollateralTokenAmountAdded, leverageTransferFee]);
   const isLeverageFeeReady = useMemo(
-    () => action === 'leverage' && leverageQuote.flashLoanAssetAmount > 0n && netAddedCollateral > 0n,
-    [action, leverageQuote.flashLoanAssetAmount, netAddedCollateral],
+    () =>
+      action === 'leverage' &&
+      leverageQuote.flashLoanAssetAmount > 0n &&
+      (!isPendlePtRoute || collateralAssetPriceUsd != null) &&
+      netAddedCollateral > 0n,
+    [action, leverageQuote.flashLoanAssetAmount, isPendlePtRoute, collateralAssetPriceUsd, netAddedCollateral],
   );
   const leverageAddedCollateralAssets = isLeverageFeeReady ? netAddedCollateral : 0n;
   const leverageAddedBorrowAssets = isLeverageFeeReady ? leverageQuote.flashLoanAssetAmount : 0n;
@@ -367,9 +371,10 @@ export function AdjustLeveragePosition({
   const insufficientLiquidity = action === 'leverage' && leverageQuote.flashLoanAssetAmount > marketLiquidity;
   const leverageFeeReadinessError = useMemo(() => {
     if (action !== 'leverage' || leverageQuote.flashLoanAssetAmount <= 0n) return null;
+    if (isPendlePtRoute && collateralAssetPriceUsd == null) return 'Collateral USD price is required to apply the $10 fee cap.';
     if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
     return null;
-  }, [action, leverageQuote.flashLoanAssetAmount, netAddedCollateral]);
+  }, [action, leverageQuote.flashLoanAssetAmount, isPendlePtRoute, collateralAssetPriceUsd, netAddedCollateral]);
   const {
     transaction: leverageTransaction,
     isLoadingPermit2,
