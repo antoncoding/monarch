@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import { getLeverageFee } from '@/config/fees';
+import { getRouteLeverageFee } from '@/hooks/leverage/fees';
 import { resolveErc4626RouteBundler } from '@/config/leverage';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useBundlerAuthorizationStep } from '@/hooks/useBundlerAuthorizationStep';
@@ -293,16 +293,16 @@ export function useLeverageTransaction({
       toast.info('Invalid leverage inputs', 'Set leverage inputs above zero before submitting.');
       return null;
     }
-    if (route.kind === 'swap' && route.conversion === 'pendle-pt' && collateralAssetPriceUsd == null) {
-      toast.info('Fee unavailable', 'Collateral USD price is required to apply the $10 Pendle leverage fee cap.');
-      return null;
-    }
-    const leverageFeeAmount = getLeverageFee({
+    const leverageFeeAmount = getRouteLeverageFee({
       amount: totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
-      isPendlePt: route.kind === 'swap' && route.conversion === 'pendle-pt',
+      route,
     });
+    if (leverageFeeAmount == null) {
+      toast.info('Fee unavailable', 'Collateral USD price is required to apply the $10 Pendle leverage fee cap.');
+      return null;
+    }
     if (totalCollateralTokenAmountAdded - leverageFeeAmount <= 0n) {
       toast.info('Leverage unavailable', 'Net collateral after fee must be positive.');
       return null;

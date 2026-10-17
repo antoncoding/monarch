@@ -31,7 +31,7 @@ const { getPendleSweepTokens } = require('../src/hooks/leverage/pendle-bundler.t
 const { computeMinSharePriceE27 } = require('../src/hooks/leverage/velora-precheck.ts');
 const { parsePendleConvertResponse, quotePendlePtDeleverage, quotePendlePtLeverage } = require('../src/hooks/leverage/pendle.ts');
 const { PERMIT2_ADDRESS } = require('../src/utils/permit2.ts');
-const { getLeverageFee } = require('../src/config/fees.ts');
+const { getRouteLeverageFee } = require('../src/hooks/leverage/fees.ts');
 const {
   isTrustedPendleMarketFactory,
   isTrustedPendleYieldContractFactory,
@@ -79,6 +79,22 @@ const hasFunction = (abi, call, functionName) => {
     return decodeCall(abi, call).functionName === functionName;
   } catch {
     return false;
+  }
+};
+const assertSweepCalls = (calls, tokens, recipient) => {
+  assert.equal(calls.length, tokens.length * 2);
+  const adapters = [
+    { abi: morphoGeneralAdapterV1Abi, address: RECEIVER },
+    { abi: paraswapAdapterAbi, address: PARASWAP_ADAPTER },
+  ];
+  for (const [adapterIndex, adapter] of adapters.entries()) {
+    for (const [tokenIndex, token] of tokens.entries()) {
+      const call = calls[adapterIndex * tokens.length + tokenIndex];
+      assert.equal(call.to, adapter.address);
+      const decoded = decodeCall(adapter.abi, call);
+      assert.equal(decoded.functionName, 'erc20Transfer');
+      assert.deepEqual(decoded.args, [token, recipient, maxUint256]);
+    }
   }
 };
 
@@ -152,8 +168,9 @@ test('parses only well-formed Pendle API routes for the requested output', () =>
 
 test('caps Pendle leverage fees at $10 without changing the default $5 cap', () => {
   const params = { amount: 1_000_000_000_000n, assetDecimals: 6, assetPriceUsd: 1 };
-  assert.equal(getLeverageFee(params), 5_000_000n);
-  assert.equal(getLeverageFee({ ...params, isPendlePt: true }), 10_000_000n);
+  assert.equal(getRouteLeverageFee({ ...params, route: { ...route, conversion: 'generic' } }), 5_000_000n);
+  assert.equal(getRouteLeverageFee({ ...params, route }), 10_000_000n);
+  assert.equal(getRouteLeverageFee({ ...params, assetPriceUsd: null, route }), null);
 });
 
 test('falls back to direct SY routes only for supported loan tokens', async () => {
@@ -795,6 +812,7 @@ test('composes the external swap and Pendle legs in the reference phase order', 
   assert.equal(borrow.args[4], RECEIVER);
   assert.equal(outer[flashIndex].callbackHash, keccak256(flash.args[2]));
   assert.ok([...outer, ...callback].every((entry) => entry.value === 0n && entry.skipRevert === false));
+  assertSweepCalls(outer.slice(flashIndex + 1), [LOAN, PT, UNDERLYING, SY, YT], OTHER_RECEIVER);
 });
 
 test('accepts wallet PT plus a separately quoted flash conversion', async () => {
@@ -932,6 +950,7 @@ test('composes deleverage as repay then withdraw then Pendle conversion', async 
   assert.equal(pendleSell.args[2], AMOUNT);
   assert.equal(outer[0].callbackHash, keccak256(flash.args[2]));
   assert.ok([...outer, ...callback].every((entry) => entry.value === 0n && entry.skipRevert === false));
+  assertSweepCalls(outer.slice(1), [LOAN, PT, SY, YT], OTHER_RECEIVER);
 });
 
 test('derives conservative Morpho borrow and repay share-price bounds', () => {
