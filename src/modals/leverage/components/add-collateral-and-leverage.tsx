@@ -43,6 +43,7 @@ import { previewMarketState } from '@/utils/morpho';
 import { convertAprToApy, toApyFromDisplayRate, toDisplayRateFromApy } from '@/utils/rateMath';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
+import { RouteDisclosure } from './route-disclosure';
 
 type AddCollateralAndLeverageProps = {
   market: Market;
@@ -744,7 +745,7 @@ export function AddCollateralAndLeverage({
                         content={
                           <SharedTooltipContent
                             title="Fee policy"
-                            detail="0.0075% of added collateral, capped at $5 per transaction."
+                            detail="0.0075% of added collateral. The $5 cap applies when a valid collateral USD price is available."
                           />
                         }
                         ariaLabel="Explain leverage fee policy"
@@ -781,6 +782,11 @@ export function AddCollateralAndLeverage({
                     </span>
                   </div>
                 )}
+                <RouteDisclosure
+                  action="leverage"
+                  quote={quote.swapPriceRoute}
+                  route={route}
+                />
                 {shouldShowSwapPreviewDetails && (
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-secondary">Swap Quote</span>

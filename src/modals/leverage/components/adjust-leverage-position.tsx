@@ -45,6 +45,7 @@ import {
   getCollateralValueInLoan,
   LTV_WAD,
 } from '@/modals/borrow/components/helpers';
+import { RouteDisclosure } from './route-disclosure';
 
 type AdjustLeveragePositionProps = {
   market: Market;
@@ -532,13 +533,13 @@ export function AdjustLeveragePosition({
     () => formatTokenAmountPreview(deleverageProjection.flashLoanAmountForTx, market.loanAsset.decimals),
     [deleverageProjection.flashLoanAmountForTx, market.loanAsset.decimals],
   );
+  const routeQuote = action === 'leverage' ? leverageQuote.swapPriceRoute : deleverageQuote.swapSellPriceRoute;
   const swapRatePreviewText = useMemo(() => {
-    const priceRoute = action === 'leverage' ? leverageQuote.swapPriceRoute : deleverageQuote.swapSellPriceRoute;
-    if (!isSwapRoute || !priceRoute) return null;
+    if (!isSwapRoute || !routeQuote) return null;
 
     try {
-      const baseAmount = BigInt(action === 'leverage' ? priceRoute.destAmount : priceRoute.srcAmount);
-      const quoteAmount = BigInt(action === 'leverage' ? priceRoute.srcAmount : priceRoute.destAmount);
+      const baseAmount = BigInt(action === 'leverage' ? routeQuote.destAmount : routeQuote.srcAmount);
+      const quoteAmount = BigInt(action === 'leverage' ? routeQuote.srcAmount : routeQuote.destAmount);
       return formatSwapRatePreview({
         baseAmount,
         baseTokenDecimals: market.collateralAsset.decimals,
@@ -553,8 +554,7 @@ export function AdjustLeveragePosition({
   }, [
     action,
     isSwapRoute,
-    leverageQuote.swapPriceRoute,
-    deleverageQuote.swapSellPriceRoute,
+    routeQuote,
     market.collateralAsset.decimals,
     market.collateralAsset.symbol,
     market.loanAsset.decimals,
@@ -783,6 +783,13 @@ export function AdjustLeveragePosition({
                         />
                       </PreviewRow>
                     </>
+                  )}
+                  {(action === 'leverage' || action === 'deleverage') && (
+                    <RouteDisclosure
+                      action={action}
+                      quote={routeQuote}
+                      route={route}
+                    />
                   )}
                   {swapRatePreviewText != null && (
                     <PreviewRow label="Swap Quote">
