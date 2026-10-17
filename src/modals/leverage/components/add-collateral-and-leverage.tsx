@@ -36,7 +36,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineEditor';
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
-import { getLeverageFee } from '@/config/fees';
+import { getLeverageFee, getLeverageFeeCeilingUsd } from '@/config/fees';
 import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { formatBalance } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
@@ -101,6 +101,7 @@ export function AddCollateralAndLeverage({
   const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const isPendlePtRoute = route?.kind === 'swap' && route.conversion === 'pendle-pt';
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
 
   const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
@@ -178,8 +179,10 @@ export function AddCollateralAndLeverage({
       amount: quote.totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
+      isPendlePt: isPendlePtRoute,
     });
-  }, [quote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals]);
+  }, [quote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals, isPendlePtRoute]);
+  const leverageFeeCeilingUsd = getLeverageFeeCeilingUsd(isPendlePtRoute);
   const netAddedCollateral = useMemo<bigint>(() => {
     return quote.totalCollateralTokenAmountAdded - leverageTransferFee;
   }, [quote.totalCollateralTokenAmountAdded, leverageTransferFee]);
@@ -745,7 +748,7 @@ export function AddCollateralAndLeverage({
                         content={
                           <SharedTooltipContent
                             title="Fee policy"
-                            detail="0.0075% of added collateral. The $5 cap applies when a valid collateral USD price is available."
+                            detail={`0.0075% of added collateral. The $${leverageFeeCeilingUsd} cap applies when a valid collateral USD price is available.`}
                           />
                         }
                         ariaLabel="Explain leverage fee policy"

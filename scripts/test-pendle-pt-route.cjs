@@ -19,6 +19,7 @@ const { getPendleSweepTokens } = require('../src/hooks/leverage/pendle-bundler.t
 const { computeMinSharePriceE27 } = require('../src/hooks/leverage/velora-precheck.ts');
 const { parsePendleConvertResponse, quotePendlePtDeleverage, quotePendlePtLeverage } = require('../src/hooks/leverage/pendle.ts');
 const { PERMIT2_ADDRESS } = require('../src/utils/permit2.ts');
+const { getLeverageFee } = require('../src/config/fees.ts');
 const {
   isTrustedPendleMarketFactory,
   isTrustedPendleYieldContractFactory,
@@ -127,6 +128,12 @@ test('parses only well-formed Pendle API routes for the requested output', () =>
       ),
     /malformed/,
   );
+});
+
+test('caps Pendle leverage fees at $10 without changing the default $5 cap', () => {
+  const params = { amount: 1_000_000_000_000n, assetDecimals: 6, assetPriceUsd: 1 };
+  assert.equal(getLeverageFee(params), 5_000_000n);
+  assert.equal(getLeverageFee({ ...params, isPendlePt: true }), 10_000_000n);
 });
 
 test('falls back to direct SY routes only for supported loan tokens', async () => {

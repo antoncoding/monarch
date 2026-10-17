@@ -297,6 +297,7 @@ export function useLeverageTransaction({
       amount: totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
+      isPendlePt: route.kind === 'swap' && route.conversion === 'pendle-pt',
     });
     if (totalCollateralTokenAmountAdded - leverageFeeAmount <= 0n) {
       toast.info('Leverage unavailable', 'Net collateral after fee must be positive.');

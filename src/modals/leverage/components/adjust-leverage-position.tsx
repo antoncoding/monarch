@@ -154,6 +154,7 @@ export function AdjustLeveragePosition({
   const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const isPendlePtRoute = route?.kind === 'swap' && route.conversion === 'pendle-pt';
   const hasAddedCapital = addedCapitalAmount > 0n;
   const hasUserIntent = targetWasEdited || hasAddedCapital;
 
@@ -224,8 +225,9 @@ export function AdjustLeveragePosition({
       amount: leverageQuote.totalCollateralTokenAmountAdded,
       assetPriceUsd: collateralAssetPriceUsd,
       assetDecimals: market.collateralAsset.decimals,
+      isPendlePt: isPendlePtRoute,
     });
-  }, [leverageQuote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals]);
+  }, [leverageQuote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals, isPendlePtRoute]);
   const netAddedCollateral = useMemo<bigint>(() => {
     return leverageQuote.totalCollateralTokenAmountAdded - leverageTransferFee;
   }, [leverageQuote.totalCollateralTokenAmountAdded, leverageTransferFee]);

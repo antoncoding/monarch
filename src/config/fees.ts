@@ -5,6 +5,7 @@ const REBALANCE_FEE_RATE_PPM = 30n; // 0.3 bps = 0.003%
 const LEVERAGE_FEE_RATE_PPM = 75n; // 0.75 bps = 0.0075%
 export const REBALANCE_FEE_CEILING_USD = 5;
 export const LEVERAGE_FEE_CEILING_USD = 5;
+export const PENDLE_LEVERAGE_FEE_CEILING_USD = 10;
 
 type FeeParams = {
   amount: bigint;
@@ -19,6 +20,10 @@ type FlowFeeParams = {
   assetPriceUsd?: number | null;
   assetDecimals?: number;
   applyCeiling?: boolean;
+};
+
+type LeverageFeeParams = FlowFeeParams & {
+  isPendlePt?: boolean;
 };
 
 function computeUsdCeilingInAssetUnits(ceilingUsd: number, assetPriceUsd: number, assetDecimals: number): bigint | null {
@@ -58,11 +63,20 @@ export function getRebalanceFee({ amount, assetPriceUsd, assetDecimals, applyCei
   });
 }
 
-export function getLeverageFee({ amount, assetPriceUsd, assetDecimals, applyCeiling = true }: FlowFeeParams): bigint {
+export const getLeverageFeeCeilingUsd = (isPendlePt = false): number =>
+  isPendlePt ? PENDLE_LEVERAGE_FEE_CEILING_USD : LEVERAGE_FEE_CEILING_USD;
+
+export function getLeverageFee({
+  amount,
+  assetPriceUsd,
+  assetDecimals,
+  applyCeiling = true,
+  isPendlePt = false,
+}: LeverageFeeParams): bigint {
   return getFee({
     amount,
     ratePpm: LEVERAGE_FEE_RATE_PPM,
-    ceilingUsd: applyCeiling ? LEVERAGE_FEE_CEILING_USD : null,
+    ceilingUsd: applyCeiling ? getLeverageFeeCeilingUsd(isPendlePt) : null,
     assetPriceUsd,
     assetDecimals,
   });

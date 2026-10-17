@@ -76,6 +76,8 @@ Leverage runs as:
 
 Deleverage reverses the flow: flash loan → repay → withdraw PT → sell/redeem PT through Pendle → optionally swap the SY output to the loan token → repay the flash loan. After maturity, Pendle redemption replaces the market swap.
 
+Pendle leverage charges 0.0075% of added collateral, capped at $10 when a valid collateral USD price is available. Pendle deleverage has no Monarch fee.
+
 ## Historical Approval Incident (April 2025)
 
 Morpho published a security notice on April 10, 2025 regarding approvals to Bundler3 contracts. The guidance was to revoke approvals to affected Bundler3 addresses on specific networks.
