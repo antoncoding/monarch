@@ -80,6 +80,8 @@ export const deleverageWithErc4626Redeem = async ({
   const { bundlerV2RepaySlippageAmount } = getDeleverageRepayBounds({
     flashLoanRepayAssets: flashLoanAmount,
     repayBySharesAmount,
+    totalBorrowAssets: BigInt(market.state.borrowAssets),
+    totalBorrowShares: BigInt(market.state.borrowShares),
     useRepayByShares: useCloseRoute,
   });
 

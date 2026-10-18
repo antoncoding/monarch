@@ -39,3 +39,8 @@ export const computeMaxSharePriceE27 = (maxAssets: bigint, shares: bigint): bigi
   if (maxAssets <= 0n || shares <= 0n) return 0n;
   return (maxAssets * SHARE_PRICE_SCALE_E27 + shares - 1n) / shares;
 };
+
+export const computeMinSharePriceE27 = (minAssets: bigint, maxShares: bigint): bigint => {
+  if (minAssets <= 0n || maxShares <= 0n) return 0n;
+  return (minAssets * SHARE_PRICE_SCALE_E27) / maxShares;
+};

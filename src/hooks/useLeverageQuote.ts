@@ -1,12 +1,20 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useReadContract } from 'wagmi';
+import { type Address } from 'viem';
+import { usePublicClient, useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
 import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
 import { BPS_SCALE, computeFlashCollateralAmount, computeLeveragedExtraAmount, withSlippageFloor } from './leverage/math';
 import { LEVERAGE_SWAP_EXCLUDED_DEXS, LEVERAGE_SWAP_ROUTE_POLICY_KEY } from './leverage/swap-route-policy';
 import { toUserFacingVeloraQuoteError } from './leverage/velora-quote-errors';
 import type { LeverageRoute } from './leverage/types';
+import {
+  createPendlePtLeveragePlan,
+  type ExecutableSwapQuote,
+  isPendlePtLeveragePlan,
+  quotePendlePtForMinimumOutput,
+  quotePendlePtLeverage,
+} from './leverage/pendle';
 
 const SELL_QUOTE_TARGET_BUFFER_BPS = 10_020n;
 const SELL_QUOTE_MAX_ATTEMPTS = 4;
@@ -58,7 +66,7 @@ export type LeverageQuote = {
   totalCollateralTokenAmountAdded: bigint;
   isLoading: boolean;
   error: string | null;
-  swapPriceRoute: VeloraPriceRoute | null;
+  swapPriceRoute: ExecutableSwapQuote | null;
 };
 
 /**
@@ -266,6 +274,7 @@ export function useLeverageQuote({
   collateralTokenDecimals,
   userAddress,
 }: UseLeverageQuoteParams): LeverageQuote {
+  const publicClient = usePublicClient({ chainId });
   const isPositionDebtInput = positionDebtInputAmount !== undefined;
   const safePositionDebtInputAmount = positionDebtInputAmount ?? 0n;
   const isLoanAssetInput = inputMode === 'loan';
@@ -281,6 +290,7 @@ export function useLeverageQuote({
       ? initialCapitalInputAmount + exactLoanInputFlashLoanAssetAmount
       : 0n;
   const isSwapExactLoanInput = route?.kind === 'swap' && (isPositionDebtInput || isLoanAssetInput);
+  const isPendlePtRoute = route?.kind === 'swap' && route.conversion === 'pendle-pt';
   const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
   const erc4626PreviewDepositAmount = isPositionDebtInput ? safePositionDebtInputAmount : isLoanAssetInput ? initialCapitalInputAmount : 0n;
 
@@ -345,6 +355,7 @@ export function useLeverageQuote({
       chainId,
       route?.kind === 'swap' ? route.paraswapAdapterAddress : null,
       route?.kind === 'swap' ? route.generalAdapterAddress : null,
+      route?.kind === 'swap' ? route.conversion : null,
       loanTokenAddress,
       loanTokenDecimals,
       collateralTokenAddress,
@@ -356,8 +367,29 @@ export function useLeverageQuote({
       userAddress ?? null,
     ],
     enabled: route?.kind === 'swap' && !isLoanAssetInput && targetFlashCollateralTokenAmount > 0n && !!userAddress,
-    queryFn: async () =>
-      quoteVeloraCollateralInputRoute({
+    queryFn: async ({ signal }) => {
+      if (isPendlePtRoute) {
+        if (!publicClient) throw new Error('Chain client is unavailable for Pendle route discovery.');
+        const flashQuote = await quotePendlePtForMinimumOutput({
+          chainId,
+          collateralDecimals: collateralTokenDecimals,
+          generalAdapterAddress: route.generalAdapterAddress,
+          loanToken: loanTokenAddress as Address,
+          loanTokenDecimals,
+          minimumPtOut: targetFlashCollateralTokenAmount,
+          paraswapAdapterAddress: route.paraswapAdapterAddress,
+          pt: collateralTokenAddress as Address,
+          publicClient,
+          signal,
+          slippageBps,
+        });
+        return {
+          flashLoanAssetAmount: BigInt(flashQuote.srcAmount),
+          flashLegCollateralTokenAmount: BigInt(flashQuote.minDestAmount),
+          priceRoute: createPendlePtLeveragePlan(null, flashQuote) as ExecutableSwapQuote,
+        };
+      }
+      return quoteVeloraCollateralInputRoute({
         chainId,
         loanTokenAddress,
         loanTokenDecimals,
@@ -366,7 +398,8 @@ export function useLeverageQuote({
         targetCollateralTokenAmount: targetFlashCollateralTokenAmount,
         slippageBps,
         swapExecutionAddress: swapExecutionAddress as `0x${string}`,
-      }),
+      });
+    },
   });
 
   const swapExactLoanInputQuoteQuery = useQuery({
@@ -375,6 +408,7 @@ export function useLeverageQuote({
       chainId,
       route?.kind === 'swap' ? route.paraswapAdapterAddress : null,
       route?.kind === 'swap' ? route.generalAdapterAddress : null,
+      route?.kind === 'swap' ? route.conversion : null,
       loanTokenAddress,
       loanTokenDecimals,
       collateralTokenAddress,
@@ -388,13 +422,42 @@ export function useLeverageQuote({
       userAddress ?? null,
     ],
     enabled: isSwapExactLoanInput && exactLoanInputSellAmount > 0n && !!userAddress,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (exactLoanInputFlashLoanAssetAmount <= 0n) {
         return {
           flashLoanAssetAmount: 0n,
           flashLegCollateralTokenAmount: 0n,
           totalCollateralTokenAmountAdded: 0n,
           priceRoute: null,
+        };
+      }
+
+      if (isPendlePtRoute) {
+        if (!publicClient || route?.kind !== 'swap') throw new Error('Chain client is unavailable for Pendle route discovery.');
+        const quoteLeg = (amountIn: bigint) =>
+          quotePendlePtLeverage({
+            amountIn,
+            chainId,
+            generalAdapterAddress: route.generalAdapterAddress,
+            loanToken: loanTokenAddress as Address,
+            loanTokenDecimals,
+            paraswapAdapterAddress: route.paraswapAdapterAddress,
+            pt: collateralTokenAddress as Address,
+            publicClient,
+            signal,
+            slippageBps,
+          });
+        const [initialCapitalQuote, flashQuote] = await Promise.all([
+          !isPositionDebtInput && initialCapitalInputAmount > 0n ? quoteLeg(initialCapitalInputAmount) : null,
+          quoteLeg(exactLoanInputFlashLoanAssetAmount),
+        ]);
+        const pendlePlan = createPendlePtLeveragePlan(initialCapitalQuote, flashQuote);
+        const totalCollateralTokenAmountAdded = BigInt(pendlePlan.minDestAmount);
+        return {
+          flashLoanAssetAmount: exactLoanInputFlashLoanAssetAmount,
+          flashLegCollateralTokenAmount: BigInt(flashQuote.minDestAmount),
+          totalCollateralTokenAmountAdded,
+          priceRoute: pendlePlan as ExecutableSwapQuote,
         };
       }
 
@@ -416,7 +479,7 @@ export function useLeverageQuote({
         flashLoanAssetAmount: exactLoanInputFlashLoanAssetAmount,
         flashLegCollateralTokenAmount: isPositionDebtInput ? totalCollateralTokenAmountAdded : 0n,
         totalCollateralTokenAmountAdded,
-        priceRoute: sellRoute,
+        priceRoute: sellRoute as ExecutableSwapQuote,
       };
     },
   });
@@ -495,6 +558,13 @@ export function useLeverageQuote({
     swapCollateralInputQuoteQuery.data?.priceRoute,
   ]);
 
+  const resolvedInitialCapitalCollateralTokenAmount = useMemo(() => {
+    if (!isLoanAssetInput || !swapPriceRoute || !isPendlePtLeveragePlan(swapPriceRoute)) {
+      return initialCapitalCollateralTokenAmount;
+    }
+    return BigInt(swapPriceRoute.initialCapital?.minDestAmount ?? 0n);
+  }, [initialCapitalCollateralTokenAmount, isLoanAssetInput, swapPriceRoute]);
+
   const error = useMemo(() => {
     if (!route) return null;
     if (route.kind === 'swap') {
@@ -503,6 +573,7 @@ export function useLeverageQuote({
       }
       const routeError = isPositionDebtInput || isLoanAssetInput ? swapExactLoanInputQuoteQuery.error : swapCollateralInputQuoteQuery.error;
       if (!routeError) return null;
+      if (isPendlePtRoute) return routeError instanceof Error ? routeError.message : 'Failed to quote Pendle leverage route';
       return toUserFacingVeloraQuoteError({ error: routeError, action: 'leverage' });
     }
     const erc4626RouteError = erc4626DepositError ?? erc4626MintError;
@@ -510,6 +581,7 @@ export function useLeverageQuote({
     return erc4626RouteError instanceof Error ? erc4626RouteError.message : 'Failed to quote leverage route';
   }, [
     route,
+    isPendlePtRoute,
     swapExecutionAddress,
     userAddress,
     initialCapitalInputAmount,
@@ -547,7 +619,7 @@ export function useLeverageQuote({
   ]);
 
   return {
-    initialCapitalCollateralTokenAmount,
+    initialCapitalCollateralTokenAmount: resolvedInitialCapitalCollateralTokenAmount,
     flashLegCollateralTokenAmount,
     flashLoanAssetAmount,
     totalCollateralTokenAmountAdded,

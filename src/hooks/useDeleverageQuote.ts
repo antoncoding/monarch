@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { zeroAddress } from 'viem';
-import { useReadContract } from 'wagmi';
+import { type Address, zeroAddress } from 'viem';
+import { usePublicClient, useReadContract } from 'wagmi';
 import { erc4626Abi } from '@/abis/erc4626';
-import { fetchVeloraPriceRoute, type VeloraPriceRoute } from '@/features/swap/api/velora';
+import { fetchVeloraPriceRoute } from '@/features/swap/api/velora';
 import { withSlippageCeil, withSlippageFloor } from './leverage/math';
 import { LEVERAGE_SWAP_EXCLUDED_DEXS, LEVERAGE_SWAP_ROUTE_POLICY_KEY } from './leverage/swap-route-policy';
 import { toUserFacingVeloraQuoteError } from './leverage/velora-quote-errors';
 import type { LeverageRoute } from './leverage/types';
+import { type ExecutableSwapQuote, quotePendlePtDeleverage } from './leverage/pendle';
 
 type UseDeleverageQuoteParams = {
   chainId: number;
@@ -33,7 +34,7 @@ export type DeleverageQuote = {
   closeRouteRequiresResolution: boolean;
   isLoading: boolean;
   error: string | null;
-  swapSellPriceRoute: VeloraPriceRoute | null;
+  swapSellPriceRoute: ExecutableSwapQuote | null;
 };
 
 /**
@@ -57,8 +58,10 @@ export function useDeleverageQuote({
   collateralTokenDecimals,
   userAddress,
 }: UseDeleverageQuoteParams): DeleverageQuote {
+  const publicClient = usePublicClient({ chainId });
   const bufferedBorrowAssets = withSlippageCeil(currentBorrowAssets, slippageBps);
   const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
+  const isPendlePtRoute = route?.kind === 'swap' && route.conversion === 'pendle-pt';
   const erc4626VaultAddress = route?.kind === 'erc4626' ? route.collateralVault : zeroAddress;
 
   const {
@@ -82,6 +85,8 @@ export function useDeleverageQuote({
       'deleverage-swap-repay-quote',
       chainId,
       route?.kind === 'swap' ? route.paraswapAdapterAddress : null,
+      route?.kind === 'swap' ? route.generalAdapterAddress : null,
+      route?.kind === 'swap' ? route.conversion : null,
       collateralTokenAddress,
       collateralTokenDecimals,
       loanTokenAddress,
@@ -93,7 +98,26 @@ export function useDeleverageQuote({
       userAddress ?? null,
     ],
     enabled: route?.kind === 'swap' && withdrawCollateralAmount > 0n && !!userAddress,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
+      if (isPendlePtRoute) {
+        if (!publicClient || route?.kind !== 'swap') throw new Error('Chain client is unavailable for Pendle route discovery.');
+        const pendleQuote = await quotePendlePtDeleverage({
+          amountIn: withdrawCollateralAmount,
+          chainId,
+          generalAdapterAddress: route.generalAdapterAddress,
+          loanToken: loanTokenAddress as Address,
+          loanTokenDecimals,
+          paraswapAdapterAddress: route.paraswapAdapterAddress,
+          pt: collateralTokenAddress as Address,
+          publicClient,
+          signal,
+          slippageBps,
+        });
+        return {
+          rawRouteRepayAmount: BigInt(pendleQuote.minDestAmount),
+          priceRoute: pendleQuote as ExecutableSwapQuote,
+        };
+      }
       const sellRoute = await fetchVeloraPriceRoute({
         srcToken: collateralTokenAddress,
         srcDecimals: collateralTokenDecimals,
@@ -110,7 +134,7 @@ export function useDeleverageQuote({
         // Preview uses the requested unwind amount as the authoritative sell size.
         // The submit path still re-validates the executable calldata before sending.
         rawRouteRepayAmount: withSlippageFloor(BigInt(sellRoute.destAmount), slippageBps),
-        priceRoute: sellRoute,
+        priceRoute: sellRoute as ExecutableSwapQuote,
       };
     },
   });
@@ -120,6 +144,7 @@ export function useDeleverageQuote({
       'deleverage-swap-max-collateral',
       chainId,
       route?.kind === 'swap' ? route.paraswapAdapterAddress : null,
+      route?.kind === 'swap' ? route.conversion : null,
       collateralTokenAddress,
       collateralTokenDecimals,
       loanTokenAddress,
@@ -131,7 +156,7 @@ export function useDeleverageQuote({
       isFullClose,
       userAddress ?? null,
     ],
-    enabled: route?.kind === 'swap' && !isFullClose && bufferedBorrowAssets > 0n && !!userAddress,
+    enabled: route?.kind === 'swap' && !isPendlePtRoute && !isFullClose && bufferedBorrowAssets > 0n && !!userAddress,
     queryFn: async () => {
       const buyRoute = await fetchVeloraPriceRoute({
         srcToken: collateralTokenAddress,
@@ -193,6 +218,7 @@ export function useDeleverageQuote({
     if (!route || currentBorrowAssets <= 0n) return 0n;
     if (route.kind === 'swap') {
       if (!userAddress) return 0n;
+      if (isPendlePtRoute) return canCurrentSellCloseDebt ? withdrawCollateralAmount : 0n;
       // The explicit close sells all collateral, so the executable SELL quote is authoritative.
       // Requiring a separate exact-output BUY route can reject closes that the SELL route fully covers.
       if (isFullClose) return canCurrentSellCloseDebt ? withdrawCollateralAmount : 0n;
@@ -202,6 +228,7 @@ export function useDeleverageQuote({
     return rawRouteRepayAmount >= bufferedBorrowAssets ? withdrawCollateralAmount : 0n;
   }, [
     route,
+    isPendlePtRoute,
     currentBorrowAssets,
     isFullClose,
     canCurrentSellCloseDebt,
@@ -236,13 +263,14 @@ export function useDeleverageQuote({
 
     if (route.kind === 'swap') {
       if (!userAddress) return false;
-      if (!isFullClose && swapMaxCollateralForDebtQuery.error) return false;
+      if (!isPendlePtRoute && !isFullClose && swapMaxCollateralForDebtQuery.error) return false;
       return canCurrentSellCloseDebt && currentBorrowShares > 0n && maxCollateralForDebtRepay > 0n;
     }
 
     return maxCollateralForDebtRepay > 0n;
   }, [
     route,
+    isPendlePtRoute,
     currentBorrowAssets,
     userAddress,
     isFullClose,
@@ -278,11 +306,14 @@ export function useDeleverageQuote({
       if (closeRouteResolutionFailed) {
         return 'Failed to resolve the exact full-close collateral bound. Refresh the quote and try again.';
       }
-      if (!isFullClose && canCurrentSellCloseDebt && currentBorrowShares > 0n && swapMaxCollateralForDebtQuery.error) {
+      if (!isPendlePtRoute && !isFullClose && canCurrentSellCloseDebt && currentBorrowShares > 0n && swapMaxCollateralForDebtQuery.error) {
         return 'Failed to resolve the exact full-close collateral bound. Refresh the quote and try again.';
       }
       const routeError = withdrawCollateralAmount > 0n ? swapRepayQuoteQuery.error : null;
       if (!routeError) return null;
+      if (isPendlePtRoute) {
+        return routeError instanceof Error ? routeError.message : 'Failed to quote Pendle deleverage route';
+      }
       return toUserFacingVeloraQuoteError({ error: routeError, action: 'deleverage' });
     }
     const routeError = erc4626PreviewRedeemError;
@@ -290,6 +321,7 @@ export function useDeleverageQuote({
     return routeError instanceof Error ? routeError.message : 'Failed to quote deleverage route';
   }, [
     route,
+    isPendlePtRoute,
     userAddress,
     withdrawCollateralAmount,
     isFullClose,

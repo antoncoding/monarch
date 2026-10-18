@@ -1,6 +1,8 @@
-import type { Address } from 'viem';
+import { getChainAddresses } from '@morpho-org/blue-sdk';
+import { type Address, isAddressEqual } from 'viem';
 import type { MorphoAuthorizationSignatureData } from '@/hooks/useMorphoAuthorization';
 import type { Market } from '@/utils/types';
+import type { SwapLeverageRoute } from './types';
 
 export type LeverageStepType =
   | 'approve_permit2'
@@ -51,5 +53,20 @@ export const buildMorphoMarketParams = (market: Market): MorphoMarketParams => (
   irm: market.irmAddress as Address,
   lltv: BigInt(market.lltv),
 });
+
+export const assertCanonicalSwapRoute = (chainId: number, bundlerAddress: Address, route: SwapLeverageRoute): void => {
+  const canonical = getChainAddresses(chainId).bundler3;
+  if (
+    !canonical?.bundler3 ||
+    !canonical.generalAdapter1 ||
+    !canonical.paraswapAdapter ||
+    !isAddressEqual(bundlerAddress, canonical.bundler3) ||
+    !isAddressEqual(route.bundler3Address, canonical.bundler3) ||
+    !isAddressEqual(route.generalAdapterAddress, canonical.generalAdapter1) ||
+    !isAddressEqual(route.paraswapAdapterAddress, canonical.paraswapAdapter)
+  ) {
+    throw new Error('Bundler3 route addresses do not match the canonical chain configuration.');
+  }
+};
 
 export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));

@@ -11,6 +11,7 @@ type UseLeverageRouteAvailabilityParams = {
   chainId: number;
   collateralTokenAddress: string;
   loanTokenAddress: string;
+  collateralTokenSymbol: string;
 };
 
 type UseLeverageRouteAvailabilityResult = {
@@ -27,7 +28,10 @@ export function useLeverageRouteAvailability({
   chainId,
   collateralTokenAddress,
   loanTokenAddress,
+  collateralTokenSymbol,
 }: UseLeverageRouteAvailabilityParams): UseLeverageRouteAvailabilityResult {
+  const isPendleSymbol = collateralTokenSymbol.toUpperCase().startsWith('PT-');
+
   const swapRoute = useMemo<SwapLeverageRoute | null>(() => {
     try {
       const chainAddresses = getChainAddresses(chainId);
@@ -38,6 +42,9 @@ export function useLeverageRouteAvailability({
 
       return {
         kind: 'swap',
+        // The symbol only selects quote discovery. Pendle metadata and factories
+        // are verified onchain before any approval or transaction is requested.
+        conversion: isPendleSymbol ? 'pendle-pt' : 'generic',
         bundler3Address: bundler3Addresses.bundler3 as Address,
         generalAdapterAddress: bundler3Addresses.generalAdapter1 as Address,
         paraswapAdapterAddress: bundler3Addresses.paraswapAdapter as Address,
@@ -45,7 +52,7 @@ export function useLeverageRouteAvailability({
     } catch {
       return null;
     }
-  }, [chainId]);
+  }, [chainId, isPendleSymbol]);
 
   const {
     data: erc4626ProbeData,

@@ -1,4 +1,5 @@
 import { computeMaxSharePriceE27 } from '@/hooks/leverage/velora-precheck';
+import { getRepaySharesSlippageFloor } from '@/hooks/leverage/math';
 
 export type DeleverageStepType = 'authorize_bundler_sig' | 'authorize_bundler_tx' | 'execute';
 
@@ -15,13 +16,19 @@ export const MIN_REPAY_SHARES_SLIPPAGE_AMOUNT = 1n;
 export const getDeleverageRepayBounds = ({
   flashLoanRepayAssets,
   repayBySharesAmount,
+  totalBorrowAssets,
+  totalBorrowShares,
   useRepayByShares,
 }: {
   flashLoanRepayAssets: bigint;
   repayBySharesAmount: bigint;
+  totalBorrowAssets: bigint;
+  totalBorrowShares: bigint;
   useRepayByShares: boolean;
 }) => {
-  const repaySharesSlippageAmount = MIN_REPAY_SHARES_SLIPPAGE_AMOUNT;
+  const repaySharesSlippageAmount = useRepayByShares
+    ? MIN_REPAY_SHARES_SLIPPAGE_AMOUNT
+    : getRepaySharesSlippageFloor({ repayAssets: flashLoanRepayAssets, totalBorrowAssets, totalBorrowShares });
   const bundlerV2RepaySlippageAmount = useRepayByShares ? flashLoanRepayAssets : repaySharesSlippageAmount;
   const generalAdapterRepayMaxSharePriceE27 = computeMaxSharePriceE27(
     flashLoanRepayAssets,
