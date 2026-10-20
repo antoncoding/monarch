@@ -117,15 +117,15 @@ export function getMorphoGenesisDate(chainId: number): Date {
     case SupportedNetworks.Optimism:
       return new Date('2026-01-17T06:39:15.000Z');
     case SupportedNetworks.Polygon:
-      return new Date('2025-01-20T02:03:12.000Z');
+      return new Date('2025-01-20T14:03:12.000Z');
     case SupportedNetworks.Unichain:
-      return new Date('2025-02-18T02:03:6.000Z');
+      return new Date('2025-02-18T14:03:06.000Z');
     case SupportedNetworks.Arbitrum:
-      return new Date('2025-01-17T06:04:51.000Z');
+      return new Date('2025-01-17T18:04:51.000Z');
     case SupportedNetworks.Etherlink:
       return new Date('2025-07-14T20:41:53.000Z');
     case SupportedNetworks.HyperEVM:
-      return new Date('2025-04-03T04:52:00.000Z');
+      return new Date('2025-04-03T16:52:00.000Z');
     case SupportedNetworks.Monad:
       return new Date('2025-10-28T10:40:00.000Z');
     case SupportedNetworks.Robinhood:
