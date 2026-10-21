@@ -13,8 +13,5 @@ export const isPendlePtLeverageRoute = (route: LeverageRoute | null): boolean =>
 export const getRouteLeverageFeeCeilingUsd = (route: LeverageRoute | null): number =>
   getLeverageFeeCeilingUsd(isPendlePtLeverageRoute(route));
 
-export const getRouteLeverageFee = ({ amount, assetDecimals, assetPriceUsd, route }: RouteLeverageFeeParams): bigint | null => {
-  const isPendlePt = isPendlePtLeverageRoute(route);
-  if (isPendlePt && assetPriceUsd == null) return null;
-  return getLeverageFee({ amount, assetDecimals, assetPriceUsd, isPendlePt });
-};
+export const getRouteLeverageFee = ({ amount, assetDecimals, assetPriceUsd, route }: RouteLeverageFeeParams): bigint =>
+  getLeverageFee({ amount, assetDecimals, assetPriceUsd, isPendlePt: isPendlePtLeverageRoute(route) });

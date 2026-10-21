@@ -299,10 +299,6 @@ export function useLeverageTransaction({
       assetDecimals: market.collateralAsset.decimals,
       route,
     });
-    if (leverageFeeAmount == null) {
-      toast.info('Fee unavailable', 'Collateral USD price is required to apply the $10 Pendle leverage fee cap.');
-      return null;
-    }
     if (totalCollateralTokenAmountAdded - leverageFeeAmount <= 0n) {
       toast.info('Leverage unavailable', 'Net collateral after fee must be positive.');
       return null;

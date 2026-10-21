@@ -36,7 +36,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { SlippageInlineEditor } from '@/features/swap/components/SlippageInlineEditor';
 import { DEFAULT_SLIPPAGE_PERCENT, slippagePercentToBps } from '@/features/swap/constants';
 import { formatSwapRatePreview } from '@/features/swap/utils/quote-preview';
-import { getRouteLeverageFee, getRouteLeverageFeeCeilingUsd, isPendlePtLeverageRoute } from '@/hooks/leverage/fees';
+import { getRouteLeverageFee, getRouteLeverageFeeCeilingUsd } from '@/hooks/leverage/fees';
 import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { formatBalance } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
@@ -101,7 +101,6 @@ export function AddCollateralAndLeverage({
   const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
-  const isPendlePtRoute = isPendlePtLeverageRoute(route);
   const canUseLoanAssetInput = isErc4626Route || isSwapRoute;
 
   const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
@@ -184,18 +183,17 @@ export function AddCollateralAndLeverage({
   }, [quote.totalCollateralTokenAmountAdded, collateralAssetPriceUsd, market.collateralAsset.decimals, route]);
   const leverageFeeCeilingUsd = getRouteLeverageFeeCeilingUsd(route);
   const netAddedCollateral = useMemo<bigint>(() => {
-    return quote.totalCollateralTokenAmountAdded - (leverageTransferFee ?? 0n);
+    return quote.totalCollateralTokenAmountAdded - leverageTransferFee;
   }, [quote.totalCollateralTokenAmountAdded, leverageTransferFee]);
   const isLeverageFeeReady = useMemo(
-    () => hasQuoteChanges && leverageTransferFee != null && netAddedCollateral > 0n,
-    [hasQuoteChanges, leverageTransferFee, netAddedCollateral],
+    () => hasQuoteChanges && netAddedCollateral > 0n,
+    [hasQuoteChanges, netAddedCollateral],
   );
   const leverageFeeReadinessError = useMemo(() => {
     if (!hasQuoteChanges) return null;
-    if (leverageTransferFee == null) return 'Collateral USD price is required to apply the $10 fee cap.';
     if (netAddedCollateral <= 0n) return 'Net collateral after fee must be positive.';
     return null;
-  }, [hasQuoteChanges, leverageTransferFee, netAddedCollateral]);
+  }, [hasQuoteChanges, netAddedCollateral]);
   const addedCollateralAssets = useMemo(() => (isLeverageFeeReady ? netAddedCollateral : 0n), [isLeverageFeeReady, netAddedCollateral]);
   const addedBorrowAssets = useMemo(
     () => (isLeverageFeeReady ? quote.flashLoanAssetAmount : 0n),
@@ -332,11 +330,11 @@ export function AddCollateralAndLeverage({
     [quote.totalCollateralTokenAmountAdded, market.collateralAsset.decimals],
   );
   const leverageFeePreview = useMemo(() => {
-    if (!isLeverageFeeReady || leverageTransferFee == null) return null;
+    if (!isLeverageFeeReady) return null;
     return formatTokenAmountPreview(leverageTransferFee, market.collateralAsset.decimals);
   }, [isLeverageFeeReady, leverageTransferFee, market.collateralAsset.decimals]);
   const leverageFeeUsdValue = useMemo(() => {
-    if (!isLeverageFeeReady || leverageTransferFee == null || collateralAssetPriceUsd == null) return null;
+    if (!isLeverageFeeReady || collateralAssetPriceUsd == null) return null;
     return computeAssetUsdValue(leverageTransferFee, market.collateralAsset.decimals, collateralAssetPriceUsd);
   }, [isLeverageFeeReady, leverageTransferFee, collateralAssetPriceUsd, market.collateralAsset.decimals]);
   const leverageFeeUsdDisplay = useMemo(
@@ -752,11 +750,7 @@ export function AddCollateralAndLeverage({
                         content={
                           <SharedTooltipContent
                             title="Fee policy"
-                            detail={
-                              isPendlePtRoute
-                                ? '0.0075% of added collateral, capped at $10. A valid collateral USD price is required.'
-                                : `0.0075% of added collateral. The $${leverageFeeCeilingUsd} cap applies when a valid collateral USD price is available.`
-                            }
+                            detail={`0.0075% of added collateral. The $${leverageFeeCeilingUsd} cap applies when a valid collateral USD price is available.`}
                           />
                         }
                         ariaLabel="Explain leverage fee policy"

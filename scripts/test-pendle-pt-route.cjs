@@ -166,11 +166,12 @@ test('parses only well-formed Pendle API routes for the requested output', () =>
   );
 });
 
-test('caps Pendle leverage fees at $10 without changing the default $5 cap', () => {
+test('caps leverage fees when priced and falls back to the base rate when unpriced', () => {
   const params = { amount: 1_000_000_000_000n, assetDecimals: 6, assetPriceUsd: 1 };
   assert.equal(getRouteLeverageFee({ ...params, route: { ...route, conversion: 'generic' } }), 5_000_000n);
   assert.equal(getRouteLeverageFee({ ...params, route }), 10_000_000n);
-  assert.equal(getRouteLeverageFee({ ...params, assetPriceUsd: null, route }), null);
+  assert.equal(getRouteLeverageFee({ ...params, assetPriceUsd: null, route: { ...route, conversion: 'generic' } }), 75_000_000n);
+  assert.equal(getRouteLeverageFee({ ...params, assetPriceUsd: null, route }), 75_000_000n);
 });
 
 test('falls back to direct SY routes only for supported loan tokens', async () => {
