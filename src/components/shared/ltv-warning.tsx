@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import type { ReactNode } from 'react';
 
 const LTV_PERCENT_SCALE = 1e16;
 const INFINITE_LTV_THRESHOLD = 10n ** 30n;
@@ -11,7 +12,7 @@ type LTVWarningProps = {
   maxLTV: bigint;
   currentLTV: bigint;
   type: 'danger' | 'error';
-  customMessage?: string;
+  customMessage?: ReactNode;
 };
 
 export function LTVWarning({ maxLTV, currentLTV, type, customMessage }: LTVWarningProps) {
@@ -27,8 +28,8 @@ export function LTVWarning({ maxLTV, currentLTV, type, customMessage }: LTVWarni
         isDanger ? 'border-yellow-500/20 bg-yellow-500/10 text-yellow-500' : 'border-red-500/20 bg-red-500/10 text-red-500'
       }`}
     >
-      <p>
-        {customMessage ? (
+      <div>
+        {customMessage !== undefined ? (
           customMessage
         ) : isDanger ? (
           <>
@@ -42,7 +43,7 @@ export function LTVWarning({ maxLTV, currentLTV, type, customMessage }: LTVWarni
             %).
           </>
         )}
-      </p>
+      </div>
     </motion.div>
   );
 }

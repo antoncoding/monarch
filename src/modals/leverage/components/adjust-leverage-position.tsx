@@ -4,6 +4,7 @@ import { useConnection, useReadContract } from 'wagmi';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -115,6 +116,7 @@ export function AdjustLeveragePosition({
   const [addedCapitalAmount, setAddedCapitalAmount] = useState<bigint>(0n);
   const [addedCapitalError, setAddedCapitalError] = useState<string | null>(null);
   const [useLoanAssetInput, setUseLoanAssetInput] = useState(false);
+  const [acknowledgedProjectedLtvKey, setAcknowledgedProjectedLtvKey] = useState<string | null>(null);
   const [targetLtvBps, setTargetLtvBps] = useState<bigint | null>(null);
   const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
 
@@ -388,6 +390,20 @@ export function AdjustLeveragePosition({
   const targetLtvWad = effectiveTargetLtvBps * WAD_TO_BPS_SCALE;
   const positionProjectedAboveTarget =
     action === 'leverage' && isLeverageFeeReady && targetWasEdited && projectedLTV > targetLtvWad + WAD_TO_BPS_SCALE;
+  const positionProjectedAboveSafeLimit =
+    action === 'leverage' && isLeverageFeeReady && projectedLTV > maxTargetLtvBps * WAD_TO_BPS_SCALE;
+  const requiresProjectedLtvAcknowledgement = positionProjectedAboveTarget && !positionProjectedAboveSafeLimit;
+  const projectedLtvAcknowledgementKey = requiresProjectedLtvAcknowledgement
+    ? [
+        targetLtvWad,
+        projectedLTV,
+        swapSlippageBps,
+        leverageQuote.swapPriceRoute?.srcAmount ?? '',
+        leverageQuote.swapPriceRoute?.destAmount ?? '',
+      ].join(':')
+    : null;
+  const hasAcknowledgedProjectedLtv =
+    projectedLtvAcknowledgementKey !== null && acknowledgedProjectedLtvKey === projectedLtvAcknowledgementKey;
   const positionProjectedBelowTarget =
     action === 'leverage' &&
     isSwapRoute &&
@@ -625,7 +641,8 @@ export function AdjustLeveragePosition({
         !isBundlerAuthorizationReady ||
         !isLeverageFeeReady ||
         leverageQuote.flashLoanAssetAmount <= 0n ||
-        positionProjectedAboveTarget ||
+        positionProjectedAboveSafeLimit ||
+        (requiresProjectedLtvAcknowledgement && !hasAcknowledgedProjectedLtv) ||
         positionProjectedBelowTarget ||
         insufficientLiquidity)) ||
     (action === 'deleverage' &&
@@ -645,6 +662,7 @@ export function AdjustLeveragePosition({
     executionError != null ||
     leverageFeeReadinessError != null ||
     positionProjectedAboveTarget ||
+    positionProjectedAboveSafeLimit ||
     positionProjectedBelowTarget ||
     insufficientLiquidity ||
     isDeleverageCloseRouteResolving;
@@ -872,8 +890,29 @@ export function AdjustLeveragePosition({
                 {!leverageQuote.error && leverageFeeReadinessError && (
                   <p className="mt-2 text-xs text-red-500">{leverageFeeReadinessError}</p>
                 )}
-                {positionProjectedAboveTarget && (
-                  <p className="mt-2 text-xs text-red-500">Projected LTV is above target after route quote. Lower the target or refresh.</p>
+                {positionProjectedAboveSafeLimit && (
+                  <p className="mt-2 text-xs text-red-500">Projected LTV exceeds the safe maximum. Lower the target or slippage.</p>
+                )}
+                {requiresProjectedLtvAcknowledgement && (
+                  <LTVWarning
+                    maxLTV={targetLtvWad}
+                    currentLTV={projectedLTV}
+                    type="danger"
+                    customMessage={
+                      <div className="space-y-2">
+                        <p>
+                          The route quote projects {formatLtvPercent(projectedLTV)}% LTV, above your {formatLtvPercent(targetLtvWad)}% target.
+                        </p>
+                        <Checkbox
+                          checked={hasAcknowledgedProjectedLtv}
+                          onCheckedChange={(checked) =>
+                            setAcknowledgedProjectedLtvKey(checked === true ? projectedLtvAcknowledgementKey : null)
+                          }
+                          label={`I understand the final projected LTV is ${formatLtvPercent(projectedLTV)}%.`}
+                        />
+                      </div>
+                    }
+                  />
                 )}
                 {positionProjectedBelowTarget && (
                   <p className="mt-2 text-xs text-red-500">Swap quote output is inconsistent with target LTV. Refresh and try again.</p>
