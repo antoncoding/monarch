@@ -32,6 +32,7 @@ const { computeMinSharePriceE27 } = require('../src/hooks/leverage/velora-preche
 const { parsePendleConvertResponse, quotePendlePtDeleverage, quotePendlePtLeverage } = require('../src/hooks/leverage/pendle.ts');
 const { PERMIT2_ADDRESS } = require('../src/utils/permit2.ts');
 const { getRouteLeverageFee } = require('../src/hooks/leverage/fees.ts');
+const { getExactLoanInputAmounts } = require('../src/hooks/useLeverageQuote.ts');
 const {
   isTrustedPendleMarketFactory,
   isTrustedPendleYieldContractFactory,
@@ -172,6 +173,44 @@ test('caps leverage fees when priced and falls back to the base rate when unpric
   assert.equal(getRouteLeverageFee({ ...params, route }), 10_000_000n);
   assert.equal(getRouteLeverageFee({ ...params, assetPriceUsd: null, route: { ...route, conversion: 'generic' } }), 75_000_000n);
   assert.equal(getRouteLeverageFee({ ...params, assetPriceUsd: null, route }), 75_000_000n);
+});
+
+test('combines wallet loan capital with fresh and existing-position debt', () => {
+  assert.deepEqual(
+    getExactLoanInputAmounts({
+      initialCapitalInputAmount: 2_000_000n,
+      inputMode: 'loan',
+      multiplierBps: 20_000n,
+    }),
+    {
+      flashLoanAssetAmount: 2_000_000n,
+      totalSellAmount: 4_000_000n,
+    },
+  );
+  assert.deepEqual(
+    getExactLoanInputAmounts({
+      initialCapitalInputAmount: 2_000_000n,
+      inputMode: 'loan',
+      multiplierBps: 10_000n,
+      positionDebtInputAmount: 3_000_000n,
+    }),
+    {
+      flashLoanAssetAmount: 3_000_000n,
+      totalSellAmount: 5_000_000n,
+    },
+  );
+  assert.deepEqual(
+    getExactLoanInputAmounts({
+      initialCapitalInputAmount: 2_000_000n,
+      inputMode: 'collateral',
+      multiplierBps: 10_000n,
+      positionDebtInputAmount: 3_000_000n,
+    }),
+    {
+      flashLoanAssetAmount: 3_000_000n,
+      totalSellAmount: 3_000_000n,
+    },
+  );
 });
 
 test('falls back to direct SY routes only for supported loan tokens', async () => {
