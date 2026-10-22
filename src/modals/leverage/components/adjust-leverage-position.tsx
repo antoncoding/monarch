@@ -899,18 +899,13 @@ export function AdjustLeveragePosition({
                     currentLTV={projectedLTV}
                     type="danger"
                     customMessage={
-                      <div className="space-y-2">
-                        <p>
-                          The route quote projects {formatLtvPercent(projectedLTV)}% LTV, above your {formatLtvPercent(targetLtvWad)}% target.
-                        </p>
-                        <Checkbox
-                          checked={hasAcknowledgedProjectedLtv}
-                          onCheckedChange={(checked) =>
-                            setAcknowledgedProjectedLtvKey(checked === true ? projectedLtvAcknowledgementKey : null)
-                          }
-                          label={`I understand the final projected LTV is ${formatLtvPercent(projectedLTV)}%.`}
-                        />
-                      </div>
+                      <Checkbox
+                        checked={hasAcknowledgedProjectedLtv}
+                        onCheckedChange={(checked) =>
+                          setAcknowledgedProjectedLtvKey(checked === true ? projectedLtvAcknowledgementKey : null)
+                        }
+                        label={`Proceed at ${formatLtvPercent(projectedLTV)}% LTV (${formatLtvPercent(targetLtvWad)}% target).`}
+                      />
                     }
                   />
                 )}
