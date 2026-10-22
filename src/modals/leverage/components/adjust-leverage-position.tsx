@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { formatUnits } from 'viem';
-import { useConnection } from 'wagmi';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { erc20Abi, formatUnits } from 'viem';
+import { useConnection, useReadContract } from 'wagmi';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -114,6 +115,8 @@ export function AdjustLeveragePosition({
   const { usePermit2: usePermit2Setting, leverageUseTargetLtvInput: useTargetLtvInput, setLeverageUseTargetLtvInput } = useAppSettings();
   const [addedCapitalAmount, setAddedCapitalAmount] = useState<bigint>(0n);
   const [addedCapitalError, setAddedCapitalError] = useState<string | null>(null);
+  const [useLoanAssetInput, setUseLoanAssetInput] = useState(false);
+  const [acknowledgedProjectedLtvKey, setAcknowledgedProjectedLtvKey] = useState<string | null>(null);
   const [targetLtvBps, setTargetLtvBps] = useState<bigint | null>(null);
   const [swapSlippagePercent, setSwapSlippagePercent] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
 
@@ -154,19 +157,50 @@ export function AdjustLeveragePosition({
   const swapSlippageBps = useMemo(() => slippagePercentToBps(swapSlippagePercent), [swapSlippagePercent]);
   const isErc4626Route = route?.kind === 'erc4626';
   const isSwapRoute = route?.kind === 'swap';
+  const canUseLoanAssetInput = isSwapRoute;
+
+  const { data: loanTokenBalance, refetch: refetchLoanTokenBalance } = useReadContract({
+    address: market.loanAsset.address as `0x${string}`,
+    args: [account as `0x${string}`],
+    functionName: 'balanceOf',
+    abi: erc20Abi,
+    chainId: market.morphoBlue.chain.id,
+    query: {
+      enabled: !!account && useLoanAssetInput,
+    },
+  });
+
+  useEffect(() => {
+    // The added-capital field flips between loan-asset units and collateral-token units.
+    setAddedCapitalAmount(0n);
+    setAddedCapitalError(null);
+  }, [useLoanAssetInput]);
+
+  useEffect(() => {
+    if (canUseLoanAssetInput) return;
+    setUseLoanAssetInput(false);
+  }, [canUseLoanAssetInput]);
+
   const hasAddedCapital = addedCapitalAmount > 0n;
   const hasUserIntent = targetWasEdited || hasAddedCapital;
 
-  const baseCollateralAssets = currentCollateralAssets + addedCapitalAmount;
-  const baseCollateralValueInLoan = useMemo(
-    () => getCollateralValueInLoan(baseCollateralAssets, oraclePrice),
-    [baseCollateralAssets, oraclePrice],
-  );
   const positionCollateralValueFactorBps = useMemo(() => {
     const roundedSlippageBps = BigInt(Math.max(0, Math.ceil(swapSlippageBps)));
     const factorBps = BPS_SCALE - roundedSlippageBps - LOOP_COLLATERAL_OUTPUT_BUFFER_BPS;
     return factorBps > 0n ? factorBps : 0n;
   }, [swapSlippageBps]);
+  const currentCollateralValueInLoan = useMemo(
+    () => getCollateralValueInLoan(currentCollateralAssets, oraclePrice),
+    [currentCollateralAssets, oraclePrice],
+  );
+  const baseCollateralValueInLoan = useMemo(
+    () =>
+      currentCollateralValueInLoan +
+      (useLoanAssetInput
+        ? (addedCapitalAmount * positionCollateralValueFactorBps) / BPS_SCALE
+        : getCollateralValueInLoan(addedCapitalAmount, oraclePrice)),
+    [addedCapitalAmount, currentCollateralValueInLoan, oraclePrice, positionCollateralValueFactorBps, useLoanAssetInput],
+  );
   const targetDebtAdjustment = useMemo(
     () =>
       computeDebtAdjustmentForTargetLtv({
@@ -191,7 +225,7 @@ export function AdjustLeveragePosition({
     route,
     initialCapitalInputAmount: action === 'leverage' ? addedCapitalAmount : 0n,
     positionDebtInputAmount: action === 'leverage' ? leverageDebtInputAmount : undefined,
-    inputMode: 'collateral',
+    inputMode: useLoanAssetInput ? 'loan' : 'collateral',
     multiplierBps: effectiveMultiplierBps,
     loanTokenAddress: market.loanAsset.address,
     loanTokenDecimals: market.loanAsset.decimals,
@@ -356,6 +390,20 @@ export function AdjustLeveragePosition({
   const targetLtvWad = effectiveTargetLtvBps * WAD_TO_BPS_SCALE;
   const positionProjectedAboveTarget =
     action === 'leverage' && isLeverageFeeReady && targetWasEdited && projectedLTV > targetLtvWad + WAD_TO_BPS_SCALE;
+  const positionProjectedAboveSafeLimit =
+    action === 'leverage' && isLeverageFeeReady && projectedLTV > maxTargetLtvBps * WAD_TO_BPS_SCALE;
+  const requiresProjectedLtvAcknowledgement = positionProjectedAboveTarget && !positionProjectedAboveSafeLimit;
+  const projectedLtvAcknowledgementKey = requiresProjectedLtvAcknowledgement
+    ? [
+        targetLtvWad,
+        projectedLTV,
+        swapSlippageBps,
+        leverageQuote.swapPriceRoute?.srcAmount ?? '',
+        leverageQuote.swapPriceRoute?.destAmount ?? '',
+      ].join(':')
+    : null;
+  const hasAcknowledgedProjectedLtv =
+    projectedLtvAcknowledgementKey !== null && acknowledgedProjectedLtvKey === projectedLtvAcknowledgementKey;
   const positionProjectedBelowTarget =
     action === 'leverage' &&
     isSwapRoute &&
@@ -387,12 +435,13 @@ export function AdjustLeveragePosition({
     totalCollateralTokenAmountAdded: leverageQuote.totalCollateralTokenAmountAdded,
     collateralAssetPriceUsd,
     swapPriceRoute: leverageQuote.swapPriceRoute,
-    useLoanAssetInput: false,
+    useLoanAssetInput,
     slippageBps: swapSlippageBps,
     onSuccess: () => {
       setAddedCapitalAmount(0n);
       setAddedCapitalError(null);
       setTargetLtvBps(null);
+      if (useLoanAssetInput) void refetchLoanTokenBalance();
       onSuccess?.();
     },
   });
@@ -522,6 +571,10 @@ export function AdjustLeveragePosition({
     () => formatTokenAmountPreview(leverageQuote.totalCollateralTokenAmountAdded, market.collateralAsset.decimals),
     [leverageQuote.totalCollateralTokenAmountAdded, market.collateralAsset.decimals],
   );
+  const inputAssetSymbol = useLoanAssetInput ? market.loanAsset.symbol : market.collateralAsset.symbol;
+  const inputAssetDecimals = useLoanAssetInput ? market.loanAsset.decimals : market.collateralAsset.decimals;
+  const inputAssetBalance = useLoanAssetInput ? (loanTokenBalance as bigint | undefined) : collateralTokenBalance;
+  const inputTokenIconAddress = useLoanAssetInput ? market.loanAsset.address : market.collateralAsset.address;
   const collateralUnwoundPreview = useMemo(
     () => formatTokenAmountPreview(withdrawCollateralAmount, market.collateralAsset.decimals),
     [withdrawCollateralAmount, market.collateralAsset.decimals],
@@ -588,7 +641,8 @@ export function AdjustLeveragePosition({
         !isBundlerAuthorizationReady ||
         !isLeverageFeeReady ||
         leverageQuote.flashLoanAssetAmount <= 0n ||
-        positionProjectedAboveTarget ||
+        positionProjectedAboveSafeLimit ||
+        (requiresProjectedLtvAcknowledgement && !hasAcknowledgedProjectedLtv) ||
         positionProjectedBelowTarget ||
         insufficientLiquidity)) ||
     (action === 'deleverage' &&
@@ -608,6 +662,7 @@ export function AdjustLeveragePosition({
     executionError != null ||
     leverageFeeReadinessError != null ||
     positionProjectedAboveTarget ||
+    positionProjectedAboveSafeLimit ||
     positionProjectedBelowTarget ||
     insufficientLiquidity ||
     isDeleverageCloseRouteResolving;
@@ -639,10 +694,25 @@ export function AdjustLeveragePosition({
             <div className="rounded border border-white/10 bg-hovered px-3 py-2.5">
               <div className="mb-1 flex items-center justify-between gap-2">
                 <p className="text-[11px] uppercase tracking-[0.12em] text-secondary">Add Capital</p>
+                {canUseLoanAssetInput && (
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs text-secondary">Use {market.loanAsset.symbol}</div>
+                    <IconSwitch
+                      size="sm"
+                      selected={useLoanAssetInput}
+                      onChange={setUseLoanAssetInput}
+                      thumbIcon={null}
+                      classNames={{
+                        wrapper: 'mr-0 h-4 w-9',
+                        thumb: 'h-3 w-3',
+                      }}
+                    />
+                  </div>
+                )}
               </div>
               <Input
-                decimals={market.collateralAsset.decimals}
-                max={collateralTokenBalance}
+                decimals={inputAssetDecimals}
+                max={inputAssetBalance}
                 setValue={setAddedCapitalAmount}
                 setError={setAddedCapitalError}
                 exceedMaxErrMessage="Insufficient Balance"
@@ -650,9 +720,9 @@ export function AdjustLeveragePosition({
                 inputClassName="h-10 rounded bg-surface px-3 py-2 text-base font-medium tabular-nums"
                 endAdornment={
                   <TokenIcon
-                    address={market.collateralAsset.address}
+                    address={inputTokenIconAddress}
                     chainId={market.morphoBlue.chain.id}
-                    symbol={market.collateralAsset.symbol}
+                    symbol={inputAssetSymbol}
                     width={16}
                     height={16}
                   />
@@ -661,7 +731,7 @@ export function AdjustLeveragePosition({
               <div className="mt-1 flex items-start gap-3 text-xs">
                 {addedCapitalError && <p className="text-red-500">{addedCapitalError}</p>}
                 <span className="ml-auto text-right text-secondary">
-                  Balance: {formatBalance(collateralTokenBalance ?? 0n, market.collateralAsset.decimals)} {market.collateralAsset.symbol}
+                  Balance: {formatBalance(inputAssetBalance ?? 0n, inputAssetDecimals)} {inputAssetSymbol}
                 </span>
               </div>
             </div>
@@ -737,7 +807,7 @@ export function AdjustLeveragePosition({
                           symbol={market.loanAsset.symbol}
                         />
                       </PreviewRow>
-                      <PreviewRow label={isSwapRoute ? 'Collateral From Loop (Min.)' : 'Collateral Added (Min.)'}>
+                      <PreviewRow label="Total Collateral Added (Min.)">
                         <PreviewTokenAmount
                           amount={collateralAddedPreview}
                           address={market.collateralAsset.address}
@@ -820,8 +890,24 @@ export function AdjustLeveragePosition({
                 {!leverageQuote.error && leverageFeeReadinessError && (
                   <p className="mt-2 text-xs text-red-500">{leverageFeeReadinessError}</p>
                 )}
-                {positionProjectedAboveTarget && (
-                  <p className="mt-2 text-xs text-red-500">Projected LTV is above target after route quote. Lower the target or refresh.</p>
+                {positionProjectedAboveSafeLimit && (
+                  <p className="mt-2 text-xs text-red-500">Projected LTV exceeds the safe maximum. Lower the target or slippage.</p>
+                )}
+                {requiresProjectedLtvAcknowledgement && (
+                  <LTVWarning
+                    maxLTV={targetLtvWad}
+                    currentLTV={projectedLTV}
+                    type="danger"
+                    customMessage={
+                      <Checkbox
+                        checked={hasAcknowledgedProjectedLtv}
+                        onCheckedChange={(checked) =>
+                          setAcknowledgedProjectedLtvKey(checked === true ? projectedLtvAcknowledgementKey : null)
+                        }
+                        label={`Proceed at ${formatLtvPercent(projectedLTV)}% LTV (${formatLtvPercent(targetLtvWad)}% target).`}
+                      />
+                    }
+                  />
                 )}
                 {positionProjectedBelowTarget && (
                   <p className="mt-2 text-xs text-red-500">Swap quote output is inconsistent with target LTV. Refresh and try again.</p>

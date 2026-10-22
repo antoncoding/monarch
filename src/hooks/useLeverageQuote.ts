@@ -44,6 +44,25 @@ type UseLeverageQuoteParams = {
   userAddress?: `0x${string}`;
 };
 
+export const getExactLoanInputAmounts = ({
+  initialCapitalInputAmount,
+  inputMode,
+  multiplierBps,
+  positionDebtInputAmount,
+}: Pick<UseLeverageQuoteParams, 'initialCapitalInputAmount' | 'inputMode' | 'multiplierBps' | 'positionDebtInputAmount'>): {
+  flashLoanAssetAmount: bigint;
+  totalSellAmount: bigint;
+} => {
+  const flashLoanAssetAmount =
+    positionDebtInputAmount ?? (inputMode === 'loan' ? computeLeveragedExtraAmount(initialCapitalInputAmount, multiplierBps) : 0n);
+  const walletLoanAssetAmount = inputMode === 'loan' ? initialCapitalInputAmount : 0n;
+
+  return {
+    flashLoanAssetAmount,
+    totalSellAmount: walletLoanAssetAmount + flashLoanAssetAmount,
+  };
+};
+
 export type LeverageQuote = {
   /**
    * Market collateral-token amount sourced directly from the user's starting capital before the flash leg.
@@ -279,16 +298,8 @@ export function useLeverageQuote({
   const safePositionDebtInputAmount = positionDebtInputAmount ?? 0n;
   const isLoanAssetInput = inputMode === 'loan';
   const isSwapLoanAssetInput = route?.kind === 'swap' && isLoanAssetInput && !isPositionDebtInput;
-  const exactLoanInputFlashLoanAssetAmount = isPositionDebtInput
-    ? safePositionDebtInputAmount
-    : isLoanAssetInput
-      ? computeLeveragedExtraAmount(initialCapitalInputAmount, multiplierBps)
-      : 0n;
-  const exactLoanInputSellAmount = isPositionDebtInput
-    ? safePositionDebtInputAmount
-    : isLoanAssetInput
-      ? initialCapitalInputAmount + exactLoanInputFlashLoanAssetAmount
-      : 0n;
+  const { flashLoanAssetAmount: exactLoanInputFlashLoanAssetAmount, totalSellAmount: exactLoanInputSellAmount } =
+    getExactLoanInputAmounts({ initialCapitalInputAmount, inputMode, multiplierBps, positionDebtInputAmount });
   const isSwapExactLoanInput = route?.kind === 'swap' && (isPositionDebtInput || isLoanAssetInput);
   const isPendlePtRoute = route?.kind === 'swap' && route.conversion === 'pendle-pt';
   const swapExecutionAddress = route?.kind === 'swap' ? route.paraswapAdapterAddress : null;
@@ -448,7 +459,7 @@ export function useLeverageQuote({
             slippageBps,
           });
         const [initialCapitalQuote, flashQuote] = await Promise.all([
-          !isPositionDebtInput && initialCapitalInputAmount > 0n ? quoteLeg(initialCapitalInputAmount) : null,
+          isLoanAssetInput && initialCapitalInputAmount > 0n ? quoteLeg(initialCapitalInputAmount) : null,
           quoteLeg(exactLoanInputFlashLoanAssetAmount),
         ]);
         const pendlePlan = createPendlePtLeveragePlan(initialCapitalQuote, flashQuote);
@@ -531,9 +542,11 @@ export function useLeverageQuote({
 
   const totalCollateralTokenAmountAdded = useMemo(() => {
     if (!route) return 0n;
+    if (route.kind === 'swap' && isLoanAssetInput) {
+      return swapExactLoanInputQuoteQuery.data?.totalCollateralTokenAmountAdded ?? 0n;
+    }
     if (isPositionDebtInput) return initialCapitalCollateralTokenAmount + flashLegCollateralTokenAmount;
     if (route.kind === 'swap') {
-      if (isLoanAssetInput) return swapExactLoanInputQuoteQuery.data?.totalCollateralTokenAmountAdded ?? 0n;
       return initialCapitalCollateralTokenAmount + flashLegCollateralTokenAmount;
     }
     return initialCapitalCollateralTokenAmount + flashLegCollateralTokenAmount;
