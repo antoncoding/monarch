@@ -1,7 +1,7 @@
 import type { Address } from 'viem';
 import { erc4626Abi } from '@/abis/erc4626';
 import { computeAnnualizedApyFromGrowth } from '@/utils/rateMath';
-import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
+import { findBlockAtTimestamp } from '@/utils/blockEstimation';
 import { supportsHistoricalStateRead, type SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import { getVaultReadKey } from '@/utils/vaultAllocation';
@@ -83,9 +83,9 @@ export async function fetchVaultYieldSnapshots({
         const currentTimestamp = Number(currentBlockData.timestamp);
 
         const targetTimestamp = currentTimestamp - lookbackDays * SECONDS_PER_DAY;
-        const estimatedPastBlock = BigInt(estimateBlockAtTimestamp(networkId, targetTimestamp, Number(currentBlock), currentTimestamp));
-        const pastBlockData = await client.getBlock({ blockNumber: estimatedPastBlock });
-        const pastTimestamp = Number(pastBlockData.timestamp);
+        const pastBlock = await findBlockAtTimestamp(client, networkId, targetTimestamp, Number(currentBlock), currentTimestamp);
+        const pastBlockNumber = BigInt(pastBlock.blockNumber);
+        const pastTimestamp = pastBlock.timestamp;
         const periodSeconds = currentTimestamp - pastTimestamp;
 
         if (periodSeconds <= 0) {
@@ -119,7 +119,7 @@ export async function fetchVaultYieldSnapshots({
 
         const baseSnapshot = {
           currentBlock,
-          pastBlock: estimatedPastBlock,
+          pastBlock: pastBlockNumber,
           periodSeconds,
         } satisfies Pick<VaultYieldSnapshot, 'currentBlock' | 'pastBlock' | 'periodSeconds'>;
 
@@ -150,7 +150,7 @@ export async function fetchVaultYieldSnapshots({
           pastPreviewResults = await client.multicall({
             contracts: previewContracts,
             allowFailure: true,
-            blockNumber: estimatedPastBlock,
+            blockNumber: pastBlockNumber,
           });
         } catch {
           // Some RPCs do not support archive eth_call on historical blocks.
@@ -181,7 +181,7 @@ export async function fetchVaultYieldSnapshots({
             sharePriceNow,
             periodSeconds,
             currentBlock,
-            pastBlock: estimatedPastBlock,
+            pastBlock: pastBlockNumber,
           });
         });
       } catch (error) {
