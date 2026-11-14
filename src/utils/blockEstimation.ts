@@ -1,4 +1,8 @@
 import type { PublicClient } from 'viem';
+import {
+  BLOCK_TIMESTAMP_TOLERANCE_SECONDS,
+  findTimestampedBlock,
+} from './block-timestamp-search';
 import { type SupportedNetworks, getBlocktime } from './networks';
 
 export type BlockWithTimestamp = {
@@ -40,6 +44,34 @@ export const estimateBlockAtTimestamp = (
   // Ensure we don't return negative block numbers
   return Math.max(0, currentBlock - blockDiff);
 };
+
+export async function findBlockAtTimestamp(
+  client: PublicClient,
+  chainId: SupportedNetworks,
+  targetTimestamp: number,
+  currentBlock: number,
+  currentTimestamp?: number,
+  toleranceSeconds = BLOCK_TIMESTAMP_TOLERANCE_SECONDS,
+): Promise<BlockWithTimestamp> {
+  const estimatedBlock = estimateBlockAtTimestamp(chainId, targetTimestamp, currentBlock, currentTimestamp);
+  const block = await findTimestampedBlock({
+    estimatedBlock,
+    getBlockTimestamp: async (blockNumber) => {
+      const result = await client.getBlock({ blockNumber: BigInt(blockNumber) });
+      return Number(result.timestamp);
+    },
+    latestBlock: currentBlock,
+    latestTimestamp: currentTimestamp,
+    secondsPerBlockEstimate: getBlocktime(chainId),
+    targetTimestamp,
+    toleranceSeconds,
+  });
+
+  return {
+    ...block,
+    targetTimestamp,
+  };
+}
 
 /**
  * Fetches real block timestamps for multiple estimated blocks in parallel.

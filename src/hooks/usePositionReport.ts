@@ -4,7 +4,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { supportsHistoricalStateRead } from '@/utils/networks';
 import { fetchPositionsSnapshots } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
-import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
+import { findBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { useCustomRpc } from '@/stores/useCustomRpc';
 import { fetchUserTransactions } from './queries/fetchUserTransactions';
@@ -58,22 +58,18 @@ export const usePositionReport = (
     // Get current block number for client-side estimation
     const client = getClient(selectedAsset.chainId as SupportedNetworks, customRpcUrls[selectedAsset.chainId as SupportedNetworks]);
     const currentBlock = Number(await client.getBlockNumber());
-    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const currentBlockData = await client.getBlock({ blockNumber: BigInt(currentBlock) });
+    const currentTimestamp = Number(currentBlockData.timestamp);
 
-    // Estimate block numbers (client-side, instant!)
     const targetStartTimestamp = Math.floor(startDate.getTime() / 1000);
     const targetEndTimestamp = Math.floor(endDate.getTime() / 1000);
-    const startBlockEstimate = estimateBlockAtTimestamp(selectedAsset.chainId, targetStartTimestamp, currentBlock, currentTimestamp);
-    const endBlockEstimate = estimateBlockAtTimestamp(selectedAsset.chainId, targetEndTimestamp, currentBlock, currentTimestamp);
-
-    // Fetch ACTUAL timestamps for the estimated blocks (critical for accuracy)
     const [startBlock, endBlock] = await Promise.all([
-      client.getBlock({ blockNumber: BigInt(startBlockEstimate) }),
-      client.getBlock({ blockNumber: BigInt(endBlockEstimate) }),
+      findBlockAtTimestamp(client, selectedAsset.chainId, targetStartTimestamp, currentBlock, currentTimestamp),
+      findBlockAtTimestamp(client, selectedAsset.chainId, targetEndTimestamp, currentBlock, currentTimestamp),
     ]);
 
-    const actualStartTimestamp = Number(startBlock.timestamp);
-    const actualEndTimestamp = Number(endBlock.timestamp);
+    const actualStartTimestamp = startBlock.timestamp;
+    const actualEndTimestamp = endBlock.timestamp;
     const period = actualEndTimestamp - actualStartTimestamp;
 
     // Fetch ALL transactions for this asset with auto-pagination
@@ -119,8 +115,8 @@ export const usePositionReport = (
 
     // Fetch start and end snapshots in parallel (batched per block number)
     const [startSnapshots, endSnapshots] = await Promise.all([
-      fetchPositionsSnapshots(discoveredMarketIds, account, selectedAsset.chainId, startBlockEstimate, client),
-      fetchPositionsSnapshots(discoveredMarketIds, account, selectedAsset.chainId, endBlockEstimate, client),
+      fetchPositionsSnapshots(discoveredMarketIds, account, selectedAsset.chainId, startBlock.blockNumber, client),
+      fetchPositionsSnapshots(discoveredMarketIds, account, selectedAsset.chainId, endBlock.blockNumber, client),
     ]);
 
     // Process positions with their snapshots
@@ -188,8 +184,8 @@ export const usePositionReport = (
       period,
       marketReports,
       groupedEarnings,
-      startBlock: startBlockEstimate,
-      endBlock: endBlockEstimate,
+      startBlock: startBlock.blockNumber,
+      endBlock: endBlock.blockNumber,
       startTimestamp: actualStartTimestamp,
       endTimestamp: actualEndTimestamp,
     };

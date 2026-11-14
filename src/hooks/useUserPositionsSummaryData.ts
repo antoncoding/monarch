@@ -1,10 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { SupportedNetworks } from '@/utils/networks';
 import useUserPositions, { positionKeys, type UserPositionMarketHint } from './useUserPositions';
 import { useCurrentBlocks } from './queries/useCurrentBlocks';
-import { useBlockTimestamps } from './queries/useBlockTimestamps';
+import { useBlocksAtTimestamps } from './queries/useBlocksAtTimestamps';
 import { usePositionSnapshots } from './queries/usePositionSnapshots';
 import { useUserTransactionsQuery } from './queries/useUserTransactionsQuery';
 import { usePositionsWithEarnings, getPeriodTimestamp, type EarningsTimeRange } from './usePositionsWithEarnings';
@@ -96,47 +95,37 @@ const useUserPositionsSummaryData = (
       positions?.some((position) => (Boolean(position.hasSupplyHistory) || hasActiveSupplyPosition(position)) && !position.supplyHistory),
     );
 
-  const snapshotBlocks = useMemo(() => {
-    if (isAllTime || !currentBlocks) return {};
+  const startTargetTimestamps = useMemo(() => {
+    if (isAllTime) return {};
+    return Object.fromEntries(uniqueChainIds.map((chainId) => [chainId, selectedRange.startTimestamp]));
+  }, [isAllTime, selectedRange.startTimestamp, uniqueChainIds]);
 
-    const blocks: Record<number, number> = {};
-
-    uniqueChainIds.forEach((chainId) => {
-      const currentBlock = currentBlocks[chainId];
-      if (currentBlock) {
-        blocks[chainId] = estimateBlockAtTimestamp(chainId, selectedRange.startTimestamp, currentBlock);
-      }
-    });
-
-    return blocks;
-  }, [isAllTime, selectedRange.startTimestamp, uniqueChainIds, currentBlocks]);
-
-  const endSnapshotBlocks = useMemo(() => {
-    if (!hasCustomRange || !currentBlocks) return {};
-
-    const blocks: Record<number, number> = {};
-
-    uniqueChainIds.forEach((chainId) => {
-      const currentBlock = currentBlocks[chainId];
-      if (currentBlock) {
-        blocks[chainId] = estimateBlockAtTimestamp(chainId, selectedRange.endTimestamp, currentBlock);
-      }
-    });
-
-    return blocks;
-  }, [hasCustomRange, selectedRange.endTimestamp, uniqueChainIds, currentBlocks]);
+  const endTargetTimestamps = useMemo(() => {
+    if (!hasCustomRange) return {};
+    return Object.fromEntries(uniqueChainIds.map((chainId) => [chainId, selectedRange.endTimestamp]));
+  }, [hasCustomRange, selectedRange.endTimestamp, uniqueChainIds]);
 
   const {
     data: actualBlockData,
     isLoading: isLoadingBlockTimestamps,
     isFetching: isFetchingBlockTimestamps,
-  } = useBlockTimestamps(snapshotBlocks);
+  } = useBlocksAtTimestamps(startTargetTimestamps, currentBlocks);
 
   const {
     data: endBlockData,
     isLoading: isLoadingEndBlockTimestamps,
     isFetching: isFetchingEndBlockTimestamps,
-  } = useBlockTimestamps(endSnapshotBlocks);
+  } = useBlocksAtTimestamps(endTargetTimestamps, currentBlocks);
+
+  const snapshotBlocks = useMemo(
+    () => Object.fromEntries(Object.entries(actualBlockData ?? {}).map(([chainId, blockData]) => [Number(chainId), blockData.block])),
+    [actualBlockData],
+  );
+
+  const endSnapshotBlocks = useMemo(
+    () => Object.fromEntries(Object.entries(endBlockData ?? {}).map(([chainId, blockData]) => [Number(chainId), blockData.block])),
+    [endBlockData],
+  );
 
   const transactionTimestampGte = useMemo(() => {
     if (isAllTime) {
