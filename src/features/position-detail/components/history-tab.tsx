@@ -14,6 +14,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
+import { TableTimestamp } from '@/components/shared/table-timestamp';
 import DatePicker from '@/components/shared/date-picker';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
@@ -421,7 +422,10 @@ export function HistoryTab({
                       className="px-4 py-3 text-right"
                       style={{ minWidth: '90px' }}
                     >
-                      <span className="text-xs text-secondary whitespace-nowrap">{moment.unix(tx.timestamp).fromNow()}</span>
+                      <TableTimestamp
+                        timestamp={tx.timestamp}
+                        className="whitespace-nowrap text-xs text-secondary"
+                      />
                     </TableCell>
                   </TableRow>
                 );

@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import moment from 'moment';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
@@ -12,6 +11,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
+import { TableTimestamp } from '@/components/shared/table-timestamp';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
@@ -370,7 +370,10 @@ export function StatsTransactionsTable({ transactions, isLoading }: StatsTransac
                       className="px-2 py-3"
                       style={{ minWidth: '90px' }}
                     >
-                      <span className="whitespace-nowrap text-xs text-secondary">{moment.unix(tx.timestamp).fromNow()}</span>
+                      <TableTimestamp
+                        timestamp={tx.timestamp}
+                        className="whitespace-nowrap text-xs text-secondary"
+                      />
                     </TableCell>
                   </TableRow>
                 );

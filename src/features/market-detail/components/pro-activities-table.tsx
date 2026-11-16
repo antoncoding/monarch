@@ -1,7 +1,6 @@
 'use client';
 
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
-import moment from 'moment';
 import { type Address, formatUnits } from 'viem';
 import { Info } from '@/components/Info/info';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
@@ -10,6 +9,7 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { TableTimestamp } from '@/components/shared/table-timestamp';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExpandableRow } from '@/components/ui/data-table/ExpandableRow';
@@ -78,11 +78,6 @@ const getAssetMetadata = (market: Market, assetType: 'loan' | 'collateral') => {
 
 const formatAmount = (amount: string, decimals: number): string => {
   return formatSimple(Number(formatUnits(BigInt(amount), decimals)));
-};
-
-const formatActivityTime = (timestamp: number): string => {
-  const activityTime = moment.unix(timestamp).utc();
-  return activityTime.format('YYYY-MM-DD HH:mm:ss [UTC]');
 };
 
 const getMarketMapKey = (marketId: string): string => marketId.toLowerCase();
@@ -793,7 +788,10 @@ export function ProActivitiesTable({ chainId, market, onSwitchToBasic }: ProActi
                         <TableCell className="px-4 py-3 text-right">{renderRowFlow(activity)}</TableCell>
 
                         <TableCell className="px-4 py-3 text-sm whitespace-nowrap text-gray-500">
-                          {formatActivityTime(activity.timestamp)}
+                          <TableTimestamp
+                            timestamp={activity.timestamp}
+                            variant="absolute"
+                          />
                         </TableCell>
 
                         <TableCell

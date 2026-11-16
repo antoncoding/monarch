@@ -1,17 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { Divider } from '@/components/ui/divider';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { PaletteSelector } from '@/components/ui/palette-preview';
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useChartPalette } from '@/stores/useChartPalette';
-import { SettingToggleItem } from '../SettingItem';
+import { getSupportedTimeZones, getTimeZoneLabel, LOCAL_TIME_ZONE } from '@/utils/timezone';
+import { SettingInputItem, SettingToggleItem } from '../SettingItem';
 
 export function DisplayPanel() {
-  const { isAprDisplay, setIsAprDisplay, showFullRewardAPY, setShowFullRewardAPY, showFullTokenSymbols, setShowFullTokenSymbols } =
-    useAppSettings();
+  const {
+    isAprDisplay,
+    setIsAprDisplay,
+    showFullRewardAPY,
+    setShowFullRewardAPY,
+    showFullTokenSymbols,
+    setShowFullTokenSymbols,
+    timeZone,
+    setTimeZone,
+  } = useAppSettings();
   const { palette: selectedPalette, setPalette } = useChartPalette();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -21,6 +31,7 @@ export function DisplayPanel() {
   }, []);
 
   const isDarkMode = theme === 'dark';
+  const supportedTimeZones = useMemo(() => getSupportedTimeZones().filter((zone) => zone !== 'UTC'), []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -49,6 +60,41 @@ export function DisplayPanel() {
           onChange={setShowFullTokenSymbols}
           ariaLabel="Toggle full token symbols"
         />
+      </div>
+
+      <div className="flex flex-col gap-4 rounded bg-surface p-4">
+        <h3 className="text-xs uppercase text-secondary">Time</h3>
+        <SettingInputItem
+          title="Timezone"
+          description="Used for dates and times shown in tables. Local follows this device."
+        >
+          {mounted && (
+            <Select
+              value={timeZone}
+              onValueChange={setTimeZone}
+            >
+              <SelectTrigger
+                aria-label="Timezone"
+                className="h-9 w-[240px] max-w-[45vw] bg-hovered"
+              >
+                <SelectValue>{getTimeZoneLabel(timeZone)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="z-[3600] max-h-72">
+                <SelectItem value={LOCAL_TIME_ZONE}>{getTimeZoneLabel(LOCAL_TIME_ZONE)}</SelectItem>
+                <SelectItem value="UTC">UTC</SelectItem>
+                <SelectSeparator />
+                {supportedTimeZones.map((zone) => (
+                  <SelectItem
+                    key={zone}
+                    value={zone}
+                  >
+                    {getTimeZoneLabel(zone)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </SettingInputItem>
       </div>
 
       <div className="flex flex-col gap-4 rounded bg-surface p-4">
