@@ -12,6 +12,29 @@ function formatUsd(value: number, maximumFractionDigits: number): string {
   }).format(value);
 }
 
+export function deriveAssetPriceUsd(
+  totalAssets: bigint | string,
+  totalAssetsUsd: number | null | undefined,
+  assetDecimals: number,
+): number | null {
+  let parsedTotalAssets: bigint;
+  try {
+    parsedTotalAssets = BigInt(totalAssets);
+  } catch {
+    return null;
+  }
+
+  if (parsedTotalAssets <= 0n || totalAssetsUsd == null || !Number.isFinite(totalAssetsUsd) || totalAssetsUsd <= 0) {
+    return null;
+  }
+
+  const totalAssetAmount = Number(formatUnits(parsedTotalAssets, assetDecimals));
+  if (!Number.isFinite(totalAssetAmount) || totalAssetAmount <= 0) return null;
+
+  const assetPriceUsd = totalAssetsUsd / totalAssetAmount;
+  return Number.isFinite(assetPriceUsd) && assetPriceUsd > 0 ? assetPriceUsd : null;
+}
+
 export function computeAssetUsdValue(amount: bigint, assetDecimals: number, assetPriceUsd: number | null): number | null {
   if (amount <= 0n || assetPriceUsd == null || !Number.isFinite(assetPriceUsd) || assetPriceUsd <= 0) {
     return null;

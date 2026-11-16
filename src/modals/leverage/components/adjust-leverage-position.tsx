@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { erc20Abi, formatUnits } from 'viem';
+import { erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import Input from '@/components/Input/Input';
 import { LTVWarning } from '@/components/shared/ltv-warning';
@@ -34,6 +34,7 @@ import { useDeleverageTransaction } from '@/hooks/useDeleverageTransaction';
 import { useLeverageQuote } from '@/hooks/useLeverageQuote';
 import { useLeverageTransaction } from '@/hooks/useLeverageTransaction';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { deriveAssetPriceUsd } from '@/utils/assetDisplay';
 import { formatBalance } from '@/utils/balance';
 import type { LeverageRoute } from '@/hooks/leverage/types';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -235,24 +236,10 @@ export function AdjustLeveragePosition({
     slippageBps: swapSlippageBps,
   });
 
-  const collateralAssetPriceUsd = useMemo(() => {
-    const totalCollateralAssets = parseUnsignedBigInt(market.state?.collateralAssets) ?? 0n;
-    const totalCollateralAssetsUsd = market.state.collateralAssetsUsd;
-    if (
-      totalCollateralAssets <= 0n ||
-      totalCollateralAssetsUsd == null ||
-      !Number.isFinite(totalCollateralAssetsUsd) ||
-      totalCollateralAssetsUsd <= 0
-    ) {
-      return null;
-    }
-
-    const totalCollateralToken = Number(formatUnits(totalCollateralAssets, market.collateralAsset.decimals));
-    if (!Number.isFinite(totalCollateralToken) || totalCollateralToken <= 0) return null;
-
-    const priceUsd = totalCollateralAssetsUsd / totalCollateralToken;
-    return Number.isFinite(priceUsd) && priceUsd > 0 ? priceUsd : null;
-  }, [market.state.collateralAssets, market.state.collateralAssetsUsd, market.collateralAsset.decimals]);
+  const collateralAssetPriceUsd = useMemo(
+    () => deriveAssetPriceUsd(market.state.collateralAssets, market.state.collateralAssetsUsd, market.collateralAsset.decimals),
+    [market.state.collateralAssets, market.state.collateralAssetsUsd, market.collateralAsset.decimals],
+  );
   const leverageTransferFee = useMemo(() => {
     return getRouteLeverageFee({
       amount: leverageQuote.totalCollateralTokenAmountAdded,
