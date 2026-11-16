@@ -6,7 +6,6 @@ import { MixerHorizontalIcon } from '@radix-ui/react-icons';
 import { RefetchIcon } from '@/components/ui/refetch-icon';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import moment from 'moment';
 import { PulseLoader } from 'react-spinners';
 import { useRouter } from 'next/navigation';
 import { useConnection } from 'wagmi';
@@ -19,6 +18,7 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { useDisclosure } from '@/hooks/useDisclosure';
+import { useResolvedTimeZone } from '@/hooks/useResolvedTimeZone';
 import { CURRENT_POSITIONS_SETTINGS_VERSION, usePositionsPreferences } from '@/stores/usePositionsPreferences';
 import { usePositionsFilters } from '@/stores/usePositionsFilters';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -28,6 +28,7 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable, formatReadableTokenAmount } from '@/utils/balance';
 import { computeAssetUsdValue, formatUsdValueDisplay } from '@/utils/assetDisplay';
 import { formatTokenAmountPreview } from '@/utils/token-amount-format';
+import { formatDateTimeInTimeZone } from '@/utils/timezone';
 import { getNetworkImg } from '@/utils/networks';
 import {
   getGroupedEarnings,
@@ -114,6 +115,8 @@ function InterestAccruedDisplay({
   prices,
   blockData,
 }: InterestAccruedDisplayProps) {
+  const timeZone = useResolvedTimeZone();
+
   if (isEarningsLoading) {
     return (
       <div className="flex items-center justify-center">
@@ -148,8 +151,8 @@ function InterestAccruedDisplay({
             detail={
               <div className="space-y-1">
                 <div>
-                  Calculated from {moment(Number(startTimestamp)).format('MMM D, YYYY HH:mm')} to{' '}
-                  {moment(Number(endTimestamp)).format('MMM D, YYYY HH:mm')}
+                  Calculated from {formatDateTimeInTimeZone(new Date(startTimestamp), timeZone)} to{' '}
+                  {formatDateTimeInTimeZone(new Date(endTimestamp), timeZone)}
                 </div>
                 <div>Exact amount: {exactTokenAmount}</div>
               </div>

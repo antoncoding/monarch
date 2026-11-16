@@ -10,7 +10,9 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
 import { useModal } from '@/hooks/useModal';
+import { useResolvedTimeZone } from '@/hooks/useResolvedTimeZone';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { formatTimeInTimeZone } from '@/utils/timezone';
 
 type MarketsTableActionsProps = {
   onRefresh: () => void;
@@ -22,9 +24,11 @@ type MarketsTableActionsProps = {
 
 export function MarketsTableActions({ onRefresh, isRefetching, isTableLoading, isMobile, dataUpdatedAt }: MarketsTableActionsProps) {
   const { open: openModal } = useModal();
+  const timeZone = useResolvedTimeZone();
   const { tableViewMode, setTableViewMode } = useMarketPreferences();
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
   const shouldShowRefreshLoading = !isTableLoading && isRefetching;
+  const updatedAtDisplay = formatTimeInTimeZone(new Date(dataUpdatedAt), timeZone);
 
   return (
     <>
@@ -33,11 +37,11 @@ export function MarketsTableActions({ onRefresh, isRefetching, isTableLoading, i
           content={
             <TooltipContent
               title="Last updated"
-              detail={`${moment(dataUpdatedAt).format('h:mm:ss A')} (${moment(dataUpdatedAt).fromNow()})`}
+              detail={`${updatedAtDisplay} (${moment(dataUpdatedAt).fromNow()})`}
             />
           }
         >
-          <span className="text-xs text-secondary whitespace-nowrap cursor-default">{moment(dataUpdatedAt).format('h:mm:ss A')}</span>
+          <span className="text-xs text-secondary whitespace-nowrap cursor-default">{updatedAtDisplay}</span>
         </Tooltip>
       )}
 

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import moment from 'moment';
 import { type Address, formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { Spinner } from '@/components/ui/spinner';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { TableTimestamp } from '@/components/shared/table-timestamp';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
 import { formatSimple } from '@/utils/balance';
@@ -159,7 +159,9 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                           <div className="flex items-center justify-end">-</div>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-gray-500">{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        <TableTimestamp timestamp={liquidation.timestamp} />
+                      </TableCell>
                       <TableCell className="text-right text-sm text-gray-500">
                         <TransactionIdentity
                           txHash={liquidation.hash}

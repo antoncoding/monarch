@@ -4,7 +4,9 @@ import { OracleTypeInfo } from '@/features/markets/components/oracle';
 import { withMarketPriceBadDebtWarning } from '@/features/markets/utils/market-price-debt-risk';
 import type { MarketMetrics } from '@/hooks/queries/useMarketMetricsQuery';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
+import { useResolvedTimeZone } from '@/hooks/useResolvedTimeZone';
 import { formatReadable } from '@/utils/balance';
+import { formatDateInTimeZone } from '@/utils/timezone';
 import type { Market } from '@/utils/types';
 
 type ExpandedMarketDetailProps = {
@@ -12,14 +14,7 @@ type ExpandedMarketDetailProps = {
   marketMetrics?: MarketMetrics | null;
 };
 
-const marketCreatedDateFormatter = new Intl.DateTimeFormat('en-US', {
-  day: 'numeric',
-  month: 'short',
-  timeZone: 'UTC',
-  year: 'numeric',
-});
-
-function getMarketCreatedDisplay(createdAt: string | null | undefined) {
+function getMarketCreatedDisplay(createdAt: string | null | undefined, timeZone: string) {
   if (!createdAt) {
     return null;
   }
@@ -40,13 +35,14 @@ function getMarketCreatedDisplay(createdAt: string | null | undefined) {
           ? `${Math.floor(ageDays / 30)}mo ago`
           : `${Math.floor(ageDays / 365)}y ago`;
 
-  return `${marketCreatedDateFormatter.format(createdDate)} (${ageLabel})`;
+  return `${formatDateInTimeZone(createdDate, timeZone)} (${ageLabel})`;
 }
 
 export function ExpandedMarketDetail({ market, marketMetrics }: ExpandedMarketDetailProps) {
+  const timeZone = useResolvedTimeZone();
   const baseWarnings = useMarketWarnings(market);
   const warningsWithDetail = withMarketPriceBadDebtWarning(marketMetrics, baseWarnings);
-  const marketCreatedDisplay = getMarketCreatedDisplay(marketMetrics?.marketCreatedAt);
+  const marketCreatedDisplay = getMarketCreatedDisplay(marketMetrics?.marketCreatedAt, timeZone);
 
   return (
     <div className="flex w-full flex-col gap-4 lg:flex-row lg:gap-6">

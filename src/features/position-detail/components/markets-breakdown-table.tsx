@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 import { formatUnits } from 'viem';
 import { PulseLoader } from 'react-spinners';
-import moment from 'moment';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -15,8 +14,10 @@ import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/featu
 import { MarketActionsCell } from './market-actions-cell';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useResolvedTimeZone } from '@/hooks/useResolvedTimeZone';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { formatRateAsPercentage, toDisplayRateFromApy } from '@/utils/rateMath';
+import { formatDateTimeInTimeZone } from '@/utils/timezone';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { EarningsTimeRange } from '@/hooks/useUserPositionsSummaryData';
@@ -290,6 +291,7 @@ export function MarketsBreakdownTable({
   isRefetching,
 }: MarketsBreakdownTableProps) {
   const { isAprDisplay } = useAppSettings();
+  const timeZone = useResolvedTimeZone();
   const { short: rateLabel } = useRateLabel();
 
   const sortedMarkets = useMemo(() => {
@@ -391,7 +393,10 @@ export function MarketsBreakdownTable({
                   return (
                     <TooltipContent
                       title={`Interest Earned (${periodLabel})`}
-                      detail={`From ${moment(startTimestamp).format('MMM D, YYYY HH:mm')} to ${moment(endTimestamp).format('MMM D, YYYY HH:mm')}`}
+                      detail={`From ${formatDateTimeInTimeZone(new Date(startTimestamp), timeZone)} to ${formatDateTimeInTimeZone(
+                        new Date(endTimestamp),
+                        timeZone,
+                      )}`}
                     />
                   );
                 })()}

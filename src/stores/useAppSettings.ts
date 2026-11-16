@@ -13,6 +13,7 @@ type AppSettingsState = {
   showFullRewardAPY: boolean;
   showFullTokenSymbols: boolean;
   isAprDisplay: boolean;
+  timeZone: string;
 
   // UI dismissals
   specialBundlerWarningAcknowledgements: Record<string, boolean>;
@@ -37,6 +38,7 @@ type AppSettingsActions = {
   setShowFullRewardAPY: (show: boolean) => void;
   setShowFullTokenSymbols: (show: boolean) => void;
   setIsAprDisplay: (isApr: boolean) => void;
+  setTimeZone: (timeZone: string) => void;
   setSpecialBundlerWarningAcknowledged: (warningStorageKey: string, acknowledged: boolean) => void;
   setShowDeveloperOptions: (show: boolean) => void;
   setUsePublicAllocator: (show: boolean) => void;
@@ -68,6 +70,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       showFullRewardAPY: true,
       showFullTokenSymbols: false,
       isAprDisplay: false,
+      timeZone: 'local',
       specialBundlerWarningAcknowledgements: {},
       showDeveloperOptions: false,
       usePublicAllocator: true,
@@ -81,6 +84,7 @@ export const useAppSettings = create<AppSettingsStore>()(
       setShowFullRewardAPY: (show) => set({ showFullRewardAPY: show }),
       setShowFullTokenSymbols: (show) => set({ showFullTokenSymbols: show }),
       setIsAprDisplay: (isApr) => set({ isAprDisplay: isApr }),
+      setTimeZone: (timeZone) => set({ timeZone }),
       setSpecialBundlerWarningAcknowledged: (warningStorageKey, acknowledged) =>
         set((state) => ({
           specialBundlerWarningAcknowledgements: {

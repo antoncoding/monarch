@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import moment from 'moment';
 import { formatUnits } from 'viem';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { IoIosArrowRoundForward } from 'react-icons/io';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
+import { TableTimestamp } from '@/components/shared/table-timestamp';
 import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
@@ -224,7 +224,7 @@ export function TransactionHistoryPreview({
                       />
                     </TableCell>
                     <TableCell className="p-3 rounded-r text-right text-xs text-secondary">
-                      {moment.unix(group.timestamp).fromNow()}
+                      <TableTimestamp timestamp={group.timestamp} />
                     </TableCell>
                   </TableRow>
                 );
@@ -277,7 +277,7 @@ export function TransactionHistoryPreview({
                       />
                     </TableCell>
                     <TableCell className="p-3 rounded-r text-right text-xs text-secondary">
-                      {moment.unix(group.timestamp).fromNow()}
+                      <TableTimestamp timestamp={group.timestamp} />
                     </TableCell>
                   </TableRow>
                 );
@@ -330,7 +330,7 @@ export function TransactionHistoryPreview({
                       />
                     </TableCell>
                     <TableCell className="p-3 rounded-r text-right text-xs text-secondary">
-                      {moment.unix(group.timestamp).fromNow()}
+                      <TableTimestamp timestamp={group.timestamp} />
                     </TableCell>
                   </TableRow>
                 );
@@ -369,7 +369,7 @@ export function TransactionHistoryPreview({
                     />
                   </TableCell>
                   <TableCell className="p-3 rounded-r text-right text-xs text-secondary whitespace-nowrap">
-                    {moment.unix(group.timestamp).fromNow()}
+                    <TableTimestamp timestamp={group.timestamp} />
                   </TableCell>
                 </TableRow>
               );

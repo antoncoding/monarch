@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import moment from 'moment';
 import { GoFilter } from 'react-icons/go';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
@@ -12,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { TableTimestamp } from '@/components/shared/table-timestamp';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
@@ -152,7 +152,9 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">{moment.unix(borrow.timestamp).fromNow()}</TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      <TableTimestamp timestamp={borrow.timestamp} />
+                    </TableCell>
                     <TableCell className="text-right text-sm text-gray-500">
                       <TransactionIdentity
                         txHash={borrow.hash}
