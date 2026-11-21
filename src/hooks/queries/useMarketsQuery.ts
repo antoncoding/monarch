@@ -9,6 +9,7 @@ import { usePersistedApiResponse } from '@/hooks/usePersistedApiResponse';
 import { getMarketIdentityKey } from '@/utils/market-identity';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import { createPersistedApiResponseKey } from '@/utils/persistedApiResponseCache';
+import { TokenMetadataUnavailableError } from '@/utils/tokenMetadata';
 import type { Market } from '@/utils/types';
 
 const toError = (error: unknown): Error => {
@@ -70,6 +71,7 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
       : ['markets', 'persisted-cache-loading', marketsCacheKey],
     queryFn: async () => {
       const fetchErrors: Error[] = [];
+      let tokenMetadataUnavailable = false;
       const marketsByChain = new Map<SupportedNetworks, Market[]>();
       const missingNetworks = new Set<SupportedNetworks>(ALL_SUPPORTED_NETWORKS);
 
@@ -100,17 +102,20 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
       };
 
       try {
-        const monarchMarkets = await fetchMonarchMarkets(undefined, customRpcUrls, {
+        const result = await fetchMonarchMarkets(undefined, customRpcUrls, {
           resolveUnknownTokens: includeUnknownTokens,
           trustedTokens: allTokens,
+          previousMarkets: cachedMarkets?.data,
         });
-        const monarchMarketsByChain = partitionMarketsByChain(monarchMarkets);
+        tokenMetadataUnavailable = result.tokenMetadataUnavailable;
+        const monarchMarketsByChain = partitionMarketsByChain(result.markets);
 
         for (const [network, markets] of monarchMarketsByChain.entries()) {
           setMarketsForChain(network, markets);
         }
       } catch (error) {
         const monarchError = toError(error);
+        tokenMetadataUnavailable = monarchError instanceof TokenMetadataUnavailableError;
         console.warn('Monarch multi-chain markets fetch failed. Falling back per chain to Morpho API.', monarchError);
         fetchErrors.push(monarchError);
       }
@@ -172,23 +177,32 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
         .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
 
       // If everything failed, surface an error so the UI can react.
+      if (filtered.length === 0 && tokenMetadataUnavailable) throw new TokenMetadataUnavailableError();
       if (filtered.length === 0 && fetchErrors.length > 0) {
         throw fetchErrors[0];
       }
 
-      return filtered;
+      return { markets: filtered, tokenMetadataUnavailable };
     },
     staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
     refetchInterval: options?.refetchInterval ?? 5 * 60 * 1000, // Auto-refetch every 5 minutes while visible by default
     refetchOnMount: true,
     refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when user returns to tab by default
-    initialData: enabled && isPersistedCacheReady ? cachedMarkets?.data : undefined,
+    initialData:
+      enabled && isPersistedCacheReady && cachedMarkets ? { markets: cachedMarkets.data, tokenMetadataUnavailable: false } : undefined,
     initialDataUpdatedAt: enabled && isPersistedCacheReady ? cachedMarkets?.updatedAt : undefined,
     enabled: enabled && tokensReady && isPersistedCacheReady,
   });
 
   useEffect(() => {
-    if (!query.data || query.data.length === 0 || !query.isSuccess || !query.isFetchedAfterMount) {
+    // A partial registry must not replace the last complete set of markets.
+    if (
+      !query.data ||
+      query.data.tokenMetadataUnavailable ||
+      query.data.markets.length === 0 ||
+      !query.isSuccess ||
+      !query.isFetchedAfterMount
+    ) {
       return;
     }
 
@@ -196,12 +210,14 @@ export const useMarketsQuery = (options?: UseMarketsQueryOptions) => {
       return;
     }
 
-    const nextCachedMarkets = { data: query.data, updatedAt: query.dataUpdatedAt };
+    const nextCachedMarkets = { data: query.data.markets, updatedAt: query.dataUpdatedAt };
     writeCachedMarkets(nextCachedMarkets);
   }, [cachedMarkets?.updatedAt, query.data, query.dataUpdatedAt, query.isFetchedAfterMount, query.isSuccess, writeCachedMarkets]);
 
   return {
     ...query,
+    data: query.data?.markets,
+    tokenMetadataUnavailable: !!query.data?.tokenMetadataUnavailable || query.error instanceof TokenMetadataUnavailableError,
     // Preserve the existing loading UI while the query is intentionally gated.
     isLoading: enabled && !cachedMarkets && (!tokensReady || !isPersistedCacheReady || query.isLoading),
   };

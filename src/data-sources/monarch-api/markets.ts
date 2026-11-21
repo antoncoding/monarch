@@ -2,12 +2,18 @@ import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-
 import { formatUnits, type Address, zeroAddress } from 'viem';
 import { buildEnvioMarketsPageQuery, envioMarketByIdQuery } from '@/graphql/envio-queries';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
+import { getMarketIdentityKey } from '@/utils/market-identity';
 import { isMarketRegistryEntryAllowed, normalizeMarketUniqueKey } from '@/utils/markets';
 import { getMorphoAddress } from '@/utils/morpho';
 import { isSupportedChain, type SupportedNetworks } from '@/utils/networks';
 import { infoToKey } from '@/utils/tokens';
 import type { ERC20Token } from '@/utils/tokens';
-import { resolveTokenInfos, type ResolvedTokenInfo, type TokenAddressInput } from '@/utils/tokenMetadata';
+import {
+  resolveTokenInfos,
+  TokenMetadataUnavailableError,
+  type TokenAddressInput,
+  type TokenMetadataResolution,
+} from '@/utils/tokenMetadata';
 import type { Market, MarketWarning } from '@/utils/types';
 import { UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
 import { monarchGraphqlFetcher } from './fetchers';
@@ -39,6 +45,12 @@ type MonarchMarketsPageResponse = {
 type MapMonarchMarketRowsOptions = {
   resolveUnknownTokens?: boolean;
   trustedTokens?: ERC20Token[];
+  previousMarkets?: readonly Market[];
+};
+
+type MonarchMarketsResult = {
+  markets: Market[];
+  tokenMetadataUnavailable: boolean;
 };
 
 const MONARCH_MARKETS_PAGE_SIZE = 1_000;
@@ -133,7 +145,11 @@ const getMarketTokenInputs = (markets: MonarchMarketRow[]): TokenAddressInput[] 
   return tokens;
 };
 
-const mapMonarchMarketToMarket = (market: MonarchMarketRow, tokenInfos: Map<string, ResolvedTokenInfo>): Market | null => {
+const mapMonarchMarketToMarket = (
+  market: MonarchMarketRow,
+  { tokenInfos, unavailableTokenKeys }: TokenMetadataResolution,
+  previousMarketsByKey: Map<string, Market>,
+): Market | null => {
   if (!isSupportedChain(market.chainId)) {
     return null;
   }
@@ -152,16 +168,18 @@ const mapMonarchMarketToMarket = (market: MonarchMarketRow, tokenInfos: Map<stri
     return null;
   }
 
-  const loanAsset = tokenInfos.get(infoToKey(loanAssetAddress, chainId));
-  const collateralAsset = tokenInfos.get(infoToKey(collateralAssetAddress, chainId));
-
-  if (!loanAsset || !collateralAsset) {
-    return null;
-  }
-
   const marketId = normalizeMarketUniqueKey(market.marketId);
   if (!marketId) {
     return null;
+  }
+
+  const loanKey = infoToKey(loanAssetAddress, chainId);
+  const collateralKey = infoToKey(collateralAssetAddress, chainId);
+  const loanAsset = tokenInfos.get(loanKey);
+  const collateralAsset = tokenInfos.get(collateralKey);
+  if (!loanAsset || !collateralAsset) {
+    if ((!loanAsset && !unavailableTokenKeys.has(loanKey)) || (!collateralAsset && !unavailableTokenKeys.has(collateralKey))) return null;
+    return previousMarketsByKey.get(getMarketIdentityKey(chainId, marketId)) ?? null;
   }
 
   return {
@@ -217,18 +235,26 @@ const mapMonarchMarketRows = async (
   rows: MonarchMarketRow[],
   customRpcUrls: CustomRpcUrls = {},
   options: MapMonarchMarketRowsOptions = {},
-): Promise<Market[]> => {
+): Promise<MonarchMarketsResult> => {
   if (rows.length === 0) {
-    return [];
+    return { markets: [], tokenMetadataUnavailable: false };
   }
 
-  const shouldResolveUnknownTokens = options.resolveUnknownTokens ?? true;
-  const tokenInfos = await resolveTokenInfos(getMarketTokenInputs(rows), customRpcUrls, {
-    resolveUnknownTokens: shouldResolveUnknownTokens,
+  const resolution = await resolveTokenInfos(getMarketTokenInputs(rows), customRpcUrls, {
+    resolveUnknownTokens: options.resolveUnknownTokens,
     trustedTokens: options.trustedTokens,
   });
+  const tokenMetadataUnavailable = resolution.unavailableTokenKeys.size > 0;
+  const previousMarkets = tokenMetadataUnavailable ? options.previousMarkets : undefined;
+  const previousMarketsByKey = new Map(
+    previousMarkets?.map((market) => [getMarketIdentityKey(market.morphoBlue.chain.id, market.uniqueKey), market]),
+  );
+  const markets = rows
+    .map((market) => mapMonarchMarketToMarket(market, resolution, previousMarketsByKey))
+    .filter((market): market is Market => market !== null);
 
-  return rows.map((market) => mapMonarchMarketToMarket(market, tokenInfos)).filter((market): market is Market => market !== null);
+  if (tokenMetadataUnavailable && markets.length === 0) throw new TokenMetadataUnavailableError();
+  return { markets, tokenMetadataUnavailable };
 };
 
 // If `network` is omitted, this fetches the merged multi-chain market registry in one query path.
@@ -236,7 +262,7 @@ export const fetchMonarchMarkets = async (
   network?: SupportedNetworks,
   customRpcUrls: CustomRpcUrls = {},
   options: MapMonarchMarketRowsOptions = {},
-): Promise<Market[]> => {
+): Promise<MonarchMarketsResult> => {
   const query = buildEnvioMarketsPageQuery({
     useChainIdFilter: network !== undefined,
   });
@@ -278,7 +304,9 @@ export const fetchMonarchMarket = async (
     zeroAddress: MONARCH_MARKETS_ZERO_ADDRESS,
   });
 
-  const [market] = await mapMonarchMarketRows(rows, customRpcUrls, {
+  const {
+    markets: [market],
+  } = await mapMonarchMarketRows(rows, customRpcUrls, {
     resolveUnknownTokens: true,
   });
   return market ?? null;

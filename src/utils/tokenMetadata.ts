@@ -19,6 +19,18 @@ export type ResolvedTokenInfo = {
   isRecognized: boolean;
 };
 
+export type TokenMetadataResolution = {
+  tokenInfos: Map<string, ResolvedTokenInfo>;
+  unavailableTokenKeys: Set<string>;
+};
+
+export class TokenMetadataUnavailableError extends Error {
+  constructor() {
+    super('Market token metadata is unavailable.');
+    this.name = 'TokenMetadataUnavailableError';
+  }
+}
+
 export type OnchainTokenMetadata = {
   decimals?: number;
   symbol?: string;
@@ -305,60 +317,54 @@ export const resolveUnknownTokenInfosOnchain = async (
   return resolvedTokenInfos;
 };
 
-const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInput[]): Promise<Map<string, ResolvedTokenInfo>> => {
+const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInput[]): Promise<TokenMetadataResolution> => {
   const batches: TokenAddressInput[][] = [];
 
   for (let start = 0; start < tokens.length; start += TOKEN_METADATA_BATCH_SIZE) {
     batches.push(tokens.slice(start, start + TOKEN_METADATA_BATCH_SIZE));
   }
 
-  const responses = await Promise.allSettled(
+  const tokenInfos = new Map<string, ResolvedTokenInfo>();
+  const unavailableTokenKeys = new Set<string>();
+  await Promise.all(
     batches.map(async (tokenBatch) => {
-      const response = await fetch(getTokenMetadataClientUrl(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getMonarchApiAuthHeaders(),
-        },
-        body: JSON.stringify({ tokens: tokenBatch }),
-      });
+      try {
+        const response = await fetch(getTokenMetadataClientUrl(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getMonarchApiAuthHeaders(),
+          },
+          body: JSON.stringify({ tokens: tokenBatch }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch token metadata: ${response.status}`);
-      }
-
-      const { tokens: responseTokens } = tokenMetadataResponseSchema.parse(await response.json());
-      const entries = deserializeResolvedTokenInfos(responseTokens);
-      const validEntries = new Map<string, ResolvedTokenInfo>();
-
-      for (const { address, chainId } of tokenBatch) {
-        const key = infoToKey(address, chainId);
-        const parsed = resolvedTokenInfoSchema.safeParse(entries.get(key));
-        if (parsed.success && normalizeAddress(parsed.data.token.address) === address) {
-          validEntries.set(key, parsed.data);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch token metadata: ${response.status}`);
         }
-      }
 
-      return validEntries;
+        const { tokens: responseTokens } = tokenMetadataResponseSchema.parse(await response.json());
+        const entries = deserializeResolvedTokenInfos(responseTokens);
+        for (const { address, chainId } of tokenBatch) {
+          const key = infoToKey(address, chainId);
+          if (!entries.has(key)) continue;
+
+          const parsed = resolvedTokenInfoSchema.safeParse(entries.get(key));
+          if (parsed.success && normalizeAddress(parsed.data.token.address) === address) {
+            tokenInfos.set(key, parsed.data);
+          } else {
+            unavailableTokenKeys.add(key);
+          }
+        }
+      } catch {
+        for (const { address, chainId } of tokenBatch) unavailableTokenKeys.add(infoToKey(address, chainId));
+      }
     }),
   );
 
-  const resolvedTokenInfos = new Map<string, ResolvedTokenInfo>();
-
-  for (const response of responses) {
-    if (response.status !== 'fulfilled') {
-      continue;
-    }
-
-    for (const [key, value] of response.value.entries()) {
-      resolvedTokenInfos.set(key, value);
-    }
-  }
-
-  return resolvedTokenInfos;
+  return { tokenInfos, unavailableTokenKeys };
 };
 
-const resolveUnknownTokenInfos = async (tokens: TokenAddressInput[]): Promise<Map<string, ResolvedTokenInfo>> => {
+const resolveUnknownTokenInfos = async (tokens: TokenAddressInput[]): Promise<TokenMetadataResolution> => {
   const keys = tokens.map(({ address, chainId }) => tokenMetadataCacheKey(infoToKey(address, chainId)));
   const cachedEntries = await readPersistedApiResponses<ResolvedTokenInfo>(keys);
   const resolved = new Map<string, ResolvedTokenInfo>();
@@ -372,9 +378,9 @@ const resolveUnknownTokenInfos = async (tokens: TokenAddressInput[]): Promise<Ma
     if (!cached || now - cached.updatedAt >= TOKEN_METADATA_CACHE_TTL) tokensToFetch.push(token);
   }
 
-  if (tokensToFetch.length === 0) return resolved;
+  if (tokensToFetch.length === 0) return { tokenInfos: resolved, unavailableTokenKeys: new Set() };
 
-  const fetched = await fetchResolvedUnknownTokenInfosFromServer(tokensToFetch);
+  const { tokenInfos: fetched, unavailableTokenKeys } = await fetchResolvedUnknownTokenInfosFromServer(tokensToFetch);
   for (const [key, data] of fetched) resolved.set(key, data);
 
   // The API can omit a token when resolution fails. Only successful lookups renew the cache.
@@ -383,22 +389,22 @@ const resolveUnknownTokenInfos = async (tokens: TokenAddressInput[]): Promise<Ma
     await writePersistedApiResponses(Array.from(fetched, ([key, data]) => [tokenMetadataCacheKey(key), { data, updatedAt }] as const));
   }
 
-  return resolved;
+  return { tokenInfos: resolved, unavailableTokenKeys };
 };
 
 export const resolveTokenInfos = async (
   tokens: TokenAddressInput[],
   _customRpcUrls: CustomRpcUrls = {},
   options: ResolveTokenInfosOptions = {},
-): Promise<Map<string, ResolvedTokenInfo>> => {
+): Promise<TokenMetadataResolution> => {
   const uniqueTokens = dedupeTokenInputs(tokens);
   const shouldResolveUnknownTokens = options.resolveUnknownTokens ?? true;
   const trustedTokens = options.trustedTokens ?? [];
   const resolvedTokenInfos = new Map<string, ResolvedTokenInfo>();
   const unresolvedTokens = uniqueTokens.filter((token) => !findResolvedToken(token.address, token.chainId, trustedTokens));
-  const unresolvedTokenInfos =
+  const { tokenInfos: unresolvedTokenInfos, unavailableTokenKeys } =
     !shouldResolveUnknownTokens || unresolvedTokens.length === 0
-      ? new Map<string, ResolvedTokenInfo>()
+      ? { tokenInfos: new Map<string, ResolvedTokenInfo>(), unavailableTokenKeys: new Set<string>() }
       : await resolveUnknownTokenInfos(unresolvedTokens);
 
   for (const token of uniqueTokens) {
@@ -425,5 +431,5 @@ export const resolveTokenInfos = async (
     }
   }
 
-  return resolvedTokenInfos;
+  return { tokenInfos: resolvedTokenInfos, unavailableTokenKeys };
 };

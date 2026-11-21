@@ -69,6 +69,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
   const enableMorphoMetadata = options?.enableMorphoMetadata ?? true;
   const {
     data: rawMarketsFromQuery,
+    tokenMetadataUnavailable,
     isLoading,
     isRefetching,
     dataUpdatedAt,
@@ -166,6 +167,7 @@ export const useProcessedMarkets = (options?: UseProcessedMarketsOptions) => {
 
   return {
     rawMarketsFromQuery,
+    tokenMetadataUnavailable,
     ...processedData,
     allMarkets: allMarketsWithUsd,
     whitelistedMarkets: whitelistedMarketsWithUsd,
