@@ -1,6 +1,8 @@
 import { erc20Abi, parseAbi, type Address, type Hex } from 'viem';
+import { z } from 'zod';
 import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import type { SupportedNetworks } from './networks';
+import { readPersistedApiResponses, writePersistedApiResponses } from './persistedApiResponseCache';
 import { getClient } from './rpc';
 import { findToken, infoToKey, type ERC20Token } from './tokens';
 import type { TokenInfo } from './types';
@@ -30,7 +32,20 @@ type ResolveTokenInfosOptions = {
 };
 
 const TOKEN_METADATA_BATCH_SIZE = 200;
+const TOKEN_METADATA_CACHE_TTL = 24 * 60 * 60 * 1000;
 const erc20SymbolBytes32Abi = parseAbi(['function symbol() view returns (bytes32)']);
+const tokenMetadataResponseSchema = z.object({ tokens: z.record(z.unknown()) });
+const resolvedTokenInfoSchema = z.object({
+  token: z.object({
+    id: z.string(),
+    address: z.string(),
+    symbol: z.string(),
+    name: z.string(),
+    decimals: z.number().int().min(0).max(255),
+  }),
+  isRecognized: z.boolean(),
+});
+const tokenMetadataCacheKey = (key: string): string => `token-metadata:v1:${key}`;
 
 const getTokenMetadataClientUrl = (): string => {
   if (!DATA_API_BASE_URL) {
@@ -123,7 +138,7 @@ const getOrCreateTokenMetadata = (metadataByToken: Map<string, OnchainTokenMetad
 export const serializeResolvedTokenInfos = (resolvedTokenInfos: Map<string, ResolvedTokenInfo>): SerializedResolvedTokenInfos =>
   Object.fromEntries(resolvedTokenInfos);
 
-export const deserializeResolvedTokenInfos = (value: SerializedResolvedTokenInfos): Map<string, ResolvedTokenInfo> =>
+export const deserializeResolvedTokenInfos = <T>(value: Record<string, T>): Map<string, T> =>
   new Map(
     Object.entries(value).map(([key, resolvedTokenInfo]) => {
       if (key.includes(':')) {
@@ -131,11 +146,11 @@ export const deserializeResolvedTokenInfos = (value: SerializedResolvedTokenInfo
         const chainId = Number(chainIdRaw);
 
         if (Number.isInteger(chainId) && address) {
-          return [infoToKey(address, chainId), resolvedTokenInfo] satisfies [string, ResolvedTokenInfo];
+          return [infoToKey(address, chainId), resolvedTokenInfo] satisfies [string, T];
         }
       }
 
-      return [key, resolvedTokenInfo] satisfies [string, ResolvedTokenInfo];
+      return [key, resolvedTokenInfo] satisfies [string, T];
     }),
   );
 
@@ -291,11 +306,10 @@ export const resolveUnknownTokenInfosOnchain = async (
 };
 
 const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInput[]): Promise<Map<string, ResolvedTokenInfo>> => {
-  const uniqueTokens = dedupeTokenInputs(tokens);
   const batches: TokenAddressInput[][] = [];
 
-  for (let start = 0; start < uniqueTokens.length; start += TOKEN_METADATA_BATCH_SIZE) {
-    batches.push(uniqueTokens.slice(start, start + TOKEN_METADATA_BATCH_SIZE));
+  for (let start = 0; start < tokens.length; start += TOKEN_METADATA_BATCH_SIZE) {
+    batches.push(tokens.slice(start, start + TOKEN_METADATA_BATCH_SIZE));
   }
 
   const responses = await Promise.allSettled(
@@ -313,8 +327,19 @@ const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInpu
         throw new Error(`Failed to fetch token metadata: ${response.status}`);
       }
 
-      const data = (await response.json()) as { tokens?: SerializedResolvedTokenInfos };
-      return deserializeResolvedTokenInfos(data.tokens ?? {});
+      const { tokens: responseTokens } = tokenMetadataResponseSchema.parse(await response.json());
+      const entries = deserializeResolvedTokenInfos(responseTokens);
+      const validEntries = new Map<string, ResolvedTokenInfo>();
+
+      for (const { address, chainId } of tokenBatch) {
+        const key = infoToKey(address, chainId);
+        const parsed = resolvedTokenInfoSchema.safeParse(entries.get(key));
+        if (parsed.success && normalizeAddress(parsed.data.token.address) === address) {
+          validEntries.set(key, parsed.data);
+        }
+      }
+
+      return validEntries;
     }),
   );
 
@@ -333,6 +358,34 @@ const fetchResolvedUnknownTokenInfosFromServer = async (tokens: TokenAddressInpu
   return resolvedTokenInfos;
 };
 
+const resolveUnknownTokenInfos = async (tokens: TokenAddressInput[]): Promise<Map<string, ResolvedTokenInfo>> => {
+  const keys = tokens.map(({ address, chainId }) => tokenMetadataCacheKey(infoToKey(address, chainId)));
+  const cachedEntries = await readPersistedApiResponses<ResolvedTokenInfo>(keys);
+  const resolved = new Map<string, ResolvedTokenInfo>();
+  const tokensToFetch: TokenAddressInput[] = [];
+  const now = Date.now();
+
+  for (const token of tokens) {
+    const key = infoToKey(token.address, token.chainId);
+    const cached = cachedEntries.get(tokenMetadataCacheKey(key));
+    if (cached) resolved.set(key, cached.data);
+    if (!cached || now - cached.updatedAt >= TOKEN_METADATA_CACHE_TTL) tokensToFetch.push(token);
+  }
+
+  if (tokensToFetch.length === 0) return resolved;
+
+  const fetched = await fetchResolvedUnknownTokenInfosFromServer(tokensToFetch);
+  for (const [key, data] of fetched) resolved.set(key, data);
+
+  // The API can omit a token when resolution fails. Only successful lookups renew the cache.
+  if (fetched.size > 0) {
+    const updatedAt = Date.now();
+    await writePersistedApiResponses(Array.from(fetched, ([key, data]) => [tokenMetadataCacheKey(key), { data, updatedAt }] as const));
+  }
+
+  return resolved;
+};
+
 export const resolveTokenInfos = async (
   tokens: TokenAddressInput[],
   _customRpcUrls: CustomRpcUrls = {},
@@ -346,7 +399,7 @@ export const resolveTokenInfos = async (
   const unresolvedTokenInfos =
     !shouldResolveUnknownTokens || unresolvedTokens.length === 0
       ? new Map<string, ResolvedTokenInfo>()
-      : await fetchResolvedUnknownTokenInfosFromServer(unresolvedTokens).catch(() => new Map<string, ResolvedTokenInfo>());
+      : await resolveUnknownTokenInfos(unresolvedTokens);
 
   for (const token of uniqueTokens) {
     const key = infoToKey(token.address, token.chainId);
