@@ -92,11 +92,16 @@ test('only fetches missing tokens and shares persisted entries across different 
 });
 
 test('expired entries keep last-good data without extending TTL after unsuccessful refreshes', async () => {
+  const dayMs = 24 * 60 * 60 * 1000;
   const time = mock.method(Date, 'now', () => 1);
   const fetch = mock.method(globalThis, 'fetch', () => tokensResponse([mainnet]));
   await resolveTokenInfos([mainnet]);
 
-  time.mock.mockImplementation(() => 1 + 24 * 60 * 60 * 1000);
+  time.mock.mockImplementation(() => 1 + 3 * dayMs);
+  assert.deepEqual((await resolveTokenInfos([mainnet])).get(tokenKey(mainnet)), metadata(mainnet));
+  assert.equal(fetch.mock.callCount(), 1);
+
+  time.mock.mockImplementation(() => 1 + 7 * dayMs);
   for (const response of [new Response(null, { status: 429 }), Response.json({ tokens: null }), Response.json({ tokens: {} })]) {
     fetch.mock.mockImplementation(() => response);
     assert.deepEqual((await resolveTokenInfos([mainnet])).get(tokenKey(mainnet)), metadata(mainnet));

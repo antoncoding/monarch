@@ -32,7 +32,7 @@ type ResolveTokenInfosOptions = {
 };
 
 const TOKEN_METADATA_BATCH_SIZE = 200;
-const TOKEN_METADATA_CACHE_TTL = 24 * 60 * 60 * 1000;
+const TOKEN_METADATA_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 const erc20SymbolBytes32Abi = parseAbi(['function symbol() view returns (bytes32)']);
 const tokenMetadataResponseSchema = z.object({ tokens: z.record(z.unknown()) });
 const resolvedTokenInfoSchema = z.object({
