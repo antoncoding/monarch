@@ -9,6 +9,7 @@ import { useApiResponseCache } from '@/stores/useApiResponseCache';
 import { getMarketDetailCacheKey } from '@/utils/marketDetailCacheKey';
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchMarketSnapshot, type MarketSnapshot } from '@/utils/positions';
+import { TokenMetadataUnavailableError } from '@/utils/tokenMetadata';
 import type { Market } from '@/utils/types';
 
 const mergeMonarchStateIntoMarket = (marketShell: Market, monarchMarket: Market): Market => ({
@@ -76,13 +77,13 @@ const fetchFallbackMarketShell = async (uniqueKey: string, network: SupportedNet
   return null;
 };
 
-const fetchMonarchMarketState = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
+const fetchMonarchMarketState = async (uniqueKey: string, network: SupportedNetworks) => {
   try {
     console.log(`Attempting to fetch market state via Monarch API for ${uniqueKey}`);
-    return await fetchMonarchMarket(uniqueKey, network);
+    return { market: await fetchMonarchMarket(uniqueKey, network), tokenMetadataError: null };
   } catch (monarchError) {
     console.error('Failed to fetch market state via Monarch API:', monarchError);
-    return null;
+    return { market: null, tokenMetadataError: monarchError instanceof TokenMetadataUnavailableError ? monarchError : null };
   }
 };
 
@@ -107,7 +108,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
         return null;
       }
 
-      const [snapshot, monarchMarket, fallbackMarketShell] = await Promise.all([
+      const [snapshot, { market: monarchMarket, tokenMetadataError }, fallbackMarketShell] = await Promise.all([
         fetchRpcMarketSnapshot(uniqueKey, network, publicClient),
         fetchMonarchMarketState(uniqueKey, network),
         fetchFallbackMarketShell(uniqueKey, network),
@@ -126,6 +127,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
         console.log(`Found market snapshot for ${uniqueKey}, overriding live balances with on-chain data.`);
         finalMarket = mergeSnapshotIntoMarket(finalMarket, snapshot);
       } else if (!finalMarket) {
+        if (tokenMetadataError) throw tokenMetadataError;
         console.error(`Failed to fetch market data for ${uniqueKey} via Monarch or Morpho API.`);
       } else if (!snapshot) {
         console.warn(`Market snapshot failed for ${uniqueKey}, using indexed market state only.`);

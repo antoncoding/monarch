@@ -30,7 +30,7 @@ type UseFilteredMarketsResult = {
   loading: boolean;
   isRefetching: boolean;
   dataUpdatedAt: number;
-  refetch: () => Promise<unknown>;
+  refetch: ReturnType<typeof useProcessedMarkets>['refetch'];
 };
 
 export type MarketDataNotice = {
@@ -48,6 +48,10 @@ const HISTORICAL_RATE_SORT_COLUMNS = new Set<SortColumn>([
 ]);
 const EMPTY_PENDING_CHAIN_IDS = new Set<number>();
 const EMPTY_DATA_NOTICES: MarketDataNotice[] = [];
+const TOKEN_METADATA_NOTICE: MarketDataNotice = {
+  id: 'market-token-metadata-unavailable',
+  impact: 'Token metadata is unavailable for some markets. Results may be incomplete or use saved data. Refresh to retry.',
+};
 
 const getNetworkLabel = (chainId: number): string => getNetworkName(chainId) ?? `chain ${chainId}`;
 
@@ -150,6 +154,7 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
   const {
     allMarkets,
     rawMarketsFromQuery: rawMarkets,
+    tokenMetadataUnavailable,
     loading,
     isRefetching,
     dataUpdatedAt,
@@ -311,11 +316,12 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
     (shouldWaitForOracleMetadata || shouldWaitForRateTargetUsd || isRateEnrichmentLoading || isRateEnrichmentFetching);
 
   const marketDataNotices = useMemo<MarketDataNotice[]>(() => {
+    const notices = tokenMetadataUnavailable ? [TOKEN_METADATA_NOTICE] : EMPTY_DATA_NOTICES;
     if (!shouldEnableRateEnrichment || morphoRateFailedChainIds.size === 0) {
-      return EMPTY_DATA_NOTICES;
+      return notices;
     }
 
-    return Array.from(morphoRateFailedChainIds)
+    const rateNotices = Array.from(morphoRateFailedChainIds)
       .sort((a, b) => a - b)
       .map((chainId) => ({
         id: `market-rate-enrichment-${chainId}`,
@@ -323,7 +329,8 @@ export const useFilteredMarkets = (options?: UseFilteredMarketsOptions): UseFilt
           chainId,
         )}. ${rateNoticeSubject} may be missing for those markets; current Supply APY and Borrow APY still use live market data.`,
       }));
-  }, [morphoRateFailedChainIds, rateNoticeSubject, shouldEnableRateEnrichment]);
+    return [...notices, ...rateNotices];
+  }, [morphoRateFailedChainIds, rateNoticeSubject, shouldEnableRateEnrichment, tokenMetadataUnavailable]);
 
   const markets = useMemo(() => {
     if (!shouldEnableRateEnrichment || marketRateEnrichments.size === 0) {

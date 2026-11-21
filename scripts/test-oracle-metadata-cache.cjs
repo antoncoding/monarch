@@ -29,7 +29,7 @@ const request = (result) => {
   const pending = {};
   queueMicrotask(() => {
     pending.result = result;
-    pending.onsuccess();
+    pending.onsuccess?.();
   });
   return pending;
 };
@@ -38,7 +38,7 @@ const database = {
   close() {},
   transaction() {
     if (storageUnavailable) throw new Error('Storage unavailable');
-    return {
+    const transaction = {
       objectStore: () => ({
         get(key) {
           reads++;
@@ -51,6 +51,8 @@ const database = {
         },
       }),
     };
+    queueMicrotask(() => queueMicrotask(() => transaction.oncomplete?.()));
+    return transaction;
   },
 };
 global.window = { indexedDB: { open: () => request(database) } };

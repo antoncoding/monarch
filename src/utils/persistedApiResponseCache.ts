@@ -83,12 +83,7 @@ export const createPersistedApiResponseKey = (namespace: string, parts: unknown[
   return `${namespace}:${(hash >>> 0).toString(36)}`;
 };
 
-const runStoreRequest = async <T, TResult>(
-  mode: IDBTransactionMode,
-  createRequest: (store: IDBObjectStore) => IDBRequest<TResult>,
-  getSuccessValue: (request: IDBRequest<TResult>) => T,
-  fallbackValue: T,
-): Promise<T> => {
+const runStoreTransaction = async <T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => T, fallbackValue: T): Promise<T> => {
   try {
     const database = await openDatabase();
     if (!database) {
@@ -96,23 +91,14 @@ const runStoreRequest = async <T, TResult>(
     }
 
     return await new Promise((resolve) => {
-      let settled = false;
-      const settle = (value: T) => {
-        if (settled) {
-          return;
-        }
-
-        settled = true;
-        resolve(value);
-      };
-
       const transaction = database.transaction(STORE_NAME, mode);
-      const request = createRequest(transaction.objectStore(STORE_NAME));
-
-      request.onsuccess = () => settle(getSuccessValue(request));
-      request.onerror = () => settle(fallbackValue);
-      transaction.onerror = () => settle(fallbackValue);
-      transaction.onabort = () => settle(fallbackValue);
+      transaction.onabort = () => resolve(fallbackValue);
+      try {
+        const result = run(transaction.objectStore(STORE_NAME));
+        transaction.oncomplete = () => resolve(result);
+      } catch {
+        transaction.abort();
+      }
     });
   } catch {
     // Browser storage is optional; unavailable storage must not block live queries.
@@ -120,28 +106,49 @@ const runStoreRequest = async <T, TResult>(
   }
 };
 
-export const readPersistedApiResponse = async <T>(key: string): Promise<CachedApiResponse<T> | null> =>
-  runStoreRequest<CachedApiResponse<T> | null, PersistedResponseRecord<T> | undefined>(
+export const readPersistedApiResponses = async <T>(keys: readonly string[]): Promise<Map<string, CachedApiResponse<T>>> =>
+  runStoreTransaction(
     'readonly',
-    (store) => store.get(key) as IDBRequest<PersistedResponseRecord<T> | undefined>,
-    (request) => {
-      return request.result ? { data: request.result.data, updatedAt: request.result.updatedAt } : null;
+    (store) => {
+      const entries = new Map<string, CachedApiResponse<T>>();
+      for (const key of keys) {
+        const request: IDBRequest<PersistedResponseRecord<T> | undefined> = store.get(key);
+        request.onsuccess = () => {
+          if (request.result) {
+            const { data, updatedAt } = request.result;
+            entries.set(key, { data, updatedAt });
+          }
+        };
+      }
+      return entries;
     },
-    null,
+    new Map(),
   );
 
-export const writePersistedApiResponse = async <T>(key: string, response: CachedApiResponse<T>): Promise<boolean> =>
-  runStoreRequest<boolean, IDBValidKey>(
+export const readPersistedApiResponse = async <T>(key: string): Promise<CachedApiResponse<T> | null> =>
+  (await readPersistedApiResponses<T>([key])).get(key) ?? null;
+
+export const writePersistedApiResponses = async <T>(entries: Iterable<readonly [string, CachedApiResponse<T>]>): Promise<boolean> =>
+  runStoreTransaction(
     'readwrite',
-    (store) => store.put({ ...response, key }),
-    () => true,
+    (store) => {
+      for (const [key, response] of entries) {
+        store.put({ ...response, key });
+      }
+      return true;
+    },
     false,
   );
 
+export const writePersistedApiResponse = async <T>(key: string, response: CachedApiResponse<T>): Promise<boolean> =>
+  writePersistedApiResponses([[key, response]]);
+
 export const clearPersistedApiResponses = async (): Promise<boolean> =>
-  runStoreRequest<boolean, undefined>(
+  runStoreTransaction(
     'readwrite',
-    (store) => store.clear(),
-    () => true,
+    (store) => {
+      store.clear();
+      return true;
+    },
     false,
   );

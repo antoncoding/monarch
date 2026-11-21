@@ -189,8 +189,11 @@ export default function Markets() {
     };
   }, []);
 
-  const handleRefresh = useCallback(() => {
-    refetch().then(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
+  const handleRefresh = useCallback(async () => {
+    const result = await refetch();
+    if (result.isSuccess && !result.data.tokenMetadataUnavailable) {
+      toast.success('Markets refreshed', 'Markets refreshed successfully');
+    }
   }, [refetch, toast]);
 
   const handleClearAll = useCallback(() => {
