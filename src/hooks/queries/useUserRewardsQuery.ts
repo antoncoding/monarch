@@ -2,7 +2,6 @@ import { useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { fetchMerklApi } from '@/utils/merklApi';
-import { reportHandledError } from '@/utils/sentry';
 import type { RewardResponseType } from '@/utils/types';
 import { ALL_SUPPORTED_NETWORKS, isSupportedNetwork } from '@/utils/networks';
 
@@ -120,11 +119,6 @@ async function fetchMerklRewards(
 async function fetchAllRewards(userAddress: string, options: { forceReload?: boolean } = {}): Promise<UserRewardsData> {
   const merklData = await fetchMerklRewards(userAddress, options).catch((err) => {
     console.error('Merkl rewards fetch failed:', err);
-    reportHandledError(err, {
-      scope: 'user_rewards',
-      operation: 'fetch:merkl',
-      level: 'warning',
-    });
     return { rewards: [] as RewardResponseType[], rewardsWithProofs: [] as MerklRewardWithProofs[] };
   });
 

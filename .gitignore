@@ -29,6 +29,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# private audit files
+/.dependency-audit/
+/docs/DEPENDENCY_SECURITY_BACKLOG.md
+
 # local env files
 .env
 .env.local

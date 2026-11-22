@@ -116,7 +116,6 @@ Use this file at the end of non-trivial work. Do not front-load it at task start
 
 - Any flow that sends Morpho actions through Bundler V2 must pass through `useBundlerAuthorizationStep`.
 - Preserve the distinction between signature mode and transaction mode for approvals.
-- Do not introduce duplicate Sentry capture for `sendTransaction` mutation errors; `useTransactionWithToast` already reports send failures.
 - Use shared logic hooks like useBundlerAuthorizationStep, useTransactionWithToast, useTransactionProcessStore...etc. Look at a similar hook and try to follow the pattern instead of creating from scratch.
 - Validate chain IDs, token addresses, and allowance/permit assumptions at the transaction boundary.
 - Verify chain-specific bundler and approval targets against the canonical deployment address for that chain. Deployed bytecode alone is insufficient because compatible bundler code may exist at multiple addresses.
