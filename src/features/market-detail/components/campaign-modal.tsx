@@ -52,6 +52,7 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
   const isBorrowReward = isBorrowCampaign(campaign);
   const rewardSign = isBorrowReward ? '-' : '+';
   const rateLabel = isBorrowReward ? 'Borrow APR offset' : 'Reward APR';
+  const { icon, symbol } = campaign.rewardToken;
 
   return (
     <div className="bg-hovered rounded-sm border border-gray-200/20 p-4 dark:border-gray-600/15">
@@ -60,14 +61,19 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
         <div className="flex items-center gap-3">
           <span className="rounded-sm bg-primary/10 px-2 py-1 text-xs text-primary">{badge}</span>
           <div className="flex items-center gap-2">
-            <Image
-              src={campaign.rewardToken.icon}
-              alt={campaign.rewardToken.symbol}
-              width={20}
-              height={20}
-              className="rounded-full"
-            />
-            <span className="text-normal">{campaign.rewardToken.symbol}</span>
+            {icon?.toLowerCase().startsWith('https://') && (
+              // Merkl supplies the icon URL. Keep it out of the server-side image optimizer.
+              <Image
+                src={icon}
+                alt={symbol}
+                width={20}
+                height={20}
+                className="rounded-full"
+                referrerPolicy="no-referrer"
+                unoptimized
+              />
+            )}
+            <span className="text-normal">{symbol}</span>
           </div>
         </div>
         <div className="text-right text-primary">

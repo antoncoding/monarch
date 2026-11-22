@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { StyledToast, TransactionToast } from '@/components/ui/styled-toast';
-import { reportHandledError } from '@/utils/sentry';
 import { clearStoredReferralCode, getStoredReferralCode } from '@/utils/referrals';
 import { toUserFacingTransactionErrorMessage } from '@/utils/transaction-errors';
 import { cacheUserTransactionHistoryFromReceipt } from '@/utils/user-transaction-history-cache';
@@ -40,7 +39,6 @@ export function useTransactionWithToast({
   onSuccess,
 }: UseTransactionWithToastProps) {
   const { data: hash, mutate: sendTransaction, error: txError, mutateAsync: sendTransactionAsync } = useSendTransaction();
-  const reportedErrorKeyRef = useRef<string | null>(null);
   const handledConfirmationHashRef = useRef<string | null>(null);
 
   const {
@@ -144,28 +142,6 @@ export function useTransactionWithToast({
       }
     }
     if (isError || txError) {
-      const errorToReport = txError ?? receiptError ?? new Error('Transaction failed while waiting for confirmation');
-      const reportKey = `${toastId}:${hash ?? 'no_hash'}:${errorToReport.message}`;
-
-      if (reportedErrorKeyRef.current !== reportKey) {
-        reportHandledError(errorToReport, {
-          scope: 'transaction',
-          operation: pendingText,
-          level: 'error',
-          tags: {
-            tx_toast_id: toastId,
-            tx_chain_id: chainId ?? 'unknown',
-            tx_has_hash: Boolean(hash),
-          },
-          extras: {
-            tx_hash: hash ?? null,
-            tx_error_message: errorToReport.message,
-            tx_error_name: errorToReport.name,
-          },
-        });
-        reportedErrorKeyRef.current = reportKey;
-      }
-
       const errorMessage = toUserFacingTransactionErrorMessage(txError ?? receiptError, 'Transaction failed');
 
       toast.update(toastId, {
@@ -181,24 +157,8 @@ export function useTransactionWithToast({
         onClick,
         closeButton: true,
       });
-    } else {
-      reportedErrorKeyRef.current = null;
     }
-  }, [
-    hash,
-    isConfirmed,
-    isError,
-    txError,
-    receiptError,
-    receipt,
-    successText,
-    successDescription,
-    errorText,
-    toastId,
-    onClick,
-    chainId,
-    pendingText,
-  ]);
+  }, [hash, isConfirmed, isError, txError, receiptError, receipt, successText, successDescription, errorText, toastId, onClick, chainId]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };
 }
