@@ -14,7 +14,7 @@ const { getFeedMetadataSnapshot } = require('../src/hooks/useFeedLastUpdatedByCh
 const { createUnknownOracleFilter, createOracleFilter } = require('../src/utils/marketFilters');
 const { getOracleVendorInfo, getOracleType, OracleType, PriceFeedVendors } = require('../src/utils/oracle');
 const { getFeedOccurrencesForOracle, findFeedOccurrences } = require('../src/features/feed-detail/feed-detail-utils');
-const { getMarketWarningsWithDetail } = require('../src/utils/warnings');
+const { getMarketWarningsWithDetail, getRiskLevel, ORACLE_RISK_WARNING_CODE } = require('../src/utils/warnings');
 
 const address = '0x3b789d4316ab5019fe57bbf3b80a0b656430b75d';
 const uranium = {
@@ -100,6 +100,27 @@ test('warnings distinguish an approved wrapper from unknown dependencies and unl
   assert.deepEqual(warningCodes(unknownInput), ['unknown feeds']);
   const unlisted = { ...oracle, data: { ...oracle.data, metadata: {} } };
   assert.deepEqual(warningCodes(unlisted), ['unrecognized_oracle']);
+});
+
+test('oracle risk flags apply to every matching market, even without scanner metadata', () => {
+  const flaggedAddress = '0x70E0B687b85A79Aa8d936AFFc8BA6F9a1Fb7beFE';
+  const flaggedMarket = { ...market, oracleAddress: flaggedAddress, morphoBlue: { chain: { id: 1 } }, state: {}, warnings: [] };
+  for (const [uniqueKey, oracleAddress] of [
+    ['market-a', flaggedAddress],
+    ['market-b', flaggedAddress.toLowerCase()],
+  ]) {
+    const warnings = getMarketWarningsWithDetail({ ...flaggedMarket, uniqueKey, oracleAddress });
+    assert.equal(warnings[0].code, ORACLE_RISK_WARNING_CODE);
+    assert.equal(warnings[0].category, 'oracle');
+    assert.match(warnings[0].description, /^Spam oracle\. The owner can set the price directly\./);
+    assert.equal(getRiskLevel([warnings[0]]), 'red');
+  }
+
+  const otherChain = { ...flaggedMarket, uniqueKey: 'market-c', morphoBlue: { chain: { id: 8453 } } };
+  const otherOracle = { ...flaggedMarket, uniqueKey: 'market-d', oracleAddress: address };
+  for (const otherMarket of [otherChain, otherOracle]) {
+    assert.ok(!getMarketWarningsWithDetail(otherMarket).some((warning) => warning.code === ORACLE_RISK_WARNING_CODE));
+  }
 });
 
 test('feed refresh and existing feed pages include custom input dependencies', () => {
