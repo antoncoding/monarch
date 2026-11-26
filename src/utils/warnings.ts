@@ -96,12 +96,9 @@ const OVER_UTILIZATION_ALERT_THRESHOLD = 1.01;
 
 export const ORACLE_RISK_WARNING_CODE = 'oracle_risk';
 
-const oracleRiskFlags: Partial<Record<string, { label: 'Spam oracle' | 'High-risk oracle'; reason: string }>> = {
+const oracleRiskFlags: Partial<Record<string, string>> = {
   // Runtime bytecode: https://eth.blockscout.com/address/0x70E0B687b85A79Aa8d936AFFc8BA6F9a1Fb7beFE?tab=contract
-  [getOracleMetadataKey(1, '0x70E0B687b85A79Aa8d936AFFc8BA6F9a1Fb7beFE')]: {
-    label: 'Spam oracle',
-    reason: 'The owner can set the price directly. This oracle reported about 4.72 trillion USDC per WETH.',
-  },
+  [getOracleMetadataKey(1, '0x70E0B687b85A79Aa8d936AFFc8BA6F9a1Fb7beFE')]: 'Spam oracle, the deployer can set the price directly.',
 };
 
 const UNRECOGNIZED_ORACLE: WarningWithDetail = {
@@ -146,12 +143,12 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
   const result: WarningWithDetail[] = [];
 
   const chainId = market.morphoBlue.chain.id;
-  const oracleRisk = oracleRiskFlags[getOracleMetadataKey(chainId, market.oracleAddress)];
-  if (oracleRisk) {
+  const oracleRiskWarning = oracleRiskFlags[getOracleMetadataKey(chainId, market.oracleAddress)];
+  if (oracleRiskWarning) {
     result.push({
       code: ORACLE_RISK_WARNING_CODE,
       level: 'alert',
-      description: `${oracleRisk.label}. ${oracleRisk.reason}`,
+      description: oracleRiskWarning,
       category: WarningCategory.oracle,
     });
   }

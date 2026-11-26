@@ -112,7 +112,7 @@ test('oracle risk flags apply to every matching market, even without scanner met
     const warnings = getMarketWarningsWithDetail({ ...flaggedMarket, uniqueKey, oracleAddress });
     assert.equal(warnings[0].code, ORACLE_RISK_WARNING_CODE);
     assert.equal(warnings[0].category, 'oracle');
-    assert.match(warnings[0].description, /^Spam oracle\. The owner can set the price directly\./);
+    assert.equal(warnings[0].description, 'Spam oracle, the deployer can set the price directly.');
     assert.equal(getRiskLevel([warnings[0]]), 'red');
   }
 
