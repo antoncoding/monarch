@@ -8,6 +8,7 @@ import type { MarketMetrics } from '@/hooks/queries/useMarketMetricsQuery';
 import { getMarketPriceBadDebtWarning } from '@/features/markets/utils/market-price-debt-risk';
 import type { WarningWithDetail, Market } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
+import { ORACLE_RISK_WARNING_CODE } from '@/utils/warnings';
 
 type RiskFlagProps = {
   level: 'green' | 'yellow' | 'red';
@@ -82,7 +83,7 @@ export function RiskIndicator({ level, description, mode = 'simple', warningDeta
     <TooltipContent
       icon={icon}
       title={description}
-      detail={mode === 'complex' ? warningDetail?.description : undefined}
+      detail={mode === 'complex' || warningDetail?.code === ORACLE_RISK_WARNING_CODE ? warningDetail?.description : undefined}
       className={styles.text}
     />
   );

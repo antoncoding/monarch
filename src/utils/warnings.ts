@@ -1,4 +1,9 @@
-import { getMetaOracleDataFromMetadata, getStandardOracleDataFromMetadata, type OracleMetadataRecord } from '@/hooks/useOracleMetadata';
+import {
+  getMetaOracleDataFromMetadata,
+  getOracleMetadataKey,
+  getStandardOracleDataFromMetadata,
+  type OracleMetadataRecord,
+} from '@/hooks/useOracleMetadata';
 import type { Market } from '@/utils/types';
 import { monarchWhitelistedMarkets, getMarketOverrideWarnings } from './markets';
 import {
@@ -89,6 +94,13 @@ const BAD_DEBT: WarningWithDetail = {
 
 const OVER_UTILIZATION_ALERT_THRESHOLD = 1.01;
 
+export const ORACLE_RISK_WARNING_CODE = 'oracle_risk';
+
+const oracleRiskFlags: Partial<Record<string, string>> = {
+  // Runtime bytecode: https://eth.blockscout.com/address/0x70E0B687b85A79Aa8d936AFFc8BA6F9a1Fb7beFE?tab=contract
+  [getOracleMetadataKey(1, '0x70E0B687b85A79Aa8d936AFFc8BA6F9a1Fb7beFE')]: 'Spam oracle, the deployer can set the price directly.',
+};
+
 const UNRECOGNIZED_ORACLE: WarningWithDetail = {
   code: 'unrecognized_oracle',
   level: 'alert',
@@ -128,7 +140,18 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
   const options: MarketWarningsOptions =
     typeof optionsOrWhitelist === 'boolean' ? { considerWhitelist: optionsOrWhitelist } : (optionsOrWhitelist ?? {});
   const { considerWhitelist = false, oracleMetadataMap } = options;
-  const result = [];
+  const result: WarningWithDetail[] = [];
+
+  const chainId = market.morphoBlue.chain.id;
+  const oracleRiskWarning = oracleRiskFlags[getOracleMetadataKey(chainId, market.oracleAddress)];
+  if (oracleRiskWarning) {
+    result.push({
+      code: ORACLE_RISK_WARNING_CODE,
+      level: 'alert',
+      description: oracleRiskWarning,
+      category: WarningCategory.oracle,
+    });
+  }
 
   const allDetails = [...morphoOfficialWarnings];
 
@@ -176,7 +199,6 @@ export const getMarketWarningsWithDetail = (market: Market, optionsOrWhitelist?:
   }
 
   // Append our own oracle warnings
-  const chainId = market.morphoBlue.chain.id;
   const oracleType = getOracleType(market.oracleAddress, chainId, oracleMetadataMap);
   if (oracleType === OracleType.Custom) {
     const vendorInfo = getOracleVendorInfo(market.oracleAddress, chainId, oracleMetadataMap);

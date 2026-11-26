@@ -46,7 +46,7 @@ import { hasBorrowSidePosition } from '@/utils/positions';
 import { getMarketURL, supportsMorphoAppLinks } from '@/utils/external';
 import type { Market, MarketPosition, WarningWithDetail } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
-import { getRiskLevel, countWarningsByLevel, type RiskLevel } from '@/utils/warnings';
+import { getRiskLevel, countWarningsByLevel, ORACLE_RISK_WARNING_CODE, type RiskLevel } from '@/utils/warnings';
 
 // Reusable component for rendering a block of warnings with consistent styling
 type WarningBlockProps = {
@@ -589,6 +589,8 @@ export function MarketHeader({
   // Filter warnings by category
   const assetWarnings = allWarnings.filter((w) => w.category === WarningCategory.asset);
   const oracleWarnings = allWarnings.filter((w) => w.category === WarningCategory.oracle);
+  const oracleRiskWarnings = oracleWarnings.filter((w) => w.code === ORACLE_RISK_WARNING_CODE);
+  const otherOracleWarnings = oracleWarnings.filter((w) => w.code !== ORACLE_RISK_WARNING_CODE);
   const globalWarnings = allWarnings.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general);
 
   // Compute risk levels for each category
@@ -646,6 +648,10 @@ export function MarketHeader({
 
   return (
     <div className="mt-6 mb-6 space-y-4">
+      <WarningBlock
+        warnings={oracleRiskWarnings}
+        riskLevel={getRiskLevel(oracleRiskWarnings)}
+      />
       {/* Main Header */}
       <div className="rounded border border-border bg-surface px-6 py-4 shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -930,8 +936,8 @@ export function MarketHeader({
 
                       {/* Oracle warnings */}
                       <WarningBlock
-                        warnings={oracleWarnings}
-                        riskLevel={oracleRiskLevel}
+                        warnings={otherOracleWarnings}
+                        riskLevel={getRiskLevel(otherOracleWarnings)}
                       />
                     </div>
                   </div>
